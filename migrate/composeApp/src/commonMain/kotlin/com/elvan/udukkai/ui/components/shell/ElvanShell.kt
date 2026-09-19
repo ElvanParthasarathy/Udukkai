@@ -22,6 +22,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.Velocity
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
+import com.elvan.udukkai.localization.LocalAppLanguage
 import com.elvan.udukkai.theme.Dimens
 import com.elvan.udukkai.theme.ShellColors
 import com.elvan.udukkai.theme.rememberShellColors
@@ -51,11 +52,20 @@ fun ElvanShell(
     actions: @Composable RowScope.() -> Unit = {},
     navbar: @Composable () -> Unit = {},
     isSearchActive: Boolean = false,
+    isSelectionMode: Boolean = false,
+    selectedCount: Int = 0,
+    isAllSelected: Boolean = false,
+    onSelectAll: () -> Unit = {},
+    onCancelSelection: () -> Unit = {},
     content: @Composable () -> Unit
 ) {
     val colors = rememberShellColors()
     var isNavbarVisible by remember { mutableStateOf(true) }
     val coroutineScope = rememberCoroutineScope()
+
+    val isTamil = LocalAppLanguage.current.startsWith("ta")
+    val selectionTitle = if (isTamil) "$selectedCount தேர்வு" else "$selectedCount Selected"
+    val effectiveTitle = if (isSelectionMode) selectionTitle else title
 
     val isDesktop = com.elvan.udukkai.core.platform.currentPlatform == com.elvan.udukkai.core.platform.PlatformType.DESKTOP
     val expandedHeight = if (isDesktop) 130.dp else 280.dp
@@ -362,15 +372,16 @@ fun ElvanShell(
                         .zIndex(100f)
                 ) {
                     ElvanExpandedBar(
-                        title = title,
+                        title = effectiveTitle,
                         colors = colors,
                         scrollOffsetPx = currentScrollOffset,
                         collisionOffsetPx = collisionOffsetPx,
                         expandedHeight = expandedHeight,
-                        hasLeadingWidget = onBack != null,
+                        hasLeadingWidget = onBack != null || isSelectionMode,
                         onBack = onBack,
-                        hasActions = hasActions,
-                        actions = actions
+                        hasActions = if (isSelectionMode) false else hasActions,
+                        actions = actions,
+                        isSelectionMode = isSelectionMode
                     )
                 }
 
@@ -380,12 +391,17 @@ fun ElvanShell(
                     collisionOffsetPx = collisionOffsetPx,
                     colors = colors,
                     expandedHeight = expandedHeight,
-                    title = if (useNewDesign) null else title,
+                    title = if (useNewDesign) null else effectiveTitle,
                     onBack = onBack,
                     leadingIcon = leadingIcon,
                     navOpacity = effectiveNavOpacity,
-                    hasActions = hasActions,
-                    actions = actions
+                    hasActions = if (isSelectionMode) false else hasActions,
+                    actions = actions,
+                    isSelectionMode = isSelectionMode,
+                    selectedCount = selectedCount,
+                    isAllSelected = isAllSelected,
+                    onSelectAll = onSelectAll,
+                    onCancelSelection = onCancelSelection
                 )
             } else {
                 ElvanCollapsedBar(
@@ -393,12 +409,17 @@ fun ElvanShell(
                     collisionOffsetPx = collisionOffsetPx,
                     colors = colors,
                     expandedHeight = expandedHeight,
-                    title = title,
+                    title = effectiveTitle,
                     onBack = onBack,
                     leadingIcon = leadingIcon,
                     navOpacity = effectiveNavOpacity,
-                    hasActions = hasActions,
-                    actions = actions
+                    hasActions = if (isSelectionMode) false else hasActions,
+                    actions = actions,
+                    isSelectionMode = isSelectionMode,
+                    selectedCount = selectedCount,
+                    isAllSelected = isAllSelected,
+                    onSelectAll = onSelectAll,
+                    onCancelSelection = onCancelSelection
                 )
             }
 

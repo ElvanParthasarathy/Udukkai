@@ -47,7 +47,7 @@ import com.elvan.udukkai.theme.LocalShellColors
 import com.elvan.udukkai.theme.ShellColors
 import com.elvan.udukkai.theme.rememberShellColors
 import com.elvan.udukkai.ui.components.ElvanSimpleScrollbar
-import com.elvan.udukkai.ui.components.shell.maeladukkugal.*
+import com.elvan.udukkai.ui.components.shell.sheets.*
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
@@ -105,9 +105,9 @@ fun <T> ElvanSelectionBottomSheet(
                     .padding(16.dp)
             ) {
                 Column(modifier = Modifier.fillMaxWidth()) {
-                    ElvanMaeladukkuThalaipu(title = title, colors = colors)
+                    ElvanSheetHeader(title = title, colors = colors)
                     if (showSearch) {
-                        ElvanMaeladukkuThaedal(
+                        ElvanSheetSearch(
                             value = searchQuery,
                             onValueChange = { searchQuery = it },
                             colors = colors
@@ -126,7 +126,7 @@ fun <T> ElvanSelectionBottomSheet(
                     ) {
                         items(filteredItems) { item ->
                             val isSelected = item == currentValue
-                            ElvanMaeladukkuUrupadi(
+                            ElvanSheetItem(
                                 title = itemLabelBuilder(item),
                                 subtitle = subtitleBuilder?.invoke(item),
                                 isSelected = isSelected,
@@ -140,7 +140,7 @@ fun <T> ElvanSelectionBottomSheet(
                         }
                     }
                     if (onRequestAddNew != null) {
-                        ElvanMaeladukkuPudhiyaPothan(
+                        ElvanSheetNewButton(
                             onTap = {
                                 onDismissRequest()
                                 onRequestAddNew()
@@ -373,7 +373,7 @@ fun <T> ElvanSelectionBottomSheet(
                                         }
                                     )
                             ) {
-                                ElvanMaeladukkuThaedal(
+                                ElvanSheetSearch(
                                     value = searchQuery,
                                     onValueChange = { searchQuery = it },
                                     colors = colors
@@ -404,7 +404,7 @@ fun <T> ElvanSelectionBottomSheet(
                             ) {
                                 filteredItems.forEach { item ->
                                     val isSelected = item == currentValue
-                                    ElvanMaeladukkuUrupadi(
+                                    ElvanSheetItem(
                                         title = itemLabelBuilder(item),
                                         subtitle = subtitleBuilder?.invoke(item),
                                         isSelected = isSelected,
@@ -430,7 +430,7 @@ fun <T> ElvanSelectionBottomSheet(
                                 ) {
                                     items(filteredItems) { item ->
                                         val isSelected = item == currentValue
-                                        ElvanMaeladukkuUrupadi(
+                                        ElvanSheetItem(
                                             title = itemLabelBuilder(item),
                                             subtitle = subtitleBuilder?.invoke(item),
                                             isSelected = isSelected,
@@ -457,7 +457,7 @@ fun <T> ElvanSelectionBottomSheet(
 
                         // Optional Add New button
                         if (onRequestAddNew != null) {
-                            ElvanMaeladukkuPudhiyaPothan(
+                            ElvanSheetNewButton(
                                 onTap = {
                                     dismissSheet()
                                     onRequestAddNew()

@@ -30,10 +30,10 @@ import com.elvan.udukkai.ui.components.shell.ElvanSnackbarHost
 import com.elvan.udukkai.ui.components.shell.LocalElvanBottomSheetController
 import com.elvan.udukkai.ui.screens.home.HomeScreen
 import com.elvan.udukkai.ui.screens.mode.ModeSelectorScreen
-import com.elvan.udukkai.ui.screens.ulnuzhaivu.thiraigal.AnumadhiKaavalarThirai
-import com.elvan.udukkai.ui.screens.ulnuzhaivu.thiraigal.NalvaravuThirai
-import com.elvan.udukkai.ui.screens.ulnuzhaivu.thiraigal.NalvaravuWelcomeScreen
-import com.elvan.udukkai.ui.screens.ulnuzhaivu.thiraigal.UllnuzhaivuThirai
+import com.elvan.udukkai.ui.screens.onboarding.screens.AnumadhiKaavalarThirai
+import com.elvan.udukkai.ui.screens.onboarding.screens.NalvaravuThirai
+import com.elvan.udukkai.ui.screens.onboarding.screens.NalvaravuWelcomeScreen
+import com.elvan.udukkai.ui.screens.onboarding.screens.UllnuzhaivuThirai
 
 private enum class AppFlowState {
     PERMISSION_GUARD,

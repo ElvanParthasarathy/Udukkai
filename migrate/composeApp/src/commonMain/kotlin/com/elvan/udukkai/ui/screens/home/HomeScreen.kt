@@ -1,6 +1,7 @@
 package com.elvan.udukkai.ui.screens.home
 
 import androidx.compose.animation.*
+import androidx.compose.animation.core.CubicBezierEasing
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
@@ -18,7 +19,7 @@ import com.elvan.udukkai.core.mode.LocalAppMode
 import com.elvan.udukkai.core.platform.AppBackHandler
 import com.elvan.udukkai.core.platform.PlatformType
 import com.elvan.udukkai.core.platform.currentPlatform
-import com.elvan.udukkai.ui.screens.home.kanini.ElvanKaniniPakkapattai
+import com.elvan.udukkai.ui.screens.home.desktop.DesktopSideBar
 import com.elvan.udukkai.data.model.PatrugalTharavuru
 import com.elvan.udukkai.data.model.PattiyalTharavuru
 import com.elvan.udukkai.data.model.PorulTharavuru
@@ -36,26 +37,26 @@ import com.elvan.udukkai.theme.rememberShellColors
 import com.elvan.udukkai.ui.components.ExpressivePullToRefreshBox
 import com.elvan.udukkai.ui.components.shell.*
 import com.elvan.udukkai.ui.navigation.BottomNavBar
-import com.elvan.udukkai.ui.navigation.ElvanThaedalPattai
+import com.elvan.udukkai.ui.navigation.ElvanSearchBar
 import com.elvan.udukkai.ui.navigation.MaterialSymbols
 import com.elvan.udukkai.ui.navigation.NavTab
-import com.elvan.udukkai.ui.screens.meetpagam.MeetpagamScreen
-import com.elvan.udukkai.ui.screens.porul.PorulScreen
-import com.elvan.udukkai.ui.screens.paarvai.PatrucheettuPaarvaiScreen
-import com.elvan.udukkai.ui.screens.paarvai.PattiyalPaarvaiScreen
-import com.elvan.udukkai.ui.screens.paarvai.PorulPaarvaiScreen
-import com.elvan.udukkai.ui.screens.paarvai.VaangunarPaarvaiScreen
+import com.elvan.udukkai.ui.screens.recyclebin.RecycleBinScreen
+import com.elvan.udukkai.ui.screens.product.ProductScreen
+import com.elvan.udukkai.ui.screens.view.ReceiptViewScreen
+import com.elvan.udukkai.ui.screens.view.InvoiceViewScreen
+import com.elvan.udukkai.ui.screens.view.ProductViewScreen
+import com.elvan.udukkai.ui.screens.view.CustomerViewScreen
 import com.elvan.udukkai.ui.screens.settings.SettingsScreen
-import com.elvan.udukkai.ui.screens.thiruthi.patrucheettu.PatrucheettuThiruthiScreen
-import com.elvan.udukkai.ui.screens.thiruthi.pattiyal.KooliPattiyalThiruthiScreen
-import com.elvan.udukkai.ui.screens.thiruthi.pattiyal.PattiyalThiruthiScreen
-import com.elvan.udukkai.ui.screens.thiruthi.pattiyal.PattuPattiyalThiruthiScreen
-import com.elvan.udukkai.ui.screens.thiruthi.porul.PorulThiruthiScreen
-import com.elvan.udukkai.ui.screens.thiruthi.vaangunar.VaangunarThiruthiScreen
+import com.elvan.udukkai.ui.screens.editor.receipt.ReceiptEditorScreen
+import com.elvan.udukkai.ui.screens.editor.invoice.CoolieInvoiceEditorScreen
+import com.elvan.udukkai.ui.screens.editor.invoice.InvoiceEditorScreen
+import com.elvan.udukkai.ui.screens.editor.invoice.SilkInvoiceEditorScreen
+import com.elvan.udukkai.ui.screens.editor.product.ProductEditorScreen
+import com.elvan.udukkai.ui.screens.editor.customer.CustomerEditorScreen
 import androidx.compose.foundation.shape.CircleShape
-import com.elvan.udukkai.ui.screens.uruvakku.UruvakkuScreen
-import com.elvan.udukkai.ui.screens.uruvakku.koorugal.UruvakkuDateFilterSheet
-import com.elvan.udukkai.ui.screens.vaangunar.VaangunarScreen
+import com.elvan.udukkai.ui.screens.create.CreateScreen
+import com.elvan.udukkai.ui.screens.create.components.CreateDateFilterSheet
+import com.elvan.udukkai.ui.screens.customer.CustomerScreen
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -97,7 +98,6 @@ fun HomeScreen() {
     val onToggleItem: (Long) -> Unit = { id ->
         val newSet = if (selectedItemIds.contains(id)) selectedItemIds - id else selectedItemIds + id
         selectedItemIds = newSet
-        if (newSet.isEmpty()) isSelectionMode = false
     }
     val onStartSelection: (Long) -> Unit = { id ->
         isSelectionMode = true
@@ -179,7 +179,7 @@ fun HomeScreen() {
         val isWideScreen = isDesktop && maxWidth >= 768.dp
 
         LaunchedEffect(activeSubpage, isWideScreen) {
-            ElvanSnackbar.isBottomBarVisible = (activeSubpage == null && !isWideScreen)
+            ElvanSnackbar.isBottomBarVisible = (activeSubpage == null || activeSubpage is ActiveSubpage.RecycleBin) && !isWideScreen
         }
         DisposableEffect(Unit) {
             onDispose { ElvanSnackbar.isBottomBarVisible = false }
@@ -187,7 +187,7 @@ fun HomeScreen() {
 
         Row(modifier = Modifier.fillMaxSize()) {
             if (isWideScreen) {
-                ElvanKaniniPakkapattai(
+                DesktopSideBar(
                     selectedTab = selectedTab,
                     onTabSelected = { tab ->
                         selectedTab = tab
@@ -232,25 +232,25 @@ fun HomeScreen() {
                     )
                 }
                 is ActiveSubpage.RecycleBin -> {
-                    MeetpagamScreen(
+                    RecycleBinScreen(
                         onBack = { activeSubpage = null }
                     )
                 }
                 is ActiveSubpage.ItemEditor -> {
-                    PorulThiruthiScreen(
+                    ProductEditorScreen(
                         item = subpage.item,
                         onBack = { activeSubpage = null }
                     )
                 }
                 is ActiveSubpage.MerchantEditor -> {
-                    VaangunarThiruthiScreen(
+                    CustomerEditorScreen(
                         merchant = subpage.merchant,
                         onBack = { activeSubpage = null }
                     )
                 }
                 is ActiveSubpage.InvoiceEditor -> {
                     if (currentMode == com.elvan.udukkai.core.mode.AppMode.PATTU) {
-                        PattuPattiyalThiruthiScreen(
+                        SilkInvoiceEditorScreen(
                             invoice = subpage.invoice,
                             onBack = { activeSubpage = null },
                             onRequestAddNewCustomer = {
@@ -261,7 +261,7 @@ fun HomeScreen() {
                             }
                         )
                     } else {
-                        KooliPattiyalThiruthiScreen(
+                        CoolieInvoiceEditorScreen(
                             invoice = subpage.invoice,
                             onBack = { activeSubpage = null },
                             onRequestAddNewCustomer = {
@@ -274,13 +274,13 @@ fun HomeScreen() {
                     }
                 }
                 is ActiveSubpage.ReceiptEditor -> {
-                    PatrucheettuThiruthiScreen(
+                    ReceiptEditorScreen(
                         receipt = subpage.receipt,
                         onBack = { activeSubpage = null }
                     )
                 }
                 is ActiveSubpage.CustomerView -> {
-                    VaangunarPaarvaiScreen(
+                    CustomerViewScreen(
                         merchant = subpage.customer,
                         onBack = { activeSubpage = null },
                         onEdit = {
@@ -289,7 +289,7 @@ fun HomeScreen() {
                     )
                 }
                 is ActiveSubpage.ProductView -> {
-                    PorulPaarvaiScreen(
+                    ProductViewScreen(
                         item = subpage.product,
                         onBack = { activeSubpage = null },
                         onEdit = {
@@ -298,7 +298,7 @@ fun HomeScreen() {
                     )
                 }
                 is ActiveSubpage.InvoiceView -> {
-                    PattiyalPaarvaiScreen(
+                    InvoiceViewScreen(
                         invoice = subpage.invoice,
                         onBack = { activeSubpage = null },
                         onEdit = {
@@ -307,7 +307,7 @@ fun HomeScreen() {
                     )
                 }
                 is ActiveSubpage.ReceiptView -> {
-                    PatrucheettuPaarvaiScreen(
+                    ReceiptViewScreen(
                         receipt = subpage.receipt,
                         onBack = { activeSubpage = null },
                         onEdit = {
@@ -316,12 +316,36 @@ fun HomeScreen() {
                     )
                 }
                 null -> {
+                    val allSelectionIds: Set<Long> = when (selectedTab) {
+                        NavTab.Products -> PorulRepository.filteredItems.map { it.id }.toSet()
+                        NavTab.Customers -> VaangunarRepository.filteredMerchants.map { it.id }.toSet()
+                        NavTab.Create -> {
+                            if (uruvakkuSegment == 0) {
+                                PattiyalRepository.filteredInvoices.map { it.id }.toSet()
+                            } else {
+                                PatrugalRepository.filteredReceipts.map { it.id }.toSet()
+                            }
+                        }
+                        else -> emptySet()
+                    }
+                    val isAllSelected = selectedItemIds.isNotEmpty() && allSelectionIds.isNotEmpty() && selectedItemIds.size == allSelectionIds.size
+
                     ElvanShell(
                         scrollState = currentScrollState,
                         title = selectedTab.getLocalizedHeader(),
                         showNavbar = !isWideScreen,
-                        hasActions = !isSearchActive,
+                        hasActions = !isSearchActive && !isSelectionMode,
                         isSearchActive = isSearchActive,
+                        isSelectionMode = isSelectionMode,
+                        selectedCount = selectedItemIds.size,
+                        isAllSelected = isAllSelected,
+                        onSelectAll = {
+                            selectedItemIds = if (selectedItemIds.size == allSelectionIds.size) emptySet() else allSelectionIds
+                        },
+                        onCancelSelection = {
+                            isSelectionMode = false
+                            selectedItemIds = emptySet()
+                        },
                         actions = {
                             if (selectedTab != NavTab.Home) {
                                 // Search Icon Button
@@ -425,104 +449,104 @@ fun HomeScreen() {
                                 contentAlignment = Alignment.Center,
                                 modifier = Modifier.fillMaxWidth()
                             ) {
-                                BottomNavBar(
-                                    selectedTab = selectedTab,
-                                    hideContent = isSearchActive || isSelectionMode,
-                                    onAddClick = {
-                                        when (selectedTab) {
-                                            NavTab.Home -> {
-                                                activeSubpage = ActiveSubpage.InvoiceEditor(null)
-                                            }
-                                            NavTab.Products -> {
-                                                activeSubpage = ActiveSubpage.ItemEditor(null)
-                                            }
-                                            NavTab.Customers -> {
-                                                activeSubpage = ActiveSubpage.MerchantEditor(null)
-                                            }
-                                            NavTab.Create -> {
-                                                if (uruvakkuSegment == 0) {
-                                                    activeSubpage = ActiveSubpage.InvoiceEditor(null)
-                                                } else {
-                                                    activeSubpage = ActiveSubpage.ReceiptEditor(null)
-                                                }
-                                            }
-                                        }
+                                AnimatedContent(
+                                    targetState = isSelectionMode,
+                                    transitionSpec = {
+                                        (fadeIn(animationSpec = tween(220, easing = CubicBezierEasing(0.0f, 0.0f, 0.2f, 1.0f))) +
+                                         scaleIn(initialScale = 0.94f, animationSpec = tween(220))) togetherWith
+                                        (fadeOut(animationSpec = tween(160, easing = CubicBezierEasing(0.4f, 0.0f, 1.0f, 1.0f))) +
+                                         scaleOut(targetScale = 0.94f, animationSpec = tween(160)))
                                     },
-                                    onTabSelected = { tab, _ ->
-                                        if (selectedTab == tab) {
-                                            shellController.toggleHeader()
-                                        } else {
-                                            selectedTab = tab
+                                    label = "bottomBarSelectionCrossfade"
+                                ) { inSelection ->
+                                    if (inSelection) {
+                                        ElvanSelectionBar(
+                                            visible = true,
+                                            selectedCount = selectedItemIds.size,
+                                            onDelete = {
+                                                if (selectedItemIds.isNotEmpty()) {
+                                                    showBulkDeleteConfirm = true
+                                                }
+                                            },
+                                            colors = colors
+                                        )
+                                    } else {
+                                        Box(
+                                            contentAlignment = Alignment.Center,
+                                            modifier = Modifier.fillMaxWidth()
+                                        ) {
+                                            BottomNavBar(
+                                                selectedTab = selectedTab,
+                                                hideContent = isSearchActive,
+                                                onAddClick = {
+                                                    when (selectedTab) {
+                                                        NavTab.Home -> {
+                                                            activeSubpage = ActiveSubpage.InvoiceEditor(null)
+                                                        }
+                                                        NavTab.Products -> {
+                                                            activeSubpage = ActiveSubpage.ItemEditor(null)
+                                                        }
+                                                        NavTab.Customers -> {
+                                                            activeSubpage = ActiveSubpage.MerchantEditor(null)
+                                                        }
+                                                        NavTab.Create -> {
+                                                            if (uruvakkuSegment == 0) {
+                                                                activeSubpage = ActiveSubpage.InvoiceEditor(null)
+                                                            } else {
+                                                                activeSubpage = ActiveSubpage.ReceiptEditor(null)
+                                                            }
+                                                        }
+                                                    }
+                                                },
+                                                onTabSelected = { tab, _ ->
+                                                    if (selectedTab == tab) {
+                                                        shellController.toggleHeader()
+                                                    } else {
+                                                        selectedTab = tab
+                                                    }
+                                                }
+                                            )
+
+                                            ElvanSearchBar(
+                                                visible = isSearchActive,
+                                                query = currentSearchQuery,
+                                                onQueryChange = { newQuery ->
+                                                    when (selectedTab) {
+                                                        NavTab.Create -> {
+                                                            if (uruvakkuSegment == 0) {
+                                                                PattiyalRepository.searchQuery = newQuery
+                                                            } else {
+                                                                PatrugalRepository.searchQuery = newQuery
+                                                            }
+                                                        }
+                                                        NavTab.Products -> {
+                                                            PorulRepository.searchQuery = newQuery
+                                                        }
+                                                        NavTab.Customers -> {
+                                                            VaangunarRepository.searchQuery = newQuery
+                                                        }
+                                                        else -> {}
+                                                    }
+                                                },
+                                                onClose = {
+                                                    isSearchActive = false
+                                                    PattiyalRepository.searchQuery = ""
+                                                    PatrugalRepository.searchQuery = ""
+                                                    PorulRepository.searchQuery = ""
+                                                    VaangunarRepository.searchQuery = ""
+                                                },
+                                                colors = colors
+                                            )
                                         }
                                     }
-                                )
-
-                                ElvanThaedalPattai(
-                                    visible = isSearchActive,
-                                    query = currentSearchQuery,
-                                    onQueryChange = { newQuery ->
-                                        when (selectedTab) {
-                                            NavTab.Create -> {
-                                                if (uruvakkuSegment == 0) {
-                                                    PattiyalRepository.searchQuery = newQuery
-                                                } else {
-                                                    PatrugalRepository.searchQuery = newQuery
-                                                }
-                                            }
-                                            NavTab.Products -> {
-                                                PorulRepository.searchQuery = newQuery
-                                            }
-                                            NavTab.Customers -> {
-                                                VaangunarRepository.searchQuery = newQuery
-                                            }
-                                            else -> {}
-                                        }
-                                    },
-                                    onClose = {
-                                        isSearchActive = false
-                                        PattiyalRepository.searchQuery = ""
-                                        PatrugalRepository.searchQuery = ""
-                                        PorulRepository.searchQuery = ""
-                                        VaangunarRepository.searchQuery = ""
-                                    },
-                                    colors = colors
-                                )
-
-                                ElvanThervuPattai(
-                                    visible = isSelectionMode,
-                                    selectedCount = selectedItemIds.size,
-                                    onSelectAll = {
-                                        val allIds: Set<Long> = when (selectedTab) {
-                                            NavTab.Products -> PorulRepository.filteredItems.map { it.id }.toSet()
-                                            NavTab.Customers -> VaangunarRepository.filteredMerchants.map { it.id }.toSet()
-                                            NavTab.Create -> {
-                                                if (uruvakkuSegment == 0) {
-                                                    PattiyalRepository.filteredInvoices.map { it.id }.toSet()
-                                                } else {
-                                                    PatrugalRepository.filteredReceipts.map { it.id }.toSet()
-                                                }
-                                            }
-                                            else -> emptySet()
-                                        }
-                                        selectedItemIds = if (selectedItemIds.size == allIds.size) emptySet() else allIds
-                                    },
-                                    onDelete = {
-                                        if (selectedItemIds.isNotEmpty()) {
-                                            showBulkDeleteConfirm = true
-                                        }
-                                    },
-                                    onCancel = {
-                                        isSelectionMode = false
-                                        selectedItemIds = emptySet()
-                                    },
-                                    colors = colors
-                                )
+                                }
                             }
                         }
                     ) {
                         when (selectedTab) {
                             NavTab.Home -> {
                                 ExpressivePullToRefreshBox(
+                                    enabled = !isSelectionMode,
                                     isRefreshing = isRefreshing,
                                     onRefresh = {
                                         scope.launch {
@@ -536,7 +560,7 @@ fun HomeScreen() {
                                     },
                                     colors = colors
                                 ) {
-                                    MugappuScreen(
+                                    DashboardScreen(
                                         scrollState = homeScrollState,
                                         onSeeAll = {
                                             selectedTab = NavTab.Create
@@ -552,6 +576,7 @@ fun HomeScreen() {
 
                             NavTab.Create -> {
                                 ExpressivePullToRefreshBox(
+                                    enabled = !isSelectionMode,
                                     isRefreshing = isRefreshing,
                                     onRefresh = {
                                         scope.launch {
@@ -564,7 +589,7 @@ fun HomeScreen() {
                                     },
                                     colors = colors
                                 ) {
-                                    UruvakkuScreen(
+                                    CreateScreen(
                                         scrollState = createScrollState,
                                         selectedSegment = uruvakkuSegment,
                                         onSegmentSelected = { newSegment ->
@@ -593,6 +618,7 @@ fun HomeScreen() {
 
                             NavTab.Products -> {
                                 ExpressivePullToRefreshBox(
+                                    enabled = !isSelectionMode,
                                     isRefreshing = isRefreshing,
                                     onRefresh = {
                                         scope.launch {
@@ -604,7 +630,7 @@ fun HomeScreen() {
                                     },
                                     colors = colors
                                 ) {
-                                    PorulScreen(
+                                    ProductScreen(
                                         scrollState = productsScrollState,
                                         isRefreshing = isRefreshing,
                                         onItemClick = { activeSubpage = ActiveSubpage.ProductView(it) },
@@ -618,6 +644,7 @@ fun HomeScreen() {
 
                             NavTab.Customers -> {
                                 ExpressivePullToRefreshBox(
+                                    enabled = !isSelectionMode,
                                     isRefreshing = isRefreshing,
                                     onRefresh = {
                                         scope.launch {
@@ -629,7 +656,7 @@ fun HomeScreen() {
                                     },
                                     colors = colors
                                 ) {
-                                    VaangunarScreen(
+                                    CustomerScreen(
                                         scrollState = customersScrollState,
                                         isRefreshing = isRefreshing,
                                         onMerchantClick = { activeSubpage = ActiveSubpage.CustomerView(it) },
@@ -696,7 +723,7 @@ fun HomeScreen() {
             )
         }
 
-        UruvakkuDateFilterSheet(
+        CreateDateFilterSheet(
             isOpen = showDateFilterSheet,
             currentStartMillis = if (uruvakkuSegment == 0) PattiyalRepository.startDateFilter else PatrugalRepository.startDateFilter,
             currentEndMillis = if (uruvakkuSegment == 0) PattiyalRepository.endDateFilter else PatrugalRepository.endDateFilter,

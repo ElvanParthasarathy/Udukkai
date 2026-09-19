@@ -30,7 +30,8 @@ fun ElvanExpandedBar(
     hasLeadingWidget: Boolean = false,
     onBack: (() -> Unit)? = null,
     hasActions: Boolean = false,
-    actions: @Composable RowScope.() -> Unit = {}
+    actions: @Composable RowScope.() -> Unit = {},
+    isSelectionMode: Boolean = false
 ) {
     BoxWithConstraints(
         modifier = Modifier
@@ -79,7 +80,11 @@ fun ElvanExpandedBar(
         } else {
             (screenWidthPx - textWidthPx) / 2f
         }
-        val targetLeftPx = with(density) { if (hasLeadingWidget || onBack != null) 74.dp.toPx() else 24.dp.toPx() }
+        val targetLeftPx = if (isSelectionMode) {
+            centeredLeftPx
+        } else {
+            with(density) { if (hasLeadingWidget || onBack != null) 74.dp.toPx() else 24.dp.toPx() }
+        }
         val currentLeftPx = centeredLeftPx + (targetLeftPx - centeredLeftPx) * t
         val currentLeftDp = with(density) { currentLeftPx.toDp() }
 
@@ -101,7 +106,8 @@ fun ElvanExpandedBar(
         } else {
             0f
         }
-        val titleOpacity = (1.0f - liftProgress).coerceIn(0f, 1f)
+        val selectionFade = if (isSelectionMode) (1.0f - t * 1.6f).coerceIn(0f, 1f) else 1.0f
+        val titleOpacity = ((1.0f - liftProgress) * selectionFade).coerceIn(0f, 1f)
 
         val maxAllowedWidthDp = (screenWidth - 32.dp)
 

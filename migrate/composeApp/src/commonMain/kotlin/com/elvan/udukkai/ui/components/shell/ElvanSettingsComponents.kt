@@ -227,7 +227,7 @@ fun ElvanSettingsDivider(
 }
 
 /**
- * ElvanSettingsSwitch — Material 3 styled switch with refined monochrome design.
+ * ElvanSettingsSwitch — One UI Blue switch matching Neram's One UI style.
  */
 @Composable
 fun ElvanSettingsSwitch(
@@ -244,18 +244,18 @@ fun ElvanSettingsSwitch(
         enabled = enabled,
         modifier = modifier,
         colors = SwitchDefaults.colors(
-            checkedThumbColor = LocalShellColors.current.surface,
-            checkedTrackColor = LocalShellColors.current.textPrimary,
+            checkedThumbColor = Color.White,
+            checkedTrackColor = colors.modeAccent,
+            uncheckedThumbColor = if (isDark) Color.White.copy(alpha = 0.6f) else Color.Black.copy(alpha = 0.6f),
+            uncheckedTrackColor = if (isDark) Color.White.copy(alpha = 0.1f) else Color.Black.copy(alpha = 0.1f),
+            disabledCheckedThumbColor = Color.White.copy(alpha = 0.6f),
+            disabledCheckedTrackColor = (if (isDark) Color.White else Color.Black).copy(alpha = 0.15f),
+            disabledUncheckedThumbColor = (if (isDark) Color.White else Color.Black).copy(alpha = 0.3f),
+            disabledUncheckedTrackColor = (if (isDark) Color.White else Color.Black).copy(alpha = 0.06f),
             checkedBorderColor = Color.Transparent,
-            uncheckedThumbColor = if (isDark) Color(0xFF9E9E9E) else Color(0xFF757575),
-            uncheckedTrackColor = if (isDark) Color(0xFF2C2C2E) else Color(0xFFE5E5EA),
-            uncheckedBorderColor = if (isDark) Color(0xFF48484A) else Color(0xFFC7C7CC),
-            disabledCheckedThumbColor = (LocalShellColors.current.surface).copy(alpha = 0.6f),
-            disabledCheckedTrackColor = (LocalShellColors.current.textPrimary).copy(alpha = 0.38f),
-            disabledUncheckedThumbColor = (if (isDark) Color(0xFF9E9E9E) else Color(0xFF757575)).copy(alpha = 0.38f),
-            disabledUncheckedTrackColor = (if (isDark) Color(0xFF2C2C2E) else Color(0xFFE5E5EA)).copy(alpha = 0.38f),
+            uncheckedBorderColor = Color.Transparent,
             disabledCheckedBorderColor = Color.Transparent,
-            disabledUncheckedBorderColor = (if (isDark) Color(0xFF48484A) else Color(0xFFC7C7CC)).copy(alpha = 0.38f)
+            disabledUncheckedBorderColor = Color.Transparent
         )
     )
 }
@@ -636,8 +636,8 @@ fun ElvanSettingsEditContainer(
                 onClick = onSave,
                 shape = RoundedCornerShape(50),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = colors.textPrimary,
-                    contentColor = colors.surface
+                    containerColor = colors.modeAccent,
+                    contentColor = Color.White
                 ),
                 elevation = ButtonDefaults.buttonElevation(0.dp)
             ) {

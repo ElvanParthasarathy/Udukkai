@@ -9,7 +9,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Surface
-import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import androidx.compose.material3.pulltorefresh.pullToRefresh
 import androidx.compose.material3.pulltorefresh.PullToRefreshState
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
@@ -29,8 +29,9 @@ private val REFRESH_INDICATOR_SIZE = 48.dp
  * ExpressivePullToRefreshBox - Shared component for consistent pull-to-refresh UX.
  * Ported directly from Neram's ExpressivePullToRefreshBox.
  *
- * Wraps Material3 PullToRefreshBox and provides the standard "Expressive"
- * contained loading indicator animation with smooth translation and scale dynamics.
+ * Wraps Material3 pullToRefresh modifier in a persistent Box hierarchy so that toggling
+ * [enabled] (e.g. entering/exiting selection mode) never disposes or recreates the content subtree,
+ * preserving list scroll state and enabling smooth card selection animations.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -38,6 +39,7 @@ fun ExpressivePullToRefreshBox(
     isRefreshing: Boolean,
     onRefresh: () -> Unit,
     modifier: Modifier = Modifier,
+    enabled: Boolean = true,
     pullRefreshState: PullToRefreshState = rememberPullToRefreshState(),
     colors: ShellColors = rememberShellColors(),
     showIndicator: Boolean = true,
@@ -47,45 +49,55 @@ fun ExpressivePullToRefreshBox(
     val fraction = pullRefreshState.distanceFraction
 
     // Smoothly animate the offset to prevent jumps between pull and refresh states
-    val targetOffset = if (isRefreshing) {
+    val targetOffset = if (isRefreshing && enabled) {
         PULL_REFRESH_REFRESHING_OFFSET
-    } else {
+    } else if (enabled) {
         (fraction * PULL_REFRESH_MAX_OFFSET).coerceIn(0f, PULL_REFRESH_MAX_OFFSET)
+    } else {
+        0f
     }
     val animatedOffset by animateFloatAsState(
         targetValue = targetOffset,
         label = "pull_offset"
     )
 
-    PullToRefreshBox(
-        state = pullRefreshState,
-        isRefreshing = isRefreshing,
-        onRefresh = onRefresh,
-        modifier = modifier.fillMaxSize(),
-        indicator = {
-            if (showIndicator && (isRefreshing || fraction > 0f)) {
-                ExpressiveRefreshIndicator(
-                    isRefreshing = isRefreshing,
-                    fraction = fraction,
-                    colors = colors,
-                    animatedOffset = animatedOffset,
-                    modifier = Modifier.align(Alignment.TopCenter)
-                )
-            }
-        },
-        content = {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .graphicsLayer {
-                        // If overlay is true, do NOT translate content
-                        translationY = if (overlay) 0f else animatedOffset
-                    }
-            ) {
-                content()
-            }
+    val pullModifier = if (enabled) {
+        Modifier.pullToRefresh(
+            state = pullRefreshState,
+            isRefreshing = isRefreshing,
+            enabled = enabled,
+            onRefresh = onRefresh
+        )
+    } else {
+        Modifier
+    }
+
+    Box(
+        modifier = modifier
+            .fillMaxSize()
+            .then(pullModifier)
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .graphicsLayer {
+                    // If overlay is true or not enabled, do NOT translate content
+                    translationY = if (overlay || !enabled) 0f else animatedOffset
+                }
+        ) {
+            content()
         }
-    )
+
+        if (enabled && showIndicator && (isRefreshing || fraction > 0f)) {
+            ExpressiveRefreshIndicator(
+                isRefreshing = isRefreshing,
+                fraction = fraction,
+                colors = colors,
+                animatedOffset = animatedOffset,
+                modifier = Modifier.align(Alignment.TopCenter)
+            )
+        }
+    }
 }
 
 @Composable

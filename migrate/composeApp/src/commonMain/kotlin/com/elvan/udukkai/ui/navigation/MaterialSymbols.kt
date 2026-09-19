@@ -97,8 +97,9 @@ object MaterialSymbols {
 
         // ── Settings Categories & Badges (Filled / Solid as per old Flutter design) ──
         val BusinessCenter: ImageVector get() = LibSymbols.RoundedFilled.Business_center
-        val Apartment: ImageVector get() = LibSymbols.RoundedFilled.Business_center
+        val Apartment: ImageVector get() = LibSymbols.RoundedFilled.Apartment
         val CurrencyRupee: ImageVector get() = LibSymbols.RoundedFilled.Currency_rupee
+        val CurrencyRupeeCircle: ImageVector get() = LibSymbols.RoundedFilled.Currency_rupee_circle
         val LocationOn: ImageVector get() = LibSymbols.RoundedFilled.Location_on
         val CreditCard: ImageVector get() = LibSymbols.RoundedFilled.Credit_card
         val Payments: ImageVector get() = LibSymbols.RoundedFilled.Payments

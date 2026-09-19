@@ -24,7 +24,7 @@ import com.elvan.udukkai.theme.rememberShellColors
 import com.elvan.udukkai.ui.components.shell.ElvanActionSheet
 import com.elvan.udukkai.ui.components.shell.ElvanSubShell
 import com.elvan.udukkai.ui.navigation.MaterialSymbols
-import com.elvan.udukkai.ui.screens.settings.thiraigal.*
+import com.elvan.udukkai.ui.screens.settings.screens.*
 
 /**
  * Master One UI Settings Screen with subpage routing and Brick Wall architecture.
@@ -139,8 +139,8 @@ fun SettingsScreen(
                         colors = colors
                     )
                     SettingsRoute.ManageProfiles -> ManageProfilesScreen(scrollState = scrollState, colors = colors)
-                    SettingsRoute.KooliIdentity -> KooliIdentityScreen(scrollState = scrollState, colors = colors)
-                    SettingsRoute.PattuIdentity -> PattuIdentityScreen(scrollState = scrollState, colors = colors)
+                    SettingsRoute.KooliIdentity -> CoolieIdentityScreen(scrollState = scrollState, colors = colors)
+                    SettingsRoute.PattuIdentity -> SilkIdentityScreen(scrollState = scrollState, colors = colors)
                     SettingsRoute.Address -> AddressSettingsScreen(scrollState = scrollState, colors = colors)
                     SettingsRoute.Bank -> BankSettingsScreen(scrollState = scrollState, colors = colors)
                     SettingsRoute.InvoiceCreation -> InvoiceCreationSettingsScreen(scrollState = scrollState, colors = colors)
@@ -149,7 +149,7 @@ fun SettingsScreen(
                     SettingsRoute.Security -> SecuritySettingsScreen(scrollState = scrollState, colors = colors)
                     SettingsRoute.AboutDeveloper -> AboutDeveloperScreen(scrollState = scrollState, colors = colors)
                     SettingsRoute.AboutApp -> AboutAppScreen(scrollState = scrollState, colors = colors)
-                    SettingsRoute.ElvanNavil -> ElvanNavilThirai(scrollState = scrollState, colors = colors)
+                    SettingsRoute.ElvanNavil -> TransliteratorSettingsScreen(scrollState = scrollState, colors = colors)
                 }
             }
         }
