@@ -348,8 +348,7 @@ fun <T> ElvanSelectionBottomSheet(
     ) {
         ConfigureDialogWindow(
             isDark = isDark,
-            clearDim = true,
-            navBarColor = sheetBg
+            clearDim = true
         )
 
         // Scrim background with smooth fade

@@ -561,7 +561,7 @@ fun HomeScreen() {
                                         ) {
                                             BottomNavBar(
                                                 selectedTab = selectedTab,
-                                                hideContent = isSearchActive,
+                                                hideContent = isSearchActive || showDateFilterSheet,
                                                 onAddClick = {
                                                     when (selectedTab) {
                                                         NavTab.Home -> {

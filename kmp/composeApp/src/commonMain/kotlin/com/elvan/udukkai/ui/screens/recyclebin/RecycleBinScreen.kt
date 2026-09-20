@@ -402,7 +402,7 @@ fun RecycleBinScreen(
                                         selectedTab = tab
                                     }
                                 },
-                                hideContent = isSearchActive
+                                hideContent = isSearchActive || showDateFilterSheet
                             )
 
                             ElvanSearchBar(
