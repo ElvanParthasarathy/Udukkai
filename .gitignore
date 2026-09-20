@@ -41,6 +41,17 @@ Trash/
 *.suo
 *.ntvs*
 *.njsproj
-*.sln
-*.sw?
 .env
+
+# Kotlin Multiplatform & Android Build Artifacts
+.gradle/
+build/
+.kotlin/
+local.properties
+*.db
+*.hprof
+
+# Flutter Build Artifacts
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies

@@ -1,8 +1,18 @@
-# Elvan Niril (எல்வன் நிறிள்)
+# Udukkai (உடுக்கை) / Elvan Niril (எல்வன் நிறிள்)
 
-Welcome to the **Elvan Niril** project! This repository follows a strict, highly organized **Pure Tanglish (Navil Vili)** architectural pattern. 
+A unified multi-platform GST invoicing & ledger suite for Coolie (labor) and Silk (goods) businesses.
 
-Whether you are a human developer or an AI coding agent, you **MUST** adhere to the naming conventions and structural rules outlined below. This ensures the codebase remains natively understandable and perfectly structured.
+## 🏗️ Repository Architecture (`projects/`)
+
+This repository is organized as a clean monorepo with dedicated project workspaces:
+
+| Project Directory | Stack | Description | Build & Run |
+| :--- | :--- | :--- | :--- |
+| [`projects/kmp/`](projects/kmp/) | **Kotlin Multiplatform (Compose Multiplatform)** | **Primary implementation.** Modern native Android & Desktop app with Material 3 & SESL design system. | `cd projects/kmp`<br>`.\gradlew.bat assembleDebug` |
+| [`projects/flutter/`](projects/flutter/) | **Flutter (Dart)** | Cross-platform mobile application following Senthamizh domain architecture. | `cd projects/flutter`<br>`flutter run` |
+| [`projects/react/`](projects/react/) | **React + Vite + Capacitor + Electron** | Offline-first web application, Capacitor Android wrapper, and Electron desktop launcher. | `cd projects/react`<br>`npm install`<br>`npm run dev` |
+
+---
 
 ## Architecture Map (English -> Tanglish)
 
