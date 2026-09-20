@@ -341,6 +341,7 @@ fun <T> ElvanSelectionBottomSheet(
         onDismissRequest = { dismissSheet() },
         properties = DialogProperties(
             usePlatformDefaultWidth = false,
+            decorFitsSystemWindows = false,
             dismissOnBackPress = true,
             dismissOnClickOutside = true
         )
@@ -397,6 +398,7 @@ fun <T> ElvanSelectionBottomSheet(
                         modifier = Modifier
                             .fillMaxWidth()
                             .nestedScroll(downwardScrollConnection)
+                            .navigationBarsPadding()
                             .padding(bottom = 16.dp)
                     ) {
                     // Full Header Draggable Area (Clean Drag Handle only, generous breathing room)
