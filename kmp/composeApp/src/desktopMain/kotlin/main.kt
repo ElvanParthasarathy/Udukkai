@@ -1,4 +1,7 @@
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.graphics.painter.BitmapPainter
+import androidx.compose.ui.res.loadImageBitmap
+import androidx.compose.ui.res.useResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.WindowPosition

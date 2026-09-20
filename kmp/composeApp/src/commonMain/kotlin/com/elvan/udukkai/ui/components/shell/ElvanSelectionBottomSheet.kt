@@ -382,18 +382,14 @@ fun <T> ElvanSelectionBottomSheet(
             val navReserved = navBarBottomPadding + 24.dp
             val maxListHeight = (availableHeight - topDragReserved - searchReserved - bottomReserved - navReserved).coerceIn(120.dp, 460.dp)
 
-            Column(
-                modifier = modifier
-                    .fillMaxWidth()
-                    .offset { IntOffset(0, (sheetOffsetY.value + dragOffsetY).roundToInt()) }
-            ) {
-                Surface(
+            Surface(
                     shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
                     color = sheetBg,
                     contentColor = colors.textPrimary,
                     shadowElevation = 16.dp,
-                    modifier = Modifier
+                    modifier = modifier
                         .fillMaxWidth()
+                        .offset { IntOffset(0, (sheetOffsetY.value + dragOffsetY).roundToInt()) }
                         .clickable(
                             interactionSource = remember { MutableInteractionSource() },
                             indication = null
@@ -606,15 +602,6 @@ fun <T> ElvanSelectionBottomSheet(
                     }
                 }
             }
-
-            // Solid bottom filler extending behind system navigation bar
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(navBarBottomPadding)
-                    .background(sheetBg)
-            )
         }
     }
-}
 }

@@ -88,6 +88,9 @@ compose.desktop {
             targetFormats(TargetFormat.Msi, TargetFormat.Exe)
             packageName = "Udukkai"
             packageVersion = "1.0.0"
+            windows {
+                iconFile.set(project.file("src/desktopMain/resources/udukkai_icon.ico"))
+            }
         }
     }
 }
