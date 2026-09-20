@@ -40,7 +40,6 @@ import androidx.compose.ui.window.DialogProperties
 import com.elvan.udukkai.core.platform.ConfigureDialogWindow
 import com.elvan.udukkai.core.platform.PlatformType
 import com.elvan.udukkai.core.platform.currentPlatform
-import com.elvan.udukkai.core.platform.getNavBarBottomPadding
 import com.elvan.udukkai.localization.tr
 import com.elvan.udukkai.theme.LocalAppFontFamily
 import com.elvan.udukkai.theme.LocalShellColors
@@ -358,8 +357,6 @@ fun <T> ElvanSelectionBottomSheet(
             label = "scrimAlpha"
         )
 
-        val navBarBottomPadding = getNavBarBottomPadding()
-
         BoxWithConstraints(
             modifier = Modifier
                 .fillMaxSize()
@@ -378,7 +375,7 @@ fun <T> ElvanSelectionBottomSheet(
             val topDragReserved = 48.dp
             val searchReserved = if (showSearch) 64.dp else 0.dp
             val bottomReserved = if (hasBottomAction) 64.dp else 0.dp
-            val navReserved = navBarBottomPadding + 24.dp
+            val navReserved = 24.dp
             val maxListHeight = (availableHeight - topDragReserved - searchReserved - bottomReserved - navReserved).coerceIn(120.dp, 460.dp)
 
             Surface(
@@ -400,7 +397,7 @@ fun <T> ElvanSelectionBottomSheet(
                         modifier = Modifier
                             .fillMaxWidth()
                             .nestedScroll(downwardScrollConnection)
-                            .padding(bottom = navBarBottomPadding + 16.dp)
+                            .padding(bottom = 16.dp)
                     ) {
                     // Full Header Draggable Area (Clean Drag Handle only, generous breathing room)
                     Box(

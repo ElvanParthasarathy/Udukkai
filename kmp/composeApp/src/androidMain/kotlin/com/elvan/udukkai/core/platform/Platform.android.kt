@@ -103,9 +103,7 @@ actual fun ConfigureDialogWindow(
     fun applySystemBars(window: Window) {
         val decorView = window.decorView
         WindowCompat.setDecorFitsSystemWindows(window, false)
-        decorView.setPadding(0, 0, 0, 0)
         window.setLayout(WindowManager.LayoutParams.MATCH_PARENT, WindowManager.LayoutParams.MATCH_PARENT)
-        window.addFlags(WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS)
         window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS)
         window.clearFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_NAVIGATION)
         window.clearFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS)
