@@ -26,6 +26,7 @@ fun main() {
         Window(
             onCloseRequest = ::exitApplication,
             title = "Udukkai",
+            icon = BitmapPainter(useResource("udukkai_icon.png", ::loadImageBitmap)),
             state = rememberWindowState(
                 width = 1180.dp,
                 height = 800.dp,
