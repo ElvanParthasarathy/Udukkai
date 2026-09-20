@@ -164,13 +164,7 @@ fun InvoiceViewScreen(
                             Box(
                                 modifier = Modifier
                                     .clip(RoundedCornerShape(6.dp))
-                                    .background(
-                                        if (currentMode == AppMode.PATTU) {
-                                            if (isDark) Color(0xFF1E3A5F) else Color(0xFFE0EDFE)
-                                        } else {
-                                            if (isDark) Color(0xFF3B1E54) else Color(0xFFF3E8FF)
-                                        }
-                                    )
+                                    .background(if (isDark) Color.White.copy(alpha = 0.08f) else Color.Black.copy(alpha = 0.06f))
                                     .padding(horizontal = 8.dp, vertical = 4.dp)
                             ) {
                                 Text(
@@ -179,11 +173,7 @@ fun InvoiceViewScreen(
                                         fontFamily = ff,
                                         fontSize = 12.sp,
                                         fontWeight = FontWeight.Bold,
-                                        color = if (currentMode == AppMode.PATTU) {
-                                            if (isDark) Color(0xFF93C5FD) else Color(0xFF1D4ED8)
-                                        } else {
-                                            if (isDark) Color(0xFFC4B5FD) else Color(0xFF7C3AED)
-                                        }
+                                        color = colors.textPrimary
                                     )
                                 )
                             }
@@ -267,10 +257,10 @@ fun InvoiceViewScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(20.dp))
-                        .background(if (isDark) Color(0xFF1B6B4F).copy(alpha = 0.2f) else Color(0xFFE8F5E9))
+                        .background(if (isDark) Color.White.copy(alpha = 0.04f) else Color.Black.copy(alpha = 0.025f))
                         .border(
                             width = 1.dp,
-                            color = if (isDark) Color(0xFF1B6B4F).copy(alpha = 0.4f) else Color(0xFFA5D6A7),
+                            color = if (isDark) Color.White.copy(alpha = 0.08f) else Color.Black.copy(alpha = 0.06f),
                             shape = RoundedCornerShape(20.dp)
                         )
                         .padding(28.dp),
@@ -283,7 +273,7 @@ fun InvoiceViewScreen(
                                 fontFamily = ff,
                                 fontSize = 15.sp,
                                 fontWeight = FontWeight.Medium,
-                                color = if (isDark) Color(0xFFA7F3D0) else Color(0xFF1B6B4F)
+                                color = colors.textSecondary
                             )
                         )
                         Spacer(modifier = Modifier.height(8.dp))
@@ -293,7 +283,7 @@ fun InvoiceViewScreen(
                                 fontFamily = ff,
                                 fontSize = 34.sp,
                                 fontWeight = FontWeight.ExtraBold,
-                                color = if (isDark) Color(0xFF6EE7B7) else Color(0xFF047857)
+                                color = colors.textPrimary
                             )
                         )
                     }

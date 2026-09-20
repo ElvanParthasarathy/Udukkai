@@ -68,4 +68,30 @@ object ElvanBillingColorArchive {
             val SecondaryAccent = Color(0xFF087F8C)
         }
     }
+
+    /**
+     * Entity and Mode Accent Colors (Blue, Green, Amber, Purple, Cyan, Pink)
+     * Preserved in archive for future reference while app uses pure monochrome design.
+     */
+    object EntityAccents {
+        val InvoiceBlue = Color(0xFF0072DE)
+        val InvoiceGradient = listOf(Color(0xFF38BDF8), Color(0xFF0072DE))
+
+        val ReceiptGreen = Color(0xFF16A34A)
+        val ReceiptGradient = listOf(Color(0xFF34D399), Color(0xFF16A34A))
+
+        val ProductAmber = Color(0xFFF59E0B)
+        val ProductGradient = listOf(Color(0xFFFBBF24), Color(0xFFEA580C))
+
+        val CustomerPurple = Color(0xFF7C3AED)
+        val CustomerGradient = listOf(Color(0xFFC084FC), Color(0xFF7C3AED))
+
+        val ModeCoolieCyan = Color(0xFF06B6D4)
+        val ModeCoolieGradient = listOf(Color(0xFF22D3EE), Color(0xFF0891B2))
+
+        val ModeSilkPink = Color(0xFFEC4899)
+        val ModeSilkGradient = listOf(Color(0xFFF472B6), Color(0xFFDB2777))
+
+        val EmeraldGreen = Color(0xFF1B6B4F)
+    }
 }

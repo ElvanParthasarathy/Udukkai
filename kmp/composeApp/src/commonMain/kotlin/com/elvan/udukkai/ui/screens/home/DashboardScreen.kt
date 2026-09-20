@@ -116,7 +116,6 @@ fun DashboardScreen(
                             label = K.totalInvoiced.tr(),
                             value = CurrencyUtils.formatInr(overallTotal),
                             colors = colors,
-                            accentColor = colors.receiptColor,
                             modifier = Modifier.weight(1f),
                             isFullWidth = false
                         )
@@ -126,7 +125,6 @@ fun DashboardScreen(
                             label = K.companies.tr(),
                             value = companiesSummary,
                             colors = colors,
-                            accentColor = colors.customerColor,
                             modifier = Modifier.weight(1f),
                             isFullWidth = false
                         )
@@ -134,11 +132,10 @@ fun DashboardScreen(
 
                     // Full-width 3rd card: Invoice count with company breakdown
                     ElvanStatsCard(
-                        icon = MaterialSymbols.Rounded.DescriptionFill,
+                        icon = MaterialSymbols.Rounded.InvoiceFill,
                         label = K.totalInvoices.tr(),
                         value = invoiceCountSummary,
                         colors = colors,
-                        accentColor = colors.invoiceColor,
                         modifier = Modifier.fillMaxWidth(),
                         isFullWidth = true,
                         onClick = onSeeAll

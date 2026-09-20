@@ -430,8 +430,45 @@ val ta: Map<String, String> = mapOf(
     K.storagePermissionRequired to "சேமிப்பக அனுமதி தேவை",
     K.storagePermissionDesc to "காப்புப்பிரதி மற்றும் பட்டியல்களைச் சேமிக்க இந்த அனுமதி தேவை.",
     K.grantPermissionBtn to "அனுமதி வழங்கு",
-    K.all to "யாவும்",
+    K.all to "எல்லாம்",
+
+    // Date Filtering
+    K.today to "இன்று",
+    K.yesterday to "நேற்று",
+    K.thisWeek to "இந்த வாரம்",
+    K.thisMonth to "இந்த மாதம்",
+    K.lastMonth to "கடந்த மாதம்",
+    K.dateFilter to "தேதி வடிகட்டி",
+    K.allBills to "அனைத்தும்",
+    K.allRecords to "எல்லா பட்டியல்களும்",
+    K.dateRangeSelector to "தேதி வரம்புத் தேர்வு...",
+    K.selectDateRange to "தேதி வரம்பைத் தேர்ந்தெடுக்கவும்",
+
+    // Selection & Actions
+    K.selected to "தேர்வு",
+    K.copyNoun to "நகல்",
+
+    // Recycle Bin
+    K.noDeletedInvoices to "நீக்கப்பட்ட பட்டியல்கள் இல்லை",
+    K.noDeletedReceipts to "நீக்கப்பட்ட பற்றுச்சீட்டுகள் இல்லை",
+    K.noDeletedProducts to "நீக்கப்பட்ட பொருட்கள் இல்லை",
+    K.noDeletedCustomers to "நீக்கப்பட்ட வாங்குநர்கள் இல்லை",
+    K.deletePermanentlyQuestion to "முழுமையாக நீக்கவா?",
+    K.deletePermanentlyDesc to "தேர்வு செய்யப்பட்டவை நிரந்தரமாக அழிக்கப்படும். இதை திரும்பப் பெற முடியாது.",
+    K.deletedPermanently to "நிரந்தரமாக அழிக்கப்பட்டது",
+
+    // Settings & Features
+    K.easyInvoiceReceiptCreation to "இலகுவான பட்டியல் & பற்றுச்சீட்டு உருவாக்கம்",
+    K.customerDataManagement to "வாங்குனர் தரவுகள் நிர்வாகம்",
+    K.productInventoryManagement to "பொருட்கள் சேர்க்கை & நிர்வாகம்",
+    K.unifiedDatabase to "ஒருங்கிணைந்த தரவு",
+    K.unifiedDatabaseDesc to "ஒரே தரவுத்தளத்தில் முழு வணிகத் தரவு",
+    K.location to "இடம்",
+    K.chennaiTamilNadu to "சென்னை, தமிழ்நாடு",
+    K.backupFailed to "காப்புப்பிரதி தோல்வியடைந்தது",
+    K.available to "உள்ளது",
 )
+
 
 /**
  * Dynamically generated Tamil Latin (Tanglish/Romanized) translations

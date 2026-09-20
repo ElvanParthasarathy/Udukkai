@@ -80,9 +80,8 @@ fun ElvanSelectionBar(
                 },
             contentAlignment = Alignment.Center
         ) {
-            val isTamil = LocalAppLanguage.current.startsWith("ta")
-            val deleteLabel = if (isTamil) "நீக்கவும்" else K.deleteBtn.tr()
-            val copyLabel = if (isTamil) "நகலெடு" else K.copyBtn.tr()
+            val deleteLabel = K.deleteBtn.tr()
+            val copyLabel = K.copyBtn.tr()
 
             val isDeleteEnabled = selectedCount > 0
             val deleteColor = if (isDeleteEnabled) colors.textPrimary else colors.textSecondary.copy(alpha = 0.35f)

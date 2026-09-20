@@ -430,4 +430,41 @@ object K {
     const val storagePermissionDesc = "storagePermissionDesc"
     const val grantPermissionBtn = "grantPermissionBtn"
     const val all = "all"
+
+    // Date Filtering
+    const val today = "today"
+    const val yesterday = "yesterday"
+    const val thisWeek = "thisWeek"
+    const val thisMonth = "thisMonth"
+    const val lastMonth = "lastMonth"
+    const val dateFilter = "dateFilter"
+    const val allBills = "allBills"
+    const val allRecords = "allRecords"
+    const val dateRangeSelector = "dateRangeSelector"
+    const val selectDateRange = "selectDateRange"
+
+    // Selection & Actions
+    const val selected = "selected"
+    const val copyNoun = "copyNoun"
+
+    // Recycle Bin
+    const val noDeletedInvoices = "noDeletedInvoices"
+    const val noDeletedReceipts = "noDeletedReceipts"
+    const val noDeletedProducts = "noDeletedProducts"
+    const val noDeletedCustomers = "noDeletedCustomers"
+    const val deletePermanentlyQuestion = "deletePermanentlyQuestion"
+    const val deletePermanentlyDesc = "deletePermanentlyDesc"
+    const val deletedPermanently = "deletedPermanently"
+
+    // Settings & Features
+    const val easyInvoiceReceiptCreation = "easyInvoiceReceiptCreation"
+    const val customerDataManagement = "customerDataManagement"
+    const val productInventoryManagement = "productInventoryManagement"
+    const val unifiedDatabase = "unifiedDatabase"
+    const val unifiedDatabaseDesc = "unifiedDatabaseDesc"
+    const val location = "location"
+    const val chennaiTamilNadu = "chennaiTamilNadu"
+    const val backupFailed = "backupFailed"
+    const val available = "available"
 }
+

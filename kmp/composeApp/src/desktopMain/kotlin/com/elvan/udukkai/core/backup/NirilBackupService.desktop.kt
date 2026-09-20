@@ -36,7 +36,9 @@ class DesktopNirilBackupService : NirilBackupService {
         } catch (_: Exception) {}
     }
 
-    override fun createBackup(): Boolean {
+    private fun getSafetySnapshotFile(): File = File(getBackupDir(), "udukkai_safety_snapshot.db")
+
+    private fun packToFile(targetFile: File): Boolean {
         return try {
             checkpointWal(getCoolieDbPath())
             checkpointWal(getSilkDbPath())
@@ -57,9 +59,8 @@ class DesktopNirilBackupService : NirilBackupService {
                 }
             }
 
-            val backupFile = getBackupFile()
-            backupFile.parentFile?.mkdirs()
-            FileOutputStream(backupFile).use { fos ->
+            targetFile.parentFile?.mkdirs()
+            FileOutputStream(targetFile).use { fos ->
                 fos.write(header.array())
                 for (bytes in fileBytesList) {
                     if (bytes.isNotEmpty()) fos.write(bytes)
@@ -67,17 +68,16 @@ class DesktopNirilBackupService : NirilBackupService {
             }
             true
         } catch (e: Exception) {
-            println("Desktop backup failed: ${e.message}")
+            println("Desktop pack failed: ${e.message}")
             false
         }
     }
 
-    override fun restoreFromBackup(): Boolean {
+    private fun unpackFromFile(sourceFile: File): Boolean {
         return try {
-            val backupFile = getBackupFile()
-            if (!backupFile.exists() || backupFile.length() < 48) return false
+            if (!sourceFile.exists() || sourceFile.length() < 48) return false
 
-            val allBytes = backupFile.readBytes()
+            val allBytes = sourceFile.readBytes()
             val header = ByteBuffer.wrap(allBytes, 0, 48).order(ByteOrder.LITTLE_ENDIAN)
             var offset = 48
 
@@ -97,10 +97,14 @@ class DesktopNirilBackupService : NirilBackupService {
             }
             true
         } catch (e: Exception) {
-            println("Desktop restore failed: ${e.message}")
+            println("Desktop unpack failed: ${e.message}")
             false
         }
     }
+
+    override fun createBackup(): Boolean = packToFile(getBackupFile())
+
+    override fun restoreFromBackup(): Boolean = unpackFromFile(getBackupFile())
 
     override fun hasBackup(): Boolean {
         return try {
@@ -119,6 +123,24 @@ class DesktopNirilBackupService : NirilBackupService {
     override fun getBackupStats(): BackupStats? {
         return try {
             val f = getBackupFile()
+            if (f.exists()) BackupStats(f.lastModified(), f.length()) else null
+        } catch (_: Exception) { null }
+    }
+
+    override fun createSafetySnapshot(): Boolean = packToFile(getSafetySnapshotFile())
+
+    override fun restoreFromSafetySnapshot(): Boolean = unpackFromFile(getSafetySnapshotFile())
+
+    override fun hasSafetySnapshot(): Boolean {
+        return try {
+            val f = getSafetySnapshotFile()
+            f.exists() && f.length() > 48
+        } catch (_: Exception) { false }
+    }
+
+    override fun getSafetySnapshotStats(): BackupStats? {
+        return try {
+            val f = getSafetySnapshotFile()
             if (f.exists()) BackupStats(f.lastModified(), f.length()) else null
         } catch (_: Exception) { null }
     }

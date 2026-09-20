@@ -1,5 +1,8 @@
 package com.elvan.udukkai.ui.screens.editor.invoice.components
 
+import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -22,10 +25,12 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.elvan.udukkai.core.mode.AppMode
 import com.elvan.udukkai.core.utils.CurrencyUtils
 import com.elvan.udukkai.data.model.PorulTharavuru
 import com.elvan.udukkai.data.repository.PorulRepository
 import com.elvan.udukkai.localization.K
+import com.elvan.udukkai.localization.PrintLanguageManager
 import com.elvan.udukkai.localization.tr
 import com.elvan.udukkai.theme.LocalAppFontFamily
 import com.elvan.udukkai.theme.preventBrokenLigatures
@@ -36,8 +41,24 @@ import com.elvan.udukkai.ui.screens.editor.ElvanThiruthiAttai
 import com.elvan.udukkai.ui.screens.editor.ElvanThiruthiThalaippu
 import com.elvan.udukkai.ui.screens.editor.ElvanThiruthiUlleedu
 import kotlin.math.floor
+import kotlin.math.round
 
-private fun cleanNum(v: Double): String {
+private fun cleanNum(v: Double, isWeight: Boolean = false): String {
+    if (isWeight) {
+        // Match Flutter: value.toStringAsFixed(3) — always 3 decimal places
+        val formatted = ((round(v * 1000.0)) / 1000.0)
+        val s = formatted.toString()
+        val dotIdx = s.indexOf('.')
+        return if (dotIdx == -1) {
+            "$s.000"
+        } else {
+            val decimals = s.length - dotIdx - 1
+            when {
+                decimals >= 3 -> s.substring(0, dotIdx + 4)
+                else -> s + "0".repeat(3 - decimals)
+            }
+        }
+    }
     return if (v == floor(v)) v.toInt().toString() else v.toString()
 }
 
@@ -69,7 +90,7 @@ fun KooliUrupadiAttai(
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .padding(bottom = 8.dp)
+            .padding(bottom = if (index < itemCount - 1) 12.dp else 0.dp)
     ) {
         // ── Header: "பொருள் #N" + trash icon ──
         Row(
@@ -115,7 +136,23 @@ fun KooliUrupadiAttai(
         ) {
             BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
                 val isWide = maxWidth >= 600.dp
-                val displayName = item.porulPeyar.ifEmpty { item.porulPeyarEn }
+                val config = PrintLanguageManager.getConfig(AppMode.KOOLI)
+                val primaryLang = config.primaryLanguage.code
+                val secondaryLang = config.secondaryLanguage.code
+                val isBilingual = true
+
+                val primaryName = if (item.mozhiMap.isNotEmpty()) {
+                    item.mozhiMap[primaryLang] ?: item.mozhiMap.values.firstOrNull().orEmpty()
+                } else {
+                    if (primaryLang == "ta") item.porulPeyar.ifEmpty { item.porulPeyarEn }
+                    else item.porulPeyarEn.ifEmpty { item.porulPeyar }
+                }
+                val secondaryName = if (item.mozhiMap.isNotEmpty()) {
+                    item.mozhiMap[secondaryLang] ?: ""
+                } else {
+                    if (secondaryLang == "en") item.porulPeyarEn else item.porulPeyar
+                }
+                val displayName = primaryName.ifEmpty { item.porulPeyar.ifEmpty { item.porulPeyarEn } }
                 val containerBg = colors.iconBg
 
                 val productSearchPill = @Composable {
@@ -178,15 +215,15 @@ fun KooliUrupadiAttai(
                             }
                         }
 
-                        if (item.porulPeyarEn.isNotEmpty() && item.porulPeyarEn != item.porulPeyar) {
+                        if (isBilingual && secondaryName.isNotEmpty() && secondaryName != displayName) {
                             Text(
-                                text = item.porulPeyarEn,
+                                text = secondaryName.preventBrokenLigatures(),
                                 style = TextStyle(
                                     fontFamily = ff,
                                     fontSize = 12.sp,
                                     color = colors.textSecondary
                                 ),
-                                modifier = Modifier.padding(start = 12.dp, top = 4.dp)
+                                modifier = Modifier.padding(start = 20.dp, end = 20.dp, top = 4.dp)
                             )
                         }
                     }
@@ -195,7 +232,7 @@ fun KooliUrupadiAttai(
                 val weightInput = @Composable {
                     ElvanThiruthiUlleedu(
                         label = K.weight.tr(),
-                        value = if (item.edai == 0.0) "" else cleanNum(item.edai),
+                        value = if (item.edai == 0.0) "" else cleanNum(item.edai, isWeight = true),
                         onValueChange = { str ->
                             val parsed = str.toDoubleOrNull() ?: 0.0
                             onItemUpdated(item.copy(edai = parsed))
@@ -341,6 +378,10 @@ fun KooliUrupadiAttai(
 
     // ── Product Selection Bottom Sheet ──
     if (isPickerOpen) {
+        val config = PrintLanguageManager.getConfig(AppMode.KOOLI)
+        val primaryLang = config.primaryLanguage.code
+        val secondaryLang = config.secondaryLanguage.code
+
         ElvanSelectionBottomSheet(
             title = K.products.tr(),
             items = allProducts,
@@ -348,13 +389,13 @@ fun KooliUrupadiAttai(
             showSearch = true,
             onDismissRequest = { isPickerOpen = false },
             onSelected = { selected ->
-                val primaryName = selected.porulPeyar["ta"] ?: selected.porulPeyar.values.firstOrNull().orEmpty()
-                val secondaryName = selected.porulPeyar["en"] ?: ""
+                val primaryName = selected.porulPeyar[primaryLang] ?: selected.porulPeyar.values.firstOrNull().orEmpty()
+                val secondaryName = selected.porulPeyar[secondaryLang] ?: ""
                 onItemUpdated(
                     item.copy(
                         porulId = selected.id.toString(),
-                        porulPeyar = primaryName,
-                        porulPeyarEn = secondaryName,
+                        porulPeyar = selected.porulPeyar["ta"] ?: primaryName,
+                        porulPeyarEn = selected.porulPeyar["en"] ?: secondaryName,
                         vilai = selected.vilai,
                         mozhiMap = selected.porulPeyar
                     )
@@ -363,12 +404,12 @@ fun KooliUrupadiAttai(
                 isPickerOpen = false
             },
             itemLabelBuilder = { p ->
-                p.porulPeyar["ta"] ?: p.porulPeyar.values.firstOrNull().orEmpty()
+                p.porulPeyar[primaryLang] ?: p.porulPeyar.values.firstOrNull().orEmpty()
             },
             subtitleBuilder = { p ->
-                val enName = p.porulPeyar["en"].orEmpty()
+                val secName = p.porulPeyar[secondaryLang].orEmpty()
                 val priceStr = if (p.vilai > 0) CurrencyUtils.formatInr(p.vilai) else ""
-                listOf(enName, priceStr).filter { it.isNotEmpty() }.joinToString("  •  ")
+                listOf(secName, priceStr).filter { it.isNotEmpty() }.joinToString("  •  ")
             },
             searchFilter = { p, query ->
                 val q = query.lowercase()
@@ -569,7 +610,9 @@ fun KooliMothangalKooru(
         modifier = modifier.fillMaxWidth()
     ) {
         Column(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .animateContentSize(animationSpec = spring(stiffness = Spring.StiffnessMediumLow, dampingRatio = Spring.DampingRatioNoBouncy)),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             // Subtotal
@@ -609,7 +652,7 @@ fun KooliMothangalKooru(
             // Total Weight
             KooliTotalsRow(
                 label = K.totalWeight.tr(),
-                value = "${totals.mothaEdai} Kg",
+                value = "${cleanNum(totals.mothaEdai, isWeight = true)} Kg",
                 labelWeight = FontWeight.SemiBold,
                 valueWeight = FontWeight.Bold
             )

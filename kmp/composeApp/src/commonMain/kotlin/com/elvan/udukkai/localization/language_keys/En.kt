@@ -430,4 +430,41 @@ val en: Map<String, String> = mapOf(
     K.storagePermissionDesc to "This permission is needed to save backups and invoices.",
     K.grantPermissionBtn to "Grant Permission",
     K.all to "All",
+
+    // Date Filtering
+    K.today to "Today",
+    K.yesterday to "Yesterday",
+    K.thisWeek to "This Week",
+    K.thisMonth to "This Month",
+    K.lastMonth to "Last Month",
+    K.dateFilter to "Date Filter",
+    K.allBills to "All Bills",
+    K.allRecords to "All records",
+    K.dateRangeSelector to "Date Range Selector...",
+    K.selectDateRange to "Select date range",
+
+    // Selection & Actions
+    K.selected to "Selected",
+    K.copyNoun to "Copy",
+
+    // Recycle Bin
+    K.noDeletedInvoices to "No deleted invoices",
+    K.noDeletedReceipts to "No deleted receipts",
+    K.noDeletedProducts to "No deleted products",
+    K.noDeletedCustomers to "No deleted customers",
+    K.deletePermanentlyQuestion to "Delete permanently?",
+    K.deletePermanentlyDesc to "Selected items will be permanently erased. This action cannot be undone.",
+    K.deletedPermanently to "Deleted permanently",
+
+    // Settings & Features
+    K.easyInvoiceReceiptCreation to "Easy invoice & receipt creation",
+    K.customerDataManagement to "Customer data management",
+    K.productInventoryManagement to "Product inventory management",
+    K.unifiedDatabase to "Unified Data",
+    K.unifiedDatabaseDesc to "Complete business data in a unified database",
+    K.location to "Location",
+    K.chennaiTamilNadu to "Chennai, Tamil Nadu",
+    K.backupFailed to "Backup failed",
+    K.available to "Available",
 )
+

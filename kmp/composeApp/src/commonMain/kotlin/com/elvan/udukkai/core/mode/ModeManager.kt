@@ -57,6 +57,9 @@ object ModeManager {
         currentMode = mode
         hasSelectedModeAtStartup = true
         isModeSelectorOpen = false
+        try {
+            com.elvan.udukkai.core.sync.getFirebaseSyncManager().startSync(mode)
+        } catch (_: Exception) {}
     }
 
     fun toggleMode() {

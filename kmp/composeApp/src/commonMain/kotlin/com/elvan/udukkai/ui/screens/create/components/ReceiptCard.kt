@@ -100,7 +100,7 @@ fun ReceiptCard(
             )
 
             ElvanCardLeadingIcon(
-                icon = MaterialSymbols.Rounded.ReceiptLongFill,
+                icon = MaterialSymbols.Rounded.ReceiptFill,
                 tint = colors.receiptColor
             )
 

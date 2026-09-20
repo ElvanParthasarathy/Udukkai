@@ -56,6 +56,12 @@ class MainActivity : ComponentActivity() {
         com.elvan.udukkai.theme.FontManager.init()
         com.elvan.udukkai.core.auth.AuthManager.init()
         com.elvan.udukkai.data.settings.NiruvanaTharavugalRepository.refreshFromDatabase()
+        try {
+            com.elvan.udukkai.core.sync.getFirebaseSyncManager().initialize()
+            com.elvan.udukkai.core.sync.getFirebaseSyncManager().startSync(ModeManager.currentMode)
+        } catch (e: Exception) {
+            android.util.Log.e("MainActivity", "Failed to start sync: ${e.message}")
+        }
 
         if (savedInstanceState == null) {
             ModeManager.resetStartupState()

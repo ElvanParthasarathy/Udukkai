@@ -22,7 +22,9 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.Velocity
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
+import com.elvan.udukkai.localization.K
 import com.elvan.udukkai.localization.LocalAppLanguage
+import com.elvan.udukkai.localization.tr
 import com.elvan.udukkai.theme.Dimens
 import com.elvan.udukkai.theme.ShellColors
 import com.elvan.udukkai.theme.rememberShellColors
@@ -63,8 +65,7 @@ fun ElvanShell(
     var isNavbarVisible by remember { mutableStateOf(true) }
     val coroutineScope = rememberCoroutineScope()
 
-    val isTamil = LocalAppLanguage.current.startsWith("ta")
-    val selectionTitle = if (isTamil) "$selectedCount தேர்வு" else "$selectedCount Selected"
+    val selectionTitle = "$selectedCount ${K.selected.tr()}"
     val effectiveTitle = if (isSelectionMode) selectionTitle else title
 
     val isDesktop = com.elvan.udukkai.core.platform.currentPlatform == com.elvan.udukkai.core.platform.PlatformType.DESKTOP
@@ -342,7 +343,9 @@ fun ElvanShell(
         ) {
             // Layer 1: Content (100% Full screen, ZERO translation, ZERO bottom clipping)
             Box(
-                modifier = Modifier.fillMaxSize()
+                modifier = Modifier
+                    .fillMaxSize()
+                    .then(if (!showNavbar) Modifier.imePadding() else Modifier)
             ) {
                 content()
             }

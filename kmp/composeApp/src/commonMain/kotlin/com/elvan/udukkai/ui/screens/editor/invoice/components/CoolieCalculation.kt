@@ -4,12 +4,16 @@ import com.elvan.udukkai.data.settings.MozhiJsonConverter
 import kotlin.math.floor
 import kotlin.math.round
 
+private var nextKooliId = 0L
+fun generateKooliId(): String = "${System.currentTimeMillis()}_${++nextKooliId}"
+
 /**
  * Single line item for Coolie mode invoices.
  * Holds product reference, weight in kg, and rate per kg.
  * Row total is truncated (floored), matching Flutter and React 1:1.
  */
 data class KooliUrupadi(
+    val id: String = generateKooliId(),
     val porulId: String? = null,
     val porulPeyar: String = "",
     val porulPeyarEn: String = "",

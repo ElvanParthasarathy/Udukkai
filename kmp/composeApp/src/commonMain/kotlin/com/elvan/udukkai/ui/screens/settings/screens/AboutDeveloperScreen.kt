@@ -133,7 +133,7 @@ fun AboutDeveloperScreen(
                 ElvanSettingsSection(colors = colors) {
                     ElvanSettingsRow(
                         icon = MaterialSymbols.Rounded.Email,
-                        title = "மின்னஞ்சல்",
+                        title = K.email.tr(),
                         description = "jaiprakashpartha@gmail.com",
                         onClick = {
                             uriHandler.openUri("mailto:jaiprakashpartha@gmail.com")
@@ -169,8 +169,8 @@ fun AboutDeveloperScreen(
 
                     ElvanSettingsRow(
                         icon = MaterialSymbols.Rounded.LocationOn,
-                        title = "இடம்",
-                        description = "சென்னை, தமிழ்நாடு",
+                        title = K.location.tr(),
+                        description = K.chennaiTamilNadu.tr(),
                         onClick = {},
                         colors = colors
                     )

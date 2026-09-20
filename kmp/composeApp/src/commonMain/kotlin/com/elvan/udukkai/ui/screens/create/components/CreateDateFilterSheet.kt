@@ -12,7 +12,9 @@ import androidx.compose.ui.unit.sp
 import com.elvan.udukkai.core.platform.ConfigureDialogWindow
 import com.elvan.udukkai.core.utils.DateGroupUtils
 import com.elvan.udukkai.core.utils.DateUtils
+import com.elvan.udukkai.localization.K
 import com.elvan.udukkai.localization.LocalAppLanguage
+import com.elvan.udukkai.localization.tr
 import com.elvan.udukkai.theme.LocalAppFontFamily
 import com.elvan.udukkai.theme.ShellColors
 import com.elvan.udukkai.theme.rememberShellColors
@@ -48,8 +50,6 @@ fun CreateDateFilterSheet(
 ) {
     val ff = LocalAppFontFamily.current
     val isDark = colors.isDark
-    val uiLang = LocalAppLanguage.current
-    val isTa = uiLang.lowercase().startsWith("ta")
 
     val now = System.currentTimeMillis()
     val todayStart = (now / 86400000L) * 86400000L
@@ -83,7 +83,16 @@ fun CreateDateFilterSheet(
 
     var showDateRangePicker by remember { mutableStateOf(false) }
 
-    val filterTitle = if (isTa) "தேதி வடிகட்டி" else "Date Filter"
+    val filterTitle = K.dateFilter.tr()
+    val allBillsLabel = K.allBills.tr()
+    val todayLabel = K.today.tr()
+    val yesterdayLabel = K.yesterday.tr()
+    val thisWeekLabel = K.thisWeek.tr()
+    val thisMonthLabel = K.thisMonth.tr()
+    val lastMonthLabel = K.lastMonth.tr()
+    val dateRangeSelectorLabel = K.dateRangeSelector.tr()
+    val allRecordsLabel = K.allRecords.tr()
+    val selectDateRangeLabel = K.selectDateRange.tr()
 
     val items = remember {
         listOf(
@@ -106,18 +115,18 @@ fun CreateDateFilterSheet(
             colors = colors,
             itemLabelBuilder = { preset ->
                 when (preset) {
-                    DateFilterPreset.ALL -> if (isTa) "அனைத்தும்" else "All Bills"
-                    DateFilterPreset.TODAY -> if (isTa) "இன்று" else "Today"
-                    DateFilterPreset.YESTERDAY -> if (isTa) "நேற்று" else "Yesterday"
-                    DateFilterPreset.THIS_WEEK -> if (isTa) "இந்த வாரம்" else "This Week"
-                    DateFilterPreset.THIS_MONTH -> if (isTa) "இந்த மாதம்" else "This Month"
-                    DateFilterPreset.LAST_MONTH -> if (isTa) "கடந்த மாதம்" else "Last Month"
-                    DateFilterPreset.CUSTOM -> if (isTa) "தேதி வரம்புத் தேர்வு..." else "Date Range Selector..."
+                    DateFilterPreset.ALL -> allBillsLabel
+                    DateFilterPreset.TODAY -> todayLabel
+                    DateFilterPreset.YESTERDAY -> yesterdayLabel
+                    DateFilterPreset.THIS_WEEK -> thisWeekLabel
+                    DateFilterPreset.THIS_MONTH -> thisMonthLabel
+                    DateFilterPreset.LAST_MONTH -> lastMonthLabel
+                    DateFilterPreset.CUSTOM -> dateRangeSelectorLabel
                 }
             },
             subtitleBuilder = { preset ->
                 when (preset) {
-                    DateFilterPreset.ALL -> if (isTa) "எல்லா பட்டியல்களும்" else "All records"
+                    DateFilterPreset.ALL -> allRecordsLabel
                     DateFilterPreset.TODAY -> DateUtils.formatDate(todayStart)
                     DateFilterPreset.YESTERDAY -> DateUtils.formatDate(yesterdayStart)
                     DateFilterPreset.THIS_WEEK -> "${DateUtils.formatDate(thisWeekStart)} - ${DateUtils.formatDate(todayEnd)}"
@@ -131,11 +140,12 @@ fun CreateDateFilterSheet(
                                 DateUtils.formatDate(currentStartMillis)
                             }
                         } else {
-                            if (isTa) "தேதி வரம்பைத் தேர்ந்தெடுக்கவும்" else "Select date range"
+                            selectDateRangeLabel
                         }
                     }
                 }
             },
+
             onSelected = { preset ->
                 when (preset) {
                     DateFilterPreset.ALL -> {
@@ -195,7 +205,7 @@ fun CreateDateFilterSheet(
                     }
                 ) {
                     Text(
-                        text = if (isTa) "சரி" else "OK",
+                        text = K.okBtn.tr(),
                         style = TextStyle(fontFamily = ff, fontWeight = FontWeight.Bold, color = colors.accent)
                     )
                 }
@@ -203,7 +213,7 @@ fun CreateDateFilterSheet(
             dismissButton = {
                 TextButton(onClick = { showDateRangePicker = false }) {
                     Text(
-                        text = if (isTa) "கைவிடு" else "Cancel",
+                        text = K.cancelBtn.tr(),
                         style = TextStyle(fontFamily = ff, color = colors.textSecondary)
                     )
                 }

@@ -45,6 +45,7 @@ import com.elvan.udukkai.localization.tr
 import com.elvan.udukkai.theme.LocalAppFontFamily
 import com.elvan.udukkai.theme.LocalShellColors
 import com.elvan.udukkai.theme.ShellColors
+import com.elvan.udukkai.theme.preventBrokenLigatures
 import com.elvan.udukkai.theme.rememberShellColors
 import com.elvan.udukkai.ui.components.ElvanSimpleScrollbar
 import com.elvan.udukkai.ui.components.shell.sheets.*
@@ -56,28 +57,45 @@ import kotlin.math.roundToInt
  * ElvanSelectionBottomSheet — Rock-Solid Raw Bottom Sheet.
  * Anchored directly to the bottom of the screen with zero upward spring lift-off (Zero Detach).
  * Built with Dialog + full-screen scrim + downward-only drag to dismiss.
+ * Supports single selection and multi-selection with sticky bottom actions.
  */
 @Composable
 fun <T> ElvanSelectionBottomSheet(
     title: String,
     items: List<T>,
-    currentValue: T?,
-    onSelected: (T) -> Unit,
+    currentValue: T? = null,
+    onSelected: ((T) -> Unit)? = null,
     onDismissRequest: () -> Unit,
     modifier: Modifier = Modifier,
     colors: ShellColors = rememberShellColors(),
-    itemLabelBuilder: (T) -> String,
+    itemLabelBuilder: (T) -> String = { it.toString() },
     subtitleBuilder: ((T) -> String?)? = null,
     leadingBuilder: (@Composable (T) -> Unit)? = null,
     showSearch: Boolean = false,
     searchFilter: ((T, String) -> Boolean)? = null,
     onRequestAddNew: (() -> Unit)? = null,
-    addNewLabel: String? = null
+    addNewLabel: String? = null,
+    // Multi-selection additions
+    selectedValues: Set<T>? = null,
+    onConfirmed: ((List<T>) -> Unit)? = null,
+    confirmLabel: String? = null,
+    itemRowContent: (@Composable (item: T, isSelected: Boolean, onToggle: () -> Unit) -> Unit)? = null,
+    onSelectionChanged: ((List<T>) -> Unit)? = null,
+    emptyMessage: String? = null
 ) {
     val isDark = colors.isDark
     val sheetBg = LocalShellColors.current.surface
     val ff = LocalAppFontFamily.current
     var searchQuery by remember { mutableStateOf("") }
+    val isMultiSelect = onConfirmed != null
+
+    val selectedItems = remember(selectedValues) {
+        mutableStateListOf<T>().apply {
+            if (selectedValues != null) {
+                addAll(selectedValues)
+            }
+        }
+    }
 
     val filteredItems = remember(items, searchQuery) {
         if (searchQuery.isBlank()) {
@@ -121,22 +139,62 @@ fun <T> ElvanSelectionBottomSheet(
                             .heightIn(max = 400.dp),
                         contentPadding = PaddingValues(
                             top = 4.dp,
-                            bottom = if (onRequestAddNew != null) 8.dp else 24.dp
+                            bottom = if (onRequestAddNew != null || onConfirmed != null) 8.dp else 24.dp
                         )
                     ) {
-                        items(filteredItems) { item ->
-                            val isSelected = item == currentValue
-                            ElvanSheetItem(
-                                title = itemLabelBuilder(item),
-                                subtitle = subtitleBuilder?.invoke(item),
-                                isSelected = isSelected,
-                                onTap = {
-                                    onSelected(item)
-                                    onDismissRequest()
-                                },
-                                leading = leadingBuilder?.let { { it(item) } },
-                                colors = colors
-                            )
+                        if (filteredItems.isEmpty() && emptyMessage != null) {
+                            item {
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(vertical = 36.dp),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text(
+                                        text = emptyMessage.preventBrokenLigatures(),
+                                        style = TextStyle(
+                                            fontFamily = ff,
+                                            fontSize = 14.sp,
+                                            color = colors.textSecondary.copy(alpha = 0.6f)
+                                        )
+                                    )
+                                }
+                            }
+                        } else {
+                            items(filteredItems) { item ->
+                                val isSelected = if (isMultiSelect) selectedItems.contains(item) else item == currentValue
+                                if (itemRowContent != null) {
+                                    itemRowContent(item, isSelected) {
+                                        if (isSelected) {
+                                            selectedItems.remove(item)
+                                        } else {
+                                            selectedItems.add(item)
+                                        }
+                                        onSelectionChanged?.invoke(selectedItems.toList())
+                                    }
+                                } else {
+                                    ElvanSheetItem(
+                                        title = itemLabelBuilder(item),
+                                        subtitle = subtitleBuilder?.invoke(item),
+                                        isSelected = isSelected,
+                                        onTap = {
+                                            if (isMultiSelect) {
+                                                if (isSelected) {
+                                                    selectedItems.remove(item)
+                                                } else {
+                                                    selectedItems.add(item)
+                                                }
+                                                onSelectionChanged?.invoke(selectedItems.toList())
+                                            } else {
+                                                onSelected?.invoke(item)
+                                                onDismissRequest()
+                                            }
+                                        },
+                                        leading = leadingBuilder?.let { { it(item) } },
+                                        colors = colors
+                                    )
+                                }
+                            }
                         }
                     }
                     if (onRequestAddNew != null) {
@@ -146,6 +204,16 @@ fun <T> ElvanSelectionBottomSheet(
                                 onRequestAddNew()
                             },
                             label = addNewLabel ?: com.elvan.udukkai.localization.K.addNew.tr(),
+                            colors = colors
+                        )
+                    }
+                    if (onConfirmed != null) {
+                        ElvanSheetConfirmButton(
+                            onTap = {
+                                onDismissRequest()
+                                onConfirmed(selectedItems.toList())
+                            },
+                            label = confirmLabel ?: com.elvan.udukkai.localization.K.done.tr(),
                             colors = colors
                         )
                     }
@@ -278,7 +346,11 @@ fun <T> ElvanSelectionBottomSheet(
             dismissOnClickOutside = true
         )
     ) {
-        ConfigureDialogWindow(isDark = isDark, clearDim = true)
+        ConfigureDialogWindow(
+            isDark = isDark,
+            clearDim = true,
+            navBarColor = sheetBg
+        )
 
         // Scrim background with smooth fade
         val scrimAlpha by animateFloatAsState(
@@ -302,17 +374,26 @@ fun <T> ElvanSelectionBottomSheet(
                 },
             contentAlignment = Alignment.BottomCenter
         ) {
-                val availableHeight = maxHeight
-                val maxListHeight = (availableHeight - 140.dp).coerceIn(140.dp, 560.dp)
+            val availableHeight = maxHeight
+            val hasBottomAction = onRequestAddNew != null || onConfirmed != null
+            val topDragReserved = 48.dp
+            val searchReserved = if (showSearch) 64.dp else 0.dp
+            val bottomReserved = if (hasBottomAction) 64.dp else 0.dp
+            val navReserved = navBarBottomPadding + 24.dp
+            val maxListHeight = (availableHeight - topDragReserved - searchReserved - bottomReserved - navReserved).coerceIn(120.dp, 460.dp)
 
+            Column(
+                modifier = modifier
+                    .fillMaxWidth()
+                    .offset { IntOffset(0, (sheetOffsetY.value + dragOffsetY).roundToInt()) }
+            ) {
                 Surface(
                     shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
                     color = sheetBg,
                     contentColor = colors.textPrimary,
                     shadowElevation = 16.dp,
-                    modifier = modifier
+                    modifier = Modifier
                         .fillMaxWidth()
-                        .offset { IntOffset(0, (sheetOffsetY.value + dragOffsetY).roundToInt()) }
                         .clickable(
                             interactionSource = remember { MutableInteractionSource() },
                             indication = null
@@ -326,7 +407,38 @@ fun <T> ElvanSelectionBottomSheet(
                             .nestedScroll(downwardScrollConnection)
                             .padding(bottom = navBarBottomPadding + 16.dp)
                     ) {
-                        // Full Header Draggable Area (Clean Drag Handle only, generous breathing room)
+                    // Full Header Draggable Area (Clean Drag Handle only, generous breathing room)
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .draggable(
+                                state = draggableState,
+                                orientation = Orientation.Vertical,
+                                onDragStopped = { velocity ->
+                                    if (dragOffsetY > 100f || velocity > 800f) {
+                                        dismissSheet()
+                                    } else {
+                                        snapBackDrag()
+                                    }
+                                }
+                            )
+                            .padding(top = 16.dp, bottom = if (showSearch) 18.dp else 12.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .width(36.dp)
+                                .height(4.dp)
+                                .clip(RoundedCornerShape(2.dp))
+                                .background(
+                                    if (isDark) Color.White.copy(alpha = 0.25f)
+                                    else Color.Black.copy(alpha = 0.2f)
+                                )
+                        )
+                    }
+
+                    // Search pill if enabled (with generous spacing and downward drag-to-dismiss)
+                    if (showSearch) {
                         Box(
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -341,75 +453,50 @@ fun <T> ElvanSelectionBottomSheet(
                                         }
                                     }
                                 )
-                                .padding(top = 16.dp, bottom = if (showSearch) 18.dp else 12.dp),
-                            contentAlignment = Alignment.Center
                         ) {
-                            Box(
-                                modifier = Modifier
-                                    .width(36.dp)
-                                    .height(4.dp)
-                                    .clip(RoundedCornerShape(2.dp))
-                                    .background(
-                                        if (isDark) Color.White.copy(alpha = 0.25f)
-                                        else Color.Black.copy(alpha = 0.2f)
-                                    )
+                            ElvanSheetSearch(
+                                value = searchQuery,
+                                onValueChange = { searchQuery = it },
+                                colors = colors
                             )
                         }
+                        Spacer(modifier = Modifier.height(10.dp))
+                    } else {
+                        Spacer(modifier = Modifier.height(6.dp))
+                    }
 
-                        // Search pill if enabled (with generous spacing and downward drag-to-dismiss)
-                        if (showSearch) {
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .draggable(
-                                        state = draggableState,
-                                        orientation = Orientation.Vertical,
-                                        onDragStopped = { velocity ->
-                                            if (dragOffsetY > 100f || velocity > 800f) {
-                                                dismissSheet()
-                                            } else {
-                                                snapBackDrag()
-                                            }
+                    // Items List
+                    if (filteredItems.size <= 7 && !showSearch && !isMultiSelect) {
+                        // Direct forEach: Draggable container so swiping down anywhere on items dismisses sheet
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .draggable(
+                                    state = draggableState,
+                                    orientation = Orientation.Vertical,
+                                    onDragStopped = { velocity ->
+                                        if (dragOffsetY > 100f || velocity > 800f) {
+                                            dismissSheet()
+                                        } else {
+                                            snapBackDrag()
                                         }
-                                    )
-                            ) {
-                                ElvanSheetSearch(
-                                    value = searchQuery,
-                                    onValueChange = { searchQuery = it },
-                                    colors = colors
+                                    }
                                 )
-                            }
-                            Spacer(modifier = Modifier.height(10.dp))
-                        } else {
-                            Spacer(modifier = Modifier.height(6.dp))
-                        }
-
-                        // Items List
-                        if (filteredItems.size <= 7 && !showSearch) {
-                            // Direct forEach: Draggable container so swiping down anywhere on items dismisses sheet
-                            Column(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .draggable(
-                                        state = draggableState,
-                                        orientation = Orientation.Vertical,
-                                        onDragStopped = { velocity ->
-                                            if (dragOffsetY > 100f || velocity > 800f) {
-                                                dismissSheet()
-                                            } else {
-                                                snapBackDrag()
-                                            }
-                                        }
-                                    )
-                            ) {
-                                filteredItems.forEach { item ->
-                                    val isSelected = item == currentValue
+                        ) {
+                            filteredItems.forEach { item ->
+                                val isSelected = item == currentValue
+                                if (itemRowContent != null) {
+                                    itemRowContent(item, isSelected) {
+                                        onSelected?.invoke(item)
+                                        dismissSheet()
+                                    }
+                                } else {
                                     ElvanSheetItem(
                                         title = itemLabelBuilder(item),
                                         subtitle = subtitleBuilder?.invoke(item),
                                         isSelected = isSelected,
                                         onTap = {
-                                            onSelected(item)
+                                            onSelected?.invoke(item)
                                             dismissSheet()
                                         },
                                         leading = leadingBuilder?.let { { it(item) } },
@@ -417,30 +504,68 @@ fun <T> ElvanSelectionBottomSheet(
                                     )
                                 }
                             }
-                        } else {
-                            // Standard LazyColumn: List scrolls normally; sheet stays firmly pinned
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .heightIn(max = maxListHeight)
-                            ) {
+                        }
+                    } else {
+                        // Standard LazyColumn: List scrolls normally; sheet stays firmly pinned
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .heightIn(max = maxListHeight)
+                        ) {
+                            if (filteredItems.isEmpty() && emptyMessage != null) {
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(vertical = 36.dp),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text(
+                                        text = emptyMessage.preventBrokenLigatures(),
+                                        style = TextStyle(
+                                            fontFamily = ff,
+                                            fontSize = 14.sp,
+                                            color = colors.textSecondary.copy(alpha = 0.6f)
+                                        )
+                                    )
+                                }
+                            } else {
                                 LazyColumn(
                                     state = listState,
                                     modifier = Modifier.fillMaxWidth()
                                 ) {
                                     items(filteredItems) { item ->
-                                        val isSelected = item == currentValue
-                                        ElvanSheetItem(
-                                            title = itemLabelBuilder(item),
-                                            subtitle = subtitleBuilder?.invoke(item),
-                                            isSelected = isSelected,
-                                            onTap = {
-                                                onSelected(item)
-                                                dismissSheet()
-                                            },
-                                            leading = leadingBuilder?.let { { it(item) } },
-                                            colors = colors
-                                        )
+                                        val isSelected = if (isMultiSelect) selectedItems.contains(item) else item == currentValue
+                                        if (itemRowContent != null) {
+                                            itemRowContent(item, isSelected) {
+                                                if (isSelected) {
+                                                    selectedItems.remove(item)
+                                                } else {
+                                                    selectedItems.add(item)
+                                                }
+                                                onSelectionChanged?.invoke(selectedItems.toList())
+                                            }
+                                        } else {
+                                            ElvanSheetItem(
+                                                title = itemLabelBuilder(item),
+                                                subtitle = subtitleBuilder?.invoke(item),
+                                                isSelected = isSelected,
+                                                onTap = {
+                                                    if (isMultiSelect) {
+                                                        if (isSelected) {
+                                                            selectedItems.remove(item)
+                                                        } else {
+                                                            selectedItems.add(item)
+                                                        }
+                                                        onSelectionChanged?.invoke(selectedItems.toList())
+                                                    } else {
+                                                        onSelected?.invoke(item)
+                                                        dismissSheet()
+                                                    }
+                                                },
+                                                leading = leadingBuilder?.let { { it(item) } },
+                                                colors = colors
+                                            )
+                                        }
                                     }
                                 }
 
@@ -454,22 +579,42 @@ fun <T> ElvanSelectionBottomSheet(
                                 )
                             }
                         }
+                    }
 
-                        // Optional Add New button
-                        if (onRequestAddNew != null) {
-                            ElvanSheetNewButton(
-                                onTap = {
-                                    dismissSheet()
-                                    onRequestAddNew()
-                                },
-                                label = addNewLabel ?: com.elvan.udukkai.localization.K.addNew.tr(),
-                                colors = colors
-                            )
-                        }
+                    // Optional Add New button
+                    if (onRequestAddNew != null) {
+                        ElvanSheetNewButton(
+                            onTap = {
+                                dismissSheet()
+                                onRequestAddNew()
+                            },
+                            label = addNewLabel ?: com.elvan.udukkai.localization.K.addNew.tr(),
+                            colors = colors
+                        )
+                    }
+
+                    // Optional Done / Confirm button
+                    if (onConfirmed != null) {
+                        ElvanSheetConfirmButton(
+                            onTap = {
+                                onConfirmed(selectedItems.toList())
+                                dismissSheet()
+                            },
+                            label = confirmLabel ?: com.elvan.udukkai.localization.K.done.tr(),
+                            colors = colors
+                        )
                     }
                 }
+            }
+
+            // Solid bottom filler extending behind system navigation bar
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(navBarBottomPadding)
+                    .background(sheetBg)
+            )
         }
     }
 }
-
-
+}

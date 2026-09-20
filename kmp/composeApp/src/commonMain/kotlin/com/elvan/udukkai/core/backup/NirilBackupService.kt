@@ -19,6 +19,12 @@ interface NirilBackupService {
     fun deleteBackup(): Boolean
     fun getBackupStats(): BackupStats?
     fun getTotalDatabaseSize(): Long
+
+    // Copy 2 - Protected Safety Vault (Anti-Erasure Guard)
+    fun createSafetySnapshot(): Boolean
+    fun restoreFromSafetySnapshot(): Boolean
+    fun hasSafetySnapshot(): Boolean
+    fun getSafetySnapshotStats(): BackupStats?
 }
 
 expect fun getNirilBackupService(): NirilBackupService

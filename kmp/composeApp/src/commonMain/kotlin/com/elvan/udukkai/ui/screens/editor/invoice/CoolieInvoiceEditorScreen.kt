@@ -31,6 +31,7 @@ import com.elvan.udukkai.data.repository.VaangunarRepository
 import com.elvan.udukkai.data.settings.MozhiJsonConverter
 import com.elvan.udukkai.data.settings.NiruvanaTharavugal
 import com.elvan.udukkai.data.settings.NiruvanaTharavugalRepository
+import com.elvan.udukkai.localization.PrintLanguageManager
 import com.elvan.udukkai.localization.K
 import com.elvan.udukkai.localization.tr
 import com.elvan.udukkai.theme.Dimens
@@ -46,6 +47,9 @@ import com.elvan.udukkai.ui.navigation.MaterialSymbols
 import com.elvan.udukkai.ui.screens.editor.ElvanEditorSection
 import com.elvan.udukkai.ui.screens.editor.ElvanThiruthiThalaippu
 import com.elvan.udukkai.ui.screens.editor.LocalEditorAccentColor
+import androidx.compose.ui.zIndex
+import com.elvan.udukkai.ui.screens.editor.customer.CustomerEditorScreen
+import com.elvan.udukkai.ui.screens.editor.product.ProductEditorScreen
 import com.elvan.udukkai.ui.screens.editor.invoice.components.*
 
 /**
@@ -138,6 +142,8 @@ fun CoolieInvoiceEditorScreen(
         )
     }
     var isInvoiceNumberOverridden by remember { mutableStateOf(isEditing) }
+    var showAddProductEditor by remember { mutableStateOf(false) }
+    var showAddCustomerEditor by remember { mutableStateOf(false) }
 
     // Customer
     var selectedVaangunarId by remember { mutableStateOf(invoice?.vaangunarId) }
@@ -157,6 +163,53 @@ fun CoolieInvoiceEditorScreen(
             }
         )
     }
+    val billingConfig = PrintLanguageManager.getConfig(AppMode.KOOLI)
+    val primaryLang = billingConfig.primaryLanguage.code
+    val secondaryLang = billingConfig.secondaryLanguage.code
+
+    LaunchedEffect(PorulRepository.items) {
+        if (PorulRepository.items.isNotEmpty()) {
+            items = items.map { item ->
+                if (item.mozhiMap.isEmpty()) {
+                    val matched = PorulRepository.items.firstOrNull { it.id.toString() == item.porulId }
+                        ?: PorulRepository.items.firstOrNull { it.porulPeyar.values.any { v -> v.equals(item.porulPeyar, ignoreCase = true) || v.equals(item.porulPeyarEn, ignoreCase = true) } }
+                    if (matched != null && matched.porulPeyar.isNotEmpty()) {
+                        item.copy(
+                            porulId = matched.id.toString(),
+                            porulPeyar = matched.porulPeyar["ta"] ?: item.porulPeyar,
+                            porulPeyarEn = matched.porulPeyar["en"] ?: item.porulPeyarEn,
+                            mozhiMap = matched.porulPeyar
+                        )
+                    } else if (item.porulPeyar.isNotEmpty() || item.porulPeyarEn.isNotEmpty()) {
+                        item.copy(
+                            mozhiMap = mapOf("ta" to item.porulPeyar, "en" to item.porulPeyarEn).filterValues { it.isNotEmpty() }
+                        )
+                    } else {
+                        item
+                    }
+                } else {
+                    item
+                }
+            }
+        }
+    }
+
+    LaunchedEffect(VaangunarRepository.merchants) {
+        if (selectedVaangunarId == null && selectedVaangunarPeyarMap.isNotEmpty() && VaangunarRepository.merchants.isNotEmpty()) {
+            val matched = VaangunarRepository.merchants.firstOrNull { m ->
+                m.peyar.values.any { v -> selectedVaangunarPeyarMap.values.contains(v) }
+            }
+            if (matched != null) {
+                selectedVaangunarId = matched.id
+                selectedVaangunarPeyarMap = matched.peyar
+                selectedVaangunarMunvariMap = matched.mugavari
+            }
+        }
+    }
+
+    val initialItemIds = remember { items.map { it.id }.toSet() }
+    var deletingItemIds by remember { mutableStateOf(setOf<String>()) }
+    val activeItems = remember(items, deletingItemIds) { items.filter { it.id !in deletingItemIds } }
 
     // Additional Charges
     var setharamGrams by remember { mutableStateOf(invoice?.setharamGrams ?: 0.0) }
@@ -171,15 +224,18 @@ fun CoolieInvoiceEditorScreen(
             }
         )
     }
+    val initialChargeIds = remember { piraVarivugal.map { it.id }.toSet() }
+    var deletingChargeIds by remember { mutableStateOf(setOf<String>()) }
+    val activeCharges = remember(piraVarivugal, deletingChargeIds) { piraVarivugal.filter { it.id !in deletingChargeIds } }
 
     // Real-time calculated totals
-    val totals = remember(items, setharamGrams, thabaalThogai, ahimsaPattuThogai, piraVarivugal) {
+    val totals = remember(activeItems, setharamGrams, thabaalThogai, ahimsaPattuThogai, activeCharges) {
         KooliKanakku.calculate(
-            items = items,
+            items = activeItems,
             setharamGrams = setharamGrams,
             thabaalThogai = thabaalThogai,
             ahimsaPattuThogai = ahimsaPattuThogai,
-            piraVarivugal = piraVarivugal
+            piraVarivugal = activeCharges
         )
     }
 
@@ -398,9 +454,9 @@ fun CoolieInvoiceEditorScreen(
             // ── Section 0: Business Profile Selector (if multiple profiles exist) ──
             if (profiles.size > 1) {
                 item(key = "profile_section") {
-                    val companyName = selectedProfile?.kurumPeyar?.ifEmpty {
-                        selectedProfile.niruvanathinPeyar.values.firstOrNull().orEmpty()
-                    }
+                    val companyName = selectedProfile?.niruvanathinPeyar?.get(primaryLang)?.ifEmpty { null }
+                        ?: selectedProfile?.kurumPeyar?.ifEmpty { null }
+                        ?: selectedProfile?.niruvanathinPeyar?.values?.firstOrNull().orEmpty()
 
                     ElvanEditorSection(index = 0, title = K.companyDetail.tr()) {
                         Column(modifier = Modifier.fillMaxWidth()) {
@@ -493,7 +549,7 @@ fun CoolieInvoiceEditorScreen(
                                 selectedVaangunarMunvariMap = emptyMap()
                                 hasUnsavedChanges = true
                             },
-                            onRequestAddNewCustomer = onRequestAddNewCustomer
+                            onRequestAddNewCustomer = { showAddCustomerEditor = true }
                         )
                     }
                 }
@@ -539,60 +595,163 @@ fun CoolieInvoiceEditorScreen(
                     ElvanEditorSection(index = baseIndex + 2, title = K.products.tr()) {
                         Column(
                             modifier = Modifier.fillMaxWidth(),
-                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                            verticalArrangement = Arrangement.spacedBy(10.dp)
                         ) {
-                            items.forEachIndexed { idx, itm ->
-                                KooliUrupadiAttai(
-                                    item = itm,
-                                    index = idx,
-                                    itemCount = items.size,
-                                    onItemUpdated = { updated ->
-                                        items = items.toMutableList().also { it[idx] = updated }
-                                        hasUnsavedChanges = true
-                                    },
-                                    onItemDeleted = {
-                                        if (items.size > 1) {
-                                            items = items.toMutableList().also { it.removeAt(idx) }
-                                            hasUnsavedChanges = true
+                            // ── Product Line Items ──
+                            ElvanAsaiPattiyal {
+                                items.forEachIndexed { idx, itm ->
+                                    key(itm.id) {
+                                        ElvanAsaiCard(
+                                            key = itm.id,
+                                            isInitial = itm.id in initialItemIds,
+                                            onDeleted = {
+                                                deletingItemIds = deletingItemIds - itm.id
+                                                items = items.filter { it.id != itm.id }
+                                                hasUnsavedChanges = true
+                                            }
+                                        ) { requestDelete ->
+                                            KooliUrupadiAttai(
+                                                item = itm,
+                                                index = idx,
+                                                itemCount = activeItems.size,
+                                                onItemUpdated = { updated ->
+                                                    items = items.map { if (it.id == itm.id) updated else it }
+                                                    hasUnsavedChanges = true
+                                                },
+                                                onItemDeleted = {
+                                                    if (activeItems.size > 1) {
+                                                        deletingItemIds = deletingItemIds + itm.id
+                                                        hasUnsavedChanges = true
+                                                        requestDelete()
+                                                    }
+                                                },
+                                                onItemCleared = {
+                                                    items = items.map { if (it.id == itm.id) KooliUrupadi(id = itm.id) else it }
+                                                    hasUnsavedChanges = true
+                                                },
+                                                onDirty = { hasUnsavedChanges = true },
+                                                onRequestAddNewProduct = { showAddProductEditor = true },
+                                                onAddNewItem = null,
+                                                onAddNewCharge = null
+                                            )
                                         }
-                                    },
-                                    onItemCleared = {
-                                        items = items.toMutableList().also { it[idx] = KooliUrupadi() }
-                                        hasUnsavedChanges = true
-                                    },
-                                    onDirty = { hasUnsavedChanges = true },
-                                    onRequestAddNewProduct = onRequestAddNewProduct,
-                                    onAddNewItem = {
-                                        items = items + KooliUrupadi()
-                                        hasUnsavedChanges = true
-                                    },
-                                    onAddNewCharge = {
-                                        piraVarivugal = piraVarivugal + PiraVarivu()
-                                        hasUnsavedChanges = true
                                     }
-                                )
+                                }
                             }
 
-                            // Dynamic Other Charges
+                            // ── Stadium Action Buttons (+ சேர் & + பிற கட்டணம் சேர்) ──
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(14.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .clip(RoundedCornerShape(999.dp))
+                                        .background(if (isDark) Color.White.copy(alpha = 0.08f) else Color.White)
+                                        .clickable(
+                                            interactionSource = remember { MutableInteractionSource() },
+                                            indication = ripple(bounded = true)
+                                        ) {
+                                            items = items + KooliUrupadi()
+                                            hasUnsavedChanges = true
+                                        }
+                                        .padding(horizontal = 20.dp, vertical = 10.dp)
+                                ) {
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                    ) {
+                                        Icon(
+                                            imageVector = MaterialSymbols.Rounded.Add,
+                                            contentDescription = null,
+                                            tint = colors.textPrimary,
+                                            modifier = Modifier.size(18.dp)
+                                        )
+                                        Text(
+                                            text = K.addBtn.tr().preventBrokenLigatures(),
+                                            style = TextStyle(
+                                                fontFamily = ff,
+                                                fontSize = 14.sp,
+                                                fontWeight = FontWeight.SemiBold,
+                                                color = colors.textPrimary
+                                            )
+                                        )
+                                    }
+                                }
+
+                                Box(
+                                    modifier = Modifier
+                                        .clip(RoundedCornerShape(999.dp))
+                                        .background(if (isDark) Color.White.copy(alpha = 0.08f) else Color.White)
+                                        .clickable(
+                                            interactionSource = remember { MutableInteractionSource() },
+                                            indication = ripple(bounded = true)
+                                        ) {
+                                            piraVarivugal = piraVarivugal + PiraVarivu()
+                                            hasUnsavedChanges = true
+                                        }
+                                        .padding(horizontal = 20.dp, vertical = 10.dp)
+                                ) {
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                    ) {
+                                        Icon(
+                                            imageVector = MaterialSymbols.Rounded.Add,
+                                            contentDescription = null,
+                                            tint = colors.textPrimary,
+                                            modifier = Modifier.size(18.dp)
+                                        )
+                                        Text(
+                                            text = K.addOtherCharges.tr().preventBrokenLigatures(),
+                                            style = TextStyle(
+                                                fontFamily = ff,
+                                                fontSize = 14.sp,
+                                                fontWeight = FontWeight.SemiBold,
+                                                color = colors.textPrimary
+                                            )
+                                        )
+                                    }
+                                }
+                            }
+                        }
+
+                        // ── Dynamic Other Charges ──
+                        ElvanAsaiPattiyal {
                             piraVarivugal.forEachIndexed { pIdx, charge ->
-                                KooliPiraVarivuAttai(
-                                    charge = charge,
-                                    index = pIdx,
-                                    onUpdated = { updatedCharge ->
-                                        piraVarivugal = piraVarivugal.toMutableList().also { it[pIdx] = updatedCharge }
-                                        hasUnsavedChanges = true
-                                    },
-                                    onDeleted = {
-                                        piraVarivugal = piraVarivugal.toMutableList().also { it.removeAt(pIdx) }
-                                        hasUnsavedChanges = true
-                                    },
-                                    onDirty = { hasUnsavedChanges = true }
-                                )
+                                key(charge.id) {
+                                    ElvanAsaiCard(
+                                        key = charge.id,
+                                        isInitial = charge.id in initialChargeIds,
+                                        modifier = Modifier.padding(top = if (pIdx == 0) 16.dp else 0.dp),
+                                        onDeleted = {
+                                            deletingChargeIds = deletingChargeIds - charge.id
+                                            piraVarivugal = piraVarivugal.filter { it.id != charge.id }
+                                            hasUnsavedChanges = true
+                                        }
+                                    ) { requestDelete ->
+                                            KooliPiraVarivuAttai(
+                                                charge = charge,
+                                                index = pIdx,
+                                                onUpdated = { updatedCharge ->
+                                                    piraVarivugal = piraVarivugal.map { if (it.id == charge.id) updatedCharge else it }
+                                                    hasUnsavedChanges = true
+                                                },
+                                                onDeleted = {
+                                                    deletingChargeIds = deletingChargeIds + charge.id
+                                                    hasUnsavedChanges = true
+                                                    requestDelete()
+                                                },
+                                                onDirty = { hasUnsavedChanges = true }
+                                            )
+                                        }
+                                    }
+                                }
                             }
                         }
                     }
                 }
-            }
 
             // ── Section 4: Totals & Extra Charges (மொத்தங்கள்) ──
             item(key = "totals_section") {
@@ -626,7 +785,7 @@ fun CoolieInvoiceEditorScreen(
                                 setharamGrams = setharamGrams,
                                 ahimsaPattuThogai = ahimsaPattuThogai,
                                 thabaalThogai = thabaalThogai,
-                                piraVarivugal = piraVarivugal
+                                piraVarivugal = activeCharges
                             )
                         }
                     }
@@ -650,14 +809,15 @@ fun CoolieInvoiceEditorScreen(
                 isCompanySheetOpen = false
             },
             itemLabelBuilder = { p ->
-                p.kurumPeyar.ifEmpty {
-                    p.niruvanathinPeyar.values.firstOrNull().orEmpty()
-                }
+                p.niruvanathinPeyar[primaryLang]?.ifEmpty { null }
+                    ?: p.kurumPeyar.ifEmpty {
+                        p.niruvanathinPeyar.values.firstOrNull().orEmpty()
+                    }
             },
             subtitleBuilder = { p ->
-                val primary = p.niruvanathinPeyar.values.firstOrNull().orEmpty()
-                val oor = p.oor.values.firstOrNull().orEmpty()
-                listOf(primary, oor).filter { it.isNotEmpty() }.joinToString(" • ")
+                val sec = p.niruvanathinPeyar[secondaryLang].orEmpty()
+                val oor = p.oor[primaryLang] ?: p.oor.values.firstOrNull().orEmpty()
+                listOf(sec, oor).filter { it.isNotEmpty() }.joinToString(" • ")
             }
         )
     }
@@ -699,5 +859,42 @@ fun CoolieInvoiceEditorScreen(
                 pendingDraftJson = null
             }
         )
+    }
+
+    // ── In-Editor Full-Screen Overlays (Add Product / Add Customer) ──
+    if (showAddProductEditor) {
+        AppBackHandler { showAddProductEditor = false }
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(colors.background)
+                .zIndex(100f)
+        ) {
+            ProductEditorScreen(
+                item = null,
+                onBack = {
+                    showAddProductEditor = false
+                    PorulRepository.loadAll(AppMode.KOOLI)
+                }
+            )
+        }
+    }
+
+    if (showAddCustomerEditor) {
+        AppBackHandler { showAddCustomerEditor = false }
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(colors.background)
+                .zIndex(100f)
+        ) {
+            CustomerEditorScreen(
+                merchant = null,
+                onBack = {
+                    showAddCustomerEditor = false
+                    VaangunarRepository.loadAll(AppMode.KOOLI)
+                }
+            )
+        }
     }
 }

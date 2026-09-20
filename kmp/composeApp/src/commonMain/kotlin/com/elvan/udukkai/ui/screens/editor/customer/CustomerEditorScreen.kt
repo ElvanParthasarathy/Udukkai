@@ -355,7 +355,8 @@ fun CustomerEditorScreen(
                                     value = mugavariMap,
                                     onChanged = { mugavariMap = it },
                                     placeholder = K.address.tr(),
-                                    maxLines = 2
+                                    minLines = 2,
+                                    maxLines = 6
                                 )
 
                                 // PIN Code
@@ -377,7 +378,8 @@ fun CustomerEditorScreen(
                                     value = velinaadMugavariMap,
                                     onChanged = { velinaadMugavariMap = it },
                                     placeholder = K.fullAddress.tr(),
-                                    maxLines = 4
+                                    minLines = 2,
+                                    maxLines = 6
                                 )
                             }
                         } else {
@@ -394,7 +396,8 @@ fun CustomerEditorScreen(
                                 value = mugavariMap,
                                 onChanged = { mugavariMap = it },
                                 placeholder = K.address.tr(),
-                                maxLines = 4
+                                minLines = 2,
+                                maxLines = 6
                             )
                         }
                     }

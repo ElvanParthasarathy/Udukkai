@@ -112,7 +112,7 @@ fun TransliteratorSettingsScreen(
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Text(
-                        text = "நூலச்சு v1.0.0",
+                        text = "${K.appName.tr()} v1.0.0",
                         style = TextStyle(
                             fontFamily = ff,
                             fontSize = 12.5.sp,

@@ -78,10 +78,8 @@ fun RecycleBinScreen(
     val isDark = colors.isDark
     val ff = LocalAppFontFamily.current
     val scope = rememberCoroutineScope()
-    val isTamil = LocalAppLanguage.current.startsWith("ta")
-
-    val restoreSuccessMsg = if (isTamil) "வெற்றிகரமாக மீட்டெடுக்கப்பட்டது" else "Restored successfully"
-    val deleteSuccessMsg = if (isTamil) "நிரந்தரமாக அழிக்கப்பட்டது" else "Deleted permanently"
+    val restoreSuccessMsg = K.restoredSuccessfully.tr()
+    val deleteSuccessMsg = K.deletedPermanently.tr()
 
     // Auto-purge items older than 30 days on launch & load deleted items
     LaunchedEffect(mode) {
@@ -112,14 +110,6 @@ fun RecycleBinScreen(
     var showDateFilterSheet by remember { mutableStateOf(false) }
 
     val isDesktop = currentPlatform == PlatformType.DESKTOP
-    DisposableEffect(isDesktop) {
-        if (!isDesktop) {
-            ElvanSnackbar.isBottomBarVisible = true
-        }
-        onDispose {
-            ElvanSnackbar.isBottomBarVisible = false
-        }
-    }
 
     // Reset selection & search when tab switches
     LaunchedEffect(selectedTab) {
@@ -318,13 +308,13 @@ fun RecycleBinScreen(
     val shifterItems = listOf(
         PillShifterItem(
             label = K.invoices.tr(),
-            icon = MaterialSymbols.Rounded.Description,
-            activeIcon = MaterialSymbols.Rounded.DescriptionFill
+            icon = MaterialSymbols.Rounded.Invoice,
+            activeIcon = MaterialSymbols.Rounded.InvoiceFill
         ),
         PillShifterItem(
             label = K.receipts.tr(),
-            icon = MaterialSymbols.Rounded.ReceiptLong,
-            activeIcon = MaterialSymbols.Rounded.ReceiptLongFill
+            icon = MaterialSymbols.Rounded.Receipt,
+            activeIcon = MaterialSymbols.Rounded.ReceiptFill
         )
     )
 
@@ -488,8 +478,7 @@ fun RecycleBinScreen(
                             item(key = "empty_invoices") {
                                 EmptyMeetpagamState(
                                     colors = colors,
-                                    isTamil = isTamil,
-                                    emptyTitle = if (isTamil) "நீக்கப்பட்ட பட்டியல்கள் இல்லை" else "No deleted invoices"
+                                    emptyTitle = K.noDeletedInvoices.tr()
                                 )
                             }
                         } else {
@@ -530,8 +519,7 @@ fun RecycleBinScreen(
                             item(key = "empty_receipts") {
                                 EmptyMeetpagamState(
                                     colors = colors,
-                                    isTamil = isTamil,
-                                    emptyTitle = if (isTamil) "நீக்கப்பட்ட பற்றுச்சீட்டுகள் இல்லை" else "No deleted receipts"
+                                    emptyTitle = K.noDeletedReceipts.tr()
                                 )
                             }
                         } else {
@@ -573,8 +561,7 @@ fun RecycleBinScreen(
                         item(key = "empty_products") {
                             EmptyMeetpagamState(
                                 colors = colors,
-                                isTamil = isTamil,
-                                emptyTitle = if (isTamil) "நீக்கப்பட்ட பொருட்கள் இல்லை" else "No deleted products"
+                                emptyTitle = K.noDeletedProducts.tr()
                             )
                         }
                     } else {
@@ -626,8 +613,7 @@ fun RecycleBinScreen(
                         item(key = "empty_customers") {
                             EmptyMeetpagamState(
                                 colors = colors,
-                                isTamil = isTamil,
-                                emptyTitle = if (isTamil) "நீக்கப்பட்ட வாங்குநர்கள் இல்லை" else "No deleted customers"
+                                emptyTitle = K.noDeletedCustomers.tr()
                             )
                         }
                     } else {
@@ -669,18 +655,15 @@ fun RecycleBinScreen(
     // Confirmation Sheet for Permanent Delete
     if (showBulkDeleteConfirm) {
         ElvanActionSheet(
-            title = if (isTamil) "முழுமையாக நீக்கவா?" else "Delete permanently?",
+            title = K.deletePermanentlyQuestion.tr(),
             onDismissRequest = { showBulkDeleteConfirm = false },
             onConfirm = onPermanentDeleteSelected,
-            cancelText = if (isTamil) "கைவிடு" else "Cancel",
-            confirmText = if (isTamil) "நீக்கவும்" else "Delete",
+            cancelText = K.cancelBtn.tr(),
+            confirmText = K.deleteBtn.tr(),
             confirmColor = colors.textPrimary,
             customContent = {
                 Text(
-                    text = if (isTamil)
-                        "தேர்வு செய்யப்பட்டவை நிரந்தரமாக அழிக்கப்படும். இதை திரும்பப் பெற முடியாது."
-                    else
-                        "Selected items will be permanently erased. This action cannot be undone.",
+                    text = K.deletePermanentlyDesc.tr(),
                     style = TextStyle(
                         fontFamily = ff,
                         fontSize = 14.sp,
@@ -718,7 +701,6 @@ fun RecycleBinScreen(
 @Composable
 private fun EmptyMeetpagamState(
     colors: ShellColors,
-    isTamil: Boolean,
     emptyTitle: String,
     modifier: Modifier = Modifier
 ) {
@@ -766,10 +748,7 @@ private fun EmptyMeetpagamState(
             Spacer(modifier = Modifier.height(6.dp))
 
             Text(
-                text = (if (isTamil)
-                    "நீக்கப்பட்ட உருப்படிகள் 30 நாட்களுக்குப் பிறகு தானாகவே அழிக்கப்படும்"
-                else
-                    "Deleted items will be automatically erased after 30 days").preventBrokenLigatures(),
+                text = K.recycleBin30Days.tr().preventBrokenLigatures(),
                 style = TextStyle(
                     fontFamily = ff,
                     fontSize = 13.sp,

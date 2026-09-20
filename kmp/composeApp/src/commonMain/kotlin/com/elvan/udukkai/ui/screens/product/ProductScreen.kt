@@ -306,30 +306,47 @@ internal fun CoolieProductCard(
                 modifier = Modifier.weight(1f),
                 verticalArrangement = Arrangement.Center
             ) {
-                Text(
-                    text = primary.preventBrokenLigatures(),
-                    style = TextStyle(
-                        fontFamily = ff,
-                        fontSize = 15.2.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = colors.textPrimary
-                    ),
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
+                // Row 1: Product Name + Chevron
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Text(
+                            text = primary.preventBrokenLigatures(),
+                            style = TextStyle(
+                                fontFamily = ff,
+                                fontSize = 15.2.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = colors.textPrimary
+                            ),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
 
-                if (isBilingual && secondary.isNotBlank() && secondary != primary) {
-                    Spacer(modifier = Modifier.height(2.dp))
-                    Text(
-                        text = secondary.preventBrokenLigatures(),
-                        style = TextStyle(
-                            fontFamily = ff,
-                            fontSize = 13.sp,
-                            fontWeight = FontWeight.Medium,
-                            color = LocalShellColors.current.textSecondary
-                        ),
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
+                        if (isBilingual && secondary.isNotBlank() && secondary != primary) {
+                            Spacer(modifier = Modifier.height(2.dp))
+                            Text(
+                                text = secondary.preventBrokenLigatures(),
+                                style = TextStyle(
+                                    fontFamily = ff,
+                                    fontSize = 13.sp,
+                                    fontWeight = FontWeight.Medium,
+                                    color = LocalShellColors.current.textSecondary
+                                ),
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                        }
+                    }
+
+                    Icon(
+                        imageVector = MaterialSymbols.Rounded.ChevronRight,
+                        contentDescription = null,
+                        tint = LocalShellColors.current.border,
+                        modifier = Modifier.size(18.dp)
                     )
                 }
             }
@@ -395,30 +412,47 @@ internal fun SilkProductCard(
                 modifier = Modifier.weight(1f),
                 verticalArrangement = Arrangement.Center
             ) {
-                Text(
-                    text = primary.preventBrokenLigatures(),
-                    style = TextStyle(
-                        fontFamily = ff,
-                        fontSize = 15.2.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = colors.textPrimary
-                    ),
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
+                // Row 1: Product Name + Chevron
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.Top
+                ) {
+                    Column(
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Text(
+                            text = primary.preventBrokenLigatures(),
+                            style = TextStyle(
+                                fontFamily = ff,
+                                fontSize = 15.2.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = colors.textPrimary
+                            ),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
 
-                if (isBilingual && secondary.isNotBlank() && secondary != primary) {
-                    Spacer(modifier = Modifier.height(2.dp))
-                    Text(
-                        text = secondary.preventBrokenLigatures(),
-                        style = TextStyle(
-                            fontFamily = ff,
-                            fontSize = 13.sp,
-                            fontWeight = FontWeight.Medium,
-                            color = LocalShellColors.current.textSecondary
-                        ),
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
+                        if (isBilingual && secondary.isNotBlank() && secondary != primary) {
+                            Spacer(modifier = Modifier.height(2.dp))
+                            Text(
+                                text = secondary.preventBrokenLigatures(),
+                                style = TextStyle(
+                                    fontFamily = ff,
+                                    fontSize = 13.sp,
+                                    fontWeight = FontWeight.Medium,
+                                    color = LocalShellColors.current.textSecondary
+                                ),
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                        }
+                    }
+
+                    Icon(
+                        imageVector = MaterialSymbols.Rounded.ChevronRight,
+                        contentDescription = null,
+                        tint = LocalShellColors.current.border,
+                        modifier = Modifier.size(18.dp)
                     )
                 }
 

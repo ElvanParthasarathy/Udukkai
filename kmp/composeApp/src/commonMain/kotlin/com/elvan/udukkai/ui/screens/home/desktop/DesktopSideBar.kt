@@ -202,14 +202,14 @@ fun DesktopSideBar(
                 ) {
                     Surface(
                         shape = CircleShape,
-                        color = if (currentMode == AppMode.KOOLI) Color(0xFF1B6B4F) else Color(0xFF7A4E00),
+                        color = colors.iconBg,
                         modifier = Modifier.size(32.dp)
                     ) {
                         Box(contentAlignment = Alignment.Center) {
                             Icon(
                                 imageVector = if (currentMode == AppMode.KOOLI) MaterialSymbols.Mode.Coolie else MaterialSymbols.Mode.Silk,
                                 contentDescription = null,
-                                tint = Color.White,
+                                tint = colors.textPrimary,
                                 modifier = Modifier.size(18.dp)
                             )
                         }

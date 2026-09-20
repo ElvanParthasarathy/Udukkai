@@ -46,13 +46,7 @@ enum class SeluthiVagai(
     fun label(): String = labelString()
 
     fun badgeColor(isDark: Boolean): Color {
-        return when (this) {
-            PANAM -> if (isDark) Color(0xFF81C784) else Color(0xFF388E3C)
-            UPI -> if (isDark) Color(0xFFCE93D8) else Color(0xFF7B1FA2)
-            VANGI_MAATRAM -> if (isDark) Color(0xFF90CAF9) else Color(0xFF1976D2)
-            KAASOALAI -> if (isDark) Color(0xFFFFCC80) else Color(0xFFF57C00)
-            ATTAI -> if (isDark) Color(0xFF80CBC4) else Color(0xFF00796B)
-        }
+        return if (isDark) Color.White else Color.Black
     }
 
     companion object {

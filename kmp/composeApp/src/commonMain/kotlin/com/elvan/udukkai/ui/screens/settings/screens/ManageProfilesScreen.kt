@@ -117,8 +117,8 @@ fun ManageProfilesScreen(
             FloatingActionButton(
                 onClick = { showNewProfileSheet = true },
                 shape = RoundedCornerShape(16.dp),
-                containerColor = colors.modeAccent,
-                contentColor = Color.White,
+                containerColor = if (colors.isDark) Color.White else Color.Black,
+                contentColor = if (colors.isDark) Color.Black else Color.White,
                 modifier = Modifier
                     .align(Alignment.BottomEnd)
                     .padding(bottom = 48.dp, end = 20.dp)

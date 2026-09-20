@@ -57,6 +57,9 @@ object PorulRepository {
             val id = helper.saveItem(mode, item)
             if (id > 0L) {
                 loadAll(mode)
+                try {
+                    com.elvan.udukkai.core.sync.getFirebaseSyncManager().pushItem(item.copy(id = id), mode)
+                } catch (_: Exception) {}
             }
             id
         } catch (_: Exception) {
@@ -66,11 +69,19 @@ object PorulRepository {
 
     fun delete(id: Long, mode: AppMode = ModeManager.currentMode): Boolean {
         return try {
+            val existing = getById(id)
             val helper = getBusinessDatabaseHelper()
             val success = helper.deleteItem(mode, id)
             if (success) {
                 loadAll(mode)
                 loadDeleted(mode)
+                if (existing != null) {
+                    try {
+                        com.elvan.udukkai.core.sync.getFirebaseSyncManager().pushItem(
+                            existing.copy(isDeleted = true, deletedAt = System.currentTimeMillis()), mode
+                        )
+                    } catch (_: Exception) {}
+                }
             }
             success
         } catch (_: Exception) {
@@ -94,6 +105,14 @@ object PorulRepository {
             if (success) {
                 loadAll(mode)
                 loadDeleted(mode)
+                val restored = getById(id)
+                if (restored != null) {
+                    try {
+                        com.elvan.udukkai.core.sync.getFirebaseSyncManager().pushItem(
+                            restored.copy(isDeleted = false, deletedAt = null), mode
+                        )
+                    } catch (_: Exception) {}
+                }
             }
             success
         } catch (_: Exception) {

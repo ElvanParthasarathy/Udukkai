@@ -18,9 +18,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.elvan.udukkai.core.mode.AppMode
+import com.elvan.udukkai.core.mode.LocalAppMode
 import com.elvan.udukkai.data.model.VaangunarTharavuru
 import com.elvan.udukkai.data.repository.VaangunarRepository
 import com.elvan.udukkai.localization.K
+import com.elvan.udukkai.localization.PrintLanguageManager
 import com.elvan.udukkai.localization.tr
 import com.elvan.udukkai.theme.LocalAppFontFamily
 import com.elvan.udukkai.theme.preventBrokenLigatures
@@ -44,9 +47,15 @@ fun PattuVaangunargalKooru(
     onRequestAddNewCustomer: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val currentMode = LocalAppMode.current
     val colors = rememberShellColors()
     val isDark = colors.isDark
     val ff = LocalAppFontFamily.current
+
+    val config = PrintLanguageManager.getConfig(currentMode)
+    val primaryLang = config.primaryLanguage.code
+    val secondaryLang = config.secondaryLanguage.code
+    val isBilingual = if (currentMode == AppMode.KOOLI) true else config.isBilingual
 
     var isBottomSheetOpen by remember { mutableStateOf(false) }
     val allMerchants = VaangunarRepository.merchants
@@ -59,7 +68,8 @@ fun PattuVaangunargalKooru(
         ElvanThiruthiThalaippu(label = K.clientNameSearch.tr())
 
         val containerBg = colors.iconBg
-        val customerName = selectedVaangunar?.peyar?.get("ta")
+        val customerName = selectedVaangunar?.peyar?.get(primaryLang)
+            ?: selectedVaangunar?.peyar?.get(secondaryLang)
             ?: selectedVaangunar?.peyar?.values?.firstOrNull()
             ?: ""
 
@@ -140,13 +150,12 @@ fun PattuVaangunargalKooru(
                         )
                     )
 
-                // Bilingual name
-                val enName = selectedVaangunar.peyar["en"].orEmpty()
-                val taName = selectedVaangunar.peyar["ta"] ?: selectedVaangunar.peyar.values.firstOrNull().orEmpty()
+                // Only secondary language name (primary already shown in pill above)
+                val secName = if (isBilingual) selectedVaangunar.peyar[secondaryLang].orEmpty() else ""
 
-                Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                if (secName.isNotEmpty()) {
                     Text(
-                        text = taName.preventBrokenLigatures(),
+                        text = secName.preventBrokenLigatures(),
                         style = TextStyle(
                             fontFamily = ff,
                             fontSize = 15.sp,
@@ -154,30 +163,22 @@ fun PattuVaangunargalKooru(
                             color = colors.textPrimary
                         )
                     )
-                    if (enName.isNotEmpty() && enName != taName) {
-                        Text(
-                            text = enName,
-                            style = TextStyle(
-                                fontFamily = ff,
-                                fontSize = 13.sp,
-                                fontWeight = FontWeight.Medium,
-                                color = colors.textSecondary
-                            )
-                        )
-                    }
                 }
 
-                // Address & Oor
-                val taMugavari = selectedVaangunar.mugavari["ta"] ?: selectedVaangunar.mugavari.values.firstOrNull().orEmpty()
-                val taOor = selectedVaangunar.oor["ta"] ?: selectedVaangunar.oor.values.firstOrNull().orEmpty()
-                val taMaanilam = selectedVaangunar.maanilam["ta"] ?: selectedVaangunar.maanilam.values.firstOrNull().orEmpty()
-                val addressCombined = listOf(taMugavari, taOor, taMaanilam, selectedVaangunar.anjalKuriyeedu)
+                // Address & Oor — bilingual
+                val primMugavari = selectedVaangunar.mugavari[primaryLang]
+                    ?: selectedVaangunar.mugavari.values.firstOrNull().orEmpty()
+                val primOor = selectedVaangunar.oor[primaryLang]
+                    ?: selectedVaangunar.oor.values.firstOrNull().orEmpty()
+                val primMaanilam = selectedVaangunar.maanilam[primaryLang]
+                    ?: selectedVaangunar.maanilam.values.firstOrNull().orEmpty()
+                val primAddressCombined = listOf(primMugavari, primOor, primMaanilam, selectedVaangunar.anjalKuriyeedu)
                     .filter { it.isNotBlank() }
                     .joinToString(", ")
 
-                if (addressCombined.isNotBlank()) {
+                if (primAddressCombined.isNotBlank()) {
                     Text(
-                        text = addressCombined.preventBrokenLigatures(),
+                        text = primAddressCombined.preventBrokenLigatures(),
                         style = TextStyle(
                             fontFamily = ff,
                             fontSize = 13.sp,
@@ -185,6 +186,28 @@ fun PattuVaangunargalKooru(
                             lineHeight = 18.sp
                         )
                     )
+                }
+
+                // Secondary language address
+                if (isBilingual) {
+                    val secMugavari = selectedVaangunar.mugavari[secondaryLang].orEmpty()
+                    val secOor = selectedVaangunar.oor[secondaryLang].orEmpty()
+                    val secMaanilam = selectedVaangunar.maanilam[secondaryLang].orEmpty()
+                    val secAddressCombined = listOf(secMugavari, secOor, secMaanilam)
+                        .filter { it.isNotBlank() }
+                        .joinToString(", ")
+
+                    if (secAddressCombined.isNotBlank() && secAddressCombined != primAddressCombined.replace(", ${selectedVaangunar.anjalKuriyeedu}", "")) {
+                        Text(
+                            text = secAddressCombined.preventBrokenLigatures(),
+                            style = TextStyle(
+                                fontFamily = ff,
+                                fontSize = 13.sp,
+                                color = colors.textSecondary.copy(alpha = 0.7f),
+                                lineHeight = 18.sp
+                            )
+                        )
+                    }
                 }
 
                 // GSTIN
@@ -217,12 +240,12 @@ fun PattuVaangunargalKooru(
                 isBottomSheetOpen = false
             },
             itemLabelBuilder = { c ->
-                c.peyar["ta"] ?: c.peyar.values.firstOrNull().orEmpty()
+                c.peyar[primaryLang] ?: c.peyar.values.firstOrNull().orEmpty()
             },
             subtitleBuilder = { c ->
-                val en = c.peyar["en"].orEmpty()
-                val oor = c.oor["ta"] ?: c.oor.values.firstOrNull().orEmpty()
-                listOf(en, oor).filter { it.isNotEmpty() }.joinToString(" - ")
+                val sec = if (isBilingual) c.peyar[secondaryLang].orEmpty() else ""
+                val oor = c.oor[primaryLang] ?: c.oor.values.firstOrNull().orEmpty()
+                listOf(sec, oor).filter { it.isNotEmpty() }.joinToString(" - ")
             },
             searchFilter = { c, query ->
                 val q = query.lowercase()

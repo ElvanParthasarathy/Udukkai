@@ -325,6 +325,8 @@ fun AddressSettingsScreen(
                                     value = tempPrimary,
                                     onValueChange = { tempPrimary = it },
                                     singleLine = false,
+                                    minLines = 2,
+                                    maxLines = 6,
                                     colors = colors
                                 )
                                 if (isBilingual) {
@@ -334,6 +336,8 @@ fun AddressSettingsScreen(
                                         value = tempSecondary,
                                         onValueChange = { tempSecondary = it },
                                         singleLine = false,
+                                        minLines = 2,
+                                        maxLines = 6,
                                         colors = colors
                                     )
                                 }
@@ -400,6 +404,8 @@ fun AddressSettingsScreen(
                                     value = tempPrimary,
                                     onValueChange = { tempPrimary = it },
                                     singleLine = false,
+                                    minLines = 2,
+                                    maxLines = 6,
                                     colors = colors
                                 )
                                 Spacer(modifier = Modifier.height(12.dp))
@@ -408,6 +414,8 @@ fun AddressSettingsScreen(
                                     value = tempSecondary,
                                     onValueChange = { tempSecondary = it },
                                     singleLine = false,
+                                    minLines = 2,
+                                    maxLines = 6,
                                     colors = colors
                                 )
                             }

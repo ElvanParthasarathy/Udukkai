@@ -8,8 +8,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -227,7 +226,7 @@ fun ElvanSettingsDivider(
 }
 
 /**
- * ElvanSettingsSwitch — One UI Blue switch matching Neram's One UI style.
+ * ElvanSettingsSwitch — Crisp monochrome switch matching Apple / One UI monochrome styling.
  */
 @Composable
 fun ElvanSettingsSwitch(
@@ -244,12 +243,12 @@ fun ElvanSettingsSwitch(
         enabled = enabled,
         modifier = modifier,
         colors = SwitchDefaults.colors(
-            checkedThumbColor = Color.White,
-            checkedTrackColor = colors.modeAccent,
+            checkedThumbColor = if (isDark) Color.Black else Color.White,
+            checkedTrackColor = if (isDark) Color.White else Color.Black,
             uncheckedThumbColor = if (isDark) Color.White.copy(alpha = 0.6f) else Color.Black.copy(alpha = 0.6f),
-            uncheckedTrackColor = if (isDark) Color.White.copy(alpha = 0.1f) else Color.Black.copy(alpha = 0.1f),
-            disabledCheckedThumbColor = Color.White.copy(alpha = 0.6f),
-            disabledCheckedTrackColor = (if (isDark) Color.White else Color.Black).copy(alpha = 0.15f),
+            uncheckedTrackColor = if (isDark) Color.White.copy(alpha = 0.12f) else Color.Black.copy(alpha = 0.10f),
+            disabledCheckedThumbColor = (if (isDark) Color.Black else Color.White).copy(alpha = 0.6f),
+            disabledCheckedTrackColor = (if (isDark) Color.White else Color.Black).copy(alpha = 0.25f),
             disabledUncheckedThumbColor = (if (isDark) Color.White else Color.Black).copy(alpha = 0.3f),
             disabledUncheckedTrackColor = (if (isDark) Color.White else Color.Black).copy(alpha = 0.06f),
             checkedBorderColor = Color.Transparent,
@@ -636,8 +635,8 @@ fun ElvanSettingsEditContainer(
                 onClick = onSave,
                 shape = RoundedCornerShape(50),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = colors.modeAccent,
-                    contentColor = Color.White
+                    containerColor = if (colors.isDark) Color.White else Color.Black,
+                    contentColor = if (colors.isDark) Color.Black else Color.White
                 ),
                 elevation = ButtonDefaults.buttonElevation(0.dp)
             ) {
@@ -668,6 +667,8 @@ fun ElvanSettingsTextField(
     prefixText: String? = null,
     keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
     singleLine: Boolean = true,
+    minLines: Int = if (singleLine) 1 else 2,
+    maxLines: Int = if (singleLine) 1 else 6,
     maxLength: Int? = null,
     readOnly: Boolean = false,
     onClick: (() -> Unit)? = null,
@@ -679,6 +680,16 @@ fun ElvanSettingsTextField(
     val shapeRadius = if (singleLine) 100.dp else 16.dp
     val bringIntoViewRequester = remember { BringIntoViewRequester() }
     val coroutineScope = rememberCoroutineScope()
+    var isFocused by remember { mutableStateOf(false) }
+    val imeBottom = com.elvan.udukkai.core.platform.getImeBottomPadding()
+
+    LaunchedEffect(isFocused, imeBottom) {
+        if (isFocused && imeBottom > 0.dp) {
+            try {
+                bringIntoViewRequester.bringIntoView()
+            } catch (_: Exception) {}
+        }
+    }
 
     Column(
         modifier = modifier
@@ -702,7 +713,14 @@ fun ElvanSettingsTextField(
             modifier = Modifier
                 .fillMaxWidth()
                 .then(
-                    if (singleLine) Modifier.height(48.dp) else Modifier.heightIn(min = 48.dp)
+                    if (singleLine) {
+                        Modifier.height(48.dp)
+                    } else {
+                        Modifier.heightIn(
+                            min = (24 + (minLines * 22)).dp,
+                            max = (24 + (maxLines.coerceAtLeast(minLines) * 22)).dp
+                        )
+                    }
                 )
                 .clip(RoundedCornerShape(shapeRadius))
                 .then(
@@ -768,8 +786,8 @@ fun ElvanSettingsTextField(
                                 }
                             },
                             singleLine = singleLine,
-                            minLines = if (singleLine) 1 else 2,
-                            maxLines = if (singleLine) 1 else 4,
+                            minLines = minLines,
+                            maxLines = maxLines,
                             keyboardOptions = keyboardOptions,
                             textStyle = TextStyle(
                                 fontFamily = ff,
@@ -781,12 +799,16 @@ fun ElvanSettingsTextField(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .onFocusChanged { focusState ->
+                                    isFocused = focusState.isFocused
                                     if (focusState.isFocused) {
                                         coroutineScope.launch {
+                                            try { bringIntoViewRequester.bringIntoView() } catch (_: Exception) {}
+                                            delay(100)
+                                            try { bringIntoViewRequester.bringIntoView() } catch (_: Exception) {}
                                             delay(150)
-                                            try {
-                                                bringIntoViewRequester.bringIntoView()
-                                            } catch (_: Exception) {}
+                                            try { bringIntoViewRequester.bringIntoView() } catch (_: Exception) {}
+                                            delay(150)
+                                            try { bringIntoViewRequester.bringIntoView() } catch (_: Exception) {}
                                         }
                                     }
                                 }

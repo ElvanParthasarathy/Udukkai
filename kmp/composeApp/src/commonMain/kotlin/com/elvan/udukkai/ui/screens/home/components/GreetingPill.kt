@@ -69,13 +69,7 @@ fun GreetingPill(
             modifier = Modifier.fillMaxSize(),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            val modeColor = if (mode == AppMode.KOOLI) Color(0xFF06B6D4) else Color(0xFFEC4899)
-            val modeGradient = if (mode == AppMode.KOOLI) {
-                listOf(Color(0xFF22D3EE), Color(0xFF0891B2))
-            } else {
-                listOf(Color(0xFFF472B6), Color(0xFFDB2777))
-            }
-            val modeBg = modeColor.copy(alpha = if (isDark) 0.16f else 0.10f)
+            val modeBg = if (isDark) Color.White.copy(alpha = 0.08f) else Color.Black.copy(alpha = 0.06f)
 
             // Mode Circular Button (62dp concentric with 84dp pill, starting cleanly after the curve)
             Box(
@@ -93,21 +87,8 @@ fun GreetingPill(
                 Icon(
                     imageVector = if (mode == AppMode.KOOLI) AppSvgs.coolieMode else AppSvgs.silkMode,
                     contentDescription = mode.displayName(),
-                    tint = Color.White,
-                    modifier = Modifier
-                        .size(30.dp)
-                        .graphicsLayer(alpha = 0.99f)
-                        .drawWithCache {
-                            val brush = Brush.linearGradient(
-                                colors = modeGradient,
-                                start = Offset.Zero,
-                                end = Offset(this.size.width, this.size.height)
-                            )
-                            onDrawWithContent {
-                                drawContent()
-                                drawRect(brush = brush, blendMode = BlendMode.SrcIn)
-                            }
-                        }
+                    tint = colors.textPrimary,
+                    modifier = Modifier.size(30.dp)
                 )
             }
 
@@ -135,7 +116,7 @@ fun GreetingPill(
                     Icon(
                         imageVector = MaterialSymbols.Rounded.AutoAwesome,
                         contentDescription = null,
-                        tint = modeColor,
+                        tint = colors.textPrimary,
                         modifier = Modifier.size(26.dp)
                     )
                 }
@@ -148,7 +129,7 @@ fun GreetingPill(
                         fontFamily = ff,
                         fontSize = 13.5.sp,
                         fontWeight = FontWeight.SemiBold,
-                        color = if (isDark) Color(0xFF9BA1A6) else Color(0xFF666666)
+                        color = colors.textSecondary
                     ),
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis

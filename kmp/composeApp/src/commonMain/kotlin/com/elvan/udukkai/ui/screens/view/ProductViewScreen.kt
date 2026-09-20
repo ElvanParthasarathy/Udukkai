@@ -94,10 +94,10 @@ fun ProductViewScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(20.dp))
-                        .background(if (isDark) Color(0xFF3B1E54).copy(alpha = 0.25f) else Color(0xFFF3E8FF))
+                        .background(if (isDark) Color.White.copy(alpha = 0.04f) else Color.Black.copy(alpha = 0.025f))
                         .border(
                             width = 1.dp,
-                            color = if (isDark) Color(0xFF8B5CF6).copy(alpha = 0.25f) else Color(0xFFC4B5FD).copy(alpha = 0.4f),
+                            color = if (isDark) Color.White.copy(alpha = 0.08f) else Color.Black.copy(alpha = 0.06f),
                             shape = RoundedCornerShape(20.dp)
                         )
                         .padding(24.dp)
@@ -111,13 +111,13 @@ fun ProductViewScreen(
                             modifier = Modifier
                                 .size(64.dp)
                                 .clip(CircleShape)
-                                .background(if (isDark) Color(0xFF8B5CF6).copy(alpha = 0.3f) else Color(0xFFDDD6FE)),
+                                .background(if (isDark) Color.White.copy(alpha = 0.08f) else Color.Black.copy(alpha = 0.06f)),
                             contentAlignment = Alignment.Center
                         ) {
                             Icon(
                                 imageVector = MaterialSymbols.Rounded.Inventory2,
                                 contentDescription = null,
-                                tint = if (isDark) Color(0xFFC4B5FD) else Color(0xFF6D28D9),
+                                tint = colors.textPrimary,
                                 modifier = Modifier.size(30.dp)
                             )
                         }

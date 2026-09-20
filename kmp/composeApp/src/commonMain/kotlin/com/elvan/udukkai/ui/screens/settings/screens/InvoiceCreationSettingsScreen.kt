@@ -51,7 +51,6 @@ fun InvoiceCreationSettingsScreen(
     var isEditingLanguages by remember { mutableStateOf(false) }
     var tempPrimaryLang by remember { mutableStateOf(profile.mudhanMozhi) }
     var tempSecondaryLang by remember { mutableStateOf(profile.thunaiMozhi) }
-    var dummyGstSplit by remember { mutableStateOf(false) }
 
     val bottomSheet = LocalElvanBottomSheetController.current
     val pdfThemeTitle = K.pdfTheme.tr()
@@ -221,14 +220,16 @@ fun InvoiceCreationSettingsScreen(
                         )
                         ElvanSettingsDivider(colors = colors)
 
-                        // GST Split Toggle (Dummy)
+                        // GST Split Toggle
                         ElvanSimpleSettingsRow(
                             title = K.showGstSplitsInTable.tr(),
                             trailing = {
                                 ElvanSettingsSwitch(
-                                    checked = dummyGstSplit,
-                                    onCheckedChange = {
-                                        dummyGstSplit = it
+                                    checked = profile.gstPirippugal,
+                                    onCheckedChange = { isChecked ->
+                                        val updated = profile.copy(gstPirippugal = isChecked)
+                                        NiruvanaTharavugalRepository.updateProfile(currentMode, updated)
+                                        ElvanSnackbar.show(saveSuccessMsg)
                                     },
                                     colors = colors
                                 )

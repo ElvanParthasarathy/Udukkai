@@ -65,8 +65,8 @@ fun ManageProfilesModal(
                     FloatingActionButton(
                         onClick = { showNewProfileSheet = true },
                         shape = RoundedCornerShape(16.dp),
-                        containerColor = colors.modeAccent,
-                        contentColor = Color.White,
+                        containerColor = if (colors.isDark) Color.White else Color.Black,
+                        contentColor = if (colors.isDark) Color.Black else Color.White,
                         modifier = Modifier.padding(bottom = 32.dp, end = 8.dp)
                     ) {
                         Icon(

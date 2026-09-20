@@ -227,8 +227,18 @@ object NiruvanaTharavugalRepository {
     fun updateProfile(mode: AppMode, profile: NiruvanaTharavugal) {
         val updated = if (mode == AppMode.KOOLI) profile.copy(iruMozhi = true) else profile.copy()
         when (mode) {
-            AppMode.KOOLI -> kooliProfileState = updated
-            AppMode.PATTU -> pattuProfileState = updated
+            AppMode.KOOLI -> {
+                kooliProfileState = updated
+                kooliProfilesState = if (kooliProfilesState.isNotEmpty()) {
+                    kooliProfilesState.map { if (it.id == updated.id) updated else it }
+                } else listOf(updated)
+            }
+            AppMode.PATTU -> {
+                pattuProfileState = updated
+                pattuProfilesState = if (pattuProfilesState.isNotEmpty()) {
+                    pattuProfilesState.map { if (it.id == updated.id) updated else it }
+                } else listOf(updated)
+            }
         }
         try {
             val saved = getSettingsDatabaseHelper().saveProfile(mode, updated)

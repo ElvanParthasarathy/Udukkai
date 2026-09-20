@@ -55,34 +55,35 @@ fun ElvanSimpleScrollbar(
     }
 
     val alpha by animateFloatAsState(
-        targetValue = if (isVisible) (if (isDark) 0.50f else 0.45f) else 0f,
+        targetValue = if (isVisible) (if (isDark) 0.22f else 0.20f) else 0f,
         animationSpec = tween(if (isVisible) 150 else 300),
         label = "scrollbarAlpha"
     )
 
     if (alpha <= 0.01f) return
 
+    val canScroll = scrollState.canScrollBackward || scrollState.canScrollForward
     val layoutInfo = scrollState.layoutInfo
     val totalItems = layoutInfo.totalItemsCount
     val visibleItems = layoutInfo.visibleItemsInfo
     val visibleCount = visibleItems.size
 
-    if (totalItems <= 1 || visibleItems.isEmpty() || totalItems <= visibleCount) return
+    if (!canScroll || totalItems <= 1 || visibleItems.isEmpty()) return
+
+    val firstItem = visibleItems.first()
+    val lastItem = visibleItems.last()
+
+    val laidOutArea = (lastItem.offset + lastItem.size) - firstItem.offset
+    val laidOutRange = (lastItem.index - firstItem.index + 1).coerceAtLeast(1)
+    val avgItemSize = laidOutArea.toFloat() / laidOutRange.toFloat()
+
+    val viewportHeight = (layoutInfo.viewportEndOffset - layoutInfo.viewportStartOffset).toFloat()
+    val estimatedTotalHeight = avgItemSize * totalItems
+    val maxScroll = (estimatedTotalHeight - viewportHeight).coerceAtLeast(1f)
 
     val fraction = run {
         if (!scrollState.canScrollBackward) return@run 0f
         if (!scrollState.canScrollForward) return@run 1f
-
-        val firstItem = visibleItems.first()
-        val lastItem = visibleItems.last()
-
-        val laidOutArea = (lastItem.offset + lastItem.size) - firstItem.offset
-        val laidOutRange = (lastItem.index - firstItem.index + 1).coerceAtLeast(1)
-        val avgItemSize = laidOutArea.toFloat() / laidOutRange.toFloat()
-
-        val viewportHeight = (layoutInfo.viewportEndOffset - layoutInfo.viewportStartOffset).toFloat()
-        val estimatedTotalHeight = avgItemSize * totalItems
-        val maxScroll = (estimatedTotalHeight - viewportHeight).coerceAtLeast(1f)
 
         val currentScroll = (firstItem.index.toFloat() * avgItemSize) + (-firstItem.offset.toFloat()).coerceAtLeast(0f)
         (currentScroll / maxScroll).coerceIn(0f, 1f)
@@ -105,11 +106,14 @@ fun ElvanSimpleScrollbar(
         }
 
         val availableTrackHeight = (containerHeightPx - topPaddingPx - bottomPaddingPx).coerceAtLeast(100f)
-        val thumbRatio = (visibleCount.toFloat() / totalItems.toFloat()).coerceIn(0.08f, 0.35f)
-        val thumbHeightPx = (thumbRatio * availableTrackHeight).coerceIn(
-            with(density) { 32.dp.toPx() },
-            with(density) { 56.dp.toPx() }
-        )
+        val minThumbHeightPx = with(density) { 28.dp.toPx() }
+        val maxThumbHeightPx = (availableTrackHeight - with(density) { 12.dp.toPx() }).coerceAtLeast(minThumbHeightPx)
+        val thumbRatio = if (estimatedTotalHeight > 0f) {
+            (viewportHeight / estimatedTotalHeight).coerceIn(0.05f, 0.90f)
+        } else {
+            (visibleCount.toFloat() / totalItems.toFloat()).coerceIn(0.05f, 0.90f)
+        }
+        val thumbHeightPx = (thumbRatio * availableTrackHeight).coerceIn(minThumbHeightPx, maxThumbHeightPx)
         val maxTravelPx = (availableTrackHeight - thumbHeightPx).coerceAtLeast(1f)
         val thumbYPx = (topPaddingPx + (fraction * maxTravelPx)).coerceIn(topPaddingPx, topPaddingPx + maxTravelPx)
 
@@ -123,7 +127,7 @@ fun ElvanSimpleScrollbar(
                 .graphicsLayer { this.alpha = alpha }
                 .clip(CircleShape)
                 .background(
-                    color = if (isDark) Color(0xFFE0E0E0) else Color(0xFF999999)
+                    color = if (isDark) Color(0xFFCCCCCC) else Color(0xFF666666)
                 )
         )
     }

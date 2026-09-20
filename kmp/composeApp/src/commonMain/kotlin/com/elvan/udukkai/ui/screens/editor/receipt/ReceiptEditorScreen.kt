@@ -489,7 +489,7 @@ fun ReceiptEditorScreen(
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
                                     Icon(
-                                        imageVector = MaterialSymbols.Rounded.Description,
+                                        imageVector = MaterialSymbols.Rounded.Invoice,
                                         contentDescription = null,
                                         tint = colors.textPrimary,
                                         modifier = Modifier.size(18.dp)
@@ -773,8 +773,9 @@ fun ReceiptEditorScreen(
                                     hasUnsavedChanges = true
                                 },
                                 label = K.remarks.tr(),
-                                maxLines = 3,
-                                singleLine = false
+                                singleLine = false,
+                                minLines = 2,
+                                maxLines = 6
                             )
                         }
                     }

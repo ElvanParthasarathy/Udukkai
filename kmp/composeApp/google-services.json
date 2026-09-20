@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "255349876806",
+    "project_id": "test-niril",
+    "storage_bucket": "test-niril.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:255349876806:android:cd144d109b63ae875c8247",
+        "android_client_info": {
+          "package_name": "com.elvan.udukkai"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC1JUQCKmF3Tije54mPhf3-DlHjlYzpV74"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

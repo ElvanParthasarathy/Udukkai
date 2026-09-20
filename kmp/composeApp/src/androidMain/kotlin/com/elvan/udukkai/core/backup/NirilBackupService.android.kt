@@ -19,6 +19,7 @@ class AndroidNirilBackupService : NirilBackupService {
     }
 
     private fun getBackupFile(): File = File(getBackupDir(), "udukkai_backup.db")
+    private fun getSafetySnapshotFile(): File = File(getBackupDir(), "udukkai_safety_snapshot.db")
 
     private fun getCoolieDbPath(): String {
         if (!AppContext.isInitialized) return ""
@@ -57,7 +58,7 @@ class AndroidNirilBackupService : NirilBackupService {
         }
     }
 
-    override fun createBackup(): Boolean {
+    private fun packToFile(targetFile: File): Boolean {
         return try {
             checkpointWal(getCoolieDbPath())
             checkpointWal(getSilkDbPath())
@@ -78,28 +79,26 @@ class AndroidNirilBackupService : NirilBackupService {
                 }
             }
 
-            val backupFile = getBackupFile()
-            backupFile.parentFile?.mkdirs()
-            FileOutputStream(backupFile).use { fos ->
+            targetFile.parentFile?.mkdirs()
+            FileOutputStream(targetFile).use { fos ->
                 fos.write(header.array())
                 for (bytes in fileBytesList) {
                     if (bytes.isNotEmpty()) fos.write(bytes)
                 }
             }
-            Log.i(tag, "Backup created: ${backupFile.absolutePath} (${backupFile.length()} bytes)")
+            Log.i(tag, "Packed to: ${targetFile.absolutePath} (${targetFile.length()} bytes)")
             true
         } catch (e: Exception) {
-            Log.e(tag, "Backup failed: ${e.message}", e)
+            Log.e(tag, "Pack failed for ${targetFile.absolutePath}: ${e.message}", e)
             false
         }
     }
 
-    override fun restoreFromBackup(): Boolean {
+    private fun unpackFromFile(sourceFile: File): Boolean {
         return try {
-            val backupFile = getBackupFile()
-            if (!backupFile.exists() || backupFile.length() < 48) return false
+            if (!sourceFile.exists() || sourceFile.length() < 48) return false
 
-            val allBytes = backupFile.readBytes()
+            val allBytes = sourceFile.readBytes()
             val header = ByteBuffer.wrap(allBytes, 0, 48).order(ByteOrder.LITTLE_ENDIAN)
             var offset = 48
 
@@ -117,13 +116,17 @@ class AndroidNirilBackupService : NirilBackupService {
                     if (file.exists()) file.delete()
                 }
             }
-            Log.i(tag, "Restore completed from ${backupFile.absolutePath}")
+            Log.i(tag, "Restore completed from ${sourceFile.absolutePath}")
             true
         } catch (e: Exception) {
-            Log.e(tag, "Restore failed: ${e.message}", e)
+            Log.e(tag, "Unpack failed from ${sourceFile.absolutePath}: ${e.message}", e)
             false
         }
     }
+
+    override fun createBackup(): Boolean = packToFile(getBackupFile())
+
+    override fun restoreFromBackup(): Boolean = unpackFromFile(getBackupFile())
 
     override fun hasBackup(): Boolean {
         return try {
@@ -142,6 +145,38 @@ class AndroidNirilBackupService : NirilBackupService {
     override fun getBackupStats(): BackupStats? {
         return try {
             val f = getBackupFile()
+            if (f.exists()) BackupStats(f.lastModified(), f.length()) else null
+        } catch (_: Exception) { null }
+    }
+
+    // --- Copy 2: Protected Safety Vault (Anti-Erasure Guard) ---
+
+    override fun createSafetySnapshot(): Boolean {
+        val ok = packToFile(getSafetySnapshotFile())
+        if (ok) {
+            Log.i(tag, "Copy 2 Safety Snapshot created successfully at ${getSafetySnapshotFile().absolutePath}")
+        }
+        return ok
+    }
+
+    override fun restoreFromSafetySnapshot(): Boolean {
+        val ok = unpackFromFile(getSafetySnapshotFile())
+        if (ok) {
+            Log.i(tag, "Restored from Copy 2 Safety Snapshot!")
+        }
+        return ok
+    }
+
+    override fun hasSafetySnapshot(): Boolean {
+        return try {
+            val f = getSafetySnapshotFile()
+            f.exists() && f.length() > 48
+        } catch (_: Exception) { false }
+    }
+
+    override fun getSafetySnapshotStats(): BackupStats? {
+        return try {
+            val f = getSafetySnapshotFile()
             if (f.exists()) BackupStats(f.lastModified(), f.length()) else null
         } catch (_: Exception) { null }
     }

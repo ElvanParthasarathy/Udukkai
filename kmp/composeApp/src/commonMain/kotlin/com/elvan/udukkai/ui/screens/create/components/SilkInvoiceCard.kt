@@ -90,7 +90,7 @@ fun SilkInvoiceCard(
             )
 
             ElvanCardLeadingIcon(
-                icon = MaterialSymbols.Rounded.DescriptionFill,
+                icon = MaterialSymbols.Rounded.InvoiceFill,
                 tint = colors.invoiceColor
             )
 

@@ -21,10 +21,12 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.elvan.udukkai.core.mode.AppMode
 import com.elvan.udukkai.core.utils.CurrencyUtils
 import com.elvan.udukkai.data.model.PorulTharavuru
 import com.elvan.udukkai.data.repository.PorulRepository
 import com.elvan.udukkai.localization.K
+import com.elvan.udukkai.localization.PrintLanguageManager
 import com.elvan.udukkai.localization.tr
 import com.elvan.udukkai.theme.LocalAppFontFamily
 import com.elvan.udukkai.theme.preventBrokenLigatures
@@ -61,7 +63,7 @@ fun PattuUrupadiAttai(
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .padding(bottom = 16.dp)
+            .padding(bottom = if (index < itemCount - 1) 12.dp else 0.dp)
     ) {
         // ── Header: "பொருள் #N" + trash icon ──
         Row(
@@ -109,7 +111,20 @@ fun PattuUrupadiAttai(
             Column(modifier = Modifier.fillMaxWidth()) {
                 ElvanThiruthiThalaippu(label = K.product.tr())
 
-                val displayName = item.porulPeyar.ifEmpty { item.porulPeyarEn }
+                val config = PrintLanguageManager.getConfig(AppMode.PATTU)
+                val primaryName = if (item.mozhiMap.isNotEmpty()) {
+                    item.mozhiMap[config.primaryLanguage.code] ?: item.mozhiMap.values.firstOrNull().orEmpty()
+                } else {
+                    item.porulPeyar
+                }
+                val secondaryName = if (config.isBilingual) {
+                    if (item.mozhiMap.isNotEmpty()) {
+                        item.mozhiMap[config.secondaryLanguage.code].orEmpty()
+                    } else {
+                        item.porulPeyarEn
+                    }
+                } else ""
+                val displayName = primaryName.ifEmpty { secondaryName }
                 val containerBg = colors.iconBg
 
                 Box(
@@ -169,35 +184,44 @@ fun PattuUrupadiAttai(
                     }
                 }
 
-                // Subtitle Info (English name • GST%)
-                if (item.porulPeyarEn.isNotEmpty() && item.porulPeyarEn != item.porulPeyar) {
+                // Subtitle Info (Secondary/English name • GST%)
+                val subtitleParts = mutableListOf<String>()
+                if (config.isBilingual && secondaryName.isNotEmpty() && secondaryName != displayName) {
+                    subtitleParts.add(secondaryName)
+                }
+                if (item.variVizhukkaadu > 0) {
+                    subtitleParts.add("GST ${item.variVizhukkaadu.toInt()}%")
+                }
+                if (subtitleParts.isNotEmpty()) {
                     Text(
-                        text = "${item.porulPeyarEn}  •  GST ${item.variVizhukkaadu.toInt()}%",
+                        text = subtitleParts.joinToString("  •  "),
                         style = TextStyle(
                             fontFamily = ff,
                             fontSize = 12.sp,
                             color = colors.textSecondary
                         ),
-                        modifier = Modifier.padding(start = 12.dp, top = 4.dp)
+                        modifier = Modifier.padding(start = 20.dp, end = 20.dp, top = 4.dp)
                     )
                 }
             }
 
             // ── Quantity & Rate Row ──
+            val isWeightItem = item.alagu.equals("kg", ignoreCase = true)
+
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(10.dp)
             ) {
                 Box(modifier = Modifier.weight(1f)) {
                     ElvanThiruthiUlleedu(
-                        label = K.quantity.tr(),
+                        label = if (isWeightItem) K.weight.tr() else K.quantity.tr(),
                         value = if (item.alavu == 0.0) "" else if (item.alavu % 1.0 == 0.0) item.alavu.toInt().toString() else item.alavu.toString(),
                         onValueChange = { str ->
                             val qty = str.toDoubleOrNull() ?: 0.0
                             onItemUpdated(item.copy(alavu = qty))
                             onDirty()
                         },
-                        placeholder = "1",
+                        placeholder = if (isWeightItem) "0.000" else "1",
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
                     )
                 }
@@ -282,13 +306,15 @@ fun PattuUrupadiAttai(
             showSearch = true,
             onDismissRequest = { isPickerOpen = false },
             onSelected = { selected ->
-                val primaryName = selected.porulPeyar["ta"] ?: selected.porulPeyar.values.firstOrNull().orEmpty()
-                val secondaryName = selected.porulPeyar["en"] ?: ""
+                val config = PrintLanguageManager.getConfig(AppMode.PATTU)
+                val primaryName = selected.porulPeyar[config.primaryLanguage.code] ?: selected.porulPeyar.values.firstOrNull().orEmpty()
+                val secondaryName = if (config.isBilingual) selected.porulPeyar[config.secondaryLanguage.code].orEmpty() else ""
                 onItemUpdated(
                     item.copy(
                         porulId = selected.id.toString(),
                         porulPeyar = primaryName,
                         porulPeyarEn = secondaryName,
+                        mozhiMap = selected.porulPeyar,
                         hsnKuriyeedu = selected.hsnCode,
                         vilai = selected.vilai,
                         variVizhukkaadu = if (selected.variVeetham > 0) selected.variVeetham else 5.0,
@@ -299,12 +325,14 @@ fun PattuUrupadiAttai(
                 isPickerOpen = false
             },
             itemLabelBuilder = { p ->
-                p.porulPeyar["ta"] ?: p.porulPeyar.values.firstOrNull().orEmpty()
+                val config = PrintLanguageManager.getConfig(AppMode.PATTU)
+                p.porulPeyar[config.primaryLanguage.code] ?: p.porulPeyar.values.firstOrNull().orEmpty()
             },
             subtitleBuilder = { p ->
-                val enName = p.porulPeyar["en"].orEmpty()
+                val config = PrintLanguageManager.getConfig(AppMode.PATTU)
+                val subName = if (config.isBilingual) p.porulPeyar[config.secondaryLanguage.code].orEmpty() else ""
                 val priceStr = if (p.vilai > 0) CurrencyUtils.formatInr(p.vilai) else ""
-                listOf(enName, priceStr).filter { it.isNotEmpty() }.joinToString("  •  ")
+                listOf(subName, priceStr).filter { it.isNotEmpty() }.joinToString("  •  ")
             },
             searchFilter = { p, query ->
                 val q = query.lowercase()

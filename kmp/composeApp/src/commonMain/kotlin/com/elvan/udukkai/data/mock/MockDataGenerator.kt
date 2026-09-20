@@ -588,14 +588,21 @@ object SodhanaiTharavuUruvakki {
      * Swaps primary and secondary data languages on the currently active profile.
      */
     suspend fun swapDataLanguages(): String {
-        val profile = NiruvanaTharavugalRepository.getProfile(ModeManager.currentMode)
-        val currentPrimary = profile.mudhanMozhi
-        val currentSecondary = profile.thunaiMozhi
-        val updated = profile.copy(
-            mudhanMozhi = currentSecondary,
-            thunaiMozhi = currentPrimary
-        )
-        NiruvanaTharavugalRepository.updateProfile(ModeManager.currentMode, updated)
+        val mode = ModeManager.currentMode
+        val allProfiles = NiruvanaTharavugalRepository.getAllProfiles(mode)
+        val activeProfile = NiruvanaTharavugalRepository.getProfile(mode)
+        val currentPrimary = activeProfile.mudhanMozhi.ifEmpty { "ta" }
+        val currentSecondary = activeProfile.thunaiMozhi.ifEmpty { "en" }
+
+        allProfiles.forEach { p ->
+            val pPrimary = p.mudhanMozhi.ifEmpty { "ta" }
+            val pSecondary = p.thunaiMozhi.ifEmpty { "en" }
+            val updated = p.copy(
+                mudhanMozhi = if (pPrimary == currentPrimary) currentSecondary else currentPrimary,
+                thunaiMozhi = if (pSecondary == currentSecondary) currentPrimary else currentSecondary
+            )
+            NiruvanaTharavugalRepository.updateProfile(mode, updated)
+        }
         NiruvanaTharavugalRepository.refreshFromDatabase()
         try {
             getNirilBackupService().createBackup()

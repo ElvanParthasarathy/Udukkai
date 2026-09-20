@@ -120,3 +120,10 @@ fun String.trWithLang(langCode: String): String {
         else -> en[this] ?: ta[this] ?: this
     }
 }
+
+/**
+ * Non-composable translation using LanguageManager.activeLanguageCode.
+ * Ideal for non-composable event handlers, repositories, or background tasks.
+ */
+fun String.trStatic(): String = trWithLang(LanguageManager.activeLanguageCode)
+

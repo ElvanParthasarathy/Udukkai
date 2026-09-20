@@ -5,6 +5,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.relocation.BringIntoViewRequester
+import androidx.compose.foundation.relocation.bringIntoViewRequester
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
@@ -16,9 +18,12 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -68,7 +73,7 @@ fun ElvanEditorSection(
         // Section Header Row
         Row(
             verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.padding(horizontal = 4.dp)
+            modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 4.dp)
         ) {
             // Numbered Circle Badge
             Box(
@@ -177,7 +182,7 @@ fun ElvanThiruthiThalaippu(
             fontWeight = FontWeight.Medium,
             color = colors.textSecondary
         ),
-        modifier = modifier.padding(start = 6.dp, bottom = 4.dp)
+        modifier = modifier.padding(start = 16.dp, bottom = 4.dp)
     )
 }
 
@@ -202,7 +207,8 @@ fun ElvanThiruthiUlleedu(
     suffixIcon: @Composable (() -> Unit)? = null,
     enabled: Boolean = true,
     singleLine: Boolean = true,
-    maxLines: Int = 1,
+    minLines: Int = if (singleLine) 1 else 2,
+    maxLines: Int = if (singleLine) 1 else 6,
     keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
     keyboardActions: KeyboardActions = KeyboardActions.Default,
     errorMessage: String? = null,
@@ -211,12 +217,27 @@ fun ElvanThiruthiUlleedu(
     val colors = rememberShellColors()
     val isDark = colors.isDark
     val ff = LocalAppFontFamily.current
+    val bringIntoViewRequester = remember { BringIntoViewRequester() }
+    val coroutineScope = rememberCoroutineScope()
+    var isFocused by remember { mutableStateOf(false) }
+    val imeBottom = com.elvan.udukkai.core.platform.getImeBottomPadding()
+
+    // As keyboard opens or expands while this field has focus, smoothly bring it into view
+    LaunchedEffect(isFocused, imeBottom) {
+        if (isFocused && imeBottom > 0.dp) {
+            try {
+                bringIntoViewRequester.bringIntoView()
+            } catch (_: Exception) {}
+        }
+    }
 
     val containerBg = backgroundColor ?: colors.iconBg
     val shape = if (singleLine) RoundedCornerShape(100.dp) else RoundedCornerShape(16.dp)
 
     Column(
-        modifier = modifier.fillMaxWidth()
+        modifier = modifier
+            .fillMaxWidth()
+            .bringIntoViewRequester(bringIntoViewRequester)
     ) {
         if (!label.isNullOrBlank()) {
             ElvanThiruthiThalaippu(label = label)
@@ -225,7 +246,16 @@ fun ElvanThiruthiUlleedu(
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .then(if (singleLine) Modifier.height(48.dp) else Modifier.heightIn(min = 48.dp, max = 120.dp))
+                .then(
+                    if (singleLine) {
+                        Modifier.height(48.dp)
+                    } else {
+                        Modifier.heightIn(
+                            min = (24 + (minLines * 22)).dp,
+                            max = (24 + (maxLines.coerceAtLeast(minLines) * 22)).dp
+                        )
+                    }
+                )
                 .clip(shape)
                 .background(containerBg)
                 .padding(horizontal = 20.dp, vertical = if (singleLine) 0.dp else 12.dp),
@@ -275,6 +305,7 @@ fun ElvanThiruthiUlleedu(
                         onValueChange = onValueChange,
                         enabled = enabled,
                         singleLine = singleLine,
+                        minLines = minLines,
                         maxLines = maxLines,
                         keyboardOptions = keyboardOptions,
                         keyboardActions = keyboardActions,
@@ -285,7 +316,22 @@ fun ElvanThiruthiUlleedu(
                             fontWeight = FontWeight.Normal,
                             color = if (enabled) colors.textPrimary else colors.textSecondary
                         ),
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .onFocusChanged { focusState ->
+                                isFocused = focusState.isFocused
+                                if (focusState.isFocused) {
+                                    coroutineScope.launch {
+                                        try { bringIntoViewRequester.bringIntoView() } catch (_: Exception) {}
+                                        delay(100)
+                                        try { bringIntoViewRequester.bringIntoView() } catch (_: Exception) {}
+                                        delay(150)
+                                        try { bringIntoViewRequester.bringIntoView() } catch (_: Exception) {}
+                                        delay(150)
+                                        try { bringIntoViewRequester.bringIntoView() } catch (_: Exception) {}
+                                    }
+                                }
+                            }
                     )
                 }
 
@@ -338,6 +384,7 @@ fun ElvanIrumozhiPulan(
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
     maxLines: Int = 1,
+    minLines: Int = if (maxLines > 1) 2 else 1,
     placeholder: String? = null
 ) {
     val currentMode = LocalAppMode.current
@@ -352,6 +399,8 @@ fun ElvanIrumozhiPulan(
 
     val primaryValue = value[primaryLang] ?: ""
     val secondaryValue = value[secondaryLang] ?: ""
+
+    val isMultiline = maxLines > 1 || minLines > 1
 
     Column(
         modifier = modifier.fillMaxWidth(),
@@ -369,8 +418,9 @@ fun ElvanIrumozhiPulan(
                 label = "$label ($primaryLangLabel)",
                 placeholder = placeholder,
                 enabled = enabled,
-                singleLine = maxLines == 1,
-                maxLines = maxLines
+                singleLine = !isMultiline,
+                minLines = minLines,
+                maxLines = if (isMultiline) maxLines.coerceAtLeast(6) else 1
             )
         }
 
@@ -391,8 +441,9 @@ fun ElvanIrumozhiPulan(
                     label = "$label ($secondaryLangLabel)",
                     placeholder = placeholder,
                     enabled = enabled,
-                    singleLine = maxLines == 1,
-                    maxLines = maxLines
+                    singleLine = !isMultiline,
+                    minLines = minLines,
+                    maxLines = if (isMultiline) maxLines.coerceAtLeast(6) else 1
                 )
             }
         }

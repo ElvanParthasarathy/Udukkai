@@ -124,9 +124,8 @@ fun ElvanCollapsedBar(
             modifier = Modifier.fillMaxWidth()
         ) { inSelection ->
             if (inSelection) {
-                val isTamil = LocalAppLanguage.current.startsWith("ta")
-                val selectAllLabel = if (isTamil) "எல்லாம்" else "All"
-                val cancelLabel = if (isTamil) "கைவிடு" else "Cancel"
+                val selectAllLabel = K.all.tr()
+                val cancelLabel = K.cancelBtn.tr()
                 val isCollapsed = liftProgress >= 0.5f
 
                 val checkboxIcon = if (isAllSelected) {

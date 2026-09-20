@@ -53,12 +53,16 @@ fun StorageBackupSettingsScreen(
     var isBackingUp by remember { mutableStateOf(false) }
     var backupStats by remember { mutableStateOf(backupService.getBackupStats()) }
     var totalDbSize by remember { mutableStateOf(backupService.getTotalDatabaseSize().coerceAtLeast(128 * 1024L)) }
+    val availableLabel = K.available.tr()
+    val todayLabel = K.today.tr()
+    val backupFailedMsg = K.backupFailed.tr()
+    val backupSuccessMsg = K.backupSavedToDocuments.tr()
+
     var lastBackupTime by remember { 
         mutableStateOf(
-            if (backupStats != null) "உள்ளது" else null
+            if (backupStats != null) availableLabel else null
         ) 
     }
-    val backupSuccessMsg = K.backupSavedToDocuments.tr()
     val backupSize = backupStats?.sizeBytes ?: 0L
 
     fun formatBytes(bytes: Long): String {
@@ -314,10 +318,10 @@ fun StorageBackupSettingsScreen(
                     if (success) {
                         backupStats = backupService.getBackupStats()
                         totalDbSize = backupService.getTotalDatabaseSize().coerceAtLeast(128 * 1024L)
-                        lastBackupTime = "இன்று"
+                        lastBackupTime = todayLabel
                         ElvanSnackbar.show(backupSuccessMsg)
                     } else {
-                        ElvanSnackbar.show("காப்புப்பிரதி தோல்வியடைந்தது")
+                        ElvanSnackbar.show(backupFailedMsg)
                     }
                 }
             },

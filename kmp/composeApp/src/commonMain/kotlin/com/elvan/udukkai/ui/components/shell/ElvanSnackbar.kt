@@ -72,7 +72,7 @@ fun ElvanSnackbarHost(
     // When BottomNavBar is not present (subpages, settings, editors):
     // Position cleanly above system navigation bar with standard breathing room.
     val effectiveBottomPadding = if (ElvanSnackbar.isBottomBarVisible) {
-        navBarsPadding + 88.dp
+        navBarsPadding + 90.dp
     } else {
         val isThreeButtonNav = navBarsPadding >= 36.dp
         if (isThreeButtonNav) {

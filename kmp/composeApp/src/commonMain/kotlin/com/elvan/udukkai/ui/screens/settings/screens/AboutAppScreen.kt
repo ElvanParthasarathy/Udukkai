@@ -84,7 +84,7 @@ fun AboutAppScreen(
                 Spacer(modifier = Modifier.height(10.dp))
 
                 Text(
-                    text = "நூலாசு",
+                    text = K.appName.tr(),
                     style = TextStyle(
                         fontFamily = ff,
                         fontSize = 24.sp,
@@ -124,32 +124,32 @@ fun AboutAppScreen(
             ElvanSettingsSection(colors = colors) {
                 ElvanSettingsRow(
                     icon = MaterialSymbols.Rounded.Description,
-                    title = "பட்டியல் / பற்றுச்சீட்டு",
-                    description = "இலகுவான பட்டியல் & பற்றுச்சீட்டு உருவாக்கம்",
+                    title = "${K.invoice.tr()} / ${K.receipt.tr()}",
+                    description = K.easyInvoiceReceiptCreation.tr(),
                     onClick = {},
                     colors = colors
                 )
                 ElvanSettingsDivider(colors = colors)
                 ElvanSettingsRow(
                     icon = MaterialSymbols.Rounded.BusinessCenter,
-                    title = "வாங்குனர்கள்",
-                    description = "வாங்குனர் தரவுகள் நிர்வாகம்",
+                    title = K.customers.tr(),
+                    description = K.customerDataManagement.tr(),
                     onClick = {},
                     colors = colors
                 )
                 ElvanSettingsDivider(colors = colors)
                 ElvanSettingsRow(
                     icon = MaterialSymbols.Rounded.Inventory2,
-                    title = "பொருட்கள்",
-                    description = "பொருட்கள் சேர்க்கை & நிர்வாகம்",
+                    title = K.products.tr(),
+                    description = K.productInventoryManagement.tr(),
                     onClick = {},
                     colors = colors
                 )
                 ElvanSettingsDivider(colors = colors)
                 ElvanSettingsRow(
                     icon = MaterialSymbols.Rounded.Storage,
-                    title = "ஒருங்கிணைந்த தரவு",
-                    description = "ஒரே தரவுத்தளத்தில் முழு வணிகத் தரவு",
+                    title = K.unifiedDatabase.tr(),
+                    description = K.unifiedDatabaseDesc.tr(),
                     onClick = {},
                     colors = colors
                 )

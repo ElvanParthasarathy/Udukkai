@@ -43,6 +43,9 @@ import com.elvan.udukkai.ui.components.shell.ElvanSelectionBottomSheet
 import com.elvan.udukkai.ui.components.shell.ElvanSubShell
 import com.elvan.udukkai.ui.components.shell.LocalElvanTopSpacerHeight
 import com.elvan.udukkai.ui.navigation.MaterialSymbols
+import androidx.compose.ui.zIndex
+import com.elvan.udukkai.ui.screens.editor.customer.CustomerEditorScreen
+import com.elvan.udukkai.ui.screens.editor.product.ProductEditorScreen
 import com.elvan.udukkai.ui.screens.editor.ElvanEditorSection
 import com.elvan.udukkai.ui.screens.editor.ElvanThiruthiThalaippu
 import com.elvan.udukkai.ui.screens.editor.LocalEditorAccentColor
@@ -134,6 +137,8 @@ fun SilkInvoiceEditorScreen(
         )
     }
     var isInvoiceNumberOverridden by remember { mutableStateOf(isEditing) }
+    var showAddProductEditor by remember { mutableStateOf(false) }
+    var showAddCustomerEditor by remember { mutableStateOf(false) }
 
     // Customer
     var selectedVaangunarId by remember { mutableStateOf(invoice?.vaangunarId) }
@@ -169,6 +174,9 @@ fun SilkInvoiceEditorScreen(
             }
         )
     }
+    val initialItemIds = remember { items.map { it.id }.toSet() }
+    var deletingIds by remember { mutableStateOf(setOf<String>()) }
+    val activeItems = remember(items, deletingIds) { items.filter { it.id !in deletingIds } }
 
     // Global discount
     var globalDiscountValue by remember {
@@ -297,10 +305,10 @@ fun SilkInvoiceEditorScreen(
         ?: selectedProfile?.maanilam?.get("ta")
         ?: "Tamil Nadu"
 
-    val totals = remember(items, globalDiscountValue, globalDiscountType, businessState, placeOfSupplyEn) {
+    val totals = remember(activeItems, globalDiscountValue, globalDiscountType, businessState, placeOfSupplyEn) {
         val discountDouble = globalDiscountValue.toDoubleOrNull() ?: 0.0
         PattuKanakku.calculate(
-            items = items,
+            items = activeItems,
             globalDiscountValue = discountDouble,
             globalDiscountType = globalDiscountType,
             businessState = businessState,
@@ -540,7 +548,7 @@ fun SilkInvoiceEditorScreen(
                                 customerState = ""
                                 hasUnsavedChanges = true
                             },
-                            onRequestAddNewCustomer = onRequestAddNewCustomer
+                            onRequestAddNewCustomer = { showAddCustomerEditor = true }
                         )
                     }
                 }
@@ -607,65 +615,83 @@ fun SilkInvoiceEditorScreen(
             item(key = "line_items_section") {
                 FormLockWrapper(isLocked = isFormLocked) {
                     ElvanEditorSection(index = baseIndex + 2, title = K.products.tr()) {
-                        ElvanAsaiPattiyal {
-                            items.forEachIndexed { idx, lineItem ->
-                                PattuUrupadiAttai(
-                                    item = lineItem,
-                                    index = idx,
-                                    itemCount = items.size,
-                                    onItemUpdated = { updated ->
-                                        items = items.toMutableList().also { it[idx] = updated }
-                                        hasUnsavedChanges = true
-                                        errorMessage = null
-                                    },
-                                    onItemDeleted = {
-                                        items = items.toMutableList().also { it.removeAt(idx) }
-                                        hasUnsavedChanges = true
-                                    },
-                                    onItemCleared = {
-                                        items = items.toMutableList().also { it[idx] = PattuUrupadi() }
-                                        hasUnsavedChanges = true
-                                    },
-                                    onDirty = { hasUnsavedChanges = true },
-                                    onRequestAddNewProduct = onRequestAddNewProduct
-                                )
-                            }
-                        }
-
-                        Spacer(modifier = Modifier.height(16.dp))
-
-                        // "+ Add New Item" stadium pill button (matching Flutter + சேர்)
-                        Box(
+                        Column(
                             modifier = Modifier.fillMaxWidth(),
-                            contentAlignment = Alignment.CenterStart
+                            verticalArrangement = Arrangement.spacedBy(10.dp)
                         ) {
-                            Box(
-                                modifier = Modifier
-                                    .clip(RoundedCornerShape(999.dp))
-                                    .background(if (isDark) Color.White.copy(alpha = 0.08f) else Color.White)
-                                    .clickable {
-                                        items = items + PattuUrupadi()
-                                        hasUnsavedChanges = true
+                            ElvanAsaiPattiyal {
+                                items.forEachIndexed { idx, lineItem ->
+                                    key(lineItem.id) {
+                                        ElvanAsaiCard(
+                                            key = lineItem.id,
+                                            isInitial = lineItem.id in initialItemIds,
+                                            onDeleted = {
+                                                deletingIds = deletingIds - lineItem.id
+                                                items = items.filter { it.id != lineItem.id }
+                                                hasUnsavedChanges = true
+                                            }
+                                        ) { requestDelete ->
+                                            PattuUrupadiAttai(
+                                                item = lineItem,
+                                                index = idx,
+                                                itemCount = activeItems.size,
+                                                onItemUpdated = { updated ->
+                                                    items = items.map { if (it.id == lineItem.id) updated else it }
+                                                    hasUnsavedChanges = true
+                                                    errorMessage = null
+                                                },
+                                                onItemDeleted = {
+                                                    if (activeItems.size > 1) {
+                                                        deletingIds = deletingIds + lineItem.id
+                                                        hasUnsavedChanges = true
+                                                        requestDelete()
+                                                    }
+                                                },
+                                                onItemCleared = {
+                                                    items = items.map { if (it.id == lineItem.id) PattuUrupadi(id = lineItem.id) else it }
+                                                    hasUnsavedChanges = true
+                                                },
+                                                onDirty = { hasUnsavedChanges = true },
+                                                onRequestAddNewProduct = { showAddProductEditor = true }
+                                            )
+                                        }
                                     }
-                                    .padding(horizontal = 24.dp, vertical = 12.dp)
+                                }
+                            }
+
+                            // "+ Add New Item" stadium pill button (matching Flutter + சேர்)
+                            Box(
+                                modifier = Modifier.fillMaxWidth(),
+                                contentAlignment = Alignment.CenterStart
                             ) {
-                                Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Icon(
-                                        imageVector = MaterialSymbols.Rounded.Add,
-                                        contentDescription = null,
-                                        tint = colors.textPrimary,
-                                        modifier = Modifier.size(18.dp)
-                                    )
-                                    Spacer(modifier = Modifier.width(6.dp))
-                                    Text(
-                                        text = K.addBtn.tr().preventBrokenLigatures(),
-                                        style = TextStyle(
-                                            fontFamily = ff,
-                                            fontSize = 14.sp,
-                                            fontWeight = FontWeight.SemiBold,
-                                            color = colors.textPrimary
+                                Box(
+                                    modifier = Modifier
+                                        .clip(RoundedCornerShape(999.dp))
+                                        .background(if (isDark) Color.White.copy(alpha = 0.08f) else Color.White)
+                                        .clickable {
+                                            items = items + PattuUrupadi()
+                                            hasUnsavedChanges = true
+                                        }
+                                        .padding(horizontal = 24.dp, vertical = 12.dp)
+                                ) {
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        Icon(
+                                            imageVector = MaterialSymbols.Rounded.Add,
+                                            contentDescription = null,
+                                            tint = colors.textPrimary,
+                                            modifier = Modifier.size(18.dp)
                                         )
-                                    )
+                                        Spacer(modifier = Modifier.width(6.dp))
+                                        Text(
+                                            text = K.addBtn.tr().preventBrokenLigatures(),
+                                            style = TextStyle(
+                                                fontFamily = ff,
+                                                fontSize = 14.sp,
+                                                fontWeight = FontWeight.SemiBold,
+                                                color = colors.textPrimary
+                                            )
+                                        )
+                                    }
                                 }
                             }
                         }
@@ -786,5 +812,42 @@ fun SilkInvoiceEditorScreen(
                 pendingDraftJson = null
             }
         )
+    }
+
+    // ── In-Editor Full-Screen Overlays (Add Product / Add Customer) ──
+    if (showAddProductEditor) {
+        AppBackHandler { showAddProductEditor = false }
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(colors.background)
+                .zIndex(100f)
+        ) {
+            ProductEditorScreen(
+                item = null,
+                onBack = {
+                    showAddProductEditor = false
+                    PorulRepository.loadAll(AppMode.PATTU)
+                }
+            )
+        }
+    }
+
+    if (showAddCustomerEditor) {
+        AppBackHandler { showAddCustomerEditor = false }
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(colors.background)
+                .zIndex(100f)
+        ) {
+            CustomerEditorScreen(
+                merchant = null,
+                onBack = {
+                    showAddCustomerEditor = false
+                    VaangunarRepository.loadAll(AppMode.PATTU)
+                }
+            )
+        }
     }
 }

@@ -92,6 +92,9 @@ object PatrugalRepository {
             val id = helper.saveReceipt(mode, receipt)
             if (id > 0L) {
                 loadAll(mode)
+                try {
+                    com.elvan.udukkai.core.sync.getFirebaseSyncManager().pushReceipt(receipt.copy(id = id), mode)
+                } catch (_: Exception) {}
             }
             id
         } catch (_: Exception) {
@@ -109,6 +112,12 @@ object PatrugalRepository {
             val id = helper.saveReceiptWithLinks(mode, receipt, links)
             if (id > 0L) {
                 loadAll(mode)
+                try {
+                    com.elvan.udukkai.core.sync.getFirebaseSyncManager().pushReceipt(receipt.copy(id = id), mode)
+                    if (links.isNotEmpty()) {
+                        com.elvan.udukkai.core.sync.getFirebaseSyncManager().pushReceiptLinks(id, links, mode)
+                    }
+                } catch (_: Exception) {}
             }
             id
         } catch (_: Exception) {
@@ -118,10 +127,19 @@ object PatrugalRepository {
 
     fun delete(id: Long, mode: AppMode = ModeManager.currentMode): Boolean {
         return try {
+            val existing = getById(id)
             val helper = getBusinessDatabaseHelper()
             val success = helper.deleteReceipt(mode, id)
             if (success) {
                 loadAll(mode)
+                loadDeleted(mode)
+                if (existing != null) {
+                    try {
+                        com.elvan.udukkai.core.sync.getFirebaseSyncManager().pushReceipt(
+                            existing.copy(isDeleted = true, deletedAt = System.currentTimeMillis()), mode
+                        )
+                    } catch (_: Exception) {}
+                }
             }
             success
         } catch (_: Exception) {
@@ -136,6 +154,14 @@ object PatrugalRepository {
             if (success) {
                 loadAll(mode)
                 loadDeleted(mode)
+                val restored = getById(id)
+                if (restored != null) {
+                    try {
+                        com.elvan.udukkai.core.sync.getFirebaseSyncManager().pushReceipt(
+                            restored.copy(isDeleted = false, deletedAt = null), mode
+                        )
+                    } catch (_: Exception) {}
+                }
             }
             success
         } catch (_: Exception) {

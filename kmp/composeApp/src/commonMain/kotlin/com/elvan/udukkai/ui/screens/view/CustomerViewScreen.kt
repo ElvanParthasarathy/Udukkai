@@ -96,10 +96,10 @@ fun CustomerViewScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(20.dp))
-                        .background(if (isDark) Color(0xFF1E3A5F).copy(alpha = 0.25f) else Color(0xFFE8F1FC))
+                        .background(if (isDark) Color.White.copy(alpha = 0.04f) else Color.Black.copy(alpha = 0.025f))
                         .border(
                             width = 1.dp,
-                            color = if (isDark) Color(0xFF3B82F6).copy(alpha = 0.25f) else Color(0xFF93C5FD).copy(alpha = 0.4f),
+                            color = if (isDark) Color.White.copy(alpha = 0.08f) else Color.Black.copy(alpha = 0.06f),
                             shape = RoundedCornerShape(20.dp)
                         )
                         .padding(24.dp)
@@ -113,7 +113,7 @@ fun CustomerViewScreen(
                             modifier = Modifier
                                 .size(64.dp)
                                 .clip(CircleShape)
-                                .background(if (isDark) Color(0xFF3B82F6).copy(alpha = 0.3f) else Color(0xFFBFDBFE)),
+                                .background(if (isDark) Color.White.copy(alpha = 0.08f) else Color.Black.copy(alpha = 0.06f)),
                             contentAlignment = Alignment.Center
                         ) {
                             Text(
@@ -122,7 +122,7 @@ fun CustomerViewScreen(
                                     fontFamily = ff,
                                     fontSize = 28.sp,
                                     fontWeight = FontWeight.Bold,
-                                    color = if (isDark) Color(0xFF93C5FD) else Color(0xFF1D4ED8)
+                                    color = colors.textPrimary
                                 )
                             )
                         }

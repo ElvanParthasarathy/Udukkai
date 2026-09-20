@@ -242,7 +242,14 @@ class AndroidBusinessDatabaseHelper : BusinessDatabaseHelper {
             val resultId: Long
             if (merchant.id > 0L) {
                 val updated = db.update(tableName, values, "id = ?", arrayOf(merchant.id.toString()))
-                resultId = if (updated > 0) merchant.id else -1L
+                if (updated > 0) {
+                    resultId = merchant.id
+                } else {
+                    values.put("id", merchant.id)
+                    val createdSec = if (merchant.createdAt > 10000000000L) merchant.createdAt / 1000 else if (merchant.createdAt > 0L) merchant.createdAt else nowSec
+                    values.put("created_at", createdSec)
+                    resultId = db.insertWithOnConflict(tableName, null, values, SQLiteDatabase.CONFLICT_REPLACE)
+                }
             } else {
                 val createdSec = if (merchant.createdAt > 10000000000L) merchant.createdAt / 1000 else if (merchant.createdAt > 0L) merchant.createdAt else nowSec
                 values.put("created_at", createdSec)
@@ -427,7 +434,14 @@ class AndroidBusinessDatabaseHelper : BusinessDatabaseHelper {
             val resultId: Long
             if (item.id > 0L) {
                 val updated = db.update(tableName, values, "id = ?", arrayOf(item.id.toString()))
-                resultId = if (updated > 0) item.id else -1L
+                if (updated > 0) {
+                    resultId = item.id
+                } else {
+                    values.put("id", item.id)
+                    val createdSec = if (item.createdAt > 10000000000L) item.createdAt / 1000 else if (item.createdAt > 0L) item.createdAt else nowSec
+                    values.put("created_at", createdSec)
+                    resultId = db.insertWithOnConflict(tableName, null, values, SQLiteDatabase.CONFLICT_REPLACE)
+                }
             } else {
                 val createdSec = if (item.createdAt > 10000000000L) item.createdAt / 1000 else if (item.createdAt > 0L) item.createdAt else nowSec
                 values.put("created_at", createdSec)
@@ -635,7 +649,14 @@ class AndroidBusinessDatabaseHelper : BusinessDatabaseHelper {
             val resultId: Long
             if (invoice.id > 0L) {
                 val updated = db.update(tableName, values, "id = ?", arrayOf(invoice.id.toString()))
-                resultId = if (updated > 0) invoice.id else -1L
+                if (updated > 0) {
+                    resultId = invoice.id
+                } else {
+                    values.put("id", invoice.id)
+                    val createdSec = if (invoice.createdAt > 10000000000L) invoice.createdAt / 1000 else if (invoice.createdAt > 0L) invoice.createdAt else nowSec
+                    values.put("created_at", createdSec)
+                    resultId = db.insertWithOnConflict(tableName, null, values, SQLiteDatabase.CONFLICT_REPLACE)
+                }
             } else {
                 val createdSec = if (invoice.createdAt > 10000000000L) invoice.createdAt / 1000 else if (invoice.createdAt > 0L) invoice.createdAt else nowSec
                 values.put("created_at", createdSec)
@@ -845,7 +866,14 @@ class AndroidBusinessDatabaseHelper : BusinessDatabaseHelper {
             val resultId: Long
             if (receipt.id > 0L) {
                 val updated = db.update(tableName, values, "id = ?", arrayOf(receipt.id.toString()))
-                resultId = if (updated > 0) receipt.id else -1L
+                if (updated > 0) {
+                    resultId = receipt.id
+                } else {
+                    values.put("id", receipt.id)
+                    val createdSec = if (receipt.createdAt > 10000000000L) receipt.createdAt / 1000 else if (receipt.createdAt > 0L) receipt.createdAt else nowSec
+                    values.put("created_at", createdSec)
+                    resultId = db.insertWithOnConflict(tableName, null, values, SQLiteDatabase.CONFLICT_REPLACE)
+                }
             } else {
                 val createdSec = if (receipt.createdAt > 10000000000L) receipt.createdAt / 1000 else if (receipt.createdAt > 0L) receipt.createdAt else nowSec
                 values.put("created_at", createdSec)

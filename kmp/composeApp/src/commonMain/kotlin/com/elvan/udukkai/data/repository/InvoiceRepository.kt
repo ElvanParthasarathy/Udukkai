@@ -99,6 +99,9 @@ object PattiyalRepository {
             val id = helper.saveInvoice(mode, invoice)
             if (id > 0L) {
                 loadAll(mode)
+                try {
+                    com.elvan.udukkai.core.sync.getFirebaseSyncManager().pushInvoice(invoice.copy(id = id), mode)
+                } catch (_: Exception) {}
             }
             id
         } catch (_: Exception) {
@@ -108,11 +111,19 @@ object PattiyalRepository {
 
     fun delete(id: Long, mode: AppMode = ModeManager.currentMode): Boolean {
         return try {
+            val existing = getById(id)
             val helper = getBusinessDatabaseHelper()
             val success = helper.deleteInvoice(mode, id)
             if (success) {
                 loadAll(mode)
                 loadDeleted(mode)
+                if (existing != null) {
+                    try {
+                        com.elvan.udukkai.core.sync.getFirebaseSyncManager().pushInvoice(
+                            existing.copy(isDeleted = true, deletedAt = System.currentTimeMillis()), mode
+                        )
+                    } catch (_: Exception) {}
+                }
             }
             success
         } catch (_: Exception) {
@@ -127,6 +138,14 @@ object PattiyalRepository {
             if (success) {
                 loadAll(mode)
                 loadDeleted(mode)
+                val restored = getById(id)
+                if (restored != null) {
+                    try {
+                        com.elvan.udukkai.core.sync.getFirebaseSyncManager().pushInvoice(
+                            restored.copy(isDeleted = false, deletedAt = null), mode
+                        )
+                    } catch (_: Exception) {}
+                }
             }
             success
         } catch (_: Exception) {

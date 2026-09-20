@@ -1,9 +1,13 @@
 package com.elvan.udukkai.ui.navigation
 
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.PathFillType
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.graphics.vector.PathParser
+import androidx.compose.ui.graphics.vector.path
 import androidx.compose.ui.unit.dp
 import com.composables.icons.materialsymbols.MaterialSymbols as LibSymbols
 import com.composables.icons.materialsymbols.rounded.*
@@ -42,22 +46,344 @@ object MaterialSymbols {
         ).build()
     }
 
+    // ── Invoice Icons (Google Material Symbols Rounded receipt_long) ──
+    private val InvoiceOutline: ImageVector by lazy {
+        ImageVector.Builder(
+            name = "receipt_long_outline",
+            defaultWidth = 24.dp,
+            defaultHeight = 24.dp,
+            viewportWidth = 24f,
+            viewportHeight = 24f,
+        ).apply {
+            path(
+                fill = SolidColor(Color.Black),
+                fillAlpha = 1f,
+                stroke = null,
+                strokeAlpha = 1f,
+                strokeLineWidth = 1f,
+                strokeLineCap = StrokeCap.Butt,
+                strokeLineJoin = StrokeJoin.Bevel,
+                strokeLineMiter = 1f,
+                pathFillType = PathFillType.Companion.NonZero,
+            ) {
+                moveTo(6f, 22f)
+                quadTo(4.75f, 22f, 3.88f, 21.13f)
+                reflectiveQuadTo(3f, 19f)
+                verticalLineTo(17f)
+                quadTo(3f, 16.58f, 3.29f, 16.29f)
+                reflectiveQuadTo(4f, 16f)
+                horizontalLineTo(6f)
+                verticalLineTo(2.6f)
+                quadTo(6f, 2.42f, 6.15f, 2.36f)
+                reflectiveQuadTo(6.43f, 2.42f)
+                lineTo(7.15f, 3.15f)
+                quadTo(7.3f, 3.3f, 7.5f, 3.3f)
+                reflectiveQuadTo(7.85f, 3.15f)
+                lineToRelative(0.8f, -0.8f)
+                quadTo(8.8f, 2.2f, 9f, 2.2f)
+                reflectiveQuadTo(9.35f, 2.35f)
+                lineToRelative(0.8f, 0.8f)
+                quadTo(10.3f, 3.3f, 10.5f, 3.3f)
+                reflectiveQuadTo(10.85f, 3.15f)
+                lineToRelative(0.8f, -0.8f)
+                quadTo(11.8f, 2.2f, 12f, 2.2f)
+                reflectiveQuadToRelative(0.35f, 0.15f)
+                lineToRelative(0.8f, 0.8f)
+                quadTo(13.3f, 3.3f, 13.5f, 3.3f)
+                reflectiveQuadTo(13.85f, 3.15f)
+                lineToRelative(0.8f, -0.8f)
+                quadTo(14.8f, 2.2f, 15f, 2.2f)
+                reflectiveQuadToRelative(0.35f, 0.15f)
+                lineToRelative(0.8f, 0.8f)
+                quadTo(16.3f, 3.3f, 16.5f, 3.3f)
+                reflectiveQuadTo(16.85f, 3.15f)
+                lineToRelative(0.8f, -0.8f)
+                quadTo(17.8f, 2.2f, 18f, 2.2f)
+                reflectiveQuadToRelative(0.35f, 0.15f)
+                lineToRelative(0.8f, 0.8f)
+                quadTo(19.3f, 3.3f, 19.5f, 3.3f)
+                reflectiveQuadTo(19.85f, 3.15f)
+                lineTo(20.58f, 2.42f)
+                quadTo(20.7f, 2.3f, 20.85f, 2.36f)
+                reflectiveQuadTo(21f, 2.6f)
+                verticalLineTo(19f)
+                quadToRelative(0f, 1.25f, -0.88f, 2.13f)
+                reflectiveQuadTo(18f, 22f)
+                horizontalLineTo(6f)
+                close()
+                moveTo(18f, 20f)
+                quadToRelative(0.43f, 0f, 0.71f, -0.29f)
+                quadTo(19f, 19.43f, 19f, 19f)
+                verticalLineTo(5f)
+                horizontalLineTo(8f)
+                verticalLineTo(16f)
+                horizontalLineToRelative(8f)
+                quadToRelative(0.43f, 0f, 0.71f, 0.29f)
+                reflectiveQuadTo(17f, 17f)
+                verticalLineToRelative(2f)
+                quadToRelative(0f, 0.43f, 0.29f, 0.71f)
+                reflectiveQuadTo(18f, 20f)
+                close()
+                moveTo(10f, 7f)
+                horizontalLineToRelative(4f)
+                quadToRelative(0.43f, 0f, 0.71f, 0.29f)
+                reflectiveQuadTo(15f, 8f)
+                quadToRelative(0f, 0.42f, -0.29f, 0.71f)
+                reflectiveQuadTo(14f, 9f)
+                horizontalLineTo(10f)
+                quadTo(9.58f, 9f, 9.29f, 8.71f)
+                reflectiveQuadTo(9f, 8f)
+                quadTo(9f, 7.57f, 9.29f, 7.29f)
+                quadTo(9.58f, 7f, 10f, 7f)
+                close()
+                moveToRelative(0f, 3f)
+                horizontalLineToRelative(4f)
+                quadToRelative(0.43f, 0f, 0.71f, 0.29f)
+                reflectiveQuadTo(15f, 11f)
+                reflectiveQuadToRelative(-0.29f, 0.71f)
+                reflectiveQuadTo(14f, 12f)
+                horizontalLineTo(10f)
+                quadTo(9.58f, 12f, 9.29f, 11.71f)
+                quadTo(9f, 11.43f, 9f, 11f)
+                reflectiveQuadTo(9.29f, 10.29f)
+                quadTo(9.58f, 10f, 10f, 10f)
+                close()
+                moveTo(17f, 9f)
+                quadTo(16.58f, 9f, 16.29f, 8.71f)
+                reflectiveQuadTo(16f, 8f)
+                quadTo(16f, 7.57f, 16.29f, 7.29f)
+                reflectiveQuadTo(17f, 7f)
+                reflectiveQuadToRelative(0.71f, 0.29f)
+                reflectiveQuadTo(18f, 8f)
+                quadToRelative(0f, 0.42f, -0.29f, 0.71f)
+                reflectiveQuadTo(17f, 9f)
+                close()
+                moveToRelative(0f, 3f)
+                quadToRelative(-0.43f, 0f, -0.71f, -0.29f)
+                quadTo(16f, 11.43f, 16f, 11f)
+                reflectiveQuadToRelative(0.29f, -0.71f)
+                reflectiveQuadTo(17f, 10f)
+                reflectiveQuadToRelative(0.71f, 0.29f)
+                reflectiveQuadTo(18f, 11f)
+                reflectiveQuadToRelative(-0.29f, 0.71f)
+                reflectiveQuadTo(17f, 12f)
+                close()
+                moveTo(6f, 20f)
+                horizontalLineToRelative(9f)
+                verticalLineTo(18f)
+                horizontalLineTo(5f)
+                verticalLineToRelative(1f)
+                quadToRelative(0f, 0.43f, 0.29f, 0.71f)
+                reflectiveQuadTo(6f, 20f)
+                close()
+                moveTo(5f, 20f)
+                quadToRelative(0f, 0f, 0f, -0.29f)
+                quadTo(5f, 19.43f, 5f, 19f)
+                verticalLineTo(18f)
+                verticalLineToRelative(2f)
+                close()
+            }
+        }.build()
+    }
+
+    private val InvoiceFilled: ImageVector by lazy {
+        ImageVector.Builder(
+            name = "receipt_long_fill",
+            defaultWidth = 24.dp,
+            defaultHeight = 24.dp,
+            viewportWidth = 24f,
+            viewportHeight = 24f,
+        ).apply {
+            path(
+                fill = SolidColor(Color.Black),
+                fillAlpha = 1f,
+                stroke = null,
+                strokeAlpha = 1f,
+                strokeLineWidth = 1f,
+                strokeLineCap = StrokeCap.Butt,
+                strokeLineJoin = StrokeJoin.Bevel,
+                strokeLineMiter = 1f,
+                pathFillType = PathFillType.Companion.NonZero,
+            ) {
+                moveTo(6f, 22f)
+                quadTo(4.75f, 22f, 3.88f, 21.13f)
+                reflectiveQuadTo(3f, 19f)
+                verticalLineTo(17f)
+                quadTo(3f, 16.58f, 3.29f, 16.29f)
+                reflectiveQuadTo(4f, 16f)
+                horizontalLineTo(6f)
+                verticalLineTo(2.6f)
+                quadTo(6f, 2.42f, 6.15f, 2.36f)
+                reflectiveQuadTo(6.43f, 2.42f)
+                lineTo(7.15f, 3.15f)
+                quadTo(7.3f, 3.3f, 7.5f, 3.3f)
+                reflectiveQuadTo(7.85f, 3.15f)
+                lineToRelative(0.8f, -0.8f)
+                quadTo(8.8f, 2.2f, 9f, 2.2f)
+                reflectiveQuadTo(9.35f, 2.35f)
+                lineToRelative(0.8f, 0.8f)
+                quadTo(10.3f, 3.3f, 10.5f, 3.3f)
+                reflectiveQuadTo(10.85f, 3.15f)
+                lineToRelative(0.8f, -0.8f)
+                quadTo(11.8f, 2.2f, 12f, 2.2f)
+                reflectiveQuadToRelative(0.35f, 0.15f)
+                lineToRelative(0.8f, 0.8f)
+                quadTo(13.3f, 3.3f, 13.5f, 3.3f)
+                reflectiveQuadTo(13.85f, 3.15f)
+                lineToRelative(0.8f, -0.8f)
+                quadTo(14.8f, 2.2f, 15f, 2.2f)
+                reflectiveQuadToRelative(0.35f, 0.15f)
+                lineToRelative(0.8f, 0.8f)
+                quadTo(16.3f, 3.3f, 16.5f, 3.3f)
+                reflectiveQuadTo(16.85f, 3.15f)
+                lineToRelative(0.8f, -0.8f)
+                quadTo(17.8f, 2.2f, 18f, 2.2f)
+                reflectiveQuadToRelative(0.35f, 0.15f)
+                lineToRelative(0.8f, 0.8f)
+                quadTo(19.3f, 3.3f, 19.5f, 3.3f)
+                reflectiveQuadTo(19.85f, 3.15f)
+                lineTo(20.58f, 2.42f)
+                quadTo(20.7f, 2.3f, 20.85f, 2.36f)
+                reflectiveQuadTo(21f, 2.6f)
+                verticalLineTo(19f)
+                quadToRelative(0f, 1.25f, -0.88f, 2.13f)
+                reflectiveQuadTo(18f, 22f)
+                horizontalLineTo(6f)
+                close()
+                moveTo(18f, 20f)
+                quadToRelative(0.43f, 0f, 0.71f, -0.29f)
+                quadTo(19f, 19.43f, 19f, 19f)
+                verticalLineTo(5f)
+                horizontalLineTo(8f)
+                verticalLineTo(16f)
+                horizontalLineToRelative(8f)
+                quadToRelative(0.43f, 0f, 0.71f, 0.29f)
+                reflectiveQuadTo(17f, 17f)
+                verticalLineToRelative(2f)
+                quadToRelative(0f, 0.43f, 0.29f, 0.71f)
+                reflectiveQuadTo(18f, 20f)
+                close()
+                moveTo(10f, 7f)
+                horizontalLineToRelative(4f)
+                quadToRelative(0.43f, 0f, 0.71f, 0.29f)
+                reflectiveQuadTo(15f, 8f)
+                quadToRelative(0f, 0.42f, -0.29f, 0.71f)
+                reflectiveQuadTo(14f, 9f)
+                horizontalLineTo(10f)
+                quadTo(9.58f, 9f, 9.29f, 8.71f)
+                reflectiveQuadTo(9f, 8f)
+                quadTo(9f, 7.57f, 9.29f, 7.29f)
+                quadTo(9.58f, 7f, 10f, 7f)
+                close()
+                moveToRelative(0f, 3f)
+                horizontalLineToRelative(4f)
+                quadToRelative(0.43f, 0f, 0.71f, 0.29f)
+                reflectiveQuadTo(15f, 11f)
+                reflectiveQuadToRelative(-0.29f, 0.71f)
+                reflectiveQuadTo(14f, 12f)
+                horizontalLineTo(10f)
+                quadTo(9.58f, 12f, 9.29f, 11.71f)
+                quadTo(9f, 11.43f, 9f, 11f)
+                reflectiveQuadTo(9.29f, 10.29f)
+                quadTo(9.58f, 10f, 10f, 10f)
+                close()
+                moveTo(17f, 9f)
+                quadTo(16.58f, 9f, 16.29f, 8.71f)
+                reflectiveQuadTo(16f, 8f)
+                quadTo(16f, 7.57f, 16.29f, 7.29f)
+                reflectiveQuadTo(17f, 7f)
+                reflectiveQuadToRelative(0.71f, 0.29f)
+                reflectiveQuadTo(18f, 8f)
+                quadToRelative(0f, 0.42f, -0.29f, 0.71f)
+                reflectiveQuadTo(17f, 9f)
+                close()
+                moveToRelative(0f, 3f)
+                quadToRelative(-0.43f, 0f, -0.71f, -0.29f)
+                quadTo(16f, 11.43f, 16f, 11f)
+                reflectiveQuadToRelative(0.29f, -0.71f)
+                reflectiveQuadTo(17f, 10f)
+                reflectiveQuadToRelative(0.71f, 0.29f)
+                reflectiveQuadTo(18f, 11f)
+                reflectiveQuadToRelative(-0.29f, 0.71f)
+                reflectiveQuadTo(17f, 12f)
+                close()
+            }
+        }.build()
+    }
+
+    // ── Receipt Icons (Phosphor SVG custom path & line vectors) ──
+    private val ReceiptOutline: ImageVector by lazy {
+        ImageVector.Builder(
+            name = "ReceiptOutline",
+            defaultWidth = 24.dp,
+            defaultHeight = 24.dp,
+            viewportWidth = 256f,
+            viewportHeight = 256f
+        ).addPath(
+            fill = null,
+            stroke = SolidColor(Color.Black),
+            strokeLineWidth = 16f,
+            strokeLineCap = StrokeCap.Round,
+            strokeLineJoin = StrokeJoin.Round,
+            pathData = PathParser().parsePathString("M80,104L176,104").toNodes()
+        ).addPath(
+            fill = null,
+            stroke = SolidColor(Color.Black),
+            strokeLineWidth = 16f,
+            strokeLineCap = StrokeCap.Round,
+            strokeLineJoin = StrokeJoin.Round,
+            pathData = PathParser().parsePathString("M80,136L176,136").toNodes()
+        ).addPath(
+            fill = null,
+            stroke = SolidColor(Color.Black),
+            strokeLineWidth = 16f,
+            strokeLineCap = StrokeCap.Round,
+            strokeLineJoin = StrokeJoin.Round,
+            pathData = PathParser().parsePathString("M32,208V56a8,8,0,0,1,8-8H216a8,8,0,0,1,8,8V208l-32-16-32,16-32-16L96,208,64,192Z").toNodes()
+        ).build()
+    }
+
+    private val ReceiptFilled: ImageVector by lazy {
+        ImageVector.Builder(
+            name = "ReceiptFilled",
+            defaultWidth = 24.dp,
+            defaultHeight = 24.dp,
+            viewportWidth = 256f,
+            viewportHeight = 256f
+        ).addPath(
+            fill = SolidColor(Color.Black),
+            pathData = PathParser().parsePathString(
+                "M216,40H40A16,16,0,0,0,24,56V208a8,8,0,0,0,11.58,7.15L64,200.94l28.42,14.21a8,8,0,0,0,7.16,0L128,200.94l28.42,14.21a8,8,0,0,0,7.16,0L192,200.94l28.42,14.21A8,8,0,0,0,232,208V56A16,16,0,0,0,216,40ZM176,144H80a8,8,0,0,1,0-16h96a8,8,0,0,1,0,16Zm0-32H80a8,8,0,0,1,0-16h96a8,8,0,0,1,0,16Z"
+            ).toNodes()
+        ).build()
+    }
+
     object Rounded {
         // ── Navigation Dynamic Fill (Inactive = Outline, Active = Filled) ──
         val Home: ImageVector get() = LibSymbols.Rounded.Home
         val HomeFill: ImageVector get() = LibSymbols.RoundedFilled.Home
-        val Description: ImageVector get() = LibSymbols.Rounded.Description
-        val DescriptionFill: ImageVector get() = LibSymbols.RoundedFilled.Description
-        val Notes: ImageVector get() = LibSymbols.Rounded.Receipt_long
-        val NotesFill: ImageVector get() = LibSymbols.RoundedFilled.Receipt_long
+
+        // Invoices use Google Material Symbols Rounded receipt_long
+        val Invoice: ImageVector get() = InvoiceOutline
+        val InvoiceFill: ImageVector get() = InvoiceFilled
+
+        // Receipts use Phosphor receipt outline and fill
+        val Receipt: ImageVector get() = ReceiptOutline
+        val ReceiptFill: ImageVector get() = ReceiptFilled
+
+        // Aliases for backwards compatibility & seamless migration
+        val Description: ImageVector get() = Invoice
+        val DescriptionFill: ImageVector get() = InvoiceFill
+        val Notes: ImageVector get() = Invoice
+        val NotesFill: ImageVector get() = InvoiceFill
+        val ReceiptLong: ImageVector get() = Invoice
+        val ReceiptLongFill: ImageVector get() = InvoiceFill
         val Schedule: ImageVector get() = LibSymbols.Rounded.Schedule
         val ScheduleFill: ImageVector get() = LibSymbols.RoundedFilled.Schedule
         val Calendar: ImageVector get() = LibSymbols.Rounded.Calendar_month
         val CalendarFill: ImageVector get() = LibSymbols.RoundedFilled.Calendar_month
         val Notifications: ImageVector get() = LibSymbols.Rounded.Notifications
         val NotificationsFill: ImageVector get() = LibSymbols.RoundedFilled.Notifications
-        val ReceiptLong: ImageVector get() = LibSymbols.Rounded.Receipt_long
-        val ReceiptLongFill: ImageVector get() = LibSymbols.RoundedFilled.Receipt_long
 
         // ── Action & UI Controls (Line/Outline for clean buttons) ──
         // Neram's exact Chevron back button SVG path

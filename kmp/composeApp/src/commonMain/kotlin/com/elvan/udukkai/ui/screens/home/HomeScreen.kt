@@ -87,7 +87,11 @@ fun HomeScreen() {
 
     var selectedTab by remember { mutableStateOf(NavTab.Home) }
     var uruvakkuSegment by remember { mutableStateOf(0) } // 0 = Invoices, 1 = Receipts
-    var activeSubpage by remember { mutableStateOf<ActiveSubpage?>(null) }
+    var subpageStack by remember { mutableStateOf<List<ActiveSubpage>>(emptyList()) }
+    val activeSubpage = subpageStack.lastOrNull()
+    val navigateToSubpage: (ActiveSubpage) -> Unit = { subpage -> subpageStack = subpageStack + subpage }
+    val popSubpage: () -> Unit = { if (subpageStack.isNotEmpty()) subpageStack = subpageStack.dropLast(1) }
+    val clearSubpages: () -> Unit = { subpageStack = emptyList() }
     var isRefreshing by remember { mutableStateOf(false) }
     var isSearchActive by remember { mutableStateOf(false) }
     var menuExpanded by remember { mutableStateOf(false) }
@@ -115,12 +119,12 @@ fun HomeScreen() {
         )
         isSelectionMode = false
         selectedItemIds = emptySet()
-        activeSubpage = ActiveSubpage.InvoiceEditor(copied)
+        navigateToSubpage(ActiveSubpage.InvoiceEditor(copied))
     }
 
+    val copySuffix = " (${K.copyNoun.tr()})"
+
     val copyProductAndEdit: (PorulTharavuru) -> Unit = { item ->
-        val isTamil = LanguageManager.activeLanguageCode.startsWith("ta")
-        val copySuffix = if (isTamil) " (நகல்)" else " (Copy)"
         val copied = item.copy(
             id = 0L,
             porulPeyar = item.porulPeyar.mapValues { "${it.value}$copySuffix" },
@@ -129,12 +133,10 @@ fun HomeScreen() {
         )
         isSelectionMode = false
         selectedItemIds = emptySet()
-        activeSubpage = ActiveSubpage.ItemEditor(copied)
+        navigateToSubpage(ActiveSubpage.ItemEditor(copied))
     }
 
     val copyCustomerAndEdit: (VaangunarTharavuru) -> Unit = { merchant ->
-        val isTamil = LanguageManager.activeLanguageCode.startsWith("ta")
-        val copySuffix = if (isTamil) " (நகல்)" else " (Copy)"
         val copied = merchant.copy(
             id = 0L,
             peyar = merchant.peyar.mapValues { "${it.value}$copySuffix" },
@@ -144,7 +146,7 @@ fun HomeScreen() {
         )
         isSelectionMode = false
         selectedItemIds = emptySet()
-        activeSubpage = ActiveSubpage.MerchantEditor(copied)
+        navigateToSubpage(ActiveSubpage.MerchantEditor(copied))
     }
 
     val scope = rememberCoroutineScope()
@@ -160,8 +162,8 @@ fun HomeScreen() {
     AppBackHandler(enabled = activeSubpage != null || isSelectionMode || isSearchActive || showBulkDeleteConfirm) {
         if (showBulkDeleteConfirm) {
             showBulkDeleteConfirm = false
-        } else if (activeSubpage != null) {
-            activeSubpage = null
+        } else if (subpageStack.isNotEmpty()) {
+            popSubpage()
         } else if (isSelectionMode) {
             isSelectionMode = false
             selectedItemIds = emptySet()
@@ -221,8 +223,9 @@ fun HomeScreen() {
     ) {
         val isWideScreen = isDesktop && maxWidth >= 768.dp
 
-        LaunchedEffect(activeSubpage, isWideScreen) {
-            ElvanSnackbar.isBottomBarVisible = (activeSubpage == null || activeSubpage is ActiveSubpage.RecycleBin) && !isWideScreen
+        val shouldShowBottomBarForSnackbar = (activeSubpage == null || activeSubpage is ActiveSubpage.RecycleBin) && !isWideScreen
+        SideEffect {
+            ElvanSnackbar.isBottomBarVisible = shouldShowBottomBarForSnackbar
         }
         DisposableEffect(Unit) {
             onDispose { ElvanSnackbar.isBottomBarVisible = false }
@@ -233,11 +236,23 @@ fun HomeScreen() {
                 DesktopSideBar(
                     selectedTab = selectedTab,
                     onTabSelected = { tab ->
-                        selectedTab = tab
-                        activeSubpage = null
+                        if (selectedTab != tab) {
+                            if (selectedTab == NavTab.Create || tab != NavTab.Create) {
+                                uruvakkuSegment = 0
+                            }
+                            val targetScrollState = when (tab) {
+                                NavTab.Home -> homeScrollState
+                                NavTab.Create -> createScrollState
+                                NavTab.Products -> productsScrollState
+                                NavTab.Customers -> customersScrollState
+                            }
+                            scope.launch { targetScrollState.scrollToItem(0, 0) }
+                            selectedTab = tab
+                            clearSubpages()
+                        }
                     },
                     onSettingsClick = {
-                        activeSubpage = ActiveSubpage.Settings
+                        navigateToSubpage(ActiveSubpage.Settings)
                     },
                     colors = colors
                 )
@@ -249,85 +264,75 @@ fun HomeScreen() {
                     .fillMaxHeight()
             ) {
                 AnimatedContent(
-                    targetState = activeSubpage,
+                    targetState = subpageStack,
                     modifier = Modifier
                         .fillMaxSize()
                         .background(colors.background),
-            transitionSpec = {
-                if (targetState != null) {
-                    slideIntoContainer(
-                        towards = AnimatedContentTransitionScope.SlideDirection.Left,
-                        animationSpec = spring(stiffness = Spring.StiffnessLow, dampingRatio = Spring.DampingRatioNoBouncy)
-                    ) togetherWith fadeOut(targetAlpha = 0.9f, animationSpec = tween(durationMillis = 50))
-                } else {
-                    fadeIn(initialAlpha = 0.9f) togetherWith slideOutOfContainer(
-                        towards = AnimatedContentTransitionScope.SlideDirection.Right,
-                        animationSpec = spring(stiffness = Spring.StiffnessLow, dampingRatio = Spring.DampingRatioNoBouncy)
-                    )
-                }
-            },
-            label = "HomeToSubpageTransition"
-        ) { subpage ->
+                    transitionSpec = {
+                        val isForward = targetState.size >= initialState.size
+                        if (isForward) {
+                            slideIntoContainer(
+                                towards = AnimatedContentTransitionScope.SlideDirection.Left,
+                                animationSpec = spring(stiffness = Spring.StiffnessLow, dampingRatio = Spring.DampingRatioNoBouncy)
+                            ) togetherWith fadeOut(targetAlpha = 0.9f, animationSpec = tween(durationMillis = 50))
+                        } else {
+                            fadeIn(initialAlpha = 0.9f) togetherWith slideOutOfContainer(
+                                towards = AnimatedContentTransitionScope.SlideDirection.Right,
+                                animationSpec = spring(stiffness = Spring.StiffnessLow, dampingRatio = Spring.DampingRatioNoBouncy)
+                            )
+                        }
+                    },
+                    label = "HomeToSubpageTransition"
+                ) { stack ->
+                    val subpage = stack.lastOrNull()
             when (subpage) {
                 is ActiveSubpage.Settings -> {
                     SettingsScreen(
-                        onBack = { activeSubpage = null }
+                        onBack = popSubpage
                     )
                 }
                 is ActiveSubpage.RecycleBin -> {
                     RecycleBinScreen(
-                        onBack = { activeSubpage = null }
+                        onBack = popSubpage
                     )
                 }
                 is ActiveSubpage.ItemEditor -> {
                     ProductEditorScreen(
                         item = subpage.item,
-                        onBack = { activeSubpage = null }
+                        onBack = popSubpage
                     )
                 }
                 is ActiveSubpage.MerchantEditor -> {
                     CustomerEditorScreen(
                         merchant = subpage.merchant,
-                        onBack = { activeSubpage = null }
+                        onBack = popSubpage
                     )
                 }
                 is ActiveSubpage.InvoiceEditor -> {
                     if (currentMode == com.elvan.udukkai.core.mode.AppMode.PATTU) {
                         SilkInvoiceEditorScreen(
                             invoice = subpage.invoice,
-                            onBack = { activeSubpage = null },
-                            onRequestAddNewCustomer = {
-                                activeSubpage = ActiveSubpage.MerchantEditor(null)
-                            },
-                            onRequestAddNewProduct = {
-                                activeSubpage = ActiveSubpage.ItemEditor(null)
-                            }
+                            onBack = popSubpage
                         )
                     } else {
                         CoolieInvoiceEditorScreen(
                             invoice = subpage.invoice,
-                            onBack = { activeSubpage = null },
-                            onRequestAddNewCustomer = {
-                                activeSubpage = ActiveSubpage.MerchantEditor(null)
-                            },
-                            onRequestAddNewProduct = {
-                                activeSubpage = ActiveSubpage.ItemEditor(null)
-                            }
+                            onBack = popSubpage
                         )
                     }
                 }
                 is ActiveSubpage.ReceiptEditor -> {
                     ReceiptEditorScreen(
                         receipt = subpage.receipt,
-                        onBack = { activeSubpage = null }
+                        onBack = popSubpage
                     )
                 }
                 is ActiveSubpage.CustomerView -> {
                     CustomerViewScreen(
                         merchant = subpage.customer,
-                        onBack = { activeSubpage = null },
+                        onBack = popSubpage,
                         onEdit = {
-                            activeSubpage = ActiveSubpage.MerchantEditor(subpage.customer)
+                            navigateToSubpage(ActiveSubpage.MerchantEditor(subpage.customer))
                         },
                         onCopy = {
                             copyCustomerAndEdit(subpage.customer)
@@ -337,9 +342,9 @@ fun HomeScreen() {
                 is ActiveSubpage.ProductView -> {
                     ProductViewScreen(
                         item = subpage.product,
-                        onBack = { activeSubpage = null },
+                        onBack = popSubpage,
                         onEdit = {
-                            activeSubpage = ActiveSubpage.ItemEditor(subpage.product)
+                            navigateToSubpage(ActiveSubpage.ItemEditor(subpage.product))
                         },
                         onCopy = {
                             copyProductAndEdit(subpage.product)
@@ -349,9 +354,9 @@ fun HomeScreen() {
                 is ActiveSubpage.InvoiceView -> {
                     InvoiceViewScreen(
                         invoice = subpage.invoice,
-                        onBack = { activeSubpage = null },
+                        onBack = popSubpage,
                         onEdit = {
-                            activeSubpage = ActiveSubpage.InvoiceEditor(subpage.invoice)
+                            navigateToSubpage(ActiveSubpage.InvoiceEditor(subpage.invoice))
                         },
                         onCopy = {
                             copyInvoiceAndEdit(subpage.invoice)
@@ -361,9 +366,9 @@ fun HomeScreen() {
                 is ActiveSubpage.ReceiptView -> {
                     ReceiptViewScreen(
                         receipt = subpage.receipt,
-                        onBack = { activeSubpage = null },
+                        onBack = popSubpage,
                         onEdit = {
-                            activeSubpage = ActiveSubpage.ReceiptEditor(subpage.receipt)
+                            navigateToSubpage(ActiveSubpage.ReceiptEditor(subpage.receipt))
                         }
                     )
                 }
@@ -454,7 +459,7 @@ fun HomeScreen() {
                                             onClick = {
                                                 ElvanMenuState.isMenuOpen = false
                                                 menuExpanded = false
-                                                activeSubpage = ActiveSubpage.Settings
+                                                navigateToSubpage(ActiveSubpage.Settings)
                                             }
                                         )
                                     )
@@ -465,7 +470,7 @@ fun HomeScreen() {
                                             onClick = {
                                                 ElvanMenuState.isMenuOpen = false
                                                 menuExpanded = false
-                                                activeSubpage = ActiveSubpage.RecycleBin
+                                                navigateToSubpage(ActiveSubpage.RecycleBin)
                                             }
                                         )
                                     )
@@ -560,19 +565,19 @@ fun HomeScreen() {
                                                 onAddClick = {
                                                     when (selectedTab) {
                                                         NavTab.Home -> {
-                                                            activeSubpage = ActiveSubpage.InvoiceEditor(null)
+                                                            navigateToSubpage(ActiveSubpage.InvoiceEditor(null))
                                                         }
                                                         NavTab.Products -> {
-                                                            activeSubpage = ActiveSubpage.ItemEditor(null)
+                                                            navigateToSubpage(ActiveSubpage.ItemEditor(null))
                                                         }
                                                         NavTab.Customers -> {
-                                                            activeSubpage = ActiveSubpage.MerchantEditor(null)
+                                                            navigateToSubpage(ActiveSubpage.MerchantEditor(null))
                                                         }
                                                         NavTab.Create -> {
                                                             if (uruvakkuSegment == 0) {
-                                                                activeSubpage = ActiveSubpage.InvoiceEditor(null)
+                                                                navigateToSubpage(ActiveSubpage.InvoiceEditor(null))
                                                             } else {
-                                                                activeSubpage = ActiveSubpage.ReceiptEditor(null)
+                                                                navigateToSubpage(ActiveSubpage.ReceiptEditor(null))
                                                             }
                                                         }
                                                     }
@@ -581,6 +586,16 @@ fun HomeScreen() {
                                                     if (selectedTab == tab) {
                                                         shellController.toggleHeader()
                                                     } else {
+                                                        if (selectedTab == NavTab.Create || tab != NavTab.Create) {
+                                                            uruvakkuSegment = 0
+                                                        }
+                                                        val targetScrollState = when (tab) {
+                                                            NavTab.Home -> homeScrollState
+                                                            NavTab.Create -> createScrollState
+                                                            NavTab.Products -> productsScrollState
+                                                            NavTab.Customers -> customersScrollState
+                                                        }
+                                                        scope.launch { targetScrollState.scrollToItem(0, 0) }
                                                         selectedTab = tab
                                                     }
                                                 }
@@ -642,12 +657,13 @@ fun HomeScreen() {
                                     DashboardScreen(
                                         scrollState = homeScrollState,
                                         onSeeAll = {
+                                            scope.launch { createScrollState.scrollToItem(0, 0) }
                                             selectedTab = NavTab.Create
                                             uruvakkuSegment = 0
                                         },
                                         isRefreshing = isRefreshing,
                                         onInvoiceClick = { invoice ->
-                                            activeSubpage = ActiveSubpage.InvoiceView(invoice)
+                                            navigateToSubpage(ActiveSubpage.InvoiceView(invoice))
                                         }
                                     )
                                 }
@@ -672,7 +688,10 @@ fun HomeScreen() {
                                         scrollState = createScrollState,
                                         selectedSegment = uruvakkuSegment,
                                         onSegmentSelected = { newSegment ->
-                                            uruvakkuSegment = newSegment
+                                            if (uruvakkuSegment != newSegment) {
+                                                scope.launch { createScrollState.scrollToItem(0, 0) }
+                                                uruvakkuSegment = newSegment
+                                            }
                                             isSearchActive = false
                                             isSelectionMode = false
                                             selectedItemIds = emptySet()
@@ -686,10 +705,10 @@ fun HomeScreen() {
                                         onToggleSelect = onToggleItem,
                                         onItemLongClick = onStartSelection,
                                         onInvoiceClick = { invoice ->
-                                            activeSubpage = ActiveSubpage.InvoiceView(invoice)
+                                            navigateToSubpage(ActiveSubpage.InvoiceView(invoice))
                                         },
                                         onReceiptClick = { receipt ->
-                                            activeSubpage = ActiveSubpage.ReceiptView(receipt)
+                                            navigateToSubpage(ActiveSubpage.ReceiptView(receipt))
                                         }
                                     )
                                 }
@@ -712,7 +731,7 @@ fun HomeScreen() {
                                     ProductScreen(
                                         scrollState = productsScrollState,
                                         isRefreshing = isRefreshing,
-                                        onItemClick = { activeSubpage = ActiveSubpage.ProductView(it) },
+                                        onItemClick = { navigateToSubpage(ActiveSubpage.ProductView(it)) },
                                         isSelectionMode = isSelectionMode,
                                         selectedItemIds = selectedItemIds,
                                         onToggleSelect = onToggleItem,
@@ -738,7 +757,7 @@ fun HomeScreen() {
                                     CustomerScreen(
                                         scrollState = customersScrollState,
                                         isRefreshing = isRefreshing,
-                                        onMerchantClick = { activeSubpage = ActiveSubpage.CustomerView(it) },
+                                        onMerchantClick = { navigateToSubpage(ActiveSubpage.CustomerView(it)) },
                                         isSelectionMode = isSelectionMode,
                                         selectedItemIds = selectedItemIds,
                                         onToggleSelect = onToggleItem,

@@ -70,9 +70,6 @@ fun CreateScreen(
     val colors = rememberShellColors()
     val isDark = colors.isDark
     val ff = LocalAppFontFamily.current
-    val uiLang = LocalAppLanguage.current
-    val isTa = uiLang.lowercase().startsWith("ta")
-
     val profiles = NiruvanaTharavugalRepository.getAllProfiles(mode)
 
     var selectedProfileFilterIndex by remember { mutableIntStateOf(0) }
@@ -190,13 +187,13 @@ fun CreateScreen(
     val shifterItems = listOf(
         PillShifterItem(
             label = K.invoices.tr(),
-            icon = MaterialSymbols.Rounded.Description,
-            activeIcon = MaterialSymbols.Rounded.DescriptionFill
+            icon = MaterialSymbols.Rounded.Invoice,
+            activeIcon = MaterialSymbols.Rounded.InvoiceFill
         ),
         PillShifterItem(
             label = K.receipts.tr(),
-            icon = MaterialSymbols.Rounded.ReceiptLong,
-            activeIcon = MaterialSymbols.Rounded.ReceiptLongFill
+            icon = MaterialSymbols.Rounded.Receipt,
+            activeIcon = MaterialSymbols.Rounded.ReceiptFill
         )
     )
 
@@ -253,7 +250,9 @@ fun CreateScreen(
                         if (isDateFilterActive) {
                             val startMillis = if (selectedSegment == 0) PattiyalRepository.startDateFilter else PatrugalRepository.startDateFilter
                             val endMillis = if (selectedSegment == 0) PattiyalRepository.endDateFilter else PatrugalRepository.endDateFilter
-                            val filterText = remember(startMillis, endMillis, isTa) {
+                            val todayText = K.today.tr()
+                            val yesterdayText = K.yesterday.tr()
+                            val filterText = remember(startMillis, endMillis, todayText, yesterdayText) {
                                 if (startMillis == null && endMillis == null) {
                                     ""
                                 } else if (startMillis != null && endMillis != null) {
@@ -264,8 +263,8 @@ fun CreateScreen(
                                         val todayKey = DateGroupUtils.getDayKey(now)
                                         val yesterdayKey = DateGroupUtils.getDayKey(now - 86400000L)
                                         when (startKey) {
-                                            todayKey -> if (isTa) "இன்று" else "Today"
-                                            yesterdayKey -> if (isTa) "நேற்று" else "Yesterday"
+                                            todayKey -> todayText
+                                            yesterdayKey -> yesterdayText
                                             else -> DateUtils.formatDate(startMillis)
                                         }
                                     } else {
@@ -349,7 +348,7 @@ fun CreateScreen(
                                 verticalArrangement = Arrangement.Center
                             ) {
                                 Icon(
-                                    imageVector = MaterialSymbols.Rounded.Description,
+                                    imageVector = MaterialSymbols.Rounded.Invoice,
                                     contentDescription = null,
                                     tint = LocalShellColors.current.textQuaternary,
                                     modifier = Modifier.size(48.dp)
@@ -458,7 +457,7 @@ fun CreateScreen(
                                 verticalArrangement = Arrangement.Center
                             ) {
                                 Icon(
-                                    imageVector = MaterialSymbols.Rounded.ReceiptLong,
+                                    imageVector = MaterialSymbols.Rounded.Receipt,
                                     contentDescription = null,
                                     tint = LocalShellColors.current.textQuaternary,
                                     modifier = Modifier.size(48.dp)

@@ -3,11 +3,15 @@ package com.elvan.udukkai.ui.screens.editor.invoice.components
 import com.elvan.udukkai.data.settings.MozhiJsonConverter
 import kotlin.math.round
 
+private var nextPattuId = 0L
+fun generatePattuId(): String = "${System.currentTimeMillis()}_${++nextPattuId}"
+
 /**
  * Single line item for Silk mode invoices.
  * Matches Flutter's `PattuUrupadi`.
  */
 data class PattuUrupadi(
+    val id: String = generatePattuId(),
     val porulId: String? = null,
     val porulPeyar: String = "",
     val porulPeyarEn: String = "",

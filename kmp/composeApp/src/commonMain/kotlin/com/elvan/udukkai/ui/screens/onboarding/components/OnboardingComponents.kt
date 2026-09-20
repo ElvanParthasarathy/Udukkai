@@ -379,7 +379,7 @@ fun AuthInput(
                                 fontWeight = FontWeight.Medium,
                                 color = textColor
                             ),
-                            cursorBrush = SolidColor(if (isDark) Color.White else Color(0xFF1B6B4F)),
+                            cursorBrush = SolidColor(if (isDark) Color.White else Color.Black),
                             visualTransformation = if (isPassword && !passwordVisible) {
                                 PasswordVisualTransformation()
                             } else {

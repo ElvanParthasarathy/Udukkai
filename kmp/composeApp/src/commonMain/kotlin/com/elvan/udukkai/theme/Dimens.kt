@@ -28,7 +28,7 @@ object Dimens {
         get() {
             val navBarsPadding = getNavBarBottomPadding()
             val imePadding = getImeBottomPadding()
-            return if (imePadding > 0.dp) 40.dp else 32.dp + navBarsPadding
+            return if (imePadding > 0.dp) 24.dp else 32.dp + navBarsPadding
         }
 
     val ContentPaddingTop = 85.dp

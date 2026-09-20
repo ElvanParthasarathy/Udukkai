@@ -314,30 +314,47 @@ internal fun CoolieCustomerCard(
                 modifier = Modifier.weight(1f),
                 verticalArrangement = Arrangement.Center
             ) {
-                Text(
-                    text = primaryName.preventBrokenLigatures(),
-                    style = TextStyle(
-                        fontFamily = ff,
-                        fontSize = 15.2.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = colors.textPrimary
-                    ),
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
+                // Row 1: Customer Name + Chevron
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.Top
+                ) {
+                    Column(
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Text(
+                            text = primaryName.preventBrokenLigatures(),
+                            style = TextStyle(
+                                fontFamily = ff,
+                                fontSize = 15.2.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = colors.textPrimary
+                            ),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
 
-                if (secondaryName.isNotBlank() && secondaryName != primaryName) {
-                    Spacer(modifier = Modifier.height(2.dp))
-                    Text(
-                        text = secondaryName.preventBrokenLigatures(),
-                        style = TextStyle(
-                            fontFamily = ff,
-                            fontSize = 13.sp,
-                            fontWeight = FontWeight.Medium,
-                            color = colors.textSecondary
-                        ),
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
+                        if (secondaryName.isNotBlank() && secondaryName != primaryName) {
+                            Spacer(modifier = Modifier.height(2.dp))
+                            Text(
+                                text = secondaryName.preventBrokenLigatures(),
+                                style = TextStyle(
+                                    fontFamily = ff,
+                                    fontSize = 13.sp,
+                                    fontWeight = FontWeight.Medium,
+                                    color = colors.textSecondary
+                                ),
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                        }
+                    }
+
+                    Icon(
+                        imageVector = MaterialSymbols.Rounded.ChevronRight,
+                        contentDescription = null,
+                        tint = LocalShellColors.current.border,
+                        modifier = Modifier.size(18.dp)
                     )
                 }
 
@@ -437,31 +454,48 @@ internal fun SilkCustomerCard(
                 modifier = Modifier.weight(1f),
                 verticalArrangement = Arrangement.Center
             ) {
-                Text(
-                    text = primaryName.preventBrokenLigatures(),
-                    style = TextStyle(
-                        fontFamily = ff,
-                        fontSize = 15.2.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = colors.textPrimary
-                    ),
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
+                // Row 1: Customer Name + Chevron
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.Top
+                ) {
+                    Column(
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Text(
+                            text = primaryName.preventBrokenLigatures(),
+                            style = TextStyle(
+                                fontFamily = ff,
+                                fontSize = 15.2.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = colors.textPrimary
+                            ),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
 
-                // Secondary Name - ONLY when bilingual mode is enabled in Silk profile
-                if (isBilingual && secondaryName.isNotBlank() && secondaryName != primaryName) {
-                    Spacer(modifier = Modifier.height(2.dp))
-                    Text(
-                        text = secondaryName.preventBrokenLigatures(),
-                        style = TextStyle(
-                            fontFamily = ff,
-                            fontSize = 13.sp,
-                            fontWeight = FontWeight.Medium,
-                            color = colors.textSecondary
-                        ),
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
+                        // Secondary Name - ONLY when bilingual mode is enabled in Silk profile
+                        if (isBilingual && secondaryName.isNotBlank() && secondaryName != primaryName) {
+                            Spacer(modifier = Modifier.height(2.dp))
+                            Text(
+                                text = secondaryName.preventBrokenLigatures(),
+                                style = TextStyle(
+                                    fontFamily = ff,
+                                    fontSize = 13.sp,
+                                    fontWeight = FontWeight.Medium,
+                                    color = colors.textSecondary
+                                ),
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                        }
+                    }
+
+                    Icon(
+                        imageVector = MaterialSymbols.Rounded.ChevronRight,
+                        contentDescription = null,
+                        tint = LocalShellColors.current.border,
+                        modifier = Modifier.size(18.dp)
                     )
                 }
 
