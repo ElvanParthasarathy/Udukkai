@@ -198,6 +198,7 @@ val ta: Map<String, String> = mapOf(
     K.restoreBtn to "மீட்டெடு",
     K.restoreDataBtn to "மீட்டெடு",
     K.deleteBtn to "நீக்கு",
+    K.copyBtn to "நகலெடு",
     K.syncAppBtn to "செயலியை ஒருங்கிணை",
     K.saveUserBtn to "சேமி",
     K.addProductBtn to "பொருளைச் சேர்",

@@ -42,7 +42,8 @@ import com.elvan.udukkai.ui.navigation.MaterialSymbols
 fun ProductViewScreen(
     item: PorulTharavuru,
     onBack: () -> Unit,
-    onEdit: () -> Unit
+    onEdit: () -> Unit,
+    onCopy: (() -> Unit)? = null
 ) {
     val currentMode = LocalAppMode.current
     val colors = rememberShellColors()
@@ -69,7 +70,8 @@ fun ProductViewScreen(
         title = K.productDetails.tr(),
         onBack = onBack,
         scrollState = scrollState,
-        onEdit = onEdit
+        onEdit = onEdit,
+        onCopy = onCopy
     ) {
         LazyColumn(
             state = scrollState,

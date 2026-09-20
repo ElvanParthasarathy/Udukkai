@@ -41,7 +41,8 @@ fun InvoiceViewScreen(
     invoice: PattiyalTharavuru,
     onBack: () -> Unit,
     onEdit: () -> Unit,
-    onPrint: (() -> Unit)? = null
+    onPrint: (() -> Unit)? = null,
+    onCopy: (() -> Unit)? = null
 ) {
     val currentMode = LocalAppMode.current
     val colors = rememberShellColors()
@@ -74,7 +75,8 @@ fun InvoiceViewScreen(
         onBack = onBack,
         scrollState = scrollState,
         onEdit = onEdit,
-        onPrint = onPrint
+        onPrint = onPrint,
+        onCopy = onCopy
     ) {
         LazyColumn(
             state = scrollState,

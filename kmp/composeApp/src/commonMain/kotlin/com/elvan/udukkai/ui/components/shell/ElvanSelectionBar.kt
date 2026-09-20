@@ -41,13 +41,14 @@ import com.elvan.udukkai.ui.navigation.MaterialSymbols
 /**
  * ElvanSelectionBar — Floating multi-selection action bar.
  * Matches BottomNavBar position and 56.dp height exactly.
- * In One UI mode, hosts ONLY the Delete ("நீக்கவும்") action pill at the bottom.
+ * In One UI mode, hosts Delete ("நீக்கவும்") and optional Copy ("நகலெடு") action pills.
  */
 @Composable
 fun ElvanSelectionBar(
     visible: Boolean,
     selectedCount: Int,
     onDelete: () -> Unit,
+    onCopy: (() -> Unit)? = null,
     colors: ShellColors = rememberShellColors(),
     modifier: Modifier = Modifier
 ) {
@@ -81,12 +82,19 @@ fun ElvanSelectionBar(
         ) {
             val isTamil = LocalAppLanguage.current.startsWith("ta")
             val deleteLabel = if (isTamil) "நீக்கவும்" else K.deleteBtn.tr()
-            val isEnabled = selectedCount > 0
-            val deleteColor = if (isEnabled) colors.textPrimary else colors.textSecondary.copy(alpha = 0.35f)
+            val copyLabel = if (isTamil) "நகலெடு" else K.copyBtn.tr()
+
+            val isDeleteEnabled = selectedCount > 0
+            val deleteColor = if (isDeleteEnabled) colors.textPrimary else colors.textSecondary.copy(alpha = 0.35f)
+
+            val isCopyEnabled = selectedCount == 1
+            val copyColor = if (isCopyEnabled) colors.textPrimary else colors.textSecondary.copy(alpha = 0.35f)
+
+            val barWidth = if (onCopy != null) 168.dp else 84.dp
 
             Box(
                 modifier = Modifier
-                    .width(84.dp)
+                    .width(barWidth)
                     .height(56.dp)
                     .cssShadow(
                         color = Color.Black,
@@ -106,39 +114,95 @@ fun ElvanSelectionBar(
                     .padding(horizontal = 4.dp, vertical = 4.dp),
                 contentAlignment = Alignment.Center
             ) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .clip(CircleShape)
-                        .clickable(
-                            interactionSource = remember { MutableInteractionSource() },
-                            indication = ripple(bounded = true),
-                            enabled = isEnabled,
-                            onClick = onDelete
-                        ),
-                    contentAlignment = Alignment.Center
+                Row(
+                    modifier = Modifier.fillMaxSize(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.Center
                 ) {
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.Center
+                    if (onCopy != null) {
+                        // Copy Action (active when single item selected)
+                        Box(
+                            modifier = Modifier
+                                .weight(1f)
+                                .fillMaxHeight()
+                                .clip(CircleShape)
+                                .clickable(
+                                    interactionSource = remember { MutableInteractionSource() },
+                                    indication = ripple(bounded = true),
+                                    enabled = isCopyEnabled,
+                                    onClick = onCopy
+                                ),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Column(
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.Center
+                            ) {
+                                Icon(
+                                    imageVector = MaterialSymbols.Rounded.ContentCopy,
+                                    contentDescription = copyLabel,
+                                    tint = copyColor,
+                                    modifier = Modifier.size(19.dp)
+                                )
+                                Spacer(modifier = Modifier.height(2.dp))
+                                Text(
+                                    text = copyLabel,
+                                    maxLines = 1,
+                                    style = TextStyle(
+                                        fontFamily = ff,
+                                        fontSize = 11.sp,
+                                        fontWeight = FontWeight.Medium,
+                                        color = copyColor
+                                    )
+                                )
+                            }
+                        }
+
+                        // Vertical divider between Copy and Delete
+                        Box(
+                            modifier = Modifier
+                                .width(1.dp)
+                                .height(24.dp)
+                                .background(colors.floatingBorder.copy(alpha = if (isDark) 0.2f else 0.4f))
+                        )
+                    }
+
+                    // Delete Action
+                    Box(
+                        modifier = Modifier
+                            .then(if (onCopy != null) Modifier.weight(1f) else Modifier.fillMaxSize())
+                            .fillMaxHeight()
+                            .clip(CircleShape)
+                            .clickable(
+                                interactionSource = remember { MutableInteractionSource() },
+                                indication = ripple(bounded = true),
+                                enabled = isDeleteEnabled,
+                                onClick = onDelete
+                            ),
+                        contentAlignment = Alignment.Center
                     ) {
-                        Icon(
-                            imageVector = MaterialSymbols.Rounded.Delete,
-                            contentDescription = deleteLabel,
-                            tint = deleteColor,
-                            modifier = Modifier.size(20.dp)
-                        )
-                        Spacer(modifier = Modifier.height(2.dp))
-                        Text(
-                            text = deleteLabel,
-                            maxLines = 1,
-                            style = TextStyle(
-                                fontFamily = ff,
-                                fontSize = 11.sp,
-                                fontWeight = FontWeight.Medium,
-                                color = deleteColor
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.Center
+                        ) {
+                            Icon(
+                                imageVector = MaterialSymbols.Rounded.Delete,
+                                contentDescription = deleteLabel,
+                                tint = deleteColor,
+                                modifier = Modifier.size(20.dp)
                             )
-                        )
+                            Spacer(modifier = Modifier.height(2.dp))
+                            Text(
+                                text = deleteLabel,
+                                maxLines = 1,
+                                style = TextStyle(
+                                    fontFamily = ff,
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Medium,
+                                    color = deleteColor
+                                )
+                            )
+                        }
                     }
                 }
             }

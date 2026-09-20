@@ -41,7 +41,8 @@ import com.elvan.udukkai.ui.navigation.MaterialSymbols
 fun CustomerViewScreen(
     merchant: VaangunarTharavuru,
     onBack: () -> Unit,
-    onEdit: () -> Unit
+    onEdit: () -> Unit,
+    onCopy: (() -> Unit)? = null
 ) {
     val currentMode = LocalAppMode.current
     val colors = rememberShellColors()
@@ -71,7 +72,8 @@ fun CustomerViewScreen(
         title = K.businessDetails.tr(),
         onBack = onBack,
         scrollState = scrollState,
-        onEdit = onEdit
+        onEdit = onEdit,
+        onCopy = onCopy
     ) {
         LazyColumn(
             state = scrollState,

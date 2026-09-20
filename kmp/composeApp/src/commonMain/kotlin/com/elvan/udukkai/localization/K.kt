@@ -197,6 +197,7 @@ object K {
     const val restoreBtn = "restoreBtn"
     const val restoreDataBtn = "restoreDataBtn"
     const val deleteBtn = "deleteBtn"
+    const val copyBtn = "copyBtn"
     const val syncAppBtn = "syncAppBtn"
     const val saveUserBtn = "saveUserBtn"
     const val addProductBtn = "addProductBtn"

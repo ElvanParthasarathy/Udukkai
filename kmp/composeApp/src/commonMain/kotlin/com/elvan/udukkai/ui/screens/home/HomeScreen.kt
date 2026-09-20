@@ -31,6 +31,7 @@ import com.elvan.udukkai.data.repository.VaangunarRepository
 import com.elvan.udukkai.data.settings.NiruvanaTharavugalRepository
 import com.elvan.udukkai.data.mock.SodhanaiTharavuUruvakki
 import com.elvan.udukkai.localization.K
+import com.elvan.udukkai.localization.LanguageManager
 import com.elvan.udukkai.localization.tr
 import com.elvan.udukkai.theme.LocalAppFontFamily
 import com.elvan.udukkai.theme.rememberShellColors
@@ -102,6 +103,48 @@ fun HomeScreen() {
     val onStartSelection: (Long) -> Unit = { id ->
         isSelectionMode = true
         selectedItemIds = setOf(id)
+    }
+
+    val copyInvoiceAndEdit: (PattiyalTharavuru) -> Unit = { invoice ->
+        val copied = invoice.copy(
+            id = 0L,
+            patrucheettuEn = "",
+            pattiyalNaal = System.currentTimeMillis(),
+            createdAt = System.currentTimeMillis(),
+            updatedAt = System.currentTimeMillis()
+        )
+        isSelectionMode = false
+        selectedItemIds = emptySet()
+        activeSubpage = ActiveSubpage.InvoiceEditor(copied)
+    }
+
+    val copyProductAndEdit: (PorulTharavuru) -> Unit = { item ->
+        val isTamil = LanguageManager.activeLanguageCode.startsWith("ta")
+        val copySuffix = if (isTamil) " (நகல்)" else " (Copy)"
+        val copied = item.copy(
+            id = 0L,
+            porulPeyar = item.porulPeyar.mapValues { "${it.value}$copySuffix" },
+            createdAt = System.currentTimeMillis(),
+            updatedAt = System.currentTimeMillis()
+        )
+        isSelectionMode = false
+        selectedItemIds = emptySet()
+        activeSubpage = ActiveSubpage.ItemEditor(copied)
+    }
+
+    val copyCustomerAndEdit: (VaangunarTharavuru) -> Unit = { merchant ->
+        val isTamil = LanguageManager.activeLanguageCode.startsWith("ta")
+        val copySuffix = if (isTamil) " (நகல்)" else " (Copy)"
+        val copied = merchant.copy(
+            id = 0L,
+            peyar = merchant.peyar.mapValues { "${it.value}$copySuffix" },
+            gstin = "",
+            createdAt = System.currentTimeMillis(),
+            updatedAt = System.currentTimeMillis()
+        )
+        isSelectionMode = false
+        selectedItemIds = emptySet()
+        activeSubpage = ActiveSubpage.MerchantEditor(copied)
     }
 
     val scope = rememberCoroutineScope()
@@ -285,6 +328,9 @@ fun HomeScreen() {
                         onBack = { activeSubpage = null },
                         onEdit = {
                             activeSubpage = ActiveSubpage.MerchantEditor(subpage.customer)
+                        },
+                        onCopy = {
+                            copyCustomerAndEdit(subpage.customer)
                         }
                     )
                 }
@@ -294,6 +340,9 @@ fun HomeScreen() {
                         onBack = { activeSubpage = null },
                         onEdit = {
                             activeSubpage = ActiveSubpage.ItemEditor(subpage.product)
+                        },
+                        onCopy = {
+                            copyProductAndEdit(subpage.product)
                         }
                     )
                 }
@@ -303,6 +352,9 @@ fun HomeScreen() {
                         onBack = { activeSubpage = null },
                         onEdit = {
                             activeSubpage = ActiveSubpage.InvoiceEditor(subpage.invoice)
+                        },
+                        onCopy = {
+                            copyInvoiceAndEdit(subpage.invoice)
                         }
                     )
                 }
@@ -460,6 +512,32 @@ fun HomeScreen() {
                                     label = "bottomBarSelectionCrossfade"
                                 ) { inSelection ->
                                     if (inSelection) {
+                                        val canCopyTab = selectedTab == NavTab.Products ||
+                                                         selectedTab == NavTab.Customers ||
+                                                         (selectedTab == NavTab.Create && uruvakkuSegment == 0)
+
+                                        val onSelectionCopy: (() -> Unit)? = if (canCopyTab) {
+                                            {
+                                                if (selectedItemIds.size == 1) {
+                                                    val selectedId = selectedItemIds.first()
+                                                    when (selectedTab) {
+                                                        NavTab.Products -> {
+                                                            PorulRepository.items.find { it.id == selectedId }?.let { copyProductAndEdit(it) }
+                                                        }
+                                                        NavTab.Customers -> {
+                                                            VaangunarRepository.merchants.find { it.id == selectedId }?.let { copyCustomerAndEdit(it) }
+                                                        }
+                                                        NavTab.Create -> {
+                                                            if (uruvakkuSegment == 0) {
+                                                                PattiyalRepository.invoices.find { it.id == selectedId }?.let { copyInvoiceAndEdit(it) }
+                                                            }
+                                                        }
+                                                        else -> {}
+                                                    }
+                                                }
+                                            }
+                                        } else null
+
                                         ElvanSelectionBar(
                                             visible = true,
                                             selectedCount = selectedItemIds.size,
@@ -468,6 +546,7 @@ fun HomeScreen() {
                                                     showBulkDeleteConfirm = true
                                                 }
                                             },
+                                            onCopy = onSelectionCopy,
                                             colors = colors
                                         )
                                     } else {

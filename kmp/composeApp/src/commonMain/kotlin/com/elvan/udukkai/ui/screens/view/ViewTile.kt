@@ -22,18 +22,25 @@ fun ViewTile(
     scrollState: LazyListState = rememberLazyListState(),
     onEdit: (() -> Unit)? = null,
     onPrint: (() -> Unit)? = null,
+    onCopy: (() -> Unit)? = null,
     content: @Composable () -> Unit
 ) {
     ElvanSubShell(
         title = title,
         onBack = onBack,
         scrollState = scrollState,
-        hasActions = onEdit != null || onPrint != null,
+        hasActions = onEdit != null || onPrint != null || onCopy != null,
         actions = {
             if (onPrint != null) {
                 ElvanActionButton(
                     label = K.printBtn.tr(),
                     onClick = onPrint
+                )
+            }
+            if (onCopy != null) {
+                ElvanActionButton(
+                    label = K.copyBtn.tr(),
+                    onClick = onCopy
                 )
             }
             if (onEdit != null) {
