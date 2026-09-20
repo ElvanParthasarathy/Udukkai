@@ -2,36 +2,19 @@
 logs
 *.log
 npm-debug.log*
-
-# AI assistant context
-.claude/
-
-# Editor directories and files
-.vscode/*
-!.vscode/extensions.json
-# Logs
-logs
-*.log
-npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
+# Node / Web Build Artifacts
 node_modules
 dist
 dist-ssr
 dist-electron
 dist-desktop
 *.local
-
-# Invoice data (personal/financial - keep local only)
-/tharavu/
-Saved Invoices/
-Trash/
-
-# AI assistant context
-.claude/
+.env
 
 # Editor directories and files
 .vscode/*
@@ -41,7 +24,15 @@ Trash/
 *.suo
 *.ntvs*
 *.njsproj
-.env
+
+# Invoice data (personal/financial - keep local only)
+archive/tharavu/
+archive/Saved Invoices/
+Saved Invoices/
+Trash/
+
+# AI assistant context
+.claude/
 
 # Kotlin Multiplatform & Android Build Artifacts
 .gradle/

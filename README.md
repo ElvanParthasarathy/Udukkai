@@ -2,15 +2,16 @@
 
 A unified multi-platform GST invoicing & ledger suite for Coolie (labor) and Silk (goods) businesses.
 
-## 🏗️ Repository Architecture (`projects/`)
+## 🏗️ Repository Architecture
 
-This repository is organized as a clean monorepo with dedicated project workspaces:
+This repository has a clean, focused root structure organized into three dedicated implementations and an archive:
 
-| Project Directory | Stack | Description | Build & Run |
+| Directory | Stack | Description | Build & Run |
 | :--- | :--- | :--- | :--- |
-| [`projects/kmp/`](projects/kmp/) | **Kotlin Multiplatform (Compose Multiplatform)** | **Primary implementation.** Modern native Android & Desktop app with Material 3 & SESL design system. | `cd projects/kmp`<br>`.\gradlew.bat assembleDebug` |
-| [`projects/flutter/`](projects/flutter/) | **Flutter (Dart)** | Cross-platform mobile application following Senthamizh domain architecture. | `cd projects/flutter`<br>`flutter run` |
-| [`projects/react/`](projects/react/) | **React + Vite + Capacitor + Electron** | Offline-first web application, Capacitor Android wrapper, and Electron desktop launcher. | `cd projects/react`<br>`npm install`<br>`npm run dev` |
+| [`kmp/`](kmp/) | **Kotlin Multiplatform (Compose Multiplatform)** | **Primary implementation.** Modern native Android & Desktop app with Material 3 & SESL design system. | `cd kmp`<br>`.\gradlew.bat assembleDebug` |
+| [`flutter/`](flutter/) | **Flutter (Dart)** | Cross-platform mobile application following Senthamizh domain architecture. | `cd flutter`<br>`flutter run` |
+| [`react/`](react/) | **React + Vite + Capacitor + Electron** | Offline-first web application, Capacitor Android wrapper, and Electron desktop launcher. | `cd react`<br>`npm install`<br>`npm run dev` |
+| [`archive/`](archive/) | **Documentation & Legacy Assets** | Historical invoice templates, sample datasets, scratch tools, and legacy documentation. | — |
 
 ---
 
