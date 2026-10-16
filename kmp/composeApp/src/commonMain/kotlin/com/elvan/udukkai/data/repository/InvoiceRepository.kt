@@ -44,10 +44,20 @@ object PattiyalRepository {
         endDateFilter = null
     }
 
+    val activeCompanyInvoices: List<PattiyalTharavuru>
+        get() {
+            val activeId = com.elvan.udukkai.data.settings.NiruvanaTharavugalRepository.getProfile(ModeManager.currentMode).id
+            return if (activeId != null) {
+                invoices.filter { it.niruvanamId == activeId }
+            } else {
+                invoices
+            }
+        }
+
     val filteredInvoices: List<PattiyalTharavuru>
         get() {
             val q = searchQuery.trim().lowercase()
-            return invoices.filter { invoice ->
+            return activeCompanyInvoices.filter { invoice ->
                 val matchesQuery = if (q.isEmpty()) true else {
                     invoice.patrucheettuEn.lowercase().contains(q) ||
                     invoice.vaangunarPeyar.values.any { it.lowercase().contains(q) } ||
@@ -66,10 +76,10 @@ object PattiyalRepository {
         }
 
     val recentInvoices: List<PattiyalTharavuru>
-        get() = invoices.take(8)
+        get() = activeCompanyInvoices.take(8)
 
     val overallTotal: Double
-        get() = invoices.sumOf { it.mothaThogai }
+        get() = activeCompanyInvoices.sumOf { it.mothaThogai }
 
     init {
         loadAll()

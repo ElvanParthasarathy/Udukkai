@@ -51,7 +51,8 @@ fun PattuUrupadiAttai(
     onItemCleared: () -> Unit,
     onDirty: () -> Unit,
     onRequestAddNewProduct: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    niruvanamId: Long? = null
 ) {
     val colors = rememberShellColors()
     val isDark = colors.isDark
@@ -59,6 +60,9 @@ fun PattuUrupadiAttai(
 
     var isPickerOpen by remember { mutableStateOf(false) }
     val allProducts = PorulRepository.items
+    val availableProducts = remember(allProducts, niruvanamId) {
+        allProducts.filter { it.isAvailableForCompany(niruvanamId) }
+    }
 
     Column(
         modifier = modifier
@@ -301,14 +305,16 @@ fun PattuUrupadiAttai(
     if (isPickerOpen) {
         ElvanSelectionBottomSheet(
             title = K.products.tr(),
-            items = allProducts,
-            currentValue = allProducts.firstOrNull { it.id.toString() == item.porulId },
+            items = availableProducts,
+            currentValue = availableProducts.firstOrNull { it.id.toString() == item.porulId },
             showSearch = true,
             onDismissRequest = { isPickerOpen = false },
             onSelected = { selected ->
                 val config = PrintLanguageManager.getConfig(AppMode.PATTU)
                 val primaryName = selected.porulPeyar[config.primaryLanguage.code] ?: selected.porulPeyar.values.firstOrNull().orEmpty()
                 val secondaryName = if (config.isBilingual) selected.porulPeyar[config.secondaryLanguage.code].orEmpty() else ""
+                val effectivePrice = selected.getEffectivePrice(niruvanamId)
+                val priceToUse = if (effectivePrice > 0.0) effectivePrice else selected.vilai
                 onItemUpdated(
                     item.copy(
                         porulId = selected.id.toString(),
@@ -316,7 +322,7 @@ fun PattuUrupadiAttai(
                         porulPeyarEn = secondaryName,
                         mozhiMap = selected.porulPeyar,
                         hsnKuriyeedu = selected.hsnCode,
-                        vilai = selected.vilai,
+                        vilai = priceToUse,
                         variVizhukkaadu = if (selected.variVeetham > 0) selected.variVeetham else 5.0,
                         alagu = selected.alagu
                     )
@@ -331,7 +337,8 @@ fun PattuUrupadiAttai(
             subtitleBuilder = { p ->
                 val config = PrintLanguageManager.getConfig(AppMode.PATTU)
                 val subName = if (config.isBilingual) p.porulPeyar[config.secondaryLanguage.code].orEmpty() else ""
-                val priceStr = if (p.vilai > 0) CurrencyUtils.formatInr(p.vilai) else ""
+                val price = p.getEffectivePrice(niruvanamId)
+                val priceStr = if (price > 0) CurrencyUtils.formatInr(price) else ""
                 listOf(subName, priceStr).filter { it.isNotEmpty() }.joinToString("  •  ")
             },
             searchFilter = { p, query ->

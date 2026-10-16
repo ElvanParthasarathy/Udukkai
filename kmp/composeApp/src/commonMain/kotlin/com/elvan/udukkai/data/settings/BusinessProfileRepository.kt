@@ -125,6 +125,20 @@ object NiruvanaTharavugalRepository {
         refreshFromDatabase()
     }
 
+    private fun getPersistedActiveId(mode: AppMode): Long? {
+        return try {
+            com.elvan.udukkai.core.platform.getPreferencesHelper().getString("active_niruvanam_id_${mode.key}")?.toLongOrNull()
+        } catch (_: Exception) {
+            null
+        }
+    }
+
+    private fun persistActiveId(mode: AppMode, id: Long) {
+        try {
+            com.elvan.udukkai.core.platform.getPreferencesHelper().setString("active_niruvanam_id_${mode.key}", id.toString())
+        } catch (_: Exception) {}
+    }
+
     fun refreshFromDatabase() {
         try {
             val helper = getSettingsDatabaseHelper()
@@ -133,9 +147,13 @@ object NiruvanaTharavugalRepository {
             val kooliProfiles = helper.loadAllProfiles(AppMode.KOOLI).map { it.copy(iruMozhi = true) }
             if (kooliProfiles.isNotEmpty()) {
                 kooliProfilesState = kooliProfiles
-                val currentId = kooliProfileState.id
-                val matching = kooliProfiles.find { it.id == currentId }
-                kooliProfileState = (matching ?: kooliProfiles.first()).copy(iruMozhi = true)
+                val savedId = getPersistedActiveId(AppMode.KOOLI)
+                val matching = if (savedId != null) kooliProfiles.find { it.id == savedId } else null
+                val target = (matching ?: kooliProfiles.first()).copy(iruMozhi = true)
+                kooliProfileState = target
+                if (savedId == null || matching == null) {
+                    target.id?.let { persistActiveId(AppMode.KOOLI, it) }
+                }
             } else {
                 helper.loadProfile(AppMode.KOOLI)?.let { kooliProfile ->
                     val fixed = kooliProfile.copy(iruMozhi = true)
@@ -147,9 +165,13 @@ object NiruvanaTharavugalRepository {
             val pattuProfiles = helper.loadAllProfiles(AppMode.PATTU)
             if (pattuProfiles.isNotEmpty()) {
                 pattuProfilesState = pattuProfiles
-                val currentId = pattuProfileState.id
-                val matching = pattuProfiles.find { it.id == currentId }
-                pattuProfileState = matching ?: pattuProfiles.first()
+                val savedId = getPersistedActiveId(AppMode.PATTU)
+                val matching = if (savedId != null) pattuProfiles.find { it.id == savedId } else null
+                val target = matching ?: pattuProfiles.first()
+                pattuProfileState = target
+                if (savedId == null || matching == null) {
+                    target.id?.let { persistActiveId(AppMode.PATTU, it) }
+                }
             } else {
                 helper.loadProfile(AppMode.PATTU)?.let { pattuProfile ->
                     pattuProfileState = pattuProfile
@@ -180,6 +202,7 @@ object NiruvanaTharavugalRepository {
             AppMode.KOOLI -> kooliProfileState = selected
             AppMode.PATTU -> pattuProfileState = selected
         }
+        persistActiveId(mode, id)
     }
 
     fun createProfile(mode: AppMode, profile: NiruvanaTharavugal): Boolean {
@@ -215,10 +238,7 @@ object NiruvanaTharavugalRepository {
             }
             if (currentActiveId == id && remaining.isNotEmpty()) {
                 val newActive = remaining.first()
-                when (mode) {
-                    AppMode.KOOLI -> kooliProfileState = newActive
-                    AppMode.PATTU -> pattuProfileState = newActive
-                }
+                newActive.id?.let { setActiveProfile(mode, it) }
             }
         }
         return success

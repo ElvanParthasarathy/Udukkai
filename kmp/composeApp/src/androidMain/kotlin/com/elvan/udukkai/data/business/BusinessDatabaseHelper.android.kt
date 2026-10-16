@@ -9,6 +9,7 @@ import com.elvan.udukkai.core.platform.AppContext
 import com.elvan.udukkai.data.model.PattiyalTharavuru
 import com.elvan.udukkai.data.model.PatruPattiyalInaippuTharavuru
 import com.elvan.udukkai.data.model.PatrugalTharavuru
+import com.elvan.udukkai.data.model.PorulJsonConverter
 import com.elvan.udukkai.data.model.PorulTharavuru
 import com.elvan.udukkai.data.model.VaangunarTharavuru
 import com.elvan.udukkai.data.settings.MozhiJsonConverter
@@ -67,6 +68,8 @@ class AndroidBusinessDatabaseHelper : BusinessDatabaseHelper {
                 "vari_veetham" REAL NOT NULL DEFAULT 0.0,
                 "alavu_vagai" TEXT NOT NULL DEFAULT 'quantity',
                 "alagu" TEXT NOT NULL DEFAULT 'Nos',
+                "niruvanam_ids" TEXT NOT NULL DEFAULT '[]',
+                "company_prices" TEXT NOT NULL DEFAULT '{}',
                 "created_at" INTEGER NOT NULL DEFAULT (CAST(strftime('%s', CURRENT_TIMESTAMP) AS INTEGER)),
                 "updated_at" INTEGER NOT NULL DEFAULT (CAST(strftime('%s', CURRENT_TIMESTAMP) AS INTEGER)),
                 "is_deleted" INTEGER NOT NULL DEFAULT 0 CHECK ("is_deleted" IN (0, 1)),
@@ -179,6 +182,13 @@ class AndroidBusinessDatabaseHelper : BusinessDatabaseHelper {
         db.execSQL(createPattiyalSql)
         db.execSQL(createPatrugalSql)
         db.execSQL(createJunctionSql)
+
+        try {
+            db.execSQL("""ALTER TABLE "$porulTable" ADD COLUMN "niruvanam_ids" TEXT NOT NULL DEFAULT '[]'""")
+        } catch (_: Exception) {}
+        try {
+            db.execSQL("""ALTER TABLE "$porulTable" ADD COLUMN "company_prices" TEXT NOT NULL DEFAULT '{}'""")
+        } catch (_: Exception) {}
     }
 
     override fun loadAllMerchants(mode: AppMode): List<VaangunarTharavuru> {
@@ -421,6 +431,8 @@ class AndroidBusinessDatabaseHelper : BusinessDatabaseHelper {
                 put("vari_veetham", item.variVeetham)
                 put("alavu_vagai", item.alavuVagai)
                 put("alagu", item.alagu)
+                put("niruvanam_ids", PorulJsonConverter.stringifyLongList(item.niruvanamIds))
+                put("company_prices", PorulJsonConverter.stringifyCompanyPrices(item.companyPrices))
                 put("updated_at", nowSec)
                 put("is_deleted", if (item.isDeleted) 1 else 0)
                 if (item.deletedAt != null) {
@@ -1233,6 +1245,8 @@ class AndroidBusinessDatabaseHelper : BusinessDatabaseHelper {
             variVeetham = getDouble("vari_veetham"),
             alavuVagai = getString("alavu_vagai").ifEmpty { "quantity" },
             alagu = getString("alagu").ifEmpty { "Nos" },
+            niruvanamIds = PorulJsonConverter.parseLongList(getString("niruvanam_ids")),
+            companyPrices = PorulJsonConverter.parseCompanyPrices(getString("company_prices")),
             createdAt = createdAt,
             updatedAt = updatedAt,
             isDeleted = getInt("is_deleted", 0) == 1,

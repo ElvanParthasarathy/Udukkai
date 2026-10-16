@@ -39,10 +39,20 @@ object PatrugalRepository {
         endDateFilter = null
     }
 
+    val activeCompanyReceipts: List<PatrugalTharavuru>
+        get() {
+            val activeId = com.elvan.udukkai.data.settings.NiruvanaTharavugalRepository.getProfile(ModeManager.currentMode).id
+            return if (activeId != null) {
+                receipts.filter { it.niruvanamId == activeId }
+            } else {
+                receipts
+            }
+        }
+
     val filteredReceipts: List<PatrugalTharavuru>
         get() {
             val q = searchQuery.trim().lowercase()
-            return receipts.filter { receipt ->
+            return activeCompanyReceipts.filter { receipt ->
                 val matchesQuery = if (q.isEmpty()) true else {
                     receipt.patruEn.lowercase().contains(q) ||
                     receipt.vaangunarPeyar.values.any { it.lowercase().contains(q) } ||
@@ -62,7 +72,17 @@ object PatrugalRepository {
         }
 
     val overallTotal: Double
-        get() = receipts.sumOf { it.thogai }
+        get() = activeCompanyReceipts.sumOf { it.thogai }
+
+    fun getCustomerBalance(customerId: Long, companyId: Long? = null, mode: AppMode = ModeManager.currentMode): Double {
+        val targetCompanyId = companyId ?: com.elvan.udukkai.data.settings.NiruvanaTharavugalRepository.getProfile(mode).id
+        val companyInvoices = PattiyalRepository.invoices.filter {
+            it.vaangunarId == customerId && (targetCompanyId == null || it.niruvanamId == targetCompanyId)
+        }
+        return companyInvoices.sumOf { inv ->
+            getPendingBalance(inv, mode)
+        }
+    }
 
     init {
         loadAll()

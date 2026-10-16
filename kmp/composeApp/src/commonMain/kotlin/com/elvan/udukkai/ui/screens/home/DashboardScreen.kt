@@ -4,7 +4,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.elvan.udukkai.core.mode.AppMode
@@ -17,6 +17,7 @@ import com.elvan.udukkai.localization.K
 import com.elvan.udukkai.localization.tr
 import com.elvan.udukkai.theme.Dimens
 import com.elvan.udukkai.theme.rememberShellColors
+import com.elvan.udukkai.ui.components.shell.ElvanCompanySelectionBottomSheet
 import com.elvan.udukkai.ui.components.shell.LocalElvanTopSpacerHeight
 import com.elvan.udukkai.ui.components.shell.MugappuStatsSkeleton
 import com.elvan.udukkai.ui.components.shell.UruvakkuCardSkeleton
@@ -42,16 +43,22 @@ fun DashboardScreen(
     onSeeAll: () -> Unit,
     modifier: Modifier = Modifier,
     isRefreshing: Boolean = false,
-    onInvoiceClick: (PattiyalTharavuru) -> Unit = {}
+    onInvoiceClick: (PattiyalTharavuru) -> Unit = {},
+    onManageProfiles: (() -> Unit)? = null
 ) {
     val mode = LocalAppMode.current
     val colors = rememberShellColors()
 
     val profiles = NiruvanaTharavugalRepository.getAllProfiles(mode)
+    val activeProfile = NiruvanaTharavugalRepository.getProfile(mode)
     val recentBills = PattiyalRepository.recentInvoices
     val overallTotal = PattiyalRepository.overallTotal
-    val companiesSummary = PattiyalRepository.getCompaniesSummary(profiles)
-    val invoiceCountSummary = PattiyalRepository.getInvoiceCountSummary(profiles)
+    val activeCompanyName = activeProfile.kurumPeyar.ifEmpty {
+        activeProfile.niruvanathinPeyar.values.firstOrNull().orEmpty()
+    }.ifEmpty { mode.displayName() }
+    val activeCompanyInvoiceCount = PattiyalRepository.activeCompanyInvoices.size
+
+    var showCompanySheetOnCardClick by remember { mutableStateOf(false) }
 
     Box(modifier = modifier.fillMaxSize()) {
         LazyColumn(
@@ -69,7 +76,7 @@ fun DashboardScreen(
 
         // 1. Greeting Vanakkam Pill
         item(key = "vanakkam_pill") {
-            GreetingPill(colors = colors)
+            GreetingPill(colors = colors, onManageProfiles = onManageProfiles)
         }
 
         if (isRefreshing) {
@@ -122,19 +129,20 @@ fun DashboardScreen(
 
                         ElvanStatsCard(
                             icon = MaterialSymbols.Rounded.Apartment,
-                            label = K.companies.tr(),
-                            value = companiesSummary,
+                            label = K.company.tr(),
+                            value = activeCompanyName,
                             colors = colors,
                             modifier = Modifier.weight(1f),
-                            isFullWidth = false
+                            isFullWidth = false,
+                            onClick = { showCompanySheetOnCardClick = true }
                         )
                     }
 
-                    // Full-width 3rd card: Invoice count with company breakdown
+                    // Full-width 3rd card: Invoice count for active company
                     ElvanStatsCard(
                         icon = MaterialSymbols.Rounded.InvoiceFill,
                         label = K.totalInvoices.tr(),
-                        value = invoiceCountSummary,
+                        value = "$activeCompanyInvoiceCount",
                         colors = colors,
                         modifier = Modifier.fillMaxWidth(),
                         isFullWidth = true,
@@ -190,5 +198,17 @@ fun DashboardScreen(
         }
     }
 
+        if (showCompanySheetOnCardClick) {
+            ElvanCompanySelectionBottomSheet(
+                profiles = profiles,
+                activeProfileId = activeProfile.id,
+                onSelectProfile = { selectedId ->
+                    NiruvanaTharavugalRepository.setActiveProfile(mode, selectedId)
+                },
+                onManageProfiles = onManageProfiles,
+                onDismissRequest = { showCompanySheetOnCardClick = false },
+                colors = colors
+            )
+        }
     }
 }

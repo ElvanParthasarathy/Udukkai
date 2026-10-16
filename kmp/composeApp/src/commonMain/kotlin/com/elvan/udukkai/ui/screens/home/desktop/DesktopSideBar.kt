@@ -17,6 +17,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -186,16 +187,16 @@ fun DesktopSideBar(
                 modifier = Modifier.padding(vertical = 12.dp)
             )
 
-            // Mode Selector Pill
-            val isFixed = com.elvan.udukkai.core.mode.AppLaunchConfig.isFixed
+            // Company Selector Pill (Desktop)
+            var showCompanySheet by remember { mutableStateOf(false) }
+            val activeProfile = NiruvanaTharavugalRepository.getProfile(currentMode)
+            val allProfiles = NiruvanaTharavugalRepository.getAllProfiles(currentMode)
+
             Surface(
                 modifier = Modifier
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(16.dp))
-                    .then(
-                        if (!isFixed) Modifier.clickable { ModeManager.openModeSelector() }
-                        else Modifier
-                    ),
+                    .clickable { showCompanySheet = true },
                 shape = RoundedCornerShape(16.dp),
                 color = colors.textPrimary.copy(alpha = 0.05f)
             ) {
@@ -210,11 +211,14 @@ fun DesktopSideBar(
                         modifier = Modifier.size(32.dp)
                     ) {
                         Box(contentAlignment = Alignment.Center) {
-                            Icon(
-                                imageVector = if (currentMode == AppMode.KOOLI) MaterialSymbols.Mode.Coolie else MaterialSymbols.Mode.Silk,
-                                contentDescription = null,
-                                tint = colors.textPrimary,
-                                modifier = Modifier.size(18.dp)
+                            Text(
+                                text = businessName.take(1).uppercase(),
+                                style = TextStyle(
+                                    fontFamily = ff,
+                                    fontSize = 15.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = colors.textPrimary
+                                )
                             )
                         }
                     }
@@ -239,8 +243,27 @@ fun DesktopSideBar(
                                 color = colors.textPrimary.copy(alpha = 0.5f)
                             )
                         }
+                        Icon(
+                            imageVector = MaterialSymbols.Rounded.KeyboardArrowDown,
+                            contentDescription = "Switch Company",
+                            tint = colors.textPrimary.copy(alpha = 0.4f),
+                            modifier = Modifier.size(16.dp)
+                        )
                     }
                 }
+            }
+
+            if (showCompanySheet) {
+                com.elvan.udukkai.ui.components.shell.ElvanCompanySelectionBottomSheet(
+                    profiles = allProfiles,
+                    activeProfileId = activeProfile.id,
+                    onSelectProfile = { selectedId ->
+                        NiruvanaTharavugalRepository.setActiveProfile(currentMode, selectedId)
+                    },
+                    onManageProfiles = onSettingsClick,
+                    onDismissRequest = { showCompanySheet = false },
+                    colors = colors
+                )
             }
 
             Spacer(modifier = Modifier.height(8.dp))

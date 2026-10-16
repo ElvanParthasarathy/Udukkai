@@ -24,6 +24,7 @@ import com.elvan.udukkai.core.mode.LocalAppMode
 import com.elvan.udukkai.core.platform.AppBackHandler
 import com.elvan.udukkai.core.utils.CurrencyUtils
 import com.elvan.udukkai.data.model.PorulTharavuru
+import com.elvan.udukkai.data.settings.NiruvanaTharavugalRepository
 import com.elvan.udukkai.localization.PrintLanguageManager
 import com.elvan.udukkai.localization.K
 import com.elvan.udukkai.localization.tr
@@ -211,6 +212,39 @@ fun ProductViewScreen(
                             colors = colors,
                             ff = ff
                         )
+                    }
+
+                    // Company Availability
+                    val allProfiles = NiruvanaTharavugalRepository.getAllProfiles(currentMode)
+                    val availabilityText = if (item.niruvanamIds.isEmpty()) {
+                        "${K.all.tr()} ${K.companies.tr()}"
+                    } else {
+                        item.niruvanamIds.mapNotNull { cId ->
+                            val p = allProfiles.find { it.id == cId }
+                            p?.kurumPeyar?.ifEmpty { p.niruvanathinPeyar.values.firstOrNull() }
+                        }.joinToString(", ").ifEmpty { "${K.select.tr()} ${K.companies.tr()}" }
+                    }
+                    DetailCard(
+                        title = K.companies.tr(),
+                        value = availabilityText,
+                        icon = MaterialSymbols.Rounded.Apartment,
+                        colors = colors,
+                        ff = ff
+                    )
+
+                    // Company Price Overrides
+                    if (item.companyPrices.isNotEmpty()) {
+                        item.companyPrices.forEach { (cId, overridePrice) ->
+                            val p = allProfiles.find { it.id == cId }
+                            val cName = p?.kurumPeyar?.ifEmpty { p.niruvanathinPeyar.values.firstOrNull() } ?: "Company #$cId"
+                            DetailCard(
+                                title = "$cName ${K.sellingRate.tr()}",
+                                value = CurrencyUtils.formatInr(overridePrice),
+                                icon = MaterialSymbols.Rounded.CurrencyRupee,
+                                colors = colors,
+                                ff = ff
+                            )
+                        }
                     }
                 }
             }

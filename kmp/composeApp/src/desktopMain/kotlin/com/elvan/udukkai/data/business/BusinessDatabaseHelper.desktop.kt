@@ -5,6 +5,7 @@ import com.elvan.udukkai.data.DesktopDbPaths
 import com.elvan.udukkai.data.model.PattiyalTharavuru
 import com.elvan.udukkai.data.model.PatruPattiyalInaippuTharavuru
 import com.elvan.udukkai.data.model.PatrugalTharavuru
+import com.elvan.udukkai.data.model.PorulJsonConverter
 import com.elvan.udukkai.data.model.PorulTharavuru
 import com.elvan.udukkai.data.model.VaangunarTharavuru
 import com.elvan.udukkai.data.settings.MozhiJsonConverter
@@ -67,6 +68,8 @@ class DesktopBusinessDatabaseHelper : BusinessDatabaseHelper {
                 "vari_veetham" REAL NOT NULL DEFAULT 0.0,
                 "alavu_vagai" TEXT NOT NULL DEFAULT 'quantity',
                 "alagu" TEXT NOT NULL DEFAULT 'Nos',
+                "niruvanam_ids" TEXT NOT NULL DEFAULT '[]',
+                "company_prices" TEXT NOT NULL DEFAULT '{}',
                 "created_at" INTEGER NOT NULL DEFAULT (CAST(strftime('%s', CURRENT_TIMESTAMP) AS INTEGER)),
                 "updated_at" INTEGER NOT NULL DEFAULT (CAST(strftime('%s', CURRENT_TIMESTAMP) AS INTEGER)),
                 "is_deleted" INTEGER NOT NULL DEFAULT 0 CHECK ("is_deleted" IN (0, 1)),
@@ -180,6 +183,13 @@ class DesktopBusinessDatabaseHelper : BusinessDatabaseHelper {
             stmt.execute(createPattiyalSql)
             stmt.execute(createPatrugalSql)
             stmt.execute(createJunctionSql)
+
+            try {
+                stmt.execute("""ALTER TABLE "$porulTable" ADD COLUMN "niruvanam_ids" TEXT NOT NULL DEFAULT '[]'""")
+            } catch (_: Exception) {}
+            try {
+                stmt.execute("""ALTER TABLE "$porulTable" ADD COLUMN "company_prices" TEXT NOT NULL DEFAULT '{}'""")
+            } catch (_: Exception) {}
         }
     }
 
@@ -436,6 +446,7 @@ class DesktopBusinessDatabaseHelper : BusinessDatabaseHelper {
                     """
                     UPDATE $tableName SET
                         porul_peyar = ?, hsn_code = ?, vilai = ?, vari_veetham = ?, alavu_vagai = ?, alagu = ?,
+                        niruvanam_ids = ?, company_prices = ?,
                         updated_at = ?, is_deleted = ?, deleted_at = ?
                     WHERE id = ?
                     """.trimIndent()
@@ -443,8 +454,9 @@ class DesktopBusinessDatabaseHelper : BusinessDatabaseHelper {
                     """
                     INSERT INTO $tableName (
                         porul_peyar, hsn_code, vilai, vari_veetham, alavu_vagai, alagu,
+                        niruvanam_ids, company_prices,
                         created_at, updated_at, is_deleted, deleted_at
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                     """.trimIndent()
                 }
 
@@ -456,6 +468,8 @@ class DesktopBusinessDatabaseHelper : BusinessDatabaseHelper {
                     stmt.setDouble(idx++, item.variVeetham)
                     stmt.setString(idx++, item.alavuVagai)
                     stmt.setString(idx++, item.alagu)
+                    stmt.setString(idx++, PorulJsonConverter.stringifyLongList(item.niruvanamIds))
+                    stmt.setString(idx++, PorulJsonConverter.stringifyCompanyPrices(item.companyPrices))
 
                     if (!isUpdate) {
                         val createdSec = if (item.createdAt > 10000000000L) item.createdAt / 1000 else if (item.createdAt > 0L) item.createdAt else nowSec
@@ -1362,6 +1376,8 @@ class DesktopBusinessDatabaseHelper : BusinessDatabaseHelper {
             variVeetham = getDouble("vari_veetham"),
             alavuVagai = getString("alavu_vagai").ifEmpty { "quantity" },
             alagu = getString("alagu").ifEmpty { "Nos" },
+            niruvanamIds = PorulJsonConverter.parseLongList(getString("niruvanam_ids")),
+            companyPrices = PorulJsonConverter.parseCompanyPrices(getString("company_prices")),
             createdAt = createdAt,
             updatedAt = updatedAt,
             isDeleted = getInt("is_deleted", 0) == 1,

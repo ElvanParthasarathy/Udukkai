@@ -68,13 +68,6 @@ class MainActivity : ComponentActivity() {
             ModeManager.resetStartupState()
         }
 
-        onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
-            override fun handleOnBackPressed() {
-                ModeManager.resetStartupState()
-                finish()
-            }
-        })
-
         val isSystemDark = (resources.configuration.uiMode and android.content.res.Configuration.UI_MODE_NIGHT_MASK) == android.content.res.Configuration.UI_MODE_NIGHT_YES
         val isInitialDark = when (ThemeManager.currentThemeMode) {
             com.elvan.udukkai.theme.ThemeMode.LIGHT -> false

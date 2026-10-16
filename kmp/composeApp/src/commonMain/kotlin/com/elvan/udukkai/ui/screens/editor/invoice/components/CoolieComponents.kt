@@ -78,7 +78,8 @@ fun KooliUrupadiAttai(
     onRequestAddNewProduct: () -> Unit,
     onAddNewItem: (() -> Unit)? = null,
     onAddNewCharge: (() -> Unit)? = null,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    niruvanamId: Long? = null
 ) {
     val colors = rememberShellColors()
     val isDark = colors.isDark
@@ -86,6 +87,9 @@ fun KooliUrupadiAttai(
 
     var isPickerOpen by remember { mutableStateOf(false) }
     val allProducts = PorulRepository.items
+    val availableProducts = remember(allProducts, niruvanamId) {
+        allProducts.filter { it.isAvailableForCompany(niruvanamId) }
+    }
 
     Column(
         modifier = modifier
@@ -384,19 +388,21 @@ fun KooliUrupadiAttai(
 
         ElvanSelectionBottomSheet(
             title = K.products.tr(),
-            items = allProducts,
-            currentValue = allProducts.firstOrNull { it.id.toString() == item.porulId },
+            items = availableProducts,
+            currentValue = availableProducts.firstOrNull { it.id.toString() == item.porulId },
             showSearch = true,
             onDismissRequest = { isPickerOpen = false },
             onSelected = { selected ->
                 val primaryName = selected.porulPeyar[primaryLang] ?: selected.porulPeyar.values.firstOrNull().orEmpty()
                 val secondaryName = selected.porulPeyar[secondaryLang] ?: ""
+                val effectivePrice = selected.getEffectivePrice(niruvanamId)
+                val priceToUse = if (effectivePrice > 0.0) effectivePrice else selected.vilai
                 onItemUpdated(
                     item.copy(
                         porulId = selected.id.toString(),
                         porulPeyar = selected.porulPeyar["ta"] ?: primaryName,
                         porulPeyarEn = selected.porulPeyar["en"] ?: secondaryName,
-                        vilai = selected.vilai,
+                        vilai = priceToUse,
                         mozhiMap = selected.porulPeyar
                     )
                 )
@@ -408,7 +414,8 @@ fun KooliUrupadiAttai(
             },
             subtitleBuilder = { p ->
                 val secName = p.porulPeyar[secondaryLang].orEmpty()
-                val priceStr = if (p.vilai > 0) CurrencyUtils.formatInr(p.vilai) else ""
+                val price = p.getEffectivePrice(niruvanamId)
+                val priceStr = if (price > 0) CurrencyUtils.formatInr(price) else ""
                 listOf(secName, priceStr).filter { it.isNotEmpty() }.joinToString("  •  ")
             },
             searchFilter = { p, query ->

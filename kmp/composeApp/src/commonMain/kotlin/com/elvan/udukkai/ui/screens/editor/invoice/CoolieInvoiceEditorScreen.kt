@@ -113,17 +113,18 @@ fun CoolieInvoiceEditorScreen(
     }
 
     val profiles: List<NiruvanaTharavugal> = NiruvanaTharavugalRepository.getAllProfiles(AppMode.KOOLI)
+    val activeProfile = NiruvanaTharavugalRepository.getProfile(AppMode.KOOLI)
     var selectedNiruvanamId by remember {
         mutableStateOf(
-            invoice?.niruvanamId ?: if (profiles.size == 1) profiles.first().id else null
+            invoice?.niruvanamId ?: activeProfile.id ?: if (profiles.isNotEmpty()) profiles.first().id else null
         )
     }
     val selectedProfile = profiles.firstOrNull { it.id == selectedNiruvanamId }
 
-    // Auto-select if only 1 profile exists
-    LaunchedEffect(profiles) {
-        if (profiles.size == 1 && selectedNiruvanamId == null) {
-            selectedNiruvanamId = profiles.first().id
+    // Auto-select if unselected
+    LaunchedEffect(profiles, activeProfile) {
+        if (selectedNiruvanamId == null && profiles.isNotEmpty()) {
+            selectedNiruvanamId = activeProfile.id ?: profiles.first().id
         }
     }
 
@@ -614,6 +615,7 @@ fun CoolieInvoiceEditorScreen(
                                                 item = itm,
                                                 index = idx,
                                                 itemCount = activeItems.size,
+                                                niruvanamId = selectedNiruvanamId,
                                                 onItemUpdated = { updated ->
                                                     items = items.map { if (it.id == itm.id) updated else it }
                                                     hasUnsavedChanges = true

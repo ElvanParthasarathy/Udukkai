@@ -105,17 +105,18 @@ fun ReceiptEditorScreen(
     val isEditing = receipt != null && receipt.id > 0L
 
     val profiles: List<NiruvanaTharavugal> = NiruvanaTharavugalRepository.getAllProfiles(currentMode)
+    val activeProfile = NiruvanaTharavugalRepository.getProfile(currentMode)
     var selectedNiruvanamId by remember {
-        mutableStateOf(receipt?.niruvanamId ?: if (profiles.size == 1) profiles.first().id else null)
+        mutableStateOf(receipt?.niruvanamId ?: activeProfile.id ?: if (profiles.isNotEmpty()) profiles.first().id else null)
     }
     val selectedProfile = remember(selectedNiruvanamId, profiles) {
         profiles.firstOrNull { it.id == selectedNiruvanamId }
     }
 
-    // Auto-select if only 1 profile exists
-    LaunchedEffect(profiles) {
-        if (profiles.size == 1 && selectedNiruvanamId == null) {
-            selectedNiruvanamId = profiles.first().id
+    // Auto-select if unselected
+    LaunchedEffect(profiles, activeProfile) {
+        if (selectedNiruvanamId == null && profiles.isNotEmpty()) {
+            selectedNiruvanamId = activeProfile.id ?: profiles.first().id
         }
     }
 

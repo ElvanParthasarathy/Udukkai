@@ -21,6 +21,12 @@ object PorulRepository {
 
     var searchQuery by mutableStateOf("")
 
+    val activeCompanyItems: List<PorulTharavuru>
+        get() {
+            val activeId = com.elvan.udukkai.data.settings.NiruvanaTharavugalRepository.getProfile(ModeManager.currentMode).id
+            return items.filter { it.isAvailableForCompany(activeId) }
+        }
+
     val filteredItems: List<PorulTharavuru>
         get() {
             val q = searchQuery.trim().lowercase()
