@@ -30,7 +30,11 @@ import com.elvan.udukkai.theme.rememberShellColors
  * - Simple monochrome design without decorative borders or card outlines
  * - Neutral theme tokens for initials avatar (no thoatraNiram color override)
  * - Pure monochrome checkmark indicator for active company
- * - Language-aware business name lookup respecting active UI language (Tamil/English/Latin)
+ * - Bilingual billing display rules:
+ *     - When bilingual billing is ON: First line = primary billing language business name;
+ *       Subtitle = secondary billing language business name (no address, GSTIN or extra details).
+ *     - When bilingual billing is OFF: First line = primary billing language business name;
+ *       Subtitle = business address (no GSTIN or extra details).
  * - Full legal names wrap naturally
  * - Downward swipe-to-dismiss with native drag handle
  * - Direct shortcut button for Company Settings
@@ -52,31 +56,70 @@ fun ElvanCompanySelectionBottomSheet(
         profiles.find { it.id == activeProfileId }
     }
 
-    fun getLocalizedBusinessName(profile: NiruvanaTharavugal): String {
-        // 1. Direct match with active app's UI language
-        val direct = profile.niruvanathinPeyar[uiLang]?.takeIf { it.isNotBlank() }
-        if (direct != null) return direct
+    // Active profile's saved billing-language settings
+    val activeBilling = currentProfile ?: profiles.firstOrNull()
+    val isBilingual = activeBilling?.iruMozhi ?: true
+    val primaryBillingLang = activeBilling?.mudhanMozhi?.ifEmpty { "ta" } ?: "ta"
+    val secondaryBillingLang = activeBilling?.thunaiMozhi?.ifEmpty { "en" } ?: "en"
 
-        // 2. Language-aware fallback:
-        if (uiLang == "en") {
-            val ta = profile.niruvanathinPeyar["ta"]?.takeIf { it.isNotBlank() }
-            if (ta != null) {
-                val latin = NavilMozhimaatri.transliterate(ta)
-                if (latin.isNotBlank()) return latin
-                return ta
+    fun getPrimaryBusinessName(profile: NiruvanaTharavugal): String {
+        val primary = profile.niruvanathinPeyar[primaryBillingLang]?.trim()?.takeIf { it.isNotEmpty() }
+        if (primary != null) return primary
+
+        // Missing translation fallback
+        val otherLang = if (primaryBillingLang == "ta") "en" else "ta"
+        val other = profile.niruvanathinPeyar[otherLang]?.trim()?.takeIf { it.isNotEmpty() }
+        if (other != null) {
+            if (primaryBillingLang.startsWith("en") || primaryBillingLang == "ta-Latn") {
+                val latin = NavilMozhimaatri.transliterate(other).trim()
+                if (latin.isNotEmpty()) return latin
             }
-        } else {
-            val ta = profile.niruvanathinPeyar["ta"]?.takeIf { it.isNotBlank() }
-            if (ta != null) return ta
-            val en = profile.niruvanathinPeyar["en"]?.takeIf { it.isNotBlank() }
-            if (en != null) return en
+            return other
         }
 
-        // 3. Fallback to short name
-        if (profile.kurumPeyar.isNotBlank()) return profile.kurumPeyar
+        if (profile.kurumPeyar.isNotBlank()) return profile.kurumPeyar.trim()
+        return profile.niruvanathinPeyar.values.firstOrNull { it.isNotBlank() }?.trim().orEmpty()
+    }
 
-        // 4. Any non-blank name
-        return profile.niruvanathinPeyar.values.firstOrNull { it.isNotBlank() }.orEmpty()
+    fun getSecondaryBusinessName(profile: NiruvanaTharavugal, primaryName: String): String? {
+        val direct = profile.niruvanathinPeyar[secondaryBillingLang]?.trim()?.takeIf { it.isNotEmpty() }
+        if (direct != null && !direct.equals(primaryName, ignoreCase = true)) {
+            return direct
+        }
+
+        // Transliteration fallback if secondary is Latin/English and direct translation is missing
+        if (secondaryBillingLang.startsWith("en") || secondaryBillingLang == "ta-Latn") {
+            val ta = profile.niruvanathinPeyar["ta"]?.trim()?.takeIf { it.isNotEmpty() }
+                ?: primaryName.takeIf { it.isNotEmpty() }
+            if (ta != null) {
+                val latin = NavilMozhimaatri.transliterate(ta).trim()
+                if (latin.isNotEmpty() && !latin.equals(primaryName, ignoreCase = true)) {
+                    return latin
+                }
+            }
+        } else if (secondaryBillingLang == "ta") {
+            val ta = profile.niruvanathinPeyar["ta"]?.trim()?.takeIf { it.isNotEmpty() }
+            if (ta != null && !ta.equals(primaryName, ignoreCase = true)) {
+                return ta
+            }
+        }
+
+        return null
+    }
+
+    fun getAddressSubtitle(profile: NiruvanaTharavugal): String? {
+        val street = (profile.mugavari[uiLang] ?: profile.mugavari["ta"] ?: profile.mugavari["en"] ?: profile.mugavari.values.firstOrNull { it.isNotBlank() }).orEmpty().trim()
+        val town = (profile.oor[uiLang] ?: profile.oor["ta"] ?: profile.oor["en"] ?: profile.oor.values.firstOrNull { it.isNotBlank() }).orEmpty().trim()
+        val district = (profile.maavattam[uiLang] ?: profile.maavattam["ta"] ?: profile.maavattam["en"] ?: profile.maavattam.values.firstOrNull { it.isNotBlank() }).orEmpty().trim()
+        val pin = profile.anjalKuriyeedu.trim()
+
+        val parts = listOfNotNull(
+            street.takeIf { it.isNotEmpty() },
+            town.takeIf { it.isNotEmpty() },
+            district.takeIf { it.isNotEmpty() },
+            pin.takeIf { it.isNotEmpty() }
+        )
+        return parts.joinToString(", ").takeIf { it.isNotEmpty() }
     }
 
     ElvanSelectionBottomSheet<NiruvanaTharavugal>(
@@ -89,33 +132,19 @@ fun ElvanCompanySelectionBottomSheet(
         onDismissRequest = onDismissRequest,
         colors = colors,
         itemLabelBuilder = { profile ->
-            val shortName = profile.kurumPeyar.trim()
-            val legalName = getLocalizedBusinessName(profile).trim()
-            if (shortName.isNotEmpty()) shortName else legalName.ifEmpty { "—" }
+            getPrimaryBusinessName(profile).ifEmpty { "—" }
         },
         subtitleBuilder = { profile ->
-            val shortName = profile.kurumPeyar.trim()
-            val legalName = getLocalizedBusinessName(profile).trim()
-            val city = (profile.oor[uiLang] ?: profile.oor["ta"] ?: profile.oor["en"] ?: profile.oor.values.firstOrNull { it.isNotBlank() }).orEmpty().trim()
-            val gstin = profile.gstin.trim()
-
-            val parts = mutableListOf<String>()
-            if (legalName.isNotEmpty() && !legalName.equals(shortName, ignoreCase = true)) {
-                parts.add(legalName)
+            val primaryName = getPrimaryBusinessName(profile)
+            if (isBilingual) {
+                getSecondaryBusinessName(profile, primaryName)
+            } else {
+                getAddressSubtitle(profile)
             }
-            val locationOrTax = listOfNotNull(
-                gstin.takeIf { it.isNotEmpty() },
-                city.takeIf { it.isNotEmpty() }
-            ).joinToString(" · ")
-            if (locationOrTax.isNotEmpty()) {
-                parts.add(locationOrTax)
-            }
-            if (parts.isNotEmpty()) parts.joinToString(" • ") else null
         },
         leadingBuilder = { profile ->
-            val shortName = profile.kurumPeyar.trim()
-            val legalName = getLocalizedBusinessName(profile).trim()
-            val initial = (if (shortName.isNotEmpty()) shortName else legalName).take(1).uppercase().preventBrokenLigatures().ifEmpty { "—" }
+            val primaryName = getPrimaryBusinessName(profile)
+            val initial = primaryName.take(1).uppercase().preventBrokenLigatures().ifEmpty { "—" }
 
             Box(
                 modifier = Modifier

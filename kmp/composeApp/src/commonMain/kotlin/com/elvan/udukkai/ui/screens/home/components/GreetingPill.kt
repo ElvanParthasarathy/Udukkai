@@ -20,10 +20,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.elvan.udukkai.core.mode.LocalAppMode
-import com.elvan.udukkai.core.navil.NavilMozhimaatri
 import com.elvan.udukkai.data.settings.NiruvanaTharavugalRepository
 import com.elvan.udukkai.localization.K
-import com.elvan.udukkai.localization.LanguageManager
 import com.elvan.udukkai.localization.tr
 import com.elvan.udukkai.theme.Dimens
 import com.elvan.udukkai.theme.LocalAppFontFamily
@@ -45,83 +43,15 @@ fun GreetingPill(
     onManageProfiles: (() -> Unit)? = null
 ) {
     val mode = LocalAppMode.current
-    val modeName = mode.displayName()
     val ff = LocalAppFontFamily.current
     val isDark = colors.isDark
 
     val activeProfile = NiruvanaTharavugalRepository.getProfile(mode)
     val allProfiles = NiruvanaTharavugalRepository.getAllProfiles(mode)
 
-    val isBilingual = activeProfile.iruMozhi
-    val primaryBillingLang = activeProfile.mudhanMozhi.ifEmpty { "ta" }
-    val secondaryBillingLang = activeProfile.thunaiMozhi.ifEmpty { "en" }
-    val uiLang = LanguageManager.activeLanguageCode
-
-    // First line logic
-    val firstLineText = remember(activeProfile, isBilingual, primaryBillingLang, modeName) {
-        if (isBilingual) {
-            // Short business name where available, otherwise full business name in primary billing language
-            activeProfile.kurumPeyar.takeIf { it.isNotBlank() }
-                ?: activeProfile.niruvanathinPeyar[primaryBillingLang]?.takeIf { it.isNotBlank() }
-                ?: activeProfile.niruvanathinPeyar["ta"]?.takeIf { it.isNotBlank() }
-                ?: activeProfile.niruvanathinPeyar["en"]?.takeIf { it.isNotBlank() }
-                ?: activeProfile.niruvanathinPeyar.values.firstOrNull { it.isNotBlank() }
-                ?: modeName
-        } else {
-            // Full business name in primary billing language
-            activeProfile.niruvanathinPeyar[primaryBillingLang]?.takeIf { it.isNotBlank() }
-                ?: activeProfile.kurumPeyar.takeIf { it.isNotBlank() }
-                ?: activeProfile.niruvanathinPeyar["ta"]?.takeIf { it.isNotBlank() }
-                ?: activeProfile.niruvanathinPeyar["en"]?.takeIf { it.isNotBlank() }
-                ?: activeProfile.niruvanathinPeyar.values.firstOrNull { it.isNotBlank() }
-                ?: modeName
-        }
-    }
-
-    // Subtitle logic
-    val subtitleText = remember(activeProfile, isBilingual, secondaryBillingLang, uiLang, firstLineText) {
-        if (isBilingual) {
-            // Subtitle: business name in secondary billing language
-            val secondary = activeProfile.niruvanathinPeyar[secondaryBillingLang]?.takeIf { it.isNotBlank() }
-            if (secondary != null && !secondary.equals(firstLineText, ignoreCase = true)) {
-                secondary
-            } else {
-                // Appropriate fallback: try the other language, or legal name if short name was used
-                val legalPrimary = activeProfile.niruvanathinPeyar[primaryBillingLang]?.takeIf { it.isNotBlank() }
-                if (legalPrimary != null && !legalPrimary.equals(firstLineText, ignoreCase = true)) {
-                    legalPrimary
-                } else {
-                    val otherLang = if (primaryBillingLang == "ta") "en" else "ta"
-                    val other = activeProfile.niruvanathinPeyar[otherLang]?.takeIf { it.isNotBlank() }
-                    if (other != null && !other.equals(firstLineText, ignoreCase = true)) {
-                        other
-                    } else {
-                        // Transliterate if Latin representation needed
-                        val transliterated = NavilMozhimaatri.transliterate(firstLineText)
-                        if (transliterated.isNotBlank() && !transliterated.equals(firstLineText, ignoreCase = true)) {
-                            transliterated
-                        } else ""
-                    }
-                }
-            }
-        } else {
-            // Subtitle: business address in configured UI language (no GSTIN)
-            val street = activeProfile.mugavari[uiLang] ?: activeProfile.mugavari["ta"] ?: activeProfile.mugavari["en"] ?: ""
-            val town = activeProfile.oor[uiLang] ?: activeProfile.oor["ta"] ?: activeProfile.oor["en"] ?: ""
-            val district = activeProfile.maavattam[uiLang] ?: activeProfile.maavattam["ta"] ?: activeProfile.maavattam["en"] ?: ""
-            val pin = activeProfile.anjalKuriyeedu.trim()
-
-            val parts = listOfNotNull(
-                street.takeIf { it.isNotBlank() },
-                town.takeIf { it.isNotBlank() },
-                district.takeIf { it.isNotBlank() },
-                pin.takeIf { it.isNotBlank() }
-            )
-            parts.joinToString(", ").ifEmpty {
-                activeProfile.oor.values.firstOrNull { it.isNotBlank() }.orEmpty()
-            }
-        }
-    }
+    val companyName = activeProfile.kurumPeyar.ifEmpty {
+        activeProfile.niruvanathinPeyar.values.firstOrNull().orEmpty()
+    }.ifEmpty { mode.displayName() }
 
     var showCompanySheet by remember { mutableStateOf(false) }
 
@@ -170,7 +100,7 @@ fun GreetingPill(
                 contentAlignment = Alignment.Center
             ) {
                 Text(
-                    text = firstLineText.take(1).uppercase(),
+                    text = companyName.take(1).uppercase(),
                     style = TextStyle(
                         fontFamily = ff,
                         fontSize = 24.sp,
@@ -182,7 +112,7 @@ fun GreetingPill(
 
             Spacer(modifier = Modifier.width(16.dp))
 
-            // Company Name & Subtitle
+            // Greeting & Company Name
             Column(
                 modifier = Modifier.weight(1f),
                 verticalArrangement = Arrangement.Center
@@ -191,13 +121,36 @@ fun GreetingPill(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = firstLineText.preventBrokenLigatures(),
+                        text = K.vanakkam.tr().preventBrokenLigatures(),
                         style = TextStyle(
                             fontFamily = ff,
-                            fontSize = 17.5.sp,
-                            fontWeight = FontWeight.Bold,
+                            fontSize = 20.sp,
+                            fontWeight = FontWeight.ExtraBold,
                             color = colors.textPrimary,
-                            letterSpacing = (-0.01).sp
+                            letterSpacing = (-0.02).sp
+                        )
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Icon(
+                        imageVector = MaterialSymbols.Rounded.AutoAwesome,
+                        contentDescription = null,
+                        tint = colors.textPrimary,
+                        modifier = Modifier.size(24.dp)
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(3.dp))
+
+                Row(
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = companyName.preventBrokenLigatures(),
+                        style = TextStyle(
+                            fontFamily = ff,
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = colors.textSecondary
                         ),
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
@@ -207,23 +160,8 @@ fun GreetingPill(
                     Icon(
                         imageVector = MaterialSymbols.Rounded.KeyboardArrowDown,
                         contentDescription = "Switch Company",
-                        tint = colors.textSecondary.copy(alpha = 0.7f),
-                        modifier = Modifier.size(18.dp)
-                    )
-                }
-
-                if (subtitleText.isNotBlank()) {
-                    Spacer(modifier = Modifier.height(3.dp))
-                    Text(
-                        text = subtitleText.preventBrokenLigatures(),
-                        style = TextStyle(
-                            fontFamily = ff,
-                            fontSize = 13.5.sp,
-                            fontWeight = FontWeight.Normal,
-                            color = colors.textSecondary
-                        ),
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
+                        tint = colors.textSecondary.copy(alpha = 0.6f),
+                        modifier = Modifier.size(16.dp)
                     )
                 }
             }
