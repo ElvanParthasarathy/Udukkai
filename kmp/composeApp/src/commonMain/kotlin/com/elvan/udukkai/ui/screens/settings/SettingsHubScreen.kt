@@ -86,16 +86,23 @@ fun SettingsHubScreen(
                             .padding(start = 11.dp, end = 16.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        // The circular Mode Switcher on the left (diameter 62dp, concentric with 84dp pill)
+                        // The circular Mode Indicator on the left (diameter 62dp, concentric with 84dp pill)
+                        val isFixed = com.elvan.udukkai.core.mode.AppLaunchConfig.isFixed
                         Box(
                             modifier = Modifier
                                 .size(62.dp)
                                 .clip(CircleShape)
                                 .background(colors.iconBg)
-                                .clickable(
-                                    interactionSource = remember { MutableInteractionSource() },
-                                    indication = ShellDefaults.ripple(colors, bounded = true),
-                                    onClick = { ModeManager.openModeSelector() }
+                                .then(
+                                    if (!isFixed) {
+                                        Modifier.clickable(
+                                            interactionSource = remember { MutableInteractionSource() },
+                                            indication = ShellDefaults.ripple(colors, bounded = true),
+                                            onClick = { ModeManager.openModeSelector() }
+                                        )
+                                    } else {
+                                        Modifier
+                                    }
                                 ),
                             contentAlignment = Alignment.Center
                         ) {

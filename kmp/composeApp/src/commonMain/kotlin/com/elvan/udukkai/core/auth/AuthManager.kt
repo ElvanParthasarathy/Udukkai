@@ -4,6 +4,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.elvan.udukkai.core.mode.AppMode
+import com.elvan.udukkai.core.mode.ModeManager
 import com.elvan.udukkai.core.platform.getPreferencesHelper
 import com.elvan.udukkai.data.settings.NiruvanaTharavugalRepository
 
@@ -86,6 +87,9 @@ object AuthManager {
      */
     val isSetupComplete: Boolean
         get() {
+            if (com.elvan.udukkai.core.mode.AppLaunchConfig.isFixed) {
+                return NiruvanaTharavugalRepository.getAllProfiles(ModeManager.currentMode).isNotEmpty()
+            }
             val kooliProfiles = NiruvanaTharavugalRepository.getAllProfiles(AppMode.KOOLI)
             val pattuProfiles = NiruvanaTharavugalRepository.getAllProfiles(AppMode.PATTU)
             return kooliProfiles.isNotEmpty() || pattuProfiles.isNotEmpty()
@@ -96,12 +100,13 @@ object AuthManager {
      */
     val missingProfiles: List<String>
         get() {
+            if (com.elvan.udukkai.core.mode.AppLaunchConfig.isFixed) {
+                val profiles = NiruvanaTharavugalRepository.getAllProfiles(ModeManager.currentMode)
+                return if (profiles.isEmpty()) listOf(ModeManager.currentMode.key) else emptyList()
+            }
             val missing = mutableListOf<String>()
             val kooliProfiles = NiruvanaTharavugalRepository.getAllProfiles(AppMode.KOOLI)
             val pattuProfiles = NiruvanaTharavugalRepository.getAllProfiles(AppMode.PATTU)
-            // Both DB's use hardcoded default profiles; check if they actually have real data
-            // (i.e., profiles loaded from DB vs the fallback hardcoded ones in Repository)
-            // For now, just check if profiles exist in the list
             if (kooliProfiles.isEmpty()) missing.add("kooli")
             if (pattuProfiles.isEmpty()) missing.add("pattu")
             return missing

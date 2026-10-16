@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Factory flavor manifest overlay.
+  Overrides android:label to "Udukkai Factory".
+  All permissions, activities and other attributes are inherited from
+  src/androidMain/AndroidManifest.xml (the base manifest).
+-->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <application android:label="@string/app_name" />
+</manifest>

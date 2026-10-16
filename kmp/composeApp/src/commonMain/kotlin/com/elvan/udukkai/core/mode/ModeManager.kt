@@ -42,6 +42,7 @@ object ModeManager {
         get() = "udukkai_${currentMode.key}"
 
     fun openModeSelector() {
+        if (AppLaunchConfig.isFixed) return
         isModeSelectorOpen = true
     }
 
@@ -54,6 +55,7 @@ object ModeManager {
      * This will cause the entire UI to re-compose with the new mode's data.
      */
     fun setMode(mode: AppMode) {
+        if (AppLaunchConfig.isFixed) return
         currentMode = mode
         hasSelectedModeAtStartup = true
         isModeSelectorOpen = false
@@ -63,6 +65,7 @@ object ModeManager {
     }
 
     fun toggleMode() {
+        if (AppLaunchConfig.isFixed) return
         openModeSelector()
     }
 
@@ -71,6 +74,7 @@ object ModeManager {
      * choosing mode at startup.
      */
     fun resetStartupState() {
+        if (AppLaunchConfig.isFixed) return
         hasSelectedModeAtStartup = false
         isModeSelectorOpen = false
     }
@@ -80,4 +84,17 @@ object ModeManager {
 
     /** Check if we are in Pattu mode */
     val isPattu: Boolean get() = currentMode == AppMode.PATTU
+
+    /**
+     * Called by AppLaunchConfig.setFixedMode() when the build has a pinned AppMode.
+     * Silently pre-sets currentMode and marks startup as already selected so that
+     * App.kt skips the ModeSelectorScreen entirely.
+     * Does NOT open the mode selector or trigger Firebase sync (that is done in
+     * MainActivity / main_factory.kt after all managers are initialized).
+     */
+    internal fun applyFixedMode(mode: AppMode) {
+        currentMode = mode
+        hasSelectedModeAtStartup = true
+        isModeSelectorOpen = false
+    }
 }

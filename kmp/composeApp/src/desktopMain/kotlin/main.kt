@@ -17,6 +17,9 @@ fun main() {
 
     println(">>> Starting Udukkai Desktop App...")
 
+    // Explicitly null for combined legacy mode selector
+    com.elvan.udukkai.core.mode.AppLaunchConfig.setFixedMode(null)
+
     application {
         com.elvan.udukkai.localization.LanguageManager.init()
         com.elvan.udukkai.theme.ThemeManager.init()

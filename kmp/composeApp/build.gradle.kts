@@ -56,13 +56,45 @@ android {
     namespace = "com.elvan.udukkai"
     compileSdk = libs.versions.android.compileSdk.get().toInt()
 
+    buildFeatures {
+        buildConfig = true
+    }
+
     defaultConfig {
-        applicationId = "com.elvan.udukkai"
+        // applicationId is set per-flavor
         minSdk = libs.versions.android.minSdk.get().toInt()
         targetSdk = libs.versions.android.targetSdk.get().toInt()
         versionCode = 1
         versionName = "1.0"
     }
+
+    // ── Flavor dimensions ─────────────────────────────────────────────────────
+    flavorDimensions += "app"
+
+    productFlavors {
+        // ── Factory: fixed Kooli mode ─────────────────────────────────────────
+        create("factory") {
+            dimension = "app"
+            applicationId = "com.elvan.udukkai.factory"
+            buildConfigField("String", "APP_MODE", "\"kooli\"")
+            buildConfigField("String", "APP_DISPLAY_NAME", "\"Udukkai Factory\"")
+        }
+        // ── Textiles: fixed Pattu mode ────────────────────────────────────────
+        create("textiles") {
+            dimension = "app"
+            applicationId = "com.elvan.udukkai.textiles"
+            buildConfigField("String", "APP_MODE", "\"pattu\"")
+            buildConfigField("String", "APP_DISPLAY_NAME", "\"Udukkai Textiles\"")
+        }
+        // ── Combined (legacy fallback — original mode selector behaviour) ─────
+        create("combined") {
+            dimension = "app"
+            applicationId = "com.elvan.udukkai"
+            buildConfigField("String", "APP_MODE", "\"\"")
+            buildConfigField("String", "APP_DISPLAY_NAME", "\"Udukkai\"")
+        }
+    }
+
     packaging {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
@@ -79,6 +111,7 @@ android {
     }
 }
 
+// ── Desktop: legacy combined entry point (./gradlew :composeApp:run) ──────────
 compose.desktop {
     application {
         mainClass = "MainKt"
@@ -93,4 +126,36 @@ compose.desktop {
             }
         }
     }
+}
+
+// ── Desktop: Factory (./gradlew :composeApp:runFactory) ──────────────────────
+tasks.register<JavaExec>("runFactory") {
+    group = "compose desktop"
+    description = "Run Udukkai Factory desktop app (fixed Kooli mode)"
+    dependsOn("compileKotlinDesktop")
+    val runtimeCp = configurations.named("desktopRuntimeClasspath")
+    classpath = files(
+        kotlin.targets.named("desktop").map { t ->
+            t.compilations.named("main").map { it.output.classesDirs }
+        },
+        runtimeCp
+    )
+    mainClass.set("MainFactoryKt")
+    jvmArgs("-Xms64m", "-Xmx512m")
+}
+
+// ── Desktop: Textiles (./gradlew :composeApp:runTextiles) ────────────────────
+tasks.register<JavaExec>("runTextiles") {
+    group = "compose desktop"
+    description = "Run Udukkai Textiles desktop app (fixed Pattu mode)"
+    dependsOn("compileKotlinDesktop")
+    val runtimeCp = configurations.named("desktopRuntimeClasspath")
+    classpath = files(
+        kotlin.targets.named("desktop").map { t ->
+            t.compilations.named("main").map { it.output.classesDirs }
+        },
+        runtimeCp
+    )
+    mainClass.set("MainTextilesKt")
+    jvmArgs("-Xms64m", "-Xmx512m")
 }

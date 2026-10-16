@@ -127,7 +127,6 @@ fun ElvanActionSheet(
         onDismissRequest = { dismiss() },
         properties = DialogProperties(
             usePlatformDefaultWidth = false,
-            decorFitsSystemWindows = false,
             dismissOnBackPress = true,
             dismissOnClickOutside = true
         )

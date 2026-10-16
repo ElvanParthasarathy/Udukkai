@@ -115,40 +115,46 @@ fun App() {
                                     )
                                 }
                                 AppFlowState.MAIN_APP -> {
-                                    AnimatedContent(
-                                        targetState = ModeManager.hasSelectedModeAtStartup,
-                                        transitionSpec = {
-                                            fadeIn(animationSpec = tween(280)) togetherWith
-                                                fadeOut(animationSpec = tween(200))
-                                        },
-                                        label = "startup_mode_flow"
-                                    ) { hasSelectedMode ->
-                                        if (!hasSelectedMode) {
-                                            ModeSelectorScreen(
-                                                onModeSelected = { selectedMode ->
-                                                    ModeManager.setMode(selectedMode)
-                                                },
-                                                canDismiss = false
-                                            )
-                                        } else {
-                                            Box(modifier = Modifier.fillMaxSize()) {
-                                                HomeScreen()
+                                    if (com.elvan.udukkai.core.mode.AppLaunchConfig.isFixed) {
+                                        Box(modifier = Modifier.fillMaxSize()) {
+                                            HomeScreen()
+                                        }
+                                    } else {
+                                        AnimatedContent(
+                                            targetState = ModeManager.hasSelectedModeAtStartup,
+                                            transitionSpec = {
+                                                fadeIn(animationSpec = tween(280)) togetherWith
+                                                    fadeOut(animationSpec = tween(200))
+                                            },
+                                            label = "startup_mode_flow"
+                                        ) { hasSelectedMode ->
+                                            if (!hasSelectedMode) {
+                                                ModeSelectorScreen(
+                                                    onModeSelected = { selectedMode ->
+                                                        ModeManager.setMode(selectedMode)
+                                                    },
+                                                    canDismiss = false
+                                                )
+                                            } else {
+                                                Box(modifier = Modifier.fillMaxSize()) {
+                                                    HomeScreen()
 
-                                                AnimatedVisibility(
-                                                    visible = ModeManager.isModeSelectorOpen,
-                                                    modifier = Modifier.zIndex(100f),
-                                                    enter = fadeIn(animationSpec = tween(300)),
-                                                    exit = fadeOut(animationSpec = tween(250))
-                                                ) {
-                                                    ModeSelectorScreen(
-                                                        onModeSelected = { selectedMode ->
-                                                            ModeManager.setMode(selectedMode)
-                                                        },
-                                                        onDismiss = {
-                                                            ModeManager.closeModeSelector()
-                                                        },
-                                                        canDismiss = true
-                                                    )
+                                                    AnimatedVisibility(
+                                                        visible = ModeManager.isModeSelectorOpen,
+                                                        modifier = Modifier.zIndex(100f),
+                                                        enter = fadeIn(animationSpec = tween(300)),
+                                                        exit = fadeOut(animationSpec = tween(250))
+                                                    ) {
+                                                        ModeSelectorScreen(
+                                                            onModeSelected = { selectedMode ->
+                                                                ModeManager.setMode(selectedMode)
+                                                            },
+                                                            onDismiss = {
+                                                                ModeManager.closeModeSelector()
+                                                            },
+                                                            canDismiss = true
+                                                        )
+                                                    }
                                                 }
                                             }
                                         }

@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Factory flavor string resources.
+  Provides the app_name string used by the flavor manifest overlay.
+-->
+<resources>
+    <string name="app_name">Udukkai Factory</string>
+</resources>

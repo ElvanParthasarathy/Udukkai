@@ -187,11 +187,15 @@ fun DesktopSideBar(
             )
 
             // Mode Selector Pill
+            val isFixed = com.elvan.udukkai.core.mode.AppLaunchConfig.isFixed
             Surface(
                 modifier = Modifier
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(16.dp))
-                    .clickable { ModeManager.openModeSelector() },
+                    .then(
+                        if (!isFixed) Modifier.clickable { ModeManager.openModeSelector() }
+                        else Modifier
+                    ),
                 shape = RoundedCornerShape(16.dp),
                 color = colors.textPrimary.copy(alpha = 0.05f)
             ) {

@@ -341,7 +341,6 @@ fun <T> ElvanSelectionBottomSheet(
         onDismissRequest = { dismissSheet() },
         properties = DialogProperties(
             usePlatformDefaultWidth = false,
-            decorFitsSystemWindows = false,
             dismissOnBackPress = true,
             dismissOnClickOutside = true
         )

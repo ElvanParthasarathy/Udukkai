@@ -23,6 +23,44 @@
           "other_platform_oauth_client": []
         }
       }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:255349876806:android:cd144d109b63ae875c8248",
+        "android_client_info": {
+          "package_name": "com.elvan.udukkai.factory"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC1JUQCKmF3Tije54mPhf3-DlHjlYzpV74"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:255349876806:android:cd144d109b63ae875c8249",
+        "android_client_info": {
+          "package_name": "com.elvan.udukkai.textiles"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC1JUQCKmF3Tije54mPhf3-DlHjlYzpV74"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
     }
   ],
   "configuration_version": "1"

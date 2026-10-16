@@ -56,8 +56,7 @@ fun ManageProfilesModal(
     Dialog(
         onDismissRequest = onDismissRequest,
         properties = DialogProperties(
-            usePlatformDefaultWidth = false,
-            decorFitsSystemWindows = false
+            usePlatformDefaultWidth = false
         )
     ) {
         ConfigureDialogWindow(isDark = colors.isDark)

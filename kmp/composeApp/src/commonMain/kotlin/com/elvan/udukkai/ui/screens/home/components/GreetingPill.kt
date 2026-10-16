@@ -71,16 +71,23 @@ fun GreetingPill(
         ) {
             val modeBg = if (isDark) Color.White.copy(alpha = 0.08f) else Color.Black.copy(alpha = 0.06f)
 
-            // Mode Circular Button (62dp concentric with 84dp pill, starting cleanly after the curve)
+            // Mode Circular Indicator (non-clickable if fixed mode)
+            val isFixed = com.elvan.udukkai.core.mode.AppLaunchConfig.isFixed
             Box(
                 modifier = Modifier
                     .size(62.dp)
                     .clip(CircleShape)
                     .background(modeBg)
-                    .clickable(
-                        interactionSource = remember { MutableInteractionSource() },
-                        indication = ShellDefaults.ripple(colors, bounded = true),
-                        onClick = onModeClick
+                    .then(
+                        if (!isFixed) {
+                            Modifier.clickable(
+                                interactionSource = remember { MutableInteractionSource() },
+                                indication = ShellDefaults.ripple(colors, bounded = true),
+                                onClick = onModeClick
+                            )
+                        } else {
+                            Modifier
+                        }
                     ),
                 contentAlignment = Alignment.Center
             ) {
