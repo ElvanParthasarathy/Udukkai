@@ -665,6 +665,11 @@ fun HomeScreen() {
                                             selectedTab = NavTab.Create
                                             uruvakkuSegment = 0
                                         },
+                                        onSeeAllReceipts = {
+                                            scope.launch { createScrollState.scrollToItem(0, 0) }
+                                            selectedTab = NavTab.Create
+                                            uruvakkuSegment = 1
+                                        },
                                         isRefreshing = isRefreshing,
                                         onInvoiceClick = { invoice ->
                                             navigateToSubpage(ActiveSubpage.InvoiceView(invoice))

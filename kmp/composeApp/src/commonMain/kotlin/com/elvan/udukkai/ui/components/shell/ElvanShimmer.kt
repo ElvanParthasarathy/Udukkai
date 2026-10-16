@@ -231,7 +231,51 @@ fun MugappuStatsSkeleton(
             .padding(horizontal = Dimens.ContentPadding),
         verticalArrangement = Arrangement.spacedBy(Dimens.ItemSpacing)
     ) {
-        // Top row: 2 cards (height 124dp)
+        // Top full-width card (height 78dp)
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(78.dp)
+                .clip(shape)
+                .background(colors.surface)
+                .padding(16.dp)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxSize(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                // Icon placeholder
+                Box(
+                    modifier = Modifier
+                        .size(44.dp)
+                        .clip(RoundedCornerShape(14.dp))
+                        .background(shimmerBrush)
+                )
+                Spacer(modifier = Modifier.width(14.dp))
+                // Label & value placeholder
+                Column(
+                    modifier = Modifier.weight(1f),
+                    verticalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth(0.45f)
+                            .height(12.dp)
+                            .clip(RoundedCornerShape(4.dp))
+                            .background(shimmerBrush)
+                    )
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth(0.75f)
+                            .height(18.dp)
+                            .clip(RoundedCornerShape(4.dp))
+                            .background(shimmerBrush)
+                    )
+                }
+            }
+        }
+
+        // Secondary row: 2 cards (height 124dp)
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(Dimens.ItemSpacing)
@@ -274,50 +318,6 @@ fun MugappuStatsSkeleton(
                             )
                         }
                     }
-                }
-            }
-        }
-
-        // Bottom full-width card (height 78dp)
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(78.dp)
-                .clip(shape)
-                .background(colors.surface)
-                .padding(16.dp)
-        ) {
-            Row(
-                modifier = Modifier.fillMaxSize(),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                // Icon placeholder
-                Box(
-                    modifier = Modifier
-                        .size(44.dp)
-                        .clip(RoundedCornerShape(14.dp))
-                        .background(shimmerBrush)
-                )
-                Spacer(modifier = Modifier.width(14.dp))
-                // Label & value placeholder
-                Column(
-                    modifier = Modifier.weight(1f),
-                    verticalArrangement = Arrangement.spacedBy(6.dp)
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth(0.45f)
-                            .height(12.dp)
-                            .clip(RoundedCornerShape(4.dp))
-                            .background(shimmerBrush)
-                    )
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth(0.75f)
-                            .height(18.dp)
-                            .clip(RoundedCornerShape(4.dp))
-                            .background(shimmerBrush)
-                    )
                 }
             }
         }

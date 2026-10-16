@@ -1,34 +1,19 @@
 package com.elvan.udukkai.ui.components.shell
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.elvan.udukkai.core.navil.NavilMozhimaatri
 import com.elvan.udukkai.data.settings.NiruvanaTharavugal
 import com.elvan.udukkai.localization.K
 import com.elvan.udukkai.localization.LanguageManager
 import com.elvan.udukkai.localization.tr
-import com.elvan.udukkai.theme.LocalAppFontFamily
 import com.elvan.udukkai.theme.ShellColors
-import com.elvan.udukkai.theme.preventBrokenLigatures
 import com.elvan.udukkai.theme.rememberShellColors
 
 /**
  * Clean, standard Company Profile Selection Bottom Sheet.
  * Built directly on top of [ElvanSelectionBottomSheet] matching Settings selection styling 1:1.
- * - Simple monochrome design without decorative borders or card outlines
- * - Neutral theme tokens for initials avatar (no thoatraNiram color override)
+ * - Simple monochrome design without decorative borders, card outlines, or avatar initials
  * - Pure monochrome checkmark indicator for active company
  * - Bilingual billing display rules:
  *     - When bilingual billing is ON: First line = primary billing language business name;
@@ -48,8 +33,6 @@ fun ElvanCompanySelectionBottomSheet(
     onDismissRequest: () -> Unit,
     colors: ShellColors = rememberShellColors()
 ) {
-    val ff = LocalAppFontFamily.current
-    val isDark = colors.isDark
     val uiLang = LanguageManager.activeLanguageCode
 
     val currentProfile = remember(profiles, activeProfileId) {
@@ -77,8 +60,10 @@ fun ElvanCompanySelectionBottomSheet(
             return other
         }
 
+        val anyLegal = profile.niruvanathinPeyar.values.firstOrNull { it.isNotBlank() }?.trim()
+        if (anyLegal != null) return anyLegal
         if (profile.kurumPeyar.isNotBlank()) return profile.kurumPeyar.trim()
-        return profile.niruvanathinPeyar.values.firstOrNull { it.isNotBlank() }?.trim().orEmpty()
+        return ""
     }
 
     fun getSecondaryBusinessName(profile: NiruvanaTharavugal, primaryName: String): String? {
@@ -140,28 +125,6 @@ fun ElvanCompanySelectionBottomSheet(
                 getSecondaryBusinessName(profile, primaryName)
             } else {
                 getAddressSubtitle(profile)
-            }
-        },
-        leadingBuilder = { profile ->
-            val primaryName = getPrimaryBusinessName(profile)
-            val initial = primaryName.take(1).uppercase().preventBrokenLigatures().ifEmpty { "—" }
-
-            Box(
-                modifier = Modifier
-                    .size(38.dp)
-                    .clip(CircleShape)
-                    .background(if (isDark) Color.White.copy(alpha = 0.08f) else Color.Black.copy(alpha = 0.05f)),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = initial,
-                    style = TextStyle(
-                        fontFamily = ff,
-                        fontSize = 15.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        color = colors.textPrimary
-                    )
-                )
             }
         },
         onRequestAddNew = onManageProfiles,
