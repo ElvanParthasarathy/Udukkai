@@ -86,13 +86,6 @@ android {
             buildConfigField("String", "APP_MODE", "\"pattu\"")
             buildConfigField("String", "APP_DISPLAY_NAME", "\"Udukkai Textiles\"")
         }
-        // ── Combined (legacy fallback — original mode selector behaviour) ─────
-        create("combined") {
-            dimension = "app"
-            applicationId = "com.elvan.udukkai"
-            buildConfigField("String", "APP_MODE", "\"\"")
-            buildConfigField("String", "APP_DISPLAY_NAME", "\"Udukkai\"")
-        }
     }
 
     packaging {
@@ -111,15 +104,15 @@ android {
     }
 }
 
-// ── Desktop: legacy combined entry point (./gradlew :composeApp:run) ──────────
+// ── Desktop: default entry point (./gradlew :composeApp:run) defaults to Factory ──
 compose.desktop {
     application {
-        mainClass = "MainKt"
+        mainClass = "MainFactoryKt"
         javaHome = "C:/Program Files/Android/Android Studio/jbr"
 
         nativeDistributions {
             targetFormats(TargetFormat.Msi, TargetFormat.Exe)
-            packageName = "Udukkai"
+            packageName = "Udukkai Factory"
             packageVersion = "1.0.0"
             windows {
                 iconFile.set(project.file("src/desktopMain/resources/udukkai_icon.ico"))

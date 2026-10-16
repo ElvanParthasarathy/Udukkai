@@ -9,6 +9,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
+import kotlin.test.assertNotEquals
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
@@ -326,6 +327,82 @@ class CompanyWorkspaceAndProductTest {
         val isEditInvoice = false // not new
         val resolvedCompanyIdForEdit = if (isEditInvoice) activeProfileId else savedInvoiceCompanyId
         assertEquals(202L, resolvedCompanyIdForEdit)
+    }
+
+    @Test
+    fun testRecycleBinCompanyIsolationAndFiltering() {
+        val companyAId = 101L
+        val companyBId = 202L
+
+        val deletedInvoices = listOf(
+            PattiyalTharavuru(id = 1, patrucheettuEn = "INV-001", niruvanamId = companyAId, isDeleted = true),
+            PattiyalTharavuru(id = 2, patrucheettuEn = "INV-002", niruvanamId = companyBId, isDeleted = true),
+            PattiyalTharavuru(id = 3, patrucheettuEn = "INV-003", niruvanamId = companyAId, isDeleted = true)
+        )
+
+        val deletedReceipts = listOf(
+            PatrugalTharavuru(id = 10, patruEn = "REC-010", niruvanamId = companyAId, isDeleted = true),
+            PatrugalTharavuru(id = 11, patruEn = "REC-011", niruvanamId = companyBId, isDeleted = true)
+        )
+
+        // Workspace Company A filter:
+        val companyAInvoices = deletedInvoices.filter { it.niruvanamId == companyAId }
+        val companyAReceipts = deletedReceipts.filter { it.niruvanamId == companyAId }
+        assertEquals(2, companyAInvoices.size)
+        assertTrue(companyAInvoices.all { it.niruvanamId == companyAId })
+        assertEquals(1, companyAReceipts.size)
+        assertEquals(companyAId, companyAReceipts.first().niruvanamId)
+
+        // Workspace Company B filter:
+        val companyBInvoices = deletedInvoices.filter { it.niruvanamId == companyBId }
+        val companyBReceipts = deletedReceipts.filter { it.niruvanamId == companyBId }
+        assertEquals(1, companyBInvoices.size)
+        assertEquals("INV-002", companyBInvoices.first().patrucheettuEn)
+        assertEquals(1, companyBReceipts.size)
+        assertEquals("REC-011", companyBReceipts.first().patruEn)
+    }
+
+    @Test
+    fun testRecycleBinRestorePreservesOriginalCompany() {
+        val originalCompanyId = 202L
+        val activeWorkspaceCompanyId = 101L
+
+        val deletedInvoice = PattiyalTharavuru(
+            id = 55,
+            patrucheettuEn = "INV-055",
+            niruvanamId = originalCompanyId,
+            isDeleted = true,
+            deletedAt = 1000L
+        )
+
+        // Simulating non-destructive restore: toggle isDeleted and deletedAt while preserving niruvanamId
+        val restoredInvoice = deletedInvoice.copy(isDeleted = false, deletedAt = null)
+
+        assertFalse(restoredInvoice.isDeleted)
+        assertNull(restoredInvoice.deletedAt)
+        // Original company profile remains untouched, not reassigned to active workspace
+        assertEquals(originalCompanyId, restoredInvoice.niruvanamId)
+        assertNotEquals(activeWorkspaceCompanyId, restoredInvoice.niruvanamId)
+    }
+
+    @Test
+    fun testRecycleBinProductAvailabilityScope() {
+        val companyAId = 101L
+        val companyBId = 202L
+
+        val sharedProduct = PorulTharavuru(id = 1, niruvanamIds = emptyList(), isDeleted = true)
+        val restrictedProductA = PorulTharavuru(id = 2, niruvanamIds = listOf(companyAId), isDeleted = true)
+
+        val deletedProducts = listOf(sharedProduct, restrictedProductA)
+
+        // Workspace Company A: displays shared + restricted to A
+        val companyAProducts = deletedProducts.filter { it.isAvailableForCompany(companyAId) }
+        assertEquals(2, companyAProducts.size)
+
+        // Workspace Company B: displays shared only
+        val companyBProducts = deletedProducts.filter { it.isAvailableForCompany(companyBId) }
+        assertEquals(1, companyBProducts.size)
+        assertEquals(1L, companyBProducts.first().id)
     }
 }
 

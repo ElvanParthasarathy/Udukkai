@@ -96,7 +96,6 @@ fun RecycleBinScreen(
 
     var selectedTab by remember { mutableStateOf(MeetpagamTab.Create) }
     var createSegment by remember { mutableIntStateOf(0) } // 0 = Invoices, 1 = Receipts
-    var selectedProfileFilterIndex by remember { mutableIntStateOf(0) }
 
     val createScrollState = rememberLazyListState()
     val productsScrollState = rememberLazyListState()
@@ -119,35 +118,19 @@ fun RecycleBinScreen(
         searchQuery = ""
     }
 
-    // Company Profiles for Aakku tab
-    val profiles = remember(mode) {
-        NiruvanaTharavugalRepository.getAllProfiles(mode)
-    }
+    // Active Company Profile for workspace isolation
+    val activeProfile = NiruvanaTharavugalRepository.getProfile(mode)
+    val activeId = activeProfile.id
 
-    val allLabel = K.all.tr()
-    val businessShifterItems = remember(profiles, allLabel) {
-        val list = mutableListOf<PillShifterItem>()
-        list.add(PillShifterItem(label = allLabel))
-        profiles.forEach { p ->
-            val shortName = p.kurumPeyar.ifEmpty {
-                p.niruvanathinPeyar.values.firstOrNull().orEmpty()
-            }
-            list.add(PillShifterItem(label = shortName))
-        }
-        list
-    }
-    val safeProfileIndex = selectedProfileFilterIndex.coerceIn(0, (businessShifterItems.size - 1).coerceAtLeast(0))
-
-    // Filtered data sets
+    // Filtered data sets scoped to active company
     val allDeletedInvoices = PattiyalRepository.deletedInvoices
     val displayedInvoices = remember(
-        allDeletedInvoices, safeProfileIndex, profiles, searchQuery,
+        allDeletedInvoices, activeId, searchQuery,
         PattiyalRepository.startDateFilter, PattiyalRepository.endDateFilter
     ) {
         val q = searchQuery.trim().lowercase()
         val s = PattiyalRepository.startDateFilter
         val e = PattiyalRepository.endDateFilter
-        val targetProfile = if (safeProfileIndex > 0) profiles.getOrNull(safeProfileIndex - 1) else null
 
         allDeletedInvoices.filter { invoice ->
             val matchesQuery = if (q.isEmpty()) true else {
@@ -161,20 +144,19 @@ fun RecycleBinScreen(
                 e != null -> invoice.pattiyalNaal <= e
                 else -> true
             }
-            val matchesProfile = if (targetProfile != null) invoice.niruvanamId == targetProfile.id else true
+            val matchesProfile = if (activeId != null) invoice.niruvanamId == activeId else true
             matchesQuery && matchesDate && matchesProfile
         }
     }
 
     val allDeletedReceipts = PatrugalRepository.deletedReceipts
     val displayedReceipts = remember(
-        allDeletedReceipts, safeProfileIndex, profiles, searchQuery,
+        allDeletedReceipts, activeId, searchQuery,
         PatrugalRepository.startDateFilter, PatrugalRepository.endDateFilter
     ) {
         val q = searchQuery.trim().lowercase()
         val s = PatrugalRepository.startDateFilter
         val e = PatrugalRepository.endDateFilter
-        val targetProfile = if (safeProfileIndex > 0) profiles.getOrNull(safeProfileIndex - 1) else null
 
         allDeletedReceipts.filter { receipt ->
             val matchesQuery = if (q.isEmpty()) true else {
@@ -188,19 +170,21 @@ fun RecycleBinScreen(
                 e != null -> receipt.patruNaal <= e
                 else -> true
             }
-            val matchesProfile = if (targetProfile != null) receipt.niruvanamId == targetProfile.id else true
+            val matchesProfile = if (activeId != null) receipt.niruvanamId == activeId else true
             matchesQuery && matchesDate && matchesProfile
         }
     }
 
     val allDeletedProducts = PorulRepository.deletedItems
-    val displayedProducts = remember(allDeletedProducts, searchQuery) {
+    val displayedProducts = remember(allDeletedProducts, activeId, searchQuery) {
         val q = searchQuery.trim().lowercase()
-        if (q.isEmpty()) allDeletedProducts else {
-            allDeletedProducts.filter { item ->
+        allDeletedProducts.filter { item ->
+            val matchesCompany = if (activeId != null) item.isAvailableForCompany(activeId) else true
+            val matchesQuery = if (q.isEmpty()) true else {
                 item.porulPeyar.values.any { it.lowercase().contains(q) } ||
                 item.hsnCode.lowercase().contains(q)
             }
+            matchesCompany && matchesQuery
         }
     }
 
@@ -433,43 +417,25 @@ fun RecycleBinScreen(
                         Spacer(modifier = Modifier.height(LocalElvanTopSpacerHeight.current))
                     }
 
-                    // Pill Shifter for Invoices vs Receipts and Company Profiles
-                    item(key = "meetpagam_top_shifters") {
-                        Column(
+                    // Pill Shifter for Invoices vs Receipts
+                    item(key = "meetpagam_top_shifter") {
+                        Box(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(bottom = 8.dp),
-                            verticalArrangement = Arrangement.spacedBy(16.dp)
+                            contentAlignment = Alignment.Center
                         ) {
-                            Box(
-                                modifier = Modifier.fillMaxWidth(),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                ElvanPillShifter(
-                                    items = shifterItems,
-                                    selectedIndex = createSegment,
-                                    onIndexSelected = {
-                                        createSegment = it
-                                        isSelectionMode = false
-                                        selectedItemIds = emptySet()
-                                    },
-                                    colors = colors,
-                                    isFullWidth = false
-                                )
-                            }
-
-                            if (businessShifterItems.size > 1) {
-                                ElvanPillShifter(
-                                    items = businessShifterItems,
-                                    selectedIndex = safeProfileIndex,
-                                    onIndexSelected = { selectedProfileFilterIndex = it },
-                                    colors = colors,
-                                    isFullWidth = true,
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(horizontal = Dimens.ContentPadding)
-                                )
-                            }
+                            ElvanPillShifter(
+                                items = shifterItems,
+                                selectedIndex = createSegment,
+                                onIndexSelected = {
+                                    createSegment = it
+                                    isSelectionMode = false
+                                    selectedItemIds = emptySet()
+                                },
+                                colors = colors,
+                                isFullWidth = false
+                            )
                         }
                     }
 

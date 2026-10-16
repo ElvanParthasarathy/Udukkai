@@ -15,10 +15,10 @@ fun main() {
         throwable.printStackTrace()
     }
 
-    println(">>> Starting Udukkai Desktop App...")
+    println(">>> Starting Udukkai Factory Desktop App (Fixed KOOLI mode)...")
 
-    // Explicitly null for combined legacy mode selector
-    com.elvan.udukkai.core.mode.AppLaunchConfig.setFixedMode(null)
+    // Default desktop entry point locks application to Factory / KOOLI mode
+    com.elvan.udukkai.core.mode.AppLaunchConfig.setFixedMode(com.elvan.udukkai.core.mode.AppMode.KOOLI)
 
     application {
         com.elvan.udukkai.localization.LanguageManager.init()
@@ -28,7 +28,7 @@ fun main() {
 
         Window(
             onCloseRequest = ::exitApplication,
-            title = "Udukkai",
+            title = "Udukkai Factory",
             icon = BitmapPainter(useResource("udukkai_icon.png", ::loadImageBitmap)),
             state = rememberWindowState(
                 width = 1180.dp,

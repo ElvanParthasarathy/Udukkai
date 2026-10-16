@@ -11,14 +11,13 @@ import com.elvan.udukkai.BuildConfig
  * BuildConfig.APP_MODE values (set in composeApp/build.gradle.kts productFlavors):
  *   "kooli"  → Udukkai Factory  (fixed, no mode selector)
  *   "pattu"  → Udukkai Textiles (fixed, no mode selector)
- *   ""       → Udukkai Combined (legacy — mode selector shown at startup)
  */
 fun initAndroidLaunchMode() {
     val modeKey = BuildConfig.APP_MODE
     val mode = when {
         modeKey.equals("kooli", ignoreCase = true) -> AppMode.KOOLI
         modeKey.equals("pattu", ignoreCase = true) -> AppMode.PATTU
-        else -> null  // combined / legacy build — no fixed mode
+        else -> AppMode.KOOLI  // default fallback to Factory
     }
     AppLaunchConfig.setFixedMode(mode)
 }
