@@ -144,21 +144,20 @@ object NiruvanaTharavugalRepository {
             val helper = getSettingsDatabaseHelper()
             helper.scanAndSync()
 
-            val kooliProfiles = helper.loadAllProfiles(AppMode.KOOLI).map { it.copy(iruMozhi = true) }
+            val kooliProfiles = helper.loadAllProfiles(AppMode.KOOLI)
             if (kooliProfiles.isNotEmpty()) {
                 kooliProfilesState = kooliProfiles
                 val savedId = getPersistedActiveId(AppMode.KOOLI)
                 val matching = if (savedId != null) kooliProfiles.find { it.id == savedId } else null
-                val target = (matching ?: kooliProfiles.first()).copy(iruMozhi = true)
+                val target = matching ?: kooliProfiles.first()
                 kooliProfileState = target
                 if (savedId == null || matching == null) {
                     target.id?.let { persistActiveId(AppMode.KOOLI, it) }
                 }
             } else {
                 helper.loadProfile(AppMode.KOOLI)?.let { kooliProfile ->
-                    val fixed = kooliProfile.copy(iruMozhi = true)
-                    kooliProfileState = fixed
-                    kooliProfilesState = listOf(fixed)
+                    kooliProfileState = kooliProfile
+                    kooliProfilesState = listOf(kooliProfile)
                 }
             }
 
@@ -190,7 +189,7 @@ object NiruvanaTharavugalRepository {
 
     fun getProfile(mode: AppMode): NiruvanaTharavugal {
         return when (mode) {
-            AppMode.KOOLI -> if (kooliProfileState.iruMozhi) kooliProfileState else kooliProfileState.copy(iruMozhi = true)
+            AppMode.KOOLI -> kooliProfileState
             AppMode.PATTU -> pattuProfileState
         }
     }
@@ -245,7 +244,7 @@ object NiruvanaTharavugalRepository {
     }
 
     fun updateProfile(mode: AppMode, profile: NiruvanaTharavugal) {
-        val updated = if (mode == AppMode.KOOLI) profile.copy(iruMozhi = true) else profile.copy()
+        val updated = profile.copy()
         when (mode) {
             AppMode.KOOLI -> {
                 kooliProfileState = updated

@@ -1,7 +1,6 @@
 package com.elvan.udukkai.ui.screens.settings.screens
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
@@ -9,7 +8,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -34,9 +32,13 @@ import com.elvan.udukkai.ui.components.shell.*
 import com.elvan.udukkai.ui.navigation.MaterialSymbols
 
 /**
- * Invoice Creation Settings Screen matching Flutter's `uruvakku_amaippugal_thirai.dart` 1:1.
- * Dynamically handles Kooli (`kooli_uruvakku_amaippu.dart` with single language + PDF color theme)
- * and Pattu (`pattu_uruvakku_amaippu.dart` with dual language, bilingual toggle, GST split toggle).
+ * Invoice Creation Settings Screen.
+ * Provides unified bilingual billing configuration for both Factory (Kooli) and Textiles (Pattu):
+ * - Primary billing language selection
+ * - Secondary billing language selection (when bilingual is active)
+ * - Bilingual billing toggle (iruMozhi)
+ * - GST split presentation toggle (for Textiles / Goods mode)
+ * - PDF color theme customization
  */
 @Composable
 fun InvoiceCreationSettingsScreen(
@@ -87,19 +89,19 @@ fun InvoiceCreationSettingsScreen(
             state = scrollState,
             modifier = Modifier.fillMaxSize(),
             contentPadding = PaddingValues(
-            start = Dimens.ContentPadding,
-            end = Dimens.ContentPadding,
-            bottom = Dimens.SubpageContentPaddingBottom
-        ),
-        verticalArrangement = Arrangement.spacedBy(Dimens.SectionSpacing)
-    ) {
-        // Top spacer driven by One UI collapsible header
-        item(key = "shell_top_spacer") {
-            Spacer(modifier = Modifier.height(LocalElvanTopSpacerHeight.current))
-        }
-        if (isPattu) {
-            // ── Pattu Section 1: Languages ──
-            item {
+                start = Dimens.ContentPadding,
+                end = Dimens.ContentPadding,
+                bottom = Dimens.SubpageContentPaddingBottom
+            ),
+            verticalArrangement = Arrangement.spacedBy(Dimens.SectionSpacing)
+        ) {
+            // Top spacer driven by One UI collapsible header
+            item(key = "shell_top_spacer") {
+                Spacer(modifier = Modifier.height(LocalElvanTopSpacerHeight.current))
+            }
+
+            // ── Section 1: Billing Languages ──
+            item(key = "languages_section") {
                 ElvanSettingsSection(colors = colors) {
                     ElvanSettingsAnimatedExpand(
                         isEditing = isEditingLanguages,
@@ -161,7 +163,7 @@ fun InvoiceCreationSettingsScreen(
                                 },
                                 colors = colors
                             ) {
-                                // Primary Language Dropdown (Pill triggering bottom sheet)
+                                // Primary Language Dropdown
                                 ElvanSettingsDropdown(
                                     label = K.primaryLanguage.tr(),
                                     value = tempPrimaryLang,
@@ -178,7 +180,7 @@ fun InvoiceCreationSettingsScreen(
 
                                 if (profile.iruMozhi) {
                                     Spacer(modifier = Modifier.height(16.dp))
-                                    // Secondary Language Dropdown (Pill triggering bottom sheet)
+                                    // Secondary Language Dropdown
                                     ElvanSettingsDropdown(
                                         label = K.secondaryLanguage.tr(),
                                         value = tempSecondaryLang,
@@ -199,28 +201,29 @@ fun InvoiceCreationSettingsScreen(
                 }
             }
 
-            // ── Pattu Section 2: Switches ──
-            item {
+            // ── Section 2: Switches (Bilingual & GST) ──
+            item(key = "switches_section") {
                 ElvanSettingsSection(colors = colors) {
-                        // Bilingual Mode Toggle
-                        ElvanSimpleSettingsRow(
-                            title = K.bilingualMode.tr(),
-                            trailing = {
-                                ElvanSettingsSwitch(
-                                    checked = profile.iruMozhi,
-                                    onCheckedChange = { isChecked ->
-                                        val updated = profile.copy(iruMozhi = isChecked)
-                                        NiruvanaTharavugalRepository.updateProfile(currentMode, updated)
-                                        ElvanSnackbar.show(saveSuccessMsg)
-                                    },
-                                    colors = colors
-                                )
-                            },
-                            colors = colors
-                        )
-                        ElvanSettingsDivider(colors = colors)
+                    // Bilingual Mode Toggle
+                    ElvanSimpleSettingsRow(
+                        title = K.bilingualMode.tr(),
+                        trailing = {
+                            ElvanSettingsSwitch(
+                                checked = profile.iruMozhi,
+                                onCheckedChange = { isChecked ->
+                                    val updated = profile.copy(iruMozhi = isChecked)
+                                    NiruvanaTharavugalRepository.updateProfile(currentMode, updated)
+                                    ElvanSnackbar.show(saveSuccessMsg)
+                                },
+                                colors = colors
+                            )
+                        },
+                        colors = colors
+                    )
 
-                        // GST Split Toggle
+                    // GST Split Toggle (Only for Goods / Pattu Mode)
+                    if (isPattu) {
+                        ElvanSettingsDivider(colors = colors)
                         ElvanSimpleSettingsRow(
                             title = K.showGstSplitsInTable.tr(),
                             trailing = {
@@ -234,79 +237,18 @@ fun InvoiceCreationSettingsScreen(
                                     colors = colors
                                 )
                             },
-                        colors = colors
-                    )
+                            colors = colors
+                        )
+                    }
                 }
             }
-        } else {
-            // ── Kooli Mode ──
-            item {
+
+            // ── Section 3: PDF Theme ──
+            item(key = "theme_section") {
+                val currentThemeColorHex = profile.thoatraNiram.ifEmpty { "#388e3c" }
+                val currentColor = parseColor(currentThemeColorHex)
+
                 ElvanSettingsSection(colors = colors) {
-                    // 1. Language Row
-                    ElvanSettingsAnimatedExpand(
-                        isEditing = isEditingLanguages,
-                        displayContent = {
-                            ElvanSimpleSettingsRow(
-                                title = K.invoiceReceiptLanguage.tr(),
-                                description = getLanguageName(profile.mudhanMozhi),
-                                trailing = {
-                                    Surface(
-                                        shape = CircleShape,
-                                        color = colors.iconBg,
-                                        modifier = Modifier
-                                            .size(40.dp)
-                                            .clip(CircleShape)
-                                            .clickable(
-                                                interactionSource = remember { MutableInteractionSource() },
-                                                indication = ShellDefaults.ripple(colors, bounded = true),
-                                                onClick = {
-                                                    tempPrimaryLang = profile.mudhanMozhi
-                                                    isEditingLanguages = true
-                                                }
-                                            )
-                                    ) {
-                                        Box(contentAlignment = Alignment.Center) {
-                                            Icon(
-                                                imageVector = MaterialSymbols.Rounded.Edit,
-                                                contentDescription = K.edit.tr(),
-                                                tint = colors.textPrimary.copy(alpha = 0.6f),
-                                                modifier = Modifier.size(20.dp)
-                                            )
-                                        }
-                                    }
-                                },
-                                colors = colors
-                            )
-                        },
-                        editContent = {
-                            ElvanSettingsEditContainer(
-                                onCancel = { isEditingLanguages = false },
-                                onSave = {
-                                    val updated = profile.copy()
-                                    updated.mudhanMozhi = tempPrimaryLang
-                                    NiruvanaTharavugalRepository.updateProfile(currentMode, updated)
-                                    isEditingLanguages = false
-                                    ElvanSnackbar.show(saveSuccessMsg)
-                                },
-                                colors = colors
-                            ) {
-                                ElvanSettingsDropdown(
-                                    label = K.invoiceReceiptLanguage.tr(),
-                                    value = tempPrimaryLang,
-                                    items = listOf("ta", "en"),
-                                    itemLabelBuilder = { getLanguageName(it) },
-                                    onChanged = { tempPrimaryLang = it },
-                                    colors = colors
-                                )
-                            }
-                        }
-                    )
-                    ElvanSettingsDivider(colors = colors)
-
-                    // 2. PDF Theme Row
-                    val currentThemeColorHex = profile.thoatraNiram.ifEmpty { "#388e3c" }
-                    val currentColor = parseColor(currentThemeColorHex)
-
                     ElvanSettingsDisplayRow(
                         title = K.pdfTheme.tr(),
                         primaryValue = "",
@@ -358,5 +300,4 @@ fun InvoiceCreationSettingsScreen(
             }
         }
     }
-}
 }

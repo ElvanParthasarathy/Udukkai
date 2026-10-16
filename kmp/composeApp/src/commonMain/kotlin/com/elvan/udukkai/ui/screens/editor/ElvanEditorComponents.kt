@@ -390,7 +390,7 @@ fun ElvanIrumozhiPulan(
     val currentMode = LocalAppMode.current
     val profile = NiruvanaTharavugalRepository.getProfile(currentMode)
 
-    val isBilingual = if (currentMode == AppMode.KOOLI) true else profile.iruMozhi
+    val isBilingual = profile.iruMozhi
     val primaryLang = profile.mudhanMozhi.ifEmpty { "ta" }
     val secondaryLang = profile.thunaiMozhi.ifEmpty { "en" }
 

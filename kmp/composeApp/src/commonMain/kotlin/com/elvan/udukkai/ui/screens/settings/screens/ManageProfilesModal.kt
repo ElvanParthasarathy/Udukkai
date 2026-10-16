@@ -142,7 +142,7 @@ fun ManageProfilesModal(
                                     val isActive = profileItem.id == activeProfile.id
                                     val primaryName = profileItem.getPrimary("niruvanathinPeyar")
                                         .ifEmpty { K.activeCompany.tr() }
-                                    val isBilingual = if (mode == AppMode.KOOLI) true else profileItem.iruMozhi
+                                    val isBilingual = profileItem.iruMozhi
                                     val secondaryName = if (isBilingual) {
                                         profileItem.getSecondary("niruvanathinPeyar").takeIf { it.isNotBlank() }
                                     } else null

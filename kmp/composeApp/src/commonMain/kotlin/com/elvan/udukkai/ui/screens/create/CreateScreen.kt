@@ -71,7 +71,7 @@ fun CreateScreen(
     val isDark = colors.isDark
     val ff = LocalAppFontFamily.current
     val activeProfile = NiruvanaTharavugalRepository.getProfile(mode)
-    val isBilingual = mode == AppMode.KOOLI || activeProfile.iruMozhi
+    val isBilingual = activeProfile.iruMozhi
     val primaryLang = activeProfile.mudhanMozhi.ifEmpty { "ta" }
 
     val invoices = PattiyalRepository.filteredInvoices

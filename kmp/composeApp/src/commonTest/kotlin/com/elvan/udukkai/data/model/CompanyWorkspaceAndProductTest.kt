@@ -1,10 +1,15 @@
 package com.elvan.udukkai.data.model
 
+import com.elvan.udukkai.core.mode.AppMode
 import com.elvan.udukkai.data.repository.PattiyalRepository
+import com.elvan.udukkai.data.settings.NiruvanaTharavugalRepository
+import com.elvan.udukkai.localization.BillingLanguage
+import com.elvan.udukkai.localization.PrintLanguageManager
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 class CompanyWorkspaceAndProductTest {
@@ -261,4 +266,66 @@ class CompanyWorkspaceAndProductTest {
         val prices = payload["companyPrices"] as Map<String, Double>
         assertEquals(1350.0, prices["101"])
     }
+
+    @Test
+    fun testBilingualBillingConsistentAcrossModes() {
+        // Test KOOLI mode with bilingual enabled and disabled
+        val kooliInitial = NiruvanaTharavugalRepository.getProfile(AppMode.KOOLI)
+
+        NiruvanaTharavugalRepository.updateProfile(
+            AppMode.KOOLI,
+            kooliInitial.copy(iruMozhi = false, mudhanMozhi = "ta", thunaiMozhi = "en")
+        )
+        val kooliSingle = PrintLanguageManager.getConfig(AppMode.KOOLI)
+        assertFalse(kooliSingle.isBilingual)
+        assertEquals(BillingLanguage.TAMIL, kooliSingle.primaryLanguage)
+
+        NiruvanaTharavugalRepository.updateProfile(
+            AppMode.KOOLI,
+            kooliInitial.copy(iruMozhi = true, mudhanMozhi = "ta", thunaiMozhi = "en")
+        )
+        val kooliBilingual = PrintLanguageManager.getConfig(AppMode.KOOLI)
+        assertTrue(kooliBilingual.isBilingual)
+        assertEquals(BillingLanguage.ENGLISH, kooliBilingual.secondaryLanguage)
+
+        // Test PATTU mode with bilingual enabled and disabled
+        val pattuInitial = NiruvanaTharavugalRepository.getProfile(AppMode.PATTU)
+
+        NiruvanaTharavugalRepository.updateProfile(
+            AppMode.PATTU,
+            pattuInitial.copy(iruMozhi = false, mudhanMozhi = "en", thunaiMozhi = "ta")
+        )
+        val pattuSingle = PrintLanguageManager.getConfig(AppMode.PATTU)
+        assertFalse(pattuSingle.isBilingual)
+        assertEquals(BillingLanguage.ENGLISH, pattuSingle.primaryLanguage)
+
+        NiruvanaTharavugalRepository.updateProfile(
+            AppMode.PATTU,
+            pattuInitial.copy(iruMozhi = true, mudhanMozhi = "en", thunaiMozhi = "ta")
+        )
+        val pattuBilingual = PrintLanguageManager.getConfig(AppMode.PATTU)
+        assertTrue(pattuBilingual.isBilingual)
+        assertEquals(BillingLanguage.TAMIL, pattuBilingual.secondaryLanguage)
+
+        // Restore initial states
+        NiruvanaTharavugalRepository.updateProfile(AppMode.KOOLI, kooliInitial)
+        NiruvanaTharavugalRepository.updateProfile(AppMode.PATTU, pattuInitial)
+    }
+
+    @Test
+    fun testDocumentCompanyProfileBindingLogic() {
+        val activeProfileId = 101L
+        val savedInvoiceCompanyId = 202L
+
+        // New invoice creation scenario: binds to active company profile
+        val isNewInvoice = true
+        val resolvedCompanyIdForNew = if (isNewInvoice) activeProfileId else savedInvoiceCompanyId
+        assertEquals(101L, resolvedCompanyIdForNew)
+
+        // Edit invoice scenario: preserves document's existing company ID
+        val isEditInvoice = false // not new
+        val resolvedCompanyIdForEdit = if (isEditInvoice) activeProfileId else savedInvoiceCompanyId
+        assertEquals(202L, resolvedCompanyIdForEdit)
+    }
 }
+

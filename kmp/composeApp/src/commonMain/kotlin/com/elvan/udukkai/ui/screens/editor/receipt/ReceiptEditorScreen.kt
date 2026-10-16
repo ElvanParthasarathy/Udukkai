@@ -106,21 +106,15 @@ fun ReceiptEditorScreen(
 
     val profiles: List<NiruvanaTharavugal> = NiruvanaTharavugalRepository.getAllProfiles(currentMode)
     val activeProfile = NiruvanaTharavugalRepository.getProfile(currentMode)
-    var selectedNiruvanamId by remember {
-        mutableStateOf(receipt?.niruvanamId ?: activeProfile.id ?: if (profiles.isNotEmpty()) profiles.first().id else null)
-    }
-    val selectedProfile = remember(selectedNiruvanamId, profiles) {
-        profiles.firstOrNull { it.id == selectedNiruvanamId }
-    }
-
-    // Auto-select if unselected
-    LaunchedEffect(profiles, activeProfile) {
-        if (selectedNiruvanamId == null && profiles.isNotEmpty()) {
-            selectedNiruvanamId = activeProfile.id ?: profiles.first().id
+    val selectedProfile = remember(profiles, activeProfile, receipt?.niruvanamId) {
+        if (isEditing) {
+            profiles.firstOrNull { it.id == receipt?.niruvanamId } ?: activeProfile
+        } else {
+            activeProfile
         }
     }
-
-    val isFormLocked = profiles.size > 1 && selectedNiruvanamId == null
+    val selectedNiruvanamId = if (isEditing) (receipt?.niruvanamId ?: selectedProfile.id) else (selectedProfile.id ?: profiles.firstOrNull()?.id)
+    val isProfileConfigured = profiles.isNotEmpty() && selectedNiruvanamId != null
 
     // Refresh dependencies on launch
     LaunchedEffect(Unit) {
@@ -178,7 +172,6 @@ fun ReceiptEditorScreen(
     var hasUnsavedChanges by remember { mutableStateOf(false) }
     var showUnsavedDialog by remember { mutableStateOf(false) }
     var isSaving by remember { mutableStateOf(false) }
-    var isCompanySheetOpen by remember { mutableStateOf(false) }
     var isSeluthiVagaiSheetOpen by remember { mutableStateOf(false) }
 
     val amaippugalStr = K.settings.tr()
@@ -188,6 +181,7 @@ fun ReceiptEditorScreen(
     val duplicateMsg = K.receiptNumberAlreadyExists.tr()
     val savedMsg = K.receiptSaved.tr()
     val saveFailedMsg = K.couldNotSavePrefix.tr()
+    val selectCompanyProfileMsg = K.selectCompanyProfile.tr()
 
     // Helper: auto-calculate receipt number
     fun generatePatruEn(profile: NiruvanaTharavugal?) {
@@ -199,14 +193,6 @@ fun ReceiptEditorScreen(
         val nextSeq = PatrugalRepository.getNextVanakkam(profile?.id, currentMode)
         vanakkam = nextSeq
         patruEn = PatrugalRepository.formatPatruEn(bizShort, nextSeq)
-    }
-
-    fun onCompanyChanged(newProfile: NiruvanaTharavugal?) {
-        selectedNiruvanamId = newProfile?.id
-        hasUnsavedChanges = true
-        if (!isEditing) {
-            generatePatruEn(newProfile)
-        }
     }
 
     // Auto-generate receipt number on profile selection if new
@@ -242,8 +228,8 @@ fun ReceiptEditorScreen(
 
     // Save logic with FIFO distribution
     fun handleSave() {
-        if (selectedProfile == null || selectedProfile.kurumPeyar.trim().isEmpty()) {
-            ElvanSnackbar.show("$amaippugalStr - Kurum Peyar is required.")
+        if (!isProfileConfigured) {
+            ElvanSnackbar.show(selectCompanyProfileMsg)
             return
         }
 
@@ -365,7 +351,7 @@ fun ReceiptEditorScreen(
             ElvanActionButton(
                 label = K.saveBtn.tr(),
                 onClick = { handleSave() },
-                enabled = !isSaving && !isFormLocked
+                enabled = !isSaving
             )
         }
     ) {
@@ -384,91 +370,21 @@ fun ReceiptEditorScreen(
                 Spacer(modifier = Modifier.height(LocalElvanTopSpacerHeight.current))
             }
 
-            // ── Section 0: Business Profile Selector (if multiple profiles exist) ──
-            if (profiles.size > 1) {
-                item(key = "profile_section") {
-                    val companyName = selectedProfile?.kurumPeyar?.ifEmpty {
-                        selectedProfile.niruvanathinPeyar.values.firstOrNull().orEmpty()
-                    }
-
-                    ElvanEditorSection(index = 0, title = K.companyDetail.tr()) {
-                        Column(modifier = Modifier.fillMaxWidth()) {
-                            ElvanThiruthiThalaippu(label = K.company.tr())
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(48.dp)
-                                    .clip(RoundedCornerShape(100.dp))
-                                    .background(pillBg)
-                                    .clickable { isCompanySheetOpen = true }
-                                    .padding(start = 20.dp, end = 8.dp),
-                                contentAlignment = Alignment.CenterStart
-                            ) {
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.SpaceBetween,
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Text(
-                                        text = (companyName ?: K.selectCompany.tr()).preventBrokenLigatures(),
-                                        style = TextStyle(
-                                            fontFamily = ff,
-                                            fontSize = 14.sp,
-                                            fontWeight = FontWeight.Medium,
-                                            color = if (companyName != null) colors.textPrimary else colors.textSecondary
-                                        ),
-                                        modifier = Modifier.weight(1f),
-                                        maxLines = 1,
-                                        overflow = TextOverflow.Ellipsis
-                                    )
-
-                                    if (selectedNiruvanamId != null) {
-                                        // Clear button (X)
-                                        Box(
-                                            modifier = Modifier
-                                                .size(32.dp)
-                                                .clip(CircleShape)
-                                                .clickable(
-                                                    interactionSource = remember { MutableInteractionSource() },
-                                                    indication = ripple(bounded = true, radius = 16.dp)
-                                                ) {
-                                                    onCompanyChanged(null)
-                                                },
-                                            contentAlignment = Alignment.Center
-                                        ) {
-                                            Icon(
-                                                imageVector = MaterialSymbols.Rounded.Close,
-                                                contentDescription = "Clear",
-                                                tint = colors.textSecondary,
-                                                modifier = Modifier.size(16.dp)
-                                            )
-                                        }
-                                    } else {
-                                        Box(
-                                            modifier = Modifier.size(32.dp),
-                                            contentAlignment = Alignment.Center
-                                        ) {
-                                            Icon(
-                                                imageVector = MaterialSymbols.Rounded.KeyboardArrowDown,
-                                                contentDescription = null,
-                                                tint = colors.textSecondary,
-                                                modifier = Modifier.size(20.dp)
-                                            )
-                                        }
-                                    }
-                                }
-                            }
-                        }
+            if (!isProfileConfigured) {
+                item(key = "unconfigured_warning") {
+                    ElvanSettingsSection(colors = colors) {
+                        ElvanSimpleSettingsRow(
+                            title = K.selectCompanyProfile.tr(),
+                            description = K.companyDetail.tr(),
+                            colors = colors
+                        )
                     }
                 }
             }
 
-            val baseIndex = if (profiles.size > 1) 1 else 0
-
-            // ── Section 1: Linked Invoice (Required) ──
+            // ── Section 0: Linked Invoice (Required) ──
             item(key = "invoice_picker_section") {
-                FormLockWrapper(isLocked = isFormLocked) {
-                    ElvanEditorSection(index = baseIndex, title = K.forWhichInvoice.tr()) {
+                ElvanEditorSection(index = 0, title = K.forWhichInvoice.tr()) {
                         Column(
                             modifier = Modifier.fillMaxWidth(),
                             verticalArrangement = Arrangement.spacedBy(12.dp)
@@ -567,12 +483,10 @@ fun ReceiptEditorScreen(
                         }
                     }
                 }
-            }
 
-            // ── Section 2: Receipt Data ──
+            // ── Section 1: Receipt Data ──
             item(key = "receipt_data_section") {
-                FormLockWrapper(isLocked = isFormLocked) {
-                    ElvanEditorSection(index = baseIndex + 1, title = K.receiptDetails.tr()) {
+                ElvanEditorSection(index = 1, title = K.receiptDetails.tr()) {
                         Column(
                             modifier = Modifier.fillMaxWidth(),
                             verticalArrangement = Arrangement.spacedBy(24.dp)
@@ -656,8 +570,7 @@ fun ReceiptEditorScreen(
                                 }
                             }
 
-                            // 3. Receipt Number (with pencil edit toggle)
-                            val bizPrefix = if (selectedProfile != null && selectedProfile.kurumPeyar.isNotEmpty()) {
+                            val bizPrefix = if (selectedProfile.kurumPeyar.isNotEmpty()) {
                                 "RCP/${selectedProfile.kurumPeyar}/"
                             } else {
                                 "RCP/BIZ/"
@@ -675,12 +588,10 @@ fun ReceiptEditorScreen(
                         }
                     }
                 }
-            }
 
-            // ── Section 3: Payment Details ──
+            // ── Section 2: Payment Details ──
             item(key = "payment_section") {
-                FormLockWrapper(isLocked = isFormLocked) {
-                    ElvanEditorSection(index = baseIndex + 2, title = K.paymentDetails.tr()) {
+                ElvanEditorSection(index = 2, title = K.paymentDetails.tr()) {
                         Column(
                             modifier = Modifier.fillMaxWidth(),
                             verticalArrangement = Arrangement.spacedBy(24.dp)
@@ -781,30 +692,9 @@ fun ReceiptEditorScreen(
                         }
                     }
                 }
-            }
         }
     }
 }
-
-    // Modal: Business Profile Bottom Sheet
-    if (isCompanySheetOpen) {
-        ElvanSelectionBottomSheet<NiruvanaTharavugal>(
-            title = K.company.tr(),
-            items = profiles,
-            currentValue = selectedProfile,
-            onSelected = { profile ->
-                onCompanyChanged(profile)
-                isCompanySheetOpen = false
-            },
-            onDismissRequest = { isCompanySheetOpen = false },
-            itemLabelBuilder = {
-                it.kurumPeyar.ifEmpty { it.niruvanathinPeyar.values.firstOrNull().orEmpty() }
-            },
-            subtitleBuilder = {
-                it.niruvanathinPeyar["ta"] ?: it.niruvanathinPeyar["en"]
-            }
-        )
-    }
 
     // Modal: Invoice Picker Bottom Sheet (Multi-select)
     if (isInvoicePickerOpen) {

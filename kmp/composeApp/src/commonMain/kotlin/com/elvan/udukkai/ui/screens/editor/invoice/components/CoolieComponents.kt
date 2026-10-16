@@ -143,7 +143,7 @@ fun KooliUrupadiAttai(
                 val config = PrintLanguageManager.getConfig(AppMode.KOOLI)
                 val primaryLang = config.primaryLanguage.code
                 val secondaryLang = config.secondaryLanguage.code
-                val isBilingual = true
+                val isBilingual = config.isBilingual
 
                 val primaryName = if (item.mozhiMap.isNotEmpty()) {
                     item.mozhiMap[primaryLang] ?: item.mozhiMap.values.firstOrNull().orEmpty()
@@ -413,7 +413,7 @@ fun KooliUrupadiAttai(
                 p.porulPeyar[primaryLang] ?: p.porulPeyar.values.firstOrNull().orEmpty()
             },
             subtitleBuilder = { p ->
-                val secName = p.porulPeyar[secondaryLang].orEmpty()
+                val secName = if (config.isBilingual) p.porulPeyar[secondaryLang].orEmpty() else ""
                 val price = p.getEffectivePrice(niruvanamId)
                 val priceStr = if (price > 0) CurrencyUtils.formatInr(price) else ""
                 listOf(secName, priceStr).filter { it.isNotEmpty() }.joinToString("  •  ")

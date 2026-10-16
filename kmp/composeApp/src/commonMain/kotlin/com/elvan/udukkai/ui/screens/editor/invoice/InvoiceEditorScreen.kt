@@ -75,9 +75,8 @@ fun InvoiceEditorScreen(
     val isEditing = invoice != null && invoice.id > 0L
 
     val profiles: List<NiruvanaTharavugal> = NiruvanaTharavugalRepository.getAllProfiles(currentMode)
-    var selectedNiruvanamId by remember {
-        mutableStateOf(invoice?.niruvanamId ?: profiles.firstOrNull()?.id)
-    }
+    val activeProfile = NiruvanaTharavugalRepository.getProfile(currentMode)
+    val selectedNiruvanamId = if (isEditing) (invoice?.niruvanamId ?: activeProfile.id) else (activeProfile.id ?: profiles.firstOrNull()?.id)
 
     val merchants = VaangunarRepository.merchants
     var selectedVaangunarId by remember { mutableStateOf(invoice?.vaangunarId) }
@@ -402,23 +401,6 @@ fun InvoiceEditorScreen(
                     title = K.invoiceDetails.tr()
                 ) {
                     ElvanThiruthiAttai {
-                        // Profile Selector (if multiple profiles exist)
-                        if (profiles.size > 1) {
-                            val activeProfile = profiles.find { it.id == selectedNiruvanamId }
-                            val profileDisplayName = activeProfile?.kurumPeyar?.ifEmpty {
-                                activeProfile.niruvanathinPeyar.values.firstOrNull().orEmpty()
-                            } ?: K.selectCompany.tr()
-
-                            ElvanThiruthiKeezhvirivu(
-                                label = K.company.tr(),
-                                selectedText = profileDisplayName,
-                                items = profiles.map { p ->
-                                    val name = p.kurumPeyar.ifEmpty { p.niruvanathinPeyar.values.firstOrNull().orEmpty() }
-                                    p.id.toString() to name
-                                },
-                                onSelected = { selectedNiruvanamId = it.toLongOrNull() }
-                            )
-                        }
 
                         // Invoice Number
                         ElvanThiruthiUlleedu(

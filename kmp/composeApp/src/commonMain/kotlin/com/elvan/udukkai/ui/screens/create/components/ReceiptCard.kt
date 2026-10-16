@@ -49,7 +49,7 @@ fun ReceiptCard(
 
     val currentMode = LocalAppMode.current
     val profile = NiruvanaTharavugalRepository.getProfile(currentMode)
-    val isBilingual = currentMode == AppMode.KOOLI || profile.iruMozhi
+    val isBilingual = profile.iruMozhi
     val primaryLang = profile.mudhanMozhi.ifEmpty { "ta" }
     val secondaryLang = profile.thunaiMozhi.ifEmpty { "en" }
 

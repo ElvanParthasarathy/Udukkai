@@ -57,7 +57,7 @@ fun MerchantSettingsScreen(
     var showExtraPhone by remember { mutableStateOf(false) }
 
     val isPattu = currentMode == AppMode.PATTU
-    val isBilingual = if (!isPattu) true else profile.iruMozhi
+    val isBilingual = profile.iruMozhi
     val saveSuccessMsg = K.profileSaved.tr()
     val defaultProfileName = K.activeCompany.tr()
     val selectCompanyTitle = K.selectCompany.tr()
@@ -136,7 +136,7 @@ fun MerchantSettingsScreen(
                                         items = NiruvanaTharavugalRepository.getAllProfiles(currentMode),
                                         currentValue = profile,
                                         itemLabelBuilder = { it.getPrimary("niruvanathinPeyar").ifEmpty { defaultProfileName } },
-                                        subtitleBuilder = { if (if (!isPattu) true else it.iruMozhi) it.getSecondary("niruvanathinPeyar").takeIf { s -> s.isNotBlank() } else null },
+                                        subtitleBuilder = { if (it.iruMozhi) it.getSecondary("niruvanathinPeyar").takeIf { s -> s.isNotBlank() } else null },
                                         onSelected = { selected ->
                                             if (selected.id != null) {
                                                 NiruvanaTharavugalRepository.setActiveProfile(currentMode, selected.id!!)

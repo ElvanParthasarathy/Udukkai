@@ -38,11 +38,7 @@ import com.elvan.udukkai.theme.Dimens
 import com.elvan.udukkai.theme.LocalAppFontFamily
 import com.elvan.udukkai.theme.preventBrokenLigatures
 import com.elvan.udukkai.theme.rememberShellColors
-import com.elvan.udukkai.ui.components.shell.ElvanActionSheet
-import com.elvan.udukkai.ui.components.shell.ElvanActionButton
-import com.elvan.udukkai.ui.components.shell.ElvanSelectionBottomSheet
-import com.elvan.udukkai.ui.components.shell.ElvanSubShell
-import com.elvan.udukkai.ui.components.shell.LocalElvanTopSpacerHeight
+import com.elvan.udukkai.ui.components.shell.*
 import com.elvan.udukkai.ui.navigation.MaterialSymbols
 import com.elvan.udukkai.ui.screens.editor.ElvanEditorSection
 import com.elvan.udukkai.ui.screens.editor.ElvanThiruthiThalaippu
@@ -114,21 +110,15 @@ fun CoolieInvoiceEditorScreen(
 
     val profiles: List<NiruvanaTharavugal> = NiruvanaTharavugalRepository.getAllProfiles(AppMode.KOOLI)
     val activeProfile = NiruvanaTharavugalRepository.getProfile(AppMode.KOOLI)
-    var selectedNiruvanamId by remember {
-        mutableStateOf(
-            invoice?.niruvanamId ?: activeProfile.id ?: if (profiles.isNotEmpty()) profiles.first().id else null
-        )
-    }
-    val selectedProfile = profiles.firstOrNull { it.id == selectedNiruvanamId }
-
-    // Auto-select if unselected
-    LaunchedEffect(profiles, activeProfile) {
-        if (selectedNiruvanamId == null && profiles.isNotEmpty()) {
-            selectedNiruvanamId = activeProfile.id ?: profiles.first().id
+    val selectedProfile = remember(profiles, activeProfile, invoice?.niruvanamId) {
+        if (isEditing) {
+            profiles.firstOrNull { it.id == invoice?.niruvanamId } ?: activeProfile
+        } else {
+            activeProfile
         }
     }
-
-    val isFormLocked = profiles.size > 1 && selectedNiruvanamId == null
+    val selectedNiruvanamId = if (isEditing) (invoice?.niruvanamId ?: selectedProfile.id) else (selectedProfile.id ?: profiles.firstOrNull()?.id)
+    val isProfileConfigured = profiles.isNotEmpty() && selectedNiruvanamId != null
 
     fun computePrefix(p: NiruvanaTharavugal?): String {
         return if (p != null && p.kurumPeyar.isNotEmpty()) p.kurumPeyar else "CB"
@@ -243,7 +233,6 @@ fun CoolieInvoiceEditorScreen(
     // UI state
     var hasUnsavedChanges by remember { mutableStateOf(false) }
     var showUnsavedDialog by remember { mutableStateOf(false) }
-    var isCompanySheetOpen by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
     var isSaving by remember { mutableStateOf(false) }
 
@@ -284,9 +273,6 @@ fun CoolieInvoiceEditorScreen(
 
     fun restoreDraft(json: String) {
         try {
-            val niruvanamId = Regex(""""selectedNiruvanamId"\s*:\s*(\d+)""").find(json)?.groupValues?.get(1)?.toLongOrNull()
-            if (niruvanamId != null) selectedNiruvanamId = niruvanamId
-
             val vaangunarId = Regex(""""selectedVaangunarId"\s*:\s*(\d+)""").find(json)?.groupValues?.get(1)?.toLongOrNull()
             if (vaangunarId != null) selectedVaangunarId = vaangunarId
 
@@ -335,16 +321,6 @@ fun CoolieInvoiceEditorScreen(
         }
     }
 
-    val onCompanyChanged: (NiruvanaTharavugal?) -> Unit = { p ->
-        selectedNiruvanamId = p?.id
-        if (!isEditing) {
-            val newPrefix = computePrefix(p)
-            invoiceNumber = PattiyalRepository.getNextInvoiceNumber(p?.id, newPrefix, AppMode.KOOLI)
-            isInvoiceNumberOverridden = false
-        }
-        hasUnsavedChanges = true
-    }
-
     val handleBack = {
         if (hasUnsavedChanges) {
             showUnsavedDialog = true
@@ -363,7 +339,7 @@ fun CoolieInvoiceEditorScreen(
     val saveBtnLabel = K.saveBtn.tr()
 
     val handleSave: () -> Unit = {
-        if (profiles.size > 1 && selectedNiruvanamId == null) {
+        if (!isProfileConfigured) {
             errorMessage = niruvanamRequiredMsg
         } else if (selectedVaangunarId == null && selectedVaangunarPeyarMap.isEmpty()) {
             errorMessage = vaangunarRequiredMsg
@@ -414,7 +390,7 @@ fun CoolieInvoiceEditorScreen(
             ElvanActionButton(
                 label = saveBtnLabel,
                 onClick = handleSave,
-                enabled = !isSaving && !isFormLocked
+                enabled = !isSaving
             )
         }
     ) {
@@ -452,148 +428,75 @@ fun CoolieInvoiceEditorScreen(
                 }
             }
 
-            // ── Section 0: Business Profile Selector (if multiple profiles exist) ──
-            if (profiles.size > 1) {
-                item(key = "profile_section") {
-                    val companyName = selectedProfile?.niruvanathinPeyar?.get(primaryLang)?.ifEmpty { null }
-                        ?: selectedProfile?.kurumPeyar?.ifEmpty { null }
-                        ?: selectedProfile?.niruvanathinPeyar?.values?.firstOrNull().orEmpty()
-
-                    ElvanEditorSection(index = 0, title = K.companyDetail.tr()) {
-                        Column(modifier = Modifier.fillMaxWidth()) {
-                            ElvanThiruthiThalaippu(label = K.company.tr())
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(48.dp)
-                                    .clip(RoundedCornerShape(100.dp))
-                                    .background(colors.iconBg)
-                                    .clickable { isCompanySheetOpen = true }
-                                    .padding(start = 20.dp, end = 8.dp),
-                                contentAlignment = Alignment.CenterStart
-                            ) {
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.SpaceBetween,
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Text(
-                                        text = (companyName ?: K.selectCompany.tr()).preventBrokenLigatures(),
-                                        style = TextStyle(
-                                            fontFamily = ff,
-                                            fontSize = 14.sp,
-                                            fontWeight = FontWeight.Medium,
-                                            color = if (companyName != null) colors.textPrimary else colors.textSecondary
-                                        ),
-                                        modifier = Modifier.weight(1f),
-                                        maxLines = 1,
-                                        overflow = TextOverflow.Ellipsis
-                                    )
-
-                                    if (selectedNiruvanamId != null) {
-                                        Box(
-                                            modifier = Modifier
-                                                .size(32.dp)
-                                                .clip(CircleShape)
-                                                .clickable(
-                                                    interactionSource = remember { MutableInteractionSource() },
-                                                    indication = ripple(bounded = true, radius = 16.dp)
-                                                ) {
-                                                    onCompanyChanged(null)
-                                                },
-                                            contentAlignment = Alignment.Center
-                                        ) {
-                                            Icon(
-                                                imageVector = MaterialSymbols.Rounded.Close,
-                                                contentDescription = "Clear",
-                                                tint = colors.textSecondary,
-                                                modifier = Modifier.size(16.dp)
-                                            )
-                                        }
-                                    } else {
-                                        Box(
-                                            modifier = Modifier.size(32.dp),
-                                            contentAlignment = Alignment.Center
-                                        ) {
-                                            Icon(
-                                                imageVector = MaterialSymbols.Rounded.KeyboardArrowDown,
-                                                contentDescription = null,
-                                                tint = colors.textSecondary,
-                                                modifier = Modifier.size(20.dp)
-                                            )
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-
-            val baseIndex = if (profiles.size > 1) 1 else 0
-
-            // ── Section 1: Customer (பெறுநர்) ──
-            item(key = "customer_section") {
-                FormLockWrapper(isLocked = isFormLocked) {
-                    ElvanEditorSection(index = baseIndex, title = K.billedTo.tr()) {
-                        PattuVaangunargalKooru(
-                            selectedVaangunarId = selectedVaangunarId,
-                            onCustomerSelected = { customer ->
-                                selectedVaangunarId = customer.id
-                                selectedVaangunarPeyarMap = customer.peyar
-                                selectedVaangunarMunvariMap = customer.mugavari
-                                hasUnsavedChanges = true
-                            },
-                            onCustomerCleared = {
-                                selectedVaangunarId = null
-                                selectedVaangunarPeyarMap = emptyMap()
-                                selectedVaangunarMunvariMap = emptyMap()
-                                hasUnsavedChanges = true
-                            },
-                            onRequestAddNewCustomer = { showAddCustomerEditor = true }
+            if (!isProfileConfigured) {
+                item(key = "unconfigured_warning") {
+                    ElvanSettingsSection(colors = colors) {
+                        ElvanSimpleSettingsRow(
+                            title = K.selectCompanyProfile.tr(),
+                            description = K.companyDetail.tr(),
+                            colors = colors
                         )
                     }
                 }
             }
 
-            // ── Section 2: Invoice Details (பட்டியல் தரவுகள்) ──
-            item(key = "invoice_details_section") {
-                FormLockWrapper(isLocked = isFormLocked) {
-                    ElvanEditorSection(index = baseIndex + 1, title = K.invoiceDetails.tr()) {
-                        val currentPrefix = computePrefix(selectedProfile)
-                        Column(
-                            modifier = Modifier.fillMaxWidth(),
-                            verticalArrangement = Arrangement.spacedBy(16.dp)
-                        ) {
-                            ElvanAavanaEnnKooru(
-                                label = K.receiptNumber.tr(),
-                                prefix = "$currentPrefix-",
-                                initialFullNumber = invoiceNumber,
-                                onFullNumberChanged = { newNum ->
-                                    invoiceNumber = newNum
-                                    isInvoiceNumberOverridden = true
-                                    hasUnsavedChanges = true
-                                },
-                                onDirty = { hasUnsavedChanges = true }
-                            )
+            // ── Section 0: Customer (பெறுநர்) ──
+            item(key = "customer_section") {
+                ElvanEditorSection(index = 0, title = K.billedTo.tr()) {
+                    PattuVaangunargalKooru(
+                        selectedVaangunarId = selectedVaangunarId,
+                        onCustomerSelected = { customer ->
+                            selectedVaangunarId = customer.id
+                            selectedVaangunarPeyarMap = customer.peyar
+                            selectedVaangunarMunvariMap = customer.mugavari
+                            hasUnsavedChanges = true
+                        },
+                        onCustomerCleared = {
+                            selectedVaangunarId = null
+                            selectedVaangunarPeyarMap = emptyMap()
+                            selectedVaangunarMunvariMap = emptyMap()
+                            hasUnsavedChanges = true
+                        },
+                        onRequestAddNewCustomer = { showAddCustomerEditor = true }
+                    )
+                }
+            }
 
-                            PattiyalNaalKooru(
-                                label = K.date.tr(),
-                                selectedDate = invoiceDate,
-                                onDateChanged = { newDate ->
-                                    invoiceDate = newDate
-                                    hasUnsavedChanges = true
-                                }
-                            )
-                        }
+            // ── Section 1: Invoice Details (பட்டியல் தரவுகள்) ──
+            item(key = "invoice_details_section") {
+                ElvanEditorSection(index = 1, title = K.invoiceDetails.tr()) {
+                    val currentPrefix = computePrefix(selectedProfile)
+                    Column(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalArrangement = Arrangement.spacedBy(16.dp)
+                    ) {
+                        ElvanAavanaEnnKooru(
+                            label = K.receiptNumber.tr(),
+                            prefix = "$currentPrefix-",
+                            initialFullNumber = invoiceNumber,
+                            onFullNumberChanged = { newNum ->
+                                invoiceNumber = newNum
+                                isInvoiceNumberOverridden = true
+                                hasUnsavedChanges = true
+                            },
+                            onDirty = { hasUnsavedChanges = true }
+                        )
+
+                        PattiyalNaalKooru(
+                            label = K.date.tr(),
+                            selectedDate = invoiceDate,
+                            onDateChanged = { newDate ->
+                                invoiceDate = newDate
+                                hasUnsavedChanges = true
+                            }
+                        )
                     }
                 }
             }
 
-            // ── Section 3: Items (பொருட்கள்) ──
+            // ── Section 2: Items (பொருட்கள்) ──
             item(key = "items_section") {
-                FormLockWrapper(isLocked = isFormLocked) {
-                    ElvanEditorSection(index = baseIndex + 2, title = K.products.tr()) {
+                ElvanEditorSection(index = 2, title = K.products.tr()) {
                         Column(
                             modifier = Modifier.fillMaxWidth(),
                             verticalArrangement = Arrangement.spacedBy(10.dp)
@@ -753,76 +656,45 @@ fun CoolieInvoiceEditorScreen(
                             }
                         }
                     }
-                }
-
-            // ── Section 4: Totals & Extra Charges (மொத்தங்கள்) ──
+            // ── Section 3: Totals & Extra Charges (மொத்தங்கள்) ──
             item(key = "totals_section") {
-                FormLockWrapper(isLocked = isFormLocked) {
-                    ElvanEditorSection(index = baseIndex + 3, title = K.totals.tr()) {
-                        Column(
-                            modifier = Modifier.fillMaxWidth(),
-                            verticalArrangement = Arrangement.spacedBy(16.dp)
-                        ) {
-                            KooliMelthogaiKooru(
-                                setharamGrams = setharamGrams,
-                                ahimsaPattuThogai = ahimsaPattuThogai,
-                                thabaalThogai = thabaalThogai,
-                                onSetharamChanged = {
-                                    setharamGrams = it
-                                    hasUnsavedChanges = true
-                                },
-                                onAhimsaChanged = {
-                                    ahimsaPattuThogai = it
-                                    hasUnsavedChanges = true
-                                },
-                                onThabaalChanged = {
-                                    thabaalThogai = it
-                                    hasUnsavedChanges = true
-                                },
-                                onDirty = { hasUnsavedChanges = true }
-                            )
+                ElvanEditorSection(index = 3, title = K.totals.tr()) {
+                    Column(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalArrangement = Arrangement.spacedBy(16.dp)
+                    ) {
+                        KooliMelthogaiKooru(
+                            setharamGrams = setharamGrams,
+                            ahimsaPattuThogai = ahimsaPattuThogai,
+                            thabaalThogai = thabaalThogai,
+                            onSetharamChanged = {
+                                setharamGrams = it
+                                hasUnsavedChanges = true
+                            },
+                            onAhimsaChanged = {
+                                ahimsaPattuThogai = it
+                                hasUnsavedChanges = true
+                            },
+                            onThabaalChanged = {
+                                thabaalThogai = it
+                                hasUnsavedChanges = true
+                            },
+                            onDirty = { hasUnsavedChanges = true }
+                        )
 
-                            KooliMothangalKooru(
-                                totals = totals,
-                                setharamGrams = setharamGrams,
-                                ahimsaPattuThogai = ahimsaPattuThogai,
-                                thabaalThogai = thabaalThogai,
-                                piraVarivugal = activeCharges
-                            )
-                        }
+                        KooliMothangalKooru(
+                            totals = totals,
+                            setharamGrams = setharamGrams,
+                            ahimsaPattuThogai = ahimsaPattuThogai,
+                            thabaalThogai = thabaalThogai,
+                            piraVarivugal = activeCharges
+                        )
                     }
                 }
-            }
-
-
             }
         }
     }
-
-    // ── Company Selection Bottom Sheet ──
-    if (isCompanySheetOpen) {
-        ElvanSelectionBottomSheet(
-            title = K.selectCompany.tr(),
-            items = profiles,
-            currentValue = selectedProfile,
-            onDismissRequest = { isCompanySheetOpen = false },
-            onSelected = { profile ->
-                onCompanyChanged(profile)
-                isCompanySheetOpen = false
-            },
-            itemLabelBuilder = { p ->
-                p.niruvanathinPeyar[primaryLang]?.ifEmpty { null }
-                    ?: p.kurumPeyar.ifEmpty {
-                        p.niruvanathinPeyar.values.firstOrNull().orEmpty()
-                    }
-            },
-            subtitleBuilder = { p ->
-                val sec = p.niruvanathinPeyar[secondaryLang].orEmpty()
-                val oor = p.oor[primaryLang] ?: p.oor.values.firstOrNull().orEmpty()
-                listOf(sec, oor).filter { it.isNotEmpty() }.joinToString(" • ")
-            }
-        )
-    }
+}
 
     // ── Unsaved Changes Guard Action Sheet ──
     if (showUnsavedDialog) {

@@ -32,8 +32,7 @@ fun BankSettingsScreen(
 ) {
     val currentMode = LocalAppMode.current
     val profile = NiruvanaTharavugalRepository.getProfile(currentMode)
-    val isPattu = currentMode == AppMode.PATTU
-    val isBilingual = !isPattu || profile.iruMozhi
+    val isBilingual = profile.iruMozhi
 
     var editingSection by remember { mutableStateOf<String?>(null) }
     var tempPrimary by remember { mutableStateOf("") }

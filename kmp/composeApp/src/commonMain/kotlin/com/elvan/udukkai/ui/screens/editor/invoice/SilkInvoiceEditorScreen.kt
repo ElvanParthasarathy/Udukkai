@@ -37,11 +37,7 @@ import com.elvan.udukkai.theme.Dimens
 import com.elvan.udukkai.theme.LocalAppFontFamily
 import com.elvan.udukkai.theme.preventBrokenLigatures
 import com.elvan.udukkai.theme.rememberShellColors
-import com.elvan.udukkai.ui.components.shell.ElvanActionSheet
-import com.elvan.udukkai.ui.components.shell.ElvanActionButton
-import com.elvan.udukkai.ui.components.shell.ElvanSelectionBottomSheet
-import com.elvan.udukkai.ui.components.shell.ElvanSubShell
-import com.elvan.udukkai.ui.components.shell.LocalElvanTopSpacerHeight
+import com.elvan.udukkai.ui.components.shell.*
 import com.elvan.udukkai.ui.navigation.MaterialSymbols
 import androidx.compose.ui.zIndex
 import com.elvan.udukkai.ui.screens.editor.customer.CustomerEditorScreen
@@ -109,21 +105,15 @@ fun SilkInvoiceEditorScreen(
 
     val profiles: List<NiruvanaTharavugal> = NiruvanaTharavugalRepository.getAllProfiles(AppMode.PATTU)
     val activeProfile = NiruvanaTharavugalRepository.getProfile(AppMode.PATTU)
-    var selectedNiruvanamId by remember {
-        mutableStateOf(
-            invoice?.niruvanamId ?: activeProfile.id ?: if (profiles.isNotEmpty()) profiles.first().id else null
-        )
-    }
-    val selectedProfile = profiles.firstOrNull { it.id == selectedNiruvanamId }
-
-    // Auto-select if unselected
-    LaunchedEffect(profiles, activeProfile) {
-        if (selectedNiruvanamId == null && profiles.isNotEmpty()) {
-            selectedNiruvanamId = activeProfile.id ?: profiles.first().id
+    val selectedProfile = remember(profiles, activeProfile, invoice?.niruvanamId) {
+        if (isEditing) {
+            profiles.firstOrNull { it.id == invoice?.niruvanamId } ?: activeProfile
+        } else {
+            activeProfile
         }
     }
-
-    val isFormLocked = profiles.size > 1 && selectedNiruvanamId == null
+    val selectedNiruvanamId = if (isEditing) (invoice?.niruvanamId ?: selectedProfile.id) else (selectedProfile.id ?: profiles.firstOrNull()?.id)
+    val isProfileConfigured = profiles.isNotEmpty() && selectedNiruvanamId != null
 
     fun computePrefix(p: NiruvanaTharavugal?): String {
         return if (p != null && p.kurumPeyar.isNotEmpty()) p.kurumPeyar else "INV"
@@ -199,7 +189,6 @@ fun SilkInvoiceEditorScreen(
     var hasUnsavedChanges by remember { mutableStateOf(false) }
     var showUnsavedDialog by remember { mutableStateOf(false) }
     var isSaving by remember { mutableStateOf(false) }
-    var isCompanySheetOpen by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
 
     // Draft persistence
@@ -239,8 +228,6 @@ fun SilkInvoiceEditorScreen(
 
     fun restoreDraft(json: String) {
         try {
-            val niruvanamId = Regex(""""selectedNiruvanamId"\s*:\s*(\d+)""").find(json)?.groupValues?.get(1)?.toLongOrNull()
-            if (niruvanamId != null) selectedNiruvanamId = niruvanamId
 
             val vaangunarId = Regex(""""selectedVaangunarId"\s*:\s*(\d+)""").find(json)?.groupValues?.get(1)?.toLongOrNull()
             if (vaangunarId != null) selectedVaangunarId = vaangunarId
@@ -290,17 +277,6 @@ fun SilkInvoiceEditorScreen(
         }
     }
 
-    fun onCompanyChanged(newProfile: NiruvanaTharavugal?) {
-        selectedNiruvanamId = newProfile?.id
-        hasUnsavedChanges = true
-        errorMessage = null
-        if (!isEditing) {
-            val prefix = computePrefix(newProfile)
-            invoiceNumber = PattiyalRepository.getNextInvoiceNumber(newProfile?.id, prefix, AppMode.PATTU)
-            isInvoiceNumberOverridden = false
-        }
-    }
-
     // Calculation Engine
     val businessState = selectedProfile?.maanilam?.get("en")
         ?: selectedProfile?.maanilam?.get("ta")
@@ -337,7 +313,7 @@ fun SilkInvoiceEditorScreen(
     val addNewProductLabel = K.addProductBtn.tr()
 
     val handleSave: () -> Unit = {
-        if (profiles.size > 1 && selectedNiruvanamId == null) {
+        if (!isProfileConfigured) {
             errorMessage = niruvanamRequiredMsg
         } else if (selectedVaangunarId == null && selectedVaangunarPeyarMap.isEmpty()) {
             errorMessage = vaangunarRequiredMsg
@@ -403,7 +379,7 @@ fun SilkInvoiceEditorScreen(
             ElvanActionButton(
                 label = saveBtnLabel,
                 onClick = handleSave,
-                enabled = !isSaving && !isFormLocked
+                enabled = !isSaving
             )
         }
     ) {
@@ -441,91 +417,21 @@ fun SilkInvoiceEditorScreen(
                 }
             }
 
-            // ── Section 0: Business Profile Selector (if multiple profiles exist) ──
-            if (profiles.size > 1) {
-                item(key = "profile_section") {
-                    val companyName = selectedProfile?.kurumPeyar?.ifEmpty {
-                        selectedProfile.niruvanathinPeyar.values.firstOrNull().orEmpty()
-                    }
-
-                    ElvanEditorSection(index = 0, title = K.companyDetail.tr()) {
-                        Column(modifier = Modifier.fillMaxWidth()) {
-                            ElvanThiruthiThalaippu(label = K.company.tr())
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(48.dp)
-                                    .clip(RoundedCornerShape(100.dp))
-                                    .background(colors.iconBg)
-                                    .clickable { isCompanySheetOpen = true }
-                                    .padding(start = 20.dp, end = 8.dp),
-                                contentAlignment = Alignment.CenterStart
-                            ) {
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.SpaceBetween,
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Text(
-                                        text = (companyName ?: K.selectCompany.tr()).preventBrokenLigatures(),
-                                        style = TextStyle(
-                                            fontFamily = ff,
-                                            fontSize = 14.sp,
-                                            fontWeight = FontWeight.Medium,
-                                            color = if (companyName != null) colors.textPrimary else colors.textSecondary
-                                        ),
-                                        modifier = Modifier.weight(1f),
-                                        maxLines = 1,
-                                        overflow = TextOverflow.Ellipsis
-                                    )
-
-                                    if (selectedNiruvanamId != null) {
-                                        // Clear button (X)
-                                        Box(
-                                            modifier = Modifier
-                                                .size(32.dp)
-                                                .clip(CircleShape)
-                                                .clickable(
-                                                    interactionSource = remember { MutableInteractionSource() },
-                                                    indication = ripple(bounded = true, radius = 16.dp)
-                                                ) {
-                                                    onCompanyChanged(null)
-                                                },
-                                            contentAlignment = Alignment.Center
-                                        ) {
-                                            Icon(
-                                                imageVector = MaterialSymbols.Rounded.Close,
-                                                contentDescription = "Clear",
-                                                tint = colors.textSecondary,
-                                                modifier = Modifier.size(16.dp)
-                                            )
-                                        }
-                                    } else {
-                                        Box(
-                                            modifier = Modifier.size(32.dp),
-                                            contentAlignment = Alignment.Center
-                                        ) {
-                                            Icon(
-                                                imageVector = MaterialSymbols.Rounded.KeyboardArrowDown,
-                                                contentDescription = null,
-                                                tint = colors.textSecondary,
-                                                modifier = Modifier.size(20.dp)
-                                            )
-                                        }
-                                    }
-                                }
-                            }
-                        }
+            if (!isProfileConfigured) {
+                item(key = "unconfigured_warning") {
+                    ElvanSettingsSection(colors = colors) {
+                        ElvanSimpleSettingsRow(
+                            title = K.selectCompanyProfile.tr(),
+                            description = K.companyDetail.tr(),
+                            colors = colors
+                        )
                     }
                 }
             }
 
-            val baseIndex = if (profiles.size > 1) 1 else 0
-
-            // ── Section 1: ① Billed To (பெறுநர்) ──
+            // ── Section 0: ① Billed To (பெறுநர்) ──
             item(key = "customer_section") {
-                FormLockWrapper(isLocked = isFormLocked) {
-                    ElvanEditorSection(index = baseIndex, title = K.billedTo.tr()) {
+                ElvanEditorSection(index = 0, title = K.billedTo.tr()) {
                         PattuVaangunargalKooru(
                             selectedVaangunarId = selectedVaangunarId,
                             onCustomerSelected = { customer ->
@@ -552,18 +458,16 @@ fun SilkInvoiceEditorScreen(
                             onRequestAddNewCustomer = { showAddCustomerEditor = true }
                         )
                     }
-                }
             }
 
-            // ── Section 2: ② Invoice Details (பட்டியல் தரவுகள்) ──
+            // ── Section 1: ② Invoice Details (பட்டியல் தரவுகள்) ──
             item(key = "invoice_details_section") {
-                FormLockWrapper(isLocked = isFormLocked) {
-                    ElvanEditorSection(index = baseIndex + 1, title = K.invoiceDetails.tr()) {
-                        Column(
-                            modifier = Modifier.fillMaxWidth(),
-                            verticalArrangement = Arrangement.spacedBy(24.dp)
-                        ) {
-                            val profilePrefix = if (selectedProfile != null && selectedProfile.kurumPeyar.isNotEmpty()) {
+                ElvanEditorSection(index = 1, title = K.invoiceDetails.tr()) {
+                    Column(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalArrangement = Arrangement.spacedBy(24.dp)
+                    ) {
+                        val profilePrefix = if (selectedProfile.kurumPeyar.isNotEmpty()) {
                                 "${selectedProfile.kurumPeyar}-"
                             } else {
                                 "INV-"
@@ -610,16 +514,14 @@ fun SilkInvoiceEditorScreen(
                         }
                     }
                 }
-            }
 
-            // ── Section 3: ③ Line Items (பொருட்கள்) ──
+            // ── Section 2: ③ Line Items (பொருட்கள்) ──
             item(key = "line_items_section") {
-                FormLockWrapper(isLocked = isFormLocked) {
-                    ElvanEditorSection(index = baseIndex + 2, title = K.products.tr()) {
-                        Column(
-                            modifier = Modifier.fillMaxWidth(),
-                            verticalArrangement = Arrangement.spacedBy(10.dp)
-                        ) {
+                ElvanEditorSection(index = 2, title = K.products.tr()) {
+                    Column(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
                             ElvanAsaiPattiyal {
                                 items.forEachIndexed { idx, lineItem ->
                                     key(lineItem.id) {
@@ -699,84 +601,49 @@ fun SilkInvoiceEditorScreen(
                         }
                     }
                 }
-            }
 
-            // ── Section 4: ④ Totals (மொத்தங்கள்) ──
+            // ── Section 3: ④ Totals (மொத்தங்கள்) ──
             item(key = "totals_section") {
-                FormLockWrapper(isLocked = isFormLocked) {
-                    ElvanEditorSection(index = baseIndex + 3, title = K.totals.tr()) {
-                        Column(
-                            modifier = Modifier.fillMaxWidth(),
-                            verticalArrangement = Arrangement.spacedBy(24.dp)
-                        ) {
-                            // Global Discount Row (% / ₹)
-                            PattuThallupadiKooru(
-                                discountValue = globalDiscountValue,
-                                discountType = globalDiscountType,
-                                onValueChanged = {
-                                    globalDiscountValue = it
-                                    hasUnsavedChanges = true
-                                },
-                                onTypeChanged = {
-                                    globalDiscountType = it
-                                    hasUnsavedChanges = true
-                                }
-                            )
-
-                            // Calculated Totals Breakdown (wrapped in ElvanThiruthiAttai inside PattuMothangalKooru)
-                            PattuMothangalKooru(totals = totals)
-                        }
-                    }
-                }
-            }
-
-            // ── Section 5: ⑤ Invoice Type (பட்டியல் வகை) ──
-            item(key = "invoice_type_section") {
-                FormLockWrapper(isLocked = isFormLocked) {
-                    ElvanEditorSection(index = baseIndex + 4, title = K.invoiceType.tr()) {
-                        PattuPattiyalVagaiKooru(
-                            pattiyalVagai = pattiyalVagai,
-                            onChanged = {
-                                pattiyalVagai = it
+                ElvanEditorSection(index = 3, title = K.totals.tr()) {
+                    Column(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalArrangement = Arrangement.spacedBy(24.dp)
+                    ) {
+                        // Global Discount Row (% / ₹)
+                        PattuThallupadiKooru(
+                            discountValue = globalDiscountValue,
+                            discountType = globalDiscountType,
+                            onValueChanged = {
+                                globalDiscountValue = it
+                                hasUnsavedChanges = true
+                            },
+                            onTypeChanged = {
+                                globalDiscountType = it
                                 hasUnsavedChanges = true
                             }
                         )
+
+                        // Calculated Totals Breakdown (wrapped in ElvanThiruthiAttai inside PattuMothangalKooru)
+                        PattuMothangalKooru(totals = totals)
                     }
                 }
             }
+
+            // ── Section 4: ⑤ Invoice Type (பட்டியல் வகை) ──
+            item(key = "invoice_type_section") {
+                ElvanEditorSection(index = 4, title = K.invoiceType.tr()) {
+                    PattuPattiyalVagaiKooru(
+                        pattiyalVagai = pattiyalVagai,
+                        onChanged = {
+                            pattiyalVagai = it
+                            hasUnsavedChanges = true
+                        }
+                    )
+                }
             }
         }
     }
-
-    // ── Company Profile Selection Bottom Sheet ──
-    if (isCompanySheetOpen) {
-        ElvanSelectionBottomSheet(
-            title = K.company.tr(),
-            items = profiles,
-            currentValue = selectedProfile,
-            showSearch = false,
-            onDismissRequest = { isCompanySheetOpen = false },
-            onSelected = { p ->
-                onCompanyChanged(p)
-                isCompanySheetOpen = false
-            },
-            itemLabelBuilder = { p ->
-                p.kurumPeyar.ifEmpty { p.niruvanathinPeyar.values.firstOrNull().orEmpty() }
-            },
-            subtitleBuilder = { p ->
-                val primary = p.kurumPeyar.ifEmpty { p.niruvanathinPeyar.values.firstOrNull().orEmpty() }
-                val fullTa = p.niruvanathinPeyar["ta"] ?: ""
-                val fullEn = p.niruvanathinPeyar["en"] ?: ""
-                val place = p.oor["ta"] ?: p.oor["en"] ?: ""
-                when {
-                    fullTa.isNotEmpty() && fullTa != primary -> fullTa
-                    fullEn.isNotEmpty() && fullEn != primary -> fullEn
-                    place.isNotEmpty() -> place
-                    else -> null
-                }
-            }
-        )
-    }
+}
 
     // ── Unsaved Changes Guard Action Sheet ──
     if (showUnsavedDialog) {

@@ -52,7 +52,7 @@ fun ProductViewScreen(
     val ff = LocalAppFontFamily.current
 
     val billingConfig = PrintLanguageManager.getConfig(currentMode)
-    val isBilingual = if (currentMode == AppMode.KOOLI) true else billingConfig.isBilingual
+    val isBilingual = billingConfig.isBilingual
     val primaryLang = billingConfig.primaryLanguage.code
     val secondaryLang = billingConfig.secondaryLanguage.code
 

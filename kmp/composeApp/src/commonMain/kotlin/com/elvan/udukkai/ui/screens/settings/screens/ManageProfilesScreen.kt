@@ -86,7 +86,7 @@ fun ManageProfilesScreen(
                                 val isActive = profileItem.id == activeProfile.id
                                 val primaryName = profileItem.getPrimary("niruvanathinPeyar")
                                     .ifEmpty { K.activeCompany.tr() }
-                                val isBilingual = if (currentMode == AppMode.KOOLI) true else profileItem.iruMozhi
+                                val isBilingual = profileItem.iruMozhi
 
                                 ElvanSettingsDisplayRow(
                                     title = if (isActive) K.activeCompany.tr() else "",

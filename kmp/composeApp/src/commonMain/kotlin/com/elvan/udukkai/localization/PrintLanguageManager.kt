@@ -49,7 +49,7 @@ object PrintLanguageManager {
      */
     fun getConfig(mode: AppMode): BillingLanguageConfig {
         val profile = NiruvanaTharavugalRepository.getProfile(mode)
-        val isBilingual = if (mode == AppMode.KOOLI) true else profile.iruMozhi
+        val isBilingual = profile.iruMozhi
         val primary = BillingLanguage.fromCode(profile.mudhanMozhi.ifEmpty { "ta" })
         val secondary = BillingLanguage.fromCode(profile.thunaiMozhi.ifEmpty { "en" })
         return BillingLanguageConfig(
