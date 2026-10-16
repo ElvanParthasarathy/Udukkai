@@ -1,6 +1,7 @@
 package com.elvan.udukkai.ui.screens.home.components
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
@@ -34,8 +35,7 @@ import com.elvan.udukkai.ui.navigation.MaterialSymbols
 
 /**
  * GreetingPill — Active Company Switcher & Greeting Header.
- * Displays "வணக்கம் ✨" and the active company's full legal business name.
- * Clean, text-led header with compact switcher dropdown chevron.
+ * Displays "வணக்கம் ✨" and the active company's full legal business name with company avatar.
  * Tapping opens the ElvanCompanySelectionBottomSheet to easily switch between company profiles.
  */
 @Composable
@@ -76,12 +76,24 @@ fun GreetingPill(
 
     var showCompanySheet by remember { mutableStateOf(false) }
 
-    val pillShape = RoundedCornerShape(22.dp)
+    val dotColor = remember(activeProfile.thoatraNiram) {
+        try {
+            val cleanHex = activeProfile.thoatraNiram.removePrefix("#")
+            if (cleanHex.length == 6) {
+                Color(cleanHex.toLong(16) or 0x00000000FF000000L)
+            } else colors.accent
+        } catch (_: Exception) {
+            colors.accent
+        }
+    }
+
+    val pillShape = RoundedCornerShape(999.dp)
 
     Box(
         modifier = modifier
             .fillMaxWidth()
             .padding(horizontal = Dimens.ContentPadding, vertical = 2.dp)
+            .height(84.dp)
             .clip(pillShape)
             .background(colors.surface)
             .clickable(
@@ -89,13 +101,39 @@ fun GreetingPill(
                 indication = ShellDefaults.ripple(colors, bounded = true),
                 onClick = { showCompanySheet = true }
             )
-            .padding(horizontal = 20.dp, vertical = 16.dp)
+            .padding(start = 11.dp, end = 16.dp)
     ) {
         Row(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier.fillMaxSize(),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Text Column: Greeting & Full Legal Business Name
+            // Company Circle Avatar (62dp concentric with 84dp pill)
+            Box(
+                modifier = Modifier
+                    .size(62.dp)
+                    .clip(CircleShape)
+                    .background(dotColor.copy(alpha = if (isDark) 0.18f else 0.12f))
+                    .border(
+                        width = 1.5.dp,
+                        color = dotColor.copy(alpha = if (isDark) 0.35f else 0.25f),
+                        shape = CircleShape
+                    ),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = fullLegalBusinessName.take(1).uppercase(),
+                    style = TextStyle(
+                        fontFamily = ff,
+                        fontSize = 24.sp,
+                        fontWeight = FontWeight.ExtraBold,
+                        color = dotColor
+                    )
+                )
+            }
+
+            Spacer(modifier = Modifier.width(16.dp))
+
+            // Greeting & Company Name
             Column(
                 modifier = Modifier.weight(1f),
                 verticalArrangement = Arrangement.Center
@@ -118,41 +156,35 @@ fun GreetingPill(
                         imageVector = MaterialSymbols.Rounded.AutoAwesome,
                         contentDescription = null,
                         tint = colors.textPrimary,
-                        modifier = Modifier.size(22.dp)
+                        modifier = Modifier.size(24.dp)
                     )
                 }
 
-                Spacer(modifier = Modifier.height(4.dp))
+                Spacer(modifier = Modifier.height(3.dp))
 
-                Text(
-                    text = fullLegalBusinessName.preventBrokenLigatures(),
-                    style = TextStyle(
-                        fontFamily = ff,
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        color = colors.textSecondary
-                    ),
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis
-                )
-            }
-
-            Spacer(modifier = Modifier.width(12.dp))
-
-            // Compact switcher dropdown button
-            Box(
-                modifier = Modifier
-                    .size(36.dp)
-                    .clip(CircleShape)
-                    .background(if (isDark) Color.White.copy(alpha = 0.08f) else Color.Black.copy(alpha = 0.05f)),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    imageVector = MaterialSymbols.Rounded.KeyboardArrowDown,
-                    contentDescription = "Switch Company",
-                    tint = colors.textSecondary,
-                    modifier = Modifier.size(20.dp)
-                )
+                Row(
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = fullLegalBusinessName.preventBrokenLigatures(),
+                        style = TextStyle(
+                            fontFamily = ff,
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = colors.textSecondary
+                        ),
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.weight(1f, fill = false)
+                    )
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Icon(
+                        imageVector = MaterialSymbols.Rounded.KeyboardArrowDown,
+                        contentDescription = "Switch Company",
+                        tint = colors.textSecondary.copy(alpha = 0.6f),
+                        modifier = Modifier.size(16.dp)
+                    )
+                }
             }
         }
     }

@@ -4,7 +4,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.elvan.udukkai.core.mode.AppMode
@@ -12,11 +12,12 @@ import com.elvan.udukkai.core.mode.LocalAppMode
 import com.elvan.udukkai.core.utils.CurrencyUtils
 import com.elvan.udukkai.data.model.PattiyalTharavuru
 import com.elvan.udukkai.data.repository.PattiyalRepository
-import com.elvan.udukkai.data.repository.PatrugalRepository
+import com.elvan.udukkai.data.settings.NiruvanaTharavugalRepository
 import com.elvan.udukkai.localization.K
 import com.elvan.udukkai.localization.tr
 import com.elvan.udukkai.theme.Dimens
 import com.elvan.udukkai.theme.rememberShellColors
+import com.elvan.udukkai.ui.components.shell.ElvanCompanySelectionBottomSheet
 import com.elvan.udukkai.ui.components.shell.LocalElvanTopSpacerHeight
 import com.elvan.udukkai.ui.components.shell.MugappuStatsSkeleton
 import com.elvan.udukkai.ui.components.shell.UruvakkuCardSkeleton
@@ -28,10 +29,11 @@ import com.elvan.udukkai.ui.screens.create.components.SilkInvoiceCard
 /**
  * Pixel-perfect Bento-style Home Dashboard (Mugappu).
  * Hosts:
- * 1. GreetingPill: “வணக்கம் ✨” and the active company's full legal business name with compact switcher.
- * 2. Bento Stats Grid:
- *    - Main Hero Tile: “மொத்தத் தொகை” (Total Invoiced ₹ billing amount for active company)
- *    - Secondary Row: “மொத்தப் பட்டியல்கள்” (Invoice count) & “பற்றுச்சீட்டுகள்” (Receipts count)
+ * 1. GreetingPill: “வணக்கம் ✨” and the active company's full legal business name with company avatar.
+ * 2. Bento Stats Grid (Exactly 3 Tiles):
+ *    - Motha Pattiyalgal (Invoice count for active company)
+ *    - Niruvanam (Active company profile)
+ *    - Motha Kanakku (Total invoiced ₹ billing amount for active company)
  * 3. RecentActivityHeader ("அண்மைய செயற்பாடுகள்" with "அனைத்தும்" link)
  * 4. Recent invoice cards (Kooli / Pattu) or DashboardEmptyState
  */
@@ -40,7 +42,6 @@ fun DashboardScreen(
     scrollState: LazyListState,
     onSeeAll: () -> Unit,
     modifier: Modifier = Modifier,
-    onSeeAllReceipts: (() -> Unit)? = null,
     isRefreshing: Boolean = false,
     onInvoiceClick: (PattiyalTharavuru) -> Unit = {},
     onManageProfiles: (() -> Unit)? = null
@@ -48,10 +49,16 @@ fun DashboardScreen(
     val mode = LocalAppMode.current
     val colors = rememberShellColors()
 
+    val profiles = NiruvanaTharavugalRepository.getAllProfiles(mode)
+    val activeProfile = NiruvanaTharavugalRepository.getProfile(mode)
     val recentBills = PattiyalRepository.recentInvoices
     val overallTotal = PattiyalRepository.overallTotal
+    val activeCompanyName = activeProfile.kurumPeyar.ifEmpty {
+        activeProfile.niruvanathinPeyar.values.firstOrNull().orEmpty()
+    }.ifEmpty { mode.displayName() }
     val activeCompanyInvoiceCount = PattiyalRepository.activeCompanyInvoices.size
-    val activeCompanyReceiptCount = PatrugalRepository.activeCompanyReceipts.size
+
+    var showCompanySheetOnCardClick by remember { mutableStateOf(false) }
 
     Box(modifier = modifier.fillMaxSize()) {
         LazyColumn(
@@ -98,7 +105,7 @@ fun DashboardScreen(
                     }
                 }
             } else {
-                // 2. Bento Stats Grid
+                // 2. Bento Stats Grid: Exactly Three Tiles
                 item(key = "stats_bento_grid") {
                     Column(
                         modifier = Modifier
@@ -106,17 +113,7 @@ fun DashboardScreen(
                             .padding(horizontal = Dimens.ContentPadding),
                         verticalArrangement = Arrangement.spacedBy(Dimens.ItemSpacing)
                     ) {
-                        // Main Bento Hero Tile: Total Amount (Highest visual priority)
-                        ElvanStatsCard(
-                            icon = MaterialSymbols.Rounded.CurrencyRupeeCircle,
-                            label = K.totalInvoiced.tr(),
-                            value = CurrencyUtils.formatInr(overallTotal),
-                            colors = colors,
-                            modifier = Modifier.fillMaxWidth(),
-                            isFullWidth = true
-                        )
-
-                        // Secondary Tiles: Invoices count & Receipts count in a balanced 2-column row
+                        // Top row: 2 cards with identical size, aligned in the same horizontal line
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.spacedBy(Dimens.ItemSpacing)
@@ -132,15 +129,25 @@ fun DashboardScreen(
                             )
 
                             ElvanStatsCard(
-                                icon = MaterialSymbols.Rounded.ReceiptLong,
-                                label = K.receipts.tr(),
-                                value = "$activeCompanyReceiptCount",
+                                icon = MaterialSymbols.Rounded.Apartment,
+                                label = K.company.tr(),
+                                value = activeCompanyName,
                                 colors = colors,
                                 modifier = Modifier.weight(1f),
                                 isFullWidth = false,
-                                onClick = onSeeAllReceipts ?: onSeeAll
+                                onClick = { showCompanySheetOnCardClick = true }
                             )
                         }
+
+                        // Full-width card underneath: Total invoiced amount for active company (Prominent)
+                        ElvanStatsCard(
+                            icon = MaterialSymbols.Rounded.CurrencyRupeeCircle,
+                            label = K.totalInvoiced.tr(),
+                            value = CurrencyUtils.formatInr(overallTotal),
+                            colors = colors,
+                            modifier = Modifier.fillMaxWidth(),
+                            isFullWidth = true
+                        )
                     }
                 }
 
@@ -189,6 +196,19 @@ fun DashboardScreen(
                     }
                 }
             }
+        }
+
+        if (showCompanySheetOnCardClick) {
+            ElvanCompanySelectionBottomSheet(
+                profiles = profiles,
+                activeProfileId = activeProfile.id,
+                onSelectProfile = { selectedId ->
+                    NiruvanaTharavugalRepository.setActiveProfile(mode, selectedId)
+                },
+                onManageProfiles = onManageProfiles,
+                onDismissRequest = { showCompanySheetOnCardClick = false },
+                colors = colors
+            )
         }
     }
 }
