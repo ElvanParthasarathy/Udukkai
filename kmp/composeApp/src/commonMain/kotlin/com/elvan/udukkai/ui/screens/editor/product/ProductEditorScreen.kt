@@ -146,9 +146,6 @@ fun ProductEditorScreen(
         }
     }
 
-    AppBackHandler(enabled = true) {
-        onBack()
-    }
 
     val scrollState = rememberLazyListState()
 

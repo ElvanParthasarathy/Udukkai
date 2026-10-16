@@ -50,7 +50,7 @@ fun SettingsScreen(
         }
     }
 
-    AppBackHandler(enabled = true) {
+    AppBackHandler(enabled = currentRoute != SettingsRoute.Hub) {
         handleBack()
     }
 

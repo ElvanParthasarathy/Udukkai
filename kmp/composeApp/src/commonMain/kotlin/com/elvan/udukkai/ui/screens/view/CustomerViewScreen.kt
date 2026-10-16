@@ -62,9 +62,6 @@ fun CustomerViewScreen(
     val oorVal = merchant.oor[primaryLang] ?: merchant.oor[secondaryLang] ?: merchant.oor.values.firstOrNull().orEmpty()
     val mugavariVal = merchant.mugavari[primaryLang] ?: merchant.mugavari[secondaryLang] ?: merchant.mugavari.values.firstOrNull().orEmpty()
 
-    AppBackHandler(enabled = true) {
-        onBack()
-    }
 
     val scrollState = rememberLazyListState()
 

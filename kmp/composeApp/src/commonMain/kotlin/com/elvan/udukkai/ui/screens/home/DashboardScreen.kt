@@ -119,12 +119,13 @@ fun DashboardScreen(
                         horizontalArrangement = Arrangement.spacedBy(Dimens.ItemSpacing)
                     ) {
                         ElvanStatsCard(
-                            icon = MaterialSymbols.Rounded.CurrencyRupeeCircle,
-                            label = K.totalInvoiced.tr(),
-                            value = CurrencyUtils.formatInr(overallTotal),
+                            icon = MaterialSymbols.Rounded.InvoiceFill,
+                            label = K.totalInvoices.tr(),
+                            value = "$activeCompanyInvoiceCount",
                             colors = colors,
                             modifier = Modifier.weight(1f),
-                            isFullWidth = false
+                            isFullWidth = false,
+                            onClick = onSeeAll
                         )
 
                         ElvanStatsCard(
@@ -138,15 +139,14 @@ fun DashboardScreen(
                         )
                     }
 
-                    // Full-width 3rd card: Invoice count for active company
+                    // Full-width card underneath: Total invoiced amount for active company
                     ElvanStatsCard(
-                        icon = MaterialSymbols.Rounded.InvoiceFill,
-                        label = K.totalInvoices.tr(),
-                        value = "$activeCompanyInvoiceCount",
+                        icon = MaterialSymbols.Rounded.CurrencyRupeeCircle,
+                        label = K.totalInvoiced.tr(),
+                        value = CurrencyUtils.formatInr(overallTotal),
                         colors = colors,
                         modifier = Modifier.fillMaxWidth(),
-                        isFullWidth = true,
-                        onClick = onSeeAll
+                        isFullWidth = true
                     )
                 }
             }

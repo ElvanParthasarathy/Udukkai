@@ -197,9 +197,6 @@ fun InvoiceEditorScreen(
         }
     }
 
-    AppBackHandler(enabled = true) {
-        onBack()
-    }
 
     val scrollState = rememberLazyListState()
 

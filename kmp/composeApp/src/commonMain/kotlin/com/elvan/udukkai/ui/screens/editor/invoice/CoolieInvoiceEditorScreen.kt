@@ -353,7 +353,7 @@ fun CoolieInvoiceEditorScreen(
         }
     }
 
-    AppBackHandler(enabled = true) {
+    AppBackHandler(enabled = hasUnsavedChanges || showUnsavedDialog) {
         handleBack()
     }
 

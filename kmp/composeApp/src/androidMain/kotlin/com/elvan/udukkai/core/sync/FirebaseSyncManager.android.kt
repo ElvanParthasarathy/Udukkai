@@ -11,6 +11,7 @@ import com.elvan.udukkai.data.business.getBusinessDatabaseHelper
 import com.elvan.udukkai.data.model.PattiyalTharavuru
 import com.elvan.udukkai.data.model.PatruPattiyalInaippuTharavuru
 import com.elvan.udukkai.data.model.PatrugalTharavuru
+import com.elvan.udukkai.data.model.PorulFirebasePayloadConverter
 import com.elvan.udukkai.data.model.PorulTharavuru
 import com.elvan.udukkai.data.model.VaangunarTharavuru
 import com.elvan.udukkai.data.repository.PattiyalRepository
@@ -380,19 +381,7 @@ class AndroidFirebaseSyncManager : FirebaseSyncManager {
         val prefix = getPrefix(mode)
         val ref = db.getReference("udukkai").child(prefix).child("products").child("${item.id}")
 
-        val data = hashMapOf<String, Any?>(
-            "id" to item.id,
-            "porulPeyar" to MozhiJsonConverter.stringify(item.porulPeyar),
-            "hsnCode" to item.hsnCode,
-            "vilai" to item.vilai,
-            "variVeetham" to item.variVeetham,
-            "alavuVagai" to item.alavuVagai,
-            "alagu" to item.alagu,
-            "createdAt" to item.createdAt,
-            "updatedAt" to item.updatedAt,
-            "isDeleted" to item.isDeleted,
-            "deletedAt" to item.deletedAt
-        )
+        val data = PorulFirebasePayloadConverter.toFirebasePayload(item)
 
         ref.setValue(data).addOnSuccessListener {
             _lastSyncTime.value = System.currentTimeMillis()
@@ -545,6 +534,40 @@ class AndroidFirebaseSyncManager : FirebaseSyncManager {
             val id = (s.child("id").value as? Number)?.toLong() ?: s.key?.toLongOrNull() ?: return null
             val porulPeyarStr = s.child("porulPeyar").value as? String ?: "{}"
 
+            val niruvanamIds = if (s.hasChild("niruvanamIds")) {
+                val rawVal = s.child("niruvanamIds").value
+                val parsed = PorulFirebasePayloadConverter.parseNiruvanamIds(rawVal)
+                if (parsed.isNotEmpty()) {
+                    parsed
+                } else {
+                    s.child("niruvanamIds").children.mapNotNull { child ->
+                        (child.value as? Number)?.toLong() ?: (child.value as? String)?.trim()?.toLongOrNull()
+                    }
+                }
+            } else {
+                emptyList()
+            }
+
+            val companyPrices = if (s.hasChild("companyPrices")) {
+                val rawVal = s.child("companyPrices").value
+                val parsed = PorulFirebasePayloadConverter.parseCompanyPrices(rawVal)
+                if (parsed.isNotEmpty()) {
+                    parsed
+                } else {
+                    val fallbackMap = mutableMapOf<Long, Double>()
+                    for (child in s.child("companyPrices").children) {
+                        val key = child.key?.toLongOrNull()
+                        val value = (child.value as? Number)?.toDouble() ?: (child.value as? String)?.trim()?.toDoubleOrNull()
+                        if (key != null && value != null && value > 0.0) {
+                            fallbackMap[key] = value
+                        }
+                    }
+                    fallbackMap
+                }
+            } else {
+                emptyMap()
+            }
+
             PorulTharavuru(
                 id = id,
                 porulPeyar = MozhiJsonConverter.parse(porulPeyarStr),
@@ -553,6 +576,8 @@ class AndroidFirebaseSyncManager : FirebaseSyncManager {
                 variVeetham = (s.child("variVeetham").value as? Number)?.toDouble() ?: 0.0,
                 alavuVagai = s.child("alavuVagai").value as? String ?: "quantity",
                 alagu = s.child("alagu").value as? String ?: "Nos",
+                niruvanamIds = niruvanamIds,
+                companyPrices = companyPrices,
                 createdAt = (s.child("createdAt").value as? Number)?.toLong() ?: (System.currentTimeMillis() / 1000),
                 updatedAt = (s.child("updatedAt").value as? Number)?.toLong() ?: (System.currentTimeMillis() / 1000),
                 isDeleted = s.child("isDeleted").value as? Boolean ?: false,

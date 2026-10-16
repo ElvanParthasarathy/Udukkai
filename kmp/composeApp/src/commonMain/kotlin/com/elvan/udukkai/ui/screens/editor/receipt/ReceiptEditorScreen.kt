@@ -348,7 +348,7 @@ fun ReceiptEditorScreen(
         }
     }
 
-    AppBackHandler(enabled = true) {
+    AppBackHandler(enabled = hasUnsavedChanges || showUnsavedDialog) {
         handleBackAttempt()
     }
 

@@ -12,11 +12,15 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import com.elvan.udukkai.core.mode.LocalAppMode
 import com.elvan.udukkai.core.platform.AppBackHandler
+import com.elvan.udukkai.core.platform.AppPredictiveBackHandler
 import com.elvan.udukkai.core.platform.PlatformType
 import com.elvan.udukkai.core.platform.currentPlatform
 import com.elvan.udukkai.ui.screens.home.desktop.DesktopSideBar
@@ -159,25 +163,50 @@ fun HomeScreen() {
     val patrucheettugalLabel = K.receipts.tr()
     val azhikkiradhuLabel = K.erasing.tr()
 
-    // Intercept hardware/system back when a subpage is open, selection mode is active, or search is active
-    AppBackHandler(enabled = activeSubpage != null || isSelectionMode || isSearchActive || showBulkDeleteConfirm || showCompanySelectionSheet) {
-        if (showCompanySelectionSheet) {
-            showCompanySelectionSheet = false
-        } else if (showBulkDeleteConfirm) {
-            showBulkDeleteConfirm = false
-        } else if (subpageStack.isNotEmpty()) {
-            popSubpage()
-        } else if (isSelectionMode) {
-            isSelectionMode = false
-            selectedItemIds = emptySet()
-        } else if (isSearchActive) {
-            isSearchActive = false
-            PattiyalRepository.searchQuery = ""
-            PatrugalRepository.searchQuery = ""
-            PorulRepository.searchQuery = ""
-            VaangunarRepository.searchQuery = ""
+    var isPredictiveBackActive by remember { mutableStateOf(false) }
+    var predictiveBackProgress by remember { mutableStateOf(0f) }
+    var predictiveBackEdge by remember { mutableStateOf(0) }
+    var skipNextSubpageAnimation by remember { mutableStateOf(false) }
+
+    // Intercept hardware/system back with Predictive Back progress tracking
+    AppPredictiveBackHandler(
+        enabled = activeSubpage != null || isSelectionMode || isSearchActive || showBulkDeleteConfirm || showCompanySelectionSheet,
+        onProgress = { progress, edge ->
+            if (activeSubpage != null && !showCompanySelectionSheet && !showBulkDeleteConfirm && !isSelectionMode && !isSearchActive) {
+                isPredictiveBackActive = progress > 0f
+                predictiveBackProgress = progress
+                predictiveBackEdge = edge
+            }
+        },
+        onCancel = {
+            isPredictiveBackActive = false
+            predictiveBackProgress = 0f
+        },
+        onBack = {
+            val wasPredictive = isPredictiveBackActive
+            isPredictiveBackActive = false
+            predictiveBackProgress = 0f
+            if (showCompanySelectionSheet) {
+                showCompanySelectionSheet = false
+            } else if (showBulkDeleteConfirm) {
+                showBulkDeleteConfirm = false
+            } else if (subpageStack.isNotEmpty()) {
+                if (wasPredictive) {
+                    skipNextSubpageAnimation = true
+                }
+                popSubpage()
+            } else if (isSelectionMode) {
+                isSelectionMode = false
+                selectedItemIds = emptySet()
+            } else if (isSearchActive) {
+                isSearchActive = false
+                PattiyalRepository.searchQuery = ""
+                PatrugalRepository.searchQuery = ""
+                PorulRepository.searchQuery = ""
+                VaangunarRepository.searchQuery = ""
+            }
         }
-    }
+    )
 
     // Load all repositories on launch and when currentMode changes
     LaunchedEffect(currentMode) {
@@ -201,6 +230,12 @@ fun HomeScreen() {
         PatrugalRepository.searchQuery = ""
         PorulRepository.searchQuery = ""
         VaangunarRepository.searchQuery = ""
+    }
+
+    LaunchedEffect(subpageStack) {
+        if (skipNextSubpageAnimation) {
+            skipNextSubpageAnimation = false
+        }
     }
 
     val currentScrollState = when (selectedTab) {
@@ -234,60 +269,8 @@ fun HomeScreen() {
             onDispose { ElvanSnackbar.isBottomBarVisible = false }
         }
 
-        Row(modifier = Modifier.fillMaxSize()) {
-            if (isWideScreen) {
-                DesktopSideBar(
-                    selectedTab = selectedTab,
-                    onTabSelected = { tab ->
-                        if (selectedTab != tab) {
-                            if (selectedTab == NavTab.Create || tab != NavTab.Create) {
-                                uruvakkuSegment = 0
-                            }
-                            val targetScrollState = when (tab) {
-                                NavTab.Home -> homeScrollState
-                                NavTab.Create -> createScrollState
-                                NavTab.Products -> productsScrollState
-                                NavTab.Customers -> customersScrollState
-                            }
-                            scope.launch { targetScrollState.scrollToItem(0, 0) }
-                            selectedTab = tab
-                            clearSubpages()
-                        }
-                    },
-                    onSettingsClick = {
-                        navigateToSubpage(ActiveSubpage.Settings)
-                    },
-                    colors = colors
-                )
-            }
-
-            Box(
-                modifier = Modifier
-                    .weight(1f)
-                    .fillMaxHeight()
-            ) {
-                AnimatedContent(
-                    targetState = subpageStack,
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .background(colors.background),
-                    transitionSpec = {
-                        val isForward = targetState.size >= initialState.size
-                        if (isForward) {
-                            slideIntoContainer(
-                                towards = AnimatedContentTransitionScope.SlideDirection.Left,
-                                animationSpec = spring(stiffness = Spring.StiffnessLow, dampingRatio = Spring.DampingRatioNoBouncy)
-                            ) togetherWith fadeOut(targetAlpha = 0.9f, animationSpec = tween(durationMillis = 50))
-                        } else {
-                            fadeIn(initialAlpha = 0.9f) togetherWith slideOutOfContainer(
-                                towards = AnimatedContentTransitionScope.SlideDirection.Right,
-                                animationSpec = spring(stiffness = Spring.StiffnessLow, dampingRatio = Spring.DampingRatioNoBouncy)
-                            )
-                        }
-                    },
-                    label = "HomeToSubpageTransition"
-                ) { stack ->
-                    val subpage = stack.lastOrNull()
+        @Composable
+        fun RenderSubpage(subpage: ActiveSubpage) {
             when (subpage) {
                 is ActiveSubpage.Settings -> {
                     SettingsScreen(
@@ -375,8 +358,12 @@ fun HomeScreen() {
                         }
                     )
                 }
-                null -> {
-                    val allSelectionIds: Set<Long> = when (selectedTab) {
+            }
+        }
+
+        @Composable
+        fun RenderMainShell() {
+            val allSelectionIds: Set<Long> = when (selectedTab) {
                         NavTab.Products -> PorulRepository.filteredItems.map { it.id }.toSet()
                         NavTab.Customers -> VaangunarRepository.filteredMerchants.map { it.id }.toSet()
                         NavTab.Create -> {
@@ -787,9 +774,123 @@ fun HomeScreen() {
                             }
                         }
                     }
+        }
+
+        Row(modifier = Modifier.fillMaxSize()) {
+            if (isWideScreen) {
+                DesktopSideBar(
+                    selectedTab = selectedTab,
+                    onTabSelected = { tab ->
+                        if (selectedTab != tab) {
+                            if (selectedTab == NavTab.Create || tab != NavTab.Create) {
+                                uruvakkuSegment = 0
+                            }
+                            val targetScrollState = when (tab) {
+                                NavTab.Home -> homeScrollState
+                                NavTab.Create -> createScrollState
+                                NavTab.Products -> productsScrollState
+                                NavTab.Customers -> customersScrollState
+                            }
+                            scope.launch { targetScrollState.scrollToItem(0, 0) }
+                            selectedTab = tab
+                            clearSubpages()
+                        }
+                    },
+                    onSettingsClick = {
+                        navigateToSubpage(ActiveSubpage.Settings)
+                    },
+                    colors = colors
+                )
+            }
+
+            val previousSubpage = if (subpageStack.size >= 2) subpageStack[subpageStack.size - 2] else null
+
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxHeight()
+            ) {
+            if (isPredictiveBackActive && activeSubpage != null) {
+                // Background layer: reveals previous subpage or the main shell
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .graphicsLayer {
+                            val scale = 0.94f + (0.06f * predictiveBackProgress)
+                            val alphaVal = 0.85f + (0.15f * predictiveBackProgress)
+                            scaleX = scale
+                            scaleY = scale
+                            alpha = alphaVal
+                        }
+                ) {
+                    if (previousSubpage != null) {
+                        RenderSubpage(previousSubpage)
+                    } else {
+                        RenderMainShell()
+                    }
+                }
+
+                // Scrim overlay between background and foreground layer
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(Color.Black.copy(alpha = 0.25f * (1f - predictiveBackProgress)))
+                )
+
+                // Foreground layer: active subpage interactive response
+                val density = LocalDensity.current
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .graphicsLayer {
+                            val maxOffsetPx = with(density) { 120.dp.toPx() }
+                            val sign = if (predictiveBackEdge == 1) -1f else 1f
+                            translationX = sign * maxOffsetPx * predictiveBackProgress
+                            val scale = 1.0f - (0.08f * predictiveBackProgress)
+                            scaleX = scale
+                            scaleY = scale
+                            alpha = 1.0f - (0.25f * predictiveBackProgress)
+                            shadowElevation = with(density) { (8.dp * predictiveBackProgress).toPx() }
+                            clip = true
+                            shape = RoundedCornerShape(24.dp * predictiveBackProgress)
+                        }
+                ) {
+                    RenderSubpage(activeSubpage)
+                }
+            } else {
+                AnimatedContent(
+                    targetState = subpageStack,
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(colors.background),
+                    transitionSpec = {
+                        if (skipNextSubpageAnimation) {
+                            EnterTransition.None togetherWith ExitTransition.None
+                        } else {
+                            val isForward = targetState.size >= initialState.size
+                            if (isForward) {
+                                slideIntoContainer(
+                                    towards = AnimatedContentTransitionScope.SlideDirection.Left,
+                                    animationSpec = spring(stiffness = Spring.StiffnessLow, dampingRatio = Spring.DampingRatioNoBouncy)
+                                ) togetherWith fadeOut(targetAlpha = 0.9f, animationSpec = tween(durationMillis = 50))
+                            } else {
+                                fadeIn(initialAlpha = 0.9f) togetherWith slideOutOfContainer(
+                                    towards = AnimatedContentTransitionScope.SlideDirection.Right,
+                                    animationSpec = spring(stiffness = Spring.StiffnessLow, dampingRatio = Spring.DampingRatioNoBouncy)
+                                )
+                            }
+                        }
+                    },
+                    label = "HomeToSubpageTransition"
+                ) { stack ->
+                    val subpage = stack.lastOrNull()
+                    if (subpage != null) {
+                        RenderSubpage(subpage)
+                    } else {
+                        RenderMainShell()
+                    }
                 }
             }
-        }
 
         if (showBulkDeleteConfirm && selectedItemIds.isNotEmpty()) {
             val deleteSheetTitle = when (selectedTab) {

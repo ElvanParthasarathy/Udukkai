@@ -60,9 +60,6 @@ fun ReceiptViewScreen(
 
     val secondaryCustomerName = if (isBilingual) (receipt.vaangunarPeyar[secondaryLang] ?: "") else ""
 
-    AppBackHandler(enabled = true) {
-        onBack()
-    }
 
     val scrollState = rememberLazyListState()
 

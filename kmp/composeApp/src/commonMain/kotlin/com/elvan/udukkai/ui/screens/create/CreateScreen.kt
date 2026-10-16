@@ -70,82 +70,22 @@ fun CreateScreen(
     val colors = rememberShellColors()
     val isDark = colors.isDark
     val ff = LocalAppFontFamily.current
-    val profiles = NiruvanaTharavugalRepository.getAllProfiles(mode)
-
-    var selectedProfileFilterIndex by remember { mutableIntStateOf(0) }
-
-    LaunchedEffect(mode) {
-        selectedProfileFilterIndex = 0
-    }
-
-    val allLabel = K.all.tr()
-    val businessShifterItems = remember(profiles, allLabel) {
-        if (profiles.isEmpty()) {
-            emptyList()
-        } else {
-            val list = mutableListOf<PillShifterItem>()
-            list.add(
-                PillShifterItem(
-                    label = allLabel
-                )
-            )
-            profiles.forEach { p ->
-                val shortName = p.kurumPeyar.ifEmpty {
-                    p.niruvanathinPeyar.values.firstOrNull().orEmpty()
-                }
-                list.add(
-                    PillShifterItem(
-                        label = shortName
-                    )
-                )
-            }
-            list
-        }
-    }
-
-    val safeProfileIndex = selectedProfileFilterIndex.coerceIn(0, (businessShifterItems.size - 1).coerceAtLeast(0))
-
-    val allInvoices = PattiyalRepository.filteredInvoices
-    val invoices = remember(allInvoices, safeProfileIndex, profiles) {
-        if (safeProfileIndex == 0 || profiles.isEmpty()) {
-            allInvoices
-        } else {
-            val targetProfile = profiles.getOrNull(safeProfileIndex - 1)
-            if (targetProfile != null) {
-                allInvoices.filter { it.niruvanamId == targetProfile.id }
-            } else {
-                allInvoices
-            }
-        }
-    }
-
-    val allReceipts = PatrugalRepository.filteredReceipts
-    val receipts = remember(allReceipts, safeProfileIndex, profiles) {
-        if (safeProfileIndex == 0 || profiles.isEmpty()) {
-            allReceipts
-        } else {
-            val targetProfile = profiles.getOrNull(safeProfileIndex - 1)
-            if (targetProfile != null) {
-                allReceipts.filter { it.niruvanamId == targetProfile.id }
-            } else {
-                allReceipts
-            }
-        }
-    }
-
     val activeProfile = NiruvanaTharavugalRepository.getProfile(mode)
     val isBilingual = mode == AppMode.KOOLI || activeProfile.iruMozhi
     val primaryLang = activeProfile.mudhanMozhi.ifEmpty { "ta" }
+
+    val invoices = PattiyalRepository.filteredInvoices
+    val receipts = PatrugalRepository.filteredReceipts
 
     val pageSize = 10
     var visibleInvoiceCount by remember { mutableIntStateOf(pageSize) }
     var visibleReceiptCount by remember { mutableIntStateOf(pageSize) }
 
-    // Reset pagination when mode, company profile filter, or date filter changes
-    LaunchedEffect(mode, safeProfileIndex, PattiyalRepository.startDateFilter, PattiyalRepository.endDateFilter) {
+    // Reset pagination when mode, active company, or date filter changes
+    LaunchedEffect(mode, activeProfile.id, PattiyalRepository.startDateFilter, PattiyalRepository.endDateFilter) {
         visibleInvoiceCount = pageSize
     }
-    LaunchedEffect(mode, safeProfileIndex, PatrugalRepository.startDateFilter, PatrugalRepository.endDateFilter) {
+    LaunchedEffect(mode, activeProfile.id, PatrugalRepository.startDateFilter, PatrugalRepository.endDateFilter) {
         visibleReceiptCount = pageSize
     }
 
@@ -232,19 +172,6 @@ fun CreateScreen(
                         )
                     }
 
-                    // Business Profile Filter Shifter (below Invoices vs Receipts pill - End to End)
-                    if (businessShifterItems.size > 1) {
-                        ElvanPillShifter(
-                            items = businessShifterItems,
-                            selectedIndex = safeProfileIndex,
-                            onIndexSelected = { selectedProfileFilterIndex = it },
-                            colors = colors,
-                            isFullWidth = true,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = Dimens.ContentPadding)
-                        )
-                    }
 
                         val isDateFilterActive = if (selectedSegment == 0) PattiyalRepository.isDateFilterActive else PatrugalRepository.isDateFilterActive
                         if (isDateFilterActive) {

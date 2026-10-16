@@ -64,9 +64,6 @@ fun InvoiceViewScreen(
         ?: invoice.vaangunarMunvari[secondaryLang]
         ?: invoice.vaangunarMunvari.values.firstOrNull().orEmpty()
 
-    AppBackHandler(enabled = true) {
-        onBack()
-    }
 
     val scrollState = rememberLazyListState()
 

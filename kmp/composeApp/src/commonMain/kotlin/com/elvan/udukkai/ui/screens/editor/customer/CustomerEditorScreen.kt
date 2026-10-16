@@ -198,9 +198,6 @@ fun CustomerEditorScreen(
         }
     }
 
-    AppBackHandler(enabled = true) {
-        onBack()
-    }
 
     val scrollState = rememberLazyListState()
     val pillBg = if (colors.isDark) Color.White.copy(alpha = 0.08f) else Color.White

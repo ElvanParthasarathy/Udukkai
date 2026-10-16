@@ -326,7 +326,7 @@ fun SilkInvoiceEditorScreen(
         }
     }
 
-    AppBackHandler(enabled = true) {
+    AppBackHandler(enabled = hasUnsavedChanges || showUnsavedDialog) {
         handleBack()
     }
 
