@@ -46,8 +46,10 @@ fun CoolieInvoiceCard(
     val ff = LocalAppFontFamily.current
     val isDark = colors.isDark
 
-    val profile = NiruvanaTharavugalRepository.getProfile(AppMode.KOOLI)
-    val isBilingual = true // Coolie mode is always bilingual
+    val profiles = NiruvanaTharavugalRepository.getAllProfiles(AppMode.KOOLI)
+    val profile = (if (pattiyal.niruvanamId != null) profiles.find { it.id == pattiyal.niruvanamId } else null)
+        ?: NiruvanaTharavugalRepository.getProfile(AppMode.KOOLI)
+    val isBilingual = profile.iruMozhi
     val primaryLang = profile.mudhanMozhi.ifEmpty { "ta" }
     val secondaryLang = profile.thunaiMozhi.ifEmpty { "en" }
 

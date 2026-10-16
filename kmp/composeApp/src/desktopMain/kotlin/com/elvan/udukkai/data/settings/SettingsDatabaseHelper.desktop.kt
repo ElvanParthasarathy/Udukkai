@@ -62,6 +62,8 @@ class DesktopSettingsDatabaseHelper : SettingsDatabaseHelper {
                 "thalaippu_vadivu" TEXT NOT NULL DEFAULT 'small',
                 "kaiyoppam" TEXT NOT NULL DEFAULT '',
                 "oppam_peyar" TEXT NOT NULL DEFAULT '',
+                "oppam_mudhal_peyar" TEXT NOT NULL DEFAULT '',
+                "oppam_irudhi_peyar" TEXT NOT NULL DEFAULT '',
                 "adaimozhi" TEXT NOT NULL DEFAULT '{}',
                 "upi_id" TEXT NOT NULL DEFAULT '',
                 "thoatra_niram" TEXT NOT NULL DEFAULT '',
@@ -100,6 +102,8 @@ class DesktopSettingsDatabaseHelper : SettingsDatabaseHelper {
                 "thalaippu_vadivu" TEXT NOT NULL DEFAULT 'small',
                 "kaiyoppam" TEXT NOT NULL DEFAULT '',
                 "oppam_peyar" TEXT NOT NULL DEFAULT '',
+                "oppam_mudhal_peyar" TEXT NOT NULL DEFAULT '',
+                "oppam_irudhi_peyar" TEXT NOT NULL DEFAULT '',
                 "adaimozhi" TEXT NOT NULL DEFAULT '{}',
                 "upi_id" TEXT NOT NULL DEFAULT '',
                 "thoatra_niram" TEXT NOT NULL DEFAULT '',
@@ -112,6 +116,32 @@ class DesktopSettingsDatabaseHelper : SettingsDatabaseHelper {
         }
         conn.createStatement().use { stmt ->
             stmt.execute(sql)
+        }
+        ensureColumns(conn, tableName)
+    }
+
+    private fun ensureColumns(conn: Connection, tableName: String) {
+        try {
+            val columns = mutableSetOf<String>()
+            conn.createStatement().use { stmt ->
+                stmt.executeQuery("PRAGMA table_info($tableName)").use { rs ->
+                    while (rs.next()) {
+                        columns.add(rs.getString("name").lowercase())
+                    }
+                }
+            }
+            if (!columns.contains("oppam_mudhal_peyar")) {
+                conn.createStatement().use { stmt ->
+                    stmt.execute("ALTER TABLE $tableName ADD COLUMN oppam_mudhal_peyar TEXT DEFAULT ''")
+                }
+            }
+            if (!columns.contains("oppam_irudhi_peyar")) {
+                conn.createStatement().use { stmt ->
+                    stmt.execute("ALTER TABLE $tableName ADD COLUMN oppam_irudhi_peyar TEXT DEFAULT ''")
+                }
+            }
+        } catch (e: Exception) {
+            println("Desktop ensureColumns failed on $tableName: ${e.message}")
         }
     }
 
@@ -187,7 +217,8 @@ class DesktopSettingsDatabaseHelper : SettingsDatabaseHelper {
                         minnanjal = ?, gstin = ?, mugavari = ?, oor = ?, maavattam = ?, maanilam = ?,
                         naadu = ?, anjal_kuriyeedu = ?, vangi_peyar = ?, kilai = ?, vangi_kanakku = ?,
                         ifsc = ?, oavuru = ?, agala_oavuru = ?, thalaippu_vadivu = ?, kaiyoppam = ?,
-                        oppam_peyar = ?, adaimozhi = ?, upi_id = ?, thoatra_niram = ?, updated_at = ?
+                        oppam_peyar = ?, oppam_mudhal_peyar = ?, oppam_irudhi_peyar = ?,
+                        adaimozhi = ?, upi_id = ?, thoatra_niram = ?, updated_at = ?
                     WHERE id = ?
                     """.trimIndent()
                 } else {
@@ -198,8 +229,9 @@ class DesktopSettingsDatabaseHelper : SettingsDatabaseHelper {
                         minnanjal, gstin, mugavari, oor, maavattam, maanilam,
                         naadu, anjal_kuriyeedu, vangi_peyar, kilai, vangi_kanakku,
                         ifsc, oavuru, agala_oavuru, thalaippu_vadivu, kaiyoppam,
-                        oppam_peyar, adaimozhi, upi_id, thoatra_niram, updated_at
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                        oppam_peyar, oppam_mudhal_peyar, oppam_irudhi_peyar,
+                        adaimozhi, upi_id, thoatra_niram, updated_at
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                     """.trimIndent()
                 }
 
@@ -229,7 +261,9 @@ class DesktopSettingsDatabaseHelper : SettingsDatabaseHelper {
                     stmt.setString(idx++, profile.agalaOavuru)
                     stmt.setString(idx++, profile.thalaippuVadivu)
                     stmt.setString(idx++, profile.kaiyoppam)
-                    stmt.setString(idx++, profile.oppamPeyar)
+                    stmt.setString(idx++, profile.fullSignatoryName)
+                    stmt.setString(idx++, profile.oppamMudhalPeyar)
+                    stmt.setString(idx++, profile.oppamIrudhiPeyar)
                     stmt.setString(idx++, MozhiJsonConverter.stringify(profile.adaimozhi))
                     stmt.setString(idx++, profile.upiId)
                     stmt.setString(idx++, profile.thoatraNiram)
@@ -341,6 +375,8 @@ class DesktopSettingsDatabaseHelper : SettingsDatabaseHelper {
             thalaippuVadivu = getString("thalaippu_vadivu").ifEmpty { "small" },
             kaiyoppam = getString("kaiyoppam"),
             oppamPeyar = getString("oppam_peyar"),
+            oppamMudhalPeyar = getString("oppam_mudhal_peyar"),
+            oppamIrudhiPeyar = getString("oppam_irudhi_peyar"),
             adaimozhi = MozhiJsonConverter.parse(getString("adaimozhi")),
             upiId = getString("upi_id"),
             thoatraNiram = getString("thoatra_niram").ifEmpty { if (mode == AppMode.PATTU) "#6a1b9a" else "#388e3c" }

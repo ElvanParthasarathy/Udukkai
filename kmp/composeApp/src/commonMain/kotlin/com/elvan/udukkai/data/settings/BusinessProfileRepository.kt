@@ -51,6 +51,8 @@ object NiruvanaTharavugalRepository {
             vangiKanakku = "502394857219",
             ifsc = "IDIB000C024",
             oppamPeyar = "உரிமையாளர் / மேலாளர்",
+            oppamMudhalPeyar = "உரிமையாளர்",
+            oppamIrudhiPeyar = "மேலாளர்",
             adaimozhi = mutableMapOf(
                 "ta" to "பாரம்பரிய கைத்தறி நெசவு",
                 "en" to "Traditional Handloom Weaving"
@@ -108,6 +110,8 @@ object NiruvanaTharavugalRepository {
             ifsc = "SBIN0000806",
             thalaippuVadivu = "small",
             oppamPeyar = "ஆட்சியர் / முகாமையாளர்",
+            oppamMudhalPeyar = "ஆட்சியர்",
+            oppamIrudhiPeyar = "முகாமையாளர்",
             adaimozhi = mutableMapOf(
                 "ta" to "தூய பட்டுச் சேலைகளின் சங்கமம்",
                 "en" to "The Realm of Pure Silk Sarees"

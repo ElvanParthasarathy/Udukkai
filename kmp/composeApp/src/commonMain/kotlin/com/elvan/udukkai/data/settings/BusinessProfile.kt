@@ -44,12 +44,22 @@ data class NiruvanaTharavugal(
     var thalaippuVadivu: String = "small", // "small" or "wide"
     var kaiyoppam: String = "",
     var oppamPeyar: String = "",
+    var oppamMudhalPeyar: String = "",
+    var oppamIrudhiPeyar: String = "",
 
     // Additional
     var adaimozhi: MutableMap<String, String> = mutableMapOf(),
     var upiId: String = "",
     var thoatraNiram: String = "#388e3c"
 ) {
+    val fullSignatoryName: String
+        get() {
+            val combined = listOf(oppamMudhalPeyar.trim(), oppamIrudhiPeyar.trim())
+                .filter { it.isNotEmpty() }
+                .joinToString(" ")
+            return combined.ifEmpty { oppamPeyar.trim() }
+        }
+
     fun getPrimary(fieldName: String): String {
         if (fieldName == "naadu") return if (mudhanMozhi.lowercase().startsWith("ta")) "இந்தியா" else "India"
         val map = getBilingualMap(fieldName)
@@ -111,6 +121,8 @@ data class NiruvanaTharavugal(
             thalaippuVadivu = thalaippuVadivu,
             kaiyoppam = kaiyoppam,
             oppamPeyar = oppamPeyar,
+            oppamMudhalPeyar = oppamMudhalPeyar,
+            oppamIrudhiPeyar = oppamIrudhiPeyar,
             adaimozhi = HashMap(adaimozhi),
             upiId = upiId,
             thoatraNiram = thoatraNiram

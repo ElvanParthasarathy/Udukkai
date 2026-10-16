@@ -48,7 +48,8 @@ fun SilkIdentityScreen(
     var tempImagePath by remember { mutableStateOf<String?>(null) }
     var tempWideImagePath by remember { mutableStateOf<String?>(null) }
     var tempHeaderStyle by remember { mutableStateOf(profile.thalaippuVadivu.ifEmpty { "small" }) }
-    var tempSignatoryName by remember { mutableStateOf("") }
+    var tempSignatoryFirstName by remember { mutableStateOf("") }
+    var tempSignatoryLastName by remember { mutableStateOf("") }
     var activePickerField by remember { mutableStateOf<String?>(null) }
 
     val imagePicker = rememberImagePicker { path ->
@@ -64,7 +65,7 @@ fun SilkIdentityScreen(
     val wideLogoPath = profile.agalaOavuru.ifEmpty { null }
     val headerStyle = profile.thalaippuVadivu.ifEmpty { "small" }
     val signaturePath = profile.kaiyoppam.ifEmpty { null }
-    val signatoryName = profile.oppamPeyar
+    val signatoryName = profile.fullSignatoryName
 
     val smallLabel = K.smallLogoCompanyName.tr()
     val wideLabel = K.wideLogoOnly.tr()
@@ -282,7 +283,13 @@ fun SilkIdentityScreen(
                             } else null,
                             onEdit = {
                                 tempImagePath = signaturePath
-                                tempSignatoryName = signatoryName
+                                tempSignatoryFirstName = profile.oppamMudhalPeyar
+                                tempSignatoryLastName = profile.oppamIrudhiPeyar
+                                if (tempSignatoryFirstName.isEmpty() && tempSignatoryLastName.isEmpty() && profile.oppamPeyar.isNotEmpty()) {
+                                    val parts = profile.oppamPeyar.trim().split(" ", limit = 2)
+                                    tempSignatoryFirstName = parts.firstOrNull() ?: ""
+                                    tempSignatoryLastName = if (parts.size > 1) parts[1] else ""
+                                }
                                 editingSection = "kaiyoppam"
                             },
                             colors = colors
@@ -295,7 +302,9 @@ fun SilkIdentityScreen(
                             onSave = {
                                 val updated = profile.copy()
                                 updated.kaiyoppam = tempImagePath ?: ""
-                                updated.oppamPeyar = tempSignatoryName
+                                updated.oppamMudhalPeyar = tempSignatoryFirstName.trim()
+                                updated.oppamIrudhiPeyar = tempSignatoryLastName.trim()
+                                updated.oppamPeyar = updated.fullSignatoryName
                                 NiruvanaTharavugalRepository.updateProfile(AppMode.PATTU, updated)
                                 editingSection = null
                                 ElvanSnackbar.show(saveSuccessMsg)
@@ -313,10 +322,18 @@ fun SilkIdentityScreen(
                             )
                             Spacer(modifier = Modifier.height(16.dp))
                             ElvanSettingsTextField(
-                                label = K.authorizedSignatoryName.tr(),
-                                value = tempSignatoryName,
-                                onValueChange = { tempSignatoryName = it },
-                                placeholder = K.authorizedSignatoryName.tr(),
+                                label = K.firstName.tr(),
+                                value = tempSignatoryFirstName,
+                                onValueChange = { tempSignatoryFirstName = it },
+                                placeholder = K.firstName.tr(),
+                                colors = colors
+                            )
+                            Spacer(modifier = Modifier.height(12.dp))
+                            ElvanSettingsTextField(
+                                label = K.lastName.tr(),
+                                value = tempSignatoryLastName,
+                                onValueChange = { tempSignatoryLastName = it },
+                                placeholder = K.lastName.tr(),
                                 colors = colors
                             )
                         }

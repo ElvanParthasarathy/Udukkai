@@ -48,7 +48,9 @@ fun ReceiptCard(
     val isDark = colors.isDark
 
     val currentMode = LocalAppMode.current
-    val profile = NiruvanaTharavugalRepository.getProfile(currentMode)
+    val profiles = NiruvanaTharavugalRepository.getAllProfiles(currentMode)
+    val profile = (if (receipt.niruvanamId != null) profiles.find { it.id == receipt.niruvanamId } else null)
+        ?: NiruvanaTharavugalRepository.getProfile(currentMode)
     val isBilingual = profile.iruMozhi
     val primaryLang = profile.mudhanMozhi.ifEmpty { "ta" }
     val secondaryLang = profile.thunaiMozhi.ifEmpty { "en" }

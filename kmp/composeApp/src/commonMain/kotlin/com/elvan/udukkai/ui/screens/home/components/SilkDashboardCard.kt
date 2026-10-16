@@ -44,14 +44,21 @@ fun SilkDashboardCard(
     val ff = LocalAppFontFamily.current
     val isDark = colors.isDark
 
-    val profile = NiruvanaTharavugalRepository.getProfile(AppMode.PATTU)
+    val profiles = NiruvanaTharavugalRepository.getAllProfiles(AppMode.PATTU)
+    val profile = (if (pattiyal.niruvanamId != null) profiles.find { it.id == pattiyal.niruvanamId } else null)
+        ?: NiruvanaTharavugalRepository.getProfile(AppMode.PATTU)
+    val isBilingual = profile.iruMozhi
     val primaryLang = profile.mudhanMozhi.ifEmpty { "ta" }
     val secondaryLang = profile.thunaiMozhi.ifEmpty { "en" }
 
-    val name = pattiyal.vaangunarPeyar[primaryLang]
-        ?: pattiyal.vaangunarPeyar[secondaryLang]
+    val primary = pattiyal.vaangunarPeyar[primaryLang]
+        ?: pattiyal.vaangunarPeyar["ta"]
+        ?: pattiyal.vaangunarPeyar["en"]
         ?: pattiyal.vaangunarPeyar.values.firstOrNull()
         ?: "-"
+
+    val secondary = if (isBilingual) pattiyal.vaangunarPeyar[secondaryLang].orEmpty() else ""
+    val showSecondary = isBilingual && secondary.isNotBlank() && secondary != primary
 
     val amountStr = CurrencyUtils.formatInr(pattiyal.mothaThogai)
     val dateStr = DateUtils.formatEpochMillis(pattiyal.pattiyalNaal)
@@ -83,28 +90,44 @@ fun SilkDashboardCard(
                 // Row 1: Customer Name + Chevron
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically
+                    verticalAlignment = Alignment.Top
                 ) {
-                    Text(
-                        text = name.preventBrokenLigatures(),
-                        style = TextStyle(
-                            fontFamily = ff,
-                            fontSize = 15.5.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = colors.textPrimary
-                        ),
-                        modifier = Modifier.weight(1f),
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
-
-                    Icon(
-                        imageVector = MaterialSymbols.Rounded.ChevronRight,
-                        contentDescription = null,
-                        tint = LocalShellColors.current.border,
-                        modifier = Modifier.size(18.dp)
-                    )
+                    Column(
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Text(
+                            text = primary.preventBrokenLigatures(),
+                            style = TextStyle(
+                                fontFamily = ff,
+                                fontSize = 16.5.sp,
+                                fontWeight = FontWeight.ExtraBold,
+                                color = colors.textPrimary
+                            ),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                        if (showSecondary) {
+                            Spacer(modifier = Modifier.height(2.dp))
+                            Text(
+                                text = secondary.preventBrokenLigatures(),
+                                style = TextStyle(
+                                fontFamily = ff,
+                                fontSize = 13.5.sp,
+                                color = LocalShellColors.current.textSecondary
+                            ),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    }
                 }
+
+                Icon(
+                    imageVector = MaterialSymbols.Rounded.ChevronRight,
+                    contentDescription = null,
+                    tint = LocalShellColors.current.border,
+                    modifier = Modifier.size(18.dp)
+                )
+            }
 
                 Spacer(modifier = Modifier.height(4.dp))
 

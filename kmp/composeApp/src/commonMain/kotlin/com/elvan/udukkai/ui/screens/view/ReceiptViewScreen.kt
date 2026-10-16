@@ -22,6 +22,7 @@ import com.elvan.udukkai.core.platform.AppBackHandler
 import com.elvan.udukkai.core.utils.CurrencyUtils
 import com.elvan.udukkai.core.utils.DateUtils
 import com.elvan.udukkai.data.model.PatrugalTharavuru
+import com.elvan.udukkai.data.settings.NiruvanaTharavugalRepository
 import com.elvan.udukkai.localization.PrintLanguageManager
 import com.elvan.udukkai.localization.K
 import com.elvan.udukkai.localization.tr
@@ -49,10 +50,12 @@ fun ReceiptViewScreen(
     val isDark = colors.isDark
     val ff = LocalAppFontFamily.current
 
-    val billingConfig = PrintLanguageManager.getConfig(currentMode)
-    val isBilingual = billingConfig.isBilingual
-    val primaryLang = billingConfig.primaryLanguage.code
-    val secondaryLang = billingConfig.secondaryLanguage.code
+    val profiles = NiruvanaTharavugalRepository.getAllProfiles(currentMode)
+    val profile = (if (receipt.niruvanamId != null) profiles.find { it.id == receipt.niruvanamId } else null)
+        ?: NiruvanaTharavugalRepository.getProfile(currentMode)
+    val isBilingual = profile.iruMozhi
+    val primaryLang = profile.mudhanMozhi.ifEmpty { "ta" }
+    val secondaryLang = profile.thunaiMozhi.ifEmpty { "en" }
 
     val customerName = receipt.vaangunarPeyar[primaryLang]
         ?: receipt.vaangunarPeyar[secondaryLang]

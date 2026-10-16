@@ -227,20 +227,10 @@ fun SettingsHubScreen(
             }
         }
 
-        // ── Section 3: User Account, Data & Security (3 items) ──
+        // ── Section 3: Data & Security (2 items) ──
         item(key = "account_data_security_section") {
             ElvanSectionContainer {
                 ElvanSettingsSection(colors = colors) {
-                    ElvanSettingsRow(
-                        icon = MaterialSymbols.Rounded.Person,
-                        title = K.user.tr(),
-                        description = K.userSettings.tr(),
-                        onClick = { onNavigate(SettingsRoute.UserProfile) },
-                        colors = colors
-                    )
-
-                    ElvanSettingsDivider(colors = colors)
-
                     ElvanSettingsRow(
                         icon = MaterialSymbols.Rounded.Folder,
                         title = K.storageAndBackup.tr(),

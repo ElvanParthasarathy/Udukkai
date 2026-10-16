@@ -66,6 +66,8 @@ class AndroidSettingsDatabaseHelper : SettingsDatabaseHelper {
                 "thalaippu_vadivu" TEXT NOT NULL DEFAULT 'small',
                 "kaiyoppam" TEXT NOT NULL DEFAULT '',
                 "oppam_peyar" TEXT NOT NULL DEFAULT '',
+                "oppam_mudhal_peyar" TEXT NOT NULL DEFAULT '',
+                "oppam_irudhi_peyar" TEXT NOT NULL DEFAULT '',
                 "adaimozhi" TEXT NOT NULL DEFAULT '{}',
                 "upi_id" TEXT NOT NULL DEFAULT '',
                 "thoatra_niram" TEXT NOT NULL DEFAULT '',
@@ -104,6 +106,8 @@ class AndroidSettingsDatabaseHelper : SettingsDatabaseHelper {
                 "thalaippu_vadivu" TEXT NOT NULL DEFAULT 'small',
                 "kaiyoppam" TEXT NOT NULL DEFAULT '',
                 "oppam_peyar" TEXT NOT NULL DEFAULT '',
+                "oppam_mudhal_peyar" TEXT NOT NULL DEFAULT '',
+                "oppam_irudhi_peyar" TEXT NOT NULL DEFAULT '',
                 "adaimozhi" TEXT NOT NULL DEFAULT '{}',
                 "upi_id" TEXT NOT NULL DEFAULT '',
                 "thoatra_niram" TEXT NOT NULL DEFAULT '',
@@ -195,6 +199,12 @@ class AndroidSettingsDatabaseHelper : SettingsDatabaseHelper {
             if (!columns.contains("thoatra_niram")) {
                 db.execSQL("ALTER TABLE $tableName ADD COLUMN thoatra_niram TEXT DEFAULT '#388e3c'")
             }
+            if (!columns.contains("oppam_mudhal_peyar")) {
+                db.execSQL("ALTER TABLE $tableName ADD COLUMN oppam_mudhal_peyar TEXT DEFAULT ''")
+            }
+            if (!columns.contains("oppam_irudhi_peyar")) {
+                db.execSQL("ALTER TABLE $tableName ADD COLUMN oppam_irudhi_peyar TEXT DEFAULT ''")
+            }
         } catch (e: Exception) {
             Log.w(tag, "ensureColumns failed on $tableName: ${e.message}")
         }
@@ -231,7 +241,9 @@ class AndroidSettingsDatabaseHelper : SettingsDatabaseHelper {
                 put("agala_oavuru", profile.agalaOavuru)
                 put("thalaippu_vadivu", profile.thalaippuVadivu)
                 put("kaiyoppam", profile.kaiyoppam)
-                put("oppam_peyar", profile.oppamPeyar)
+                put("oppam_peyar", profile.fullSignatoryName)
+                put("oppam_mudhal_peyar", profile.oppamMudhalPeyar)
+                put("oppam_irudhi_peyar", profile.oppamIrudhiPeyar)
                 put("adaimozhi", MozhiJsonConverter.stringify(profile.adaimozhi))
                 put("upi_id", profile.upiId)
                 put("thoatra_niram", profile.thoatraNiram)
@@ -353,6 +365,8 @@ class AndroidSettingsDatabaseHelper : SettingsDatabaseHelper {
             thalaippuVadivu = getString("thalaippu_vadivu").ifEmpty { "small" },
             kaiyoppam = getString("kaiyoppam"),
             oppamPeyar = getString("oppam_peyar"),
+            oppamMudhalPeyar = getString("oppam_mudhal_peyar"),
+            oppamIrudhiPeyar = getString("oppam_irudhi_peyar"),
             adaimozhi = MozhiJsonConverter.parse(getString("adaimozhi")),
             upiId = getString("upi_id"),
             thoatraNiram = getString("thoatra_niram").ifEmpty { if (mode == AppMode.PATTU) "#6a1b9a" else "#388e3c" }
