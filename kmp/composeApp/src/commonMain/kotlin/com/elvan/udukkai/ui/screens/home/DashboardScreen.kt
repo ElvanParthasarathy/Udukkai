@@ -12,12 +12,10 @@ import com.elvan.udukkai.core.mode.LocalAppMode
 import com.elvan.udukkai.core.utils.CurrencyUtils
 import com.elvan.udukkai.data.model.PattiyalTharavuru
 import com.elvan.udukkai.data.repository.PattiyalRepository
-import com.elvan.udukkai.data.settings.NiruvanaTharavugalRepository
 import com.elvan.udukkai.localization.K
 import com.elvan.udukkai.localization.tr
 import com.elvan.udukkai.theme.Dimens
 import com.elvan.udukkai.theme.rememberShellColors
-import com.elvan.udukkai.ui.components.shell.ElvanCompanySelectionBottomSheet
 import com.elvan.udukkai.ui.components.shell.LocalElvanTopSpacerHeight
 import com.elvan.udukkai.ui.components.shell.MugappuStatsSkeleton
 import com.elvan.udukkai.ui.components.shell.UruvakkuCardSkeleton
@@ -30,9 +28,8 @@ import com.elvan.udukkai.ui.screens.create.components.SilkInvoiceCard
  * Pixel-perfect Bento-style Home Dashboard (Mugappu).
  * Hosts:
  * 1. GreetingPill: “வணக்கம் ✨” and the active company's full legal business name with company avatar.
- * 2. Bento Stats Grid (Exactly 3 Tiles):
+ * 2. Bento Stats Grid (Two Summary Tiles):
  *    - Motha Pattiyalgal (Invoice count for active company)
- *    - Niruvanam (Active company profile)
  *    - Motha Kanakku (Total invoiced ₹ billing amount for active company)
  * 3. RecentActivityHeader ("அண்மைய செயற்பாடுகள்" with "அனைத்தும்" link)
  * 4. Recent invoice cards (Kooli / Pattu) or DashboardEmptyState
@@ -42,6 +39,7 @@ fun DashboardScreen(
     scrollState: LazyListState,
     onSeeAll: () -> Unit,
     modifier: Modifier = Modifier,
+    onSeeAllReceipts: (() -> Unit)? = null,
     isRefreshing: Boolean = false,
     onInvoiceClick: (PattiyalTharavuru) -> Unit = {},
     onManageProfiles: (() -> Unit)? = null
@@ -49,16 +47,9 @@ fun DashboardScreen(
     val mode = LocalAppMode.current
     val colors = rememberShellColors()
 
-    val profiles = NiruvanaTharavugalRepository.getAllProfiles(mode)
-    val activeProfile = NiruvanaTharavugalRepository.getProfile(mode)
     val recentBills = PattiyalRepository.recentInvoices
     val overallTotal = PattiyalRepository.overallTotal
-    val activeCompanyName = activeProfile.kurumPeyar.ifEmpty {
-        activeProfile.niruvanathinPeyar.values.firstOrNull().orEmpty()
-    }.ifEmpty { mode.displayName() }
     val activeCompanyInvoiceCount = PattiyalRepository.activeCompanyInvoices.size
-
-    var showCompanySheetOnCardClick by remember { mutableStateOf(false) }
 
     Box(modifier = modifier.fillMaxSize()) {
         LazyColumn(
@@ -105,48 +96,31 @@ fun DashboardScreen(
                     }
                 }
             } else {
-                // 2. Bento Stats Grid: Exactly Three Tiles
+                // 2. Bento Stats Grid: Two Summary Tiles
                 item(key = "stats_bento_grid") {
-                    Column(
+                    Row(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(horizontal = Dimens.ContentPadding),
-                        verticalArrangement = Arrangement.spacedBy(Dimens.ItemSpacing)
+                        horizontalArrangement = Arrangement.spacedBy(Dimens.ItemSpacing)
                     ) {
-                        // Top row: 2 cards with identical size, aligned in the same horizontal line
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(Dimens.ItemSpacing)
-                        ) {
-                            ElvanStatsCard(
-                                icon = MaterialSymbols.Rounded.InvoiceFill,
-                                label = K.totalInvoices.tr(),
-                                value = "$activeCompanyInvoiceCount",
-                                colors = colors,
-                                modifier = Modifier.weight(1f),
-                                isFullWidth = false,
-                                onClick = onSeeAll
-                            )
+                        ElvanStatsCard(
+                            icon = MaterialSymbols.Rounded.InvoiceFill,
+                            label = K.totalInvoices.tr(),
+                            value = "$activeCompanyInvoiceCount",
+                            colors = colors,
+                            modifier = Modifier.weight(1f),
+                            isFullWidth = false,
+                            onClick = onSeeAll
+                        )
 
-                            ElvanStatsCard(
-                                icon = MaterialSymbols.Rounded.Apartment,
-                                label = K.company.tr(),
-                                value = activeCompanyName,
-                                colors = colors,
-                                modifier = Modifier.weight(1f),
-                                isFullWidth = false,
-                                onClick = { showCompanySheetOnCardClick = true }
-                            )
-                        }
-
-                        // Full-width card underneath: Total invoiced amount for active company (Prominent)
                         ElvanStatsCard(
                             icon = MaterialSymbols.Rounded.CurrencyRupeeCircle,
                             label = K.totalInvoiced.tr(),
                             value = CurrencyUtils.formatInr(overallTotal),
                             colors = colors,
-                            modifier = Modifier.fillMaxWidth(),
-                            isFullWidth = true
+                            modifier = Modifier.weight(1f),
+                            isFullWidth = false
                         )
                     }
                 }
@@ -196,19 +170,6 @@ fun DashboardScreen(
                     }
                 }
             }
-        }
-
-        if (showCompanySheetOnCardClick) {
-            ElvanCompanySelectionBottomSheet(
-                profiles = profiles,
-                activeProfileId = activeProfile.id,
-                onSelectProfile = { selectedId ->
-                    NiruvanaTharavugalRepository.setActiveProfile(mode, selectedId)
-                },
-                onManageProfiles = onManageProfiles,
-                onDismissRequest = { showCompanySheetOnCardClick = false },
-                colors = colors
-            )
         }
     }
 }
