@@ -65,28 +65,14 @@ fun SettingsScreen(
                 .fillMaxSize()
                 .background(colors.background),
             transitionSpec = {
-                if (targetState == SettingsRoute.ManageProfiles) {
-                    slideIntoContainer(
-                        towards = AnimatedContentTransitionScope.SlideDirection.Up,
-                        animationSpec = spring(stiffness = Spring.StiffnessLow, dampingRatio = Spring.DampingRatioNoBouncy)
-                    ) togetherWith fadeOut(targetAlpha = 0.9f, animationSpec = tween(durationMillis = 50))
-                } else if (initialState == SettingsRoute.ManageProfiles) {
-                    fadeIn(initialAlpha = 0.9f) togetherWith slideOutOfContainer(
-                        towards = AnimatedContentTransitionScope.SlideDirection.Down,
-                        animationSpec = spring(stiffness = Spring.StiffnessLow, dampingRatio = Spring.DampingRatioNoBouncy)
-                    )
-                } else {
-                    val isForward = targetState != SettingsRoute.Hub
-                    if (isForward) {
-                        slideIntoContainer(
-                            towards = AnimatedContentTransitionScope.SlideDirection.Left,
-                            animationSpec = spring(stiffness = Spring.StiffnessLow, dampingRatio = Spring.DampingRatioNoBouncy)
-                        ) togetherWith fadeOut(targetAlpha = 0.9f, animationSpec = tween(durationMillis = 50))
+                with(Transitions) {
+                    if (targetState == SettingsRoute.ManageProfiles) {
+                        platformSlideVertical(forward = true)
+                    } else if (initialState == SettingsRoute.ManageProfiles) {
+                        platformSlideVertical(forward = false)
                     } else {
-                        fadeIn(initialAlpha = 0.9f) togetherWith slideOutOfContainer(
-                            towards = AnimatedContentTransitionScope.SlideDirection.Right,
-                            animationSpec = spring(stiffness = Spring.StiffnessLow, dampingRatio = Spring.DampingRatioNoBouncy)
-                        )
+                        val isForward = targetState != SettingsRoute.Hub
+                        platformSlideHorizontal(forward = isForward)
                     }
                 }
             },

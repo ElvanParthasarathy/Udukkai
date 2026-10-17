@@ -11,6 +11,116 @@ import androidx.compose.ui.graphics.TransformOrigin
 object Transitions {
 
     /**
+     * Standard Android platform / WhatsApp style horizontal screen transition.
+     * Forward: Incoming screen slides in from right (100% to 0) with EmphasizedDecelerate,
+     *          while outgoing screen slides left by 25% parallax and dims slightly.
+     * Backward: Outgoing screen slides out to right (0 to 100%) with EmphasizedAccelerate,
+     *           while incoming screen slides from -25% parallax to 0 and brightens.
+     */
+    fun <S> AnimatedContentTransitionScope<S>.platformSlideHorizontal(forward: Boolean): ContentTransform {
+        return if (forward) {
+            slideIntoContainer(
+                towards = AnimatedContentTransitionScope.SlideDirection.Left,
+                animationSpec = tween(
+                    durationMillis = MotionTokens.DurationMedium,
+                    easing = MotionTokens.EmphasizedDecelerate
+                )
+            ) togetherWith (
+                slideOutOfContainer(
+                    towards = AnimatedContentTransitionScope.SlideDirection.Left,
+                    animationSpec = tween(
+                        durationMillis = MotionTokens.DurationMedium,
+                        easing = MotionTokens.EmphasizedDecelerate
+                    ),
+                    targetOffset = { fullWidth -> fullWidth / 4 }
+                ) + fadeOut(
+                    targetAlpha = 0.85f,
+                    animationSpec = tween(
+                        durationMillis = MotionTokens.DurationMedium,
+                        easing = MotionTokens.StandardAccelerate
+                    )
+                )
+            )
+        } else {
+            (
+                slideIntoContainer(
+                    towards = AnimatedContentTransitionScope.SlideDirection.Right,
+                    animationSpec = tween(
+                        durationMillis = MotionTokens.DurationShort,
+                        easing = MotionTokens.EmphasizedDecelerate
+                    ),
+                    initialOffset = { fullWidth -> fullWidth / 4 }
+                ) + fadeIn(
+                    initialAlpha = 0.85f,
+                    animationSpec = tween(
+                        durationMillis = MotionTokens.DurationShort,
+                        easing = MotionTokens.StandardDecelerate
+                    )
+                )
+            ) togetherWith slideOutOfContainer(
+                towards = AnimatedContentTransitionScope.SlideDirection.Right,
+                animationSpec = tween(
+                    durationMillis = MotionTokens.DurationShort,
+                    easing = MotionTokens.EmphasizedAccelerate
+                )
+            )
+        }
+    }
+
+    /**
+     * Standard Android platform style vertical screen transition (for modal-style subpages).
+     */
+    fun <S> AnimatedContentTransitionScope<S>.platformSlideVertical(forward: Boolean): ContentTransform {
+        return if (forward) {
+            slideIntoContainer(
+                towards = AnimatedContentTransitionScope.SlideDirection.Up,
+                animationSpec = tween(
+                    durationMillis = MotionTokens.DurationMedium,
+                    easing = MotionTokens.EmphasizedDecelerate
+                )
+            ) togetherWith (
+                slideOutOfContainer(
+                    towards = AnimatedContentTransitionScope.SlideDirection.Up,
+                    animationSpec = tween(
+                        durationMillis = MotionTokens.DurationMedium,
+                        easing = MotionTokens.EmphasizedDecelerate
+                    ),
+                    targetOffset = { fullHeight -> fullHeight / 6 }
+                ) + fadeOut(
+                    targetAlpha = 0.9f,
+                    animationSpec = tween(
+                        durationMillis = MotionTokens.DurationShort,
+                        easing = MotionTokens.StandardAccelerate
+                    )
+                )
+            )
+        } else {
+            (
+                slideIntoContainer(
+                    towards = AnimatedContentTransitionScope.SlideDirection.Down,
+                    animationSpec = tween(
+                        durationMillis = MotionTokens.DurationShort,
+                        easing = MotionTokens.EmphasizedDecelerate
+                    ),
+                    initialOffset = { fullHeight -> fullHeight / 6 }
+                ) + fadeIn(
+                    initialAlpha = 0.9f,
+                    animationSpec = tween(
+                        durationMillis = MotionTokens.DurationShort,
+                        easing = MotionTokens.StandardDecelerate
+                    )
+                )
+            ) togetherWith slideOutOfContainer(
+                towards = AnimatedContentTransitionScope.SlideDirection.Down,
+                animationSpec = tween(
+                    durationMillis = MotionTokens.DurationShort,
+                    easing = MotionTokens.EmphasizedAccelerate
+                )
+            )
+        }
+    }
+
+    /**
      * Shared Axis X (Horizontal)
      * Used for hierarchical navigation (Forward/Backward)
      */

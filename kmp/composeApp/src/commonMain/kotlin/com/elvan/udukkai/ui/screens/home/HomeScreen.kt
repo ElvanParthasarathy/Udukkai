@@ -23,6 +23,7 @@ import com.elvan.udukkai.core.platform.AppBackHandler
 import com.elvan.udukkai.core.platform.AppPredictiveBackHandler
 import com.elvan.udukkai.core.platform.PlatformType
 import com.elvan.udukkai.core.platform.currentPlatform
+import com.elvan.udukkai.theme.Transitions
 import com.elvan.udukkai.ui.screens.home.desktop.DesktopSideBar
 import com.elvan.udukkai.data.model.PatrugalTharavuru
 import com.elvan.udukkai.data.model.PattiyalTharavuru
@@ -856,16 +857,8 @@ fun HomeScreen() {
                             EnterTransition.None togetherWith ExitTransition.None
                         } else {
                             val isForward = targetState.size >= initialState.size
-                            if (isForward) {
-                                slideIntoContainer(
-                                    towards = AnimatedContentTransitionScope.SlideDirection.Left,
-                                    animationSpec = spring(stiffness = Spring.StiffnessLow, dampingRatio = Spring.DampingRatioNoBouncy)
-                                ) togetherWith fadeOut(targetAlpha = 0.9f, animationSpec = tween(durationMillis = 50))
-                            } else {
-                                fadeIn(initialAlpha = 0.9f) togetherWith slideOutOfContainer(
-                                    towards = AnimatedContentTransitionScope.SlideDirection.Right,
-                                    animationSpec = spring(stiffness = Spring.StiffnessLow, dampingRatio = Spring.DampingRatioNoBouncy)
-                                )
+                            with(Transitions) {
+                                platformSlideHorizontal(isForward)
                             }
                         }
                     },

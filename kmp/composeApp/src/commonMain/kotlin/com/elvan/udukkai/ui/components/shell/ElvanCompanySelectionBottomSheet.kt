@@ -23,7 +23,7 @@ import com.elvan.udukkai.theme.rememberShellColors
  *     - Selecting a company never shifts or resizes other rows.
  * - Full legal names wrap naturally
  * - Downward swipe-to-dismiss with native drag handle
- * - Direct shortcut button for Company Settings
+ * - Pure company profile selection without bottom action button
  */
 @Composable
 fun ElvanCompanySelectionBottomSheet(
@@ -53,8 +53,8 @@ fun ElvanCompanySelectionBottomSheet(
         subtitleBuilder = { profile ->
             resolveCompanySubtitle(profile)
         },
-        onRequestAddNew = onManageProfiles,
-        addNewLabel = K.companySettings.tr()
+        onRequestAddNew = null,
+        addNewLabel = null
     )
 }
 
