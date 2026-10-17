@@ -15,10 +15,12 @@ import com.elvan.udukkai.theme.rememberShellColors
  * - Simple monochrome design without decorative borders, card outlines, or avatar initials
  * - Pure monochrome checkmark indicator for active company
  * - Bilingual billing display rules:
- *     - When bilingual billing is ON: First line = primary billing language business name;
+ *     - Each company's saved iruMozhi setting controls its own display.
+ *     - When a company's bilingual billing is ON: First line = primary billing language business name;
  *       Subtitle = secondary billing language business name (no address, GSTIN or extra details).
- *     - When bilingual billing is OFF: First line = primary billing language business name;
+ *     - When a company's bilingual billing is OFF: First line = primary billing language business name;
  *       No subtitle (returns null; no address, GSTIN or secondary details).
+ *     - Selecting a company never shifts or resizes other rows.
  * - Full legal names wrap naturally
  * - Downward swipe-to-dismiss with native drag handle
  * - Direct shortcut button for Company Settings
@@ -36,12 +38,6 @@ fun ElvanCompanySelectionBottomSheet(
         profiles.find { it.id == activeProfileId }
     }
 
-    // Active profile's saved billing-language settings
-    val activeBilling = currentProfile ?: profiles.firstOrNull()
-    val isBilingual = activeBilling?.iruMozhi ?: true
-    val primaryBillingLang = activeBilling?.mudhanMozhi?.ifEmpty { "ta" } ?: "ta"
-    val secondaryBillingLang = activeBilling?.thunaiMozhi?.ifEmpty { "en" } ?: "en"
-
     ElvanSelectionBottomSheet<NiruvanaTharavugal>(
         title = K.selectCompanyProfile.tr(),
         items = profiles,
@@ -52,15 +48,10 @@ fun ElvanCompanySelectionBottomSheet(
         onDismissRequest = onDismissRequest,
         colors = colors,
         itemLabelBuilder = { profile ->
-            resolveCompanyItemLabel(profile, primaryBillingLang).ifEmpty { "—" }
+            resolveCompanyItemLabel(profile).ifEmpty { "—" }
         },
         subtitleBuilder = { profile ->
-            resolveCompanySubtitle(
-                profile = profile,
-                isBilingual = isBilingual,
-                primaryBillingLang = primaryBillingLang,
-                secondaryBillingLang = secondaryBillingLang
-            )
+            resolveCompanySubtitle(profile)
         },
         onRequestAddNew = onManageProfiles,
         addNewLabel = K.companySettings.tr()
@@ -69,10 +60,11 @@ fun ElvanCompanySelectionBottomSheet(
 
 /**
  * Resolves the primary business name for display in the bottom sheet.
+ * Uses the profile's own mudhanMozhi setting by default.
  */
 internal fun resolveCompanyItemLabel(
     profile: NiruvanaTharavugal,
-    primaryBillingLang: String = "ta"
+    primaryBillingLang: String = profile.mudhanMozhi.ifEmpty { "ta" }
 ): String {
     val primary = profile.niruvanathinPeyar[primaryBillingLang]?.trim()?.takeIf { it.isNotEmpty() }
     if (primary != null) return primary
@@ -96,14 +88,15 @@ internal fun resolveCompanyItemLabel(
 
 /**
  * Resolves the subtitle for a company row in the bottom sheet:
+ * - Each company's saved iruMozhi setting controls its own subtitle display.
  * - Returns the secondary business name when [isBilingual] is true.
  * - Returns null when [isBilingual] is false (showing no subtitle space or address).
  */
 internal fun resolveCompanySubtitle(
     profile: NiruvanaTharavugal,
-    isBilingual: Boolean,
-    primaryBillingLang: String = "ta",
-    secondaryBillingLang: String = "en"
+    isBilingual: Boolean = profile.iruMozhi,
+    primaryBillingLang: String = profile.mudhanMozhi.ifEmpty { "ta" },
+    secondaryBillingLang: String = profile.thunaiMozhi.ifEmpty { "en" }
 ): String? {
     if (!isBilingual) return null
 

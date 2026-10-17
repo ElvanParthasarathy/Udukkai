@@ -1,14 +1,18 @@
 package com.elvan.udukkai.ui.components.shell.sheets
 
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -25,6 +29,7 @@ import com.elvan.udukkai.ui.navigation.MaterialSymbols
  * Title: 16sp, FontWeight.Normal (400), 80% opacity onSurface.
  * Subtitle: 13sp, FontWeight.Normal (400), 50% opacity onSurface.
  * Selection checkmark: 20dp, pure monochrome onSurface (white in dark, black in light).
+ * Stable checkmark container ensures consistent text column constraints and prevents layout jumping.
  */
 @Composable
 fun ElvanSheetItem(
@@ -41,6 +46,7 @@ fun ElvanSheetItem(
     Row(
         modifier = modifier
             .fillMaxWidth()
+            .defaultMinSize(minHeight = 48.dp)
             .clickable(
                 interactionSource = remember { MutableInteractionSource() },
                 indication = ShellDefaults.ripple(colors, bounded = true),
@@ -81,14 +87,28 @@ fun ElvanSheetItem(
             }
         }
 
-        if (isSelected) {
-            Spacer(modifier = Modifier.width(16.dp))
-            Icon(
-                imageVector = MaterialSymbols.Rounded.Check,
-                contentDescription = "Selected",
-                tint = colors.textPrimary,
-                modifier = Modifier.size(20.dp)
-            )
+        val checkAlpha by animateFloatAsState(
+            targetValue = if (isSelected) 1f else 0f,
+            animationSpec = tween(150),
+            label = "checkAlpha"
+        )
+
+        // Dedicated selection indicator container: reserves space to maintain identical text width and prevent layout shifts
+        Spacer(modifier = Modifier.width(16.dp))
+        Box(
+            modifier = Modifier.size(20.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            if (checkAlpha > 0f) {
+                Icon(
+                    imageVector = MaterialSymbols.Rounded.Check,
+                    contentDescription = "Selected",
+                    tint = colors.textPrimary,
+                    modifier = Modifier
+                        .size(20.dp)
+                        .alpha(checkAlpha)
+                )
+            }
         }
     }
 }
