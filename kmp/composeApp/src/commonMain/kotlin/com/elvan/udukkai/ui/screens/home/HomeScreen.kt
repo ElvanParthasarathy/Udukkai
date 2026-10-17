@@ -103,7 +103,6 @@ fun HomeScreen() {
     var selectedItemIds by remember { mutableStateOf<Set<Long>>(emptySet()) }
     var showBulkDeleteConfirm by remember { mutableStateOf(false) }
     var showDateFilterSheet by remember { mutableStateOf(false) }
-    var showCompanySelectionSheet by remember { mutableStateOf(false) }
 
     val onToggleItem: (Long) -> Unit = { id ->
         val newSet = if (selectedItemIds.contains(id)) selectedItemIds - id else selectedItemIds + id
@@ -170,9 +169,9 @@ fun HomeScreen() {
 
     // Intercept hardware/system back with Predictive Back progress tracking
     AppPredictiveBackHandler(
-        enabled = activeSubpage != null || isSelectionMode || isSearchActive || showBulkDeleteConfirm || showCompanySelectionSheet,
+        enabled = activeSubpage != null || isSelectionMode || isSearchActive || showBulkDeleteConfirm,
         onProgress = { progress, edge ->
-            if (activeSubpage != null && !showCompanySelectionSheet && !showBulkDeleteConfirm && !isSelectionMode && !isSearchActive) {
+            if (activeSubpage != null && !showBulkDeleteConfirm && !isSelectionMode && !isSearchActive) {
                 isPredictiveBackActive = progress > 0f
                 predictiveBackProgress = progress
                 predictiveBackEdge = edge
@@ -186,9 +185,7 @@ fun HomeScreen() {
             val wasPredictive = isPredictiveBackActive
             isPredictiveBackActive = false
             predictiveBackProgress = 0f
-            if (showCompanySelectionSheet) {
-                showCompanySelectionSheet = false
-            } else if (showBulkDeleteConfirm) {
+            if (showBulkDeleteConfirm) {
                 showBulkDeleteConfirm = false
             } else if (subpageStack.isNotEmpty()) {
                 if (wasPredictive) {
@@ -394,20 +391,6 @@ fun HomeScreen() {
                             selectedItemIds = emptySet()
                         },
                         actions = {
-                            if (selectedTab == NavTab.Home) {
-                                // Company Switcher Button
-                                ElvanTopBarIconButton(
-                                    onClick = { showCompanySelectionSheet = true }
-                                ) {
-                                    Icon(
-                                        imageVector = MaterialSymbols.Rounded.Apartment,
-                                        contentDescription = "Switch Company",
-                                        tint = colors.textPrimary,
-                                        modifier = Modifier.size(22.dp)
-                                    )
-                                }
-                            }
-
                             if (selectedTab != NavTab.Home) {
                                 // Search Icon Button
                                 ElvanTopBarIconButton(
@@ -959,23 +942,6 @@ fun HomeScreen() {
             colors = colors
         )
 
-        if (showCompanySelectionSheet) {
-            val profiles = NiruvanaTharavugalRepository.getAllProfiles(currentMode)
-            val activeProfile = NiruvanaTharavugalRepository.getProfile(currentMode)
-            ElvanCompanySelectionBottomSheet(
-                profiles = profiles,
-                activeProfileId = activeProfile.id,
-                onSelectProfile = { selectedId ->
-                    NiruvanaTharavugalRepository.setActiveProfile(currentMode, selectedId)
-                },
-                onManageProfiles = {
-                    showCompanySelectionSheet = false
-                    navigateToSubpage(ActiveSubpage.Settings)
-                },
-                onDismissRequest = { showCompanySelectionSheet = false },
-                colors = colors
-            )
-        }
             }
         }
     }
