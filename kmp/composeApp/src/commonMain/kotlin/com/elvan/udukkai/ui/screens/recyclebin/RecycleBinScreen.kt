@@ -108,6 +108,12 @@ fun RecycleBinScreen(
     var showBulkDeleteConfirm by remember { mutableStateOf(false) }
     var showDateFilterSheet by remember { mutableStateOf(false) }
 
+    // Isolated date filter state strictly for Recycle Bin (does not leak into or mutate main screen repositories)
+    var invoiceStartDateFilter by remember { mutableStateOf<Long?>(null) }
+    var invoiceEndDateFilter by remember { mutableStateOf<Long?>(null) }
+    var receiptStartDateFilter by remember { mutableStateOf<Long?>(null) }
+    var receiptEndDateFilter by remember { mutableStateOf<Long?>(null) }
+
     val isDesktop = currentPlatform == PlatformType.DESKTOP
 
     // Reset selection & search when tab switches
@@ -122,15 +128,15 @@ fun RecycleBinScreen(
     val activeProfile = NiruvanaTharavugalRepository.getProfile(mode)
     val activeId = activeProfile.id
 
-    // Filtered data sets scoped to active company
+    // Filtered data sets scoped to active company and isolated Recycle Bin filters
     val allDeletedInvoices = PattiyalRepository.deletedInvoices
     val displayedInvoices = remember(
         allDeletedInvoices, activeId, searchQuery,
-        PattiyalRepository.startDateFilter, PattiyalRepository.endDateFilter
+        invoiceStartDateFilter, invoiceEndDateFilter
     ) {
         val q = searchQuery.trim().lowercase()
-        val s = PattiyalRepository.startDateFilter
-        val e = PattiyalRepository.endDateFilter
+        val s = invoiceStartDateFilter
+        val e = invoiceEndDateFilter
 
         allDeletedInvoices.filter { invoice ->
             val matchesQuery = if (q.isEmpty()) true else {
@@ -152,11 +158,11 @@ fun RecycleBinScreen(
     val allDeletedReceipts = PatrugalRepository.deletedReceipts
     val displayedReceipts = remember(
         allDeletedReceipts, activeId, searchQuery,
-        PatrugalRepository.startDateFilter, PatrugalRepository.endDateFilter
+        receiptStartDateFilter, receiptEndDateFilter
     ) {
         val q = searchQuery.trim().lowercase()
-        val s = PatrugalRepository.startDateFilter
-        val e = PatrugalRepository.endDateFilter
+        val s = receiptStartDateFilter
+        val e = receiptEndDateFilter
 
         allDeletedReceipts.filter { receipt ->
             val matchesQuery = if (q.isEmpty()) true else {
@@ -334,7 +340,11 @@ fun RecycleBinScreen(
 
             // Filter Icon Button (exclusive for Create/Aakku tab)
             if (selectedTab == MeetpagamTab.Create) {
-                val isFilterActive = PattiyalRepository.isDateFilterActive || PatrugalRepository.isDateFilterActive
+                val isFilterActive = if (createSegment == 0) {
+                    invoiceStartDateFilter != null || invoiceEndDateFilter != null
+                } else {
+                    receiptStartDateFilter != null || receiptEndDateFilter != null
+                }
                 ElvanTopBarIconButton(
                     onClick = { showDateFilterSheet = true }
                 ) {
@@ -644,18 +654,23 @@ fun RecycleBinScreen(
         )
     }
 
-    // Date Filter Bottom Sheet for Create tab
+    // Date Filter Bottom Sheet for Create tab (isolated within Recycle Bin)
     if (showDateFilterSheet) {
+        val currentStart = if (createSegment == 0) invoiceStartDateFilter else receiptStartDateFilter
+        val currentEnd = if (createSegment == 0) invoiceEndDateFilter else receiptEndDateFilter
+
         CreateDateFilterSheet(
             isOpen = showDateFilterSheet,
-            currentStartMillis = if (createSegment == 0) PattiyalRepository.startDateFilter else PatrugalRepository.startDateFilter,
-            currentEndMillis = if (createSegment == 0) PattiyalRepository.endDateFilter else PatrugalRepository.endDateFilter,
+            currentStartMillis = currentStart,
+            currentEndMillis = currentEnd,
             onDismissRequest = { showDateFilterSheet = false },
             onApplyFilter = { start, end, _ ->
                 if (createSegment == 0) {
-                    PattiyalRepository.setDateRange(start, end)
+                    invoiceStartDateFilter = start
+                    invoiceEndDateFilter = end
                 } else {
-                    PatrugalRepository.setDateRange(start, end)
+                    receiptStartDateFilter = start
+                    receiptEndDateFilter = end
                 }
                 showDateFilterSheet = false
             },
