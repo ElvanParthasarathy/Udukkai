@@ -29,7 +29,6 @@ import com.elvan.udukkai.theme.preventBrokenLigatures
 import com.elvan.udukkai.ui.components.shell.ElvanCompanySelectionBottomSheet
 import com.elvan.udukkai.ui.components.shell.ElvanSectionContainer
 import com.elvan.udukkai.ui.components.shell.resolveCompanyItemLabel
-import com.elvan.udukkai.ui.components.shell.resolveCompanySubtitle
 import com.elvan.udukkai.ui.navigation.MaterialSymbols
 
 /**
@@ -53,14 +52,12 @@ fun GreetingPill(
 
     val fullLegalBusinessName = remember(activeProfile, defaultModeName) {
         val primary = resolveCompanyItemLabel(activeProfile).trim()
-        val name = if (primary.isNotEmpty()) primary else {
-            if (activeProfile.kurumPeyar.isNotBlank()) activeProfile.kurumPeyar.trim() else defaultModeName
-        }
-        val secondary = resolveCompanySubtitle(activeProfile)?.trim()
-        if (!secondary.isNullOrEmpty() && !secondary.equals(name, ignoreCase = true)) {
-            "$name  •  $secondary"
+        if (primary.isNotEmpty()) {
+            primary
+        } else if (activeProfile.kurumPeyar.isNotBlank()) {
+            activeProfile.kurumPeyar.trim()
         } else {
-            name
+            defaultModeName
         }
     }
 
