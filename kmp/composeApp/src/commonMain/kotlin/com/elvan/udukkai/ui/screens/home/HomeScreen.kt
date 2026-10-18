@@ -12,11 +12,8 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import com.elvan.udukkai.core.mode.LocalAppMode
 import com.elvan.udukkai.core.platform.AppBackHandler
@@ -163,35 +160,19 @@ fun HomeScreen() {
     val patrucheettugalLabel = K.receipts.tr()
     val azhikkiradhuLabel = K.erasing.tr()
 
-    var isPredictiveBackActive by remember { mutableStateOf(false) }
-    var predictiveBackProgress by remember { mutableStateOf(0f) }
-    var predictiveBackEdge by remember { mutableStateOf(0) }
-    var skipNextSubpageAnimation by remember { mutableStateOf(false) }
 
-    // Intercept hardware/system back with Predictive Back progress tracking
+    // Keep Android Back handling enabled for in-app navigation, but let the single
+    // AnimatedContent transition below handle all subpage motion.
     AppPredictiveBackHandler(
         enabled = activeSubpage != null || isSelectionMode || isSearchActive || showBulkDeleteConfirm || selectedTab != NavTab.Home,
-        onProgress = { progress, edge ->
-            if (activeSubpage != null && !showBulkDeleteConfirm && !isSelectionMode && !isSearchActive) {
-                isPredictiveBackActive = progress > 0f
-                predictiveBackProgress = progress
-                predictiveBackEdge = edge
-            }
-        },
-        onCancel = {
-            isPredictiveBackActive = false
-            predictiveBackProgress = 0f
-        },
+        onProgress = { _, _ -> },
+        onCancel = {},
         onBack = {
-            val wasPredictive = isPredictiveBackActive
-            isPredictiveBackActive = false
-            predictiveBackProgress = 0f
-            if (showBulkDeleteConfirm) {
+            if (showCompanySelectionSheet) {
+                showCompanySelectionSheet = false
+            } else if (showBulkDeleteConfirm) {
                 showBulkDeleteConfirm = false
             } else if (subpageStack.isNotEmpty()) {
-                if (wasPredictive) {
-                    skipNextSubpageAnimation = true
-                }
                 popSubpage()
             } else if (isSelectionMode) {
                 isSelectionMode = false
@@ -203,7 +184,7 @@ fun HomeScreen() {
                 PorulRepository.searchQuery = ""
                 VaangunarRepository.searchQuery = ""
             } else if (selectedTab != NavTab.Home) {
-                // Back from a secondary bottom-navigation tab returns to Home first.
+                // Bottom tabs remain unanimated; Back simply returns to Home.
                 selectedTab = NavTab.Home
             }
         }
@@ -231,12 +212,6 @@ fun HomeScreen() {
         PatrugalRepository.searchQuery = ""
         PorulRepository.searchQuery = ""
         VaangunarRepository.searchQuery = ""
-    }
-
-    LaunchedEffect(subpageStack) {
-        if (skipNextSubpageAnimation) {
-            skipNextSubpageAnimation = false
-        }
     }
 
     val currentScrollState = when (selectedTab) {
@@ -795,36 +770,23 @@ fun HomeScreen() {
                 )
             }
 
-            val previousSubpage = if (subpageStack.size >= 2) subpageStack[subpageStack.size - 2] else null
-
             Box(
                 modifier = Modifier
                     .weight(1f)
                     .fillMaxHeight()
             ) {
-            // Keep AnimatedContent mounted throughout predictive-back gestures. Replacing it
-            // with a separate conditional tree during the gesture disposed/recreated subpages,
-            // which could replay the normal transition or cause flicker on fast back swipes.
-            val showPredictiveBackLayers = isPredictiveBackActive && activeSubpage != null
-
+            // Use one transition owner for subpages. Rendering the current and previous
+            // subpages again in a predictive overlay caused duplicate composition and competing
+            // motion on quick Back gestures. The same AnimatedContent now handles each stack change.
             AnimatedContent(
                 targetState = subpageStack,
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(colors.background)
-                    .graphicsLayer {
-                        // Keep the normal destination composed but hidden while the
-                        // finger-following predictive-back layers are displayed above it.
-                        alpha = if (showPredictiveBackLayers) 0f else 1f
-                    },
+                    .background(colors.background),
                 transitionSpec = {
-                    if (skipNextSubpageAnimation) {
-                        EnterTransition.None togetherWith ExitTransition.None
-                    } else {
-                        val isForward = targetState.size >= initialState.size
-                        with(Transitions) {
-                            platformSlideHorizontal(isForward)
-                        }
+                    val isForward = targetState.size >= initialState.size
+                    with(Transitions) {
+                        platformSlideHorizontal(isForward)
                     }
                 },
                 label = "HomeToSubpageTransition"
@@ -834,56 +796,6 @@ fun HomeScreen() {
                     RenderSubpage(subpage)
                 } else {
                     RenderMainShell()
-                }
-            }
-
-            // Overlay gesture-driven visuals without replacing AnimatedContent itself.
-            if (showPredictiveBackLayers) {
-                // Background layer: reveals previous subpage or the main shell
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .graphicsLayer {
-                            val scale = 0.94f + (0.06f * predictiveBackProgress)
-                            val alphaVal = 0.85f + (0.15f * predictiveBackProgress)
-                            scaleX = scale
-                            scaleY = scale
-                            alpha = alphaVal
-                        }
-                ) {
-                    if (previousSubpage != null) {
-                        RenderSubpage(previousSubpage)
-                    } else {
-                        RenderMainShell()
-                    }
-                }
-
-                // Scrim overlay between background and foreground layer
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .background(Color.Black.copy(alpha = 0.25f * (1f - predictiveBackProgress)))
-                )
-
-                // Foreground layer: active subpage interactive response
-                val density = LocalDensity.current
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .graphicsLayer {
-                            val maxOffsetPx = with(density) { 120.dp.toPx() }
-                            val sign = if (predictiveBackEdge == 1) -1f else 1f
-                            translationX = sign * maxOffsetPx * predictiveBackProgress
-                            val scale = 1.0f - (0.08f * predictiveBackProgress)
-                            scaleX = scale
-                            scaleY = scale
-                            alpha = 1.0f - (0.25f * predictiveBackProgress)
-                            shadowElevation = with(density) { (8.dp * predictiveBackProgress).toPx() }
-                            clip = true
-                            shape = RoundedCornerShape(24.dp * predictiveBackProgress)
-                        }
-                ) {
-                    RenderSubpage(activeSubpage)
                 }
             }
 
