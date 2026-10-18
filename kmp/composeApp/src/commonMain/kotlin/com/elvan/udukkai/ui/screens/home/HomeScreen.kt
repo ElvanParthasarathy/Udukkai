@@ -790,8 +790,9 @@ fun HomeScreen() {
                             platformSlideHorizontal(forward = true)
                         }
                     } else {
-                        // Back navigation is immediate: no reverse slide, fade, or scale.
-                        EnterTransition.None togetherWith ExitTransition.None
+                        with(Transitions) {
+                            smoothBackSlideHorizontal()
+                        }
                     }
                 },
                 label = "HomeToSubpageTransition"
