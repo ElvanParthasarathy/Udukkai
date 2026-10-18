@@ -473,10 +473,15 @@ fun HomeScreen() {
                                 AnimatedContent(
                                     targetState = isSelectionMode,
                                     transitionSpec = {
-                                        (fadeIn(animationSpec = tween(220, easing = CubicBezierEasing(0.0f, 0.0f, 0.2f, 1.0f))) +
-                                         scaleIn(initialScale = 0.94f, animationSpec = tween(220))) togetherWith
-                                        (fadeOut(animationSpec = tween(160, easing = CubicBezierEasing(0.4f, 0.0f, 1.0f, 1.0f))) +
-                                         scaleOut(targetScale = 0.94f, animationSpec = tween(160)))
+                                        if (initialState && !targetState) {
+                                            // Back out of selection mode immediately.
+                                            EnterTransition.None togetherWith ExitTransition.None
+                                        } else {
+                                            (fadeIn(animationSpec = tween(220, easing = CubicBezierEasing(0.0f, 0.0f, 0.2f, 1.0f))) +
+                                             scaleIn(initialScale = 0.94f, animationSpec = tween(220))) togetherWith
+                                            (fadeOut(animationSpec = tween(160, easing = CubicBezierEasing(0.4f, 0.0f, 1.0f, 1.0f))) +
+                                             scaleOut(targetScale = 0.94f, animationSpec = tween(160)))
+                                        }
                                     },
                                     label = "bottomBarSelectionCrossfade"
                                 ) { inSelection ->
