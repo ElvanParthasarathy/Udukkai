@@ -2,8 +2,6 @@ package com.elvan.udukkai.ui.screens.home
 
 import androidx.compose.animation.*
 import androidx.compose.animation.core.CubicBezierEasing
-import androidx.compose.animation.core.Spring
-import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -16,7 +14,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.elvan.udukkai.core.mode.LocalAppMode
-import com.elvan.udukkai.core.platform.AppBackHandler
 import com.elvan.udukkai.core.platform.AppPredictiveBackHandler
 import com.elvan.udukkai.core.platform.PlatformType
 import com.elvan.udukkai.core.platform.currentPlatform
