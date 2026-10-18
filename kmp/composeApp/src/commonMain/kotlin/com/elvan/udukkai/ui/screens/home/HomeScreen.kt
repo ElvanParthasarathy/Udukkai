@@ -168,9 +168,7 @@ fun HomeScreen() {
         onProgress = { _, _ -> },
         onCancel = {},
         onBack = {
-            if (showCompanySelectionSheet) {
-                showCompanySelectionSheet = false
-            } else if (showBulkDeleteConfirm) {
+            if (showBulkDeleteConfirm) {
                 showBulkDeleteConfirm = false
             } else if (subpageStack.isNotEmpty()) {
                 popSubpage()
