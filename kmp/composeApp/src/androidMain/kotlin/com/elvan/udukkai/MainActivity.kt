@@ -68,6 +68,15 @@ class MainActivity : ComponentActivity() {
             ModeManager.resetStartupState()
         }
 
+        // Root fallback. Compose back handlers registered later handle in-app navigation first.
+        // When no in-app handler is enabled (Home at its root), Back exits the activity.
+        onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+                ModeManager.resetStartupState()
+                finish()
+            }
+        })
+
         val isSystemDark = (resources.configuration.uiMode and android.content.res.Configuration.UI_MODE_NIGHT_MASK) == android.content.res.Configuration.UI_MODE_NIGHT_YES
         val isInitialDark = when (ThemeManager.currentThemeMode) {
             com.elvan.udukkai.theme.ThemeMode.LIGHT -> false
