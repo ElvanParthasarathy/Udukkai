@@ -170,7 +170,7 @@ fun HomeScreen() {
 
     // Intercept hardware/system back with Predictive Back progress tracking
     AppPredictiveBackHandler(
-        enabled = activeSubpage != null || isSelectionMode || isSearchActive || showBulkDeleteConfirm,
+        enabled = activeSubpage != null || isSelectionMode || isSearchActive || showBulkDeleteConfirm || selectedTab != NavTab.Home,
         onProgress = { progress, edge ->
             if (activeSubpage != null && !showBulkDeleteConfirm && !isSelectionMode && !isSearchActive) {
                 isPredictiveBackActive = progress > 0f
@@ -202,6 +202,9 @@ fun HomeScreen() {
                 PatrugalRepository.searchQuery = ""
                 PorulRepository.searchQuery = ""
                 VaangunarRepository.searchQuery = ""
+            } else if (selectedTab != NavTab.Home) {
+                // Back from a secondary bottom-navigation tab returns to Home first.
+                selectedTab = NavTab.Home
             }
         }
     )
