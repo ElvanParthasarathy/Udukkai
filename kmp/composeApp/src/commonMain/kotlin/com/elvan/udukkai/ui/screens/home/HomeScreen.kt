@@ -783,8 +783,13 @@ fun HomeScreen() {
                     .background(colors.background),
                 transitionSpec = {
                     val isForward = targetState.size >= initialState.size
-                    with(Transitions) {
-                        platformSlideHorizontal(isForward)
+                    if (isForward) {
+                        with(Transitions) {
+                            platformSlideHorizontal(forward = true)
+                        }
+                    } else {
+                        // Back navigation is immediate: no reverse slide, fade, or scale.
+                        EnterTransition.None togetherWith ExitTransition.None
                     }
                 },
                 label = "HomeToSubpageTransition"
