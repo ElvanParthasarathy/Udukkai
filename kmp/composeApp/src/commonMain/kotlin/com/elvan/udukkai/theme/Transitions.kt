@@ -1,35 +1,97 @@
 package com.elvan.udukkai.theme
 
 import androidx.compose.animation.*
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.ui.graphics.TransformOrigin
+import androidx.compose.ui.unit.IntOffset
 
 /**
  * Material 3 Transitions
- * Implements standard patterns: Shared Axis, Fade Through, Elevation Scale
+ * Implements standard patterns: Shared Axis, Fade Through, Elevation Scale,
+ * and fluid physics-based Spring screen transitions.
  */
 object Transitions {
 
     /**
-     * Fresh, slide-only transition for returning to a parent screen.
-     * The current page moves out to the right while the parent reveals from a
-     * small leftward parallax offset. No fade or scale is applied.
+     * Organic spring transition for horizontal screen navigation.
+     * Uses gentle, unbouncy spring physics (Spring.StiffnessLow, Spring.DampingRatioNoBouncy).
+     *
+     * Forward: Incoming screen slides in smoothly from the right, with parent fading slightly underneath.
+     * Backward: Exiting subpage remains on top (targetContentZIndex = -1f) and slides out smoothly
+     *           to the right, gracefully revealing the parent screen underneath.
+     */
+    fun <S> AnimatedContentTransitionScope<S>.smoothHorizontal(forward: Boolean): ContentTransform {
+        val springSpec = spring<IntOffset>(
+            stiffness = Spring.StiffnessLow,
+            dampingRatio = Spring.DampingRatioNoBouncy
+        )
+        return if (forward) {
+            slideIntoContainer(
+                towards = AnimatedContentTransitionScope.SlideDirection.Left,
+                animationSpec = springSpec
+            ) togetherWith fadeOut(
+                targetAlpha = 0.9f,
+                animationSpec = tween(durationMillis = 50)
+            )
+        } else {
+            (
+                fadeIn(
+                    initialAlpha = 0.9f,
+                    animationSpec = tween(durationMillis = 50)
+                ) togetherWith slideOutOfContainer(
+                    towards = AnimatedContentTransitionScope.SlideDirection.Right,
+                    animationSpec = springSpec
+                )
+            ).apply {
+                targetContentZIndex = -1f
+            }
+        }
+    }
+
+    /**
+     * Organic spring transition for vertical screen navigation (e.g. ManageProfiles modal subpage).
+     * Uses gentle, unbouncy spring physics (Spring.StiffnessLow, Spring.DampingRatioNoBouncy).
+     *
+     * Forward: Incoming screen slides up smoothly from bottom.
+     * Backward: Exiting screen remains on top (targetContentZIndex = -1f) and slides down smoothly,
+     *           gracefully revealing the parent screen underneath.
+     */
+    fun <S> AnimatedContentTransitionScope<S>.smoothVertical(forward: Boolean): ContentTransform {
+        val springSpec = spring<IntOffset>(
+            stiffness = Spring.StiffnessLow,
+            dampingRatio = Spring.DampingRatioNoBouncy
+        )
+        return if (forward) {
+            slideIntoContainer(
+                towards = AnimatedContentTransitionScope.SlideDirection.Up,
+                animationSpec = springSpec
+            ) togetherWith fadeOut(
+                targetAlpha = 0.9f,
+                animationSpec = tween(durationMillis = 50)
+            )
+        } else {
+            (
+                fadeIn(
+                    initialAlpha = 0.9f,
+                    animationSpec = tween(durationMillis = 50)
+                ) togetherWith slideOutOfContainer(
+                    towards = AnimatedContentTransitionScope.SlideDirection.Down,
+                    animationSpec = springSpec
+                )
+            ).apply {
+                targetContentZIndex = -1f
+            }
+        }
+    }
+
+    /**
+     * Slide-only transition for returning to a parent screen.
+     * Kept for backward compatibility, routes directly to smoothHorizontal(forward = false).
      */
     fun <S> AnimatedContentTransitionScope<S>.smoothBackSlideHorizontal(): ContentTransform {
-        return slideIntoContainer(
-            towards = AnimatedContentTransitionScope.SlideDirection.Right,
-            animationSpec = tween(
-                durationMillis = 280,
-                easing = MotionTokens.EmphasizedDecelerate
-            ),
-            initialOffset = { fullWidth -> -(fullWidth / 5) }
-        ) togetherWith slideOutOfContainer(
-            towards = AnimatedContentTransitionScope.SlideDirection.Right,
-            animationSpec = tween(
-                durationMillis = 280,
-                easing = MotionTokens.EmphasizedAccelerate
-            )
-        )
+        return smoothHorizontal(forward = false)
     }
 
     /**

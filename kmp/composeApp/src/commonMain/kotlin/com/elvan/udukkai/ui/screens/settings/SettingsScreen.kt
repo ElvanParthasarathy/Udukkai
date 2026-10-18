@@ -58,19 +58,14 @@ fun SettingsScreen(
                 .fillMaxSize()
                 .background(colors.background),
             transitionSpec = {
-                val isBack = targetState == SettingsRoute.Hub ||
-                    initialState == SettingsRoute.ManageProfiles
-                if (isBack) {
-                    with(Transitions) {
-                        smoothBackSlideHorizontal()
-                    }
-                } else {
-                    with(Transitions) {
-                        if (targetState == SettingsRoute.ManageProfiles) {
-                            platformSlideVertical(forward = true)
-                        } else {
-                            platformSlideHorizontal(forward = true)
-                        }
+                with(Transitions) {
+                    if (targetState == SettingsRoute.ManageProfiles) {
+                        smoothVertical(forward = true)
+                    } else if (initialState == SettingsRoute.ManageProfiles) {
+                        smoothVertical(forward = false)
+                    } else {
+                        val isForward = targetState != SettingsRoute.Hub
+                        smoothHorizontal(forward = isForward)
                     }
                 }
             },

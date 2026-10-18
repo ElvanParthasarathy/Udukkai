@@ -785,14 +785,8 @@ fun HomeScreen() {
                     .background(colors.background),
                 transitionSpec = {
                     val isForward = targetState.size >= initialState.size
-                    if (isForward) {
-                        with(Transitions) {
-                            platformSlideHorizontal(forward = true)
-                        }
-                    } else {
-                        with(Transitions) {
-                            smoothBackSlideHorizontal()
-                        }
+                    with(Transitions) {
+                        smoothHorizontal(forward = isForward)
                     }
                 },
                 label = "HomeToSubpageTransition"
