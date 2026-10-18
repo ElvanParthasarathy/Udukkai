@@ -10,7 +10,6 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Icon
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -18,8 +17,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
-import com.elvan.udukkai.core.utils.DateGroupUtils
-import com.elvan.udukkai.core.utils.DateUtils
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -56,7 +53,6 @@ import com.elvan.udukkai.ui.screens.create.components.CoolieInvoiceCard
 import com.elvan.udukkai.ui.screens.create.components.SilkInvoiceCard
 import com.elvan.udukkai.ui.screens.create.components.ReceiptCard
 import com.elvan.udukkai.ui.screens.create.components.PillShifterItem
-import com.elvan.udukkai.ui.screens.create.components.CreateDateFilterSheet
 import com.elvan.udukkai.ui.screens.customer.CoolieCustomerCard
 import com.elvan.udukkai.ui.screens.customer.SilkCustomerCard
 import kotlinx.coroutines.launch
@@ -69,7 +65,7 @@ import kotlinx.coroutines.launch
  * - Multi-selection mode with Restore and Permanent Delete floating capsule bar.
  * - Selection mode stays open even if all items are deselected (until explicit back/cancel).
  * - Pure Tamil "கைவிடு" used for cancel throughout.
- * - Search and Date Filter in top bar, NO 3-dot overflow menu.
+ * - Search in top bar, NO 3-dot overflow menu.
  */
 @Composable
 fun RecycleBinScreen(
@@ -109,13 +105,6 @@ fun RecycleBinScreen(
     var isSelectionMode by remember { mutableStateOf(false) }
     var selectedItemIds by remember { mutableStateOf<Set<Long>>(emptySet()) }
     var showBulkDeleteConfirm by remember { mutableStateOf(false) }
-    var showDateFilterSheet by remember { mutableStateOf(false) }
-
-    // Isolated date filter state strictly for Recycle Bin (does not leak into or mutate main screen repositories)
-    var invoiceStartDateFilter by remember { mutableStateOf<Long?>(null) }
-    var invoiceEndDateFilter by remember { mutableStateOf<Long?>(null) }
-    var receiptStartDateFilter by remember { mutableStateOf<Long?>(null) }
-    var receiptEndDateFilter by remember { mutableStateOf<Long?>(null) }
 
     val isDesktop = currentPlatform == PlatformType.DESKTOP
 
@@ -131,56 +120,32 @@ fun RecycleBinScreen(
     val activeProfile = NiruvanaTharavugalRepository.getProfile(mode)
     val activeId = activeProfile.id
 
-    // Filtered data sets scoped to active company and isolated Recycle Bin filters
+    // Filtered data sets scoped to active company and search query (sorted by deleted_at DESC)
     val allDeletedInvoices = PattiyalRepository.deletedInvoices
-    val displayedInvoices = remember(
-        allDeletedInvoices, activeId, searchQuery,
-        invoiceStartDateFilter, invoiceEndDateFilter
-    ) {
+    val displayedInvoices = remember(allDeletedInvoices, activeId, searchQuery) {
         val q = searchQuery.trim().lowercase()
-        val s = invoiceStartDateFilter
-        val e = invoiceEndDateFilter
-
         allDeletedInvoices.filter { invoice ->
             val matchesQuery = if (q.isEmpty()) true else {
                 invoice.patrucheettuEn.lowercase().contains(q) ||
                 invoice.vaangunarPeyar.values.any { it.lowercase().contains(q) } ||
                 invoice.vaangunarMunvari.values.any { it.lowercase().contains(q) }
             }
-            val matchesDate = when {
-                s != null && e != null -> invoice.pattiyalNaal in s..e
-                s != null -> invoice.pattiyalNaal >= s
-                e != null -> invoice.pattiyalNaal <= e
-                else -> true
-            }
             val matchesProfile = if (activeId != null) invoice.niruvanamId == activeId else true
-            matchesQuery && matchesDate && matchesProfile
+            matchesQuery && matchesProfile
         }
     }
 
     val allDeletedReceipts = PatrugalRepository.deletedReceipts
-    val displayedReceipts = remember(
-        allDeletedReceipts, activeId, searchQuery,
-        receiptStartDateFilter, receiptEndDateFilter
-    ) {
+    val displayedReceipts = remember(allDeletedReceipts, activeId, searchQuery) {
         val q = searchQuery.trim().lowercase()
-        val s = receiptStartDateFilter
-        val e = receiptEndDateFilter
-
         allDeletedReceipts.filter { receipt ->
             val matchesQuery = if (q.isEmpty()) true else {
                 receipt.patruEn.lowercase().contains(q) ||
                 receipt.vaangunarPeyar.values.any { it.lowercase().contains(q) } ||
                 receipt.vaangunarMunvari.values.any { it.lowercase().contains(q) }
             }
-            val matchesDate = when {
-                s != null && e != null -> receipt.patruNaal in s..e
-                s != null -> receipt.patruNaal >= s
-                e != null -> receipt.patruNaal <= e
-                else -> true
-            }
             val matchesProfile = if (activeId != null) receipt.niruvanamId == activeId else true
-            matchesQuery && matchesDate && matchesProfile
+            matchesQuery && matchesProfile
         }
     }
 
@@ -340,25 +305,6 @@ fun RecycleBinScreen(
                     modifier = Modifier.size(22.dp)
                 )
             }
-
-            // Filter Icon Button (exclusive for Create/Aakku tab)
-            if (selectedTab == MeetpagamTab.Create) {
-                val isFilterActive = if (createSegment == 0) {
-                    invoiceStartDateFilter != null || invoiceEndDateFilter != null
-                } else {
-                    receiptStartDateFilter != null || receiptEndDateFilter != null
-                }
-                ElvanTopBarIconButton(
-                    onClick = { showDateFilterSheet = true }
-                ) {
-                    Icon(
-                        imageVector = MaterialSymbols.Rounded.FilterList,
-                        contentDescription = "Filter",
-                        tint = if (isFilterActive) colors.accent else colors.textPrimary,
-                        modifier = Modifier.size(22.dp)
-                    )
-                }
-            }
         },
         navbar = {
             Box(
@@ -399,7 +345,7 @@ fun RecycleBinScreen(
                                         selectedTab = tab
                                     }
                                 },
-                                hideContent = isSearchActive || showDateFilterSheet
+                                hideContent = isSearchActive
                             )
 
                             ElvanSearchBar(
@@ -430,14 +376,13 @@ fun RecycleBinScreen(
                         Spacer(modifier = Modifier.height(LocalElvanTopSpacerHeight.current))
                     }
 
-                    // Pill Shifter for Invoices vs Receipts & Active Date Filter Pill
+                    // Pill Shifter for Invoices vs Receipts
                     item(key = "meetpagam_top_shifter") {
-                        Column(
+                        Box(
+                            contentAlignment = Alignment.Center,
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(bottom = 8.dp),
-                            verticalArrangement = Arrangement.spacedBy(16.dp),
-                            horizontalAlignment = Alignment.CenterHorizontally
+                                .padding(bottom = 8.dp)
                         ) {
                             ElvanPillShifter(
                                 items = shifterItems,
@@ -450,92 +395,6 @@ fun RecycleBinScreen(
                                 colors = colors,
                                 isFullWidth = false
                             )
-
-                            val isDateFilterActive = if (createSegment == 0) {
-                                invoiceStartDateFilter != null || invoiceEndDateFilter != null
-                            } else {
-                                receiptStartDateFilter != null || receiptEndDateFilter != null
-                            }
-
-                            if (isDateFilterActive) {
-                                val startMillis = if (createSegment == 0) invoiceStartDateFilter else receiptStartDateFilter
-                                val endMillis = if (createSegment == 0) invoiceEndDateFilter else receiptEndDateFilter
-                                val todayText = K.today.tr()
-                                val yesterdayText = K.yesterday.tr()
-                                val filterText = remember(startMillis, endMillis, todayText, yesterdayText) {
-                                    if (startMillis == null && endMillis == null) {
-                                        ""
-                                    } else if (startMillis != null && endMillis != null) {
-                                        val startKey = DateGroupUtils.getDayKey(startMillis)
-                                        val endKey = DateGroupUtils.getDayKey(endMillis)
-                                        if (startKey == endKey) {
-                                            val now = System.currentTimeMillis()
-                                            val todayKey = DateGroupUtils.getDayKey(now)
-                                            val yesterdayKey = DateGroupUtils.getDayKey(now - 86400000L)
-                                            when (startKey) {
-                                                todayKey -> todayText
-                                                yesterdayKey -> yesterdayText
-                                                else -> DateUtils.formatDate(startMillis)
-                                            }
-                                        } else {
-                                            "${DateUtils.formatDate(startMillis)} - ${DateUtils.formatDate(endMillis)}"
-                                        }
-                                    } else if (startMillis != null) {
-                                        ">= ${DateUtils.formatDate(startMillis)}"
-                                    } else {
-                                        "<= ${DateUtils.formatDate(endMillis!!)}"
-                                    }
-                                }
-                                Box(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(horizontal = Dimens.ContentPadding),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Surface(
-                                        onClick = {
-                                            if (createSegment == 0) {
-                                                invoiceStartDateFilter = null
-                                                invoiceEndDateFilter = null
-                                            } else {
-                                                receiptStartDateFilter = null
-                                                receiptEndDateFilter = null
-                                            }
-                                        },
-                                        shape = CircleShape,
-                                        color = colors.accent.copy(alpha = 0.12f),
-                                        modifier = Modifier.clip(CircleShape)
-                                    ) {
-                                        Row(
-                                            modifier = Modifier.padding(horizontal = 14.dp, vertical = 6.dp),
-                                            verticalAlignment = Alignment.CenterVertically,
-                                            horizontalArrangement = Arrangement.spacedBy(6.dp)
-                                        ) {
-                                            Icon(
-                                                imageVector = MaterialSymbols.Rounded.FilterList,
-                                                contentDescription = null,
-                                                tint = colors.accent,
-                                                modifier = Modifier.size(14.dp)
-                                            )
-                                            Text(
-                                                text = filterText,
-                                                style = TextStyle(
-                                                    fontFamily = ff,
-                                                    fontSize = 12.sp,
-                                                    fontWeight = FontWeight.SemiBold,
-                                                    color = colors.accent
-                                                )
-                                            )
-                                            Icon(
-                                                imageVector = MaterialSymbols.Rounded.Close,
-                                                contentDescription = "Clear",
-                                                tint = colors.accent,
-                                                modifier = Modifier.size(14.dp)
-                                            )
-                                        }
-                                    }
-                                }
-                            }
                         }
                     }
 
@@ -741,30 +600,6 @@ fun RecycleBinScreen(
                         .padding(horizontal = 24.dp, vertical = 8.dp)
                 )
             }
-        )
-    }
-
-    // Date Filter Bottom Sheet for Create tab (isolated within Recycle Bin)
-    if (showDateFilterSheet) {
-        val currentStart = if (createSegment == 0) invoiceStartDateFilter else receiptStartDateFilter
-        val currentEnd = if (createSegment == 0) invoiceEndDateFilter else receiptEndDateFilter
-
-        CreateDateFilterSheet(
-            isOpen = showDateFilterSheet,
-            currentStartMillis = currentStart,
-            currentEndMillis = currentEnd,
-            onDismissRequest = { showDateFilterSheet = false },
-            onApplyFilter = { start, end, _ ->
-                if (createSegment == 0) {
-                    invoiceStartDateFilter = start
-                    invoiceEndDateFilter = end
-                } else {
-                    receiptStartDateFilter = start
-                    receiptEndDateFilter = end
-                }
-                showDateFilterSheet = false
-            },
-            colors = colors
         )
     }
 }
