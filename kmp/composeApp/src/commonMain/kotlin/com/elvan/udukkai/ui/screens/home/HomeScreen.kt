@@ -802,7 +802,43 @@ fun HomeScreen() {
                     .weight(1f)
                     .fillMaxHeight()
             ) {
-            if (isPredictiveBackActive && activeSubpage != null) {
+            // Keep AnimatedContent mounted throughout predictive-back gestures. Replacing it
+            // with a separate conditional tree during the gesture disposed/recreated subpages,
+            // which could replay the normal transition or cause flicker on fast back swipes.
+            val showPredictiveBackLayers = isPredictiveBackActive && activeSubpage != null
+
+            AnimatedContent(
+                targetState = subpageStack,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(colors.background)
+                    .graphicsLayer {
+                        // Keep the normal destination composed but hidden while the
+                        // finger-following predictive-back layers are displayed above it.
+                        alpha = if (showPredictiveBackLayers) 0f else 1f
+                    },
+                transitionSpec = {
+                    if (skipNextSubpageAnimation) {
+                        EnterTransition.None togetherWith ExitTransition.None
+                    } else {
+                        val isForward = targetState.size >= initialState.size
+                        with(Transitions) {
+                            platformSlideHorizontal(isForward)
+                        }
+                    }
+                },
+                label = "HomeToSubpageTransition"
+            ) { stack ->
+                val subpage = stack.lastOrNull()
+                if (subpage != null) {
+                    RenderSubpage(subpage)
+                } else {
+                    RenderMainShell()
+                }
+            }
+
+            // Overlay gesture-driven visuals without replacing AnimatedContent itself.
+            if (showPredictiveBackLayers) {
                 // Background layer: reveals previous subpage or the main shell
                 Box(
                     modifier = Modifier
@@ -848,31 +884,6 @@ fun HomeScreen() {
                         }
                 ) {
                     RenderSubpage(activeSubpage)
-                }
-            } else {
-                AnimatedContent(
-                    targetState = subpageStack,
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .background(colors.background),
-                    transitionSpec = {
-                        if (skipNextSubpageAnimation) {
-                            EnterTransition.None togetherWith ExitTransition.None
-                        } else {
-                            val isForward = targetState.size >= initialState.size
-                            with(Transitions) {
-                                platformSlideHorizontal(isForward)
-                            }
-                        }
-                    },
-                    label = "HomeToSubpageTransition"
-                ) { stack ->
-                    val subpage = stack.lastOrNull()
-                    if (subpage != null) {
-                        RenderSubpage(subpage)
-                    } else {
-                        RenderMainShell()
-                    }
                 }
             }
 
