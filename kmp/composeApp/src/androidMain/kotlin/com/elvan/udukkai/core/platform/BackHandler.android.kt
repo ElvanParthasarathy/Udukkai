@@ -16,8 +16,10 @@ actual fun AppPredictiveBackHandler(
             progress.collect { backEvent ->
                 onProgress(backEvent.progress, backEvent.swipeEdge)
             }
-            onProgress(0f, 0)
+            // Let the caller inspect the completed gesture before clearing its progress.
+            // HomeScreen uses this to avoid replaying the normal subpage transition.
             onBack()
+            onProgress(0f, 0)
         } catch (_: CancellationException) {
             onProgress(0f, 0)
             onCancel()
