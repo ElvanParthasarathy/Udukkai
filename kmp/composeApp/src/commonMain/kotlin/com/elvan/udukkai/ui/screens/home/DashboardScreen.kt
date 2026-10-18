@@ -80,7 +80,7 @@ fun DashboardScreen(
                     RecentActivityHeader(
                         onSeeAll = onSeeAll,
                         colors = colors,
-                        modifier = Modifier
+                        modifier = Modifier.offset(y = 6.dp)
                     )
                 }
 
@@ -123,12 +123,12 @@ fun DashboardScreen(
                     }
                 }
 
-                // 3. Recent Activity Header (closely attached to the cards)
+                // 3. Recent Activity Header (attached closely to the cards below)
                 item(key = "recent_activity_header") {
                     RecentActivityHeader(
                         onSeeAll = onSeeAll,
                         colors = colors,
-                        modifier = Modifier
+                        modifier = Modifier.offset(y = 6.dp)
                     )
                 }
 
