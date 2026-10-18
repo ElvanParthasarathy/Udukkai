@@ -10,6 +10,7 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Icon
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -17,6 +18,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
+import com.elvan.udukkai.core.utils.DateGroupUtils
+import com.elvan.udukkai.core.utils.DateUtils
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -427,13 +430,14 @@ fun RecycleBinScreen(
                         Spacer(modifier = Modifier.height(LocalElvanTopSpacerHeight.current))
                     }
 
-                    // Pill Shifter for Invoices vs Receipts
+                    // Pill Shifter for Invoices vs Receipts & Active Date Filter Pill
                     item(key = "meetpagam_top_shifter") {
-                        Box(
+                        Column(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(bottom = 8.dp),
-                            contentAlignment = Alignment.Center
+                            verticalArrangement = Arrangement.spacedBy(16.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally
                         ) {
                             ElvanPillShifter(
                                 items = shifterItems,
@@ -446,6 +450,92 @@ fun RecycleBinScreen(
                                 colors = colors,
                                 isFullWidth = false
                             )
+
+                            val isDateFilterActive = if (createSegment == 0) {
+                                invoiceStartDateFilter != null || invoiceEndDateFilter != null
+                            } else {
+                                receiptStartDateFilter != null || receiptEndDateFilter != null
+                            }
+
+                            if (isDateFilterActive) {
+                                val startMillis = if (createSegment == 0) invoiceStartDateFilter else receiptStartDateFilter
+                                val endMillis = if (createSegment == 0) invoiceEndDateFilter else receiptEndDateFilter
+                                val todayText = K.today.tr()
+                                val yesterdayText = K.yesterday.tr()
+                                val filterText = remember(startMillis, endMillis, todayText, yesterdayText) {
+                                    if (startMillis == null && endMillis == null) {
+                                        ""
+                                    } else if (startMillis != null && endMillis != null) {
+                                        val startKey = DateGroupUtils.getDayKey(startMillis)
+                                        val endKey = DateGroupUtils.getDayKey(endMillis)
+                                        if (startKey == endKey) {
+                                            val now = System.currentTimeMillis()
+                                            val todayKey = DateGroupUtils.getDayKey(now)
+                                            val yesterdayKey = DateGroupUtils.getDayKey(now - 86400000L)
+                                            when (startKey) {
+                                                todayKey -> todayText
+                                                yesterdayKey -> yesterdayText
+                                                else -> DateUtils.formatDate(startMillis)
+                                            }
+                                        } else {
+                                            "${DateUtils.formatDate(startMillis)} - ${DateUtils.formatDate(endMillis)}"
+                                        }
+                                    } else if (startMillis != null) {
+                                        ">= ${DateUtils.formatDate(startMillis)}"
+                                    } else {
+                                        "<= ${DateUtils.formatDate(endMillis!!)}"
+                                    }
+                                }
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(horizontal = Dimens.ContentPadding),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Surface(
+                                        onClick = {
+                                            if (createSegment == 0) {
+                                                invoiceStartDateFilter = null
+                                                invoiceEndDateFilter = null
+                                            } else {
+                                                receiptStartDateFilter = null
+                                                receiptEndDateFilter = null
+                                            }
+                                        },
+                                        shape = CircleShape,
+                                        color = colors.accent.copy(alpha = 0.12f),
+                                        modifier = Modifier.clip(CircleShape)
+                                    ) {
+                                        Row(
+                                            modifier = Modifier.padding(horizontal = 14.dp, vertical = 6.dp),
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                        ) {
+                                            Icon(
+                                                imageVector = MaterialSymbols.Rounded.FilterList,
+                                                contentDescription = null,
+                                                tint = colors.accent,
+                                                modifier = Modifier.size(14.dp)
+                                            )
+                                            Text(
+                                                text = filterText,
+                                                style = TextStyle(
+                                                    fontFamily = ff,
+                                                    fontSize = 12.sp,
+                                                    fontWeight = FontWeight.SemiBold,
+                                                    color = colors.accent
+                                                )
+                                            )
+                                            Icon(
+                                                imageVector = MaterialSymbols.Rounded.Close,
+                                                contentDescription = "Clear",
+                                                tint = colors.accent,
+                                                modifier = Modifier.size(14.dp)
+                                            )
+                                        }
+                                    }
+                                }
+                            }
                         }
                     }
 

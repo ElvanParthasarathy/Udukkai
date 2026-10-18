@@ -76,7 +76,6 @@ fun DashboardScreen(
             item(key = "vanakkam_pill") {
                 GreetingPill(
                     colors = colors,
-                    isLoading = isSwitchingCompany,
                     onProfileChanging = { newProfileId ->
                         scope.launch {
                             isSwitchingCompany = true
