@@ -11,6 +11,30 @@ import androidx.compose.ui.graphics.TransformOrigin
 object Transitions {
 
     /**
+     * Fresh, slide-only transition for returning to a parent screen.
+     * The current page moves out to the right while the parent reveals from a
+     * small leftward parallax offset. No fade or scale is applied.
+     */
+    fun <S> AnimatedContentTransitionScope<S>.smoothBackSlideHorizontal(): ContentTransform {
+        val backSpec = tween(
+            durationMillis = 280,
+            easing = MotionTokens.EmphasizedDecelerate
+        )
+        val exitSpec = tween(
+            durationMillis = 280,
+            easing = MotionTokens.EmphasizedAccelerate
+        )
+        return slideIntoContainer(
+            towards = AnimatedContentTransitionScope.SlideDirection.Right,
+            animationSpec = backSpec,
+            initialOffset = { fullWidth -> -(fullWidth / 5) }
+        ) togetherWith slideOutOfContainer(
+            towards = AnimatedContentTransitionScope.SlideDirection.Right,
+            animationSpec = exitSpec
+        )
+    }
+
+    /**
      * Standard Android platform / WhatsApp style horizontal screen transition.
      * Forward: Incoming screen slides in from right (100% to 0) with EmphasizedDecelerate,
      *          while outgoing screen slides left by 25% parallax and dims slightly.
