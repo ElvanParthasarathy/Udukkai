@@ -19,10 +19,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.elvan.udukkai.core.mode.LocalAppMode
-import com.elvan.udukkai.core.navil.NavilMozhimaatri
 import com.elvan.udukkai.data.settings.NiruvanaTharavugalRepository
 import com.elvan.udukkai.localization.K
-import com.elvan.udukkai.localization.LanguageManager
 import com.elvan.udukkai.localization.tr
 import com.elvan.udukkai.theme.LocalAppFontFamily
 import com.elvan.udukkai.theme.ShellColors
@@ -30,6 +28,8 @@ import com.elvan.udukkai.theme.ShellDefaults
 import com.elvan.udukkai.theme.preventBrokenLigatures
 import com.elvan.udukkai.ui.components.shell.ElvanCompanySelectionBottomSheet
 import com.elvan.udukkai.ui.components.shell.ElvanSectionContainer
+import com.elvan.udukkai.ui.components.shell.resolveCompanyItemLabel
+import com.elvan.udukkai.ui.components.shell.resolveCompanySubtitle
 import com.elvan.udukkai.ui.navigation.MaterialSymbols
 
 /**
@@ -46,31 +46,22 @@ fun GreetingPill(
 ) {
     val mode = LocalAppMode.current
     val ff = LocalAppFontFamily.current
-    val uiLang = LanguageManager.activeLanguageCode
     val defaultModeName = mode.displayName()
 
     val activeProfile = NiruvanaTharavugalRepository.getProfile(mode)
     val allProfiles = NiruvanaTharavugalRepository.getAllProfiles(mode)
 
-    val fullLegalBusinessName = remember(activeProfile, uiLang, defaultModeName) {
-        val direct = activeProfile.niruvanathinPeyar[uiLang]?.trim()?.takeIf { it.isNotEmpty() }
-        if (direct != null) return@remember direct
-
-        // Missing translation fallback: transliterate if UI language is Latin/English
-        if (uiLang.startsWith("en") || uiLang == "ta-Latn") {
-            val ta = activeProfile.niruvanathinPeyar["ta"]?.trim()?.takeIf { it.isNotEmpty() }
-            if (ta != null) {
-                val latin = NavilMozhimaatri.transliterate(ta).trim()
-                if (latin.isNotEmpty()) return@remember latin
-            }
+    val fullLegalBusinessName = remember(activeProfile, defaultModeName) {
+        val primary = resolveCompanyItemLabel(activeProfile).trim()
+        val name = if (primary.isNotEmpty()) primary else {
+            if (activeProfile.kurumPeyar.isNotBlank()) activeProfile.kurumPeyar.trim() else defaultModeName
         }
-
-        val anyLegal = activeProfile.niruvanathinPeyar.values.firstOrNull { it.isNotBlank() }?.trim()
-        if (anyLegal != null) return@remember anyLegal
-
-        if (activeProfile.kurumPeyar.isNotBlank()) return@remember activeProfile.kurumPeyar.trim()
-
-        defaultModeName
+        val secondary = resolveCompanySubtitle(activeProfile)?.trim()
+        if (!secondary.isNullOrEmpty() && !secondary.equals(name, ignoreCase = true)) {
+            "$name  •  $secondary"
+        } else {
+            name
+        }
     }
 
     var showCompanySheet by remember { mutableStateOf(false) }
