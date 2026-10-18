@@ -16,21 +16,19 @@ object Transitions {
      * small leftward parallax offset. No fade or scale is applied.
      */
     fun <S> AnimatedContentTransitionScope<S>.smoothBackSlideHorizontal(): ContentTransform {
-        val backSpec = tween(
-            durationMillis = 280,
-            easing = MotionTokens.EmphasizedDecelerate
-        )
-        val exitSpec = tween(
-            durationMillis = 280,
-            easing = MotionTokens.EmphasizedAccelerate
-        )
         return slideIntoContainer(
             towards = AnimatedContentTransitionScope.SlideDirection.Right,
-            animationSpec = backSpec,
+            animationSpec = tween(
+                durationMillis = 280,
+                easing = MotionTokens.EmphasizedDecelerate
+            ),
             initialOffset = { fullWidth -> -(fullWidth / 5) }
         ) togetherWith slideOutOfContainer(
             towards = AnimatedContentTransitionScope.SlideDirection.Right,
-            animationSpec = exitSpec
+            animationSpec = tween(
+                durationMillis = 280,
+                easing = MotionTokens.EmphasizedAccelerate
+            )
         )
     }
 
