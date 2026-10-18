@@ -1,9 +1,6 @@
 package com.elvan.udukkai.ui.screens.settings
 
 import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.EnterTransition
-import androidx.compose.animation.ExitTransition
-import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -64,8 +61,9 @@ fun SettingsScreen(
                 val isBack = targetState == SettingsRoute.Hub ||
                     initialState == SettingsRoute.ManageProfiles
                 if (isBack) {
-                    // Back navigation is immediate across Settings routes.
-                    EnterTransition.None togetherWith ExitTransition.None
+                    with(Transitions) {
+                        smoothBackSlideHorizontal()
+                    }
                 } else {
                     with(Transitions) {
                         if (targetState == SettingsRoute.ManageProfiles) {
