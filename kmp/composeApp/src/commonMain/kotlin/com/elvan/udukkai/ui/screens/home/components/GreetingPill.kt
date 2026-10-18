@@ -1,5 +1,7 @@
 package com.elvan.udukkai.ui.screens.home.components
 
+import androidx.compose.animation.Crossfade
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -28,6 +30,7 @@ import com.elvan.udukkai.theme.ShellDefaults
 import com.elvan.udukkai.theme.preventBrokenLigatures
 import com.elvan.udukkai.ui.components.shell.ElvanCompanySelectionBottomSheet
 import com.elvan.udukkai.ui.components.shell.ElvanSectionContainer
+import com.elvan.udukkai.ui.components.shell.rememberShimmerBrush
 import com.elvan.udukkai.ui.components.shell.resolveCompanyItemLabel
 import com.elvan.udukkai.ui.navigation.MaterialSymbols
 
@@ -41,6 +44,8 @@ import com.elvan.udukkai.ui.navigation.MaterialSymbols
 fun GreetingPill(
     colors: ShellColors,
     modifier: Modifier = Modifier,
+    isLoading: Boolean = false,
+    onProfileChanging: ((Long) -> Unit)? = null,
     onManageProfiles: (() -> Unit)? = null
 ) {
     val mode = LocalAppMode.current
@@ -63,12 +68,15 @@ fun GreetingPill(
 
     var showCompanySheet by remember { mutableStateOf(false) }
 
+    val shimmerBrush = rememberShimmerBrush()
+
     ElvanSectionContainer(modifier = modifier) {
         Surface(
             modifier = Modifier
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(999.dp))
                 .clickable(
+                    enabled = !isLoading,
                     interactionSource = remember { MutableInteractionSource() },
                     indication = ShellDefaults.ripple(colors, bounded = true),
                     onClick = { showCompanySheet = true }
@@ -85,22 +93,37 @@ fun GreetingPill(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 // The circular Company Indicator on the left (diameter 62dp, concentric with 84dp pill, monochrome matching Settings)
-                Box(
-                    modifier = Modifier
-                        .size(62.dp)
-                        .clip(CircleShape)
-                        .background(colors.iconBg),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = fullLegalBusinessName.take(1).uppercase(),
-                        style = TextStyle(
-                            fontFamily = ff,
-                            fontSize = 24.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = colors.textPrimary
+                Crossfade(
+                    targetState = isLoading,
+                    animationSpec = tween(durationMillis = 220),
+                    label = "greetingAvatarCrossfade"
+                ) { loading ->
+                    if (loading) {
+                        Box(
+                            modifier = Modifier
+                                .size(62.dp)
+                                .clip(CircleShape)
+                                .background(shimmerBrush)
                         )
-                    )
+                    } else {
+                        Box(
+                            modifier = Modifier
+                                .size(62.dp)
+                                .clip(CircleShape)
+                                .background(colors.iconBg),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = fullLegalBusinessName.take(1).uppercase(),
+                                style = TextStyle(
+                                    fontFamily = ff,
+                                    fontSize = 24.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = colors.textPrimary
+                                )
+                            )
+                        }
+                    }
                 }
 
                 Spacer(modifier = Modifier.width(16.dp))
@@ -134,28 +157,45 @@ fun GreetingPill(
 
                     Spacer(modifier = Modifier.height(3.dp))
 
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            text = fullLegalBusinessName.preventBrokenLigatures(),
-                            style = TextStyle(
-                                fontFamily = ff,
-                                fontSize = 14.sp,
-                                fontWeight = FontWeight.Medium
-                            ),
-                            color = colors.textPrimary.copy(alpha = 0.5f),
-                            maxLines = 2,
-                            overflow = TextOverflow.Ellipsis,
-                            modifier = Modifier.weight(1f, fill = false)
-                        )
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Icon(
-                            imageVector = MaterialSymbols.Rounded.KeyboardArrowDown,
-                            contentDescription = "Switch Company",
-                            tint = colors.textPrimary.copy(alpha = 0.5f),
-                            modifier = Modifier.size(16.dp)
-                        )
+                    Crossfade(
+                        targetState = isLoading,
+                        animationSpec = tween(durationMillis = 220),
+                        label = "greetingNameCrossfade"
+                    ) { loading ->
+                        if (loading) {
+                            Box(
+                                modifier = Modifier
+                                    .padding(top = 2.dp)
+                                    .fillMaxWidth(0.55f)
+                                    .height(16.dp)
+                                    .clip(RoundedCornerShape(4.dp))
+                                    .background(shimmerBrush)
+                            )
+                        } else {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = fullLegalBusinessName.preventBrokenLigatures(),
+                                    style = TextStyle(
+                                        fontFamily = ff,
+                                        fontSize = 14.sp,
+                                        fontWeight = FontWeight.Medium
+                                    ),
+                                    color = colors.textPrimary.copy(alpha = 0.5f),
+                                    maxLines = 2,
+                                    overflow = TextOverflow.Ellipsis,
+                                    modifier = Modifier.weight(1f, fill = false)
+                                )
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Icon(
+                                    imageVector = MaterialSymbols.Rounded.KeyboardArrowDown,
+                                    contentDescription = "Switch Company",
+                                    tint = colors.textPrimary.copy(alpha = 0.5f),
+                                    modifier = Modifier.size(16.dp)
+                                )
+                            }
+                        }
                     }
                 }
             }
@@ -167,7 +207,13 @@ fun GreetingPill(
             profiles = allProfiles,
             activeProfileId = activeProfile.id,
             onSelectProfile = { selectedId ->
-                NiruvanaTharavugalRepository.setActiveProfile(mode, selectedId)
+                if (selectedId != activeProfile.id) {
+                    if (onProfileChanging != null) {
+                        onProfileChanging(selectedId)
+                    } else {
+                        NiruvanaTharavugalRepository.setActiveProfile(mode, selectedId)
+                    }
+                }
             },
             onManageProfiles = onManageProfiles,
             onDismissRequest = { showCompanySheet = false },

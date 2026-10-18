@@ -12,6 +12,7 @@ import com.elvan.udukkai.core.mode.LocalAppMode
 import com.elvan.udukkai.core.utils.CurrencyUtils
 import com.elvan.udukkai.data.model.PattiyalTharavuru
 import com.elvan.udukkai.data.repository.PattiyalRepository
+import com.elvan.udukkai.data.settings.NiruvanaTharavugalRepository
 import com.elvan.udukkai.localization.K
 import com.elvan.udukkai.localization.tr
 import com.elvan.udukkai.theme.Dimens
@@ -23,6 +24,8 @@ import com.elvan.udukkai.ui.navigation.MaterialSymbols
 import com.elvan.udukkai.ui.screens.home.components.*
 import com.elvan.udukkai.ui.screens.create.components.CoolieInvoiceCard
 import com.elvan.udukkai.ui.screens.create.components.SilkInvoiceCard
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 /**
  * Pixel-perfect Bento-style Home Dashboard (Mugappu).
@@ -47,6 +50,10 @@ fun DashboardScreen(
     val mode = LocalAppMode.current
     val colors = rememberShellColors()
 
+    var isSwitchingCompany by remember { mutableStateOf(false) }
+    val scope = rememberCoroutineScope()
+    val showSkeleton = isRefreshing || isSwitchingCompany
+
     val recentBills = PattiyalRepository.recentInvoices
     val overallTotal = PattiyalRepository.overallTotal
     val activeCompanyInvoiceCount = PattiyalRepository.activeCompanyInvoices.size
@@ -67,10 +74,24 @@ fun DashboardScreen(
 
             // 1. Greeting Vanakkam Pill
             item(key = "vanakkam_pill") {
-                GreetingPill(colors = colors, onManageProfiles = onManageProfiles)
+                GreetingPill(
+                    colors = colors,
+                    isLoading = isSwitchingCompany,
+                    onProfileChanging = { newProfileId ->
+                        scope.launch {
+                            isSwitchingCompany = true
+                            scrollState.scrollToItem(0, 0)
+                            delay(120)
+                            NiruvanaTharavugalRepository.setActiveProfile(mode, newProfileId)
+                            delay(550)
+                            isSwitchingCompany = false
+                        }
+                    },
+                    onManageProfiles = onManageProfiles
+                )
             }
 
-            if (isRefreshing) {
+            if (showSkeleton) {
                 // Shimmer state when pull-down-to-refresh is active
                 item(key = "stats_shimmer") {
                     MugappuStatsSkeleton()
