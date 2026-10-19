@@ -7,14 +7,14 @@ import com.elvan.udukkai.core.backup.AutoBackupManager
 import com.elvan.udukkai.core.mode.AppMode
 
 /**
- * Reactive repository managing active and stored business profiles for both Kooli and Pattu modes.
+ * Reactive repository managing active and stored business profiles for both Factory and Textiles modes.
  * Strictly maintains Brick Wall decoupling:
- * - Kooli profile is isolated and backed by Kooli database space.
- * - Pattu profile is isolated and backed by Pattu database space.
+ * - Factory profile is isolated and backed by Factory database space.
+ * - Textiles profile is isolated and backed by Textiles database space.
  */
 object NiruvanaTharavugalRepository {
 
-    private var kooliProfileState by mutableStateOf(
+    private var factoryProfileState by mutableStateOf(
         NiruvanaTharavugal(
             id = 1L,
             mudhanMozhi = "ta",
@@ -62,7 +62,7 @@ object NiruvanaTharavugalRepository {
         )
     )
 
-    private var pattuProfileState by mutableStateOf(
+    private var textilesProfileState by mutableStateOf(
         NiruvanaTharavugal(
             id = 2L,
             mudhanMozhi = "ta",
@@ -123,8 +123,8 @@ object NiruvanaTharavugalRepository {
 
     const val MAX_PROFILES = 5
 
-    private var kooliProfilesState by mutableStateOf<List<NiruvanaTharavugal>>(emptyList())
-    private var pattuProfilesState by mutableStateOf<List<NiruvanaTharavugal>>(emptyList())
+    private var factoryProfilesState by mutableStateOf<List<NiruvanaTharavugal>>(emptyList())
+    private var textilesProfilesState by mutableStateOf<List<NiruvanaTharavugal>>(emptyList())
 
     init {
         refreshFromDatabase()
@@ -149,37 +149,37 @@ object NiruvanaTharavugalRepository {
             val helper = getSettingsDatabaseHelper()
             helper.scanAndSync()
 
-            val kooliProfiles = helper.loadAllProfiles(AppMode.KOOLI)
-            if (kooliProfiles.isNotEmpty()) {
-                kooliProfilesState = kooliProfiles
-                val savedId = getPersistedActiveId(AppMode.KOOLI)
-                val matching = if (savedId != null) kooliProfiles.find { it.id == savedId } else null
-                val target = matching ?: kooliProfiles.first()
-                kooliProfileState = target
+            val factoryProfiles = helper.loadAllProfiles(AppMode.FACTORY)
+            if (factoryProfiles.isNotEmpty()) {
+                factoryProfilesState = factoryProfiles
+                val savedId = getPersistedActiveId(AppMode.FACTORY)
+                val matching = if (savedId != null) factoryProfiles.find { it.id == savedId } else null
+                val target = matching ?: factoryProfiles.first()
+                factoryProfileState = target
                 if (savedId == null || matching == null) {
-                    target.id?.let { persistActiveId(AppMode.KOOLI, it) }
+                    target.id?.let { persistActiveId(AppMode.FACTORY, it) }
                 }
             } else {
-                helper.loadProfile(AppMode.KOOLI)?.let { kooliProfile ->
-                    kooliProfileState = kooliProfile
-                    kooliProfilesState = listOf(kooliProfile)
+                helper.loadProfile(AppMode.FACTORY)?.let { factoryProfile ->
+                    factoryProfileState = factoryProfile
+                    factoryProfilesState = listOf(factoryProfile)
                 }
             }
 
-            val pattuProfiles = helper.loadAllProfiles(AppMode.PATTU)
-            if (pattuProfiles.isNotEmpty()) {
-                pattuProfilesState = pattuProfiles
-                val savedId = getPersistedActiveId(AppMode.PATTU)
-                val matching = if (savedId != null) pattuProfiles.find { it.id == savedId } else null
-                val target = matching ?: pattuProfiles.first()
-                pattuProfileState = target
+            val textilesProfiles = helper.loadAllProfiles(AppMode.TEXTILES)
+            if (textilesProfiles.isNotEmpty()) {
+                textilesProfilesState = textilesProfiles
+                val savedId = getPersistedActiveId(AppMode.TEXTILES)
+                val matching = if (savedId != null) textilesProfiles.find { it.id == savedId } else null
+                val target = matching ?: textilesProfiles.first()
+                textilesProfileState = target
                 if (savedId == null || matching == null) {
-                    target.id?.let { persistActiveId(AppMode.PATTU, it) }
+                    target.id?.let { persistActiveId(AppMode.TEXTILES, it) }
                 }
             } else {
-                helper.loadProfile(AppMode.PATTU)?.let { pattuProfile ->
-                    pattuProfileState = pattuProfile
-                    pattuProfilesState = listOf(pattuProfile)
+                helper.loadProfile(AppMode.TEXTILES)?.let { textilesProfile ->
+                    textilesProfileState = textilesProfile
+                    textilesProfilesState = listOf(textilesProfile)
                 }
             }
         } catch (_: Exception) {}
@@ -187,15 +187,15 @@ object NiruvanaTharavugalRepository {
 
     fun getAllProfiles(mode: AppMode): List<NiruvanaTharavugal> {
         return when (mode) {
-            AppMode.KOOLI -> if (kooliProfilesState.isNotEmpty()) kooliProfilesState else listOf(kooliProfileState)
-            AppMode.PATTU -> if (pattuProfilesState.isNotEmpty()) pattuProfilesState else listOf(pattuProfileState)
+            AppMode.FACTORY -> if (factoryProfilesState.isNotEmpty()) factoryProfilesState else listOf(factoryProfileState)
+            AppMode.TEXTILES -> if (textilesProfilesState.isNotEmpty()) textilesProfilesState else listOf(textilesProfileState)
         }
     }
 
     fun getProfile(mode: AppMode): NiruvanaTharavugal {
         return when (mode) {
-            AppMode.KOOLI -> kooliProfileState
-            AppMode.PATTU -> pattuProfileState
+            AppMode.FACTORY -> factoryProfileState
+            AppMode.TEXTILES -> textilesProfileState
         }
     }
 
@@ -203,8 +203,8 @@ object NiruvanaTharavugalRepository {
         val profiles = getAllProfiles(mode)
         val selected = profiles.find { it.id == id } ?: return
         when (mode) {
-            AppMode.KOOLI -> kooliProfileState = selected
-            AppMode.PATTU -> pattuProfileState = selected
+            AppMode.FACTORY -> factoryProfileState = selected
+            AppMode.TEXTILES -> textilesProfileState = selected
         }
         persistActiveId(mode, id)
     }
@@ -238,8 +238,8 @@ object NiruvanaTharavugalRepository {
             refreshFromDatabase()
             val remaining = getAllProfiles(mode)
             val currentActiveId = when (mode) {
-                AppMode.KOOLI -> kooliProfileState.id
-                AppMode.PATTU -> pattuProfileState.id
+                AppMode.FACTORY -> factoryProfileState.id
+                AppMode.TEXTILES -> textilesProfileState.id
             }
             if (currentActiveId == id && remaining.isNotEmpty()) {
                 val newActive = remaining.first()
@@ -253,16 +253,16 @@ object NiruvanaTharavugalRepository {
     fun updateProfile(mode: AppMode, profile: NiruvanaTharavugal) {
         val updated = profile.copy()
         when (mode) {
-            AppMode.KOOLI -> {
-                kooliProfileState = updated
-                kooliProfilesState = if (kooliProfilesState.isNotEmpty()) {
-                    kooliProfilesState.map { if (it.id == updated.id) updated else it }
+            AppMode.FACTORY -> {
+                factoryProfileState = updated
+                factoryProfilesState = if (factoryProfilesState.isNotEmpty()) {
+                    factoryProfilesState.map { if (it.id == updated.id) updated else it }
                 } else listOf(updated)
             }
-            AppMode.PATTU -> {
-                pattuProfileState = updated
-                pattuProfilesState = if (pattuProfilesState.isNotEmpty()) {
-                    pattuProfilesState.map { if (it.id == updated.id) updated else it }
+            AppMode.TEXTILES -> {
+                textilesProfileState = updated
+                textilesProfilesState = if (textilesProfilesState.isNotEmpty()) {
+                    textilesProfilesState.map { if (it.id == updated.id) updated else it }
                 } else listOf(updated)
             }
         }
@@ -283,8 +283,8 @@ object NiruvanaTharavugalRepository {
         val success = helper.clearProfiles(mode)
         if (success) {
             when (mode) {
-                AppMode.KOOLI -> kooliProfilesState = emptyList()
-                AppMode.PATTU -> pattuProfilesState = emptyList()
+                AppMode.FACTORY -> factoryProfilesState = emptyList()
+                AppMode.TEXTILES -> textilesProfilesState = emptyList()
             }
             refreshFromDatabase()
         }

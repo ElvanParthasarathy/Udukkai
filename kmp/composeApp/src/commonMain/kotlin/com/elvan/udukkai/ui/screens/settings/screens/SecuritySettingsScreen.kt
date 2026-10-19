@@ -241,7 +241,7 @@ fun SecuritySettingsScreen(
                             // 2. Wipe SQLite business tables & company profile tables for all modes
                             val bizHelper = getBusinessDatabaseHelper()
                             val settingsHelper = getSettingsDatabaseHelper()
-                            for (m in listOf(AppMode.KOOLI, AppMode.PATTU)) {
+                            for (m in listOf(AppMode.FACTORY, AppMode.TEXTILES)) {
                                 try { bizHelper.clearAllData(m) } catch (_: Exception) {}
                                 try { settingsHelper.clearProfiles(m) } catch (_: Exception) {}
                             }

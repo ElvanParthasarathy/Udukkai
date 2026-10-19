@@ -18,8 +18,26 @@ import java.io.File
 class AndroidBusinessDatabaseHelper : BusinessDatabaseHelper {
 
     private val tag = "BusinessDbHelper"
-    private val coolieDbName = "udukkai_kooli.db"
-    private val silkDbName = "udukkai_pattu.db"
+    private val factoryDbName = "udukkai_factory.db"
+    private val textilesDbName = "udukkai_textiles.db"
+
+    private fun getDbName(mode: AppMode): String =
+        if (mode == AppMode.FACTORY) factoryDbName else textilesDbName
+
+    private fun getVaangunarTable(mode: AppMode): String =
+        if (mode == AppMode.FACTORY) "factory_vaangunar_table" else "textiles_vaangunar_table"
+
+    private fun getPorulTable(mode: AppMode): String =
+        if (mode == AppMode.FACTORY) "factory_porul_table" else "textiles_porul_table"
+
+    private fun getPattiyalTable(mode: AppMode): String =
+        if (mode == AppMode.FACTORY) "factory_pattiyal_table" else "textiles_pattiyal_table"
+
+    private fun getPatrugalTable(mode: AppMode): String =
+        if (mode == AppMode.FACTORY) "factory_patrugal_table" else "textiles_patrugal_table"
+
+    private fun getJunctionTable(mode: AppMode): String =
+        if (mode == AppMode.FACTORY) "factory_patru_pattiyal_table" else "textiles_patru_pattiyal_table"
 
     private fun resolveActiveDatabase(dbName: String): File? {
         if (!AppContext.isInitialized) {
@@ -28,15 +46,68 @@ class AndroidBusinessDatabaseHelper : BusinessDatabaseHelper {
         }
         val localDb = AppContext.context.getDatabasePath(dbName)
         localDb.parentFile?.mkdirs()
+
+        // ── Auto-migration: if target doesn't exist, check for legacy DB ──
+        if (!localDb.exists()) {
+            val legacyName = if (dbName == factoryDbName) "udukkai_kooli.db" else if (dbName == textilesDbName) "udukkai_pattu.db" else null
+            if (legacyName != null) {
+                val legacyFile = AppContext.context.getDatabasePath(legacyName)
+                if (legacyFile.exists()) {
+                    try {
+                        Log.i(tag, "Auto-migrating legacy DB $legacyName -> $dbName")
+                        legacyFile.copyTo(localDb, overwrite = true)
+                        val legacyWal = File(legacyFile.path + "-wal")
+                        if (legacyWal.exists()) legacyWal.copyTo(File(localDb.path + "-wal"), overwrite = true)
+                        val legacyShm = File(legacyFile.path + "-shm")
+                        if (legacyShm.exists()) legacyShm.copyTo(File(localDb.path + "-shm"), overwrite = true)
+                    } catch (e: Exception) {
+                        Log.e(tag, "Failed to copy legacy DB $legacyName: ${e.message}")
+                    }
+                }
+            }
+        }
         return localDb
     }
 
+    private fun renameTableIfExists(db: SQLiteDatabase, oldName: String, newName: String) {
+        try {
+            val curOld = db.rawQuery("SELECT name FROM sqlite_master WHERE type='table' AND name=?", arrayOf(oldName))
+            val oldExists = curOld.moveToFirst()
+            curOld.close()
+            if (oldExists) {
+                val curNew = db.rawQuery("SELECT name FROM sqlite_master WHERE type='table' AND name=?", arrayOf(newName))
+                val newExists = curNew.moveToFirst()
+                curNew.close()
+                if (!newExists) {
+                    Log.i(tag, "Renaming legacy table $oldName to $newName")
+                    db.execSQL("ALTER TABLE \"$oldName\" RENAME TO \"$newName\"")
+                }
+            }
+        } catch (e: Exception) {
+            Log.e(tag, "Table rename $oldName -> $newName error: ${e.message}")
+        }
+    }
+
     private fun ensureTables(db: SQLiteDatabase, mode: AppMode) {
-        val vaangunarTable = if (mode == AppMode.KOOLI) "kooli_vaangunar_table" else "pattu_vaangunar_table"
-        val porulTable = if (mode == AppMode.KOOLI) "kooli_porul_table" else "pattu_porul_table"
-        val pattiyalTable = if (mode == AppMode.KOOLI) "kooli_pattiyal_table" else "pattu_pattiyal_table"
-        val patrugalTable = if (mode == AppMode.KOOLI) "kooli_patrugal_table" else "pattu_patrugal_table"
-        val junctionTable = if (mode == AppMode.KOOLI) "kooli_patru_pattiyal_table" else "pattu_patru_pattiyal_table"
+        if (mode == AppMode.FACTORY) {
+            renameTableIfExists(db, "kooli_vaangunar_table", "factory_vaangunar_table")
+            renameTableIfExists(db, "kooli_porul_table", "factory_porul_table")
+            renameTableIfExists(db, "kooli_pattiyal_table", "factory_pattiyal_table")
+            renameTableIfExists(db, "kooli_patrugal_table", "factory_patrugal_table")
+            renameTableIfExists(db, "kooli_patru_pattiyal_table", "factory_patru_pattiyal_table")
+        } else {
+            renameTableIfExists(db, "pattu_vaangunar_table", "textiles_vaangunar_table")
+            renameTableIfExists(db, "pattu_porul_table", "textiles_porul_table")
+            renameTableIfExists(db, "pattu_pattiyal_table", "textiles_pattiyal_table")
+            renameTableIfExists(db, "pattu_patrugal_table", "textiles_patrugal_table")
+            renameTableIfExists(db, "pattu_patru_pattiyal_table", "textiles_patru_pattiyal_table")
+        }
+
+        val vaangunarTable = getVaangunarTable(mode)
+        val porulTable = getPorulTable(mode)
+        val pattiyalTable = getPattiyalTable(mode)
+        val patrugalTable = getPatrugalTable(mode)
+        val junctionTable = getJunctionTable(mode)
 
         val createVaangunarSql = """
             CREATE TABLE IF NOT EXISTS "$vaangunarTable" (
@@ -192,8 +263,8 @@ class AndroidBusinessDatabaseHelper : BusinessDatabaseHelper {
     }
 
     override fun loadAllMerchants(mode: AppMode): List<VaangunarTharavuru> {
-        val dbName = if (mode == AppMode.KOOLI) coolieDbName else silkDbName
-        val tableName = if (mode == AppMode.KOOLI) "kooli_vaangunar_table" else "pattu_vaangunar_table"
+        val dbName = getDbName(mode)
+        val tableName = getVaangunarTable(mode)
         val dbFile = resolveActiveDatabase(dbName) ?: return emptyList()
 
         val list = mutableListOf<VaangunarTharavuru>()
@@ -217,8 +288,8 @@ class AndroidBusinessDatabaseHelper : BusinessDatabaseHelper {
     }
 
     override fun saveMerchant(mode: AppMode, merchant: VaangunarTharavuru): Long {
-        val dbName = if (mode == AppMode.KOOLI) coolieDbName else silkDbName
-        val tableName = if (mode == AppMode.KOOLI) "kooli_vaangunar_table" else "pattu_vaangunar_table"
+        val dbName = getDbName(mode)
+        val tableName = getVaangunarTable(mode)
         val dbFile = resolveActiveDatabase(dbName) ?: return -1L
 
         var db: SQLiteDatabase? = null
@@ -276,8 +347,8 @@ class AndroidBusinessDatabaseHelper : BusinessDatabaseHelper {
     }
 
     override fun deleteMerchant(mode: AppMode, id: Long): Boolean {
-        val dbName = if (mode == AppMode.KOOLI) coolieDbName else silkDbName
-        val tableName = if (mode == AppMode.KOOLI) "kooli_vaangunar_table" else "pattu_vaangunar_table"
+        val dbName = getDbName(mode)
+        val tableName = getVaangunarTable(mode)
         val dbFile = resolveActiveDatabase(dbName) ?: return false
 
         var db: SQLiteDatabase? = null
@@ -302,8 +373,8 @@ class AndroidBusinessDatabaseHelper : BusinessDatabaseHelper {
     }
 
     override fun loadDeletedMerchants(mode: AppMode): List<VaangunarTharavuru> {
-        val dbName = if (mode == AppMode.KOOLI) coolieDbName else silkDbName
-        val tableName = if (mode == AppMode.KOOLI) "kooli_vaangunar_table" else "pattu_vaangunar_table"
+        val dbName = getDbName(mode)
+        val tableName = getVaangunarTable(mode)
         val dbFile = resolveActiveDatabase(dbName) ?: return emptyList()
 
         val list = mutableListOf<VaangunarTharavuru>()
@@ -327,8 +398,8 @@ class AndroidBusinessDatabaseHelper : BusinessDatabaseHelper {
     }
 
     override fun restoreMerchant(mode: AppMode, id: Long): Boolean {
-        val dbName = if (mode == AppMode.KOOLI) coolieDbName else silkDbName
-        val tableName = if (mode == AppMode.KOOLI) "kooli_vaangunar_table" else "pattu_vaangunar_table"
+        val dbName = getDbName(mode)
+        val tableName = getVaangunarTable(mode)
         val dbFile = resolveActiveDatabase(dbName) ?: return false
 
         var db: SQLiteDatabase? = null
@@ -351,8 +422,8 @@ class AndroidBusinessDatabaseHelper : BusinessDatabaseHelper {
     }
 
     override fun permanentDeleteMerchant(mode: AppMode, id: Long): Boolean {
-        val dbName = if (mode == AppMode.KOOLI) coolieDbName else silkDbName
-        val tableName = if (mode == AppMode.KOOLI) "kooli_vaangunar_table" else "pattu_vaangunar_table"
+        val dbName = getDbName(mode)
+        val tableName = getVaangunarTable(mode)
         val dbFile = resolveActiveDatabase(dbName) ?: return false
 
         var db: SQLiteDatabase? = null
@@ -370,8 +441,8 @@ class AndroidBusinessDatabaseHelper : BusinessDatabaseHelper {
     }
 
     override fun purgeExpiredMerchants(mode: AppMode, days: Int): Int {
-        val dbName = if (mode == AppMode.KOOLI) coolieDbName else silkDbName
-        val tableName = if (mode == AppMode.KOOLI) "kooli_vaangunar_table" else "pattu_vaangunar_table"
+        val dbName = getDbName(mode)
+        val tableName = getVaangunarTable(mode)
         val dbFile = resolveActiveDatabase(dbName) ?: return 0
 
         var db: SQLiteDatabase? = null
@@ -389,8 +460,8 @@ class AndroidBusinessDatabaseHelper : BusinessDatabaseHelper {
     }
 
     override fun loadAllItems(mode: AppMode): List<PorulTharavuru> {
-        val dbName = if (mode == AppMode.KOOLI) coolieDbName else silkDbName
-        val tableName = if (mode == AppMode.KOOLI) "kooli_porul_table" else "pattu_porul_table"
+        val dbName = getDbName(mode)
+        val tableName = getPorulTable(mode)
         val dbFile = resolveActiveDatabase(dbName) ?: return emptyList()
 
         val list = mutableListOf<PorulTharavuru>()
@@ -414,8 +485,8 @@ class AndroidBusinessDatabaseHelper : BusinessDatabaseHelper {
     }
 
     override fun saveItem(mode: AppMode, item: PorulTharavuru): Long {
-        val dbName = if (mode == AppMode.KOOLI) coolieDbName else silkDbName
-        val tableName = if (mode == AppMode.KOOLI) "kooli_porul_table" else "pattu_porul_table"
+        val dbName = getDbName(mode)
+        val tableName = getPorulTable(mode)
         val dbFile = resolveActiveDatabase(dbName) ?: return -1L
 
         var db: SQLiteDatabase? = null
@@ -470,8 +541,8 @@ class AndroidBusinessDatabaseHelper : BusinessDatabaseHelper {
     }
 
     override fun deleteItem(mode: AppMode, id: Long): Boolean {
-        val dbName = if (mode == AppMode.KOOLI) coolieDbName else silkDbName
-        val tableName = if (mode == AppMode.KOOLI) "kooli_porul_table" else "pattu_porul_table"
+        val dbName = getDbName(mode)
+        val tableName = getPorulTable(mode)
         val dbFile = resolveActiveDatabase(dbName) ?: return false
 
         var db: SQLiteDatabase? = null
@@ -496,8 +567,8 @@ class AndroidBusinessDatabaseHelper : BusinessDatabaseHelper {
     }
 
     override fun loadDeletedItems(mode: AppMode): List<PorulTharavuru> {
-        val dbName = if (mode == AppMode.KOOLI) coolieDbName else silkDbName
-        val tableName = if (mode == AppMode.KOOLI) "kooli_porul_table" else "pattu_porul_table"
+        val dbName = getDbName(mode)
+        val tableName = getPorulTable(mode)
         val dbFile = resolveActiveDatabase(dbName) ?: return emptyList()
 
         val list = mutableListOf<PorulTharavuru>()
@@ -521,8 +592,8 @@ class AndroidBusinessDatabaseHelper : BusinessDatabaseHelper {
     }
 
     override fun restoreItem(mode: AppMode, id: Long): Boolean {
-        val dbName = if (mode == AppMode.KOOLI) coolieDbName else silkDbName
-        val tableName = if (mode == AppMode.KOOLI) "kooli_porul_table" else "pattu_porul_table"
+        val dbName = getDbName(mode)
+        val tableName = getPorulTable(mode)
         val dbFile = resolveActiveDatabase(dbName) ?: return false
 
         var db: SQLiteDatabase? = null
@@ -545,8 +616,8 @@ class AndroidBusinessDatabaseHelper : BusinessDatabaseHelper {
     }
 
     override fun permanentDeleteItem(mode: AppMode, id: Long): Boolean {
-        val dbName = if (mode == AppMode.KOOLI) coolieDbName else silkDbName
-        val tableName = if (mode == AppMode.KOOLI) "kooli_porul_table" else "pattu_porul_table"
+        val dbName = getDbName(mode)
+        val tableName = getPorulTable(mode)
         val dbFile = resolveActiveDatabase(dbName) ?: return false
 
         var db: SQLiteDatabase? = null
@@ -564,8 +635,8 @@ class AndroidBusinessDatabaseHelper : BusinessDatabaseHelper {
     }
 
     override fun purgeExpiredItems(mode: AppMode, days: Int): Int {
-        val dbName = if (mode == AppMode.KOOLI) coolieDbName else silkDbName
-        val tableName = if (mode == AppMode.KOOLI) "kooli_porul_table" else "pattu_porul_table"
+        val dbName = getDbName(mode)
+        val tableName = getPorulTable(mode)
         val dbFile = resolveActiveDatabase(dbName) ?: return 0
 
         var db: SQLiteDatabase? = null
@@ -583,8 +654,8 @@ class AndroidBusinessDatabaseHelper : BusinessDatabaseHelper {
     }
 
     override fun loadAllInvoices(mode: AppMode): List<PattiyalTharavuru> {
-        val dbName = if (mode == AppMode.KOOLI) coolieDbName else silkDbName
-        val tableName = if (mode == AppMode.KOOLI) "kooli_pattiyal_table" else "pattu_pattiyal_table"
+        val dbName = getDbName(mode)
+        val tableName = getPattiyalTable(mode)
         val dbFile = resolveActiveDatabase(dbName) ?: return emptyList()
 
         val list = mutableListOf<PattiyalTharavuru>()
@@ -608,8 +679,8 @@ class AndroidBusinessDatabaseHelper : BusinessDatabaseHelper {
     }
 
     override fun saveInvoice(mode: AppMode, invoice: PattiyalTharavuru): Long {
-        val dbName = if (mode == AppMode.KOOLI) coolieDbName else silkDbName
-        val tableName = if (mode == AppMode.KOOLI) "kooli_pattiyal_table" else "pattu_pattiyal_table"
+        val dbName = getDbName(mode)
+        val tableName = getPattiyalTable(mode)
         val dbFile = resolveActiveDatabase(dbName) ?: return -1L
 
         var db: SQLiteDatabase? = null
@@ -685,8 +756,8 @@ class AndroidBusinessDatabaseHelper : BusinessDatabaseHelper {
     }
 
     override fun deleteInvoice(mode: AppMode, id: Long): Boolean {
-        val dbName = if (mode == AppMode.KOOLI) coolieDbName else silkDbName
-        val tableName = if (mode == AppMode.KOOLI) "kooli_pattiyal_table" else "pattu_pattiyal_table"
+        val dbName = getDbName(mode)
+        val tableName = getPattiyalTable(mode)
         val dbFile = resolveActiveDatabase(dbName) ?: return false
 
         var db: SQLiteDatabase? = null
@@ -711,8 +782,8 @@ class AndroidBusinessDatabaseHelper : BusinessDatabaseHelper {
     }
 
     override fun loadDeletedInvoices(mode: AppMode): List<PattiyalTharavuru> {
-        val dbName = if (mode == AppMode.KOOLI) coolieDbName else silkDbName
-        val tableName = if (mode == AppMode.KOOLI) "kooli_pattiyal_table" else "pattu_pattiyal_table"
+        val dbName = getDbName(mode)
+        val tableName = getPattiyalTable(mode)
         val dbFile = resolveActiveDatabase(dbName) ?: return emptyList()
 
         var db: SQLiteDatabase? = null
@@ -735,8 +806,8 @@ class AndroidBusinessDatabaseHelper : BusinessDatabaseHelper {
     }
 
     override fun restoreInvoice(mode: AppMode, id: Long): Boolean {
-        val dbName = if (mode == AppMode.KOOLI) coolieDbName else silkDbName
-        val tableName = if (mode == AppMode.KOOLI) "kooli_pattiyal_table" else "pattu_pattiyal_table"
+        val dbName = getDbName(mode)
+        val tableName = getPattiyalTable(mode)
         val dbFile = resolveActiveDatabase(dbName) ?: return false
 
         var db: SQLiteDatabase? = null
@@ -760,9 +831,9 @@ class AndroidBusinessDatabaseHelper : BusinessDatabaseHelper {
     }
 
     override fun permanentDeleteInvoice(mode: AppMode, id: Long): Boolean {
-        val dbName = if (mode == AppMode.KOOLI) coolieDbName else silkDbName
-        val tableName = if (mode == AppMode.KOOLI) "kooli_pattiyal_table" else "pattu_pattiyal_table"
-        val junctionTable = if (mode == AppMode.KOOLI) "kooli_patru_pattiyal_table" else "pattu_patru_pattiyal_table"
+        val dbName = getDbName(mode)
+        val tableName = getPattiyalTable(mode)
+        val junctionTable = getJunctionTable(mode)
         val dbFile = resolveActiveDatabase(dbName) ?: return false
 
         var db: SQLiteDatabase? = null
@@ -787,9 +858,9 @@ class AndroidBusinessDatabaseHelper : BusinessDatabaseHelper {
     }
 
     override fun purgeExpiredInvoices(mode: AppMode, days: Int): Int {
-        val dbName = if (mode == AppMode.KOOLI) coolieDbName else silkDbName
-        val tableName = if (mode == AppMode.KOOLI) "kooli_pattiyal_table" else "pattu_pattiyal_table"
-        val junctionTable = if (mode == AppMode.KOOLI) "kooli_patru_pattiyal_table" else "pattu_patru_pattiyal_table"
+        val dbName = getDbName(mode)
+        val tableName = getPattiyalTable(mode)
+        val junctionTable = getJunctionTable(mode)
         val dbFile = resolveActiveDatabase(dbName) ?: return 0
 
         var db: SQLiteDatabase? = null
@@ -815,8 +886,8 @@ class AndroidBusinessDatabaseHelper : BusinessDatabaseHelper {
     }
 
     override fun loadAllReceipts(mode: AppMode): List<PatrugalTharavuru> {
-        val dbName = if (mode == AppMode.KOOLI) coolieDbName else silkDbName
-        val tableName = if (mode == AppMode.KOOLI) "kooli_patrugal_table" else "pattu_patrugal_table"
+        val dbName = getDbName(mode)
+        val tableName = getPatrugalTable(mode)
         val dbFile = resolveActiveDatabase(dbName) ?: return emptyList()
 
         val list = mutableListOf<PatrugalTharavuru>()
@@ -840,8 +911,8 @@ class AndroidBusinessDatabaseHelper : BusinessDatabaseHelper {
     }
 
     override fun saveReceipt(mode: AppMode, receipt: PatrugalTharavuru): Long {
-        val dbName = if (mode == AppMode.KOOLI) coolieDbName else silkDbName
-        val tableName = if (mode == AppMode.KOOLI) "kooli_patrugal_table" else "pattu_patrugal_table"
+        val dbName = getDbName(mode)
+        val tableName = getPatrugalTable(mode)
         val dbFile = resolveActiveDatabase(dbName) ?: return -1L
 
         var db: SQLiteDatabase? = null
@@ -902,8 +973,8 @@ class AndroidBusinessDatabaseHelper : BusinessDatabaseHelper {
     }
 
     override fun deleteReceipt(mode: AppMode, id: Long): Boolean {
-        val dbName = if (mode == AppMode.KOOLI) coolieDbName else silkDbName
-        val tableName = if (mode == AppMode.KOOLI) "kooli_patrugal_table" else "pattu_patrugal_table"
+        val dbName = getDbName(mode)
+        val tableName = getPatrugalTable(mode)
         val dbFile = resolveActiveDatabase(dbName) ?: return false
 
         var db: SQLiteDatabase? = null
@@ -928,8 +999,8 @@ class AndroidBusinessDatabaseHelper : BusinessDatabaseHelper {
     }
 
     override fun loadDeletedReceipts(mode: AppMode): List<PatrugalTharavuru> {
-        val dbName = if (mode == AppMode.KOOLI) coolieDbName else silkDbName
-        val tableName = if (mode == AppMode.KOOLI) "kooli_patrugal_table" else "pattu_patrugal_table"
+        val dbName = getDbName(mode)
+        val tableName = getPatrugalTable(mode)
         val dbFile = resolveActiveDatabase(dbName) ?: return emptyList()
 
         var db: SQLiteDatabase? = null
@@ -952,8 +1023,8 @@ class AndroidBusinessDatabaseHelper : BusinessDatabaseHelper {
     }
 
     override fun restoreReceipt(mode: AppMode, id: Long): Boolean {
-        val dbName = if (mode == AppMode.KOOLI) coolieDbName else silkDbName
-        val tableName = if (mode == AppMode.KOOLI) "kooli_patrugal_table" else "pattu_patrugal_table"
+        val dbName = getDbName(mode)
+        val tableName = getPatrugalTable(mode)
         val dbFile = resolveActiveDatabase(dbName) ?: return false
 
         var db: SQLiteDatabase? = null
@@ -977,9 +1048,9 @@ class AndroidBusinessDatabaseHelper : BusinessDatabaseHelper {
     }
 
     override fun permanentDeleteReceipt(mode: AppMode, id: Long): Boolean {
-        val dbName = if (mode == AppMode.KOOLI) coolieDbName else silkDbName
-        val tableName = if (mode == AppMode.KOOLI) "kooli_patrugal_table" else "pattu_patrugal_table"
-        val junctionTable = if (mode == AppMode.KOOLI) "kooli_patru_pattiyal_table" else "pattu_patru_pattiyal_table"
+        val dbName = getDbName(mode)
+        val tableName = getPatrugalTable(mode)
+        val junctionTable = getJunctionTable(mode)
         val dbFile = resolveActiveDatabase(dbName) ?: return false
 
         var db: SQLiteDatabase? = null
@@ -1004,9 +1075,9 @@ class AndroidBusinessDatabaseHelper : BusinessDatabaseHelper {
     }
 
     override fun purgeExpiredReceipts(mode: AppMode, days: Int): Int {
-        val dbName = if (mode == AppMode.KOOLI) coolieDbName else silkDbName
-        val tableName = if (mode == AppMode.KOOLI) "kooli_patrugal_table" else "pattu_patrugal_table"
-        val junctionTable = if (mode == AppMode.KOOLI) "kooli_patru_pattiyal_table" else "pattu_patru_pattiyal_table"
+        val dbName = getDbName(mode)
+        val tableName = getPatrugalTable(mode)
+        val junctionTable = getJunctionTable(mode)
         val dbFile = resolveActiveDatabase(dbName) ?: return 0
 
         var db: SQLiteDatabase? = null
@@ -1032,8 +1103,8 @@ class AndroidBusinessDatabaseHelper : BusinessDatabaseHelper {
     }
 
     override fun getLinksForPatru(mode: AppMode, patruId: Long): List<PatruPattiyalInaippuTharavuru> {
-        val dbName = if (mode == AppMode.KOOLI) coolieDbName else silkDbName
-        val junctionTable = if (mode == AppMode.KOOLI) "kooli_patru_pattiyal_table" else "pattu_patru_pattiyal_table"
+        val dbName = getDbName(mode)
+        val junctionTable = getJunctionTable(mode)
         val dbFile = resolveActiveDatabase(dbName) ?: return emptyList()
 
         var db: SQLiteDatabase? = null
@@ -1063,8 +1134,8 @@ class AndroidBusinessDatabaseHelper : BusinessDatabaseHelper {
     }
 
     override fun saveReceiptWithLinks(mode: AppMode, receipt: PatrugalTharavuru, links: List<PatruPattiyalInaippuTharavuru>): Long {
-        val dbName = if (mode == AppMode.KOOLI) coolieDbName else silkDbName
-        val junctionTable = if (mode == AppMode.KOOLI) "kooli_patru_pattiyal_table" else "pattu_patru_pattiyal_table"
+        val dbName = getDbName(mode)
+        val junctionTable = getJunctionTable(mode)
         val dbFile = resolveActiveDatabase(dbName) ?: return -1L
 
         val receiptId = saveReceipt(mode, receipt)
@@ -1099,9 +1170,9 @@ class AndroidBusinessDatabaseHelper : BusinessDatabaseHelper {
     }
 
     override fun getPaidAmountForInvoice(mode: AppMode, invoiceId: Long): Double {
-        val dbName = if (mode == AppMode.KOOLI) coolieDbName else silkDbName
-        val patrugalTable = if (mode == AppMode.KOOLI) "kooli_patrugal_table" else "pattu_patrugal_table"
-        val junctionTable = if (mode == AppMode.KOOLI) "kooli_patru_pattiyal_table" else "pattu_patru_pattiyal_table"
+        val dbName = getDbName(mode)
+        val patrugalTable = getPatrugalTable(mode)
+        val junctionTable = getJunctionTable(mode)
         val dbFile = resolveActiveDatabase(dbName) ?: return 0.0
 
         var db: SQLiteDatabase? = null
@@ -1129,9 +1200,9 @@ class AndroidBusinessDatabaseHelper : BusinessDatabaseHelper {
 
     override fun getPaidAmountsForInvoices(mode: AppMode, invoiceIds: List<Long>): Map<Long, Double> {
         if (invoiceIds.isEmpty()) return emptyMap()
-        val dbName = if (mode == AppMode.KOOLI) coolieDbName else silkDbName
-        val patrugalTable = if (mode == AppMode.KOOLI) "kooli_patrugal_table" else "pattu_patrugal_table"
-        val junctionTable = if (mode == AppMode.KOOLI) "kooli_patru_pattiyal_table" else "pattu_patru_pattiyal_table"
+        val dbName = getDbName(mode)
+        val patrugalTable = getPatrugalTable(mode)
+        val junctionTable = getJunctionTable(mode)
         val dbFile = resolveActiveDatabase(dbName) ?: return emptyMap()
 
         val map = mutableMapOf<Long, Double>()
@@ -1378,12 +1449,12 @@ class AndroidBusinessDatabaseHelper : BusinessDatabaseHelper {
     }
 
     override fun clearAllData(mode: AppMode): Boolean {
-        val dbFile = resolveActiveDatabase(if (mode == AppMode.KOOLI) coolieDbName else silkDbName) ?: return false
-        val vaangunarTable = if (mode == AppMode.KOOLI) "kooli_vaangunar_table" else "pattu_vaangunar_table"
-        val porulTable = if (mode == AppMode.KOOLI) "kooli_porul_table" else "pattu_porul_table"
-        val pattiyalTable = if (mode == AppMode.KOOLI) "kooli_pattiyal_table" else "pattu_pattiyal_table"
-        val patrugalTable = if (mode == AppMode.KOOLI) "kooli_patrugal_table" else "pattu_patrugal_table"
-        val junctionTable = if (mode == AppMode.KOOLI) "kooli_patru_pattiyal_table" else "pattu_patru_pattiyal_table"
+        val dbFile = resolveActiveDatabase(getDbName(mode)) ?: return false
+        val vaangunarTable = getVaangunarTable(mode)
+        val porulTable = getPorulTable(mode)
+        val pattiyalTable = getPattiyalTable(mode)
+        val patrugalTable = getPatrugalTable(mode)
+        val junctionTable = getJunctionTable(mode)
 
         return try {
             val db = SQLiteDatabase.openOrCreateDatabase(dbFile, null)

@@ -205,8 +205,8 @@ fun CustomerScreen(
                         onItemLongClick?.invoke(merchant.id)
                     }
 
-                    if (mode == AppMode.KOOLI) {
-                        CoolieCustomerCard(
+                    if (mode == AppMode.FACTORY) {
+                        FactoryCustomerCard(
                             index = index,
                             merchant = merchant,
                             onClick = onCardClick,
@@ -216,7 +216,7 @@ fun CustomerScreen(
                             isSelected = isSelected
                         )
                     } else {
-                        SilkCustomerCard(
+                        TextilesCustomerCard(
                             index = index,
                             merchant = merchant,
                             onClick = onCardClick,
@@ -255,11 +255,11 @@ fun CustomerScreen(
 
 
 /**
- * Coolie customer card: 28dp index badge, name, secondary name, town/city.
+ * Factory customer card: 28dp index badge, name, secondary name, town/city.
  * Exact 1:1 port of React's CoolieMerchants.tsx with unified Pattiyalgal selection badge.
  */
 @Composable
-internal fun CoolieCustomerCard(
+internal fun FactoryCustomerCard(
     index: Int,
     merchant: VaangunarTharavuru,
     onClick: () -> Unit,
@@ -271,7 +271,7 @@ internal fun CoolieCustomerCard(
     val ff = LocalAppFontFamily.current
     val isDark = colors.isDark
 
-    val profile = NiruvanaTharavugalRepository.getProfile(AppMode.KOOLI)
+    val profile = NiruvanaTharavugalRepository.getProfile(AppMode.FACTORY)
     val isBilingual = profile.iruMozhi
     val primaryLang = profile.mudhanMozhi.ifEmpty { "ta" }
     val secondaryLang = profile.thunaiMozhi.ifEmpty { "en" }
@@ -392,12 +392,12 @@ internal fun CoolieCustomerCard(
 }
 
 /**
- * Silk customer card: 28dp index badge, name, secondary name (if bilingual),
+ * Textiles customer card: 28dp index badge, name, secondary name (if bilingual),
  * inline town/city with bullet separator (`Primary • Secondary`), and GSTIN.
  * Exact 1:1 port of React's Vanigargal.tsx with unified Pattiyalgal selection badge.
  */
 @Composable
-internal fun SilkCustomerCard(
+internal fun TextilesCustomerCard(
     index: Int,
     merchant: VaangunarTharavuru,
     onClick: () -> Unit,
@@ -409,7 +409,7 @@ internal fun SilkCustomerCard(
     val ff = LocalAppFontFamily.current
     val isDark = colors.isDark
 
-    val profile = NiruvanaTharavugalRepository.getProfile(AppMode.PATTU)
+    val profile = NiruvanaTharavugalRepository.getProfile(AppMode.TEXTILES)
     val isBilingual = profile.iruMozhi
     val primaryLang = profile.mudhanMozhi.ifEmpty { "ta" }
     val secondaryLang = profile.thunaiMozhi.ifEmpty { "en" }
@@ -541,3 +541,27 @@ internal fun SilkCustomerCard(
         }
     }
 }
+
+@Deprecated("Use FactoryCustomerCard instead", ReplaceWith("FactoryCustomerCard(index, merchant, onClick, colors, isSelectionMode, isSelected, onLongClick)"))
+@Composable
+internal fun CoolieCustomerCard(
+    index: Int,
+    merchant: VaangunarTharavuru,
+    onClick: () -> Unit,
+    colors: ShellColors,
+    isSelectionMode: Boolean = false,
+    isSelected: Boolean = false,
+    onLongClick: (() -> Unit)? = null
+) = FactoryCustomerCard(index, merchant, onClick, colors, isSelectionMode, isSelected, onLongClick)
+
+@Deprecated("Use TextilesCustomerCard instead", ReplaceWith("TextilesCustomerCard(index, merchant, onClick, colors, isSelectionMode, isSelected, onLongClick)"))
+@Composable
+internal fun SilkCustomerCard(
+    index: Int,
+    merchant: VaangunarTharavuru,
+    onClick: () -> Unit,
+    colors: ShellColors,
+    isSelectionMode: Boolean = false,
+    isSelected: Boolean = false,
+    onLongClick: (() -> Unit)? = null
+) = TextilesCustomerCard(index, merchant, onClick, colors, isSelectionMode, isSelected, onLongClick)

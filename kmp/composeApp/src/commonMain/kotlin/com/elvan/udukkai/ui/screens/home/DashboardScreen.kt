@@ -22,8 +22,8 @@ import com.elvan.udukkai.ui.components.shell.MugappuStatsSkeleton
 import com.elvan.udukkai.ui.components.shell.UruvakkuCardSkeleton
 import com.elvan.udukkai.ui.navigation.MaterialSymbols
 import com.elvan.udukkai.ui.screens.home.components.*
-import com.elvan.udukkai.ui.screens.create.components.CoolieInvoiceCard
-import com.elvan.udukkai.ui.screens.create.components.SilkInvoiceCard
+import com.elvan.udukkai.ui.screens.create.components.FactoryInvoiceCard
+import com.elvan.udukkai.ui.screens.create.components.TextilesInvoiceCard
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -167,15 +167,15 @@ fun DashboardScreen(
                                 .fillMaxWidth()
                                 .padding(horizontal = Dimens.ContentPadding)
                         ) {
-                            if (mode == AppMode.KOOLI) {
-                                CoolieInvoiceCard(
+                            if (mode == AppMode.FACTORY) {
+                                FactoryInvoiceCard(
                                     index = index + 1,
                                     pattiyal = item,
                                     colors = colors,
                                     onClick = { onInvoiceClick(item) }
                                 )
                             } else {
-                                SilkInvoiceCard(
+                                TextilesInvoiceCard(
                                     index = index + 1,
                                     pattiyal = item,
                                     colors = colors,

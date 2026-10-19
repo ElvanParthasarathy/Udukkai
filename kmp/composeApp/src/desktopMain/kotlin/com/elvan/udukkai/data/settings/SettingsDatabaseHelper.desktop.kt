@@ -2,19 +2,38 @@ package com.elvan.udukkai.data.settings
 
 import com.elvan.udukkai.core.mode.AppMode
 import java.io.File
-import java.io.FileInputStream
-import java.io.FileOutputStream
 import java.sql.Connection
 import java.sql.DriverManager
 import java.sql.ResultSet
 
 class DesktopSettingsDatabaseHelper : SettingsDatabaseHelper {
 
-    private val coolieDbName = "udukkai_kooli.db"
-    private val silkDbName = "udukkai_pattu.db"
+    private val factoryDbName = "udukkai_factory.db"
+    private val textilesDbName = "udukkai_textiles.db"
+
+    private fun getDbName(mode: AppMode): String =
+        if (mode == AppMode.FACTORY) factoryDbName else textilesDbName
+
+    private fun getTableName(mode: AppMode): String =
+        if (mode == AppMode.FACTORY) "factory_niruvana_tharavugal_table" else "textiles_niruvana_tharavugal_table"
 
     private fun resolveActiveDatabase(dbName: String): File {
-        return com.elvan.udukkai.data.DesktopDbPaths.getDbFile(dbName)
+        val target = com.elvan.udukkai.data.DesktopDbPaths.getDbFile(dbName)
+        if (!target.exists()) {
+            val legacyName = if (dbName == factoryDbName) "udukkai_kooli.db" else if (dbName == textilesDbName) "udukkai_pattu.db" else null
+            if (legacyName != null) {
+                val legacyFile = com.elvan.udukkai.data.DesktopDbPaths.getDbFile(legacyName)
+                if (legacyFile.exists()) {
+                    try {
+                        println("Desktop auto-migrating legacy DB $legacyName -> $dbName")
+                        legacyFile.copyTo(target, overwrite = true)
+                    } catch (e: Exception) {
+                        println("Failed to copy legacy DB $legacyName: ${e.message}")
+                    }
+                }
+            }
+        }
+        return target
     }
 
     private fun getConnection(file: File): Connection {
@@ -24,21 +43,44 @@ class DesktopSettingsDatabaseHelper : SettingsDatabaseHelper {
     }
 
     override fun scanAndSync(): DatabaseScanReport {
-        val coolie = resolveActiveDatabase(coolieDbName)
-        val silk = resolveActiveDatabase(silkDbName)
+        val factory = resolveActiveDatabase(factoryDbName)
+        val textiles = resolveActiveDatabase(textilesDbName)
         return DatabaseScanReport(
-            isCoolieFound = coolie != null && coolie.exists(),
-            cooliePath = coolie?.absolutePath,
-            isSilkFound = silk != null && silk.exists(),
-            silkPath = silk?.absolutePath,
-            message = "Desktop Coolie: ${coolie?.absolutePath ?: "Not found"}, Silk: ${silk?.absolutePath ?: "Not found"}"
+            isFactoryFound = factory.exists(),
+            factoryPath = factory.absolutePath,
+            isTextilesFound = textiles.exists(),
+            textilesPath = textiles.absolutePath,
+            message = "Desktop Factory: ${factory.absolutePath}, Textiles: ${textiles.absolutePath}"
         )
     }
 
+    private fun renameTableIfExists(conn: Connection, oldName: String, newName: String) {
+        try {
+            conn.prepareStatement("SELECT name FROM sqlite_master WHERE type='table' AND name=?").use { stmt ->
+                stmt.setString(1, oldName)
+                stmt.executeQuery().use { rs ->
+                    if (rs.next()) {
+                        conn.prepareStatement("SELECT name FROM sqlite_master WHERE type='table' AND name=?").use { stmtNew ->
+                            stmtNew.setString(1, newName)
+                            stmtNew.executeQuery().use { rsNew ->
+                                if (!rsNew.next()) {
+                                    conn.createStatement().use { alterStmt ->
+                                        alterStmt.execute("ALTER TABLE \"$oldName\" RENAME TO \"$newName\"")
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        } catch (_: Exception) {}
+    }
+
     private fun ensureTables(conn: Connection, mode: AppMode) {
-        val tableName = if (mode == AppMode.KOOLI) "kooli_niruvana_tharavugal_table" else "pattu_niruvana_tharavugal_table"
-    private fun ensureTables(conn: Connection, mode: AppMode) {
-        val tableName = if (mode == AppMode.KOOLI) "kooli_niruvana_tharavugal_table" else "pattu_niruvana_tharavugal_table"
+        val legacyName = if (mode == AppMode.FACTORY) "kooli_niruvana_tharavugal_table" else "pattu_niruvana_tharavugal_table"
+        val tableName = getTableName(mode)
+        renameTableIfExists(conn, legacyName, tableName)
+
         val sql = """
             CREATE TABLE IF NOT EXISTS "$tableName" (
                 "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
@@ -120,9 +162,9 @@ class DesktopSettingsDatabaseHelper : SettingsDatabaseHelper {
     }
 
     override fun loadProfile(mode: AppMode, profileId: Long?): NiruvanaTharavugal? {
-        val dbName = if (mode == AppMode.KOOLI) coolieDbName else silkDbName
-        val tableName = if (mode == AppMode.KOOLI) "kooli_niruvana_tharavugal_table" else "pattu_niruvana_tharavugal_table"
-        val file = resolveActiveDatabase(dbName) ?: return null
+        val dbName = getDbName(mode)
+        val tableName = getTableName(mode)
+        val file = resolveActiveDatabase(dbName)
 
         try {
             getConnection(file).use { conn ->
@@ -150,9 +192,9 @@ class DesktopSettingsDatabaseHelper : SettingsDatabaseHelper {
     }
 
     override fun loadAllProfiles(mode: AppMode): List<NiruvanaTharavugal> {
-        val dbName = if (mode == AppMode.KOOLI) coolieDbName else silkDbName
-        val tableName = if (mode == AppMode.KOOLI) "kooli_niruvana_tharavugal_table" else "pattu_niruvana_tharavugal_table"
-        val file = resolveActiveDatabase(dbName) ?: return emptyList()
+        val dbName = getDbName(mode)
+        val tableName = getTableName(mode)
+        val file = resolveActiveDatabase(dbName)
 
         val list = mutableListOf<NiruvanaTharavugal>()
         try {
@@ -174,9 +216,9 @@ class DesktopSettingsDatabaseHelper : SettingsDatabaseHelper {
     }
 
     override fun saveProfile(mode: AppMode, profile: NiruvanaTharavugal): Boolean {
-        val dbName = if (mode == AppMode.KOOLI) coolieDbName else silkDbName
-        val tableName = if (mode == AppMode.KOOLI) "kooli_niruvana_tharavugal_table" else "pattu_niruvana_tharavugal_table"
-        val file = resolveActiveDatabase(dbName) ?: return false
+        val dbName = getDbName(mode)
+        val tableName = getTableName(mode)
+        val file = resolveActiveDatabase(dbName)
 
         try {
             getConnection(file).use { conn ->
@@ -265,9 +307,9 @@ class DesktopSettingsDatabaseHelper : SettingsDatabaseHelper {
     }
 
     override fun deleteProfile(mode: AppMode, profileId: Long): Boolean {
-        val dbName = if (mode == AppMode.KOOLI) coolieDbName else silkDbName
-        val tableName = if (mode == AppMode.KOOLI) "kooli_niruvana_tharavugal_table" else "pattu_niruvana_tharavugal_table"
-        val file = resolveActiveDatabase(dbName) ?: return false
+        val dbName = getDbName(mode)
+        val tableName = getTableName(mode)
+        val file = resolveActiveDatabase(dbName)
 
         try {
             getConnection(file).use { conn ->
@@ -287,9 +329,9 @@ class DesktopSettingsDatabaseHelper : SettingsDatabaseHelper {
     }
 
     override fun clearProfiles(mode: AppMode): Boolean {
-        val dbName = if (mode == AppMode.KOOLI) coolieDbName else silkDbName
-        val tableName = if (mode == AppMode.KOOLI) "kooli_niruvana_tharavugal_table" else "pattu_niruvana_tharavugal_table"
-        val file = resolveActiveDatabase(dbName) ?: return false
+        val dbName = getDbName(mode)
+        val tableName = getTableName(mode)
+        val file = resolveActiveDatabase(dbName)
 
         try {
             getConnection(file).use { conn ->
@@ -353,7 +395,7 @@ class DesktopSettingsDatabaseHelper : SettingsDatabaseHelper {
             oppamIrudhiPeyar = getString("oppam_irudhi_peyar"),
             adaimozhi = MozhiJsonConverter.parse(getString("adaimozhi")),
             upiId = getString("upi_id"),
-            thoatraNiram = getString("thoatra_niram").ifEmpty { if (mode == AppMode.PATTU) "#6a1b9a" else "#388e3c" }
+            thoatraNiram = getString("thoatra_niram").ifEmpty { if (mode == AppMode.TEXTILES) "#6a1b9a" else "#388e3c" }
         )
     }
 }

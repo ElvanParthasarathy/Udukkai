@@ -62,7 +62,7 @@ fun NewProfileBottomSheet(
                     mudhanMozhi = "ta",
                     thunaiMozhi = "en",
                     iruMozhi = true,
-                    gstPirippugal = mode == AppMode.PATTU,
+                    gstPirippugal = mode == AppMode.TEXTILES,
                     niruvanathinPeyar = mutableMapOf(
                         "ta" to newNamePrimary.trim(),
                         "en" to newNameSecondary.trim()
@@ -70,7 +70,7 @@ fun NewProfileBottomSheet(
                     kurumPeyar = newNamePrimary.trim().take(15),
                     naadu = mutableMapOf("en" to "India", "ta" to "இந்தியா"),
                     thalaippuVadivu = "small",
-                    thoatraNiram = if (mode == AppMode.PATTU) "#6a1b9a" else "#388e3c"
+                    thoatraNiram = if (mode == AppMode.TEXTILES) "#6a1b9a" else "#388e3c"
                 )
                 val success = NiruvanaTharavugalRepository.createProfile(mode, newProfile)
                 if (success) {

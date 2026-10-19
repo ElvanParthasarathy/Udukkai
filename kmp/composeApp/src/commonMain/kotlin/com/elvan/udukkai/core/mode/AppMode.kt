@@ -6,31 +6,28 @@ import com.elvan.udukkai.localization.tr
 import com.elvan.udukkai.localization.trWithLang
 
 /**
- * The two operating modes of Udukkai.
+ * The two operating modes of Udukkai:
  *
- * KOOLI (கூலி) — Service / Labor invoicing mode.
- * PATTU (பட்டு) — Product / Goods invoicing mode.
+ * FACTORY (ஆலை) — Service / Labor invoicing mode.
+ * TEXTILES (சவுளி) — Product / Goods invoicing mode.
  *
  * Each mode has its own completely isolated database,
  * settings, and data. They never touch each other.
- *
- * Zero hardcoded languages: Titles are resolved dynamically
- * via the translation engine (titleKey.tr()).
  */
 enum class AppMode(
     val key: String,
     val titleKey: String,
     val databaseName: String
 ) {
-    KOOLI(
-        key = "kooli",
-        titleKey = K.udukkaiCoolie,
-        databaseName = "udukkai_kooli.db"
+    FACTORY(
+        key = "factory",
+        titleKey = K.udukkaiFactory,
+        databaseName = "udukkai_factory.db"
     ),
-    PATTU(
-        key = "pattu",
-        titleKey = K.udukkaiSilk,
-        databaseName = "udukkai_pattu.db"
+    TEXTILES(
+        key = "textiles",
+        titleKey = K.udukkaiTextiles,
+        databaseName = "udukkai_textiles.db"
     );
 
     /**
@@ -45,7 +42,15 @@ enum class AppMode(
     fun displayName(langCode: String): String = titleKey.trWithLang(langCode)
 
     companion object {
+        // Backward-compatible aliases for existing code
+        val KOOLI get() = FACTORY
+        val PATTU get() = TEXTILES
+
         fun fromKey(key: String): AppMode =
-            entries.firstOrNull { it.key == key } ?: KOOLI
+            when (key.lowercase()) {
+                "factory", "kooli" -> FACTORY
+                "textiles", "pattu", "silk" -> TEXTILES
+                else -> FACTORY
+            }
     }
 }

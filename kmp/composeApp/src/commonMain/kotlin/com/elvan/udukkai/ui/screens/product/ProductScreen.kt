@@ -201,8 +201,8 @@ fun ProductScreen(
                     val onCardLongClick: () -> Unit = {
                         onItemLongClick?.invoke(item.id)
                     }
-                    if (mode == AppMode.KOOLI) {
-                        CoolieProductCard(
+                    if (mode == AppMode.FACTORY) {
+                        FactoryProductCard(
                             index = index,
                             porul = item,
                             onClick = onCardClick,
@@ -212,7 +212,7 @@ fun ProductScreen(
                             isSelected = isSelected
                         )
                     } else {
-                        SilkProductCard(
+                        TextilesProductCard(
                             index = index,
                             porul = item,
                             onClick = onCardClick,
@@ -250,11 +250,11 @@ fun ProductScreen(
 }
 
 /**
- * Coolie product card: 28dp index badge, product name (15.2sp bold), secondary name (13sp medium).
+ * Factory product card: 28dp index badge, product name (15.2sp bold), secondary name (13sp medium).
  * Exact 1:1 port of Flutter's _CooliePorulCard with unified Pattiyalgal selection badge.
  */
 @Composable
-internal fun CoolieProductCard(
+internal fun FactoryProductCard(
     index: Int,
     porul: PorulTharavuru,
     onClick: () -> Unit,
@@ -266,7 +266,7 @@ internal fun CoolieProductCard(
     val ff = LocalAppFontFamily.current
     val isDark = colors.isDark
 
-    val profile = NiruvanaTharavugalRepository.getProfile(AppMode.KOOLI)
+    val profile = NiruvanaTharavugalRepository.getProfile(AppMode.FACTORY)
     val isBilingual = profile.iruMozhi
     val primaryLang = profile.mudhanMozhi.ifEmpty { "ta" }
     val secondaryLang = profile.thunaiMozhi.ifEmpty { "en" }
@@ -355,12 +355,12 @@ internal fun CoolieProductCard(
 }
 
 /**
- * Silk product card: 28dp index badge, product name, secondary name,
+ * Textiles product card: 28dp index badge, product name, secondary name,
  * HSN/Tax row, measure type label ("அளவு • Quantity" / "எடை • Weight"), and price.
  * Matches React 1:1 with unified Pattiyalgal circular selection graphics.
  */
 @Composable
-internal fun SilkProductCard(
+internal fun TextilesProductCard(
     index: Int,
     porul: PorulTharavuru,
     onClick: () -> Unit,
@@ -372,7 +372,7 @@ internal fun SilkProductCard(
     val ff = LocalAppFontFamily.current
     val isDark = colors.isDark
 
-    val profile = NiruvanaTharavugalRepository.getProfile(AppMode.PATTU)
+    val profile = NiruvanaTharavugalRepository.getProfile(AppMode.TEXTILES)
     val isBilingual = profile.iruMozhi
     val primaryLang = profile.mudhanMozhi.ifEmpty { "ta" }
     val secondaryLang = profile.thunaiMozhi.ifEmpty { "en" }
@@ -524,3 +524,27 @@ internal fun SilkProductCard(
         }
     }
 }
+
+@Deprecated("Use FactoryProductCard instead", ReplaceWith("FactoryProductCard(index, porul, onClick, colors, isSelectionMode, isSelected, onLongClick)"))
+@Composable
+internal fun CoolieProductCard(
+    index: Int,
+    porul: PorulTharavuru,
+    onClick: () -> Unit,
+    colors: ShellColors,
+    isSelectionMode: Boolean = false,
+    isSelected: Boolean = false,
+    onLongClick: (() -> Unit)? = null
+) = FactoryProductCard(index, porul, onClick, colors, isSelectionMode, isSelected, onLongClick)
+
+@Deprecated("Use TextilesProductCard instead", ReplaceWith("TextilesProductCard(index, porul, onClick, colors, isSelectionMode, isSelected, onLongClick)"))
+@Composable
+internal fun SilkProductCard(
+    index: Int,
+    porul: PorulTharavuru,
+    onClick: () -> Unit,
+    colors: ShellColors,
+    isSelectionMode: Boolean = false,
+    isSelected: Boolean = false,
+    onLongClick: (() -> Unit)? = null
+) = TextilesProductCard(index, porul, onClick, colors, isSelectionMode, isSelected, onLongClick)

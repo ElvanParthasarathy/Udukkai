@@ -33,7 +33,7 @@ fun AddressSettingsScreen(
     colors: ShellColors = rememberShellColors()
 ) {
     val currentMode = LocalAppMode.current
-    val isPattu = currentMode == AppMode.PATTU
+    val isPattu = currentMode == AppMode.TEXTILES
     val profile = NiruvanaTharavugalRepository.getProfile(currentMode)
     val isBilingual = profile.iruMozhi
 

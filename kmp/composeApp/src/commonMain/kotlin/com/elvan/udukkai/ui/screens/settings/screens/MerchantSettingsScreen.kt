@@ -56,7 +56,7 @@ fun MerchantSettingsScreen(
     var tempSecondary by remember { mutableStateOf("") }
     var showExtraPhone by remember { mutableStateOf(false) }
 
-    val isPattu = currentMode == AppMode.PATTU
+    val isPattu = currentMode == AppMode.TEXTILES
     val isBilingual = profile.iruMozhi
     val saveSuccessMsg = K.profileSaved.tr()
     val defaultProfileName = K.activeCompany.tr()

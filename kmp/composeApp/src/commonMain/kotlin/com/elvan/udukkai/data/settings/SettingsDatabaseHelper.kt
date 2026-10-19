@@ -3,11 +3,15 @@ package com.elvan.udukkai.data.settings
 import com.elvan.udukkai.core.mode.AppMode
 
 data class DatabaseScanReport(
-    val isCoolieFound: Boolean = false,
-    val cooliePath: String? = null,
-    val isSilkFound: Boolean = false,
-    val silkPath: String? = null,
-    val message: String = ""
+    val isFactoryFound: Boolean = false,
+    val factoryPath: String? = null,
+    val isTextilesFound: Boolean = false,
+    val textilesPath: String? = null,
+    val message: String = "",
+    val isCoolieFound: Boolean = isFactoryFound,
+    val cooliePath: String? = factoryPath,
+    val isSilkFound: Boolean = isTextilesFound,
+    val silkPath: String? = textilesPath
 )
 
 object MozhiJsonConverter {

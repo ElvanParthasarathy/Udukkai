@@ -47,7 +47,7 @@ fun InvoiceCreationSettingsScreen(
 ) {
     val currentMode = LocalAppMode.current
     val profile = NiruvanaTharavugalRepository.getProfile(currentMode)
-    val isPattu = currentMode == AppMode.PATTU
+    val isPattu = currentMode == AppMode.TEXTILES
     val ff = LocalAppFontFamily.current
 
     var isEditingLanguages by remember { mutableStateOf(false) }

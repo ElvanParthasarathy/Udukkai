@@ -56,8 +56,8 @@ class AndroidNirilBackupService : NirilBackupService {
 
     private fun modePrefix(mode: AppMode?): String {
         return when (mode) {
-            AppMode.KOOLI -> "kooli"
-            AppMode.PATTU -> "pattu"
+            AppMode.FACTORY -> "factory"
+            AppMode.TEXTILES -> "textiles"
             null -> "common"
         }
     }
@@ -89,66 +89,80 @@ class AndroidNirilBackupService : NirilBackupService {
 
         // Fallbacks for LATEST: check legacy file names
         if (slot == BackupSlot.LATEST) {
-            val legacyName = when (mode) {
-                AppMode.KOOLI -> "udukkai_kooli_backup.db"
-                AppMode.PATTU -> "udukkai_pattu_backup.db"
-                null -> "udukkai_backup.db"
+            val legacyNames = when (mode) {
+                AppMode.FACTORY -> listOf("udukkai_factory_backup.db", "udukkai_kooli_backup.db")
+                AppMode.TEXTILES -> listOf("udukkai_textiles_backup.db", "udukkai_pattu_backup.db")
+                null -> listOf("udukkai_backup.db")
             }
-            val internalLegacy = File(internalDir, legacyName)
-            if (internalLegacy.exists() && internalLegacy.length() > 48) return internalLegacy
+            for (legacyName in legacyNames) {
+                val internalLegacy = File(internalDir, legacyName)
+                if (internalLegacy.exists() && internalLegacy.length() > 48) return internalLegacy
+            }
 
             // Check external documents
             val externalDir = getExternalBackupDir()
             if (externalDir != null) {
                 val externalSlot = getFileForSlot(externalDir, slot, mode)
                 if (externalSlot.exists() && externalSlot.length() > 48) return externalSlot
-                val externalLegacy = File(externalDir, legacyName)
-                if (externalLegacy.exists() && externalLegacy.length() > 48) return externalLegacy
+                for (legacyName in legacyNames) {
+                    val externalLegacy = File(externalDir, legacyName)
+                    if (externalLegacy.exists() && externalLegacy.length() > 48) return externalLegacy
+                }
             }
         }
 
         // Fallbacks for SAFETY_VAULT: check legacy snapshot names
         if (slot == BackupSlot.SAFETY_VAULT) {
-            val legacySafetyName = when (mode) {
-                AppMode.KOOLI -> "udukkai_kooli_safety_snapshot.db"
-                AppMode.PATTU -> "udukkai_pattu_safety_snapshot.db"
-                null -> "udukkai_safety_snapshot.db"
+            val legacySafetyNames = when (mode) {
+                AppMode.FACTORY -> listOf("udukkai_factory_safety_snapshot.db", "udukkai_kooli_safety_snapshot.db")
+                AppMode.TEXTILES -> listOf("udukkai_textiles_safety_snapshot.db", "udukkai_pattu_safety_snapshot.db")
+                null -> listOf("udukkai_safety_snapshot.db")
             }
-            val internalLegacy = File(internalDir, legacySafetyName)
-            if (internalLegacy.exists() && internalLegacy.length() > 48) return internalLegacy
+            for (legacySafetyName in legacySafetyNames) {
+                val internalLegacy = File(internalDir, legacySafetyName)
+                if (internalLegacy.exists() && internalLegacy.length() > 48) return internalLegacy
+            }
 
             val externalDir = getExternalBackupDir()
             if (externalDir != null) {
                 val externalSlot = getFileForSlot(externalDir, slot, mode)
                 if (externalSlot.exists() && externalSlot.length() > 48) return externalSlot
-                val externalLegacy = File(externalDir, legacySafetyName)
-                if (externalLegacy.exists() && externalLegacy.length() > 48) return externalLegacy
+                for (legacySafetyName in legacySafetyNames) {
+                    val externalLegacy = File(externalDir, legacySafetyName)
+                    if (externalLegacy.exists() && externalLegacy.length() > 48) return externalLegacy
+                }
             }
         }
 
         return if (slotFile.exists()) slotFile else null
     }
 
-    private fun getCoolieDbPath(): String {
+    private fun getFactoryDbPath(): String {
         if (!AppContext.isInitialized) return ""
-        return AppContext.context.getDatabasePath("udukkai_kooli.db").absolutePath
+        val f = AppContext.context.getDatabasePath("udukkai_factory.db")
+        if (f.exists()) return f.absolutePath
+        val legacy = AppContext.context.getDatabasePath("udukkai_kooli.db")
+        return if (legacy.exists()) legacy.absolutePath else f.absolutePath
     }
 
-    private fun getSilkDbPath(): String {
+    private fun getTextilesDbPath(): String {
         if (!AppContext.isInitialized) return ""
-        return AppContext.context.getDatabasePath("udukkai_pattu.db").absolutePath
+        val f = AppContext.context.getDatabasePath("udukkai_textiles.db")
+        if (f.exists()) return f.absolutePath
+        val legacy = AppContext.context.getDatabasePath("udukkai_pattu.db")
+        return if (legacy.exists()) legacy.absolutePath else f.absolutePath
     }
 
     private fun getFilesToPack(): List<String> {
-        val coolie = getCoolieDbPath()
-        val silk = getSilkDbPath()
+        val factory = getFactoryDbPath()
+        val textiles = getTextilesDbPath()
         return listOf(
-            coolie,
-            "$coolie-wal",
-            "$coolie-shm",
-            silk,
-            "$silk-wal",
-            "$silk-shm"
+            factory,
+            "$factory-wal",
+            "$factory-shm",
+            textiles,
+            "$textiles-wal",
+            "$textiles-shm"
         )
     }
 
@@ -331,11 +345,11 @@ class AndroidNirilBackupService : NirilBackupService {
     private fun packToFile(targetFile: File): Boolean {
         return try {
             val mode = currentMode()
-            if (mode == null || mode == AppMode.KOOLI) {
-                checkpointWal(getCoolieDbPath())
+            if (mode == null || mode == AppMode.FACTORY) {
+                checkpointWal(getFactoryDbPath())
             }
-            if (mode == null || mode == AppMode.PATTU) {
-                checkpointWal(getSilkDbPath())
+            if (mode == null || mode == AppMode.TEXTILES) {
+                checkpointWal(getTextilesDbPath())
             }
 
             val filesToPack = getFilesToPack()
@@ -345,8 +359,8 @@ class AndroidNirilBackupService : NirilBackupService {
 
             for (i in filesToPack.indices) {
                 val shouldPack = when (mode) {
-                    AppMode.KOOLI -> i < 3       // pack only Kooli chunks 0, 1, 2
-                    AppMode.PATTU -> i >= 3      // pack only Silk chunks 3, 4, 5
+                    AppMode.FACTORY -> i < 3       // pack only Factory chunks 0, 1, 2
+                    AppMode.TEXTILES -> i >= 3      // pack only Textiles chunks 3, 4, 5
                     null -> true                 // pack all 6 chunks in combined mode
                 }
 
@@ -380,8 +394,8 @@ class AndroidNirilBackupService : NirilBackupService {
             header.putLong(magicConstant)
             header.putInt(1)
             header.putInt(when (mode) {
-                AppMode.KOOLI -> 0
-                AppMode.PATTU -> 1
+                AppMode.FACTORY -> 0
+                AppMode.TEXTILES -> 1
                 null -> 2
             })
             header.putLong(System.currentTimeMillis())
@@ -463,8 +477,8 @@ class AndroidNirilBackupService : NirilBackupService {
 
                     val file = File(filesToUnpack[i])
                     val shouldRestore = when (mode) {
-                        AppMode.KOOLI -> i < 3       // restore only Kooli chunks 0, 1, 2
-                        AppMode.PATTU -> i >= 3      // restore only Silk chunks 3, 4, 5
+                        AppMode.FACTORY -> i < 3       // restore only Factory chunks 0, 1, 2
+                        AppMode.TEXTILES -> i >= 3      // restore only Textiles chunks 3, 4, 5
                         null -> true                 // restore all chunks in combined mode
                     }
 
@@ -716,8 +730,8 @@ class AndroidNirilBackupService : NirilBackupService {
             val mode = currentMode()
             getFilesToPack().filterIndexed { index, _ ->
                 when (mode) {
-                    AppMode.KOOLI -> index < 3
-                    AppMode.PATTU -> index >= 3
+                    AppMode.FACTORY -> index < 3
+                    AppMode.TEXTILES -> index >= 3
                     null -> true
                 }
             }.sumOf { path ->

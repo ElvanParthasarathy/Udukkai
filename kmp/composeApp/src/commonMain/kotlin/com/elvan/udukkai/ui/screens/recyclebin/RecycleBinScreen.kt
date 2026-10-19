@@ -46,15 +46,15 @@ import com.elvan.udukkai.ui.components.shell.ElvanTopBarIconButton
 import com.elvan.udukkai.ui.components.shell.LocalElvanTopSpacerHeight
 import com.elvan.udukkai.ui.navigation.ElvanSearchBar
 import com.elvan.udukkai.ui.navigation.MaterialSymbols
-import com.elvan.udukkai.ui.screens.product.CoolieProductCard
-import com.elvan.udukkai.ui.screens.product.SilkProductCard
+import com.elvan.udukkai.ui.screens.product.FactoryProductCard
+import com.elvan.udukkai.ui.screens.product.TextilesProductCard
 import com.elvan.udukkai.ui.screens.create.components.ElvanPillShifter
-import com.elvan.udukkai.ui.screens.create.components.CoolieInvoiceCard
-import com.elvan.udukkai.ui.screens.create.components.SilkInvoiceCard
+import com.elvan.udukkai.ui.screens.create.components.FactoryInvoiceCard
+import com.elvan.udukkai.ui.screens.create.components.TextilesInvoiceCard
 import com.elvan.udukkai.ui.screens.create.components.ReceiptCard
 import com.elvan.udukkai.ui.screens.create.components.PillShifterItem
-import com.elvan.udukkai.ui.screens.customer.CoolieCustomerCard
-import com.elvan.udukkai.ui.screens.customer.SilkCustomerCard
+import com.elvan.udukkai.ui.screens.customer.FactoryCustomerCard
+import com.elvan.udukkai.ui.screens.customer.TextilesCustomerCard
 import kotlinx.coroutines.launch
 
 /**
@@ -414,8 +414,8 @@ fun RecycleBinScreen(
                                 }
                                 val onCardLongClick = { onStartSelection(invoice.id) }
 
-                                if (mode == AppMode.PATTU) {
-                                    SilkInvoiceCard(
+                                if (mode == AppMode.FACTORY) {
+                                    FactoryInvoiceCard(
                                         index = index + 1,
                                         pattiyal = invoice,
                                         colors = colors,
@@ -426,7 +426,7 @@ fun RecycleBinScreen(
                                         modifier = Modifier.padding(horizontal = Dimens.ContentPadding)
                                     )
                                 } else {
-                                    CoolieInvoiceCard(
+                                    TextilesInvoiceCard(
                                         index = index + 1,
                                         pattiyal = invoice,
                                         colors = colors,
@@ -497,8 +497,8 @@ fun RecycleBinScreen(
                             }
                             val onCardLongClick = { onStartSelection(item.id) }
 
-                            if (mode == AppMode.KOOLI) {
-                                CoolieProductCard(
+                            if (mode == AppMode.FACTORY) {
+                                FactoryProductCard(
                                     index = index + 1,
                                     porul = item,
                                     onClick = onCardClick,
@@ -508,7 +508,7 @@ fun RecycleBinScreen(
                                     isSelected = isSelected
                                 )
                             } else {
-                                SilkProductCard(
+                                TextilesProductCard(
                                     index = index + 1,
                                     porul = item,
                                     onClick = onCardClick,
@@ -549,8 +549,8 @@ fun RecycleBinScreen(
                             }
                             val onCardLongClick = { onStartSelection(merchant.id) }
 
-                            if (mode == AppMode.KOOLI) {
-                                CoolieCustomerCard(
+                            if (mode == AppMode.FACTORY) {
+                                FactoryCustomerCard(
                                     index = index + 1,
                                     merchant = merchant,
                                     onClick = onCardClick,
@@ -560,7 +560,7 @@ fun RecycleBinScreen(
                                     isSelected = isSelected
                                 )
                             } else {
-                                SilkCustomerCard(
+                                TextilesCustomerCard(
                                     index = index + 1,
                                     merchant = merchant,
                                     onClick = onCardClick,

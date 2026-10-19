@@ -98,7 +98,7 @@ fun VanakkamThirai(
                                 niruvanathinPeyar = mutableMapOf(billingLanguage to gstBusinessName.trim()),
                                 kurumPeyar = gstBusinessName.trim()
                             )
-                            NiruvanaTharavugalRepository.createProfile(AppMode.PATTU, silkProfile)
+                            NiruvanaTharavugalRepository.createProfile(AppMode.TEXTILES, silkProfile)
                         }
 
                         if (needsCoolie) {
@@ -107,7 +107,7 @@ fun VanakkamThirai(
                                 niruvanathinPeyar = mutableMapOf(billingLanguage to coolieBusinessName.trim()),
                                 kurumPeyar = coolieBusinessName.trim()
                             )
-                            NiruvanaTharavugalRepository.createProfile(AppMode.KOOLI, coolieProfile)
+                            NiruvanaTharavugalRepository.createProfile(AppMode.FACTORY, coolieProfile)
                         }
 
                         // Create backup and refresh profile status

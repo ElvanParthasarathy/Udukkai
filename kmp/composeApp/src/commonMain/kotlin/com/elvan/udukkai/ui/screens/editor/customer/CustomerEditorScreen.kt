@@ -141,7 +141,7 @@ fun CustomerEditorScreen(
             return
         }
 
-        if (currentMode == AppMode.PATTU && gstin.isNotBlank()) {
+        if (currentMode == AppMode.TEXTILES && gstin.isNotBlank()) {
             if (!validateGstin(gstin)) {
                 gstinValidationError = gstinErrorMsg
                 ElvanSnackbar.show(gstinErrorMsg)
@@ -149,8 +149,8 @@ fun CustomerEditorScreen(
             }
         }
 
-        val merchantToSave = if (currentMode == AppMode.KOOLI) {
-            // Coolie mode: simplified to Name, Town, Street only
+        val merchantToSave = if (currentMode == AppMode.FACTORY) {
+            // Factory mode: simplified to Name, Town, Street only
             VaangunarTharavuru(
                 id = merchant?.id ?: 0L,
                 peyar = peyarMap.filterValues { it.isNotBlank() },
@@ -275,7 +275,7 @@ fun CustomerEditorScreen(
                         modifier = Modifier.fillMaxWidth(),
                         verticalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
-                        if (currentMode == AppMode.PATTU) {
+                        if (currentMode == AppMode.TEXTILES) {
                             // Country Selector Pill
                             ElvanThiruthiKeezhvirivu<IdangalinPeyar>(
                                 label = K.country.tr(),
@@ -380,7 +380,7 @@ fun CustomerEditorScreen(
                                 )
                             }
                         } else {
-                            // Coolie Mode: only Town and Street Address
+                            // Factory Mode: only Town and Street Address
                             ElvanIrumozhiPulan(
                                 label = K.city.tr(),
                                 value = oorMap,
@@ -401,8 +401,8 @@ fun CustomerEditorScreen(
                 }
             }
 
-            // Section 3: Contact & Tax (Silk mode only)
-            if (currentMode == AppMode.PATTU) {
+            // Section 3: Contact & Tax (Textiles mode only)
+            if (currentMode == AppMode.TEXTILES) {
                 item(key = "contact_tax_section") {
                     ElvanEditorSection(
                         index = 2,

@@ -31,8 +31,8 @@ object DesktopDbPaths {
 
     private fun modePrefix(mode: AppMode?): String {
         return when (mode) {
-            AppMode.KOOLI -> "kooli"
-            AppMode.PATTU -> "pattu"
+            AppMode.FACTORY -> "factory"
+            AppMode.TEXTILES -> "textiles"
             null -> "common"
         }
     }
@@ -53,24 +53,28 @@ object DesktopDbPaths {
 
         // Fallbacks for LATEST: check legacy file names
         if (slot == BackupSlot.LATEST) {
-            val legacyName = when (mode) {
-                AppMode.KOOLI -> "udukkai_kooli_backup.db"
-                AppMode.PATTU -> "udukkai_pattu_backup.db"
-                null -> "udukkai_backup.db"
+            val legacyNames = when (mode) {
+                AppMode.FACTORY -> listOf("udukkai_factory_backup.db", "udukkai_kooli_backup.db")
+                AppMode.TEXTILES -> listOf("udukkai_textiles_backup.db", "udukkai_pattu_backup.db")
+                null -> listOf("udukkai_backup.db")
             }
-            val legacyFile = File(getBackupDir(), legacyName)
-            if (legacyFile.exists() && legacyFile.length() > 48) return legacyFile
+            for (legacyName in legacyNames) {
+                val legacyFile = File(getBackupDir(), legacyName)
+                if (legacyFile.exists() && legacyFile.length() > 48) return legacyFile
+            }
         }
 
         // Fallbacks for SAFETY_VAULT: check legacy snapshot names
         if (slot == BackupSlot.SAFETY_VAULT) {
-            val legacySafetyName = when (mode) {
-                AppMode.KOOLI -> "udukkai_kooli_safety_snapshot.db"
-                AppMode.PATTU -> "udukkai_pattu_safety_snapshot.db"
-                null -> "udukkai_safety_snapshot.db"
+            val legacySafetyNames = when (mode) {
+                AppMode.FACTORY -> listOf("udukkai_factory_safety_snapshot.db", "udukkai_kooli_safety_snapshot.db")
+                AppMode.TEXTILES -> listOf("udukkai_textiles_safety_snapshot.db", "udukkai_pattu_safety_snapshot.db")
+                null -> listOf("udukkai_safety_snapshot.db")
             }
-            val legacyFile = File(getBackupDir(), legacySafetyName)
-            if (legacyFile.exists() && legacyFile.length() > 48) return legacyFile
+            for (legacySafetyName in legacySafetyNames) {
+                val legacyFile = File(getBackupDir(), legacySafetyName)
+                if (legacyFile.exists() && legacyFile.length() > 48) return legacyFile
+            }
         }
 
         return slotFile

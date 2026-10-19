@@ -48,9 +48,9 @@ import com.elvan.udukkai.ui.screens.view.ProductViewScreen
 import com.elvan.udukkai.ui.screens.view.CustomerViewScreen
 import com.elvan.udukkai.ui.screens.settings.SettingsScreen
 import com.elvan.udukkai.ui.screens.editor.receipt.ReceiptEditorScreen
-import com.elvan.udukkai.ui.screens.editor.invoice.CoolieInvoiceEditorScreen
+import com.elvan.udukkai.ui.screens.editor.invoice.FactoryInvoiceEditorScreen
 import com.elvan.udukkai.ui.screens.editor.invoice.InvoiceEditorScreen
-import com.elvan.udukkai.ui.screens.editor.invoice.SilkInvoiceEditorScreen
+import com.elvan.udukkai.ui.screens.editor.invoice.TextilesInvoiceEditorScreen
 import com.elvan.udukkai.ui.screens.editor.product.ProductEditorScreen
 import com.elvan.udukkai.ui.screens.editor.customer.CustomerEditorScreen
 import androidx.compose.foundation.shape.CircleShape
@@ -266,13 +266,13 @@ fun HomeScreen() {
                     )
                 }
                 is ActiveSubpage.InvoiceEditor -> {
-                    if (currentMode == com.elvan.udukkai.core.mode.AppMode.PATTU) {
-                        SilkInvoiceEditorScreen(
+                    if (currentMode == com.elvan.udukkai.core.mode.AppMode.TEXTILES) {
+                        TextilesInvoiceEditorScreen(
                             invoice = subpage.invoice,
                             onBack = popSubpage
                         )
                     } else {
-                        CoolieInvoiceEditorScreen(
+                        FactoryInvoiceEditorScreen(
                             invoice = subpage.invoice,
                             onBack = popSubpage
                         )

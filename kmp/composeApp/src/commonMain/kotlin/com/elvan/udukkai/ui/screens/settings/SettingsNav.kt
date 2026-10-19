@@ -5,8 +5,10 @@ sealed interface SettingsRoute {
     data object Display : SettingsRoute
     data object Language : SettingsRoute
     data object Merchant : SettingsRoute
-    data object KooliIdentity : SettingsRoute
-    data object PattuIdentity : SettingsRoute
+    data object FactoryIdentity : SettingsRoute
+    data object TextilesIdentity : SettingsRoute
+    val KooliIdentity: SettingsRoute get() = FactoryIdentity
+    val PattuIdentity: SettingsRoute get() = TextilesIdentity
     data object Address : SettingsRoute
     data object Bank : SettingsRoute
     data object InvoiceCreation : SettingsRoute

@@ -107,8 +107,8 @@ fun SettingsHubScreen(
                             contentAlignment = Alignment.Center
                         ) {
                             Icon(
-                                imageVector = if (currentMode == AppMode.KOOLI) AppSvgs.coolieMode else AppSvgs.silkMode,
-                                contentDescription = if (currentMode == AppMode.KOOLI) K.udukkaiCoolie.tr() else K.udukkaiSilk.tr(),
+                                imageVector = if (currentMode == AppMode.FACTORY) AppSvgs.coolieMode else AppSvgs.silkMode,
+                                contentDescription = if (currentMode == AppMode.FACTORY) K.udukkaiFactory.tr() else K.udukkaiTextiles.tr(),
                                 tint = colors.textPrimary,
                                 modifier = Modifier.size(30.dp)
                             )
@@ -132,7 +132,7 @@ fun SettingsHubScreen(
                             )
                             Spacer(modifier = Modifier.height(3.dp))
                             Text(
-                                text = if (currentMode == AppMode.KOOLI) K.udukkaiCoolie.tr() else K.udukkaiSilk.tr(),
+                                text = if (currentMode == AppMode.FACTORY) K.udukkaiFactory.tr() else K.udukkaiTextiles.tr(),
                                 style = TextStyle(
                                     fontFamily = ff,
                                     fontSize = 14.sp,
@@ -151,20 +151,20 @@ fun SettingsHubScreen(
         item(key = "business_identity_section") {
             ElvanSectionContainer {
                 ElvanSettingsSection(colors = colors) {
-                    if (currentMode == AppMode.KOOLI) {
+                    if (currentMode == AppMode.FACTORY) {
                         ElvanSettingsRow(
                             icon = MaterialSymbols.Rounded.BusinessCenter,
                             title = K.identifier.tr(),
-                            description = K.coolieCompanyBranding.tr(),
-                            onClick = { onNavigate(SettingsRoute.KooliIdentity) },
+                            description = K.factoryCompanyBranding.tr(),
+                            onClick = { onNavigate(SettingsRoute.FactoryIdentity) },
                             colors = colors
                         )
                     } else {
                         ElvanSettingsRow(
                             icon = MaterialSymbols.Rounded.BusinessCenter,
                             title = K.identifier.tr(),
-                            description = K.silkCompanyBranding.tr(),
-                            onClick = { onNavigate(SettingsRoute.PattuIdentity) },
+                            description = K.textilesCompanyBranding.tr(),
+                            onClick = { onNavigate(SettingsRoute.TextilesIdentity) },
                             colors = colors
                         )
                     }

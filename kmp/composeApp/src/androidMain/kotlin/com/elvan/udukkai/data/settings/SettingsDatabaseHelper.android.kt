@@ -11,8 +11,14 @@ import java.io.File
 class AndroidSettingsDatabaseHelper : SettingsDatabaseHelper {
 
     private val tag = "SettingsDatabaseHelper"
-    private val coolieDbName = "udukkai_kooli.db"
-    private val silkDbName = "udukkai_pattu.db"
+    private val factoryDbName = "udukkai_factory.db"
+    private val textilesDbName = "udukkai_textiles.db"
+
+    private fun getDbName(mode: AppMode): String =
+        if (mode == AppMode.FACTORY) factoryDbName else textilesDbName
+
+    private fun getTableName(mode: AppMode): String =
+        if (mode == AppMode.FACTORY) "factory_niruvana_tharavugal_table" else "textiles_niruvana_tharavugal_table"
 
     private fun resolveActiveDatabase(dbName: String): File? {
         if (!AppContext.isInitialized) {
@@ -21,26 +27,63 @@ class AndroidSettingsDatabaseHelper : SettingsDatabaseHelper {
         }
         val localDb = AppContext.context.getDatabasePath(dbName)
         localDb.parentFile?.mkdirs()
+
+        // ── Auto-migration: if target doesn't exist, check for legacy DB ──
+        if (!localDb.exists()) {
+            val legacyName = if (dbName == factoryDbName) "udukkai_kooli.db" else if (dbName == textilesDbName) "udukkai_pattu.db" else null
+            if (legacyName != null) {
+                val legacyFile = AppContext.context.getDatabasePath(legacyName)
+                if (legacyFile.exists()) {
+                    try {
+                        Log.i(tag, "Auto-migrating legacy DB $legacyName -> $dbName")
+                        legacyFile.copyTo(localDb, overwrite = true)
+                        val legacyWal = File(legacyFile.path + "-wal")
+                        if (legacyWal.exists()) legacyWal.copyTo(File(localDb.path + "-wal"), overwrite = true)
+                        val legacyShm = File(legacyFile.path + "-shm")
+                        if (legacyShm.exists()) legacyShm.copyTo(File(localDb.path + "-shm"), overwrite = true)
+                    } catch (e: Exception) {
+                        Log.e(tag, "Failed to copy legacy DB $legacyName: ${e.message}")
+                    }
+                }
+            }
+        }
         return localDb
     }
 
     override fun scanAndSync(): DatabaseScanReport {
-        val coolieFile = resolveActiveDatabase(coolieDbName)
-        val silkFile = resolveActiveDatabase(silkDbName)
+        val factoryFile = resolveActiveDatabase(factoryDbName)
+        val textilesFile = resolveActiveDatabase(textilesDbName)
 
         val report = DatabaseScanReport(
-            isCoolieFound = coolieFile != null && coolieFile.exists(),
-            cooliePath = coolieFile?.absolutePath,
-            isSilkFound = silkFile != null && silkFile.exists(),
-            silkPath = silkFile?.absolutePath,
-            message = "Coolie: ${coolieFile?.absolutePath ?: "Not Found"}, Silk: ${silkFile?.absolutePath ?: "Not Found"}"
+            isFactoryFound = factoryFile != null && factoryFile.exists(),
+            factoryPath = factoryFile?.absolutePath,
+            isTextilesFound = textilesFile != null && textilesFile.exists(),
+            textilesPath = textilesFile?.absolutePath,
+            message = "Factory: ${factoryFile?.absolutePath ?: "Not Found"}, Textiles: ${textilesFile?.absolutePath ?: "Not Found"}"
         )
         Log.i(tag, "Database scan result: ${report.message}")
         return report
     }
 
     private fun ensureTables(db: SQLiteDatabase, mode: AppMode) {
-        val tableName = if (mode == AppMode.KOOLI) "kooli_niruvana_tharavugal_table" else "pattu_niruvana_tharavugal_table"
+        val legacyName = if (mode == AppMode.FACTORY) "kooli_niruvana_tharavugal_table" else "pattu_niruvana_tharavugal_table"
+        val tableName = getTableName(mode)
+        try {
+            val curOld = db.rawQuery("SELECT name FROM sqlite_master WHERE type='table' AND name=?", arrayOf(legacyName))
+            val oldExists = curOld.moveToFirst()
+            curOld.close()
+            if (oldExists) {
+                val curNew = db.rawQuery("SELECT name FROM sqlite_master WHERE type='table' AND name=?", arrayOf(tableName))
+                val newExists = curNew.moveToFirst()
+                curNew.close()
+                if (!newExists) {
+                    Log.i(tag, "Renaming legacy table $legacyName to $tableName")
+                    db.execSQL("ALTER TABLE \"$legacyName\" RENAME TO \"$tableName\"")
+                }
+            }
+        } catch (e: Exception) {
+            Log.e(tag, "Table rename error: ${e.message}")
+        }
         val sql = """
             CREATE TABLE IF NOT EXISTS "$tableName" (
                 "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
@@ -85,8 +128,8 @@ class AndroidSettingsDatabaseHelper : SettingsDatabaseHelper {
     }
 
     override fun loadProfile(mode: AppMode, profileId: Long?): NiruvanaTharavugal? {
-        val dbName = if (mode == AppMode.KOOLI) coolieDbName else silkDbName
-        val tableName = if (mode == AppMode.KOOLI) "kooli_niruvana_tharavugal_table" else "pattu_niruvana_tharavugal_table"
+        val dbName = getDbName(mode)
+        val tableName = getTableName(mode)
         val dbFile = resolveActiveDatabase(dbName) ?: return null
 
         var db: SQLiteDatabase? = null
@@ -114,8 +157,8 @@ class AndroidSettingsDatabaseHelper : SettingsDatabaseHelper {
     }
 
     override fun loadAllProfiles(mode: AppMode): List<NiruvanaTharavugal> {
-        val dbName = if (mode == AppMode.KOOLI) coolieDbName else silkDbName
-        val tableName = if (mode == AppMode.KOOLI) "kooli_niruvana_tharavugal_table" else "pattu_niruvana_tharavugal_table"
+        val dbName = getDbName(mode)
+        val tableName = getTableName(mode)
         val dbFile = resolveActiveDatabase(dbName) ?: return emptyList()
 
         val list = mutableListOf<NiruvanaTharavugal>()
@@ -170,8 +213,8 @@ class AndroidSettingsDatabaseHelper : SettingsDatabaseHelper {
     }
 
     override fun saveProfile(mode: AppMode, profile: NiruvanaTharavugal): Boolean {
-        val dbName = if (mode == AppMode.KOOLI) coolieDbName else silkDbName
-        val tableName = if (mode == AppMode.KOOLI) "kooli_niruvana_tharavugal_table" else "pattu_niruvana_tharavugal_table"
+        val dbName = getDbName(mode)
+        val tableName = getTableName(mode)
         val dbFile = resolveActiveDatabase(dbName) ?: return false
 
         var db: SQLiteDatabase? = null
@@ -237,8 +280,8 @@ class AndroidSettingsDatabaseHelper : SettingsDatabaseHelper {
     }
 
     override fun deleteProfile(mode: AppMode, profileId: Long): Boolean {
-        val dbName = if (mode == AppMode.KOOLI) coolieDbName else silkDbName
-        val tableName = if (mode == AppMode.KOOLI) "kooli_niruvana_tharavugal_table" else "pattu_niruvana_tharavugal_table"
+        val dbName = getDbName(mode)
+        val tableName = getTableName(mode)
         val dbFile = resolveActiveDatabase(dbName) ?: return false
 
         var db: SQLiteDatabase? = null
@@ -260,8 +303,8 @@ class AndroidSettingsDatabaseHelper : SettingsDatabaseHelper {
     }
 
     override fun clearProfiles(mode: AppMode): Boolean {
-        val dbName = if (mode == AppMode.KOOLI) coolieDbName else silkDbName
-        val tableName = if (mode == AppMode.KOOLI) "kooli_niruvana_tharavugal_table" else "pattu_niruvana_tharavugal_table"
+        val dbName = getDbName(mode)
+        val tableName = getTableName(mode)
         val dbFile = resolveActiveDatabase(dbName) ?: return false
 
         var db: SQLiteDatabase? = null

@@ -76,14 +76,14 @@ android {
         create("factory") {
             dimension = "app"
             applicationId = "com.elvan.udukkai.factory"
-            buildConfigField("String", "APP_MODE", "\"kooli\"")
+            buildConfigField("String", "APP_MODE", "\"factory\"")
             buildConfigField("String", "APP_DISPLAY_NAME", "\"Udukkai Factory\"")
         }
-        // ── Textiles: fixed Pattu mode ────────────────────────────────────────
+        // ── Textiles: fixed Textiles mode ──────────────────────────────────────
         create("textiles") {
             dimension = "app"
             applicationId = "com.elvan.udukkai.textiles"
-            buildConfigField("String", "APP_MODE", "\"pattu\"")
+            buildConfigField("String", "APP_MODE", "\"textiles\"")
             buildConfigField("String", "APP_DISPLAY_NAME", "\"Udukkai Textiles\"")
         }
     }

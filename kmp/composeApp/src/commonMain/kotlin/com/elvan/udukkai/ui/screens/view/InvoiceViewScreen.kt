@@ -168,7 +168,7 @@ fun InvoiceViewScreen(
                                     .padding(horizontal = 8.dp, vertical = 4.dp)
                             ) {
                                 Text(
-                                    text = if (currentMode == AppMode.PATTU) K.udukkaiSilk.tr() else K.udukkaiCoolie.tr(),
+                                    text = if (currentMode == AppMode.TEXTILES) K.udukkaiTextiles.tr() else K.udukkaiFactory.tr(),
                                     style = TextStyle(
                                         fontFamily = ff,
                                         fontSize = 12.sp,
@@ -182,9 +182,9 @@ fun InvoiceViewScreen(
                 }
             }
 
-            // Kooli Specific Additional Charges Card
-            if (currentMode == AppMode.KOOLI && (invoice.setharamGrams > 0 || invoice.thabaalThogai > 0 || invoice.ahimsaPattuThogai > 0)) {
-                item(key = "kooli_charges_card") {
+            // Factory Specific Additional Charges Card
+            if (currentMode == AppMode.FACTORY && (invoice.setharamGrams > 0 || invoice.thabaalThogai > 0 || invoice.ahimsaPattuThogai > 0)) {
+                item(key = "factory_charges_card") {
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()

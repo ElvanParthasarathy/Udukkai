@@ -257,32 +257,40 @@ fun StorageBackupSettingsScreen(
         item {
             val fixedMode = AppLaunchConfig.fixedMode
             val modes = when (fixedMode) {
-                AppMode.KOOLI -> listOf(AppMode.KOOLI)
-                AppMode.PATTU -> listOf(AppMode.PATTU)
-                null -> listOf(AppMode.KOOLI, AppMode.PATTU)
+                AppMode.FACTORY -> listOf(AppMode.FACTORY)
+                AppMode.TEXTILES -> listOf(AppMode.TEXTILES)
+                null -> listOf(AppMode.FACTORY, AppMode.TEXTILES)
             }
 
             val factoryDataLabel = K.factoryData.tr()
             val textilesDataLabel = K.textilesData.tr()
             val companyLabel = K.company.tr()
+            val factoryBadge = K.udukkaiFactory.tr()
+            val textilesBadge = K.udukkaiTextiles.tr()
 
-            val businessItems = remember(liveStats, factoryDataLabel, textilesDataLabel, companyLabel, NiruvanaTharavugalRepository.getProfile(AppMode.KOOLI), NiruvanaTharavugalRepository.getProfile(AppMode.PATTU)) {
+            val businessItems = remember(liveStats, factoryDataLabel, textilesDataLabel, companyLabel, factoryBadge, textilesBadge, NiruvanaTharavugalRepository.getProfile(AppMode.FACTORY), NiruvanaTharavugalRepository.getProfile(AppMode.TEXTILES)) {
                 val list = mutableListOf<BusinessDisplayItem>()
                 for (m in modes) {
                     val profiles = NiruvanaTharavugalRepository.getAllProfiles(m)
-                    val modeLabel = if (m == AppMode.KOOLI) factoryDataLabel else textilesDataLabel
+                    val modeLabel = if (m == AppMode.FACTORY) factoryDataLabel else textilesDataLabel
+                    val appBadge = if (m == AppMode.FACTORY) factoryBadge else textilesBadge
 
                     if (profiles.isEmpty()) {
                         val fallback = NiruvanaTharavugalRepository.getProfile(m)
                         val name = fallback.kurumPeyar.ifBlank {
                             fallback.getPrimary("niruvanathinPeyar")
+                        }.ifBlank {
+                            fallback.getSecondary("niruvanathinPeyar")
                         }.ifBlank { modeLabel }
+
+                        val town = fallback.oor.values.firstOrNull { it.isNotBlank() }
+                        val subtitleText = if (!town.isNullOrBlank()) "$appBadge • $town" else appBadge
 
                         list.add(
                             BusinessDisplayItem(
                                 mode = m,
                                 name = name,
-                                subtitle = modeLabel,
+                                subtitle = subtitleText,
                                 invoiceCount = PattiyalRepository.invoices.count { (fallback.id == null || it.niruvanamId == fallback.id) && !it.isDeleted },
                                 receiptCount = PatrugalRepository.receipts.count { (fallback.id == null || it.niruvanamId == fallback.id) && !it.isDeleted },
                                 customerCount = VaangunarRepository.merchants.count { !it.isDeleted },
@@ -299,7 +307,8 @@ fun StorageBackupSettingsScreen(
                                 "$companyLabel ${index + 1}"
                             }
 
-                            val sub = p.oor.values.firstOrNull { it.isNotBlank() } ?: modeLabel
+                            val town = p.oor.values.firstOrNull { it.isNotBlank() }
+                            val sub = if (!town.isNullOrBlank()) "$appBadge • $town" else appBadge
 
                             val invC = PattiyalRepository.invoices.count { (p.id == null || it.niruvanamId == p.id) && !it.isDeleted }
                             val recC = PatrugalRepository.receipts.count { (p.id == null || it.niruvanamId == p.id) && !it.isDeleted }
@@ -342,7 +351,7 @@ fun StorageBackupSettingsScreen(
                             ) {
                                 Box(contentAlignment = Alignment.Center) {
                                     Icon(
-                                        imageVector = if (item.mode == AppMode.KOOLI) AppSvgs.coolieMode else AppSvgs.silkMode,
+                                        imageVector = if (item.mode == AppMode.FACTORY) AppSvgs.coolieMode else AppSvgs.silkMode,
                                         contentDescription = null,
                                         tint = colors.textPrimary,
                                         modifier = Modifier.size(18.dp)

@@ -108,7 +108,7 @@ fun ProductEditorScreen(
 
         val unit = if (alavuVagai == "weight") "kg" else "Nos"
 
-        val finalCompanyPrices: Map<Long, Double> = if (currentMode == AppMode.PATTU) {
+        val finalCompanyPrices: Map<Long, Double> = if (currentMode == AppMode.TEXTILES) {
             val map = mutableMapOf<Long, Double>()
             companyPricesMap.forEach { (k, v) ->
                 val parsed = v.trim().toDoubleOrNull()
@@ -126,11 +126,11 @@ fun ProductEditorScreen(
         val itemToSave = PorulTharavuru(
             id = item?.id ?: 0L,
             porulPeyar = porulPeyarMap.filterValues { it.isNotBlank() },
-            hsnCode = if (currentMode == AppMode.PATTU) hsnCode.trim() else "",
-            vilai = if (currentMode == AppMode.PATTU) (vilai.trim().toDoubleOrNull() ?: 0.0) else 0.0,
-            variVeetham = if (currentMode == AppMode.PATTU) (variVeetham.trim().toDoubleOrNull() ?: 0.0) else 0.0,
-            alavuVagai = if (currentMode == AppMode.PATTU) alavuVagai else "quantity",
-            alagu = if (currentMode == AppMode.PATTU) unit else "Nos",
+            hsnCode = if (currentMode == AppMode.TEXTILES) hsnCode.trim() else "",
+            vilai = if (currentMode == AppMode.TEXTILES) (vilai.trim().toDoubleOrNull() ?: 0.0) else 0.0,
+            variVeetham = if (currentMode == AppMode.TEXTILES) (variVeetham.trim().toDoubleOrNull() ?: 0.0) else 0.0,
+            alavuVagai = if (currentMode == AppMode.TEXTILES) alavuVagai else "quantity",
+            alagu = if (currentMode == AppMode.TEXTILES) unit else "Nos",
             niruvanamIds = finalNiruvanamIds,
             companyPrices = finalCompanyPrices,
             createdAt = item?.createdAt ?: System.currentTimeMillis(),
@@ -209,8 +209,8 @@ fun ProductEditorScreen(
                                 )
                             }
 
-                            // In Silk mode: Measurement method selector
-                            if (currentMode == AppMode.PATTU) {
+                            // In Textiles mode: Measurement method selector
+                            if (currentMode == AppMode.TEXTILES) {
                                 ElvanThiruthiKeezhvirivu<String>(
                                     label = K.measurementMethod.tr(),
                                     value = if (alavuVagai == "weight") K.weight else K.quantity,
@@ -228,8 +228,8 @@ fun ProductEditorScreen(
                     }
                 }
 
-                // Section 2: Price & Tax (விலை மற்றும் வரி) - Pattu only
-                if (currentMode == AppMode.PATTU) {
+                // Section 2: Price & Tax (விலை மற்றும் வரி) - Textiles only
+                if (currentMode == AppMode.TEXTILES) {
                     item(key = "price_tax_section") {
                         ElvanEditorSection(
                             index = 1,
@@ -333,7 +333,7 @@ fun ProductEditorScreen(
                 if (profiles.size > 1) {
                     item(key = "company_availability_section") {
                         ElvanEditorSection(
-                            index = if (currentMode == AppMode.PATTU) 2 else 1,
+                            index = if (currentMode == AppMode.TEXTILES) 2 else 1,
                             title = K.companies.tr()
                         ) {
                             Column(

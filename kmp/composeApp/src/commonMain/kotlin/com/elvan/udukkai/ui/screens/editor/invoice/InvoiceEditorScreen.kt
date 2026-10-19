@@ -96,14 +96,14 @@ fun InvoiceEditorScreen(
         )
     }
     var invoiceDate by remember { mutableStateOf(invoice?.pattiyalNaal ?: System.currentTimeMillis()) }
-    var placeOfSupply by remember { mutableStateOf(if (currentMode == AppMode.PATTU) "Tamil Nadu" else "") }
+    var placeOfSupply by remember { mutableStateOf(if (currentMode == AppMode.TEXTILES) "Tamil Nadu" else "") }
 
     // Line items list
     var lineItems by remember {
         mutableStateOf(
             listOf(
                 InvoiceLineItem(
-                    name = if (currentMode == AppMode.KOOLI) "கூலி நெசவு" else "பட்டு புடவை",
+                    name = if (currentMode == AppMode.FACTORY) "கூலி நெசவு" else "பட்டு புடவை",
                     quantityOrWeight = "1",
                     rate = if (invoice != null && invoice.mothaThogai > 0) invoice.mothaThogai.toString() else "0"
                 )
@@ -128,7 +128,7 @@ fun InvoiceEditorScreen(
         lineItems.sumOf { item ->
             val qty = item.quantityOrWeight.toDoubleOrNull() ?: 0.0
             val r = item.rate.toDoubleOrNull() ?: 0.0
-            if (currentMode == AppMode.KOOLI) {
+            if (currentMode == AppMode.FACTORY) {
                 floor(qty * r)
             } else {
                 qty * r
@@ -137,7 +137,7 @@ fun InvoiceEditorScreen(
     }
 
     val taxOrAdditional = remember(lineItems, setharamGrams, courierCharges, ahimsaCharges, currentMode) {
-        if (currentMode == AppMode.KOOLI) {
+        if (currentMode == AppMode.FACTORY) {
             val courier = courierCharges.toDoubleOrNull() ?: 0.0
             val ahimsa = ahimsaCharges.toDoubleOrNull() ?: 0.0
             courier + ahimsa
@@ -427,7 +427,7 @@ fun InvoiceEditorScreen(
                         )
 
                         // In Silk mode: Place of Supply
-                        if (currentMode == AppMode.PATTU) {
+                        if (currentMode == AppMode.TEXTILES) {
                             ElvanThiruthiUlleedu(
                                 label = "வழங்கல் இடம் (Place of Supply)",
                                 value = placeOfSupply,
@@ -505,7 +505,7 @@ fun InvoiceEditorScreen(
                             ) {
                                 Box(modifier = Modifier.weight(1f)) {
                                     ElvanThiruthiUlleedu(
-                                        label = if (currentMode == AppMode.KOOLI) "${K.weight.tr()} (kg)" else K.quantity.tr(),
+                                        label = if (currentMode == AppMode.FACTORY) "${K.weight.tr()} (kg)" else K.quantity.tr(),
                                         value = lineItem.quantityOrWeight,
                                         onValueChange = { newQty ->
                                             lineItems = lineItems.toMutableList().also {
@@ -532,7 +532,7 @@ fun InvoiceEditorScreen(
                             }
 
                             // In Silk Mode: HSN + GST %
-                            if (currentMode == AppMode.PATTU) {
+                            if (currentMode == AppMode.TEXTILES) {
                                 Row(
                                     modifier = Modifier.fillMaxWidth(),
                                     horizontalArrangement = Arrangement.spacedBy(10.dp)
@@ -580,7 +580,7 @@ fun InvoiceEditorScreen(
                                 lineItems = lineItems.toMutableList().also {
                                     it.add(
                                         InvoiceLineItem(
-                                            name = if (currentMode == AppMode.KOOLI) "கூலி நெசவு" else "பட்டு புடவை",
+                                            name = if (currentMode == AppMode.FACTORY) "கூலி நெசவு" else "பட்டு புடவை",
                                             quantityOrWeight = "1",
                                             rate = "0"
                                         )
@@ -615,10 +615,10 @@ fun InvoiceEditorScreen(
             item(key = "totals_section") {
                 ElvanEditorSection(
                     index = 3,
-                    title = if (currentMode == AppMode.KOOLI) "கூடுதல் கட்டணங்கள் மற்றும் மொத்தம்" else K.totals.tr()
+                    title = if (currentMode == AppMode.FACTORY) "கூடுதல் கட்டணங்கள் மற்றும் மொத்தம்" else K.totals.tr()
                 ) {
                     ElvanThiruthiAttai {
-                        if (currentMode == AppMode.KOOLI) {
+                        if (currentMode == AppMode.FACTORY) {
                             ElvanThiruthiUlleedu(
                                 label = "${K.setharam.tr()} (Grams)",
                                 value = setharamGrams,
@@ -686,7 +686,7 @@ fun InvoiceEditorScreen(
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Text(
-                                    text = if (currentMode == AppMode.KOOLI) "கூடுதல் கட்டணங்கள்" else "வரி (GST)",
+                                    text = if (currentMode == AppMode.FACTORY) "கூடுதல் கட்டணங்கள்" else "வரி (GST)",
                                     style = TextStyle(
                                         fontFamily = ff,
                                         fontSize = 14.sp,

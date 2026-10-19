@@ -324,8 +324,8 @@ fun CreateScreen(
                                     .fillMaxWidth()
                                     .padding(horizontal = Dimens.ContentPadding)
                             ) {
-                                if (mode == AppMode.KOOLI) {
-                                    CoolieInvoiceCard(
+                                if (mode == AppMode.FACTORY) {
+                                    FactoryInvoiceCard(
                                         index = index,
                                         pattiyal = invoice,
                                         colors = colors,
@@ -335,7 +335,7 @@ fun CreateScreen(
                                         onLongClick = onCardLongClick
                                     )
                                 } else {
-                                    SilkInvoiceCard(
+                                    TextilesInvoiceCard(
                                         index = index,
                                         pattiyal = invoice,
                                         colors = colors,

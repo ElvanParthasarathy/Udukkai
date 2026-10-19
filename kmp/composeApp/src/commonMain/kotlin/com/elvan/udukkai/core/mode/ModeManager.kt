@@ -20,7 +20,7 @@ import androidx.compose.runtime.setValue
  */
 object ModeManager {
 
-    var currentMode by mutableStateOf(AppMode.KOOLI)
+    var currentMode by mutableStateOf(AppMode.FACTORY)
         private set
 
     /** Tracks whether the user has chosen their workspace mode during startup */
