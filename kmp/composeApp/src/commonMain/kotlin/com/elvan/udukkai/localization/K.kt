@@ -479,5 +479,7 @@ object K {
     const val factoryData = "factoryData"
     const val textilesData = "textilesData"
     const val noBackupsAvailable = "noBackupsAvailable"
+    const val emailMismatch = "emailMismatch"
+    const val passwordRequired = "passwordRequired"
 }
 

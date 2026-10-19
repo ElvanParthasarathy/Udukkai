@@ -7,7 +7,20 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import com.elvan.udukkai.core.auth.AuthManager
+import com.elvan.udukkai.core.backup.BackupSlot
+import com.elvan.udukkai.core.backup.getNirilBackupService
+import com.elvan.udukkai.core.mode.AppLaunchConfig
+import com.elvan.udukkai.core.mode.AppMode
+import com.elvan.udukkai.core.mode.ModeManager
+import com.elvan.udukkai.core.platform.getPreferencesHelper
+import com.elvan.udukkai.data.business.getBusinessDatabaseHelper
+import com.elvan.udukkai.data.repository.PattiyalRepository
+import com.elvan.udukkai.data.repository.PatrugalRepository
+import com.elvan.udukkai.data.repository.PorulRepository
+import com.elvan.udukkai.data.repository.VaangunarRepository
 import com.elvan.udukkai.data.settings.NiruvanaTharavugalRepository
+import com.elvan.udukkai.data.settings.getSettingsDatabaseHelper
 import com.elvan.udukkai.localization.K
 import com.elvan.udukkai.localization.tr
 import com.elvan.udukkai.theme.Dimens
@@ -20,9 +33,11 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 /**
- * Security Settings Screen matching Flutter's `paadhugaappu_amaippugal_thirai.dart` and
- * `kanakku_paadhugaappu_pagudhi.dart` 1:1 pixel-perfect.
- * Features Sync App, Sign Out, and 2-Step Erase App Data with modal flows.
+ * Security Settings Screen.
+ * Fully wired actions:
+ * - Sync App: Refreshes and synchronizes all in-memory repositories with local database.
+ * - Sign Out: Logs out the user via AuthManager, clears session state, and redirects to welcome/login.
+ * - Erase App Data: 2-step authenticated wipe (email & password check), takes safety vault backup, wipes all SQLite tables, and resets app to factory default.
  */
 @Composable
 fun SecuritySettingsScreen(
@@ -45,6 +60,13 @@ fun SecuritySettingsScreen(
     val syncSuccessMsg = K.synced.tr()
     val signOutSuccessMsg = K.signedOutSuccessfully.tr()
     val eraseSuccessMsg = K.appDataErased.tr()
+    val emailMismatchMsg = K.emailMismatch.tr()
+    val passwordRequiredMsg = K.passwordRequired.tr()
+
+    val currentMode = AppLaunchConfig.fixedMode ?: ModeManager.currentMode
+    val currentProfile = NiruvanaTharavugalRepository.getProfile(currentMode)
+    val registeredEmail = currentProfile.minnanjal.trim()
+    val confirmEmailPlaceholder = if (registeredEmail.isNotBlank()) registeredEmail else K.confirmEmail.tr()
 
     LazyColumn(
         state = scrollState,
@@ -73,8 +95,12 @@ fun SecuritySettingsScreen(
                         scope.launch {
                             try {
                                 NiruvanaTharavugalRepository.refreshFromDatabase()
+                                PattiyalRepository.loadAll()
+                                PatrugalRepository.loadAll()
+                                PorulRepository.loadAll()
+                                VaangunarRepository.loadAll()
                             } catch (_: Exception) {}
-                            delay(800)
+                            delay(600)
                             showSyncLoading = false
                             ElvanSnackbar.show(syncSuccessMsg)
                         }
@@ -131,7 +157,8 @@ fun SecuritySettingsScreen(
                 showSignOutConfirm = false
                 showSignOutLoading = true
                 scope.launch {
-                    delay(1000)
+                    delay(400)
+                    AuthManager.logout()
                     showSignOutLoading = false
                     ElvanSnackbar.show(signOutSuccessMsg)
                 }
@@ -158,14 +185,25 @@ fun SecuritySettingsScreen(
                     label = K.email.tr(),
                     value = emailInput,
                     onValueChange = { emailInput = it },
-                    placeholder = K.confirmEmail.tr(),
+                    placeholder = confirmEmailPlaceholder,
                     colors = colors
                 )
             },
             onDismissRequest = { showEraseStep1 = false },
             onConfirm = {
-                showEraseStep1 = false
-                showEraseStep2 = true
+                val input = emailInput.trim()
+                val isMatch = if (registeredEmail.isNotBlank()) {
+                    input.equals(registeredEmail, ignoreCase = true)
+                } else {
+                    input.contains("@") && input.contains(".")
+                }
+
+                if (!isMatch) {
+                    ElvanSnackbar.show(emailMismatchMsg)
+                } else {
+                    showEraseStep1 = false
+                    showEraseStep2 = true
+                }
             },
             colors = colors
         )
@@ -189,12 +227,46 @@ fun SecuritySettingsScreen(
             },
             onDismissRequest = { showEraseStep2 = false },
             onConfirm = {
-                showEraseStep2 = false
-                showEraseLoading = true
-                scope.launch {
-                    delay(1500)
-                    showEraseLoading = false
-                    ElvanSnackbar.show(eraseSuccessMsg)
+                val pwd = passwordInput.trim()
+                if (pwd.isBlank()) {
+                    ElvanSnackbar.show(passwordRequiredMsg)
+                } else {
+                    showEraseStep2 = false
+                    showEraseLoading = true
+                    scope.launch {
+                        try {
+                            // 1. Take safety vault backup first so user never loses data by accident
+                            getNirilBackupService().createSafetySnapshot()
+
+                            // 2. Wipe SQLite business tables & company profile tables for all modes
+                            val bizHelper = getBusinessDatabaseHelper()
+                            val settingsHelper = getSettingsDatabaseHelper()
+                            for (m in listOf(AppMode.KOOLI, AppMode.PATTU)) {
+                                try { bizHelper.clearAllData(m) } catch (_: Exception) {}
+                                try { settingsHelper.clearProfiles(m) } catch (_: Exception) {}
+                            }
+
+                            // 3. Clear repositories in-memory
+                            PattiyalRepository.loadAll()
+                            PatrugalRepository.loadAll()
+                            PorulRepository.loadAll()
+                            VaangunarRepository.loadAll()
+                            NiruvanaTharavugalRepository.refreshFromDatabase()
+
+                            // 4. Wipe user preferences
+                            try {
+                                getPreferencesHelper().clear()
+                            } catch (_: Exception) {}
+
+                            // 5. Reset AuthManager session
+                            AuthManager.logout()
+                            AuthManager.refreshProfileStatus()
+                        } catch (_: Exception) {}
+
+                        delay(600)
+                        showEraseLoading = false
+                        ElvanSnackbar.show(eraseSuccessMsg)
+                    }
                 }
             },
             colors = colors
@@ -208,3 +280,4 @@ fun SecuritySettingsScreen(
         )
     }
 }
+

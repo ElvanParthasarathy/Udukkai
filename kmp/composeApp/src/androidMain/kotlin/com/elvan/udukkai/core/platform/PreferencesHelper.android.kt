@@ -36,6 +36,10 @@ class AndroidPreferencesHelper : PreferencesHelper {
     override fun setInt(key: String, value: Int) {
         prefs?.edit()?.putInt(key, value)?.apply()
     }
+
+    override fun clear() {
+        prefs?.edit()?.clear()?.apply()
+    }
 }
 
 private val androidPrefsInstance by lazy { AndroidPreferencesHelper() }

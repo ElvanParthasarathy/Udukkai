@@ -479,5 +479,7 @@ val en: Map<String, String> = mapOf(
     K.factoryData to "Factory Data",
     K.textilesData to "Textiles Data",
     K.noBackupsAvailable to "No backups found",
+    K.emailMismatch to "Email does not match",
+    K.passwordRequired to "Password is required",
 )
 

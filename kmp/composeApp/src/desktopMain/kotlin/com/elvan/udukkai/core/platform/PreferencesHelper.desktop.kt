@@ -35,6 +35,12 @@ class DesktopPreferencesHelper : PreferencesHelper {
     override fun setInt(key: String, value: Int) {
         prefs.putInt(key, value)
     }
+
+    override fun clear() {
+        try {
+            prefs.clear()
+        } catch (_: Exception) {}
+    }
 }
 
 private val desktopPrefsInstance by lazy { DesktopPreferencesHelper() }

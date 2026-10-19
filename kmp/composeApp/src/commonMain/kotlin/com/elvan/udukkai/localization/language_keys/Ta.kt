@@ -480,6 +480,8 @@ val ta: Map<String, String> = mapOf(
     K.factoryData to "தொழிற்சாலைத் தரவுகள்",
     K.textilesData to "நெசவுத் தரவுகள்",
     K.noBackupsAvailable to "காப்புகள் ஏதுமில்லை",
+    K.emailMismatch to "மின்னஞ்சல் முகவரி பொருந்தவில்லை",
+    K.passwordRequired to "கடவுச்சொல் தேவை",
 )
 
 

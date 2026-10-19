@@ -27,6 +27,11 @@ import com.elvan.udukkai.core.backup.getNirilBackupService
 import com.elvan.udukkai.core.mode.AppLaunchConfig
 import com.elvan.udukkai.core.mode.AppMode
 import com.elvan.udukkai.core.utils.DateUtils
+import com.elvan.udukkai.data.repository.PattiyalRepository
+import com.elvan.udukkai.data.repository.PatrugalRepository
+import com.elvan.udukkai.data.repository.PorulRepository
+import com.elvan.udukkai.data.repository.VaangunarRepository
+import com.elvan.udukkai.data.settings.NiruvanaTharavugalRepository
 import com.elvan.udukkai.localization.K
 import com.elvan.udukkai.localization.tr
 import com.elvan.udukkai.theme.Dimens
@@ -248,67 +253,82 @@ fun StorageBackupSettingsScreen(
             }
         }
 
-        // ── 3. Live Databases Grid Section ──
+        // ── 3. Live Databases Grid Section (Business-by-Business) ──
         item {
             val fixedMode = AppLaunchConfig.fixedMode
-            val showCoolie = fixedMode == null || fixedMode == AppMode.KOOLI
-            val showSilk = fixedMode == null || fixedMode == AppMode.PATTU
+            val modes = when (fixedMode) {
+                AppMode.KOOLI -> listOf(AppMode.KOOLI)
+                AppMode.PATTU -> listOf(AppMode.PATTU)
+                null -> listOf(AppMode.KOOLI, AppMode.PATTU)
+            }
 
-            ElvanSettingsSection(colors = colors) {
-                if (showCoolie) {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 16.dp, vertical = 14.dp)
-                    ) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Surface(
-                                shape = CircleShape,
-                                color = colors.iconBg,
-                                modifier = Modifier.size(36.dp)
-                            ) {
-                                Box(contentAlignment = Alignment.Center) {
-                                    Icon(
-                                        imageVector = AppSvgs.coolieMode,
-                                        contentDescription = null,
-                                        tint = colors.textPrimary,
-                                        modifier = Modifier.size(18.dp)
-                                    )
-                                }
-                            }
-                            Spacer(modifier = Modifier.width(14.dp))
-                            Text(
-                                text = if (fixedMode == AppMode.KOOLI) K.factoryData.tr() else K.coolieData.tr(),
-                                style = TextStyle(
-                                    fontFamily = ff,
-                                    fontSize = 15.sp,
-                                    fontWeight = FontWeight.Medium
-                                ),
-                                color = colors.textPrimary
+            val factoryDataLabel = K.factoryData.tr()
+            val textilesDataLabel = K.textilesData.tr()
+            val companyLabel = K.company.tr()
+
+            val businessItems = remember(liveStats, factoryDataLabel, textilesDataLabel, companyLabel, NiruvanaTharavugalRepository.getProfile(AppMode.KOOLI), NiruvanaTharavugalRepository.getProfile(AppMode.PATTU)) {
+                val list = mutableListOf<BusinessDisplayItem>()
+                for (m in modes) {
+                    val profiles = NiruvanaTharavugalRepository.getAllProfiles(m)
+                    val modeLabel = if (m == AppMode.KOOLI) factoryDataLabel else textilesDataLabel
+
+                    if (profiles.isEmpty()) {
+                        val fallback = NiruvanaTharavugalRepository.getProfile(m)
+                        val name = fallback.kurumPeyar.ifBlank {
+                            fallback.getPrimary("niruvanathinPeyar")
+                        }.ifBlank { modeLabel }
+
+                        list.add(
+                            BusinessDisplayItem(
+                                mode = m,
+                                name = name,
+                                subtitle = modeLabel,
+                                invoiceCount = PattiyalRepository.invoices.count { (fallback.id == null || it.niruvanamId == fallback.id) && !it.isDeleted },
+                                receiptCount = PatrugalRepository.receipts.count { (fallback.id == null || it.niruvanamId == fallback.id) && !it.isDeleted },
+                                customerCount = VaangunarRepository.merchants.count { !it.isDeleted },
+                                productCount = PorulRepository.items.count { (fallback.id == null || it.isAvailableForCompany(fallback.id)) && !it.isDeleted }
                             )
-                        }
+                        )
+                    } else {
+                        profiles.forEachIndexed { index, p ->
+                            val bName = p.kurumPeyar.ifBlank {
+                                p.getPrimary("niruvanathinPeyar")
+                            }.ifBlank {
+                                p.getSecondary("niruvanathinPeyar")
+                            }.ifBlank {
+                                "$companyLabel ${index + 1}"
+                            }
 
-                        Spacer(modifier = Modifier.height(10.dp))
+                            val sub = p.oor.values.firstOrNull { it.isNotBlank() } ?: modeLabel
 
-                        // Dynamic 2x2 Data Grid
-                        val gridStyle = TextStyle(fontFamily = ff, fontSize = 12.sp, color = colors.textPrimary.copy(alpha = 0.5f))
-                        Row(modifier = Modifier.fillMaxWidth().padding(start = 50.dp)) {
-                            Text("${liveStats.invoiceCount} ${K.invoices.tr()}", style = gridStyle, modifier = Modifier.weight(1f))
-                            Text("${liveStats.receiptCount} ${K.receipts.tr()}", style = gridStyle, modifier = Modifier.weight(1f))
-                        }
-                        Spacer(modifier = Modifier.height(6.dp))
-                        Row(modifier = Modifier.fillMaxWidth().padding(start = 50.dp)) {
-                            Text("${liveStats.customerCount} ${K.customers.tr()}", style = gridStyle, modifier = Modifier.weight(1f))
-                            Text("${liveStats.productCount} ${K.products.tr()}", style = gridStyle, modifier = Modifier.weight(1f))
+                            val invC = PattiyalRepository.invoices.count { (p.id == null || it.niruvanamId == p.id) && !it.isDeleted }
+                            val recC = PatrugalRepository.receipts.count { (p.id == null || it.niruvanamId == p.id) && !it.isDeleted }
+                            val cusC = VaangunarRepository.merchants.count { !it.isDeleted }
+                            val proC = PorulRepository.items.count { (p.id == null || it.isAvailableForCompany(p.id)) && !it.isDeleted }
+
+                            list.add(
+                                BusinessDisplayItem(
+                                    mode = m,
+                                    name = bName,
+                                    subtitle = sub,
+                                    invoiceCount = invC,
+                                    receiptCount = recC,
+                                    customerCount = cusC,
+                                    productCount = proC
+                                )
+                            )
                         }
                     }
                 }
+                list
+            }
 
-                if (showCoolie && showSilk) {
-                    ElvanSettingsDivider(colors = colors)
-                }
+            ElvanSettingsSection(colors = colors) {
+                businessItems.forEachIndexed { index, item ->
+                    if (index > 0) {
+                        ElvanSettingsDivider(colors = colors)
+                    }
 
-                if (showSilk) {
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -322,7 +342,7 @@ fun StorageBackupSettingsScreen(
                             ) {
                                 Box(contentAlignment = Alignment.Center) {
                                     Icon(
-                                        imageVector = AppSvgs.silkMode,
+                                        imageVector = if (item.mode == AppMode.KOOLI) AppSvgs.coolieMode else AppSvgs.silkMode,
                                         contentDescription = null,
                                         tint = colors.textPrimary,
                                         modifier = Modifier.size(18.dp)
@@ -330,28 +350,41 @@ fun StorageBackupSettingsScreen(
                                 }
                             }
                             Spacer(modifier = Modifier.width(14.dp))
-                            Text(
-                                text = if (fixedMode == AppMode.PATTU) K.textilesData.tr() else K.silkData.tr(),
-                                style = TextStyle(
-                                    fontFamily = ff,
-                                    fontSize = 15.sp,
-                                    fontWeight = FontWeight.Medium
-                                ),
-                                color = colors.textPrimary
-                            )
+                            Column {
+                                Text(
+                                    text = item.name,
+                                    style = TextStyle(
+                                        fontFamily = ff,
+                                        fontSize = 15.sp,
+                                        fontWeight = FontWeight.Medium
+                                    ),
+                                    color = colors.textPrimary
+                                )
+                                if (item.subtitle.isNotBlank() && item.subtitle != item.name) {
+                                    Text(
+                                        text = item.subtitle,
+                                        style = TextStyle(
+                                            fontFamily = ff,
+                                            fontSize = 12.sp,
+                                            fontWeight = FontWeight.Normal
+                                        ),
+                                        color = colors.textPrimary.copy(alpha = 0.5f)
+                                    )
+                                }
+                            }
                         }
 
                         Spacer(modifier = Modifier.height(10.dp))
 
                         val gridStyle = TextStyle(fontFamily = ff, fontSize = 12.sp, color = colors.textPrimary.copy(alpha = 0.5f))
                         Row(modifier = Modifier.fillMaxWidth().padding(start = 50.dp)) {
-                            Text("${liveStats.invoiceCount} ${K.invoices.tr()}", style = gridStyle, modifier = Modifier.weight(1f))
-                            Text("${liveStats.receiptCount} ${K.receipts.tr()}", style = gridStyle, modifier = Modifier.weight(1f))
+                            Text("${item.invoiceCount} ${K.invoices.tr()}", style = gridStyle, modifier = Modifier.weight(1f))
+                            Text("${item.receiptCount} ${K.receipts.tr()}", style = gridStyle, modifier = Modifier.weight(1f))
                         }
                         Spacer(modifier = Modifier.height(6.dp))
                         Row(modifier = Modifier.fillMaxWidth().padding(start = 50.dp)) {
-                            Text("${liveStats.customerCount} ${K.customers.tr()}", style = gridStyle, modifier = Modifier.weight(1f))
-                            Text("${liveStats.productCount} ${K.products.tr()}", style = gridStyle, modifier = Modifier.weight(1f))
+                            Text("${item.customerCount} ${K.customers.tr()}", style = gridStyle, modifier = Modifier.weight(1f))
+                            Text("${item.productCount} ${K.products.tr()}", style = gridStyle, modifier = Modifier.weight(1f))
                         }
                     }
                 }
@@ -549,3 +582,14 @@ fun StorageBackupSettingsScreen(
         )
     }
 }
+
+private data class BusinessDisplayItem(
+    val mode: AppMode,
+    val name: String,
+    val subtitle: String,
+    val invoiceCount: Int,
+    val receiptCount: Int,
+    val customerCount: Int,
+    val productCount: Int
+)
+
