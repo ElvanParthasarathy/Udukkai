@@ -459,6 +459,7 @@ object MaterialSymbols {
         val Percent: ImageVector get() = LibSymbols.Rounded.Percent
         val Straighten: ImageVector get() = LibSymbols.Rounded.Straighten
         val LocalShipping: ImageVector get() = LibSymbols.Rounded.Local_shipping
+        val Share: ImageVector get() = LibSymbols.Rounded.Share
     }
 
     /**

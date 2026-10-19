@@ -3,6 +3,7 @@ package com.elvan.udukkai.data.repository
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import com.elvan.udukkai.core.backup.AutoBackupManager
 import com.elvan.udukkai.core.mode.AppMode
 import com.elvan.udukkai.core.mode.ModeManager
 import com.elvan.udukkai.data.business.getBusinessDatabaseHelper
@@ -109,6 +110,7 @@ object PattiyalRepository {
             val id = helper.saveInvoice(mode, invoice)
             if (id > 0L) {
                 loadAll(mode)
+                AutoBackupManager.onDataChanged()
                 try {
                     com.elvan.udukkai.core.sync.getFirebaseSyncManager().pushInvoice(invoice.copy(id = id), mode)
                 } catch (_: Exception) {}
@@ -127,6 +129,7 @@ object PattiyalRepository {
             if (success) {
                 loadAll(mode)
                 loadDeleted(mode)
+                AutoBackupManager.onDataChanged()
                 if (existing != null) {
                     try {
                         com.elvan.udukkai.core.sync.getFirebaseSyncManager().pushInvoice(
@@ -148,6 +151,7 @@ object PattiyalRepository {
             if (success) {
                 loadAll(mode)
                 loadDeleted(mode)
+                AutoBackupManager.onDataChanged()
                 val restored = getById(id)
                 if (restored != null) {
                     try {
@@ -169,6 +173,7 @@ object PattiyalRepository {
             val success = helper.permanentDeleteInvoice(mode, id)
             if (success) {
                 loadDeleted(mode)
+                AutoBackupManager.onDataChanged()
             }
             success
         } catch (_: Exception) {

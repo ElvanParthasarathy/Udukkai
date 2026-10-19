@@ -466,5 +466,18 @@ object K {
     const val chennaiTamilNadu = "chennaiTamilNadu"
     const val backupFailed = "backupFailed"
     const val available = "available"
+
+    // Safe Backup & Restore System
+    const val backupLatest = "backupLatest"
+    const val backupPrevious = "backupPrevious"
+    const val safetyVault = "safetyVault"
+    const val safetyVaultDesc = "safetyVaultDesc"
+    const val restoreConfirmPrompt = "restoreConfirmPrompt"
+    const val restoreSuccess = "restoreSuccess"
+    const val shareBackupBtn = "shareBackupBtn"
+    const val availableBackups = "availableBackups"
+    const val factoryData = "factoryData"
+    const val textilesData = "textilesData"
+    const val noBackupsAvailable = "noBackupsAvailable"
 }
 

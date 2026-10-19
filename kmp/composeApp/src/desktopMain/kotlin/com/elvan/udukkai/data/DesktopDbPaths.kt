@@ -1,5 +1,6 @@
 package com.elvan.udukkai.data
 
+import com.elvan.udukkai.core.backup.BackupSlot
 import com.elvan.udukkai.core.mode.AppMode
 import java.io.File
 
@@ -28,37 +29,56 @@ object DesktopDbPaths {
         return dir
     }
 
-    fun getBackupFile(mode: AppMode? = null): File {
-        val dir = getBackupDir()
+    private fun modePrefix(mode: AppMode?): String {
         return when (mode) {
-            AppMode.KOOLI -> File(dir, "udukkai_kooli_backup.db")
-            AppMode.PATTU -> File(dir, "udukkai_pattu_backup.db")
-            null -> File(dir, "udukkai_backup.db")
+            AppMode.KOOLI -> "kooli"
+            AppMode.PATTU -> "pattu"
+            null -> "common"
         }
     }
 
-    fun resolveExistingBackupFile(mode: AppMode? = null): File {
-        val modeFile = getBackupFile(mode)
-        if (modeFile.exists()) return modeFile
-        val legacyFile = getBackupFile(null)
-        if (legacyFile.exists()) return legacyFile
-        return modeFile
-    }
-
-    fun getSafetySnapshotFile(mode: AppMode? = null): File {
+    fun getBackupFile(mode: AppMode? = null, slot: BackupSlot = BackupSlot.LATEST): File {
         val dir = getBackupDir()
-        return when (mode) {
-            AppMode.KOOLI -> File(dir, "udukkai_kooli_safety_snapshot.db")
-            AppMode.PATTU -> File(dir, "udukkai_pattu_safety_snapshot.db")
-            null -> File(dir, "udukkai_safety_snapshot.db")
+        val prefix = modePrefix(mode)
+        return when (slot) {
+            BackupSlot.LATEST -> File(dir, "udukkai_${prefix}_backup_latest.db")
+            BackupSlot.PREVIOUS -> File(dir, "udukkai_${prefix}_backup_previous.db")
+            BackupSlot.SAFETY_VAULT -> File(dir, "udukkai_${prefix}_safety_vault.db")
         }
     }
 
-    fun resolveExistingSafetySnapshotFile(mode: AppMode? = null): File {
-        val modeFile = getSafetySnapshotFile(mode)
-        if (modeFile.exists()) return modeFile
-        val legacyFile = getSafetySnapshotFile(null)
-        if (legacyFile.exists()) return legacyFile
-        return modeFile
+    fun resolveExistingBackupFile(mode: AppMode? = null, slot: BackupSlot = BackupSlot.LATEST): File {
+        val slotFile = getBackupFile(mode, slot)
+        if (slotFile.exists() && slotFile.length() > 48) return slotFile
+
+        // Fallbacks for LATEST: check legacy file names
+        if (slot == BackupSlot.LATEST) {
+            val legacyName = when (mode) {
+                AppMode.KOOLI -> "udukkai_kooli_backup.db"
+                AppMode.PATTU -> "udukkai_pattu_backup.db"
+                null -> "udukkai_backup.db"
+            }
+            val legacyFile = File(getBackupDir(), legacyName)
+            if (legacyFile.exists() && legacyFile.length() > 48) return legacyFile
+        }
+
+        // Fallbacks for SAFETY_VAULT: check legacy snapshot names
+        if (slot == BackupSlot.SAFETY_VAULT) {
+            val legacySafetyName = when (mode) {
+                AppMode.KOOLI -> "udukkai_kooli_safety_snapshot.db"
+                AppMode.PATTU -> "udukkai_pattu_safety_snapshot.db"
+                null -> "udukkai_safety_snapshot.db"
+            }
+            val legacyFile = File(getBackupDir(), legacySafetyName)
+            if (legacyFile.exists() && legacyFile.length() > 48) return legacyFile
+        }
+
+        return slotFile
     }
+
+    fun getSafetySnapshotFile(mode: AppMode? = null): File =
+        getBackupFile(mode, BackupSlot.SAFETY_VAULT)
+
+    fun resolveExistingSafetySnapshotFile(mode: AppMode? = null): File =
+        resolveExistingBackupFile(mode, BackupSlot.SAFETY_VAULT)
 }

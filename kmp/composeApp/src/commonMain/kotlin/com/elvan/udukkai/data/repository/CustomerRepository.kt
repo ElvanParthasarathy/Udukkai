@@ -3,6 +3,7 @@ package com.elvan.udukkai.data.repository
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import com.elvan.udukkai.core.backup.AutoBackupManager
 import com.elvan.udukkai.core.mode.AppMode
 import com.elvan.udukkai.core.mode.ModeManager
 import com.elvan.udukkai.data.business.getBusinessDatabaseHelper
@@ -65,6 +66,7 @@ object VaangunarRepository {
             val id = helper.saveMerchant(mode, merchant)
             if (id > 0L) {
                 loadAll(mode)
+                AutoBackupManager.onDataChanged()
                 try {
                     com.elvan.udukkai.core.sync.getFirebaseSyncManager().pushMerchant(merchant.copy(id = id), mode)
                 } catch (_: Exception) {}
@@ -83,6 +85,7 @@ object VaangunarRepository {
             if (success) {
                 loadAll(mode)
                 loadDeleted(mode)
+                AutoBackupManager.onDataChanged()
                 if (existing != null) {
                     try {
                         com.elvan.udukkai.core.sync.getFirebaseSyncManager().pushMerchant(
@@ -113,6 +116,7 @@ object VaangunarRepository {
             if (success) {
                 loadAll(mode)
                 loadDeleted(mode)
+                AutoBackupManager.onDataChanged()
                 val restored = getById(id)
                 if (restored != null) {
                     try {
@@ -134,6 +138,7 @@ object VaangunarRepository {
             val success = helper.permanentDeleteMerchant(mode, id)
             if (success) {
                 loadDeleted(mode)
+                AutoBackupManager.onDataChanged()
             }
             success
         } catch (_: Exception) {

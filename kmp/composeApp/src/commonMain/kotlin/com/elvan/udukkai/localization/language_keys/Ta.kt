@@ -467,6 +467,19 @@ val ta: Map<String, String> = mapOf(
     K.chennaiTamilNadu to "சென்னை, தமிழ்நாடு",
     K.backupFailed to "காப்புப்பிரதி தோல்வியடைந்தது",
     K.available to "உள்ளது",
+
+    // Safe Backup & Restore System
+    K.backupLatest to "அண்மைக்காப்பு",
+    K.backupPrevious to "முந்தைய காப்பு",
+    K.safetyVault to "பாதுகாப்புப் பெட்டகம்",
+    K.safetyVaultDesc to "மாற்றங்களுக்கு முன் எடுக்கப்படும் அவசரப் பாதுகாப்புப் படம்",
+    K.restoreConfirmPrompt to "இக்காப்பை மீட்டெடுக்க விரும்புகிறீர்களா? தற்போதைய தரவு பாதுகாப்புப் பெட்டகத்தில் சேமிக்கப்படும்.",
+    K.restoreSuccess to "தரவு வெற்றிகரமாக மீட்டெடுக்கப்பட்டது!",
+    K.shareBackupBtn to "காப்புப் பகிர்",
+    K.availableBackups to "கிடைக்கும் காப்புகள்",
+    K.factoryData to "தொழிற்சாலைத் தரவுகள்",
+    K.textilesData to "நெசவுத் தரவுகள்",
+    K.noBackupsAvailable to "காப்புகள் ஏதுமில்லை",
 )
 
 

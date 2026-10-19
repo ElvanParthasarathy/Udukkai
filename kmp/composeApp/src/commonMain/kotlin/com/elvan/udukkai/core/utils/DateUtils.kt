@@ -6,6 +6,16 @@ object DateUtils {
      */
     fun formatDate(millis: Long): String = formatEpochMillis(millis)
 
+    fun formatDateTime(millis: Long): String {
+        val dateStr = formatEpochMillis(millis)
+        val totalSeconds = millis / 1000
+        val minute = ((totalSeconds / 60) % 60).toInt()
+        val hour = ((totalSeconds / 3600) % 24).toInt()
+        val minStr = if (minute < 10) "0$minute" else "$minute"
+        val hrStr = if (hour < 10) "0$hour" else "$hour"
+        return "$dateStr $hrStr:$minStr"
+    }
+
     fun formatEpochMillis(millis: Long): String {
         val days = (millis / 86400000L).toInt()
         val z = days + 719468

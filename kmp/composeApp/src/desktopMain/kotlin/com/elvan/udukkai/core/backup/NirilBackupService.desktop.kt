@@ -4,29 +4,25 @@ import com.elvan.udukkai.core.mode.AppLaunchConfig
 import com.elvan.udukkai.core.mode.AppMode
 import com.elvan.udukkai.core.mode.ModeManager
 import com.elvan.udukkai.data.DesktopDbPaths
+import com.elvan.udukkai.data.repository.PattiyalRepository
+import com.elvan.udukkai.data.repository.PatrugalRepository
+import com.elvan.udukkai.data.repository.PorulRepository
+import com.elvan.udukkai.data.repository.VaangunarRepository
+import com.elvan.udukkai.data.settings.NiruvanaTharavugalRepository
 import java.io.File
 import java.io.FileOutputStream
+import java.io.RandomAccessFile
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import java.sql.DriverManager
 
 class DesktopNirilBackupService : NirilBackupService {
 
-    private fun currentMode(): AppMode? = AppLaunchConfig.fixedMode
+    private val magicConstant = 0x5544554B4B414921L // "UDUKKAI!"
+
+    private fun currentMode(): AppMode? = AppLaunchConfig.fixedMode ?: ModeManager.currentMode
 
     private fun getBackupDir(): File = DesktopDbPaths.getBackupDir()
-
-    private fun getBackupFileForWriting(): File =
-        DesktopDbPaths.getBackupFile(currentMode())
-
-    private fun getBackupFileForReading(): File =
-        DesktopDbPaths.resolveExistingBackupFile(currentMode())
-
-    private fun getSafetySnapshotFileForWriting(): File =
-        DesktopDbPaths.getSafetySnapshotFile(currentMode())
-
-    private fun getSafetySnapshotFileForReading(): File =
-        DesktopDbPaths.resolveExistingSafetySnapshotFile(currentMode())
 
     private fun getCoolieDbPath(): String = DesktopDbPaths.getDbFile("udukkai_kooli.db").absolutePath
 
@@ -52,6 +48,7 @@ class DesktopNirilBackupService : NirilBackupService {
     }
 
     private fun packToFile(targetFile: File): Boolean {
+        val tempFile = File(targetFile.parentFile, "${targetFile.name}.tmp")
         return try {
             val mode = currentMode()
             if (mode == null || mode == AppMode.KOOLI) {
@@ -83,22 +80,45 @@ class DesktopNirilBackupService : NirilBackupService {
                         fileBytesList.add(ByteArray(0))
                     }
                 } else {
-                    // For the other mode, store 0L in header and 0 bytes
                     header.putLong(0L)
                     fileBytesList.add(ByteArray(0))
                 }
             }
 
-            targetFile.parentFile?.mkdirs()
-            FileOutputStream(targetFile).use { fos ->
+            tempFile.parentFile?.mkdirs()
+            FileOutputStream(tempFile).use { fos ->
                 fos.write(header.array())
                 for (bytes in fileBytesList) {
                     if (bytes.isNotEmpty()) fos.write(bytes)
                 }
+
+                // Append metadata trailer
+                val stats = getLiveStats()
+                val jsonString = """{"invoices":${stats.invoiceCount},"receipts":${stats.receiptCount},"customers":${stats.customerCount},"products":${stats.productCount},"time":${System.currentTimeMillis()},"mode":"${mode?.key ?: "common"}"}"""
+                val jsonBytes = jsonString.toByteArray(Charsets.UTF_8)
+                fos.write(jsonBytes)
+
+                val trailerBuffer = ByteBuffer.allocate(12).order(ByteOrder.LITTLE_ENDIAN)
+                trailerBuffer.putInt(jsonBytes.size)
+                trailerBuffer.putLong(magicConstant)
+                fos.write(trailerBuffer.array())
+            }
+
+            if (!tempFile.exists() || tempFile.length() < 48) {
+                tempFile.delete()
+                return false
+            }
+
+            if (targetFile.exists()) targetFile.delete()
+            val renamed = tempFile.renameTo(targetFile)
+            if (!renamed) {
+                tempFile.copyTo(targetFile, overwrite = true)
+                tempFile.delete()
             }
             true
         } catch (e: Exception) {
             println("Desktop pack failed: ${e.message}")
+            try { tempFile.delete() } catch (_: Exception) {}
             false
         }
     }
@@ -133,13 +153,14 @@ class DesktopNirilBackupService : NirilBackupService {
                     }
                     offset += size
                 } else {
-                    // CRITICAL: NEVER delete files of the other mode!
-                    // Only clean up WAL/SHM of the active mode if size is 0
                     if (shouldRestore && (i == 1 || i == 2 || i == 4 || i == 5)) {
                         if (file.exists()) file.delete()
                     }
                 }
             }
+
+            // Immediately reload in-memory repositories across app
+            reloadAllRepositories()
             true
         } catch (e: Exception) {
             println("Desktop unpack failed: ${e.message}")
@@ -147,47 +168,113 @@ class DesktopNirilBackupService : NirilBackupService {
         }
     }
 
-    override fun createBackup(): Boolean = packToFile(getBackupFileForWriting())
+    override fun createBackup(): Boolean {
+        val latestFile = DesktopDbPaths.getBackupFile(currentMode(), BackupSlot.LATEST)
+        val previousFile = DesktopDbPaths.getBackupFile(currentMode(), BackupSlot.PREVIOUS)
 
-    override fun restoreFromBackup(): Boolean = unpackFromFile(getBackupFileForReading())
+        if (latestFile.exists() && latestFile.length() > 48) {
+            try {
+                latestFile.copyTo(previousFile, overwrite = true)
+            } catch (_: Exception) {}
+        }
 
-    override fun hasBackup(): Boolean {
+        return packToFile(latestFile)
+    }
+
+    override fun createSafetySnapshot(): Boolean {
+        val vaultFile = DesktopDbPaths.getBackupFile(currentMode(), BackupSlot.SAFETY_VAULT)
+        return packToFile(vaultFile)
+    }
+
+    override fun restoreFromSlot(slot: BackupSlot): Boolean {
+        val file = DesktopDbPaths.resolveExistingBackupFile(currentMode(), slot)
+        if (!file.exists() || file.length() < 48) return false
+
+        try {
+            createSafetySnapshot()
+        } catch (_: Exception) {}
+
+        return unpackFromFile(file)
+    }
+
+    override fun hasBackup(slot: BackupSlot): Boolean {
         return try {
-            val f = getBackupFileForReading()
+            val f = DesktopDbPaths.resolveExistingBackupFile(currentMode(), slot)
             f.exists() && f.length() > 48
         } catch (_: Exception) { false }
     }
 
-    override fun deleteBackup(): Boolean {
+    override fun deleteBackup(slot: BackupSlot): Boolean {
         return try {
-            val f = getBackupFileForWriting()
+            val f = DesktopDbPaths.resolveExistingBackupFile(currentMode(), slot)
             if (f.exists()) f.delete() else true
         } catch (_: Exception) { false }
     }
 
-    override fun getBackupStats(): BackupStats? {
+    override fun getBackupStats(slot: BackupSlot): BackupStats? {
         return try {
-            val f = getBackupFileForReading()
+            val f = DesktopDbPaths.resolveExistingBackupFile(currentMode(), slot)
             if (f.exists()) BackupStats(f.lastModified(), f.length()) else null
         } catch (_: Exception) { null }
     }
 
-    override fun createSafetySnapshot(): Boolean = packToFile(getSafetySnapshotFileForWriting())
+    override fun getBackupMetadata(slot: BackupSlot): BackupItemMetadata? {
+        val file = DesktopDbPaths.resolveExistingBackupFile(currentMode(), slot)
+        if (!file.exists() || file.length() < 48) return null
 
-    override fun restoreFromSafetySnapshot(): Boolean = unpackFromFile(getSafetySnapshotFileForReading())
+        var invoiceCount = 0
+        var receiptCount = 0
+        var customerCount = 0
+        var productCount = 0
+        var recordedTime = file.lastModified()
 
-    override fun hasSafetySnapshot(): Boolean {
-        return try {
-            val f = getSafetySnapshotFileForReading()
-            f.exists() && f.length() > 48
-        } catch (_: Exception) { false }
+        try {
+            RandomAccessFile(file, "r").use { raf ->
+                val length = raf.length()
+                if (length > 60) {
+                    raf.seek(length - 8)
+                    val magic = java.lang.Long.reverseBytes(raf.readLong())
+                    if (magic == magicConstant) {
+                        raf.seek(length - 12)
+                        val jsonLen = java.lang.Integer.reverseBytes(raf.readInt())
+                        if (jsonLen in 1..2048 && length >= (48 + 12 + jsonLen)) {
+                            raf.seek(length - 12 - jsonLen)
+                            val jsonBytes = ByteArray(jsonLen)
+                            raf.readFully(jsonBytes)
+                            val json = String(jsonBytes, Charsets.UTF_8)
+
+                            invoiceCount = Regex("\"invoices\":(\\d+)").find(json)?.groupValues?.get(1)?.toIntOrNull() ?: 0
+                            receiptCount = Regex("\"receipts\":(\\d+)").find(json)?.groupValues?.get(1)?.toIntOrNull() ?: 0
+                            customerCount = Regex("\"customers\":(\\d+)").find(json)?.groupValues?.get(1)?.toIntOrNull() ?: 0
+                            productCount = Regex("\"products\":(\\d+)").find(json)?.groupValues?.get(1)?.toIntOrNull() ?: 0
+                            recordedTime = Regex("\"time\":(\\d+)").find(json)?.groupValues?.get(1)?.toLongOrNull() ?: file.lastModified()
+                        }
+                    }
+                }
+            }
+        } catch (_: Exception) {}
+
+        return BackupItemMetadata(
+            slot = slot,
+            lastModified = recordedTime,
+            sizeBytes = file.length(),
+            invoiceCount = invoiceCount,
+            receiptCount = receiptCount,
+            customerCount = customerCount,
+            productCount = productCount,
+            mode = currentMode(),
+            isSafetySnapshot = slot == BackupSlot.SAFETY_VAULT,
+            isValid = true
+        )
     }
 
-    override fun getSafetySnapshotStats(): BackupStats? {
-        return try {
-            val f = getSafetySnapshotFileForReading()
-            if (f.exists()) BackupStats(f.lastModified(), f.length()) else null
-        } catch (_: Exception) { null }
+    override fun getAllAvailableBackups(): List<BackupItemMetadata> {
+        val list = mutableListOf<BackupItemMetadata>()
+        BackupSlot.entries.forEach { slot ->
+            val meta = getBackupMetadata(slot)
+            if (meta != null) list.add(meta)
+        }
+        return list
     }
 
     override fun getTotalDatabaseSize(): Long {
@@ -204,6 +291,38 @@ class DesktopNirilBackupService : NirilBackupService {
                 if (f.exists()) f.length() else 0L
             }
         } catch (_: Exception) { 0L }
+    }
+
+    override fun getLiveStats(): DatabaseLiveStats {
+        val mode = currentMode() ?: ModeManager.currentMode
+        val activeId = NiruvanaTharavugalRepository.getProfile(mode).id
+
+        val invCount = PattiyalRepository.invoices.count { (activeId == null || it.niruvanamId == activeId) && !it.isDeleted }
+        val recCount = PatrugalRepository.receipts.count { (activeId == null || it.niruvanamId == activeId) && !it.isDeleted }
+        val cusCount = VaangunarRepository.merchants.count { !it.isDeleted }
+        val proCount = PorulRepository.items.count { (activeId == null || it.isAvailableForCompany(activeId)) && !it.isDeleted }
+
+        return DatabaseLiveStats(
+            totalDbSizeBytes = getTotalDatabaseSize(),
+            invoiceCount = invCount,
+            receiptCount = recCount,
+            customerCount = cusCount,
+            productCount = proCount
+        )
+    }
+
+    override fun shareBackup(slot: BackupSlot): Boolean {
+        return try {
+            val dir = getBackupDir()
+            if (java.awt.Desktop.isDesktopSupported()) {
+                java.awt.Desktop.getDesktop().open(dir)
+                true
+            } else {
+                false
+            }
+        } catch (_: Exception) {
+            false
+        }
     }
 }
 

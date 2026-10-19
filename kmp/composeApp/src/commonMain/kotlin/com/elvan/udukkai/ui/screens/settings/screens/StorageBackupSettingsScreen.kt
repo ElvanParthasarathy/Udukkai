@@ -3,8 +3,8 @@ package com.elvan.udukkai.ui.screens.settings.screens
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
@@ -21,24 +21,32 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.elvan.udukkai.core.backup.BackupItemMetadata
+import com.elvan.udukkai.core.backup.BackupSlot
+import com.elvan.udukkai.core.backup.getNirilBackupService
+import com.elvan.udukkai.core.mode.AppLaunchConfig
+import com.elvan.udukkai.core.mode.AppMode
+import com.elvan.udukkai.core.utils.DateUtils
 import com.elvan.udukkai.localization.K
 import com.elvan.udukkai.localization.tr
 import com.elvan.udukkai.theme.Dimens
 import com.elvan.udukkai.theme.LocalAppFontFamily
 import com.elvan.udukkai.theme.ShellColors
-import com.elvan.udukkai.theme.ShellDefaults
+import com.elvan.udukkai.theme.preventBrokenLigatures
 import com.elvan.udukkai.theme.rememberShellColors
 import com.elvan.udukkai.ui.components.shell.*
 import com.elvan.udukkai.ui.navigation.AppSvgs
 import com.elvan.udukkai.ui.navigation.MaterialSymbols
-import com.elvan.udukkai.core.backup.getNirilBackupService
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 /**
- * Storage & Backup Screen matching Flutter's `chaemippu_matrum_kaappu_thirai.dart` and
- * `chaemippu_matrum_kaappu_pagudhi.dart` 1:1 pixel-perfect.
- * Features `StorageProjectionPill`, storage stats, backup trigger, and Kooli/Pattu data grids.
+ * Storage & Backup Screen.
+ * Features:
+ * - Live dynamic storage projection & counts.
+ * - Reactive auto-backup state with rotating slots (Latest, Previous, Safety Vault).
+ * - In-app safe Restore flow with automatic pre-restore safety snapshot.
+ * - Native export/share trigger.
  */
 @Composable
 fun StorageBackupSettingsScreen(
@@ -50,18 +58,34 @@ fun StorageBackupSettingsScreen(
     val backupService = remember { getNirilBackupService() }
 
     var showBackupConfirm by remember { mutableStateOf(false) }
+    var showRestoreSelectSheet by remember { mutableStateOf(false) }
+    var slotToRestore by remember { mutableStateOf<BackupSlot?>(null) }
     var isBackingUp by remember { mutableStateOf(false) }
+    var isRestoring by remember { mutableStateOf(false) }
+
+    var liveStats by remember { mutableStateOf(backupService.getLiveStats()) }
     var backupStats by remember { mutableStateOf(backupService.getBackupStats()) }
     var totalDbSize by remember { mutableStateOf(backupService.getTotalDatabaseSize().coerceAtLeast(128 * 1024L)) }
-    val availableLabel = K.available.tr()
-    val todayLabel = K.today.tr()
+    var availableBackups by remember { mutableStateOf(backupService.getAllAvailableBackups()) }
+
     val backupFailedMsg = K.backupFailed.tr()
     val backupSuccessMsg = K.backupSavedToDocuments.tr()
+    val restoreSuccessMsg = K.restoreSuccess.tr()
 
-    var lastBackupTime by remember { 
-        mutableStateOf(
-            if (backupStats != null) availableLabel else null
-        ) 
+    fun refreshAll() {
+        liveStats = backupService.getLiveStats()
+        backupStats = backupService.getBackupStats()
+        totalDbSize = backupService.getTotalDatabaseSize().coerceAtLeast(128 * 1024L)
+        availableBackups = backupService.getAllAvailableBackups()
+    }
+
+    val latestBackupMeta = availableBackups.firstOrNull { it.slot == BackupSlot.LATEST }
+    val lastBackupFormatted = remember(latestBackupMeta) {
+        if (latestBackupMeta != null) {
+            DateUtils.formatDateTime(latestBackupMeta.lastModified)
+        } else {
+            null
+        }
     }
     val backupSize = backupStats?.sizeBytes ?: 0L
 
@@ -78,7 +102,6 @@ fun StorageBackupSettingsScreen(
 
     val maxSpace = 1024.0 * 1024.0 * 1024.0 // 1 GB
     val progress = (totalDbSize / maxSpace).toFloat().coerceIn(0.02f, 1f)
-
 
     LazyColumn(
         state = scrollState,
@@ -180,7 +203,7 @@ fun StorageBackupSettingsScreen(
                 ElvanSettingsRow(
                     icon = MaterialSymbols.Rounded.Schedule,
                     title = K.lastAutoBackup.tr(),
-                    description = lastBackupTime ?: K.noBackupYet.tr(),
+                    description = lastBackupFormatted ?: K.noBackupYet.tr(),
                     onClick = {},
                     colors = colors
                 )
@@ -194,114 +217,149 @@ fun StorageBackupSettingsScreen(
                     onClick = { showBackupConfirm = true },
                     colors = colors
                 )
+                ElvanSettingsDivider(colors = colors)
+
+                // Restore Data Button
+                ElvanSettingsRow(
+                    icon = MaterialSymbols.Rounded.Restore,
+                    title = K.restoreDataBtn.tr(),
+                    description = K.restorePreviousDataPrompt.tr(),
+                    onClick = {
+                        refreshAll()
+                        showRestoreSelectSheet = true
+                    },
+                    colors = colors
+                )
+                ElvanSettingsDivider(colors = colors)
+
+                // Share / Export Backup Button
+                ElvanSettingsRow(
+                    icon = MaterialSymbols.Rounded.Share,
+                    title = K.shareBackupBtn.tr(),
+                    description = "${K.backup.tr()} (${latestBackupMeta?.let { formatBytes(it.sizeBytes) } ?: "0 B"})",
+                    onClick = {
+                        val ok = backupService.shareBackup(BackupSlot.LATEST)
+                        if (!ok) {
+                            ElvanSnackbar.show(backupFailedMsg)
+                        }
+                    },
+                    colors = colors
+                )
             }
         }
 
-        // ── 3. Mode Databases Grid Section ──
+        // ── 3. Live Databases Grid Section ──
         item {
+            val fixedMode = AppLaunchConfig.fixedMode
+            val showCoolie = fixedMode == null || fixedMode == AppMode.KOOLI
+            val showSilk = fixedMode == null || fixedMode == AppMode.PATTU
+
             ElvanSettingsSection(colors = colors) {
-                // Kooli Data Grid
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 14.dp)
-                ) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Surface(
-                            shape = CircleShape,
-                            color = colors.iconBg,
-                            modifier = Modifier.size(36.dp)
-                        ) {
-                            Box(contentAlignment = Alignment.Center) {
-                                Icon(
-                                    imageVector = AppSvgs.coolieMode,
-                                    contentDescription = null,
-                                    tint = colors.textPrimary,
-                                    modifier = Modifier.size(18.dp)
-                                )
+                if (showCoolie) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp, vertical = 14.dp)
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Surface(
+                                shape = CircleShape,
+                                color = colors.iconBg,
+                                modifier = Modifier.size(36.dp)
+                            ) {
+                                Box(contentAlignment = Alignment.Center) {
+                                    Icon(
+                                        imageVector = AppSvgs.coolieMode,
+                                        contentDescription = null,
+                                        tint = colors.textPrimary,
+                                        modifier = Modifier.size(18.dp)
+                                    )
+                                }
                             }
+                            Spacer(modifier = Modifier.width(14.dp))
+                            Text(
+                                text = if (fixedMode == AppMode.KOOLI) K.factoryData.tr() else K.coolieData.tr(),
+                                style = TextStyle(
+                                    fontFamily = ff,
+                                    fontSize = 15.sp,
+                                    fontWeight = FontWeight.Medium
+                                ),
+                                color = colors.textPrimary
+                            )
                         }
-                        Spacer(modifier = Modifier.width(14.dp))
-                        Text(
-                            text = K.coolieData.tr(),
-                            style = TextStyle(
-                                fontFamily = ff,
-                                fontSize = 15.sp,
-                                fontWeight = FontWeight.Medium
-                            ),
-                            color = colors.textPrimary
-                        )
-                    }
 
-                    Spacer(modifier = Modifier.height(10.dp))
+                        Spacer(modifier = Modifier.height(10.dp))
 
-                    // 2x2 Data Grid
-                    val gridStyle = TextStyle(fontFamily = ff, fontSize = 12.sp, color = colors.textPrimary.copy(alpha = 0.5f))
-                    Row(modifier = Modifier.fillMaxWidth().padding(start = 50.dp)) {
-                        Text("0 ${K.invoices.tr()}", style = gridStyle, modifier = Modifier.weight(1f))
-                        Text("0 ${K.receipts.tr()}", style = gridStyle, modifier = Modifier.weight(1f))
-                    }
-                    Spacer(modifier = Modifier.height(6.dp))
-                    Row(modifier = Modifier.fillMaxWidth().padding(start = 50.dp)) {
-                        Text("0 ${K.customers.tr()}", style = gridStyle, modifier = Modifier.weight(1f))
-                        Text("0 ${K.products.tr()}", style = gridStyle, modifier = Modifier.weight(1f))
+                        // Dynamic 2x2 Data Grid
+                        val gridStyle = TextStyle(fontFamily = ff, fontSize = 12.sp, color = colors.textPrimary.copy(alpha = 0.5f))
+                        Row(modifier = Modifier.fillMaxWidth().padding(start = 50.dp)) {
+                            Text("${liveStats.invoiceCount} ${K.invoices.tr()}", style = gridStyle, modifier = Modifier.weight(1f))
+                            Text("${liveStats.receiptCount} ${K.receipts.tr()}", style = gridStyle, modifier = Modifier.weight(1f))
+                        }
+                        Spacer(modifier = Modifier.height(6.dp))
+                        Row(modifier = Modifier.fillMaxWidth().padding(start = 50.dp)) {
+                            Text("${liveStats.customerCount} ${K.customers.tr()}", style = gridStyle, modifier = Modifier.weight(1f))
+                            Text("${liveStats.productCount} ${K.products.tr()}", style = gridStyle, modifier = Modifier.weight(1f))
+                        }
                     }
                 }
 
-                ElvanSettingsDivider(colors = colors)
+                if (showCoolie && showSilk) {
+                    ElvanSettingsDivider(colors = colors)
+                }
 
-                // Pattu Data Grid
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 14.dp)
-                ) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Surface(
-                            shape = CircleShape,
-                            color = colors.iconBg,
-                            modifier = Modifier.size(36.dp)
-                        ) {
-                            Box(contentAlignment = Alignment.Center) {
-                                Icon(
-                                    imageVector = AppSvgs.silkMode,
-                                    contentDescription = null,
-                                    tint = colors.textPrimary,
-                                    modifier = Modifier.size(18.dp)
-                                )
+                if (showSilk) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp, vertical = 14.dp)
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Surface(
+                                shape = CircleShape,
+                                color = colors.iconBg,
+                                modifier = Modifier.size(36.dp)
+                            ) {
+                                Box(contentAlignment = Alignment.Center) {
+                                    Icon(
+                                        imageVector = AppSvgs.silkMode,
+                                        contentDescription = null,
+                                        tint = colors.textPrimary,
+                                        modifier = Modifier.size(18.dp)
+                                    )
+                                }
                             }
+                            Spacer(modifier = Modifier.width(14.dp))
+                            Text(
+                                text = if (fixedMode == AppMode.PATTU) K.textilesData.tr() else K.silkData.tr(),
+                                style = TextStyle(
+                                    fontFamily = ff,
+                                    fontSize = 15.sp,
+                                    fontWeight = FontWeight.Medium
+                                ),
+                                color = colors.textPrimary
+                            )
                         }
-                        Spacer(modifier = Modifier.width(14.dp))
-                        Text(
-                            text = K.silkData.tr(),
-                            style = TextStyle(
-                                fontFamily = ff,
-                                fontSize = 15.sp,
-                                fontWeight = FontWeight.Medium
-                            ),
-                            color = colors.textPrimary
-                        )
-                    }
 
-                    Spacer(modifier = Modifier.height(10.dp))
+                        Spacer(modifier = Modifier.height(10.dp))
 
-                    // 2x2 Data Grid
-                    val gridStyle = TextStyle(fontFamily = ff, fontSize = 12.sp, color = colors.textPrimary.copy(alpha = 0.5f))
-                    Row(modifier = Modifier.fillMaxWidth().padding(start = 50.dp)) {
-                        Text("0 ${K.invoices.tr()}", style = gridStyle, modifier = Modifier.weight(1f))
-                        Text("0 ${K.receipts.tr()}", style = gridStyle, modifier = Modifier.weight(1f))
-                    }
-                    Spacer(modifier = Modifier.height(6.dp))
-                    Row(modifier = Modifier.fillMaxWidth().padding(start = 50.dp)) {
-                        Text("0 ${K.customers.tr()}", style = gridStyle, modifier = Modifier.weight(1f))
-                        Text("0 ${K.products.tr()}", style = gridStyle, modifier = Modifier.weight(1f))
+                        val gridStyle = TextStyle(fontFamily = ff, fontSize = 12.sp, color = colors.textPrimary.copy(alpha = 0.5f))
+                        Row(modifier = Modifier.fillMaxWidth().padding(start = 50.dp)) {
+                            Text("${liveStats.invoiceCount} ${K.invoices.tr()}", style = gridStyle, modifier = Modifier.weight(1f))
+                            Text("${liveStats.receiptCount} ${K.receipts.tr()}", style = gridStyle, modifier = Modifier.weight(1f))
+                        }
+                        Spacer(modifier = Modifier.height(6.dp))
+                        Row(modifier = Modifier.fillMaxWidth().padding(start = 50.dp)) {
+                            Text("${liveStats.customerCount} ${K.customers.tr()}", style = gridStyle, modifier = Modifier.weight(1f))
+                            Text("${liveStats.productCount} ${K.products.tr()}", style = gridStyle, modifier = Modifier.weight(1f))
+                        }
                     }
                 }
             }
         }
     }
 
-    // Confirmation & Loading Sheets
+    // Backup Confirmation Action Sheet
     if (showBackupConfirm) {
         ElvanActionSheet(
             title = K.backupDatabase.tr(),
@@ -312,13 +370,11 @@ fun StorageBackupSettingsScreen(
                 showBackupConfirm = false
                 isBackingUp = true
                 scope.launch {
-                    delay(300)
+                    delay(250)
                     val success = backupService.createBackup()
                     isBackingUp = false
                     if (success) {
-                        backupStats = backupService.getBackupStats()
-                        totalDbSize = backupService.getTotalDatabaseSize().coerceAtLeast(128 * 1024L)
-                        lastBackupTime = todayLabel
+                        refreshAll()
                         ElvanSnackbar.show(backupSuccessMsg)
                     } else {
                         ElvanSnackbar.show(backupFailedMsg)
@@ -329,9 +385,166 @@ fun StorageBackupSettingsScreen(
         )
     }
 
+    // Available Backups Selection Sheet
+    if (showRestoreSelectSheet) {
+        ElvanActionSheet(
+            title = K.availableBackups.tr(),
+            cancelText = K.cancelBtn.tr(),
+            confirmText = "",
+            onDismissRequest = { showRestoreSelectSheet = false },
+            onConfirm = {},
+            customContent = {
+                if (availableBackups.isEmpty()) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 16.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = K.noBackupsAvailable.tr(),
+                            style = TextStyle(
+                                fontFamily = ff,
+                                fontSize = 14.sp,
+                                color = colors.textSecondary
+                            )
+                        )
+                    }
+                } else {
+                    Column(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        availableBackups.forEach { backup ->
+                            val slotName = when (backup.slot) {
+                                BackupSlot.LATEST -> K.backupLatest.tr()
+                                BackupSlot.PREVIOUS -> K.backupPrevious.tr()
+                                BackupSlot.SAFETY_VAULT -> K.safetyVault.tr()
+                            }
+                            val dateString = DateUtils.formatDateTime(backup.lastModified)
+                            val summary = if (backup.invoiceCount > 0 || backup.customerCount > 0) {
+                                "${backup.invoiceCount} ${K.invoices.tr()} • ${backup.customerCount} ${K.customers.tr()}"
+                            } else {
+                                formatBytes(backup.sizeBytes)
+                            }
+
+                            Surface(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clip(RoundedCornerShape(16.dp))
+                                    .clickable {
+                                        slotToRestore = backup.slot
+                                        showRestoreSelectSheet = false
+                                    },
+                                shape = RoundedCornerShape(16.dp),
+                                color = colors.surface
+                            ) {
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(horizontal = 16.dp, vertical = 12.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Surface(
+                                        shape = CircleShape,
+                                        color = if (backup.slot == BackupSlot.SAFETY_VAULT) colors.accent.copy(alpha = 0.15f) else colors.iconBg,
+                                        modifier = Modifier.size(36.dp)
+                                    ) {
+                                        Box(contentAlignment = Alignment.Center) {
+                                            Icon(
+                                                imageVector = if (backup.slot == BackupSlot.SAFETY_VAULT) MaterialSymbols.Rounded.Lock else MaterialSymbols.Rounded.Backup,
+                                                contentDescription = null,
+                                                tint = if (backup.slot == BackupSlot.SAFETY_VAULT) colors.accent else colors.textPrimary,
+                                                modifier = Modifier.size(18.dp)
+                                            )
+                                        }
+                                    }
+                                    Spacer(modifier = Modifier.width(14.dp))
+                                    Column(modifier = Modifier.weight(1f)) {
+                                        Text(
+                                            text = slotName,
+                                            style = TextStyle(
+                                                fontFamily = ff,
+                                                fontSize = 14.sp,
+                                                fontWeight = FontWeight.SemiBold,
+                                                color = colors.textPrimary
+                                            )
+                                        )
+                                        Text(
+                                            text = "$dateString • $summary",
+                                            style = TextStyle(
+                                                fontFamily = ff,
+                                                fontSize = 12.sp,
+                                                color = colors.textSecondary
+                                            )
+                                        )
+                                    }
+                                    Icon(
+                                        imageVector = MaterialSymbols.Rounded.ArrowForward,
+                                        contentDescription = null,
+                                        tint = colors.textSecondary.copy(alpha = 0.5f),
+                                        modifier = Modifier.size(16.dp)
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            colors = colors
+        )
+    }
+
+    // Restore Pre-Confirmation Sheet
+    if (slotToRestore != null) {
+        val targetSlot = slotToRestore!!
+        ElvanActionSheet(
+            title = K.restoreDataBtn.tr(),
+            cancelText = K.cancelBtn.tr(),
+            confirmText = K.restoreBtn.tr(),
+            onDismissRequest = { slotToRestore = null },
+            onConfirm = {
+                val slot = targetSlot
+                slotToRestore = null
+                isRestoring = true
+                scope.launch {
+                    delay(250)
+                    val success = backupService.restoreFromSlot(slot)
+                    isRestoring = false
+                    if (success) {
+                        refreshAll()
+                        ElvanSnackbar.show(restoreSuccessMsg)
+                    } else {
+                        ElvanSnackbar.show(backupFailedMsg)
+                    }
+                }
+            },
+            customContent = {
+                Text(
+                    text = K.restoreConfirmPrompt.tr().preventBrokenLigatures(),
+                    style = TextStyle(
+                        fontFamily = ff,
+                        fontSize = 13.sp,
+                        color = colors.textSecondary,
+                        lineHeight = 18.sp
+                    ),
+                    modifier = Modifier.padding(horizontal = 8.dp)
+                )
+            },
+            colors = colors
+        )
+    }
+
     if (isBackingUp) {
         ElvanLoadingOverlay(
             text = K.backingUp.tr(),
+            colors = colors
+        )
+    }
+
+    if (isRestoring) {
+        ElvanLoadingOverlay(
+            text = K.restoringData.tr(),
             colors = colors
         )
     }

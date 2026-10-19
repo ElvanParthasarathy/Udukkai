@@ -3,6 +3,7 @@ package com.elvan.udukkai.data.repository
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import com.elvan.udukkai.core.backup.AutoBackupManager
 import com.elvan.udukkai.core.mode.AppMode
 import com.elvan.udukkai.core.mode.ModeManager
 import com.elvan.udukkai.data.business.getBusinessDatabaseHelper
@@ -112,6 +113,7 @@ object PatrugalRepository {
             val id = helper.saveReceipt(mode, receipt)
             if (id > 0L) {
                 loadAll(mode)
+                AutoBackupManager.onDataChanged()
                 try {
                     com.elvan.udukkai.core.sync.getFirebaseSyncManager().pushReceipt(receipt.copy(id = id), mode)
                 } catch (_: Exception) {}
@@ -132,6 +134,7 @@ object PatrugalRepository {
             val id = helper.saveReceiptWithLinks(mode, receipt, links)
             if (id > 0L) {
                 loadAll(mode)
+                AutoBackupManager.onDataChanged()
                 try {
                     com.elvan.udukkai.core.sync.getFirebaseSyncManager().pushReceipt(receipt.copy(id = id), mode)
                     if (links.isNotEmpty()) {
@@ -153,6 +156,7 @@ object PatrugalRepository {
             if (success) {
                 loadAll(mode)
                 loadDeleted(mode)
+                AutoBackupManager.onDataChanged()
                 if (existing != null) {
                     try {
                         com.elvan.udukkai.core.sync.getFirebaseSyncManager().pushReceipt(
@@ -174,6 +178,7 @@ object PatrugalRepository {
             if (success) {
                 loadAll(mode)
                 loadDeleted(mode)
+                AutoBackupManager.onDataChanged()
                 val restored = getById(id)
                 if (restored != null) {
                     try {
@@ -195,6 +200,7 @@ object PatrugalRepository {
             val success = helper.permanentDeleteReceipt(mode, id)
             if (success) {
                 loadDeleted(mode)
+                AutoBackupManager.onDataChanged()
             }
             success
         } catch (_: Exception) {

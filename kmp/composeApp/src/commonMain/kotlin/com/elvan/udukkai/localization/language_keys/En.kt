@@ -466,5 +466,18 @@ val en: Map<String, String> = mapOf(
     K.chennaiTamilNadu to "Chennai, Tamil Nadu",
     K.backupFailed to "Backup failed",
     K.available to "Available",
+
+    // Safe Backup & Restore System
+    K.backupLatest to "Latest Backup",
+    K.backupPrevious to "Previous Backup",
+    K.safetyVault to "Safety Vault",
+    K.safetyVaultDesc to "Automatic safety snapshot created before changes",
+    K.restoreConfirmPrompt to "Do you want to restore this backup? Current data will be saved to the Safety Vault first.",
+    K.restoreSuccess to "Data restored successfully!",
+    K.shareBackupBtn to "Share Backup",
+    K.availableBackups to "Available Backups",
+    K.factoryData to "Factory Data",
+    K.textilesData to "Textiles Data",
+    K.noBackupsAvailable to "No backups found",
 )
 

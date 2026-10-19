@@ -9,6 +9,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.elvan.udukkai.core.backup.getNirilBackupService
+import com.elvan.udukkai.localization.K
+import com.elvan.udukkai.localization.tr
 import com.elvan.udukkai.ui.screens.onboarding.components.AuthButton
 import com.elvan.udukkai.ui.screens.onboarding.components.AuthHeader
 import kotlinx.coroutines.launch
@@ -28,14 +30,14 @@ fun RestorePage(
         verticalArrangement = Arrangement.spacedBy(24.dp)
     ) {
         AuthHeader(
-            title = "காப்புப்பிரதி கிடைத்தது",
-            subtitle = "உங்களது முந்தைய தரவுகள் கண்டறியப்பட்டுள்ளன"
+            title = K.oldDataAvailable.tr(),
+            subtitle = K.restorePreviousDataPrompt.tr()
         )
 
         Spacer(modifier = Modifier.weight(1f))
 
         AuthButton(
-            text = "மீட்டெடு",
+            text = K.restoreDataBtn.tr(),
             loading = isLoading,
             onClick = {
                 if (!isLoading) {

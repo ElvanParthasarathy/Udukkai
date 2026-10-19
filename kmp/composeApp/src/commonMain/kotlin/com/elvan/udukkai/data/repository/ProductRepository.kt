@@ -3,6 +3,7 @@ package com.elvan.udukkai.data.repository
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import com.elvan.udukkai.core.backup.AutoBackupManager
 import com.elvan.udukkai.core.mode.AppMode
 import com.elvan.udukkai.core.mode.ModeManager
 import com.elvan.udukkai.data.business.getBusinessDatabaseHelper
@@ -63,6 +64,7 @@ object PorulRepository {
             val id = helper.saveItem(mode, item)
             if (id > 0L) {
                 loadAll(mode)
+                AutoBackupManager.onDataChanged()
                 try {
                     com.elvan.udukkai.core.sync.getFirebaseSyncManager().pushItem(item.copy(id = id), mode)
                 } catch (_: Exception) {}
@@ -81,6 +83,7 @@ object PorulRepository {
             if (success) {
                 loadAll(mode)
                 loadDeleted(mode)
+                AutoBackupManager.onDataChanged()
                 if (existing != null) {
                     try {
                         com.elvan.udukkai.core.sync.getFirebaseSyncManager().pushItem(
@@ -111,6 +114,7 @@ object PorulRepository {
             if (success) {
                 loadAll(mode)
                 loadDeleted(mode)
+                AutoBackupManager.onDataChanged()
                 val restored = getById(id)
                 if (restored != null) {
                     try {
@@ -132,6 +136,7 @@ object PorulRepository {
             val success = helper.permanentDeleteItem(mode, id)
             if (success) {
                 loadDeleted(mode)
+                AutoBackupManager.onDataChanged()
             }
             success
         } catch (_: Exception) {
