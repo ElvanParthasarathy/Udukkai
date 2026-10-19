@@ -62,7 +62,7 @@ fun reloadAllRepositories() {
     try { PorulRepository.loadDeleted(mode) } catch (_: Exception) {}
     try { VaangunarRepository.loadAll(mode) } catch (_: Exception) {}
     try { VaangunarRepository.loadDeleted(mode) } catch (_: Exception) {}
-    try { NiruvanaTharavugalRepository.getProfile(mode) } catch (_: Exception) {}
+    try { NiruvanaTharavugalRepository.refreshFromDatabase() } catch (_: Exception) {}
 }
 
 interface NirilBackupService {

@@ -18,6 +18,10 @@ import java.io.FileOutputStream
 import java.io.RandomAccessFile
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
+import java.nio.file.AtomicMoveNotSupportedException
+import java.nio.file.Files
+import java.nio.file.StandardCopyOption
+import java.util.zip.CRC32
 
 class AndroidNirilBackupService : NirilBackupService {
 
@@ -164,10 +168,167 @@ class AndroidNirilBackupService : NirilBackupService {
     }
 
     /**
-     * Packs databases safely into targetFile with atomic temp-file guarantee and trailer metadata.
+     * Replaces destination with source atomically without deleting destination first.
+     */
+    private fun atomicReplace(source: File, destination: File): Boolean {
+        destination.parentFile?.mkdirs()
+        try {
+            Files.move(
+                source.toPath(),
+                destination.toPath(),
+                StandardCopyOption.ATOMIC_MOVE,
+                StandardCopyOption.REPLACE_EXISTING
+            )
+            return true
+        } catch (_: AtomicMoveNotSupportedException) {
+            try {
+                Files.move(
+                    source.toPath(),
+                    destination.toPath(),
+                    StandardCopyOption.REPLACE_EXISTING
+                )
+                return true
+            } catch (e: Exception) {
+                Log.e(tag, "Files.move fallback failed: ${e.message}")
+            }
+        } catch (e: Exception) {
+            Log.e(tag, "Atomic move failed: ${e.message}")
+        }
+
+        return try {
+            if (source.renameTo(destination)) {
+                true
+            } else {
+                source.copyTo(destination, overwrite = true)
+                source.delete()
+                true
+            }
+        } catch (e: Exception) {
+            Log.e(tag, "Fallback replace failed: ${e.message}")
+            false
+        }
+    }
+
+    private fun validateLegacyArchive(file: File): Boolean {
+        if (!file.exists() || file.length() < 60) return false
+        return try {
+            RandomAccessFile(file, "r").use { raf ->
+                val len = raf.length()
+                if (len < 60) return false
+                raf.seek(len - 8)
+                val magic = java.lang.Long.reverseBytes(raf.readLong())
+                if (magic != magicConstant) return false
+
+                raf.seek(len - 12)
+                val jsonLen = java.lang.Integer.reverseBytes(raf.readInt())
+                if (jsonLen !in 1..65536 || len < (48 + 12 + jsonLen)) return false
+
+                raf.seek(0)
+                var sum = 0L
+                for (i in 0 until 6) {
+                    val clen = java.lang.Long.reverseBytes(raf.readLong())
+                    if (clen < 0) return false
+                    sum += clen
+                }
+                len == (48L + sum + jsonLen + 12L)
+            }
+        } catch (_: Exception) {
+            false
+        }
+    }
+
+    /**
+     * Validates archive integrity: magic constants, version, total size, trailer, and CRC32 payload checksum.
+     */
+    private fun validateArchive(file: File): Boolean {
+        if (!file.exists() || !file.isFile || file.length() < 124) {
+            return validateLegacyArchive(file)
+        }
+
+        return try {
+            RandomAccessFile(file, "r").use { raf ->
+                val fileLen = raf.length()
+
+                // Check v1 header magic
+                raf.seek(0)
+                val headerMagic = java.lang.Long.reverseBytes(raf.readLong())
+                if (headerMagic != magicConstant) {
+                    return validateLegacyArchive(file)
+                }
+
+                val version = java.lang.Integer.reverseBytes(raf.readInt())
+                if (version != 1) return false
+
+                val modeFlag = java.lang.Integer.reverseBytes(raf.readInt())
+                val timestamp = java.lang.Long.reverseBytes(raf.readLong())
+                val expectedCrc = java.lang.Long.reverseBytes(raf.readLong())
+                val chunkCount = java.lang.Integer.reverseBytes(raf.readInt())
+                if (chunkCount != 6) return false
+
+                val trailerJsonLen = java.lang.Integer.reverseBytes(raf.readInt())
+                if (trailerJsonLen < 0 || trailerJsonLen > 65536) return false
+
+                // Skip 24 reserved bytes to reach chunk sizes table at offset 64
+                raf.seek(64)
+                var payloadTotal = 0L
+                for (i in 0 until 6) {
+                    val clen = java.lang.Long.reverseBytes(raf.readLong())
+                    if (clen < 0 || clen > 500L * 1024 * 1024) return false
+                    payloadTotal += clen
+                }
+
+                // Verify file size matches exact layout
+                val expectedTotal = 112L + payloadTotal + trailerJsonLen + 12L
+                if (fileLen != expectedTotal) {
+                    Log.w(tag, "Archive size mismatch: file=$fileLen, expected=$expectedTotal")
+                    return false
+                }
+
+                // Verify trailer footer magic & json length
+                raf.seek(fileLen - 8)
+                val endMagic = java.lang.Long.reverseBytes(raf.readLong())
+                if (endMagic != magicConstant) {
+                    Log.w(tag, "Archive trailer magic mismatch")
+                    return false
+                }
+
+                raf.seek(fileLen - 12)
+                val endJsonLen = java.lang.Integer.reverseBytes(raf.readInt())
+                if (endJsonLen != trailerJsonLen) {
+                    Log.w(tag, "Archive trailer JSON len mismatch")
+                    return false
+                }
+
+                // Verify CRC32 of payload data
+                raf.seek(112)
+                val crc = CRC32()
+                val buf = ByteArray(8192)
+                var remaining = payloadTotal
+                while (remaining > 0) {
+                    val toRead = minOf(remaining, buf.size.toLong()).toInt()
+                    val read = raf.read(buf, 0, toRead)
+                    if (read <= 0) return false
+                    crc.update(buf, 0, read)
+                    remaining -= read
+                }
+
+                if (crc.value != expectedCrc) {
+                    Log.w(tag, "Archive CRC32 mismatch: calculated=${crc.value}, expected=$expectedCrc")
+                    return false
+                }
+
+                true
+            }
+        } catch (e: Exception) {
+            Log.w(tag, "Validation failed: ${e.message}")
+            false
+        }
+    }
+
+    /**
+     * Packs databases safely into targetFile with 64-byte v1 header, CRC32, and trailer metadata.
      */
     private fun packToFile(targetFile: File): Boolean {
-        val tempFile = File(targetFile.parentFile, "${targetFile.name}.tmp")
         return try {
             val mode = currentMode()
             if (mode == null || mode == AppMode.KOOLI) {
@@ -178,8 +339,9 @@ class AndroidNirilBackupService : NirilBackupService {
             }
 
             val filesToPack = getFilesToPack()
-            val header = ByteBuffer.allocate(48).order(ByteOrder.LITTLE_ENDIAN)
+            val chunkSizes = LongArray(6)
             val fileBytesList = mutableListOf<ByteArray>()
+            val crc = CRC32()
 
             for (i in filesToPack.indices) {
                 val shouldPack = when (mode) {
@@ -192,107 +354,144 @@ class AndroidNirilBackupService : NirilBackupService {
                     val file = File(filesToPack[i])
                     if (file.exists() && file.canRead()) {
                         val bytes = file.readBytes()
-                        header.putLong(bytes.size.toLong())
+                        chunkSizes[i] = bytes.size.toLong()
                         fileBytesList.add(bytes)
+                        if (bytes.isNotEmpty()) {
+                            crc.update(bytes)
+                        }
                     } else {
-                        header.putLong(0L)
+                        chunkSizes[i] = 0L
                         fileBytesList.add(ByteArray(0))
                     }
                 } else {
-                    header.putLong(0L)
+                    chunkSizes[i] = 0L
                     fileBytesList.add(ByteArray(0))
                 }
             }
 
-            // Write 48-byte header + data chunks
-            tempFile.parentFile?.mkdirs()
-            FileOutputStream(tempFile).use { fos ->
+            val payloadCrc32 = crc.value
+
+            val stats = getLiveStats()
+            val jsonString = """{"invoices":${stats.invoiceCount},"receipts":${stats.receiptCount},"customers":${stats.customerCount},"products":${stats.productCount},"time":${System.currentTimeMillis()},"mode":"${mode?.key ?: "common"}"}"""
+            val jsonBytes = jsonString.toByteArray(Charsets.UTF_8)
+
+            // 64-byte v1 header
+            val header = ByteBuffer.allocate(64).order(ByteOrder.LITTLE_ENDIAN)
+            header.putLong(magicConstant)
+            header.putInt(1)
+            header.putInt(when (mode) {
+                AppMode.KOOLI -> 0
+                AppMode.PATTU -> 1
+                null -> 2
+            })
+            header.putLong(System.currentTimeMillis())
+            header.putLong(payloadCrc32)
+            header.putInt(6)
+            header.putInt(jsonBytes.size)
+            header.put(ByteArray(24))
+
+            // 48-byte chunk table
+            val chunkTable = ByteBuffer.allocate(48).order(ByteOrder.LITTLE_ENDIAN)
+            for (size in chunkSizes) {
+                chunkTable.putLong(size)
+            }
+
+            // 12-byte trailer footer
+            val trailerFooter = ByteBuffer.allocate(12).order(ByteOrder.LITTLE_ENDIAN)
+            trailerFooter.putInt(jsonBytes.size)
+            trailerFooter.putLong(magicConstant)
+
+            targetFile.parentFile?.mkdirs()
+            FileOutputStream(targetFile).use { fos ->
                 fos.write(header.array())
+                fos.write(chunkTable.array())
                 for (bytes in fileBytesList) {
                     if (bytes.isNotEmpty()) fos.write(bytes)
                 }
-
-                // Append metadata trailer
-                val stats = getLiveStats()
-                val jsonString = """{"invoices":${stats.invoiceCount},"receipts":${stats.receiptCount},"customers":${stats.customerCount},"products":${stats.productCount},"time":${System.currentTimeMillis()},"mode":"${mode?.key ?: "common"}"}"""
-                val jsonBytes = jsonString.toByteArray(Charsets.UTF_8)
                 fos.write(jsonBytes)
-
-                val trailerBuffer = ByteBuffer.allocate(12).order(ByteOrder.LITTLE_ENDIAN)
-                trailerBuffer.putInt(jsonBytes.size)
-                trailerBuffer.putLong(magicConstant)
-                fos.write(trailerBuffer.array())
+                fos.write(trailerFooter.array())
+                fos.flush()
             }
 
-            // Verify written temp file
-            if (!tempFile.exists() || tempFile.length() < 48) {
-                tempFile.delete()
-                return false
-            }
-
-            // Atomic rename
-            if (targetFile.exists()) targetFile.delete()
-            val renamed = tempFile.renameTo(targetFile)
-            if (!renamed) {
-                // Fallback copy if renameTo fails across file boundaries
-                tempFile.copyTo(targetFile, overwrite = true)
-                tempFile.delete()
-            }
-
-            // Also mirror to external Documents if available (best effort)
-            try {
-                val extDir = getExternalBackupDir()
-                if (extDir != null) {
-                    val extFile = File(extDir, targetFile.name)
-                    targetFile.copyTo(extFile, overwrite = true)
-                }
-            } catch (_: Exception) {}
-
-            Log.i(tag, "Successfully packed atomic backup to: ${targetFile.absolutePath} (${targetFile.length()} bytes)")
+            Log.i(tag, "Successfully packed backup to: ${targetFile.absolutePath} (${targetFile.length()} bytes, CRC=$payloadCrc32)")
             true
         } catch (e: Exception) {
             Log.e(tag, "Pack failed for ${targetFile.absolutePath}: ${e.message}", e)
-            try { tempFile.delete() } catch (_: Exception) {}
             false
         }
     }
 
     private fun unpackFromFile(sourceFile: File): Boolean {
         return try {
-            if (!sourceFile.exists() || sourceFile.length() < 48) return false
+            if (!validateArchive(sourceFile)) {
+                Log.e(tag, "Refusing to restore: Archive validation failed for ${sourceFile.absolutePath}")
+                return false
+            }
 
-            val allBytes = sourceFile.readBytes()
-            val header = ByteBuffer.wrap(allBytes, 0, 48).order(ByteOrder.LITTLE_ENDIAN)
-            var offset = 48
+            RandomAccessFile(sourceFile, "r").use { raf ->
+                raf.seek(0)
+                val first8 = java.lang.Long.reverseBytes(raf.readLong())
+                val isV1 = (first8 == magicConstant)
 
-            val filesToUnpack = getFilesToPack()
-            val mode = currentMode()
+                val headerOffset: Long
+                val chunkLengths = LongArray(6)
 
-            for (i in filesToUnpack.indices) {
-                val size = header.getLong().toInt()
-                if (filesToUnpack[i].isEmpty()) {
-                    offset += size
-                    continue
-                }
-
-                val file = File(filesToUnpack[i])
-                val shouldRestore = when (mode) {
-                    AppMode.KOOLI -> i < 3       // restore only Kooli chunks 0, 1, 2
-                    AppMode.PATTU -> i >= 3      // restore only Silk chunks 3, 4, 5
-                    null -> true                 // restore all chunks in combined mode
-                }
-
-                if (size > 0) {
-                    if (shouldRestore) {
-                        file.parentFile?.mkdirs()
-                        FileOutputStream(file).use { fos ->
-                            fos.write(allBytes, offset, size)
-                        }
+                if (isV1) {
+                    headerOffset = 112L
+                    raf.seek(64)
+                    for (i in 0 until 6) {
+                        chunkLengths[i] = java.lang.Long.reverseBytes(raf.readLong())
                     }
-                    offset += size
                 } else {
-                    if (shouldRestore && (i == 1 || i == 2 || i == 4 || i == 5)) {
-                        if (file.exists()) file.delete()
+                    headerOffset = 48L
+                    raf.seek(0)
+                    for (i in 0 until 6) {
+                        chunkLengths[i] = java.lang.Long.reverseBytes(raf.readLong())
+                    }
+                }
+
+                val filesToUnpack = getFilesToPack()
+                val mode = currentMode()
+                var currentOffset = headerOffset
+
+                for (i in filesToUnpack.indices) {
+                    val size = chunkLengths[i]
+                    if (filesToUnpack[i].isEmpty()) {
+                        currentOffset += size
+                        continue
+                    }
+
+                    val file = File(filesToUnpack[i])
+                    val shouldRestore = when (mode) {
+                        AppMode.KOOLI -> i < 3       // restore only Kooli chunks 0, 1, 2
+                        AppMode.PATTU -> i >= 3      // restore only Silk chunks 3, 4, 5
+                        null -> true                 // restore all chunks in combined mode
+                    }
+
+                    if (size > 0) {
+                        if (shouldRestore) {
+                            file.parentFile?.mkdirs()
+                            val tempUnpack = File(file.parentFile, "${file.name}.restore.tmp")
+                            FileOutputStream(tempUnpack).use { fos ->
+                                raf.seek(currentOffset)
+                                val buf = ByteArray(8192)
+                                var remaining = size
+                                while (remaining > 0) {
+                                    val toRead = minOf(remaining, buf.size.toLong()).toInt()
+                                    val read = raf.read(buf, 0, toRead)
+                                    if (read <= 0) break
+                                    fos.write(buf, 0, read)
+                                    remaining -= read
+                                }
+                                fos.flush()
+                            }
+                            atomicReplace(tempUnpack, file)
+                        }
+                        currentOffset += size
+                    } else {
+                        if (shouldRestore && (i == 1 || i == 2 || i == 4 || i == 5)) {
+                            if (file.exists()) file.delete()
+                        }
                     }
                 }
             }
@@ -300,7 +499,7 @@ class AndroidNirilBackupService : NirilBackupService {
             // Immediately reload in-memory cached repositories across app
             reloadAllRepositories()
 
-            Log.i(tag, "Restore completed from ${sourceFile.absolutePath}")
+            Log.i(tag, "Restore completed successfully from ${sourceFile.absolutePath}")
             true
         } catch (e: Exception) {
             Log.e(tag, "Unpack failed from ${sourceFile.absolutePath}: ${e.message}", e)
@@ -309,41 +508,132 @@ class AndroidNirilBackupService : NirilBackupService {
     }
 
     override fun createBackup(): Boolean {
+        val internalDir = getInternalBackupDir()
+        val prefix = modePrefix(currentMode())
+        val tempNewFile = File(internalDir, "udukkai_${prefix}_backup_new.tmp")
+
+        if (!packToFile(tempNewFile)) {
+            try { tempNewFile.delete() } catch (_: Exception) {}
+            return false
+        }
+
+        if (!validateArchive(tempNewFile)) {
+            Log.e(tag, "Created backup failed validation check. Discarding temp file.")
+            try { tempNewFile.delete() } catch (_: Exception) {}
+            return false
+        }
+
         val latestFile = getFileForWriting(BackupSlot.LATEST)
         val previousFile = getFileForWriting(BackupSlot.PREVIOUS)
 
-        // Rotate existing LATEST to PREVIOUS before generating new LATEST
-        if (latestFile.exists() && latestFile.length() > 48) {
+        // Rotate existing LATEST to PREVIOUS atomically only after new backup is verified
+        if (latestFile.exists() && latestFile.length() >= 60 && validateArchive(latestFile)) {
             try {
                 latestFile.copyTo(previousFile, overwrite = true)
-            } catch (_: Exception) {}
+            } catch (e: Exception) {
+                Log.w(tag, "Failed to rotate latest to previous: ${e.message}")
+            }
         }
 
-        return packToFile(latestFile)
+        val replaced = atomicReplace(tempNewFile, latestFile)
+        if (!replaced) {
+            Log.e(tag, "Failed to atomically replace latest backup with new backup")
+            return false
+        }
+
+        // Also mirror to external Documents if available (best effort)
+        try {
+            val extDir = getExternalBackupDir()
+            if (extDir != null) {
+                val extFile = File(extDir, latestFile.name)
+                latestFile.copyTo(extFile, overwrite = true)
+            }
+        } catch (_: Exception) {}
+
+        return true
     }
 
     override fun createSafetySnapshot(): Boolean {
+        val internalDir = getInternalBackupDir()
+        val prefix = modePrefix(currentMode())
+        val tempVaultFile = File(internalDir, "udukkai_${prefix}_safety_vault_new.tmp")
+
+        if (!packToFile(tempVaultFile)) {
+            try { tempVaultFile.delete() } catch (_: Exception) {}
+            return false
+        }
+
+        if (!validateArchive(tempVaultFile)) {
+            Log.e(tag, "Created safety snapshot failed validation. Discarding.")
+            try { tempVaultFile.delete() } catch (_: Exception) {}
+            return false
+        }
+
         val vaultFile = getFileForWriting(BackupSlot.SAFETY_VAULT)
-        return packToFile(vaultFile)
+        val replaced = atomicReplace(tempVaultFile, vaultFile)
+        if (!replaced) return false
+
+        // Best-effort mirror to external
+        try {
+            val extDir = getExternalBackupDir()
+            if (extDir != null) {
+                val extVault = File(extDir, vaultFile.name)
+                vaultFile.copyTo(extVault, overwrite = true)
+            }
+        } catch (_: Exception) {}
+
+        return true
     }
 
     override fun restoreFromSlot(slot: BackupSlot): Boolean {
-        val file = resolveExistingFileForReading(slot) ?: return false
-
-        // Before restoring from any backup, take an untouchable safety snapshot of the CURRENT state
-        try {
-            createSafetySnapshot()
-        } catch (e: Exception) {
-            Log.w(tag, "Pre-restore safety snapshot warning: ${e.message}")
+        val file = resolveExistingFileForReading(slot) ?: run {
+            Log.e(tag, "Cannot restore: backup file for slot $slot not found")
+            return false
         }
 
-        return unpackFromFile(file)
+        if (!validateArchive(file)) {
+            Log.e(tag, "Cannot restore: backup archive for slot $slot failed validation")
+            return false
+        }
+
+        // Isolate restore source if slot is SAFETY_VAULT to avoid snapshot overwrite
+        val restoreSource: File
+        val isTempSource: Boolean
+        if (slot == BackupSlot.SAFETY_VAULT) {
+            val tempRestoreFile = File(AppContext.context.cacheDir, "udukkai_vault_restore_${System.currentTimeMillis()}.tmp")
+            try {
+                file.copyTo(tempRestoreFile, overwrite = true)
+                restoreSource = tempRestoreFile
+                isTempSource = true
+            } catch (e: Exception) {
+                Log.e(tag, "Failed to isolate safety vault source: ${e.message}")
+                return false
+            }
+        } else {
+            restoreSource = file
+            isTempSource = false
+        }
+
+        return try {
+            // Before restoring, take an untouchable safety snapshot of CURRENT state
+            val secured = createSafetySnapshot()
+            if (!secured) {
+                Log.e(tag, "Aborting restore: Failed to create safety snapshot of current data before restoring.")
+                false
+            } else {
+                unpackFromFile(restoreSource)
+            }
+        } finally {
+            if (isTempSource) {
+                try { restoreSource.delete() } catch (_: Exception) {}
+            }
+        }
     }
 
     override fun hasBackup(slot: BackupSlot): Boolean {
         return try {
             val f = resolveExistingFileForReading(slot)
-            f != null && f.exists() && f.length() > 48
+            f != null && f.exists() && f.length() >= 60 && validateArchive(f)
         } catch (_: Exception) { false }
     }
 
@@ -363,8 +653,9 @@ class AndroidNirilBackupService : NirilBackupService {
 
     override fun getBackupMetadata(slot: BackupSlot): BackupItemMetadata? {
         val file = resolveExistingFileForReading(slot) ?: return null
-        if (!file.exists() || file.length() < 48) return null
+        if (!file.exists() || file.length() < 60) return null
 
+        val isValid = validateArchive(file)
         var invoiceCount = 0
         var receiptCount = 0
         var customerCount = 0
@@ -380,7 +671,7 @@ class AndroidNirilBackupService : NirilBackupService {
                     if (magic == magicConstant) {
                         raf.seek(length - 12)
                         val jsonLen = java.lang.Integer.reverseBytes(raf.readInt())
-                        if (jsonLen in 1..2048 && length >= (48 + 12 + jsonLen)) {
+                        if (jsonLen in 1..65536 && length >= (12 + jsonLen)) {
                             raf.seek(length - 12 - jsonLen)
                             val jsonBytes = ByteArray(jsonLen)
                             raf.readFully(jsonBytes)
@@ -407,7 +698,7 @@ class AndroidNirilBackupService : NirilBackupService {
             productCount = productCount,
             mode = currentMode(),
             isSafetySnapshot = slot == BackupSlot.SAFETY_VAULT,
-            isValid = true
+            isValid = isValid
         )
     }
 

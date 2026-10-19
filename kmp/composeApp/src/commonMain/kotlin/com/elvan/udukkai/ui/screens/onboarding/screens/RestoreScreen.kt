@@ -24,6 +24,8 @@ fun RestorePage(
     var isLoading by remember { mutableStateOf(false) }
     val backupService = getNirilBackupService()
 
+    val failedMsg = K.backupFailed.tr()
+
     Column(
         modifier = Modifier.fillMaxWidth().padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -43,9 +45,13 @@ fun RestorePage(
                 if (!isLoading) {
                     isLoading = true
                     coroutineScope.launch {
-                        backupService.restoreFromBackup()
+                        val success = backupService.restoreFromBackup()
                         isLoading = false
-                        onRestoreComplete()
+                        if (success) {
+                            onRestoreComplete()
+                        } else {
+                            com.elvan.udukkai.ui.components.shell.ElvanSnackbar.show(failedMsg)
+                        }
                     }
                 }
             }

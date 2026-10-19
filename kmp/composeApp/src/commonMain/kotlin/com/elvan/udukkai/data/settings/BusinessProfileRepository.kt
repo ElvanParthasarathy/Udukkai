@@ -3,6 +3,7 @@ package com.elvan.udukkai.data.settings
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import com.elvan.udukkai.core.backup.AutoBackupManager
 import com.elvan.udukkai.core.mode.AppMode
 
 /**
@@ -225,6 +226,7 @@ object NiruvanaTharavugalRepository {
                     setActiveProfile(mode, it.id ?: 1L)
                 }
             }
+            AutoBackupManager.onDataChanged()
         }
         return success
     }
@@ -243,6 +245,7 @@ object NiruvanaTharavugalRepository {
                 val newActive = remaining.first()
                 newActive.id?.let { setActiveProfile(mode, it) }
             }
+            AutoBackupManager.onDataChanged()
         }
         return success
     }
@@ -267,6 +270,7 @@ object NiruvanaTharavugalRepository {
             val saved = getSettingsDatabaseHelper().saveProfile(mode, updated)
             if (saved) {
                 refreshFromDatabase()
+                AutoBackupManager.onDataChanged()
             }
         } catch (_: Exception) {}
     }

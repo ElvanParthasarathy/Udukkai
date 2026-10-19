@@ -10,8 +10,7 @@ import kotlinx.coroutines.launch
 /**
  * Reactive Auto-Backup Manager.
  * Listens to database writes across repositories and performs a debounced atomic backup.
- * 
- * Replaces the Flutter autoBackupProvider with a robust 3-second debouncer.
+ * Includes automatic retry on failure and immediate flush capabilities.
  */
 object AutoBackupManager {
     private val scope = CoroutineScope(Dispatchers.Default + SupervisorJob())
@@ -25,9 +24,34 @@ object AutoBackupManager {
         debounceJob?.cancel()
         debounceJob = scope.launch {
             delay(3000)
+            executeBackupWithRetry(maxRetries = 2)
+        }
+    }
+
+    /**
+     * Immediately triggers an atomic backup without waiting for the debounce window.
+     * Useful during critical actions or when saving vital company details.
+     */
+    fun flushImmediate() {
+        debounceJob?.cancel()
+        scope.launch {
+            executeBackupWithRetry(maxRetries = 2)
+        }
+    }
+
+    private suspend fun executeBackupWithRetry(maxRetries: Int) {
+        var attempts = 0
+        var success = false
+        while (!success && attempts <= maxRetries) {
+            attempts++
             try {
-                getNirilBackupService().createBackup()
-            } catch (_: Exception) {}
+                success = getNirilBackupService().createBackup()
+            } catch (_: Exception) {
+                success = false
+            }
+            if (!success && attempts <= maxRetries) {
+                delay(2000) // Brief backoff before retrying
+            }
         }
     }
 }
