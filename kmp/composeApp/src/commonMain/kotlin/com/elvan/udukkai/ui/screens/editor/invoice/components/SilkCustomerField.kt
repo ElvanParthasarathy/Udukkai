@@ -55,7 +55,7 @@ fun PattuVaangunargalKooru(
     val config = PrintLanguageManager.getConfig(currentMode)
     val primaryLang = config.primaryLanguage.code
     val secondaryLang = config.secondaryLanguage.code
-    val isBilingual = if (currentMode == AppMode.KOOLI) true else config.isBilingual
+    val isBilingual = config.isBilingual
 
     var isBottomSheetOpen by remember { mutableStateOf(false) }
     val allMerchants = VaangunarRepository.merchants

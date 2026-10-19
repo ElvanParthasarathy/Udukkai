@@ -41,49 +41,12 @@ class AndroidSettingsDatabaseHelper : SettingsDatabaseHelper {
 
     private fun ensureTables(db: SQLiteDatabase, mode: AppMode) {
         val tableName = if (mode == AppMode.KOOLI) "kooli_niruvana_tharavugal_table" else "pattu_niruvana_tharavugal_table"
-        val sql = if (mode == AppMode.KOOLI) {
-            """
-            CREATE TABLE IF NOT EXISTS "$tableName" (
-                "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-                "niruvanathin_peyar" TEXT NOT NULL DEFAULT '{}',
-                "kurum_peyar" TEXT NOT NULL DEFAULT '',
-                "tholaipaesi1" TEXT NOT NULL DEFAULT '',
-                "tholaipaesi2" TEXT NOT NULL DEFAULT '',
-                "minnanjal" TEXT NOT NULL DEFAULT '',
-                "gstin" TEXT NOT NULL DEFAULT '',
-                "mugavari" TEXT NOT NULL DEFAULT '{}',
-                "oor" TEXT NOT NULL DEFAULT '{}',
-                "maavattam" TEXT NOT NULL DEFAULT '{}',
-                "maanilam" TEXT NOT NULL DEFAULT '{}',
-                "naadu" TEXT NOT NULL DEFAULT '{"en": "India", "ta": "இந்தியா"}',
-                "anjal_kuriyeedu" TEXT NOT NULL DEFAULT '',
-                "vangi_peyar" TEXT NOT NULL DEFAULT '{}',
-                "kilai" TEXT NOT NULL DEFAULT '{}',
-                "vangi_kanakku" TEXT NOT NULL DEFAULT '',
-                "ifsc" TEXT NOT NULL DEFAULT '',
-                "oavuru" TEXT NOT NULL DEFAULT '',
-                "agala_oavuru" TEXT NOT NULL DEFAULT '',
-                "thalaippu_vadivu" TEXT NOT NULL DEFAULT 'small',
-                "kaiyoppam" TEXT NOT NULL DEFAULT '',
-                "oppam_peyar" TEXT NOT NULL DEFAULT '',
-                "oppam_mudhal_peyar" TEXT NOT NULL DEFAULT '',
-                "oppam_irudhi_peyar" TEXT NOT NULL DEFAULT '',
-                "adaimozhi" TEXT NOT NULL DEFAULT '{}',
-                "upi_id" TEXT NOT NULL DEFAULT '',
-                "thoatra_niram" TEXT NOT NULL DEFAULT '',
-                "created_at" INTEGER NOT NULL DEFAULT (CAST(strftime('%s', CURRENT_TIMESTAMP) AS INTEGER)),
-                "updated_at" INTEGER NOT NULL DEFAULT (CAST(strftime('%s', CURRENT_TIMESTAMP) AS INTEGER)),
-                "is_deleted" INTEGER NOT NULL DEFAULT 0 CHECK ("is_deleted" IN (0, 1)),
-                "deleted_at" INTEGER NULL
-            )
-            """.trimIndent()
-        } else {
-            """
+        val sql = """
             CREATE TABLE IF NOT EXISTS "$tableName" (
                 "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
                 "mudhan_mozhi" TEXT NOT NULL DEFAULT 'ta',
                 "thunai_mozhi" TEXT NOT NULL DEFAULT 'en',
-                "iru_mozhi" INTEGER NOT NULL DEFAULT 0 CHECK ("iru_mozhi" IN (0, 1)),
+                "iru_mozhi" INTEGER NOT NULL DEFAULT 1 CHECK ("iru_mozhi" IN (0, 1)),
                 "gst_pirippugal" INTEGER NOT NULL DEFAULT 0 CHECK ("gst_pirippugal" IN (0, 1)),
                 "niruvanathin_peyar" TEXT NOT NULL DEFAULT '{}',
                 "kurum_peyar" TEXT NOT NULL DEFAULT '',
@@ -116,8 +79,7 @@ class AndroidSettingsDatabaseHelper : SettingsDatabaseHelper {
                 "is_deleted" INTEGER NOT NULL DEFAULT 0 CHECK ("is_deleted" IN (0, 1)),
                 "deleted_at" INTEGER NULL
             )
-            """.trimIndent()
-        }
+        """.trimIndent()
         db.execSQL(sql)
         ensureColumns(db, tableName)
     }
@@ -176,38 +138,35 @@ class AndroidSettingsDatabaseHelper : SettingsDatabaseHelper {
     }
 
     private fun ensureColumns(db: SQLiteDatabase, tableName: String) {
+        val columns = mutableSetOf<String>()
         try {
-            val columns = mutableSetOf<String>()
-            db.rawQuery("PRAGMA table_info($tableName)", null).use { cursor ->
+            db.rawQuery("PRAGMA table_info(\"$tableName\")", null).use { cursor ->
                 val nameIdx = cursor.getColumnIndex("name")
                 while (cursor.moveToNext()) {
                     if (nameIdx >= 0) columns.add(cursor.getString(nameIdx).lowercase())
                 }
             }
-            if (!columns.contains("mudhan_mozhi")) {
-                db.execSQL("ALTER TABLE $tableName ADD COLUMN mudhan_mozhi TEXT DEFAULT 'ta'")
-            }
-            if (!columns.contains("thunai_mozhi")) {
-                db.execSQL("ALTER TABLE $tableName ADD COLUMN thunai_mozhi TEXT DEFAULT 'en'")
-            }
-            if (!columns.contains("iru_mozhi")) {
-                db.execSQL("ALTER TABLE $tableName ADD COLUMN iru_mozhi INTEGER DEFAULT 1")
-            }
-            if (!columns.contains("gst_pirippugal")) {
-                db.execSQL("ALTER TABLE $tableName ADD COLUMN gst_pirippugal INTEGER DEFAULT 0")
-            }
-            if (!columns.contains("thoatra_niram")) {
-                db.execSQL("ALTER TABLE $tableName ADD COLUMN thoatra_niram TEXT DEFAULT '#388e3c'")
-            }
-            if (!columns.contains("oppam_mudhal_peyar")) {
-                db.execSQL("ALTER TABLE $tableName ADD COLUMN oppam_mudhal_peyar TEXT DEFAULT ''")
-            }
-            if (!columns.contains("oppam_irudhi_peyar")) {
-                db.execSQL("ALTER TABLE $tableName ADD COLUMN oppam_irudhi_peyar TEXT DEFAULT ''")
-            }
         } catch (e: Exception) {
-            Log.w(tag, "ensureColumns failed on $tableName: ${e.message}")
+            Log.w(tag, "Failed to read PRAGMA table_info on $tableName: ${e.message}")
         }
+
+        fun addCol(colName: String, defSql: String) {
+            if (!columns.contains(colName.lowercase())) {
+                try {
+                    db.execSQL("ALTER TABLE \"$tableName\" ADD COLUMN $colName $defSql")
+                } catch (e: Exception) {
+                    Log.w(tag, "Failed to add column $colName to $tableName: ${e.message}")
+                }
+            }
+        }
+
+        addCol("mudhan_mozhi", "TEXT DEFAULT 'ta'")
+        addCol("thunai_mozhi", "TEXT DEFAULT 'en'")
+        addCol("iru_mozhi", "INTEGER DEFAULT 1")
+        addCol("gst_pirippugal", "INTEGER DEFAULT 0")
+        addCol("thoatra_niram", "TEXT DEFAULT '#388e3c'")
+        addCol("oppam_mudhal_peyar", "TEXT DEFAULT ''")
+        addCol("oppam_irudhi_peyar", "TEXT DEFAULT ''")
     }
 
     override fun saveProfile(mode: AppMode, profile: NiruvanaTharavugal): Boolean {

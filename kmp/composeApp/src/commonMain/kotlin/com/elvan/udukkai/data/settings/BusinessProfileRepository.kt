@@ -269,6 +269,9 @@ object NiruvanaTharavugalRepository {
         try {
             val saved = getSettingsDatabaseHelper().saveProfile(mode, updated)
             if (saved) {
+                if (updated.id != null) {
+                    persistActiveId(mode, updated.id!!)
+                }
                 refreshFromDatabase()
                 AutoBackupManager.onDataChanged()
             }

@@ -37,49 +37,14 @@ class DesktopSettingsDatabaseHelper : SettingsDatabaseHelper {
 
     private fun ensureTables(conn: Connection, mode: AppMode) {
         val tableName = if (mode == AppMode.KOOLI) "kooli_niruvana_tharavugal_table" else "pattu_niruvana_tharavugal_table"
-        val sql = if (mode == AppMode.KOOLI) {
-            """
-            CREATE TABLE IF NOT EXISTS "$tableName" (
-                "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-                "niruvanathin_peyar" TEXT NOT NULL DEFAULT '{}',
-                "kurum_peyar" TEXT NOT NULL DEFAULT '',
-                "tholaipaesi1" TEXT NOT NULL DEFAULT '',
-                "tholaipaesi2" TEXT NOT NULL DEFAULT '',
-                "minnanjal" TEXT NOT NULL DEFAULT '',
-                "gstin" TEXT NOT NULL DEFAULT '',
-                "mugavari" TEXT NOT NULL DEFAULT '{}',
-                "oor" TEXT NOT NULL DEFAULT '{}',
-                "maavattam" TEXT NOT NULL DEFAULT '{}',
-                "maanilam" TEXT NOT NULL DEFAULT '{}',
-                "naadu" TEXT NOT NULL DEFAULT '{"en": "India", "ta": "இந்தியா"}',
-                "anjal_kuriyeedu" TEXT NOT NULL DEFAULT '',
-                "vangi_peyar" TEXT NOT NULL DEFAULT '{}',
-                "kilai" TEXT NOT NULL DEFAULT '{}',
-                "vangi_kanakku" TEXT NOT NULL DEFAULT '',
-                "ifsc" TEXT NOT NULL DEFAULT '',
-                "oavuru" TEXT NOT NULL DEFAULT '',
-                "agala_oavuru" TEXT NOT NULL DEFAULT '',
-                "thalaippu_vadivu" TEXT NOT NULL DEFAULT 'small',
-                "kaiyoppam" TEXT NOT NULL DEFAULT '',
-                "oppam_peyar" TEXT NOT NULL DEFAULT '',
-                "oppam_mudhal_peyar" TEXT NOT NULL DEFAULT '',
-                "oppam_irudhi_peyar" TEXT NOT NULL DEFAULT '',
-                "adaimozhi" TEXT NOT NULL DEFAULT '{}',
-                "upi_id" TEXT NOT NULL DEFAULT '',
-                "thoatra_niram" TEXT NOT NULL DEFAULT '',
-                "created_at" INTEGER NOT NULL DEFAULT (CAST(strftime('%s', CURRENT_TIMESTAMP) AS INTEGER)),
-                "updated_at" INTEGER NOT NULL DEFAULT (CAST(strftime('%s', CURRENT_TIMESTAMP) AS INTEGER)),
-                "is_deleted" INTEGER NOT NULL DEFAULT 0 CHECK ("is_deleted" IN (0, 1)),
-                "deleted_at" INTEGER NULL
-            )
-            """.trimIndent()
-        } else {
-            """
+    private fun ensureTables(conn: Connection, mode: AppMode) {
+        val tableName = if (mode == AppMode.KOOLI) "kooli_niruvana_tharavugal_table" else "pattu_niruvana_tharavugal_table"
+        val sql = """
             CREATE TABLE IF NOT EXISTS "$tableName" (
                 "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
                 "mudhan_mozhi" TEXT NOT NULL DEFAULT 'ta',
                 "thunai_mozhi" TEXT NOT NULL DEFAULT 'en',
-                "iru_mozhi" INTEGER NOT NULL DEFAULT 0 CHECK ("iru_mozhi" IN (0, 1)),
+                "iru_mozhi" INTEGER NOT NULL DEFAULT 1 CHECK ("iru_mozhi" IN (0, 1)),
                 "gst_pirippugal" INTEGER NOT NULL DEFAULT 0 CHECK ("gst_pirippugal" IN (0, 1)),
                 "niruvanathin_peyar" TEXT NOT NULL DEFAULT '{}',
                 "kurum_peyar" TEXT NOT NULL DEFAULT '',
@@ -112,8 +77,7 @@ class DesktopSettingsDatabaseHelper : SettingsDatabaseHelper {
                 "is_deleted" INTEGER NOT NULL DEFAULT 0 CHECK ("is_deleted" IN (0, 1)),
                 "deleted_at" INTEGER NULL
             )
-            """.trimIndent()
-        }
+        """.trimIndent()
         conn.createStatement().use { stmt ->
             stmt.execute(sql)
         }
@@ -121,28 +85,38 @@ class DesktopSettingsDatabaseHelper : SettingsDatabaseHelper {
     }
 
     private fun ensureColumns(conn: Connection, tableName: String) {
+        val columns = mutableSetOf<String>()
         try {
-            val columns = mutableSetOf<String>()
             conn.createStatement().use { stmt ->
-                stmt.executeQuery("PRAGMA table_info($tableName)").use { rs ->
+                stmt.executeQuery("PRAGMA table_info(\"$tableName\")").use { rs ->
                     while (rs.next()) {
                         columns.add(rs.getString("name").lowercase())
                     }
                 }
             }
-            if (!columns.contains("oppam_mudhal_peyar")) {
-                conn.createStatement().use { stmt ->
-                    stmt.execute("ALTER TABLE $tableName ADD COLUMN oppam_mudhal_peyar TEXT DEFAULT ''")
-                }
-            }
-            if (!columns.contains("oppam_irudhi_peyar")) {
-                conn.createStatement().use { stmt ->
-                    stmt.execute("ALTER TABLE $tableName ADD COLUMN oppam_irudhi_peyar TEXT DEFAULT ''")
-                }
-            }
         } catch (e: Exception) {
-            println("Desktop ensureColumns failed on $tableName: ${e.message}")
+            println("Desktop table_info failed on $tableName: ${e.message}")
         }
+
+        fun addCol(colName: String, defSql: String) {
+            if (!columns.contains(colName.lowercase())) {
+                try {
+                    conn.createStatement().use { stmt ->
+                        stmt.execute("ALTER TABLE \"$tableName\" ADD COLUMN $colName $defSql")
+                    }
+                } catch (e: Exception) {
+                    println("Desktop addCol $colName on $tableName failed: ${e.message}")
+                }
+            }
+        }
+
+        addCol("mudhan_mozhi", "TEXT DEFAULT 'ta'")
+        addCol("thunai_mozhi", "TEXT DEFAULT 'en'")
+        addCol("iru_mozhi", "INTEGER DEFAULT 1")
+        addCol("gst_pirippugal", "INTEGER DEFAULT 0")
+        addCol("thoatra_niram", "TEXT DEFAULT '#388e3c'")
+        addCol("oppam_mudhal_peyar", "TEXT DEFAULT ''")
+        addCol("oppam_irudhi_peyar", "TEXT DEFAULT ''")
     }
 
     override fun loadProfile(mode: AppMode, profileId: Long?): NiruvanaTharavugal? {

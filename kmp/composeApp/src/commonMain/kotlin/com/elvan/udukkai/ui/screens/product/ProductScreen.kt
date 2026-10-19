@@ -267,7 +267,7 @@ internal fun CoolieProductCard(
     val isDark = colors.isDark
 
     val profile = NiruvanaTharavugalRepository.getProfile(AppMode.KOOLI)
-    val isBilingual = true // Coolie mode is always bilingual
+    val isBilingual = profile.iruMozhi
     val primaryLang = profile.mudhanMozhi.ifEmpty { "ta" }
     val secondaryLang = profile.thunaiMozhi.ifEmpty { "en" }
 
