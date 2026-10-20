@@ -3,8 +3,8 @@ package com.elvan.udukkai.localization
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import com.elvan.udukkai.core.mode.AppMode
-import com.elvan.udukkai.data.settings.NiruvanaTharavugalRepository
+import com.elvan.udukkai.factory.data.FactoryProfileRepository
+import com.elvan.udukkai.textiles.data.TextilesProfileRepository
 
 /**
  * ══════════════════════════════════════════════════════════════════════
@@ -19,9 +19,9 @@ import com.elvan.udukkai.data.settings.NiruvanaTharavugalRepository
  *    - Changing UI language NEVER affects what prints on the bill!
  *    - Changing Print language NEVER affects what appears on screen!
  *
- * 3. Mode Isolation (Kooli vs Pattu):
- *    - Kooli (Labor/Service) has its own independent billing language.
- *    - Pattu (Silk/Goods) has its own independent billing language,
+ * 3. App Domain Isolation (Factory vs Textiles):
+ *    - Factory (ஆலை) has its own independent billing language.
+ *    - Textiles (சவுளி) has its own independent billing language,
  *      supporting bilingual (இருமொழி) printing (Primary + Secondary).
  */
 
@@ -43,12 +43,20 @@ data class BillingLanguageConfig(
 
 object PrintLanguageManager {
 
-    /**
-     * Returns the active billing language config for the specified mode.
-     * Reactively reads from NiruvanaTharavugalRepository.
-     */
-    fun getConfig(mode: AppMode): BillingLanguageConfig {
-        val profile = NiruvanaTharavugalRepository.getProfile(mode)
+    fun getFactoryConfig(): BillingLanguageConfig {
+        val profile = FactoryProfileRepository.profile
+        val isBilingual = profile.iruMozhi
+        val primary = BillingLanguage.fromCode(profile.mudhanMozhi.ifEmpty { "ta" })
+        val secondary = BillingLanguage.fromCode(profile.thunaiMozhi.ifEmpty { "en" })
+        return BillingLanguageConfig(
+            primaryLanguage = primary,
+            secondaryLanguage = secondary,
+            isBilingual = isBilingual
+        )
+    }
+
+    fun getTextilesConfig(): BillingLanguageConfig {
+        val profile = TextilesProfileRepository.profile
         val isBilingual = profile.iruMozhi
         val primary = BillingLanguage.fromCode(profile.mudhanMozhi.ifEmpty { "ta" })
         val secondary = BillingLanguage.fromCode(profile.thunaiMozhi.ifEmpty { "en" })
@@ -60,36 +68,62 @@ object PrintLanguageManager {
     }
 
     /**
-     * Updates the primary billing language for a mode on its active profile.
+     * Returns the active billing language config for the specified app scope ("factory" or "textiles").
      */
-    fun setPrimaryLanguage(mode: AppMode, language: BillingLanguage) {
-        val profile = NiruvanaTharavugalRepository.getProfile(mode)
-        NiruvanaTharavugalRepository.updateProfile(mode, profile.copy(mudhanMozhi = language.code))
+    fun getConfig(scope: String = "factory"): BillingLanguageConfig {
+        return if (scope.equals("textiles", ignoreCase = true) || scope.equals("pattu", ignoreCase = true)) {
+            getTextilesConfig()
+        } else {
+            getFactoryConfig()
+        }
+    }
+
+    /**
+     * Updates the primary billing language for an app scope on its active profile.
+     */
+    fun setPrimaryLanguage(scope: String = "factory", language: BillingLanguage) {
+        if (scope.equals("textiles", ignoreCase = true) || scope.equals("pattu", ignoreCase = true)) {
+            val profile = TextilesProfileRepository.profile
+            TextilesProfileRepository.updateProfile(profile.copy(mudhanMozhi = language.code))
+        } else {
+            val profile = FactoryProfileRepository.profile
+            FactoryProfileRepository.updateProfile(profile.copy(mudhanMozhi = language.code))
+        }
     }
 
     /**
      * Updates the secondary billing language (used for bilingual bills).
      */
-    fun setSecondaryLanguage(mode: AppMode, language: BillingLanguage) {
-        val profile = NiruvanaTharavugalRepository.getProfile(mode)
-        NiruvanaTharavugalRepository.updateProfile(mode, profile.copy(thunaiMozhi = language.code))
+    fun setSecondaryLanguage(scope: String = "factory", language: BillingLanguage) {
+        if (scope.equals("textiles", ignoreCase = true) || scope.equals("pattu", ignoreCase = true)) {
+            val profile = TextilesProfileRepository.profile
+            TextilesProfileRepository.updateProfile(profile.copy(thunaiMozhi = language.code))
+        } else {
+            val profile = FactoryProfileRepository.profile
+            FactoryProfileRepository.updateProfile(profile.copy(thunaiMozhi = language.code))
+        }
     }
 
     /**
      * Toggles bilingual billing mode (e.g. Tamil heading + English subheading on bills).
      */
-    fun setBilingual(mode: AppMode, enabled: Boolean) {
-        val profile = NiruvanaTharavugalRepository.getProfile(mode)
-        NiruvanaTharavugalRepository.updateProfile(mode, profile.copy(iruMozhi = enabled))
+    fun setBilingual(scope: String = "factory", enabled: Boolean) {
+        if (scope.equals("textiles", ignoreCase = true) || scope.equals("pattu", ignoreCase = true)) {
+            val profile = TextilesProfileRepository.profile
+            TextilesProfileRepository.updateProfile(profile.copy(iruMozhi = enabled))
+        } else {
+            val profile = FactoryProfileRepository.profile
+            FactoryProfileRepository.updateProfile(profile.copy(iruMozhi = enabled))
+        }
     }
 
     /**
      * Translates a string key strictly for PRINT / BILLING output.
-     * Uses the mode's configured print language, completely immune
+     * Uses the scope's configured print language, completely immune
      * to whatever UI language the user has chosen for the app screens.
      */
-    fun printTr(key: String, mode: AppMode): String {
-        val config = getConfig(mode)
+    fun printTr(key: String, scope: String = "factory"): String {
+        val config = getConfig(scope)
         return key.trWithLang(config.primaryLanguage.code)
     }
 
@@ -97,8 +131,8 @@ object PrintLanguageManager {
      * Translates a string key for BILINGUAL print output.
      * Returns Pair(primaryTranslation, secondaryTranslationOrNull).
      */
-    fun printBilingual(key: String, mode: AppMode): Pair<String, String?> {
-        val config = getConfig(mode)
+    fun printBilingual(key: String, scope: String = "factory"): Pair<String, String?> {
+        val config = getConfig(scope)
         val primary = key.trWithLang(config.primaryLanguage.code)
         val secondary = if (config.isBilingual) {
             key.trWithLang(config.secondaryLanguage.code)

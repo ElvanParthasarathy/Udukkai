@@ -1,4 +1,6 @@
-package com.elvan.udukkai.ui.screens.settings.screens
+﻿package com.elvan.udukkai.ui.screens.settings.screens
+
+import com.elvan.udukkai.textiles.data.TextilesProfileRepository
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -20,8 +22,6 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.elvan.udukkai.core.mode.AppMode
-import com.elvan.udukkai.data.settings.NiruvanaTharavugalRepository
 import com.elvan.udukkai.localization.K
 import com.elvan.udukkai.localization.tr
 import com.elvan.udukkai.theme.Dimens
@@ -41,7 +41,7 @@ fun TextilesIdentityScreen(
     scrollState: LazyListState = rememberLazyListState(),
     colors: ShellColors = rememberShellColors()
 ) {
-    val profile = NiruvanaTharavugalRepository.getProfile(AppMode.TEXTILES)
+    val profile = TextilesProfileRepository.profile
     val ff = LocalAppFontFamily.current
 
     var editingSection by remember { mutableStateOf<String?>(null) }
@@ -119,7 +119,7 @@ fun TextilesIdentityScreen(
                                 onSave = {
                                     val updated = profile.copy()
                                     updated.oavuru = tempImagePath ?: ""
-                                    NiruvanaTharavugalRepository.updateProfile(AppMode.TEXTILES, updated)
+                                    TextilesProfileRepository.updateProfile(updated)
                                     editingSection = null
                                     ElvanSnackbar.show(saveSuccessMsg)
                                 },
@@ -169,7 +169,7 @@ fun TextilesIdentityScreen(
                                 onSave = {
                                     val updated = profile.copy()
                                     updated.agalaOavuru = tempWideImagePath ?: ""
-                                    NiruvanaTharavugalRepository.updateProfile(AppMode.TEXTILES, updated)
+                                    TextilesProfileRepository.updateProfile(updated)
                                     editingSection = null
                                     ElvanSnackbar.show(saveSuccessMsg)
                                 },
@@ -210,7 +210,7 @@ fun TextilesIdentityScreen(
                                 onSave = {
                                     val updated = profile.copy()
                                     updated.thalaippuVadivu = tempHeaderStyle
-                                    NiruvanaTharavugalRepository.updateProfile(AppMode.TEXTILES, updated)
+                                    TextilesProfileRepository.updateProfile(updated)
                                     editingSection = null
                                     ElvanSnackbar.show(saveSuccessMsg)
                                 },
@@ -305,7 +305,7 @@ fun TextilesIdentityScreen(
                                     updated.oppamMudhalPeyar = tempSignatoryFirstName.trim()
                                     updated.oppamIrudhiPeyar = tempSignatoryLastName.trim()
                                     updated.oppamPeyar = updated.fullSignatoryName
-                                    NiruvanaTharavugalRepository.updateProfile(AppMode.TEXTILES, updated)
+                                    TextilesProfileRepository.updateProfile(updated)
                                     editingSection = null
                                     ElvanSnackbar.show(saveSuccessMsg)
                                 },

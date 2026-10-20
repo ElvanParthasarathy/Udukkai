@@ -1,7 +1,6 @@
 package com.elvan.udukkai.core.sync
 
 import androidx.compose.runtime.State
-import com.elvan.udukkai.core.mode.AppMode
 import com.elvan.udukkai.data.model.PattiyalTharavuru
 import com.elvan.udukkai.data.model.PatruPattiyalInaippuTharavuru
 import com.elvan.udukkai.data.model.PatrugalTharavuru
@@ -24,16 +23,16 @@ interface FirebaseSyncManager {
     val isOnline: State<Boolean>
 
     fun initialize()
-    fun startSync(mode: AppMode)
+    fun startSync(scope: String = "factory")
     fun stopSync()
     fun triggerManualSync()
     fun dismissGuardAlert()
 
-    fun pushMerchant(merchant: VaangunarTharavuru, mode: AppMode)
-    fun pushItem(item: PorulTharavuru, mode: AppMode)
-    fun pushInvoice(invoice: PattiyalTharavuru, mode: AppMode)
-    fun pushReceipt(receipt: PatrugalTharavuru, mode: AppMode)
-    fun pushReceiptLinks(receiptId: Long, links: List<PatruPattiyalInaippuTharavuru>, mode: AppMode)
+    fun pushMerchant(merchant: VaangunarTharavuru, scope: String = "factory")
+    fun pushItem(item: PorulTharavuru, scope: String = "factory")
+    fun pushInvoice(invoice: PattiyalTharavuru, scope: String = "factory")
+    fun pushReceipt(receipt: PatrugalTharavuru, scope: String = "factory")
+    fun pushReceiptLinks(receiptId: Long, links: List<PatruPattiyalInaippuTharavuru>, scope: String = "factory")
 }
 
 expect fun getFirebaseSyncManager(): FirebaseSyncManager

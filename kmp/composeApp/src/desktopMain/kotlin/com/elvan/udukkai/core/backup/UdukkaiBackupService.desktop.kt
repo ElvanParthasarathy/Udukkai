@@ -1,14 +1,6 @@
-package com.elvan.udukkai.core.backup
+﻿package com.elvan.udukkai.core.backup
 
-import com.elvan.udukkai.core.mode.AppLaunchConfig
-import com.elvan.udukkai.core.mode.AppMode
-import com.elvan.udukkai.core.mode.ModeManager
 import com.elvan.udukkai.data.DesktopDbPaths
-import com.elvan.udukkai.data.repository.PattiyalRepository
-import com.elvan.udukkai.data.repository.PatrugalRepository
-import com.elvan.udukkai.data.repository.PorulRepository
-import com.elvan.udukkai.data.repository.VaangunarRepository
-import com.elvan.udukkai.data.settings.NiruvanaTharavugalRepository
 import java.io.File
 import java.io.FileOutputStream
 import java.io.RandomAccessFile
@@ -24,7 +16,7 @@ class DesktopUdukkaiBackupService : UdukkaiBackupService {
 
     private val magicConstant = 0x5544554B4B414921L // "UDUKKAI!"
 
-    private fun currentMode(): AppMode? = AppLaunchConfig.fixedMode ?: ModeManager.currentMode
+    private fun currentMode(): String = "kooli"
 
     private fun getBackupDir(): File = DesktopDbPaths.getBackupDir()
 
@@ -186,10 +178,10 @@ class DesktopUdukkaiBackupService : UdukkaiBackupService {
     private fun packToFile(targetFile: File): Boolean {
         return try {
             val mode = currentMode()
-            if (mode == null || mode == AppMode.KOOLI) {
+            if (mode == null || mode == "kooli" || mode == "factory") {
                 checkpointWal(getCoolieDbPath())
             }
-            if (mode == null || mode == AppMode.PATTU) {
+            if (mode == null || mode == "pattu" || mode == "textiles") {
                 checkpointWal(getSilkDbPath())
             }
 
@@ -200,9 +192,10 @@ class DesktopUdukkaiBackupService : UdukkaiBackupService {
 
             for (i in filesToPack.indices) {
                 val shouldPack = when (mode) {
-                    AppMode.KOOLI -> i < 3       // pack only Kooli chunks 0, 1, 2
-                    AppMode.PATTU -> i >= 3      // pack only Silk chunks 3, 4, 5
+                    "factory" -> i < 3       // pack only Kooli chunks 0, 1, 2
+                    "textiles" -> i >= 3      // pack only Silk chunks 3, 4, 5
                     null -> true                 // pack all 6 chunks in combined mode
+                    else -> true
                 }
 
                 if (shouldPack) {
@@ -227,16 +220,17 @@ class DesktopUdukkaiBackupService : UdukkaiBackupService {
             val payloadCrc32 = crc.value
 
             val stats = getLiveStats()
-            val jsonString = """{"invoices":${stats.invoiceCount},"receipts":${stats.receiptCount},"customers":${stats.customerCount},"products":${stats.productCount},"time":${System.currentTimeMillis()},"mode":"${mode?.key ?: "common"}"}"""
+            val jsonString = """{"invoices":${stats.invoiceCount},"receipts":${stats.receiptCount},"customers":${stats.customerCount},"products":${stats.productCount},"time":${System.currentTimeMillis()},"mode":"${mode ?: "common"}"}"""
             val jsonBytes = jsonString.toByteArray(Charsets.UTF_8)
 
             val header = ByteBuffer.allocate(64).order(ByteOrder.LITTLE_ENDIAN)
             header.putLong(magicConstant)
             header.putInt(1)
             header.putInt(when (mode) {
-                AppMode.KOOLI -> 0
-                AppMode.PATTU -> 1
+                "factory" -> 0
+                "textiles" -> 1
                 null -> 2
+                else -> 2
             })
             header.putLong(System.currentTimeMillis())
             header.putLong(payloadCrc32)
@@ -309,9 +303,10 @@ class DesktopUdukkaiBackupService : UdukkaiBackupService {
                     val file = File(filesToUnpack[i])
 
                     val shouldRestore = when (mode) {
-                        AppMode.KOOLI -> i < 3       // restore only Kooli chunks 0, 1, 2
-                        AppMode.PATTU -> i >= 3      // restore only Silk chunks 3, 4, 5
+                        "factory" -> i < 3       // restore only Kooli chunks 0, 1, 2
+                        "textiles" -> i >= 3      // restore only Silk chunks 3, 4, 5
                         null -> true                 // restore all chunks in combined mode
+                        else -> true
                     }
 
                     if (size > 0) {
@@ -354,9 +349,10 @@ class DesktopUdukkaiBackupService : UdukkaiBackupService {
     override fun createBackup(): Boolean {
         val backupDir = getBackupDir()
         val prefix = when (currentMode()) {
-            AppMode.KOOLI -> "kooli"
-            AppMode.PATTU -> "pattu"
+            "factory" -> "kooli"
+            "textiles" -> "pattu"
             null -> "common"
+            else -> "common"
         }
         val tempNewFile = File(backupDir, "udukkai_${prefix}_backup_new.tmp")
 
@@ -387,9 +383,10 @@ class DesktopUdukkaiBackupService : UdukkaiBackupService {
     override fun createSafetySnapshot(): Boolean {
         val backupDir = getBackupDir()
         val prefix = when (currentMode()) {
-            AppMode.KOOLI -> "kooli"
-            AppMode.PATTU -> "pattu"
+            "factory" -> "kooli"
+            "textiles" -> "pattu"
             null -> "common"
+            else -> "common"
         }
         val tempVaultFile = File(backupDir, "udukkai_${prefix}_safety_vault_new.tmp")
 
@@ -531,9 +528,10 @@ class DesktopUdukkaiBackupService : UdukkaiBackupService {
             val mode = currentMode()
             getFilesToPack().filterIndexed { index, _ ->
                 when (mode) {
-                    AppMode.KOOLI -> index < 3
-                    AppMode.PATTU -> index >= 3
+                    "factory" -> index < 3
+                    "textiles" -> index >= 3
                     null -> true
+                    else -> true
                 }
             }.sumOf { path ->
                 val f = File(path)
@@ -543,13 +541,12 @@ class DesktopUdukkaiBackupService : UdukkaiBackupService {
     }
 
     override fun getLiveStats(): DatabaseLiveStats {
-        val mode = currentMode() ?: ModeManager.currentMode
-        val activeId = NiruvanaTharavugalRepository.getProfile(mode).id
+        val activeId = com.elvan.udukkai.factory.data.FactoryProfileRepository.profile.id
 
-        val invCount = PattiyalRepository.invoices.count { (activeId == null || it.niruvanamId == activeId) && !it.isDeleted }
-        val recCount = PatrugalRepository.receipts.count { (activeId == null || it.niruvanamId == activeId) && !it.isDeleted }
-        val cusCount = VaangunarRepository.merchants.count { !it.isDeleted }
-        val proCount = PorulRepository.items.count { (activeId == null || it.isAvailableForCompany(activeId)) && !it.isDeleted }
+        val invCount = com.elvan.udukkai.factory.data.FactoryInvoiceRepository.invoices.count { (activeId == null || it.niruvanamId == activeId) && !it.isDeleted }
+        val recCount = com.elvan.udukkai.factory.data.FactoryReceiptRepository.receipts.count { (activeId == null || it.niruvanamId == activeId) && !it.isDeleted }
+        val cusCount = com.elvan.udukkai.factory.data.FactoryCustomerRepository.customers.count { !it.isDeleted }
+        val proCount = com.elvan.udukkai.factory.data.FactoryProductRepository.products.count { (activeId == null || it.isAvailableForCompany(activeId)) && !it.isDeleted }
 
         return DatabaseLiveStats(
             totalDbSizeBytes = getTotalDatabaseSize(),

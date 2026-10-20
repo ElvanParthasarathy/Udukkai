@@ -1,4 +1,4 @@
-package com.elvan.udukkai.ui.screens.settings.screens
+﻿package com.elvan.udukkai.ui.screens.settings.screens
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -22,9 +22,6 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
-import com.elvan.udukkai.core.mode.AppMode
-import com.elvan.udukkai.core.mode.LocalAppMode
-import com.elvan.udukkai.data.settings.NiruvanaTharavugalRepository
 import com.elvan.udukkai.localization.K
 import com.elvan.udukkai.localization.tr
 import com.elvan.udukkai.theme.Dimens
@@ -43,10 +40,15 @@ import com.elvan.udukkai.ui.navigation.MaterialSymbols
 fun MerchantSettingsScreen(
     onNavigateToManageProfiles: () -> Unit = {},
     scrollState: LazyListState = rememberLazyListState(),
-    colors: ShellColors = rememberShellColors()
+    colors: ShellColors = rememberShellColors(),
+    customProfile: com.elvan.udukkai.data.settings.NiruvanaTharavugal? = null,
+    customProfiles: List<com.elvan.udukkai.data.settings.NiruvanaTharavugal>? = null,
+    onUpdateProfile: ((com.elvan.udukkai.data.settings.NiruvanaTharavugal) -> Unit)? = null,
+    onSelectProfile: ((Long) -> Unit)? = null,
+    isTextiles: Boolean = false
 ) {
-    val currentMode = LocalAppMode.current
-    val profile = NiruvanaTharavugalRepository.getProfile(currentMode)
+    val profile = customProfile ?: if (isTextiles) com.elvan.udukkai.textiles.data.TextilesProfileRepository.profile else com.elvan.udukkai.factory.data.FactoryProfileRepository.profile
+    val allProfilesList = customProfiles ?: if (isTextiles) com.elvan.udukkai.textiles.data.TextilesProfileRepository.profiles else com.elvan.udukkai.factory.data.FactoryProfileRepository.profiles
     val ff = LocalAppFontFamily.current
 
     var editingSection by remember { mutableStateOf<String?>(null) }
@@ -56,7 +58,7 @@ fun MerchantSettingsScreen(
     var tempSecondary by remember { mutableStateOf("") }
     var showExtraPhone by remember { mutableStateOf(false) }
 
-    val isPattu = currentMode == AppMode.TEXTILES
+    val isPattu = isTextiles
     val isBilingual = profile.iruMozhi
     val saveSuccessMsg = K.profileSaved.tr()
     val defaultProfileName = K.activeCompany.tr()
@@ -65,7 +67,13 @@ fun MerchantSettingsScreen(
 
     fun saveField(action: () -> Unit) {
         action()
-        NiruvanaTharavugalRepository.updateProfile(currentMode, profile)
+        if (onUpdateProfile != null) {
+            onUpdateProfile(profile)
+        } else if (isTextiles) {
+            com.elvan.udukkai.textiles.data.TextilesProfileRepository.updateProfile(profile)
+        } else {
+            com.elvan.udukkai.factory.data.FactoryProfileRepository.updateProfile(profile)
+        }
         editingSection = null
         showExtraPhone = false
         ElvanSnackbar.show(saveSuccessMsg)
@@ -133,13 +141,13 @@ fun MerchantSettingsScreen(
                                 onClick = {
                                     bottomSheet.showSelection(
                                         title = selectCompanyTitle,
-                                        items = NiruvanaTharavugalRepository.getAllProfiles(currentMode),
+                                        items = allProfilesList,
                                         currentValue = profile,
                                         itemLabelBuilder = { it.getPrimary("niruvanathinPeyar").ifEmpty { defaultProfileName } },
                                         subtitleBuilder = { if (it.iruMozhi) it.getSecondary("niruvanathinPeyar").takeIf { s -> s.isNotBlank() } else null },
                                         onSelected = { selected ->
                                             if (selected.id != null) {
-                                                NiruvanaTharavugalRepository.setActiveProfile(currentMode, selected.id!!)
+                                                if (onSelectProfile != null) onSelectProfile(selected.id!!) else if (isTextiles) com.elvan.udukkai.textiles.data.TextilesProfileRepository.setActiveProfile(selected.id!!) else com.elvan.udukkai.factory.data.FactoryProfileRepository.setActiveProfile(selected.id!!)
                                             }
                                         }
                                     )

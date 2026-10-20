@@ -16,11 +16,9 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.elvan.udukkai.core.mode.AppMode
 import com.elvan.udukkai.core.utils.CurrencyUtils
 import com.elvan.udukkai.core.utils.DateUtils
 import com.elvan.udukkai.data.model.PattiyalTharavuru
-import com.elvan.udukkai.data.settings.NiruvanaTharavugalRepository
 import com.elvan.udukkai.theme.LocalAppFontFamily
 import com.elvan.udukkai.theme.ShellColors
 import com.elvan.udukkai.theme.preventBrokenLigatures
@@ -47,9 +45,9 @@ fun TextilesInvoiceCard(
     val ff = LocalAppFontFamily.current
     val isDark = colors.isDark
 
-    val profiles = NiruvanaTharavugalRepository.getAllProfiles(AppMode.TEXTILES)
+    val profiles = com.elvan.udukkai.textiles.data.TextilesProfileRepository.profiles
     val profile = (if (pattiyal.niruvanamId != null) profiles.find { it.id == pattiyal.niruvanamId } else null)
-        ?: NiruvanaTharavugalRepository.getProfile(AppMode.TEXTILES)
+        ?: com.elvan.udukkai.textiles.data.TextilesProfileRepository.profile
     val isBilingual = profile.iruMozhi
     val primaryLang = profile.mudhanMozhi.ifEmpty { "ta" }
     val secondaryLang = profile.thunaiMozhi.ifEmpty { "en" }

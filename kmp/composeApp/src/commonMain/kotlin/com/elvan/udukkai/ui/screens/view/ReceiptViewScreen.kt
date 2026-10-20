@@ -16,13 +16,10 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.elvan.udukkai.core.mode.AppMode
-import com.elvan.udukkai.core.mode.LocalAppMode
 import com.elvan.udukkai.core.platform.AppBackHandler
 import com.elvan.udukkai.core.utils.CurrencyUtils
 import com.elvan.udukkai.core.utils.DateUtils
 import com.elvan.udukkai.data.model.PatrugalTharavuru
-import com.elvan.udukkai.data.settings.NiruvanaTharavugalRepository
 import com.elvan.udukkai.localization.PrintLanguageManager
 import com.elvan.udukkai.localization.K
 import com.elvan.udukkai.localization.tr
@@ -43,16 +40,17 @@ fun ReceiptViewScreen(
     receipt: PatrugalTharavuru,
     onBack: () -> Unit,
     onEdit: () -> Unit,
-    onPrint: (() -> Unit)? = null
+    onPrint: (() -> Unit)? = null,
+    isTextiles: Boolean = false
 ) {
-    val currentMode = LocalAppMode.current
-    val colors = rememberShellColors()
+        val colors = rememberShellColors()
     val isDark = colors.isDark
     val ff = LocalAppFontFamily.current
 
-    val profiles = NiruvanaTharavugalRepository.getAllProfiles(currentMode)
+    val profiles = if (isTextiles) com.elvan.udukkai.textiles.data.TextilesProfileRepository.allProfiles else com.elvan.udukkai.factory.data.FactoryProfileRepository.allProfiles
+    val defaultProfile = if (isTextiles) com.elvan.udukkai.textiles.data.TextilesProfileRepository.profile else com.elvan.udukkai.factory.data.FactoryProfileRepository.profile
     val profile = (if (receipt.niruvanamId != null) profiles.find { it.id == receipt.niruvanamId } else null)
-        ?: NiruvanaTharavugalRepository.getProfile(currentMode)
+        ?: defaultProfile
     val isBilingual = profile.iruMozhi
     val primaryLang = profile.mudhanMozhi.ifEmpty { "ta" }
     val secondaryLang = profile.thunaiMozhi.ifEmpty { "en" }

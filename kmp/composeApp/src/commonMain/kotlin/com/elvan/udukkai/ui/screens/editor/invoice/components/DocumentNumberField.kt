@@ -25,11 +25,6 @@ import com.elvan.udukkai.ui.navigation.MaterialSymbols
 import com.elvan.udukkai.ui.screens.editor.ElvanThiruthiThalaippu
 import com.elvan.udukkai.ui.screens.editor.ElvanThiruthiUlleedu
 
-/**
- * Self-contained component for editing document numbers.
- * Switches between a locked display pill with a pencil icon and an editable text field with a checkmark commit button.
- * Matches Flutter's `elvan_aavana_enn_kooru.dart` 1:1.
- */
 @Composable
 fun ElvanAavanaEnnKooru(
     label: String,
@@ -46,7 +41,6 @@ fun ElvanAavanaEnnKooru(
     var isEditing by remember { mutableStateOf(false) }
     var currentFullNumber by remember(initialFullNumber) { mutableStateOf(initialFullNumber) }
 
-    // Strip prefix for editing
     val numberPart = remember(currentFullNumber, prefix) {
         if (prefix.isNotEmpty() && currentFullNumber.startsWith(prefix)) {
             currentFullNumber.removePrefix(prefix)

@@ -7,7 +7,7 @@ import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.WindowPosition
 import androidx.compose.ui.window.application
 import androidx.compose.ui.window.rememberWindowState
-import com.elvan.udukkai.App
+import com.elvan.udukkai.factory.FactoryApp
 
 fun main() {
     Thread.setDefaultUncaughtExceptionHandler { thread, throwable ->
@@ -15,20 +15,16 @@ fun main() {
         throwable.printStackTrace()
     }
 
-    println(">>> Starting Udukkai Factory Desktop App (Fixed KOOLI mode)...")
-
-    // Default desktop entry point locks application to Factory / KOOLI mode
-    com.elvan.udukkai.core.mode.AppLaunchConfig.setFixedMode(com.elvan.udukkai.core.mode.AppMode.KOOLI)
+    println(">>> Starting Udukkai Factory Desktop App (ஆலை)...")
 
     application {
         com.elvan.udukkai.localization.LanguageManager.init()
         com.elvan.udukkai.theme.ThemeManager.init()
         com.elvan.udukkai.theme.FontManager.init()
-        com.elvan.udukkai.core.auth.AuthManager.init()
 
         Window(
             onCloseRequest = ::exitApplication,
-            title = "Udukkai Factory",
+            title = "Udukkai Factory (ஆலை)",
             icon = BitmapPainter(useResource("udukkai_icon.png", ::loadImageBitmap)),
             state = rememberWindowState(
                 width = 1180.dp,
@@ -36,7 +32,7 @@ fun main() {
                 position = WindowPosition.Aligned(Alignment.Center)
             )
         ) {
-            App()
+            FactoryApp()
         }
     }
 }

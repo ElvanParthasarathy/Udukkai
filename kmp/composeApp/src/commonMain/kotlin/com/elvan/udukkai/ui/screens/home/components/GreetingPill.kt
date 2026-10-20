@@ -18,8 +18,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.elvan.udukkai.core.mode.LocalAppMode
-import com.elvan.udukkai.data.settings.NiruvanaTharavugalRepository
+import com.elvan.udukkai.data.settings.NiruvanaTharavugal
 import com.elvan.udukkai.localization.K
 import com.elvan.udukkai.localization.tr
 import com.elvan.udukkai.theme.LocalAppFontFamily
@@ -31,34 +30,26 @@ import com.elvan.udukkai.ui.components.shell.ElvanSectionContainer
 import com.elvan.udukkai.ui.components.shell.resolveCompanyItemLabel
 import com.elvan.udukkai.ui.navigation.MaterialSymbols
 
-/**
- * GreetingPill — Active Company Switcher & Greeting Header.
- * Displays "வணக்கம் ✨" and the active company's full legal business name with company avatar.
- * Styled matching the Settings Hub Mode Pill in dimensions, typography, and monochrome appearance.
- * Tapping opens the ElvanCompanySelectionBottomSheet to easily switch between company profiles.
- */
 @Composable
 fun GreetingPill(
     colors: ShellColors,
+    profile: NiruvanaTharavugal,
+    allProfiles: List<NiruvanaTharavugal>,
+    defaultTitle: String,
     modifier: Modifier = Modifier,
     onProfileChanging: ((Long) -> Unit)? = null,
     onManageProfiles: (() -> Unit)? = null
 ) {
-    val mode = LocalAppMode.current
     val ff = LocalAppFontFamily.current
-    val defaultModeName = mode.displayName()
 
-    val activeProfile = NiruvanaTharavugalRepository.getProfile(mode)
-    val allProfiles = NiruvanaTharavugalRepository.getAllProfiles(mode)
-
-    val fullLegalBusinessName = remember(activeProfile, defaultModeName) {
-        val primary = resolveCompanyItemLabel(activeProfile).trim()
+    val fullLegalBusinessName = remember(profile, defaultTitle) {
+        val primary = resolveCompanyItemLabel(profile).trim()
         if (primary.isNotEmpty()) {
             primary
-        } else if (activeProfile.kurumPeyar.isNotBlank()) {
-            activeProfile.kurumPeyar.trim()
+        } else if (profile.kurumPeyar.isNotBlank()) {
+            profile.kurumPeyar.trim()
         } else {
-            defaultModeName
+            defaultTitle
         }
     }
 
@@ -85,7 +76,6 @@ fun GreetingPill(
                     .padding(start = 11.dp, end = 16.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // The circular Company Indicator on the left (diameter 62dp, concentric with 84dp pill, monochrome matching Settings)
                 Box(
                     modifier = Modifier
                         .size(62.dp)
@@ -106,7 +96,6 @@ fun GreetingPill(
 
                 Spacer(modifier = Modifier.width(16.dp))
 
-                // Greeting & Company Name
                 Column(
                     modifier = Modifier.weight(1f),
                     horizontalAlignment = Alignment.Start
@@ -166,14 +155,10 @@ fun GreetingPill(
     if (showCompanySheet) {
         ElvanCompanySelectionBottomSheet(
             profiles = allProfiles,
-            activeProfileId = activeProfile.id,
+            activeProfileId = profile.id,
             onSelectProfile = { selectedId ->
-                if (selectedId != activeProfile.id) {
-                    if (onProfileChanging != null) {
-                        onProfileChanging(selectedId)
-                    } else {
-                        NiruvanaTharavugalRepository.setActiveProfile(mode, selectedId)
-                    }
+                if (selectedId != profile.id) {
+                    onProfileChanging?.invoke(selectedId)
                 }
             },
             onManageProfiles = onManageProfiles,

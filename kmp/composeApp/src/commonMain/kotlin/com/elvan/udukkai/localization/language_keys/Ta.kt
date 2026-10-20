@@ -488,7 +488,33 @@ val ta: Map<String, String> = mapOf(
 
 
 /**
- * Dynamically generated Tamil Latin (Tanglish/Romanized) translations
+ * Dynamically generated Tamil Latin (Tanglish/Romanized    K.productName to "பொருட்பெயர்",
+    K.ratePerUnit to "அலகு விலை",
+    K.editCustomer to "வாங்குநர் திருத்து",
+    K.createCustomer to "புதிய வாங்குநர்",
+    K.editProduct to "பொருள் திருத்து",
+    K.createProduct to "புதிய பொருள்",
+    K.noMatchingCustomers to "பொருந்தும் வாங்குநர்கள் ஏதுமில்லை",
+    K.noMatchingProducts to "பொருந்தும் பொருட்கள் ஏதுமில்லை",
+    K.noMatchingInvoices to "பொருந்தும் பட்டியல்கள் ஏதுமில்லை",
+    K.noMatchingReceipts to "பொருந்தும் பற்றுச்சீட்டுகள் ஏதுமில்லை",
+    K.confirmDeleteSelected to "தேர்ந்தெடுத்தவற்றை நீக்க உறுதிப்படுத்துகிறீர்களா?",
+    K.confirmDeleteTitle to "நீக்கல் உறுதிப்படுத்தல்",
+    K.deleteInvoice to "பட்டியலை நீக்கு",
+    K.filterByDate to "நாள் வழி வடிகட்டு",
+    K.fromWord to "இருந்து",
+    K.untilWord to "வரை",
+    K.moreActions to "கூடுதல் செயல்கள்",
+    K.searchBtn to "தேடு",
+    K.searchCustomers to "வாங்குநர்களைத் தேடு...",
+    K.searchInvoices to "பட்டியல்களைத் தேடு...",
+    K.searchProducts to "பொருட்களைத் தேடு...",
+    K.searchReceipts to "பற்றுச்சீட்டுகளைத் தேடு...",
+    K.selectMultiple to "பலவற்றைத் தேர்ந்தெடு",
+    K.selectedCount to "தேர்ந்தெடுக்கப்பட்டது",
+    K.taxRate to "வரி வீதம்",
+)
+ translations
  * using the pure Kotlin Tolkappiyam NavilEngine.
  * Eliminates the need for a separate static TaLatn.kt file.
  */

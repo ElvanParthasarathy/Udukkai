@@ -19,13 +19,9 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.elvan.udukkai.core.mode.AppMode
-import com.elvan.udukkai.core.mode.LocalAppMode
 import com.elvan.udukkai.core.platform.AppBackHandler
 import com.elvan.udukkai.core.utils.CurrencyUtils
 import com.elvan.udukkai.data.model.PorulTharavuru
-import com.elvan.udukkai.data.settings.NiruvanaTharavugalRepository
-import com.elvan.udukkai.localization.PrintLanguageManager
 import com.elvan.udukkai.localization.K
 import com.elvan.udukkai.localization.tr
 import com.elvan.udukkai.theme.Dimens
@@ -44,18 +40,15 @@ fun ProductViewScreen(
     item: PorulTharavuru,
     onBack: () -> Unit,
     onEdit: () -> Unit,
-    onCopy: (() -> Unit)? = null
+    onCopy: (() -> Unit)? = null,
+    isTextiles: Boolean = false
 ) {
-    val currentMode = LocalAppMode.current
-    val colors = rememberShellColors()
+        val colors = rememberShellColors()
     val isDark = colors.isDark
     val ff = LocalAppFontFamily.current
 
-    val billingConfig = PrintLanguageManager.getConfig(currentMode)
-    val isBilingual = billingConfig.isBilingual
-    val primaryLang = billingConfig.primaryLanguage.code
-    val secondaryLang = billingConfig.secondaryLanguage.code
-
+    val isBilingual = true; val primaryLang = "ta"; val secondaryLang = "en"
+            
     val p1 = item.porulPeyar[primaryLang] ?: item.porulPeyar["ta"] ?: ""
     val p2 = item.porulPeyar[secondaryLang] ?: item.porulPeyar["en"] ?: ""
     val primaryName = p1.ifEmpty { p2.ifEmpty { "-" } }
@@ -212,7 +205,7 @@ fun ProductViewScreen(
                     }
 
                     // Company Availability
-                    val allProfiles = NiruvanaTharavugalRepository.getAllProfiles(currentMode)
+                    val allProfiles = if (isTextiles) com.elvan.udukkai.textiles.data.TextilesProfileRepository.allProfiles else com.elvan.udukkai.factory.data.FactoryProfileRepository.allProfiles
                     val availabilityText = if (item.niruvanamIds.isEmpty()) {
                         "${K.all.tr()} ${K.companies.tr()}"
                     } else {

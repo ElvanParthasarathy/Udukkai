@@ -5,14 +5,13 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -22,18 +21,10 @@ import com.elvan.udukkai.localization.tr
 import com.elvan.udukkai.theme.Dimens
 import com.elvan.udukkai.theme.LocalAppFontFamily
 import com.elvan.udukkai.theme.ShellColors
-import com.elvan.udukkai.theme.ShellDefaults
 import com.elvan.udukkai.theme.preventBrokenLigatures
 import com.elvan.udukkai.ui.navigation.MaterialSymbols
 import com.elvan.udukkai.theme.LocalShellColors
 
-import androidx.compose.material3.ripple
-
-/**
- * RecentActivityHeader for DashboardScreen.
- * Aligns cleanly after the card curve with the cards below.
- * Displays "நடப்பு வினைகள்" and a compact "யாவும் >" button with a bounded pill ripple.
- */
 @Composable
 fun RecentActivityHeader(
     onSeeAll: () -> Unit,
@@ -60,7 +51,6 @@ fun RecentActivityHeader(
             )
         )
 
-        // Compact "See All" action with no background shape but bounded pill ripple
         Box(
             modifier = Modifier
                 .clip(RoundedCornerShape(999.dp))

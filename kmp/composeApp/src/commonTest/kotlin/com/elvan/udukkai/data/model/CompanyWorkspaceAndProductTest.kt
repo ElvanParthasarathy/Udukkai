@@ -1,8 +1,6 @@
-package com.elvan.udukkai.data.model
+﻿package com.elvan.udukkai.data.model
 
-import com.elvan.udukkai.core.mode.AppMode
-import com.elvan.udukkai.data.repository.PattiyalRepository
-import com.elvan.udukkai.data.settings.NiruvanaTharavugalRepository
+import com.elvan.udukkai.factory.data.FactoryInvoiceRepository
 import com.elvan.udukkai.localization.BillingLanguage
 import com.elvan.udukkai.localization.PrintLanguageManager
 import kotlin.test.Test
@@ -90,10 +88,10 @@ class CompanyWorkspaceAndProductTest {
 
     @Test
     fun testInvoiceNumberingPrefix() {
-        assertEquals("VRM-01", PattiyalRepository.formatPattiyalEn("VRM", 1))
-        assertEquals("VRM-09", PattiyalRepository.formatPattiyalEn("VRM", 9))
-        assertEquals("VRM-10", PattiyalRepository.formatPattiyalEn("VRM", 10))
-        assertEquals("PVS-25", PattiyalRepository.formatPattiyalEn("PVS", 25))
+        assertEquals("VRM-01", FactoryInvoiceRepository.formatPattiyalEn("VRM", 1))
+        assertEquals("VRM-09", FactoryInvoiceRepository.formatPattiyalEn("VRM", 9))
+        assertEquals("VRM-10", FactoryInvoiceRepository.formatPattiyalEn("VRM", 10))
+        assertEquals("PVS-25", FactoryInvoiceRepository.formatPattiyalEn("PVS", 25))
     }
 
     @Test
@@ -270,47 +268,40 @@ class CompanyWorkspaceAndProductTest {
 
     @Test
     fun testBilingualBillingConsistentAcrossModes() {
-        // Test KOOLI mode with bilingual enabled and disabled
-        val kooliInitial = NiruvanaTharavugalRepository.getProfile(AppMode.KOOLI)
+        val factoryInitial = com.elvan.udukkai.factory.data.FactoryProfileRepository.profile
 
-        NiruvanaTharavugalRepository.updateProfile(
-            AppMode.KOOLI,
-            kooliInitial.copy(iruMozhi = false, mudhanMozhi = "ta", thunaiMozhi = "en")
+        com.elvan.udukkai.factory.data.FactoryProfileRepository.updateProfile(
+            factoryInitial.copy(iruMozhi = false, mudhanMozhi = "ta", thunaiMozhi = "en")
         )
-        val kooliSingle = PrintLanguageManager.getConfig(AppMode.KOOLI)
-        assertFalse(kooliSingle.isBilingual)
-        assertEquals(BillingLanguage.TAMIL, kooliSingle.primaryLanguage)
+        val factorySingle = PrintLanguageManager.getConfig("factory")
+        assertFalse(factorySingle.isBilingual)
+        assertEquals(BillingLanguage.TAMIL, factorySingle.primaryLanguage)
 
-        NiruvanaTharavugalRepository.updateProfile(
-            AppMode.KOOLI,
-            kooliInitial.copy(iruMozhi = true, mudhanMozhi = "ta", thunaiMozhi = "en")
+        com.elvan.udukkai.factory.data.FactoryProfileRepository.updateProfile(
+            factoryInitial.copy(iruMozhi = true, mudhanMozhi = "ta", thunaiMozhi = "en")
         )
-        val kooliBilingual = PrintLanguageManager.getConfig(AppMode.KOOLI)
-        assertTrue(kooliBilingual.isBilingual)
-        assertEquals(BillingLanguage.ENGLISH, kooliBilingual.secondaryLanguage)
+        val factoryBilingual = PrintLanguageManager.getConfig("factory")
+        assertTrue(factoryBilingual.isBilingual)
+        assertEquals(BillingLanguage.ENGLISH, factoryBilingual.secondaryLanguage)
 
-        // Test PATTU mode with bilingual enabled and disabled
-        val pattuInitial = NiruvanaTharavugalRepository.getProfile(AppMode.PATTU)
+        val textilesInitial = com.elvan.udukkai.textiles.data.TextilesProfileRepository.profile
 
-        NiruvanaTharavugalRepository.updateProfile(
-            AppMode.PATTU,
-            pattuInitial.copy(iruMozhi = false, mudhanMozhi = "en", thunaiMozhi = "ta")
+        com.elvan.udukkai.textiles.data.TextilesProfileRepository.updateProfile(
+            textilesInitial.copy(iruMozhi = false, mudhanMozhi = "en", thunaiMozhi = "ta")
         )
-        val pattuSingle = PrintLanguageManager.getConfig(AppMode.PATTU)
-        assertFalse(pattuSingle.isBilingual)
-        assertEquals(BillingLanguage.ENGLISH, pattuSingle.primaryLanguage)
+        val textilesSingle = PrintLanguageManager.getConfig("textiles")
+        assertFalse(textilesSingle.isBilingual)
+        assertEquals(BillingLanguage.ENGLISH, textilesSingle.primaryLanguage)
 
-        NiruvanaTharavugalRepository.updateProfile(
-            AppMode.PATTU,
-            pattuInitial.copy(iruMozhi = true, mudhanMozhi = "en", thunaiMozhi = "ta")
+        com.elvan.udukkai.textiles.data.TextilesProfileRepository.updateProfile(
+            textilesInitial.copy(iruMozhi = true, mudhanMozhi = "en", thunaiMozhi = "ta")
         )
-        val pattuBilingual = PrintLanguageManager.getConfig(AppMode.PATTU)
-        assertTrue(pattuBilingual.isBilingual)
-        assertEquals(BillingLanguage.TAMIL, pattuBilingual.secondaryLanguage)
+        val textilesBilingual = PrintLanguageManager.getConfig("textiles")
+        assertTrue(textilesBilingual.isBilingual)
+        assertEquals(BillingLanguage.TAMIL, textilesBilingual.secondaryLanguage)
 
-        // Restore initial states
-        NiruvanaTharavugalRepository.updateProfile(AppMode.KOOLI, kooliInitial)
-        NiruvanaTharavugalRepository.updateProfile(AppMode.PATTU, pattuInitial)
+        com.elvan.udukkai.factory.data.FactoryProfileRepository.updateProfile(factoryInitial)
+        com.elvan.udukkai.textiles.data.TextilesProfileRepository.updateProfile(textilesInitial)
     }
 
     @Test

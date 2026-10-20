@@ -6,10 +6,9 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.text.TextStyle
 import com.elvan.udukkai.localization.K
 import com.elvan.udukkai.localization.tr
 import com.elvan.udukkai.theme.LocalAppFontFamily
@@ -18,16 +17,12 @@ import com.elvan.udukkai.theme.preventBrokenLigatures
 import com.elvan.udukkai.ui.navigation.MaterialSymbols
 import com.elvan.udukkai.theme.LocalShellColors
 
-/**
- * Pixel-perfect port of Flutter's DashboardEmptyState.
- */
 @Composable
 fun DashboardEmptyState(
     colors: ShellColors,
     modifier: Modifier = Modifier
 ) {
     val ff = LocalAppFontFamily.current
-    val isDark = colors.isDark
 
     Box(
         modifier = modifier

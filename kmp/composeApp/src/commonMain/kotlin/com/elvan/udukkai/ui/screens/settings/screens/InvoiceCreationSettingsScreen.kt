@@ -1,5 +1,6 @@
-package com.elvan.udukkai.ui.screens.settings.screens
+﻿package com.elvan.udukkai.ui.screens.settings.screens
 
+import com.elvan.udukkai.data.settings.NiruvanaTharavugal
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -18,9 +19,6 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.elvan.udukkai.core.mode.AppMode
-import com.elvan.udukkai.core.mode.LocalAppMode
-import com.elvan.udukkai.data.settings.NiruvanaTharavugalRepository
 import com.elvan.udukkai.localization.K
 import com.elvan.udukkai.localization.tr
 import com.elvan.udukkai.theme.Dimens
@@ -43,11 +41,13 @@ import com.elvan.udukkai.ui.navigation.MaterialSymbols
 @Composable
 fun InvoiceCreationSettingsScreen(
     scrollState: LazyListState = rememberLazyListState(),
-    colors: ShellColors = rememberShellColors()
+    colors: ShellColors = rememberShellColors(),
+    customProfile: NiruvanaTharavugal? = null,
+    onUpdateProfile: ((NiruvanaTharavugal) -> Unit)? = null,
+    isTextiles: Boolean? = null
 ) {
-    val currentMode = LocalAppMode.current
-    val profile = NiruvanaTharavugalRepository.getProfile(currentMode)
-    val isPattu = currentMode == AppMode.TEXTILES
+    val isPattu = isTextiles ?: false
+    val profile = customProfile ?: if (isPattu) com.elvan.udukkai.textiles.data.TextilesProfileRepository.profile else com.elvan.udukkai.factory.data.FactoryProfileRepository.profile
     val ff = LocalAppFontFamily.current
 
     var isEditingLanguages by remember { mutableStateOf(false) }
@@ -157,7 +157,7 @@ fun InvoiceCreationSettingsScreen(
                                     val updated = profile.copy()
                                     updated.mudhanMozhi = tempPrimaryLang
                                     updated.thunaiMozhi = tempSecondaryLang
-                                    NiruvanaTharavugalRepository.updateProfile(currentMode, updated)
+                                    if (onUpdateProfile != null) onUpdateProfile(updated) else if (isPattu) com.elvan.udukkai.textiles.data.TextilesProfileRepository.updateProfile(updated) else com.elvan.udukkai.factory.data.FactoryProfileRepository.updateProfile(updated)
                                     isEditingLanguages = false
                                     ElvanSnackbar.show(saveSuccessMsg)
                                 },
@@ -212,7 +212,7 @@ fun InvoiceCreationSettingsScreen(
                                 checked = profile.iruMozhi,
                                 onCheckedChange = { isChecked ->
                                     val updated = profile.copy(iruMozhi = isChecked)
-                                    NiruvanaTharavugalRepository.updateProfile(currentMode, updated)
+                                    if (onUpdateProfile != null) onUpdateProfile(updated) else if (isPattu) com.elvan.udukkai.textiles.data.TextilesProfileRepository.updateProfile(updated) else com.elvan.udukkai.factory.data.FactoryProfileRepository.updateProfile(updated)
                                     ElvanSnackbar.show(saveSuccessMsg)
                                 },
                                 colors = colors
@@ -231,7 +231,7 @@ fun InvoiceCreationSettingsScreen(
                                     checked = profile.gstPirippugal,
                                     onCheckedChange = { isChecked ->
                                         val updated = profile.copy(gstPirippugal = isChecked)
-                                        NiruvanaTharavugalRepository.updateProfile(currentMode, updated)
+                                        if (onUpdateProfile != null) onUpdateProfile(updated) else if (isPattu) com.elvan.udukkai.textiles.data.TextilesProfileRepository.updateProfile(updated) else com.elvan.udukkai.factory.data.FactoryProfileRepository.updateProfile(updated)
                                         ElvanSnackbar.show(saveSuccessMsg)
                                     },
                                     colors = colors
@@ -289,7 +289,7 @@ fun InvoiceCreationSettingsScreen(
                                 onSelected = { selectedColor ->
                                     val updated = profile.copy()
                                     updated.thoatraNiram = selectedColor
-                                    NiruvanaTharavugalRepository.updateProfile(currentMode, updated)
+                                    if (onUpdateProfile != null) onUpdateProfile(updated) else if (isPattu) com.elvan.udukkai.textiles.data.TextilesProfileRepository.updateProfile(updated) else com.elvan.udukkai.factory.data.FactoryProfileRepository.updateProfile(updated)
                                     ElvanSnackbar.show(saveSuccessMsg)
                                 }
                             )

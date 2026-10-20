@@ -30,9 +30,6 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.elvan.udukkai.core.mode.AppMode
-import com.elvan.udukkai.core.mode.LocalAppMode
-import com.elvan.udukkai.data.settings.NiruvanaTharavugalRepository
 import com.elvan.udukkai.localization.K
 import com.elvan.udukkai.localization.tr
 import com.elvan.udukkai.theme.LocalAppFontFamily
@@ -383,17 +380,13 @@ fun ElvanIrumozhiPulan(
     onChanged: (Map<String, String>) -> Unit,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
+    isBilingual: Boolean = true,
+    primaryLang: String = "ta",
+    secondaryLang: String = "en",
     maxLines: Int = 1,
     minLines: Int = if (maxLines > 1) 2 else 1,
     placeholder: String? = null
 ) {
-    val currentMode = LocalAppMode.current
-    val profile = NiruvanaTharavugalRepository.getProfile(currentMode)
-
-    val isBilingual = profile.iruMozhi
-    val primaryLang = profile.mudhanMozhi.ifEmpty { "ta" }
-    val secondaryLang = profile.thunaiMozhi.ifEmpty { "en" }
-
     val primaryLangLabel = if (primaryLang == "ta") K.taCode.tr() else K.enCode.tr()
     val secondaryLangLabel = if (secondaryLang == "en") K.enCode.tr() else K.taCode.tr()
 

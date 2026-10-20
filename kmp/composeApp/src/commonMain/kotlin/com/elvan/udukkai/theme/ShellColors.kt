@@ -5,8 +5,6 @@ import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
-import com.elvan.udukkai.core.mode.AppMode
-import com.elvan.udukkai.core.mode.LocalAppMode
 
 @Immutable
 data class ShellColors(
@@ -60,9 +58,9 @@ val LocalShellColors = staticCompositionLocalOf<ShellColors> {
 }
 
 @Composable
-fun rememberShellColors(mode: AppMode = LocalAppMode.current): ShellColors {
+fun rememberShellColors(): ShellColors {
     val isDark = ThemeManager.isDark()
-    return remember(isDark, mode) {
+    return remember(isDark) {
         val monoColor = if (isDark) Color.White else Color.Black
 
         if (isDark) {

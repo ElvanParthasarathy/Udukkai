@@ -1,4 +1,4 @@
-package com.elvan.udukkai.ui.screens.settings.screens
+﻿package com.elvan.udukkai.ui.screens.settings.screens
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -10,17 +10,7 @@ import androidx.compose.ui.graphics.Color
 import com.elvan.udukkai.core.auth.AuthManager
 import com.elvan.udukkai.core.backup.BackupSlot
 import com.elvan.udukkai.core.backup.getUdukkaiBackupService
-import com.elvan.udukkai.core.mode.AppLaunchConfig
-import com.elvan.udukkai.core.mode.AppMode
-import com.elvan.udukkai.core.mode.ModeManager
 import com.elvan.udukkai.core.platform.getPreferencesHelper
-import com.elvan.udukkai.data.business.getBusinessDatabaseHelper
-import com.elvan.udukkai.data.repository.PattiyalRepository
-import com.elvan.udukkai.data.repository.PatrugalRepository
-import com.elvan.udukkai.data.repository.PorulRepository
-import com.elvan.udukkai.data.repository.VaangunarRepository
-import com.elvan.udukkai.data.settings.NiruvanaTharavugalRepository
-import com.elvan.udukkai.data.settings.getSettingsDatabaseHelper
 import com.elvan.udukkai.localization.K
 import com.elvan.udukkai.localization.tr
 import com.elvan.udukkai.theme.Dimens
@@ -63,8 +53,7 @@ fun SecuritySettingsScreen(
     val emailMismatchMsg = K.emailMismatch.tr()
     val passwordRequiredMsg = K.passwordRequired.tr()
 
-    val currentMode = AppLaunchConfig.fixedMode ?: ModeManager.currentMode
-    val currentProfile = NiruvanaTharavugalRepository.getProfile(currentMode)
+        val currentProfile = com.elvan.udukkai.factory.data.FactoryProfileRepository.profile
     val registeredEmail = currentProfile.minnanjal.trim()
     val confirmEmailPlaceholder = if (registeredEmail.isNotBlank()) registeredEmail else K.confirmEmail.tr()
 
@@ -94,11 +83,7 @@ fun SecuritySettingsScreen(
                         showSyncLoading = true
                         scope.launch {
                             try {
-                                NiruvanaTharavugalRepository.refreshFromDatabase()
-                                PattiyalRepository.loadAll()
-                                PatrugalRepository.loadAll()
-                                PorulRepository.loadAll()
-                                VaangunarRepository.loadAll()
+                                com.elvan.udukkai.core.backup.reloadAllRepositories()
                             } catch (_: Exception) {}
                             delay(600)
                             showSyncLoading = false
@@ -238,20 +223,14 @@ fun SecuritySettingsScreen(
                             // 1. Take safety vault backup first so user never loses data by accident
                             getUdukkaiBackupService().createSafetySnapshot()
 
-                            // 2. Wipe SQLite business tables & company profile tables for all modes
-                            val bizHelper = getBusinessDatabaseHelper()
-                            val settingsHelper = getSettingsDatabaseHelper()
-                            for (m in listOf(AppMode.FACTORY, AppMode.TEXTILES)) {
-                                try { bizHelper.clearAllData(m) } catch (_: Exception) {}
-                                try { settingsHelper.clearProfiles(m) } catch (_: Exception) {}
-                            }
+                            // 2. Wipe SQLite business tables & company profile tables for all apps
+                            try { com.elvan.udukkai.data.database.getFactoryDatabaseHelper().clearAllData() } catch (_: Exception) {}
+                            try { com.elvan.udukkai.factory.data.FactoryProfileRepository.clearProfiles() } catch (_: Exception) {}
+                            try { com.elvan.udukkai.data.database.getTextilesDatabaseHelper().clearAllData() } catch (_: Exception) {}
+                            try { com.elvan.udukkai.textiles.data.TextilesProfileRepository.clearProfiles() } catch (_: Exception) {}
 
                             // 3. Clear repositories in-memory
-                            PattiyalRepository.loadAll()
-                            PatrugalRepository.loadAll()
-                            PorulRepository.loadAll()
-                            VaangunarRepository.loadAll()
-                            NiruvanaTharavugalRepository.refreshFromDatabase()
+                            com.elvan.udukkai.core.backup.reloadAllRepositories()
 
                             // 4. Wipe user preferences
                             try {

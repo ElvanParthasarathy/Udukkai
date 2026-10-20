@@ -2,7 +2,6 @@ package com.elvan.udukkai.core.sync
 
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
-import com.elvan.udukkai.core.mode.AppMode
 import com.elvan.udukkai.data.model.PattiyalTharavuru
 import com.elvan.udukkai.data.model.PatruPattiyalInaippuTharavuru
 import com.elvan.udukkai.data.model.PatrugalTharavuru
@@ -23,16 +22,16 @@ class DesktopFirebaseSyncManager : FirebaseSyncManager {
     override val isOnline: State<Boolean> = _isOnline
 
     override fun initialize() {}
-    override fun startSync(mode: AppMode) {}
+    override fun startSync(scope: String) {}
     override fun stopSync() {}
     override fun triggerManualSync() {}
     override fun dismissGuardAlert() { _guardAlertMessage.value = null }
 
-    override fun pushMerchant(merchant: VaangunarTharavuru, mode: AppMode) {}
-    override fun pushItem(item: PorulTharavuru, mode: AppMode) {}
-    override fun pushInvoice(invoice: PattiyalTharavuru, mode: AppMode) {}
-    override fun pushReceipt(receipt: PatrugalTharavuru, mode: AppMode) {}
-    override fun pushReceiptLinks(receiptId: Long, links: List<PatruPattiyalInaippuTharavuru>, mode: AppMode) {}
+    override fun pushMerchant(merchant: VaangunarTharavuru, scope: String) {}
+    override fun pushItem(item: PorulTharavuru, scope: String) {}
+    override fun pushInvoice(invoice: PattiyalTharavuru, scope: String) {}
+    override fun pushReceipt(receipt: PatrugalTharavuru, scope: String) {}
+    override fun pushReceiptLinks(receiptId: Long, links: List<PatruPattiyalInaippuTharavuru>, scope: String) {}
 }
 
 private val desktopSyncManagerInstance by lazy { DesktopFirebaseSyncManager() }

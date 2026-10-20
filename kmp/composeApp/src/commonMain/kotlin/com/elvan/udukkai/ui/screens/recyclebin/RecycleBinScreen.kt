@@ -1,4 +1,4 @@
-package com.elvan.udukkai.ui.screens.recyclebin
+﻿package com.elvan.udukkai.ui.screens.recyclebin
 
 import androidx.compose.animation.*
 import androidx.compose.animation.core.CubicBezierEasing
@@ -21,16 +21,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.elvan.udukkai.core.mode.AppMode
-import com.elvan.udukkai.core.mode.LocalAppMode
 import com.elvan.udukkai.core.platform.AppBackHandler
 import com.elvan.udukkai.core.platform.PlatformType
 import com.elvan.udukkai.core.platform.currentPlatform
-import com.elvan.udukkai.data.repository.PattiyalRepository
-import com.elvan.udukkai.data.repository.PatrugalRepository
-import com.elvan.udukkai.data.repository.PorulRepository
-import com.elvan.udukkai.data.repository.VaangunarRepository
-import com.elvan.udukkai.data.settings.NiruvanaTharavugalRepository
 import com.elvan.udukkai.localization.K
 import com.elvan.udukkai.localization.LocalAppLanguage
 import com.elvan.udukkai.localization.tr
@@ -70,9 +63,9 @@ import kotlinx.coroutines.launch
 @Composable
 fun RecycleBinScreen(
     onBack: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    isTextiles: Boolean = false
 ) {
-    val mode = LocalAppMode.current
     val colors = rememberShellColors()
     val isDark = colors.isDark
     val ff = LocalAppFontFamily.current
@@ -81,16 +74,28 @@ fun RecycleBinScreen(
     val deleteSuccessMsg = K.deletedPermanently.tr()
 
     // Auto-purge items older than 30 days on launch & load deleted items
-    LaunchedEffect(mode) {
-        PorulRepository.purgeExpired(days = 30, mode = mode)
-        VaangunarRepository.purgeExpired(days = 30, mode = mode)
-        PattiyalRepository.purgeExpired(days = 30, mode = mode)
-        PatrugalRepository.purgeExpired(days = 30, mode = mode)
+    LaunchedEffect(isTextiles) {
+        if (isTextiles) {
+            com.elvan.udukkai.textiles.data.TextilesProductRepository.purgeExpired(days = 30)
+            com.elvan.udukkai.textiles.data.TextilesCustomerRepository.purgeExpired(days = 30)
+            com.elvan.udukkai.textiles.data.TextilesInvoiceRepository.purgeExpired(days = 30)
+            com.elvan.udukkai.textiles.data.TextilesReceiptRepository.purgeExpired(days = 30)
 
-        PorulRepository.loadDeleted(mode)
-        VaangunarRepository.loadDeleted(mode)
-        PattiyalRepository.loadDeleted(mode)
-        PatrugalRepository.loadDeleted(mode)
+            com.elvan.udukkai.textiles.data.TextilesProductRepository.loadDeleted()
+            com.elvan.udukkai.textiles.data.TextilesCustomerRepository.loadDeleted()
+            com.elvan.udukkai.textiles.data.TextilesInvoiceRepository.loadDeleted()
+            com.elvan.udukkai.textiles.data.TextilesReceiptRepository.loadDeleted()
+        } else {
+            com.elvan.udukkai.factory.data.FactoryProductRepository.purgeExpired(days = 30)
+            com.elvan.udukkai.factory.data.FactoryCustomerRepository.purgeExpired(days = 30)
+            com.elvan.udukkai.factory.data.FactoryInvoiceRepository.purgeExpired(days = 30)
+            com.elvan.udukkai.factory.data.FactoryReceiptRepository.purgeExpired(days = 30)
+
+            com.elvan.udukkai.factory.data.FactoryProductRepository.loadDeleted()
+            com.elvan.udukkai.factory.data.FactoryCustomerRepository.loadDeleted()
+            com.elvan.udukkai.factory.data.FactoryInvoiceRepository.loadDeleted()
+            com.elvan.udukkai.factory.data.FactoryReceiptRepository.loadDeleted()
+        }
     }
 
     var selectedTab by remember { mutableStateOf(MeetpagamTab.Create) }
@@ -117,11 +122,11 @@ fun RecycleBinScreen(
     }
 
     // Active Company Profile for workspace isolation
-    val activeProfile = NiruvanaTharavugalRepository.getProfile(mode)
+    val activeProfile = if (isTextiles) com.elvan.udukkai.textiles.data.TextilesProfileRepository.profile else com.elvan.udukkai.factory.data.FactoryProfileRepository.profile
     val activeId = activeProfile.id
 
     // Filtered data sets scoped to active company and search query (sorted by deleted_at DESC)
-    val allDeletedInvoices = PattiyalRepository.deletedInvoices
+    val allDeletedInvoices = if (isTextiles) com.elvan.udukkai.textiles.data.TextilesInvoiceRepository.deletedInvoices else com.elvan.udukkai.factory.data.FactoryInvoiceRepository.deletedInvoices
     val displayedInvoices = remember(allDeletedInvoices, activeId, searchQuery) {
         val q = searchQuery.trim().lowercase()
         allDeletedInvoices.filter { invoice ->
@@ -135,7 +140,7 @@ fun RecycleBinScreen(
         }
     }
 
-    val allDeletedReceipts = PatrugalRepository.deletedReceipts
+    val allDeletedReceipts = if (isTextiles) com.elvan.udukkai.textiles.data.TextilesReceiptRepository.deletedReceipts else com.elvan.udukkai.factory.data.FactoryReceiptRepository.deletedReceipts
     val displayedReceipts = remember(allDeletedReceipts, activeId, searchQuery) {
         val q = searchQuery.trim().lowercase()
         allDeletedReceipts.filter { receipt ->
@@ -149,7 +154,7 @@ fun RecycleBinScreen(
         }
     }
 
-    val allDeletedProducts = PorulRepository.deletedItems
+    val allDeletedProducts = if (isTextiles) com.elvan.udukkai.textiles.data.TextilesProductRepository.deletedProducts else com.elvan.udukkai.factory.data.FactoryProductRepository.deletedProducts
     val displayedProducts = remember(allDeletedProducts, activeId, searchQuery) {
         val q = searchQuery.trim().lowercase()
         allDeletedProducts.filter { item ->
@@ -162,7 +167,7 @@ fun RecycleBinScreen(
         }
     }
 
-    val allDeletedCustomers = VaangunarRepository.deletedMerchants
+    val allDeletedCustomers = if (isTextiles) com.elvan.udukkai.textiles.data.TextilesCustomerRepository.deletedCustomers else com.elvan.udukkai.factory.data.FactoryCustomerRepository.deletedCustomers
     val displayedCustomers = remember(allDeletedCustomers, searchQuery) {
         val q = searchQuery.trim().lowercase()
         if (q.isEmpty()) allDeletedCustomers else {
@@ -212,16 +217,32 @@ fun RecycleBinScreen(
                 when (selectedTab) {
                     MeetpagamTab.Create -> {
                         if (createSegment == 0) {
-                            selectedItemIds.forEach { id -> PattiyalRepository.restore(id, mode) }
+                            if (isTextiles) {
+                                selectedItemIds.forEach { id -> com.elvan.udukkai.textiles.data.TextilesInvoiceRepository.restore(id) }
+                            } else {
+                                selectedItemIds.forEach { id -> com.elvan.udukkai.factory.data.FactoryInvoiceRepository.restore(id) }
+                            }
                         } else {
-                            selectedItemIds.forEach { id -> PatrugalRepository.restore(id, mode) }
+                            if (isTextiles) {
+                                selectedItemIds.forEach { id -> com.elvan.udukkai.textiles.data.TextilesReceiptRepository.restore(id) }
+                            } else {
+                                selectedItemIds.forEach { id -> com.elvan.udukkai.factory.data.FactoryReceiptRepository.restore(id) }
+                            }
                         }
                     }
                     MeetpagamTab.Products -> {
-                        selectedItemIds.forEach { id -> PorulRepository.restore(id, mode) }
+                        if (isTextiles) {
+                            selectedItemIds.forEach { id -> com.elvan.udukkai.textiles.data.TextilesProductRepository.restore(id) }
+                        } else {
+                            selectedItemIds.forEach { id -> com.elvan.udukkai.factory.data.FactoryProductRepository.restore(id) }
+                        }
                     }
                     MeetpagamTab.Customers -> {
-                        selectedItemIds.forEach { id -> VaangunarRepository.restore(id, mode) }
+                        if (isTextiles) {
+                            selectedItemIds.forEach { id -> com.elvan.udukkai.textiles.data.TextilesCustomerRepository.restore(id) }
+                        } else {
+                            selectedItemIds.forEach { id -> com.elvan.udukkai.factory.data.FactoryCustomerRepository.restore(id) }
+                        }
                     }
                 }
                 ElvanSnackbar.show(restoreSuccessMsg)
@@ -237,16 +258,32 @@ fun RecycleBinScreen(
                 when (selectedTab) {
                     MeetpagamTab.Create -> {
                         if (createSegment == 0) {
-                            selectedItemIds.forEach { id -> PattiyalRepository.permanentDelete(id, mode) }
+                            if (isTextiles) {
+                                selectedItemIds.forEach { id -> com.elvan.udukkai.textiles.data.TextilesInvoiceRepository.permanentDelete(id) }
+                            } else {
+                                selectedItemIds.forEach { id -> com.elvan.udukkai.factory.data.FactoryInvoiceRepository.permanentDelete(id) }
+                            }
                         } else {
-                            selectedItemIds.forEach { id -> PatrugalRepository.permanentDelete(id, mode) }
+                            if (isTextiles) {
+                                selectedItemIds.forEach { id -> com.elvan.udukkai.textiles.data.TextilesReceiptRepository.permanentDelete(id) }
+                            } else {
+                                selectedItemIds.forEach { id -> com.elvan.udukkai.factory.data.FactoryReceiptRepository.permanentDelete(id) }
+                            }
                         }
                     }
                     MeetpagamTab.Products -> {
-                        selectedItemIds.forEach { id -> PorulRepository.permanentDelete(id, mode) }
+                        if (isTextiles) {
+                            selectedItemIds.forEach { id -> com.elvan.udukkai.textiles.data.TextilesProductRepository.permanentDelete(id) }
+                        } else {
+                            selectedItemIds.forEach { id -> com.elvan.udukkai.factory.data.FactoryProductRepository.permanentDelete(id) }
+                        }
                     }
                     MeetpagamTab.Customers -> {
-                        selectedItemIds.forEach { id -> VaangunarRepository.permanentDelete(id, mode) }
+                        if (isTextiles) {
+                            selectedItemIds.forEach { id -> com.elvan.udukkai.textiles.data.TextilesCustomerRepository.permanentDelete(id) }
+                        } else {
+                            selectedItemIds.forEach { id -> com.elvan.udukkai.factory.data.FactoryCustomerRepository.permanentDelete(id) }
+                        }
                     }
                 }
                 ElvanSnackbar.show(deleteSuccessMsg)
@@ -414,7 +451,7 @@ fun RecycleBinScreen(
                                 }
                                 val onCardLongClick = { onStartSelection(invoice.id) }
 
-                                if (mode == AppMode.FACTORY) {
+                                if (!isTextiles) {
                                     FactoryInvoiceCard(
                                         index = index + 1,
                                         pattiyal = invoice,
@@ -497,7 +534,7 @@ fun RecycleBinScreen(
                             }
                             val onCardLongClick = { onStartSelection(item.id) }
 
-                            if (mode == AppMode.FACTORY) {
+                            if (!isTextiles) {
                                 FactoryProductCard(
                                     index = index + 1,
                                     porul = item,
@@ -549,7 +586,7 @@ fun RecycleBinScreen(
                             }
                             val onCardLongClick = { onStartSelection(merchant.id) }
 
-                            if (mode == AppMode.FACTORY) {
+                            if (!isTextiles) {
                                 FactoryCustomerCard(
                                     index = index + 1,
                                     merchant = merchant,

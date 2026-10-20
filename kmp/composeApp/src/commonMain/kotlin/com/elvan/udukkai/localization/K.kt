@@ -499,5 +499,34 @@ object K {
     const val noBackupsAvailable = "noBackupsAvailable"
     const val emailMismatch = "emailMismatch"
     const val passwordRequired = "passwordRequired"
-}
 
+    // Aliases & Missing Entity Keys
+    const val measureQuantity = quantity
+    const val measureWeight = weight
+    const val unitOfMeasurement = measureType
+    const val productName = "productName"
+    const val ratePerUnit = "ratePerUnit"
+    const val editCustomer = "editCustomer"
+    const val createCustomer = "createCustomer"
+    const val editProduct = "editProduct"
+    const val createProduct = "createProduct"
+    const val noMatchingCustomers = "noMatchingCustomers"
+    const val noMatchingProducts = "noMatchingProducts"
+    const val noMatchingInvoices = "noMatchingInvoices"
+    const val noMatchingReceipts = "noMatchingReceipts"
+    const val confirmDeleteSelected = "confirmDeleteSelected"
+    const val confirmDeleteTitle = "confirmDeleteTitle"
+    const val deleteInvoice = "deleteInvoice"
+    const val filterByDate = "filterByDate"
+    const val fromWord = "fromWord"
+    const val untilWord = "untilWord"
+    const val moreActions = "moreActions"
+    const val searchBtn = "searchBtn"
+    const val searchCustomers = "searchCustomers"
+    const val searchInvoices = "searchInvoices"
+    const val searchProducts = "searchProducts"
+    const val searchReceipts = "searchReceipts"
+    const val selectMultiple = "selectMultiple"
+    const val selectedCount = "selectedCount"
+    const val taxRate = "taxRate"
+}

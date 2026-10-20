@@ -16,13 +16,10 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.elvan.udukkai.core.mode.AppMode
-import com.elvan.udukkai.core.mode.LocalAppMode
 import com.elvan.udukkai.core.platform.AppBackHandler
 import com.elvan.udukkai.core.utils.CurrencyUtils
 import com.elvan.udukkai.core.utils.DateUtils
 import com.elvan.udukkai.data.model.PattiyalTharavuru
-import com.elvan.udukkai.data.settings.NiruvanaTharavugalRepository
 import com.elvan.udukkai.localization.PrintLanguageManager
 import com.elvan.udukkai.localization.K
 import com.elvan.udukkai.localization.tr
@@ -43,16 +40,17 @@ fun InvoiceViewScreen(
     onBack: () -> Unit,
     onEdit: () -> Unit,
     onPrint: (() -> Unit)? = null,
-    onCopy: (() -> Unit)? = null
+    onCopy: (() -> Unit)? = null,
+    isTextiles: Boolean = false
 ) {
-    val currentMode = LocalAppMode.current
-    val colors = rememberShellColors()
+        val colors = rememberShellColors()
     val isDark = colors.isDark
     val ff = LocalAppFontFamily.current
 
-    val profiles = NiruvanaTharavugalRepository.getAllProfiles(currentMode)
+    val profiles = if (isTextiles) com.elvan.udukkai.textiles.data.TextilesProfileRepository.allProfiles else com.elvan.udukkai.factory.data.FactoryProfileRepository.allProfiles
+    val defaultProfile = if (isTextiles) com.elvan.udukkai.textiles.data.TextilesProfileRepository.profile else com.elvan.udukkai.factory.data.FactoryProfileRepository.profile
     val profile = (if (invoice.niruvanamId != null) profiles.find { it.id == invoice.niruvanamId } else null)
-        ?: NiruvanaTharavugalRepository.getProfile(currentMode)
+        ?: defaultProfile
     val isBilingual = profile.iruMozhi
     val primaryLang = profile.mudhanMozhi.ifEmpty { "ta" }
     val secondaryLang = profile.thunaiMozhi.ifEmpty { "en" }
@@ -168,7 +166,7 @@ fun InvoiceViewScreen(
                                     .padding(horizontal = 8.dp, vertical = 4.dp)
                             ) {
                                 Text(
-                                    text = if (currentMode == AppMode.TEXTILES) K.udukkaiTextiles.tr() else K.udukkaiFactory.tr(),
+                                    text = if (invoice.tharavugal.any { (it as? Map<*, *>)?.containsKey("vari_veetham") == true }) K.udukkaiTextiles.tr() else K.udukkaiFactory.tr(),
                                     style = TextStyle(
                                         fontFamily = ff,
                                         fontSize = 12.sp,
@@ -183,7 +181,7 @@ fun InvoiceViewScreen(
             }
 
             // Factory Specific Additional Charges Card
-            if (currentMode == AppMode.FACTORY && (invoice.setharamGrams > 0 || invoice.thabaalThogai > 0 || invoice.ahimsaPattuThogai > 0)) {
+            if ((invoice.setharamGrams > 0 || invoice.thabaalThogai > 0 || invoice.ahimsaPattuThogai > 0)) {
                 item(key = "factory_charges_card") {
                     Box(
                         modifier = Modifier

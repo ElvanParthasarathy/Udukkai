@@ -408,3 +408,18 @@ fun ElvanActionSheet(
         }
     }
 }
+
+
+@Composable
+fun ElvanDiscardChangesDialog(
+    onKeepEditing: () -> Unit,
+    onDiscard: () -> Unit
+) {
+    ElvanActionSheet(
+        title = K.pendingSave.tr(),
+        cancelText = K.continueBtn.tr(),
+        confirmText = K.discardBtn.tr(),
+        onDismissRequest = onKeepEditing,
+        onConfirm = onDiscard
+    )
+}

@@ -7,9 +7,7 @@ import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.WindowPosition
 import androidx.compose.ui.window.application
 import androidx.compose.ui.window.rememberWindowState
-import com.elvan.udukkai.App
-import com.elvan.udukkai.core.mode.AppLaunchConfig
-import com.elvan.udukkai.core.mode.AppMode
+import com.elvan.udukkai.textiles.TextilesApp
 
 fun main() {
     Thread.setDefaultUncaughtExceptionHandler { thread, throwable ->
@@ -17,20 +15,16 @@ fun main() {
         throwable.printStackTrace()
     }
 
-    println(">>> Starting Udukkai Textiles Desktop App (Fixed PATTU mode)...")
-
-    // Lock application to Textiles / PATTU mode permanently before Compose tree mounts
-    AppLaunchConfig.setFixedMode(AppMode.PATTU)
+    println(">>> Starting Udukkai Textiles Desktop App (சவுளி)...")
 
     application {
         com.elvan.udukkai.localization.LanguageManager.init()
         com.elvan.udukkai.theme.ThemeManager.init()
         com.elvan.udukkai.theme.FontManager.init()
-        com.elvan.udukkai.core.auth.AuthManager.init()
 
         Window(
             onCloseRequest = ::exitApplication,
-            title = "Udukkai Textiles",
+            title = "Udukkai Textiles (சவுளி)",
             icon = BitmapPainter(useResource("udukkai_icon.png", ::loadImageBitmap)),
             state = rememberWindowState(
                 width = 1180.dp,
@@ -38,7 +32,7 @@ fun main() {
                 position = WindowPosition.Aligned(Alignment.Center)
             )
         ) {
-            App()
+            TextilesApp()
         }
     }
 }

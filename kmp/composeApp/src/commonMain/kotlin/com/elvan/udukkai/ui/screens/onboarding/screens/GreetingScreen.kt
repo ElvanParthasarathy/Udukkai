@@ -7,9 +7,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.elvan.udukkai.core.auth.AuthManager
 import com.elvan.udukkai.core.backup.getUdukkaiBackupService
-import com.elvan.udukkai.core.mode.AppMode
 import com.elvan.udukkai.data.settings.NiruvanaTharavugal
-import com.elvan.udukkai.data.settings.NiruvanaTharavugalRepository
+import com.elvan.udukkai.factory.data.FactoryProfileRepository
+import com.elvan.udukkai.textiles.data.TextilesProfileRepository
 import com.elvan.udukkai.localization.K
 import com.elvan.udukkai.localization.tr
 import com.elvan.udukkai.ui.screens.onboarding.components.*
@@ -98,7 +98,7 @@ fun VanakkamThirai(
                                 niruvanathinPeyar = mutableMapOf(billingLanguage to gstBusinessName.trim()),
                                 kurumPeyar = gstBusinessName.trim()
                             )
-                            NiruvanaTharavugalRepository.createProfile(AppMode.TEXTILES, silkProfile)
+                            TextilesProfileRepository.createProfile(silkProfile)
                         }
 
                         if (needsCoolie) {
@@ -107,7 +107,7 @@ fun VanakkamThirai(
                                 niruvanathinPeyar = mutableMapOf(billingLanguage to coolieBusinessName.trim()),
                                 kurumPeyar = coolieBusinessName.trim()
                             )
-                            NiruvanaTharavugalRepository.createProfile(AppMode.FACTORY, coolieProfile)
+                            FactoryProfileRepository.createProfile(coolieProfile)
                         }
 
                         // Create backup and refresh profile status

@@ -1,17 +1,9 @@
-package com.elvan.udukkai.core.backup
+﻿package com.elvan.udukkai.core.backup
 
 import android.content.Intent
 import android.util.Log
 import androidx.core.content.FileProvider
-import com.elvan.udukkai.core.mode.AppLaunchConfig
-import com.elvan.udukkai.core.mode.AppMode
-import com.elvan.udukkai.core.mode.ModeManager
 import com.elvan.udukkai.core.platform.AppContext
-import com.elvan.udukkai.data.repository.PattiyalRepository
-import com.elvan.udukkai.data.repository.PatrugalRepository
-import com.elvan.udukkai.data.repository.PorulRepository
-import com.elvan.udukkai.data.repository.VaangunarRepository
-import com.elvan.udukkai.data.settings.NiruvanaTharavugalRepository
 import java.io.File
 import java.io.FileInputStream
 import java.io.FileOutputStream
@@ -28,7 +20,8 @@ class AndroidUdukkaiBackupService : UdukkaiBackupService {
     private val tag = "UdukkaiBackup"
     private val magicConstant = 0x5544554B4B414921L // "UDUKKAI!"
 
-    private fun currentMode(): AppMode? = AppLaunchConfig.fixedMode ?: ModeManager.currentMode
+    private fun isFactory(): Boolean = com.elvan.udukkai.BuildConfig.FLAVOR == "factory"
+    private fun currentMode(): String = if (isFactory()) "factory" else "textiles"
 
     /**
      * Primary backup directory inside the application sandbox.
@@ -54,15 +47,15 @@ class AndroidUdukkaiBackupService : UdukkaiBackupService {
         }
     }
 
-    private fun modePrefix(mode: AppMode?): String {
+    private fun modePrefix(mode: String?): String {
         return when (mode) {
-            AppMode.FACTORY -> "factory"
-            AppMode.TEXTILES -> "textiles"
-            null -> "common"
+            "factory" -> "factory"
+            "textiles" -> "textiles"
+            else -> if (isFactory()) "factory" else "textiles"
         }
     }
 
-    private fun getFileForSlot(dir: File, slot: BackupSlot, mode: AppMode?): File {
+    private fun getFileForSlot(dir: File, slot: BackupSlot, mode: String?): File {
         val prefix = modePrefix(mode)
         return when (slot) {
             BackupSlot.LATEST -> File(dir, "udukkai_${prefix}_backup_latest.db")
@@ -89,10 +82,10 @@ class AndroidUdukkaiBackupService : UdukkaiBackupService {
 
         // Fallbacks for LATEST: check legacy file names
         if (slot == BackupSlot.LATEST) {
-            val legacyNames = when (mode) {
-                AppMode.FACTORY -> listOf("udukkai_factory_backup.db", "udukkai_kooli_backup.db")
-                AppMode.TEXTILES -> listOf("udukkai_textiles_backup.db", "udukkai_pattu_backup.db")
-                null -> listOf("udukkai_backup.db")
+            val legacyNames = if (isFactory()) {
+                listOf("udukkai_factory_backup.db", "udukkai_kooli_backup.db")
+            } else {
+                listOf("udukkai_textiles_backup.db", "udukkai_pattu_backup.db")
             }
             for (legacyName in legacyNames) {
                 val internalLegacy = File(internalDir, legacyName)
@@ -113,10 +106,10 @@ class AndroidUdukkaiBackupService : UdukkaiBackupService {
 
         // Fallbacks for SAFETY_VAULT: check legacy snapshot names
         if (slot == BackupSlot.SAFETY_VAULT) {
-            val legacySafetyNames = when (mode) {
-                AppMode.FACTORY -> listOf("udukkai_factory_safety_snapshot.db", "udukkai_kooli_safety_snapshot.db")
-                AppMode.TEXTILES -> listOf("udukkai_textiles_safety_snapshot.db", "udukkai_pattu_safety_snapshot.db")
-                null -> listOf("udukkai_safety_snapshot.db")
+            val legacySafetyNames = if (isFactory()) {
+                listOf("udukkai_factory_safety_snapshot.db", "udukkai_kooli_safety_snapshot.db")
+            } else {
+                listOf("udukkai_textiles_safety_snapshot.db", "udukkai_pattu_safety_snapshot.db")
             }
             for (legacySafetyName in legacySafetyNames) {
                 val internalLegacy = File(internalDir, legacySafetyName)
@@ -345,10 +338,9 @@ class AndroidUdukkaiBackupService : UdukkaiBackupService {
     private fun packToFile(targetFile: File): Boolean {
         return try {
             val mode = currentMode()
-            if (mode == null || mode == AppMode.FACTORY) {
+            if (isFactory()) {
                 checkpointWal(getFactoryDbPath())
-            }
-            if (mode == null || mode == AppMode.TEXTILES) {
+            } else {
                 checkpointWal(getTextilesDbPath())
             }
 
@@ -358,11 +350,7 @@ class AndroidUdukkaiBackupService : UdukkaiBackupService {
             val crc = CRC32()
 
             for (i in filesToPack.indices) {
-                val shouldPack = when (mode) {
-                    AppMode.FACTORY -> i < 3       // pack only Factory chunks 0, 1, 2
-                    AppMode.TEXTILES -> i >= 3      // pack only Textiles chunks 3, 4, 5
-                    null -> true                 // pack all 6 chunks in combined mode
-                }
+                val shouldPack = if (isFactory()) i < 3 else i >= 3
 
                 if (shouldPack && filesToPack[i].isNotEmpty()) {
                     val file = File(filesToPack[i])
@@ -386,18 +374,14 @@ class AndroidUdukkaiBackupService : UdukkaiBackupService {
             val payloadCrc32 = crc.value
 
             val stats = getLiveStats()
-            val jsonString = """{"invoices":${stats.invoiceCount},"receipts":${stats.receiptCount},"customers":${stats.customerCount},"products":${stats.productCount},"time":${System.currentTimeMillis()},"mode":"${mode?.key ?: "common"}"}"""
+            val jsonString = """{"invoices":${stats.invoiceCount},"receipts":${stats.receiptCount},"customers":${stats.customerCount},"products":${stats.productCount},"time":${System.currentTimeMillis()},"mode":"${if (isFactory()) "factory" else "textiles"}"}"""
             val jsonBytes = jsonString.toByteArray(Charsets.UTF_8)
 
             // 64-byte v1 header
             val header = ByteBuffer.allocate(64).order(ByteOrder.LITTLE_ENDIAN)
             header.putLong(magicConstant)
             header.putInt(1)
-            header.putInt(when (mode) {
-                AppMode.FACTORY -> 0
-                AppMode.TEXTILES -> 1
-                null -> 2
-            })
+            header.putInt(if (isFactory()) 0 else 1)
             header.putLong(System.currentTimeMillis())
             header.putLong(payloadCrc32)
             header.putInt(6)
@@ -476,11 +460,7 @@ class AndroidUdukkaiBackupService : UdukkaiBackupService {
                     }
 
                     val file = File(filesToUnpack[i])
-                    val shouldRestore = when (mode) {
-                        AppMode.FACTORY -> i < 3       // restore only Factory chunks 0, 1, 2
-                        AppMode.TEXTILES -> i >= 3      // restore only Textiles chunks 3, 4, 5
-                        null -> true                 // restore all chunks in combined mode
-                    }
+                    val shouldRestore = if (isFactory()) i < 3 else i >= 3
 
                     if (size > 0) {
                         if (shouldRestore) {
@@ -727,13 +707,8 @@ class AndroidUdukkaiBackupService : UdukkaiBackupService {
 
     override fun getTotalDatabaseSize(): Long {
         return try {
-            val mode = currentMode()
             getFilesToPack().filterIndexed { index, _ ->
-                when (mode) {
-                    AppMode.FACTORY -> index < 3
-                    AppMode.TEXTILES -> index >= 3
-                    null -> true
-                }
+                if (isFactory()) index < 3 else index >= 3
             }.sumOf { path ->
                 if (path.isEmpty()) 0L else {
                     val f = File(path)
@@ -744,13 +719,36 @@ class AndroidUdukkaiBackupService : UdukkaiBackupService {
     }
 
     override fun getLiveStats(): DatabaseLiveStats {
-        val mode = currentMode() ?: ModeManager.currentMode
-        val activeId = NiruvanaTharavugalRepository.getProfile(mode).id
+        val isFact = isFactory()
+        val invCount = if (isFact) {
+            val activeId = com.elvan.udukkai.factory.data.FactoryProfileRepository.profile.id
+            com.elvan.udukkai.factory.data.FactoryInvoiceRepository.invoices.count { (activeId == null || it.niruvanamId == activeId) && !it.isDeleted }
+        } else {
+            val activeId = com.elvan.udukkai.textiles.data.TextilesProfileRepository.profile.id
+            com.elvan.udukkai.textiles.data.TextilesInvoiceRepository.invoices.count { (activeId == null || it.niruvanamId == activeId) && !it.isDeleted }
+        }
 
-        val invCount = PattiyalRepository.invoices.count { (activeId == null || it.niruvanamId == activeId) && !it.isDeleted }
-        val recCount = PatrugalRepository.receipts.count { (activeId == null || it.niruvanamId == activeId) && !it.isDeleted }
-        val cusCount = VaangunarRepository.merchants.count { !it.isDeleted }
-        val proCount = PorulRepository.items.count { (activeId == null || it.isAvailableForCompany(activeId)) && !it.isDeleted }
+        val recCount = if (isFact) {
+            val activeId = com.elvan.udukkai.factory.data.FactoryProfileRepository.profile.id
+            com.elvan.udukkai.factory.data.FactoryReceiptRepository.receipts.count { (activeId == null || it.niruvanamId == activeId) && !it.isDeleted }
+        } else {
+            val activeId = com.elvan.udukkai.textiles.data.TextilesProfileRepository.profile.id
+            com.elvan.udukkai.textiles.data.TextilesReceiptRepository.receipts.count { (activeId == null || it.niruvanamId == activeId) && !it.isDeleted }
+        }
+
+        val cusCount = if (isFact) {
+            com.elvan.udukkai.factory.data.FactoryCustomerRepository.customers.count { !it.isDeleted }
+        } else {
+            com.elvan.udukkai.textiles.data.TextilesCustomerRepository.customers.count { !it.isDeleted }
+        }
+
+        val proCount = if (isFact) {
+            val activeId = com.elvan.udukkai.factory.data.FactoryProfileRepository.profile.id
+            com.elvan.udukkai.factory.data.FactoryProductRepository.products.count { (activeId == null || it.isAvailableForCompany(activeId)) && !it.isDeleted }
+        } else {
+            val activeId = com.elvan.udukkai.textiles.data.TextilesProfileRepository.profile.id
+            com.elvan.udukkai.textiles.data.TextilesProductRepository.products.count { (activeId == null || it.isAvailableForCompany(activeId)) && !it.isDeleted }
+        }
 
         return DatabaseLiveStats(
             totalDbSizeBytes = getTotalDatabaseSize(),

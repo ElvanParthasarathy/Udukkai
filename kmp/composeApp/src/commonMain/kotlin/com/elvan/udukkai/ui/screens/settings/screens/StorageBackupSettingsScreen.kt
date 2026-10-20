@@ -24,14 +24,7 @@ import androidx.compose.ui.unit.sp
 import com.elvan.udukkai.core.backup.BackupItemMetadata
 import com.elvan.udukkai.core.backup.BackupSlot
 import com.elvan.udukkai.core.backup.getUdukkaiBackupService
-import com.elvan.udukkai.core.mode.AppLaunchConfig
-import com.elvan.udukkai.core.mode.AppMode
 import com.elvan.udukkai.core.utils.DateUtils
-import com.elvan.udukkai.data.repository.PattiyalRepository
-import com.elvan.udukkai.data.repository.PatrugalRepository
-import com.elvan.udukkai.data.repository.PorulRepository
-import com.elvan.udukkai.data.repository.VaangunarRepository
-import com.elvan.udukkai.data.settings.NiruvanaTharavugalRepository
 import com.elvan.udukkai.localization.K
 import com.elvan.udukkai.localization.tr
 import com.elvan.udukkai.theme.Dimens
@@ -56,7 +49,8 @@ import kotlinx.coroutines.launch
 @Composable
 fun StorageBackupSettingsScreen(
     scrollState: LazyListState = rememberLazyListState(),
-    colors: ShellColors = rememberShellColors()
+    colors: ShellColors = rememberShellColors(),
+    isTextilesApp: Boolean = false
 ) {
     val ff = LocalAppFontFamily.current
     val scope = rememberCoroutineScope()
@@ -255,78 +249,69 @@ fun StorageBackupSettingsScreen(
 
         // ── 3. Live Databases Grid Section (Business-by-Business) ──
         item {
-            val fixedMode = AppLaunchConfig.fixedMode
-            val modes = when (fixedMode) {
-                AppMode.FACTORY -> listOf(AppMode.FACTORY)
-                AppMode.TEXTILES -> listOf(AppMode.TEXTILES)
-                null -> listOf(AppMode.FACTORY, AppMode.TEXTILES)
-            }
-
-            val factoryDataLabel = K.factoryData.tr()
-            val textilesDataLabel = K.textilesData.tr()
+            val appBadge = if (isTextilesApp) K.udukkaiTextiles.tr() else K.udukkaiFactory.tr()
             val companyLabel = K.company.tr()
-            val factoryBadge = K.udukkaiFactory.tr()
-            val textilesBadge = K.udukkaiTextiles.tr()
 
-            val businessItems = remember(liveStats, factoryDataLabel, textilesDataLabel, companyLabel, factoryBadge, textilesBadge, NiruvanaTharavugalRepository.getProfile(AppMode.FACTORY), NiruvanaTharavugalRepository.getProfile(AppMode.TEXTILES)) {
+            val businessItems = remember(liveStats, isTextilesApp) {
                 val list = mutableListOf<BusinessDisplayItem>()
-                for (m in modes) {
-                    val profiles = NiruvanaTharavugalRepository.getAllProfiles(m)
-                    val modeLabel = if (m == AppMode.FACTORY) factoryDataLabel else textilesDataLabel
-                    val appBadge = if (m == AppMode.FACTORY) factoryBadge else textilesBadge
+                val profiles = if (isTextilesApp) com.elvan.udukkai.textiles.data.TextilesProfileRepository.profiles else com.elvan.udukkai.factory.data.FactoryProfileRepository.profiles
+                val fallback = if (isTextilesApp) com.elvan.udukkai.textiles.data.TextilesProfileRepository.profile else com.elvan.udukkai.factory.data.FactoryProfileRepository.profile
 
-                    if (profiles.isEmpty()) {
-                        val fallback = NiruvanaTharavugalRepository.getProfile(m)
-                        val name = fallback.kurumPeyar.ifBlank {
-                            fallback.getPrimary("niruvanathinPeyar")
+                if (profiles.isEmpty()) {
+                    val name = fallback.kurumPeyar.ifBlank {
+                        fallback.getPrimary("niruvanathinPeyar")
+                    }.ifBlank {
+                        fallback.getSecondary("niruvanathinPeyar")
+                    }.ifBlank { appBadge }
+
+                    val town = fallback.oor.values.firstOrNull { it.isNotBlank() }
+                    val subtitleText = if (!town.isNullOrBlank()) "$appBadge • $town" else appBadge
+
+                    val invCount = if (isTextilesApp) com.elvan.udukkai.textiles.data.TextilesInvoiceRepository.invoices.count { (fallback.id == null || it.niruvanamId == fallback.id) && !it.isDeleted } else com.elvan.udukkai.factory.data.FactoryInvoiceRepository.invoices.count { (fallback.id == null || it.niruvanamId == fallback.id) && !it.isDeleted }
+                    val recCount = if (isTextilesApp) com.elvan.udukkai.textiles.data.TextilesReceiptRepository.receipts.count { (fallback.id == null || it.niruvanamId == fallback.id) && !it.isDeleted } else com.elvan.udukkai.factory.data.FactoryReceiptRepository.receipts.count { (fallback.id == null || it.niruvanamId == fallback.id) && !it.isDeleted }
+                    val cusCount = if (isTextilesApp) com.elvan.udukkai.textiles.data.TextilesCustomerRepository.customers.count { !it.isDeleted } else com.elvan.udukkai.factory.data.FactoryCustomerRepository.customers.count { !it.isDeleted }
+                    val proCount = if (isTextilesApp) com.elvan.udukkai.textiles.data.TextilesProductRepository.products.count { (fallback.id == null || it.isAvailableForCompany(fallback.id)) && !it.isDeleted } else com.elvan.udukkai.factory.data.FactoryProductRepository.products.count { (fallback.id == null || it.isAvailableForCompany(fallback.id)) && !it.isDeleted }
+
+                    list.add(
+                        BusinessDisplayItem(
+                            isTextiles = isTextilesApp,
+                            name = name,
+                            subtitle = subtitleText,
+                            invoiceCount = invCount,
+                            receiptCount = recCount,
+                            customerCount = cusCount,
+                            productCount = proCount
+                        )
+                    )
+                } else {
+                    profiles.forEachIndexed { index, p ->
+                        val bName = p.kurumPeyar.ifBlank {
+                            p.getPrimary("niruvanathinPeyar")
                         }.ifBlank {
-                            fallback.getSecondary("niruvanathinPeyar")
-                        }.ifBlank { modeLabel }
+                            p.getSecondary("niruvanathinPeyar")
+                        }.ifBlank {
+                            "$companyLabel ${index + 1}"
+                        }
 
-                        val town = fallback.oor.values.firstOrNull { it.isNotBlank() }
-                        val subtitleText = if (!town.isNullOrBlank()) "$appBadge • $town" else appBadge
+                        val town = p.oor.values.firstOrNull { it.isNotBlank() }
+                        val sub = if (!town.isNullOrBlank()) "$appBadge • $town" else appBadge
+
+                        val invC = if (isTextilesApp) com.elvan.udukkai.textiles.data.TextilesInvoiceRepository.invoices.count { (p.id == null || it.niruvanamId == p.id) && !it.isDeleted } else com.elvan.udukkai.factory.data.FactoryInvoiceRepository.invoices.count { (p.id == null || it.niruvanamId == p.id) && !it.isDeleted }
+                        val recC = if (isTextilesApp) com.elvan.udukkai.textiles.data.TextilesReceiptRepository.receipts.count { (p.id == null || it.niruvanamId == p.id) && !it.isDeleted } else com.elvan.udukkai.factory.data.FactoryReceiptRepository.receipts.count { (p.id == null || it.niruvanamId == p.id) && !it.isDeleted }
+                        val cusC = if (isTextilesApp) com.elvan.udukkai.textiles.data.TextilesCustomerRepository.customers.count { !it.isDeleted } else com.elvan.udukkai.factory.data.FactoryCustomerRepository.customers.count { !it.isDeleted }
+                        val proC = if (isTextilesApp) com.elvan.udukkai.textiles.data.TextilesProductRepository.products.count { (p.id == null || it.isAvailableForCompany(p.id)) && !it.isDeleted } else com.elvan.udukkai.factory.data.FactoryProductRepository.products.count { (p.id == null || it.isAvailableForCompany(p.id)) && !it.isDeleted }
 
                         list.add(
                             BusinessDisplayItem(
-                                mode = m,
-                                name = name,
-                                subtitle = subtitleText,
-                                invoiceCount = PattiyalRepository.invoices.count { (fallback.id == null || it.niruvanamId == fallback.id) && !it.isDeleted },
-                                receiptCount = PatrugalRepository.receipts.count { (fallback.id == null || it.niruvanamId == fallback.id) && !it.isDeleted },
-                                customerCount = VaangunarRepository.merchants.count { !it.isDeleted },
-                                productCount = PorulRepository.items.count { (fallback.id == null || it.isAvailableForCompany(fallback.id)) && !it.isDeleted }
+                                isTextiles = isTextilesApp,
+                                name = bName,
+                                subtitle = sub,
+                                invoiceCount = invC,
+                                receiptCount = recC,
+                                customerCount = cusC,
+                                productCount = proC
                             )
                         )
-                    } else {
-                        profiles.forEachIndexed { index, p ->
-                            val bName = p.kurumPeyar.ifBlank {
-                                p.getPrimary("niruvanathinPeyar")
-                            }.ifBlank {
-                                p.getSecondary("niruvanathinPeyar")
-                            }.ifBlank {
-                                "$companyLabel ${index + 1}"
-                            }
-
-                            val town = p.oor.values.firstOrNull { it.isNotBlank() }
-                            val sub = if (!town.isNullOrBlank()) "$appBadge • $town" else appBadge
-
-                            val invC = PattiyalRepository.invoices.count { (p.id == null || it.niruvanamId == p.id) && !it.isDeleted }
-                            val recC = PatrugalRepository.receipts.count { (p.id == null || it.niruvanamId == p.id) && !it.isDeleted }
-                            val cusC = VaangunarRepository.merchants.count { !it.isDeleted }
-                            val proC = PorulRepository.items.count { (p.id == null || it.isAvailableForCompany(p.id)) && !it.isDeleted }
-
-                            list.add(
-                                BusinessDisplayItem(
-                                    mode = m,
-                                    name = bName,
-                                    subtitle = sub,
-                                    invoiceCount = invC,
-                                    receiptCount = recC,
-                                    customerCount = cusC,
-                                    productCount = proC
-                                )
-                            )
-                        }
                     }
                 }
                 list
@@ -351,35 +336,34 @@ fun StorageBackupSettingsScreen(
                             ) {
                                 Box(contentAlignment = Alignment.Center) {
                                     Icon(
-                                        imageVector = if (item.mode == AppMode.FACTORY) AppSvgs.coolieMode else AppSvgs.silkMode,
+                                        imageVector = if (!item.isTextiles) AppSvgs.coolieMode else AppSvgs.silkMode,
                                         contentDescription = null,
                                         tint = colors.textPrimary,
                                         modifier = Modifier.size(18.dp)
                                     )
                                 }
                             }
+
                             Spacer(modifier = Modifier.width(14.dp))
-                            Column {
+
+                            Column(modifier = Modifier.weight(1f)) {
                                 Text(
-                                    text = item.name,
+                                    text = item.name.preventBrokenLigatures(),
                                     style = TextStyle(
                                         fontFamily = ff,
                                         fontSize = 15.sp,
-                                        fontWeight = FontWeight.Medium
-                                    ),
-                                    color = colors.textPrimary
-                                )
-                                if (item.subtitle.isNotBlank() && item.subtitle != item.name) {
-                                    Text(
-                                        text = item.subtitle,
-                                        style = TextStyle(
-                                            fontFamily = ff,
-                                            fontSize = 12.sp,
-                                            fontWeight = FontWeight.Normal
-                                        ),
-                                        color = colors.textPrimary.copy(alpha = 0.5f)
+                                        fontWeight = FontWeight.SemiBold,
+                                        color = colors.textPrimary
                                     )
-                                }
+                                )
+                                Text(
+                                    text = item.subtitle.preventBrokenLigatures(),
+                                    style = TextStyle(
+                                        fontFamily = ff,
+                                        fontSize = 12.sp,
+                                        color = colors.textSecondary
+                                    )
+                                )
                             }
                         }
 
@@ -593,7 +577,7 @@ fun StorageBackupSettingsScreen(
 }
 
 private data class BusinessDisplayItem(
-    val mode: AppMode,
+    val isTextiles: Boolean,
     val name: String,
     val subtitle: String,
     val invoiceCount: Int,

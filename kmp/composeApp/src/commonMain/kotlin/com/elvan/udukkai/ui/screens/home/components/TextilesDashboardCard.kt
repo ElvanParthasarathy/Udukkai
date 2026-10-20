@@ -1,26 +1,20 @@
 package com.elvan.udukkai.ui.screens.home.components
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.elvan.udukkai.core.mode.AppMode
 import com.elvan.udukkai.core.utils.CurrencyUtils
 import com.elvan.udukkai.core.utils.DateUtils
 import com.elvan.udukkai.data.model.PattiyalTharavuru
-import com.elvan.udukkai.data.settings.NiruvanaTharavugalRepository
+import com.elvan.udukkai.textiles.data.TextilesProfileRepository
 import com.elvan.udukkai.theme.Dimens
 import com.elvan.udukkai.theme.LocalAppFontFamily
 import com.elvan.udukkai.theme.ShellColors
@@ -30,9 +24,6 @@ import com.elvan.udukkai.ui.components.ElvanCardLeadingIcon
 import com.elvan.udukkai.ui.navigation.MaterialSymbols
 import com.elvan.udukkai.theme.LocalShellColors
 
-/**
- * Textiles (சவுளி) Dashboard Card for recent invoices on the Home screen.
- */
 @Composable
 fun TextilesDashboardCard(
     index: Int,
@@ -42,11 +33,10 @@ fun TextilesDashboardCard(
     onClick: () -> Unit = {}
 ) {
     val ff = LocalAppFontFamily.current
-    val isDark = colors.isDark
 
-    val profiles = NiruvanaTharavugalRepository.getAllProfiles(AppMode.TEXTILES)
+    val profiles = TextilesProfileRepository.allProfiles
     val profile = (if (pattiyal.niruvanamId != null) profiles.find { it.id == pattiyal.niruvanamId } else null)
-        ?: NiruvanaTharavugalRepository.getProfile(AppMode.TEXTILES)
+        ?: TextilesProfileRepository.profile
     val isBilingual = profile.iruMozhi
     val primaryLang = profile.mudhanMozhi.ifEmpty { "ta" }
     val secondaryLang = profile.thunaiMozhi.ifEmpty { "en" }
@@ -59,6 +49,12 @@ fun TextilesDashboardCard(
 
     val secondary = if (isBilingual) pattiyal.vaangunarPeyar[secondaryLang].orEmpty() else ""
     val showSecondary = isBilingual && secondary.isNotBlank() && secondary != primary
+
+    val primaryOor = pattiyal.vaangunarMunvari[primaryLang]
+        ?: pattiyal.vaangunarMunvari["ta"]
+        ?: pattiyal.vaangunarMunvari["en"]
+        ?: pattiyal.vaangunarMunvari.values.firstOrNull()
+        ?: ""
 
     val amountStr = CurrencyUtils.formatInr(pattiyal.mothaThogai)
     val dateStr = DateUtils.formatEpochMillis(pattiyal.pattiyalNaal)
@@ -83,11 +79,9 @@ fun TextilesDashboardCard(
 
             Spacer(modifier = Modifier.width(12.dp))
 
-            // Content
             Column(
                 modifier = Modifier.weight(1f)
             ) {
-                // Row 1: Customer Name + Chevron
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.Top
@@ -131,7 +125,6 @@ fun TextilesDashboardCard(
 
                 Spacer(modifier = Modifier.height(8.dp))
 
-                // Row 2: Invoice #  •  Date
                 Text(
                     text = "${pattiyal.patrucheettuEn}  •  $dateStr",
                     style = TextStyle(
@@ -145,12 +138,25 @@ fun TextilesDashboardCard(
 
                 Spacer(modifier = Modifier.height(4.dp))
 
-                // Row 3: Amount
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.End,
+                    horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.Bottom
                 ) {
+                    Text(
+                        text = primaryOor.preventBrokenLigatures(),
+                        style = TextStyle(
+                            fontFamily = ff,
+                            fontSize = 13.5.sp,
+                            color = LocalShellColors.current.textSecondary
+                        ),
+                        modifier = Modifier.weight(1f, fill = false),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+
+                    Spacer(modifier = Modifier.width(8.dp))
+
                     Text(
                         text = amountStr,
                         style = TextStyle(
@@ -165,13 +171,3 @@ fun TextilesDashboardCard(
         }
     }
 }
-
-@Deprecated("Use TextilesDashboardCard", ReplaceWith("TextilesDashboardCard(index, pattiyal, colors, modifier, onClick)"))
-@Composable
-fun SilkDashboardCard(
-    index: Int,
-    pattiyal: PattiyalTharavuru,
-    colors: ShellColors,
-    modifier: Modifier = Modifier,
-    onClick: () -> Unit = {}
-) = TextilesDashboardCard(index, pattiyal, colors, modifier, onClick)

@@ -1,4 +1,4 @@
-package com.elvan.udukkai.ui.screens.editor.receipt
+﻿package com.elvan.udukkai.ui.screens.editor.receipt
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -18,18 +18,14 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.elvan.udukkai.core.mode.LocalAppMode
 import com.elvan.udukkai.core.platform.AppBackHandler
 import com.elvan.udukkai.data.model.PattiyalTharavuru
 import com.elvan.udukkai.data.model.PatruPattiyalInaippuTharavuru
 import com.elvan.udukkai.data.model.PatrugalTharavuru
 import com.elvan.udukkai.data.model.SeluthiVagai
-import com.elvan.udukkai.data.repository.PatrugalRepository
-import com.elvan.udukkai.data.repository.PattiyalRepository
 import com.elvan.udukkai.data.settings.NiruvanaTharavugal
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.text.input.KeyboardType
-import com.elvan.udukkai.data.settings.NiruvanaTharavugalRepository
 import com.elvan.udukkai.localization.K
 import com.elvan.udukkai.localization.tr
 import com.elvan.udukkai.theme.Dimens
@@ -96,16 +92,16 @@ private fun FormLockWrapper(
 @Composable
 fun ReceiptEditorScreen(
     receipt: PatrugalTharavuru? = null,
+    isTextiles: Boolean = false,
     onBack: () -> Unit
 ) {
-    val currentMode = LocalAppMode.current
     val colors = rememberShellColors()
     val isDark = colors.isDark
     val ff = LocalAppFontFamily.current
     val isEditing = receipt != null && receipt.id > 0L
 
-    val profiles: List<NiruvanaTharavugal> = NiruvanaTharavugalRepository.getAllProfiles(currentMode)
-    val activeProfile = NiruvanaTharavugalRepository.getProfile(currentMode)
+    val profiles: List<NiruvanaTharavugal> = if (isTextiles) com.elvan.udukkai.textiles.data.TextilesProfileRepository.profiles else com.elvan.udukkai.factory.data.FactoryProfileRepository.profiles
+    val activeProfile = if (isTextiles) com.elvan.udukkai.textiles.data.TextilesProfileRepository.profile else com.elvan.udukkai.factory.data.FactoryProfileRepository.profile
     val selectedProfile = remember(profiles, activeProfile, receipt?.niruvanamId) {
         if (isEditing) {
             profiles.firstOrNull { it.id == receipt?.niruvanamId } ?: activeProfile
@@ -118,12 +114,17 @@ fun ReceiptEditorScreen(
 
     // Refresh dependencies on launch
     LaunchedEffect(Unit) {
-        PattiyalRepository.loadAll(currentMode)
-        PatrugalRepository.loadAll(currentMode)
+        if (isTextiles) {
+            com.elvan.udukkai.textiles.data.TextilesInvoiceRepository.loadAll()
+            com.elvan.udukkai.textiles.data.TextilesReceiptRepository.loadAll()
+        } else {
+            com.elvan.udukkai.factory.data.FactoryInvoiceRepository.loadAll()
+            com.elvan.udukkai.factory.data.FactoryReceiptRepository.loadAll()
+        }
     }
 
     // Linked Invoices
-    val allInvoices = PattiyalRepository.invoices
+    val allInvoices = if (isTextiles) com.elvan.udukkai.textiles.data.TextilesInvoiceRepository.invoices else com.elvan.udukkai.factory.data.FactoryInvoiceRepository.invoices
     val selectedInvoices = remember { mutableStateListOf<PattiyalTharavuru>() }
     var isInvoicePickerOpen by remember { mutableStateOf(false) }
 
@@ -132,7 +133,7 @@ fun ReceiptEditorScreen(
     LaunchedEffect(receipt?.id, allInvoices) {
         if (receipt != null && !isInitialized && allInvoices.isNotEmpty()) {
             isInitialized = true
-            val links = PatrugalRepository.getLinksForPatru(receipt.id, currentMode)
+            val links = if (isTextiles) com.elvan.udukkai.textiles.data.TextilesReceiptRepository.getLinksForPatru(receipt.id) else com.elvan.udukkai.factory.data.FactoryReceiptRepository.getLinksForPatru(receipt.id)
             val matching = links.mapNotNull { link ->
                 allInvoices.firstOrNull { it.id == link.pattiyalId }
             }
@@ -190,9 +191,9 @@ fun ReceiptEditorScreen(
             ?: profile?.niruvanathinPeyar?.get("en")?.split(" ")?.mapNotNull { it.firstOrNull()?.uppercaseChar() }?.joinToString("")?.take(4)?.ifEmpty { null }
             ?: "BIZ"
 
-        val nextSeq = PatrugalRepository.getNextVanakkam(profile?.id, currentMode)
+        val nextSeq = if (isTextiles) com.elvan.udukkai.textiles.data.TextilesReceiptRepository.getNextVanakkam(profile?.id) else com.elvan.udukkai.factory.data.FactoryReceiptRepository.getNextVanakkam(profile?.id)
         vanakkam = nextSeq
-        patruEn = PatrugalRepository.formatPatruEn(bizShort, nextSeq)
+        patruEn = if (isTextiles) com.elvan.udukkai.textiles.data.TextilesReceiptRepository.formatPatruEn(bizShort, nextSeq) else com.elvan.udukkai.factory.data.FactoryReceiptRepository.formatPatruEn(bizShort, nextSeq)
     }
 
     // Auto-generate receipt number on profile selection if new
@@ -251,12 +252,11 @@ fun ReceiptEditorScreen(
         }
 
         // Duplicate check
-        val isDuplicate = PatrugalRepository.isPatruEnDuplicate(
-            selectedNiruvanamId,
-            patruEn,
-            excludeId = receipt?.id,
-            mode = currentMode
-        )
+        val isDuplicate = if (isTextiles) {
+            com.elvan.udukkai.textiles.data.TextilesReceiptRepository.isPatruEnDuplicate(patruEn, selectedNiruvanamId, receipt?.id)
+        } else {
+            com.elvan.udukkai.factory.data.FactoryReceiptRepository.isPatruEnDuplicate(patruEn, selectedNiruvanamId, receipt?.id)
+        }
         if (isDuplicate) {
             ElvanSnackbar.show("$patruEn - $duplicateMsg")
             return
@@ -281,7 +281,7 @@ fun ReceiptEditorScreen(
         }
 
         // Validate links
-        val validationErr = PatrugalRepository.validateLinks(links, receipt?.id, currentMode)
+        val validationErr = if (isTextiles) com.elvan.udukkai.textiles.data.TextilesReceiptRepository.validateLinks(links, receipt?.id) else com.elvan.udukkai.factory.data.FactoryReceiptRepository.validateLinks(links, receipt?.id)
         if (validationErr != null) {
             ElvanSnackbar.show(validationErr)
             return
@@ -311,7 +311,7 @@ fun ReceiptEditorScreen(
                 isDeleted = false
             )
 
-            val savedId = PatrugalRepository.saveWithLinks(entryToSave, links, currentMode)
+            val savedId = if (isTextiles) com.elvan.udukkai.textiles.data.TextilesReceiptRepository.saveWithLinks(entryToSave, links) else com.elvan.udukkai.factory.data.FactoryReceiptRepository.saveWithLinks(entryToSave, links)
             if (savedId > 0L) {
                 ElvanSnackbar.show(savedMsg)
                 onBack()
@@ -711,7 +711,8 @@ fun ReceiptEditorScreen(
                 onInvoicesUpdated(pickedList)
                 isInvoicePickerOpen = false
             },
-            onDismissRequest = { isInvoicePickerOpen = false }
+            onDismissRequest = { isInvoicePickerOpen = false },
+            isTextiles = isTextiles
         )
     }
 

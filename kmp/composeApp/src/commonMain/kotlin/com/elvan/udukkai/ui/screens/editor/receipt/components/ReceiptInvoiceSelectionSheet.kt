@@ -20,7 +20,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.elvan.udukkai.core.utils.DateUtils
 import com.elvan.udukkai.data.model.PattiyalTharavuru
-import com.elvan.udukkai.data.repository.VaangunarRepository
 import com.elvan.udukkai.localization.K
 import com.elvan.udukkai.localization.tr
 import com.elvan.udukkai.theme.LocalAppFontFamily
@@ -50,9 +49,10 @@ fun ReceiptInvoiceSelectionSheet(
     onConfirmed: (List<PattiyalTharavuru>) -> Unit,
     onDismissRequest: () -> Unit,
     modifier: Modifier = Modifier,
-    colors: ShellColors = rememberShellColors()
+    colors: ShellColors = rememberShellColors(),
+    isTextiles: Boolean = false
 ) {
-    val allMerchants = VaangunarRepository.merchants
+    val allMerchants = if (isTextiles) com.elvan.udukkai.textiles.data.TextilesCustomerRepository.customers else com.elvan.udukkai.factory.data.FactoryCustomerRepository.customers
     val ff = LocalAppFontFamily.current
     val sheetBg = LocalShellColors.current.surface
 

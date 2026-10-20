@@ -19,11 +19,8 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.elvan.udukkai.core.mode.AppMode
-import com.elvan.udukkai.core.mode.LocalAppMode
 import com.elvan.udukkai.core.platform.AppBackHandler
 import com.elvan.udukkai.data.model.VaangunarTharavuru
-import com.elvan.udukkai.localization.PrintLanguageManager
 import com.elvan.udukkai.localization.K
 import com.elvan.udukkai.localization.tr
 import com.elvan.udukkai.theme.Dimens
@@ -44,16 +41,12 @@ fun CustomerViewScreen(
     onEdit: () -> Unit,
     onCopy: (() -> Unit)? = null
 ) {
-    val currentMode = LocalAppMode.current
-    val colors = rememberShellColors()
+        val colors = rememberShellColors()
     val isDark = colors.isDark
     val ff = LocalAppFontFamily.current
 
-    val billingConfig = PrintLanguageManager.getConfig(currentMode)
-    val isBilingual = billingConfig.isBilingual
-    val primaryLang = billingConfig.primaryLanguage.code
-    val secondaryLang = billingConfig.secondaryLanguage.code
-
+    val isBilingual = true; val primaryLang = "ta"; val secondaryLang = "en"
+            
     val p1 = merchant.peyar[primaryLang] ?: merchant.peyar["ta"] ?: ""
     val p2 = merchant.peyar[secondaryLang] ?: merchant.peyar["en"] ?: ""
     val primaryName = p1.ifEmpty { p2.ifEmpty { "-" } }

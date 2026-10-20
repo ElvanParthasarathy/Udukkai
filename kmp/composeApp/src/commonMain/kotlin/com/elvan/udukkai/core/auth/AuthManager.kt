@@ -3,10 +3,9 @@ package com.elvan.udukkai.core.auth
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import com.elvan.udukkai.core.mode.AppMode
-import com.elvan.udukkai.core.mode.ModeManager
 import com.elvan.udukkai.core.platform.getPreferencesHelper
-import com.elvan.udukkai.data.settings.NiruvanaTharavugalRepository
+import com.elvan.udukkai.factory.data.FactoryProfileRepository
+import com.elvan.udukkai.textiles.data.TextilesProfileRepository
 
 /**
  * Central authentication and onboarding state manager.
@@ -79,7 +78,8 @@ object AuthManager {
 
     fun refreshProfileStatus() {
         try {
-            NiruvanaTharavugalRepository.refreshFromDatabase()
+            FactoryProfileRepository.refreshFromDatabase()
+            TextilesProfileRepository.refreshFromDatabase()
             isProfilesLoading = false
         } catch (_: Exception) {
             isProfilesLoading = false
@@ -87,39 +87,31 @@ object AuthManager {
     }
 
     /**
-     * Returns true if at least one profile (either Kooli or Pattu) exists in the database.
+     * Returns true if at least one profile exists across Factory or Textiles.
      */
     val isSetupComplete: Boolean
         get() {
-            if (com.elvan.udukkai.core.mode.AppLaunchConfig.isFixed) {
-                return NiruvanaTharavugalRepository.getAllProfiles(ModeManager.currentMode).isNotEmpty()
-            }
-            val kooliProfiles = NiruvanaTharavugalRepository.getAllProfiles(AppMode.KOOLI)
-            val pattuProfiles = NiruvanaTharavugalRepository.getAllProfiles(AppMode.PATTU)
-            return kooliProfiles.isNotEmpty() || pattuProfiles.isNotEmpty()
+            val factoryProfiles = FactoryProfileRepository.allProfiles
+            val textilesProfiles = TextilesProfileRepository.allProfiles
+            return factoryProfiles.isNotEmpty() || textilesProfiles.isNotEmpty()
         }
 
     /**
-     * Returns which profiles are missing ("kooli" and/or "pattu").
+     * Returns which profiles are missing ("factory" and/or "textiles").
      */
     val missingProfiles: List<String>
         get() {
-            if (com.elvan.udukkai.core.mode.AppLaunchConfig.isFixed) {
-                val profiles = NiruvanaTharavugalRepository.getAllProfiles(ModeManager.currentMode)
-                return if (profiles.isEmpty()) listOf(ModeManager.currentMode.key) else emptyList()
-            }
             val missing = mutableListOf<String>()
-            val kooliProfiles = NiruvanaTharavugalRepository.getAllProfiles(AppMode.KOOLI)
-            val pattuProfiles = NiruvanaTharavugalRepository.getAllProfiles(AppMode.PATTU)
-            if (kooliProfiles.isEmpty()) missing.add("kooli")
-            if (pattuProfiles.isEmpty()) missing.add("pattu")
+            if (FactoryProfileRepository.allProfiles.isEmpty()) missing.add("factory")
+            if (TextilesProfileRepository.allProfiles.isEmpty()) missing.add("textiles")
             return missing
         }
 
-    /**
-     * Returns true if the current mode has a valid profile.
-     */
-    fun hasProfileForMode(mode: AppMode): Boolean {
-        return NiruvanaTharavugalRepository.getAllProfiles(mode).isNotEmpty()
+    fun hasProfile(scope: String = "factory"): Boolean {
+        return if (scope.equals("textiles", ignoreCase = true) || scope.equals("pattu", ignoreCase = true)) {
+            TextilesProfileRepository.allProfiles.isNotEmpty()
+        } else {
+            FactoryProfileRepository.allProfiles.isNotEmpty()
+        }
     }
 }

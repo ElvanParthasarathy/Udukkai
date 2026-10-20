@@ -1,25 +1,20 @@
 package com.elvan.udukkai.ui.screens.home.components
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.elvan.udukkai.core.mode.AppMode
 import com.elvan.udukkai.core.utils.CurrencyUtils
 import com.elvan.udukkai.core.utils.DateUtils
 import com.elvan.udukkai.data.model.PattiyalTharavuru
-import com.elvan.udukkai.data.settings.NiruvanaTharavugalRepository
+import com.elvan.udukkai.factory.data.FactoryProfileRepository
 import com.elvan.udukkai.theme.Dimens
 import com.elvan.udukkai.theme.LocalAppFontFamily
 import com.elvan.udukkai.theme.ShellColors
@@ -29,9 +24,6 @@ import com.elvan.udukkai.ui.components.ElvanCardLeadingIcon
 import com.elvan.udukkai.ui.navigation.MaterialSymbols
 import com.elvan.udukkai.theme.LocalShellColors
 
-/**
- * Factory (ஆலை) Dashboard Card for recent invoices on the Home screen.
- */
 @Composable
 fun FactoryDashboardCard(
     index: Int,
@@ -41,11 +33,10 @@ fun FactoryDashboardCard(
     onClick: () -> Unit = {}
 ) {
     val ff = LocalAppFontFamily.current
-    val isDark = colors.isDark
 
-    val profiles = NiruvanaTharavugalRepository.getAllProfiles(AppMode.FACTORY)
+    val profiles = FactoryProfileRepository.allProfiles
     val profile = (if (pattiyal.niruvanamId != null) profiles.find { it.id == pattiyal.niruvanamId } else null)
-        ?: NiruvanaTharavugalRepository.getProfile(AppMode.FACTORY)
+        ?: FactoryProfileRepository.profile
     val isBilingual = profile.iruMozhi
     val primaryLang = profile.mudhanMozhi.ifEmpty { "ta" }
     val secondaryLang = profile.thunaiMozhi.ifEmpty { "en" }
@@ -88,11 +79,9 @@ fun FactoryDashboardCard(
 
             Spacer(modifier = Modifier.width(12.dp))
 
-            // Content
             Column(
                 modifier = Modifier.weight(1f)
             ) {
-                // Row 1: Name + Chevron
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.Top
@@ -136,7 +125,6 @@ fun FactoryDashboardCard(
 
                 Spacer(modifier = Modifier.height(8.dp))
 
-                // Row 2: Invoice #  •  Date
                 Text(
                     text = "${pattiyal.patrucheettuEn}  •  $dateStr",
                     style = TextStyle(
@@ -150,7 +138,6 @@ fun FactoryDashboardCard(
 
                 Spacer(modifier = Modifier.height(4.dp))
 
-                // Row 3: Oor (Place) + Amount
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -184,13 +171,3 @@ fun FactoryDashboardCard(
         }
     }
 }
-
-@Deprecated("Use FactoryDashboardCard", ReplaceWith("FactoryDashboardCard(index, pattiyal, colors, modifier, onClick)"))
-@Composable
-fun CoolieDashboardCard(
-    index: Int,
-    pattiyal: PattiyalTharavuru,
-    colors: ShellColors,
-    modifier: Modifier = Modifier,
-    onClick: () -> Unit = {}
-) = FactoryDashboardCard(index, pattiyal, colors, modifier, onClick)

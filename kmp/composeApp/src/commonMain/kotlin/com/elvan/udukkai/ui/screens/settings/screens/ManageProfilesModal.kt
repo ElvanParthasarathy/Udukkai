@@ -1,4 +1,4 @@
-package com.elvan.udukkai.ui.screens.settings.screens
+﻿package com.elvan.udukkai.ui.screens.settings.screens
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -18,9 +18,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
-import com.elvan.udukkai.core.mode.AppMode
 import com.elvan.udukkai.data.settings.NiruvanaTharavugal
-import com.elvan.udukkai.data.settings.NiruvanaTharavugalRepository
 import com.elvan.udukkai.localization.K
 import com.elvan.udukkai.localization.tr
 import com.elvan.udukkai.theme.LocalAppFontFamily
@@ -36,14 +34,14 @@ import com.elvan.udukkai.ui.navigation.MaterialSymbols
  */
 @Composable
 fun ManageProfilesModal(
-    mode: AppMode,
+    isTextiles: Boolean = false,
     onDismissRequest: () -> Unit,
     colors: ShellColors = rememberShellColors()
 ) {
     val ff = LocalAppFontFamily.current
 
-    val profiles = NiruvanaTharavugalRepository.getAllProfiles(mode)
-    val activeProfile = NiruvanaTharavugalRepository.getProfile(mode)
+    val profiles = if (isTextiles) com.elvan.udukkai.textiles.data.TextilesProfileRepository.profiles else com.elvan.udukkai.factory.data.FactoryProfileRepository.profiles
+    val activeProfile = if (isTextiles) com.elvan.udukkai.textiles.data.TextilesProfileRepository.profile else com.elvan.udukkai.factory.data.FactoryProfileRepository.profile
 
     var showNewProfileSheet by remember { mutableStateOf(false) }
     var profileToDelete by remember { mutableStateOf<NiruvanaTharavugal?>(null) }
@@ -63,7 +61,7 @@ fun ManageProfilesModal(
         Scaffold(
             containerColor = colors.background,
             floatingActionButton = {
-                if (profiles.size < NiruvanaTharavugalRepository.MAX_PROFILES) {
+                if (profiles.size < 5) {
                     FloatingActionButton(
                         onClick = { showNewProfileSheet = true },
                         shape = RoundedCornerShape(16.dp),
@@ -158,7 +156,7 @@ fun ManageProfilesModal(
                                         } else null,
                                         onTap = if (!isActive && profileItem.id != null) {
                                             {
-                                                NiruvanaTharavugalRepository.setActiveProfile(mode, profileItem.id!!)
+                                                if (isTextiles) com.elvan.udukkai.textiles.data.TextilesProfileRepository.setActiveProfile(profileItem.id!!) else com.elvan.udukkai.factory.data.FactoryProfileRepository.setActiveProfile(profileItem.id!!)
                                             }
                                         } else null
                                     )
@@ -180,7 +178,7 @@ fun ManageProfilesModal(
                 onConfirm = {
                     val id = targetProfile.id
                     if (id != null) {
-                        NiruvanaTharavugalRepository.deleteProfile(mode, id)
+                        if (isTextiles) com.elvan.udukkai.textiles.data.TextilesProfileRepository.deleteProfile(id) else com.elvan.udukkai.factory.data.FactoryProfileRepository.deleteProfile(id)
                         ElvanSnackbar.show(deleteSuccessMsg)
                     }
                     profileToDelete = null
@@ -192,7 +190,7 @@ fun ManageProfilesModal(
         // New Profile Action Sheet
         if (showNewProfileSheet) {
             NewProfileBottomSheet(
-                mode = mode,
+                isTextiles = isTextiles,
                 onDismissRequest = { showNewProfileSheet = false },
                 onSuccess = {
                     showNewProfileSheet = false

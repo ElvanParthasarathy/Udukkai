@@ -1,4 +1,4 @@
-package com.elvan.udukkai.ui.screens.settings.screens
+﻿package com.elvan.udukkai.ui.screens.settings.screens
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -10,9 +10,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
-import com.elvan.udukkai.core.mode.AppMode
-import com.elvan.udukkai.core.mode.LocalAppMode
-import com.elvan.udukkai.data.settings.NiruvanaTharavugalRepository
 import com.elvan.udukkai.localization.K
 import com.elvan.udukkai.localization.tr
 import com.elvan.udukkai.theme.Dimens
@@ -28,10 +25,12 @@ import com.elvan.udukkai.ui.components.shell.*
 @Composable
 fun BankSettingsScreen(
     scrollState: LazyListState = rememberLazyListState(),
-    colors: ShellColors = rememberShellColors()
+    colors: ShellColors = rememberShellColors(),
+    customProfile: com.elvan.udukkai.data.settings.NiruvanaTharavugal? = null,
+    onUpdateProfile: ((com.elvan.udukkai.data.settings.NiruvanaTharavugal) -> Unit)? = null,
+    isTextiles: Boolean = false
 ) {
-    val currentMode = LocalAppMode.current
-    val profile = NiruvanaTharavugalRepository.getProfile(currentMode)
+    val profile = customProfile ?: if (isTextiles) com.elvan.udukkai.textiles.data.TextilesProfileRepository.profile else com.elvan.udukkai.factory.data.FactoryProfileRepository.profile
     val isBilingual = profile.iruMozhi
 
     var editingSection by remember { mutableStateOf<String?>(null) }
@@ -52,7 +51,7 @@ fun BankSettingsScreen(
         val updated = profile.copy()
         updated.setBilingual(fieldName, profile.mudhanMozhi, tempPrimary)
         updated.setBilingual(fieldName, profile.thunaiMozhi, tempSecondary)
-        NiruvanaTharavugalRepository.updateProfile(currentMode, updated)
+        if (onUpdateProfile != null) onUpdateProfile(updated) else if (isTextiles) com.elvan.udukkai.textiles.data.TextilesProfileRepository.updateProfile(updated) else com.elvan.udukkai.factory.data.FactoryProfileRepository.updateProfile(updated)
         editingSection = null
         ElvanSnackbar.show(saveSuccessMsg)
     }
@@ -60,7 +59,7 @@ fun BankSettingsScreen(
     fun saveSingle(action: (String) -> Unit) {
         val updated = profile.copy()
         action(tempPrimary)
-        NiruvanaTharavugalRepository.updateProfile(currentMode, updated)
+        if (onUpdateProfile != null) onUpdateProfile(updated) else if (isTextiles) com.elvan.udukkai.textiles.data.TextilesProfileRepository.updateProfile(updated) else com.elvan.udukkai.factory.data.FactoryProfileRepository.updateProfile(updated)
         editingSection = null
         ElvanSnackbar.show(saveSuccessMsg)
     }

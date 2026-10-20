@@ -1,13 +1,5 @@
 package com.elvan.udukkai.core.backup
 
-import com.elvan.udukkai.core.mode.AppMode
-import com.elvan.udukkai.core.mode.ModeManager
-import com.elvan.udukkai.data.repository.PattiyalRepository
-import com.elvan.udukkai.data.repository.PatrugalRepository
-import com.elvan.udukkai.data.repository.PorulRepository
-import com.elvan.udukkai.data.repository.VaangunarRepository
-import com.elvan.udukkai.data.settings.NiruvanaTharavugalRepository
-
 /**
  * Cross-platform backup service interface.
  * Binary format: 48-byte header (6 x 8-byte little-endian longs) + raw file data.
@@ -35,7 +27,7 @@ data class BackupItemMetadata(
     val receiptCount: Int = 0,
     val customerCount: Int = 0,
     val productCount: Int = 0,
-    val mode: AppMode? = null,
+    val mode: String? = null,
     val isSafetySnapshot: Boolean = false,
     val isValid: Boolean = true
 )
@@ -53,16 +45,25 @@ data class DatabaseLiveStats(
  * Must be invoked immediately after any database file restoration.
  */
 fun reloadAllRepositories() {
-    val mode = ModeManager.currentMode
-    try { PattiyalRepository.loadAll(mode) } catch (_: Exception) {}
-    try { PattiyalRepository.loadDeleted(mode) } catch (_: Exception) {}
-    try { PatrugalRepository.loadAll(mode) } catch (_: Exception) {}
-    try { PatrugalRepository.loadDeleted(mode) } catch (_: Exception) {}
-    try { PorulRepository.loadAll(mode) } catch (_: Exception) {}
-    try { PorulRepository.loadDeleted(mode) } catch (_: Exception) {}
-    try { VaangunarRepository.loadAll(mode) } catch (_: Exception) {}
-    try { VaangunarRepository.loadDeleted(mode) } catch (_: Exception) {}
-    try { NiruvanaTharavugalRepository.refreshFromDatabase() } catch (_: Exception) {}
+    try { com.elvan.udukkai.factory.data.FactoryInvoiceRepository.loadAll() } catch (_: Exception) {}
+    try { com.elvan.udukkai.factory.data.FactoryInvoiceRepository.loadDeleted() } catch (_: Exception) {}
+    try { com.elvan.udukkai.factory.data.FactoryReceiptRepository.loadAll() } catch (_: Exception) {}
+    try { com.elvan.udukkai.factory.data.FactoryReceiptRepository.loadDeleted() } catch (_: Exception) {}
+    try { com.elvan.udukkai.factory.data.FactoryProductRepository.loadAll() } catch (_: Exception) {}
+    try { com.elvan.udukkai.factory.data.FactoryProductRepository.loadDeleted() } catch (_: Exception) {}
+    try { com.elvan.udukkai.factory.data.FactoryCustomerRepository.loadAll() } catch (_: Exception) {}
+    try { com.elvan.udukkai.factory.data.FactoryCustomerRepository.loadDeleted() } catch (_: Exception) {}
+    try { com.elvan.udukkai.factory.data.FactoryProfileRepository.refreshFromDatabase() } catch (_: Exception) {}
+
+    try { com.elvan.udukkai.textiles.data.TextilesInvoiceRepository.loadAll() } catch (_: Exception) {}
+    try { com.elvan.udukkai.textiles.data.TextilesInvoiceRepository.loadDeleted() } catch (_: Exception) {}
+    try { com.elvan.udukkai.textiles.data.TextilesReceiptRepository.loadAll() } catch (_: Exception) {}
+    try { com.elvan.udukkai.textiles.data.TextilesReceiptRepository.loadDeleted() } catch (_: Exception) {}
+    try { com.elvan.udukkai.textiles.data.TextilesProductRepository.loadAll() } catch (_: Exception) {}
+    try { com.elvan.udukkai.textiles.data.TextilesProductRepository.loadDeleted() } catch (_: Exception) {}
+    try { com.elvan.udukkai.textiles.data.TextilesCustomerRepository.loadAll() } catch (_: Exception) {}
+    try { com.elvan.udukkai.textiles.data.TextilesCustomerRepository.loadDeleted() } catch (_: Exception) {}
+    try { com.elvan.udukkai.textiles.data.TextilesProfileRepository.refreshFromDatabase() } catch (_: Exception) {}
 }
 
 interface UdukkaiBackupService {

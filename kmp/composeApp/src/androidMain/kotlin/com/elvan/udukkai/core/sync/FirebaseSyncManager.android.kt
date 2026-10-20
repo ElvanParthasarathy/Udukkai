@@ -1,23 +1,16 @@
-package com.elvan.udukkai.core.sync
+﻿package com.elvan.udukkai.core.sync
 
 import android.util.Log
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
 import com.elvan.udukkai.core.backup.getUdukkaiBackupService
-import com.elvan.udukkai.core.mode.AppMode
-import com.elvan.udukkai.core.mode.ModeManager
 import com.elvan.udukkai.core.platform.AppContext
-import com.elvan.udukkai.data.business.getBusinessDatabaseHelper
 import com.elvan.udukkai.data.model.PattiyalTharavuru
 import com.elvan.udukkai.data.model.PatruPattiyalInaippuTharavuru
 import com.elvan.udukkai.data.model.PatrugalTharavuru
 import com.elvan.udukkai.data.model.PorulFirebasePayloadConverter
 import com.elvan.udukkai.data.model.PorulTharavuru
 import com.elvan.udukkai.data.model.VaangunarTharavuru
-import com.elvan.udukkai.data.repository.PattiyalRepository
-import com.elvan.udukkai.data.repository.PatrugalRepository
-import com.elvan.udukkai.data.repository.PorulRepository
-import com.elvan.udukkai.data.repository.VaangunarRepository
 import com.elvan.udukkai.data.settings.MozhiJsonConverter
 import com.google.firebase.FirebaseApp
 import com.google.firebase.database.DataSnapshot
@@ -84,9 +77,9 @@ class AndroidFirebaseSyncManager : FirebaseSyncManager {
         getDatabase()
     }
 
-    private fun getPrefix(mode: AppMode): String = if (mode == AppMode.KOOLI) "kooli" else "pattu"
+    private fun getPrefix(scope: String): String = if (scope == "factory" || scope == "kooli") "kooli" else "pattu"
 
-    override fun startSync(mode: AppMode) {
+    override fun startSync(scope: String) {
         stopSync()
         val db = getDatabase() ?: return
 
@@ -99,7 +92,7 @@ class AndroidFirebaseSyncManager : FirebaseSyncManager {
         }
 
         _syncStatus.value = SyncStatus.SYNCING
-        val prefix = getPrefix(mode)
+        val prefix = getPrefix(scope)
         val rootRef = db.getReference("udukkai").child(prefix)
 
         // 1. Merchants Listener
@@ -107,7 +100,7 @@ class AndroidFirebaseSyncManager : FirebaseSyncManager {
         merchantRef.keepSynced(true)
         val merchantListener = object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
-                handleMerchantsSnapshot(mode, snapshot)
+                handleMerchantsSnapshot(scope, snapshot)
             }
             override fun onCancelled(error: DatabaseError) {
                 Log.e(tag, "Merchant sync cancelled: ${error.message}")
@@ -122,7 +115,7 @@ class AndroidFirebaseSyncManager : FirebaseSyncManager {
         productRef.keepSynced(true)
         val productListener = object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
-                handleProductsSnapshot(mode, snapshot)
+                handleProductsSnapshot(scope, snapshot)
             }
             override fun onCancelled(error: DatabaseError) {
                 Log.e(tag, "Product sync cancelled: ${error.message}")
@@ -136,7 +129,7 @@ class AndroidFirebaseSyncManager : FirebaseSyncManager {
         invoiceRef.keepSynced(true)
         val invoiceListener = object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
-                handleInvoicesSnapshot(mode, snapshot)
+                handleInvoicesSnapshot(scope, snapshot)
             }
             override fun onCancelled(error: DatabaseError) {
                 Log.e(tag, "Invoice sync cancelled: ${error.message}")
@@ -150,7 +143,7 @@ class AndroidFirebaseSyncManager : FirebaseSyncManager {
         receiptRef.keepSynced(true)
         val receiptListener = object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
-                handleReceiptsSnapshot(mode, snapshot)
+                handleReceiptsSnapshot(scope, snapshot)
             }
             override fun onCancelled(error: DatabaseError) {
                 Log.e(tag, "Receipt sync cancelled: ${error.message}")
@@ -173,7 +166,7 @@ class AndroidFirebaseSyncManager : FirebaseSyncManager {
     }
 
     override fun triggerManualSync() {
-        startSync(ModeManager.currentMode)
+        startSync(if (com.elvan.udukkai.BuildConfig.FLAVOR == "factory") "factory" else "textiles")
     }
 
     override fun dismissGuardAlert() {
@@ -185,9 +178,10 @@ class AndroidFirebaseSyncManager : FirebaseSyncManager {
 
     // --- Anti-Erasure Guard & RTDB Inbound Snapshot Processors ---
 
-    private fun handleMerchantsSnapshot(mode: AppMode, snapshot: DataSnapshot) {
-        val helper = getBusinessDatabaseHelper()
-        val localList = helper.loadAllMerchants(mode)
+    private fun handleMerchantsSnapshot(scope: String, snapshot: DataSnapshot) {
+        val isFact = scope == "factory" || scope == "kooli"
+        val helper = if (isFact) com.elvan.udukkai.data.database.getFactoryDatabaseHelper() else com.elvan.udukkai.data.database.getTextilesDatabaseHelper()
+        val localList = helper.loadAllMerchants()
 
         if (localList.isNotEmpty() && (!snapshot.exists() || snapshot.childrenCount == 0L)) {
             triggerAntiErasureGuard("merchants", localList.size)
@@ -205,7 +199,7 @@ class AndroidFirebaseSyncManager : FirebaseSyncManager {
                 val localUpdated = existing?.updatedAt ?: 0L
 
                 if (existing == null || remoteUpdated > localUpdated) {
-                    helper.saveMerchant(mode, merchant)
+                    helper.saveMerchant(merchant)
                     anyChanged = true
                 }
             }
@@ -216,15 +210,21 @@ class AndroidFirebaseSyncManager : FirebaseSyncManager {
         if (anyChanged) {
             _lastSyncTime.value = System.currentTimeMillis()
             CoroutineScope(Dispatchers.Main).launch {
-                VaangunarRepository.loadAll(mode)
-                VaangunarRepository.loadDeleted(mode)
+                if (isFact) {
+                    com.elvan.udukkai.factory.data.FactoryCustomerRepository.loadAll()
+                    com.elvan.udukkai.factory.data.FactoryCustomerRepository.loadDeleted()
+                } else {
+                    com.elvan.udukkai.textiles.data.TextilesCustomerRepository.loadAll()
+                    com.elvan.udukkai.textiles.data.TextilesCustomerRepository.loadDeleted()
+                }
             }
         }
     }
 
-    private fun handleProductsSnapshot(mode: AppMode, snapshot: DataSnapshot) {
-        val helper = getBusinessDatabaseHelper()
-        val localList = helper.loadAllItems(mode)
+    private fun handleProductsSnapshot(scope: String, snapshot: DataSnapshot) {
+        val isFact = scope == "factory" || scope == "kooli"
+        val helper = if (isFact) com.elvan.udukkai.data.database.getFactoryDatabaseHelper() else com.elvan.udukkai.data.database.getTextilesDatabaseHelper()
+        val localList = helper.loadAllItems()
 
         if (localList.isNotEmpty() && (!snapshot.exists() || snapshot.childrenCount == 0L)) {
             triggerAntiErasureGuard("products", localList.size)
@@ -242,7 +242,7 @@ class AndroidFirebaseSyncManager : FirebaseSyncManager {
                 val localUpdated = existing?.updatedAt ?: 0L
 
                 if (existing == null || remoteUpdated > localUpdated) {
-                    helper.saveItem(mode, item)
+                    helper.saveItem(item)
                     anyChanged = true
                 }
             }
@@ -253,15 +253,21 @@ class AndroidFirebaseSyncManager : FirebaseSyncManager {
         if (anyChanged) {
             _lastSyncTime.value = System.currentTimeMillis()
             CoroutineScope(Dispatchers.Main).launch {
-                PorulRepository.loadAll(mode)
-                PorulRepository.loadDeleted(mode)
+                if (isFact) {
+                    com.elvan.udukkai.factory.data.FactoryProductRepository.loadAll()
+                    com.elvan.udukkai.factory.data.FactoryProductRepository.loadDeleted()
+                } else {
+                    com.elvan.udukkai.textiles.data.TextilesProductRepository.loadAll()
+                    com.elvan.udukkai.textiles.data.TextilesProductRepository.loadDeleted()
+                }
             }
         }
     }
 
-    private fun handleInvoicesSnapshot(mode: AppMode, snapshot: DataSnapshot) {
-        val helper = getBusinessDatabaseHelper()
-        val localList = helper.loadAllInvoices(mode)
+    private fun handleInvoicesSnapshot(scope: String, snapshot: DataSnapshot) {
+        val isFact = scope == "factory" || scope == "kooli"
+        val helper = if (isFact) com.elvan.udukkai.data.database.getFactoryDatabaseHelper() else com.elvan.udukkai.data.database.getTextilesDatabaseHelper()
+        val localList = helper.loadAllInvoices()
 
         if (localList.isNotEmpty() && (!snapshot.exists() || snapshot.childrenCount == 0L)) {
             triggerAntiErasureGuard("invoices", localList.size)
@@ -279,7 +285,7 @@ class AndroidFirebaseSyncManager : FirebaseSyncManager {
                 val localUpdated = existing?.updatedAt ?: 0L
 
                 if (existing == null || remoteUpdated > localUpdated) {
-                    helper.saveInvoice(mode, invoice)
+                    helper.saveInvoice(invoice)
                     anyChanged = true
                 }
             }
@@ -290,15 +296,21 @@ class AndroidFirebaseSyncManager : FirebaseSyncManager {
         if (anyChanged) {
             _lastSyncTime.value = System.currentTimeMillis()
             CoroutineScope(Dispatchers.Main).launch {
-                PattiyalRepository.loadAll(mode)
-                PattiyalRepository.loadDeleted(mode)
+                if (isFact) {
+                    com.elvan.udukkai.factory.data.FactoryInvoiceRepository.loadAll()
+                    com.elvan.udukkai.factory.data.FactoryInvoiceRepository.loadDeleted()
+                } else {
+                    com.elvan.udukkai.textiles.data.TextilesInvoiceRepository.loadAll()
+                    com.elvan.udukkai.textiles.data.TextilesInvoiceRepository.loadDeleted()
+                }
             }
         }
     }
 
-    private fun handleReceiptsSnapshot(mode: AppMode, snapshot: DataSnapshot) {
-        val helper = getBusinessDatabaseHelper()
-        val localList = helper.loadAllReceipts(mode)
+    private fun handleReceiptsSnapshot(scope: String, snapshot: DataSnapshot) {
+        val isFact = scope == "factory" || scope == "kooli"
+        val helper = if (isFact) com.elvan.udukkai.data.database.getFactoryDatabaseHelper() else com.elvan.udukkai.data.database.getTextilesDatabaseHelper()
+        val localList = helper.loadAllReceipts()
 
         if (localList.isNotEmpty() && (!snapshot.exists() || snapshot.childrenCount == 0L)) {
             triggerAntiErasureGuard("receipts", localList.size)
@@ -316,7 +328,7 @@ class AndroidFirebaseSyncManager : FirebaseSyncManager {
                 val localUpdated = existing?.updatedAt ?: 0L
 
                 if (existing == null || remoteUpdated > localUpdated) {
-                    helper.saveReceipt(mode, receipt)
+                    helper.saveReceipt(receipt)
                     anyChanged = true
                 }
             }
@@ -327,8 +339,13 @@ class AndroidFirebaseSyncManager : FirebaseSyncManager {
         if (anyChanged) {
             _lastSyncTime.value = System.currentTimeMillis()
             CoroutineScope(Dispatchers.Main).launch {
-                PatrugalRepository.loadAll(mode)
-                PatrugalRepository.loadDeleted(mode)
+                if (isFact) {
+                    com.elvan.udukkai.factory.data.FactoryReceiptRepository.loadAll()
+                    com.elvan.udukkai.factory.data.FactoryReceiptRepository.loadDeleted()
+                } else {
+                    com.elvan.udukkai.textiles.data.TextilesReceiptRepository.loadAll()
+                    com.elvan.udukkai.textiles.data.TextilesReceiptRepository.loadDeleted()
+                }
             }
         }
     }
@@ -342,10 +359,10 @@ class AndroidFirebaseSyncManager : FirebaseSyncManager {
 
     // --- Outbound Push Operations (Offline-Persistent) ---
 
-    override fun pushMerchant(merchant: VaangunarTharavuru, mode: AppMode) {
+    override fun pushMerchant(merchant: VaangunarTharavuru, scope: String) {
         if (isApplyingRemoteChange) return
         val db = getDatabase() ?: return
-        val prefix = getPrefix(mode)
+        val prefix = getPrefix(scope)
         val ref = db.getReference("udukkai").child(prefix).child("merchants").child("${merchant.id}")
 
         val data = hashMapOf<String, Any?>(
@@ -375,10 +392,10 @@ class AndroidFirebaseSyncManager : FirebaseSyncManager {
         }
     }
 
-    override fun pushItem(item: PorulTharavuru, mode: AppMode) {
+    override fun pushItem(item: PorulTharavuru, scope: String) {
         if (isApplyingRemoteChange) return
         val db = getDatabase() ?: return
-        val prefix = getPrefix(mode)
+        val prefix = getPrefix(scope)
         val ref = db.getReference("udukkai").child(prefix).child("products").child("${item.id}")
 
         val data = PorulFirebasePayloadConverter.toFirebasePayload(item)
@@ -391,10 +408,10 @@ class AndroidFirebaseSyncManager : FirebaseSyncManager {
         }
     }
 
-    override fun pushInvoice(invoice: PattiyalTharavuru, mode: AppMode) {
+    override fun pushInvoice(invoice: PattiyalTharavuru, scope: String) {
         if (isApplyingRemoteChange) return
         val db = getDatabase() ?: return
-        val prefix = getPrefix(mode)
+        val prefix = getPrefix(scope)
         val ref = db.getReference("udukkai").child(prefix).child("invoices").child("${invoice.id}")
 
         val data = hashMapOf<String, Any?>(
@@ -439,10 +456,10 @@ class AndroidFirebaseSyncManager : FirebaseSyncManager {
         }
     }
 
-    override fun pushReceipt(receipt: PatrugalTharavuru, mode: AppMode) {
+    override fun pushReceipt(receipt: PatrugalTharavuru, scope: String) {
         if (isApplyingRemoteChange) return
         val db = getDatabase() ?: return
-        val prefix = getPrefix(mode)
+        val prefix = getPrefix(scope)
         val ref = db.getReference("udukkai").child(prefix).child("receipts").child("${receipt.id}")
 
         val data = hashMapOf<String, Any?>(
@@ -474,10 +491,10 @@ class AndroidFirebaseSyncManager : FirebaseSyncManager {
         }
     }
 
-    override fun pushReceiptLinks(receiptId: Long, links: List<PatruPattiyalInaippuTharavuru>, mode: AppMode) {
+    override fun pushReceiptLinks(receiptId: Long, links: List<PatruPattiyalInaippuTharavuru>, scope: String) {
         if (isApplyingRemoteChange) return
         val db = getDatabase() ?: return
-        val prefix = getPrefix(mode)
+        val prefix = getPrefix(scope)
         val root = db.getReference("udukkai").child(prefix).child("receipt_links").child("$receiptId")
 
         val linksMap = hashMapOf<String, Any>()

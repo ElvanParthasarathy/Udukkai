@@ -28,9 +28,6 @@ import com.elvan.udukkai.ui.components.ElvanCommonCard
 import com.elvan.udukkai.theme.LocalShellColors
 import com.elvan.udukkai.theme.gradientFor
 
-/**
- * Pixel-perfect port of Flutter's ElvanStatsCard bento grid card.
- */
 @Composable
 fun ElvanStatsCard(
     icon: ImageVector,
@@ -99,7 +96,6 @@ fun ElvanStatsCard(
                 modifier = Modifier.fillMaxSize(),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // Icon box
                 Box(
                     modifier = Modifier
                         .size(iconBoxSize)
@@ -139,7 +135,6 @@ fun ElvanStatsCard(
 
                 Spacer(modifier = Modifier.width(14.dp))
 
-                // Text column
                 Column(
                     modifier = Modifier.weight(1f),
                     verticalArrangement = Arrangement.Center
@@ -177,7 +172,6 @@ fun ElvanStatsCard(
                 modifier = Modifier.fillMaxSize(),
                 verticalArrangement = Arrangement.SpaceBetween
             ) {
-                // Icon box
                 Box(
                     modifier = Modifier
                         .size(iconBoxSize)
@@ -215,7 +209,6 @@ fun ElvanStatsCard(
                     }
                 }
 
-                // Text column
                 Column(
                     modifier = Modifier.fillMaxWidth()
                 ) {

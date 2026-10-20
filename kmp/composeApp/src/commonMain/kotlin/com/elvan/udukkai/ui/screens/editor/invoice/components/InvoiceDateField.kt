@@ -23,10 +23,6 @@ import com.elvan.udukkai.theme.rememberShellColors
 import com.elvan.udukkai.ui.navigation.MaterialSymbols
 import com.elvan.udukkai.ui.screens.editor.ElvanThiruthiThalaippu
 
-/**
- * Tappable date display pill that opens a DatePickerDialog.
- * Matches Flutter's `pattiyal_naal_kooru.dart` 1:1.
- */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PattiyalNaalKooru(
@@ -117,80 +113,23 @@ fun PattiyalNaalKooru(
                 containerColor = dialogBg
             )
         ) {
-            MaterialTheme(
-                typography = MaterialTheme.typography.copy(
-                    headlineLarge = TextStyle(
-                        fontFamily = ff,
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        lineHeight = 24.sp
-                    ),
-                    headlineMedium = TextStyle(
-                        fontFamily = ff,
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        lineHeight = 24.sp
-                    ),
-                    headlineSmall = TextStyle(
-                        fontFamily = ff,
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        lineHeight = 22.sp
-                    ),
-                    titleLarge = TextStyle(
-                        fontFamily = ff,
-                        fontSize = 15.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        lineHeight = 20.sp
-                    ),
-                    titleMedium = TextStyle(
-                        fontFamily = ff,
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        lineHeight = 20.sp
-                    ),
-                    titleSmall = TextStyle(
-                        fontFamily = ff,
-                        fontSize = 13.sp,
-                        fontWeight = FontWeight.Medium,
-                        lineHeight = 18.sp
-                    ),
-                    bodyLarge = TextStyle(
-                        fontFamily = ff,
-                        fontSize = 14.sp,
-                        lineHeight = 20.sp
-                    ),
-                    bodyMedium = TextStyle(
-                        fontFamily = ff,
-                        fontSize = 13.sp,
-                        lineHeight = 18.sp
-                    ),
-                    labelLarge = TextStyle(
-                        fontFamily = ff,
-                        fontSize = 13.sp,
-                        fontWeight = FontWeight.Medium,
-                        lineHeight = 18.sp
+            DatePicker(
+                state = datePickerState,
+                title = null,
+                headline = {
+                    DatePickerDefaults.DatePickerHeadline(
+                        selectedDateMillis = datePickerState.selectedDateMillis,
+                        displayMode = datePickerState.displayMode,
+                        dateFormatter = remember { DatePickerDefaults.dateFormatter() },
+                        modifier = Modifier.padding(start = 24.dp, end = 12.dp, top = 16.dp, bottom = 8.dp)
                     )
+                },
+                colors = DatePickerDefaults.colors(
+                    containerColor = dialogBg,
+                    selectedDayContainerColor = colors.accent,
+                    todayDateBorderColor = colors.accent
                 )
-            ) {
-                DatePicker(
-                    state = datePickerState,
-                    title = null,
-                    headline = {
-                        DatePickerDefaults.DatePickerHeadline(
-                            selectedDateMillis = datePickerState.selectedDateMillis,
-                            displayMode = datePickerState.displayMode,
-                            dateFormatter = remember { DatePickerDefaults.dateFormatter() },
-                            modifier = Modifier.padding(start = 24.dp, end = 12.dp, top = 16.dp, bottom = 8.dp)
-                        )
-                    },
-                    colors = DatePickerDefaults.colors(
-                        containerColor = dialogBg,
-                        selectedDayContainerColor = colors.accent,
-                        todayDateBorderColor = colors.accent
-                    )
-                )
-            }
+            )
         }
     }
 }

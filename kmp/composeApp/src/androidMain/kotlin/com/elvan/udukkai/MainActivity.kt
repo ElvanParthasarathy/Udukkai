@@ -14,7 +14,8 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.DisposableEffect
 import androidx.core.view.WindowCompat
-import com.elvan.udukkai.core.mode.ModeManager
+import com.elvan.udukkai.factory.FactoryApp
+import com.elvan.udukkai.textiles.TextilesApp
 import com.elvan.udukkai.theme.ThemeManager
 
 fun updateSystemBarsAppearance(window: Window, isDark: Boolean) {
@@ -49,30 +50,28 @@ fun updateSystemBarsAppearance(window: Window, isDark: Boolean) {
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        com.elvan.udukkai.core.mode.initAndroidLaunchMode()
         requestedOrientation = android.content.pm.ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
         com.elvan.udukkai.core.platform.AppContext.context = applicationContext
         com.elvan.udukkai.localization.LanguageManager.init()
         com.elvan.udukkai.theme.ThemeManager.init()
         com.elvan.udukkai.theme.FontManager.init()
-        com.elvan.udukkai.core.auth.AuthManager.init()
-        com.elvan.udukkai.data.settings.NiruvanaTharavugalRepository.refreshFromDatabase()
+
+        val isFactory = BuildConfig.FLAVOR == "factory"
+        if (isFactory) {
+            com.elvan.udukkai.factory.data.FactoryProfileRepository.refreshFromDatabase()
+        } else {
+            com.elvan.udukkai.textiles.data.TextilesProfileRepository.refreshFromDatabase()
+        }
+
         try {
             com.elvan.udukkai.core.sync.getFirebaseSyncManager().initialize()
-            com.elvan.udukkai.core.sync.getFirebaseSyncManager().startSync(ModeManager.currentMode)
+            com.elvan.udukkai.core.sync.getFirebaseSyncManager().startSync(if (isFactory) "factory" else "textiles")
         } catch (e: Exception) {
             android.util.Log.e("MainActivity", "Failed to start sync: ${e.message}")
         }
 
-        if (savedInstanceState == null) {
-            ModeManager.resetStartupState()
-        }
-
-        // Root fallback. Compose back handlers registered later handle in-app navigation first.
-        // When no in-app handler is enabled (Home at its root), Back exits the activity.
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
-                ModeManager.resetStartupState()
                 finish()
             }
         })
@@ -128,14 +127,11 @@ class MainActivity : ComponentActivity() {
 
                 onDispose {}
             }
-            App()
-        }
-    }
-
-    override fun onDestroy() {
-        super.onDestroy()
-        if (!isChangingConfigurations) {
-            ModeManager.resetStartupState()
+            if (isFactory) {
+                FactoryApp()
+            } else {
+                TextilesApp()
+            }
         }
     }
 }

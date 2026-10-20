@@ -15,9 +15,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.elvan.udukkai.core.mode.AppMode
 import com.elvan.udukkai.data.settings.NiruvanaTharavugal
-import com.elvan.udukkai.data.settings.NiruvanaTharavugalRepository
 import com.elvan.udukkai.localization.K
 import com.elvan.udukkai.localization.tr
 import com.elvan.udukkai.theme.LocalAppFontFamily
@@ -28,7 +26,7 @@ import com.elvan.udukkai.ui.components.shell.ElvanSnackbar
 
 @Composable
 fun NewProfileBottomSheet(
-    mode: AppMode,
+    isTextiles: Boolean = false,
     onDismissRequest: () -> Unit,
     onSuccess: () -> Unit,
     colors: ShellColors = rememberShellColors()
@@ -52,8 +50,8 @@ fun NewProfileBottomSheet(
         onDismissRequest = onDismissRequest,
         onConfirm = {
             if (newNamePrimary.trim().isNotEmpty()) {
-                val profiles = NiruvanaTharavugalRepository.getAllProfiles(mode)
-                if (profiles.size >= NiruvanaTharavugalRepository.MAX_PROFILES) {
+                val profiles = if (isTextiles) com.elvan.udukkai.textiles.data.TextilesProfileRepository.profiles else com.elvan.udukkai.factory.data.FactoryProfileRepository.profiles
+                if (profiles.size >= 5) {
                     ElvanSnackbar.show(maxProfilesMsg)
                     return@ElvanActionSheet
                 }
@@ -62,7 +60,7 @@ fun NewProfileBottomSheet(
                     mudhanMozhi = "ta",
                     thunaiMozhi = "en",
                     iruMozhi = true,
-                    gstPirippugal = mode == AppMode.TEXTILES,
+                    gstPirippugal = isTextiles,
                     niruvanathinPeyar = mutableMapOf(
                         "ta" to newNamePrimary.trim(),
                         "en" to newNameSecondary.trim()
@@ -70,9 +68,9 @@ fun NewProfileBottomSheet(
                     kurumPeyar = newNamePrimary.trim().take(15),
                     naadu = mutableMapOf("en" to "India", "ta" to "இந்தியா"),
                     thalaippuVadivu = "small",
-                    thoatraNiram = if (mode == AppMode.TEXTILES) "#6a1b9a" else "#388e3c"
+                    thoatraNiram = if (isTextiles) "#6a1b9a" else "#388e3c"
                 )
-                val success = NiruvanaTharavugalRepository.createProfile(mode, newProfile)
+                val success = if (isTextiles) com.elvan.udukkai.textiles.data.TextilesProfileRepository.createProfile(newProfile) else com.elvan.udukkai.factory.data.FactoryProfileRepository.createProfile(newProfile)
                 if (success) {
                     ElvanSnackbar.show(saveSuccessMsg)
                     onSuccess()
