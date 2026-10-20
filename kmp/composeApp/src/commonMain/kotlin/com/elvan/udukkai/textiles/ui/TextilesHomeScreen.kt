@@ -47,6 +47,7 @@ import com.elvan.udukkai.ui.navigation.BottomNavBar
 import com.elvan.udukkai.ui.navigation.ElvanSearchBar
 import com.elvan.udukkai.ui.navigation.MaterialSymbols
 import com.elvan.udukkai.ui.navigation.NavTab
+import com.elvan.udukkai.ui.screens.home.desktop.DesktopSideBar
 import com.elvan.udukkai.ui.screens.create.components.CreateDateFilterSheet
 import com.elvan.udukkai.ui.screens.editor.receipt.ReceiptEditorScreen
 import com.elvan.udukkai.ui.screens.recyclebin.RecycleBinScreen
@@ -267,7 +268,8 @@ fun TextilesHomeScreen() {
                         },
                         onCopy = {
                             copyCustomerAndEdit(subpage.customer)
-                        }
+                        },
+                        isTextiles = true
                     )
                 }
                 is ActiveSubpage.ProductView -> {
@@ -279,7 +281,8 @@ fun TextilesHomeScreen() {
                         },
                         onCopy = {
                             copyProductAndEdit(subpage.product)
-                        }
+                        },
+                        isTextiles = true
                     )
                 }
                 is ActiveSubpage.InvoiceView -> {
@@ -718,7 +721,40 @@ fun TextilesHomeScreen() {
                     }
         }
 
-        Box(modifier = Modifier.fillMaxSize()) {
+        Row(modifier = Modifier.fillMaxSize()) {
+            if (isWideScreen) {
+                DesktopSideBar(
+                    selectedTab = selectedTab,
+                    onTabSelected = { tab ->
+                        if (selectedTab != tab) {
+                            if (selectedTab == NavTab.Create || tab != NavTab.Create) {
+                                uruvakkuSegment = 0
+                            }
+                            val targetScrollState = when (tab) {
+                                NavTab.Home -> homeScrollState
+                                NavTab.Create -> createScrollState
+                                NavTab.Products -> productsScrollState
+                                NavTab.Customers -> customersScrollState
+                            }
+                            scope.launch { targetScrollState.scrollToItem(0, 0) }
+                            selectedTab = tab
+                        }
+                    },
+                    onSettingsClick = {
+                        navigateToSubpage(ActiveSubpage.Settings)
+                    },
+                    colors = colors,
+                    appTitle = "Udukkai Textiles",
+                    subtitle = "சவுளி",
+                    activeProfile = TextilesProfileRepository.profile,
+                    allProfiles = TextilesProfileRepository.profiles,
+                    onSelectProfile = { TextilesProfileRepository.setActiveProfile(it) }
+                )
+            }
+
+            Box(
+                modifier = if (isWideScreen) Modifier.weight(1f).fillMaxHeight() else Modifier.fillMaxSize()
+            ) {
             // Use one transition owner for subpages. Rendering the current and previous
             // subpages again in a predictive overlay caused duplicate composition and competing
             // motion on quick Back gestures. The same AnimatedContent now handles each stack change.
@@ -804,7 +840,7 @@ fun TextilesHomeScreen() {
             },
             colors = colors
         )
-
+            }
         }
     }
 }

@@ -43,17 +43,19 @@ fun ProductViewScreen(
     onCopy: (() -> Unit)? = null,
     isTextiles: Boolean = false
 ) {
-        val colors = rememberShellColors()
+    val colors = rememberShellColors()
     val isDark = colors.isDark
     val ff = LocalAppFontFamily.current
 
-    val isBilingual = true; val primaryLang = "ta"; val secondaryLang = "en"
+    val profile = if (isTextiles) com.elvan.udukkai.textiles.data.TextilesProfileRepository.profile else com.elvan.udukkai.factory.data.FactoryProfileRepository.profile
+    val isBilingual = profile.iruMozhi
+    val primaryLang = profile.mudhanMozhi.ifEmpty { "ta" }
+    val secondaryLang = profile.thunaiMozhi.ifEmpty { "en" }
             
     val p1 = item.porulPeyar[primaryLang] ?: item.porulPeyar["ta"] ?: ""
     val p2 = item.porulPeyar[secondaryLang] ?: item.porulPeyar["en"] ?: ""
     val primaryName = p1.ifEmpty { p2.ifEmpty { "-" } }
     val secondaryName = if (isBilingual && p1.isNotEmpty() && p2.isNotEmpty() && p1 != p2) p2 else ""
-
 
     val scrollState = rememberLazyListState()
 

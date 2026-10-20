@@ -39,13 +39,17 @@ fun CustomerViewScreen(
     merchant: VaangunarTharavuru,
     onBack: () -> Unit,
     onEdit: () -> Unit,
-    onCopy: (() -> Unit)? = null
+    onCopy: (() -> Unit)? = null,
+    isTextiles: Boolean = false
 ) {
-        val colors = rememberShellColors()
+    val colors = rememberShellColors()
     val isDark = colors.isDark
     val ff = LocalAppFontFamily.current
 
-    val isBilingual = true; val primaryLang = "ta"; val secondaryLang = "en"
+    val profile = if (isTextiles) com.elvan.udukkai.textiles.data.TextilesProfileRepository.profile else com.elvan.udukkai.factory.data.FactoryProfileRepository.profile
+    val isBilingual = profile.iruMozhi
+    val primaryLang = profile.mudhanMozhi.ifEmpty { "ta" }
+    val secondaryLang = profile.thunaiMozhi.ifEmpty { "en" }
             
     val p1 = merchant.peyar[primaryLang] ?: merchant.peyar["ta"] ?: ""
     val p2 = merchant.peyar[secondaryLang] ?: merchant.peyar["en"] ?: ""
@@ -54,7 +58,6 @@ fun CustomerViewScreen(
 
     val oorVal = merchant.oor[primaryLang] ?: merchant.oor[secondaryLang] ?: merchant.oor.values.firstOrNull().orEmpty()
     val mugavariVal = merchant.mugavari[primaryLang] ?: merchant.mugavari[secondaryLang] ?: merchant.mugavari.values.firstOrNull().orEmpty()
-
 
     val scrollState = rememberLazyListState()
 

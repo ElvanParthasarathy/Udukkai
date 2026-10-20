@@ -162,24 +162,40 @@ fun FactoryCreateScreen(
                     }
 
                     if (isDateFilterActive) {
-                        val (sDate, eDate) = if (selectedSegment == 0) {
-                            FactoryInvoiceRepository.startDateFilter to FactoryInvoiceRepository.endDateFilter
-                        } else {
-                            FactoryReceiptRepository.startDateFilter to FactoryReceiptRepository.endDateFilter
+                        val startMillis = if (selectedSegment == 0) FactoryInvoiceRepository.startDateFilter else FactoryReceiptRepository.startDateFilter
+                        val endMillis = if (selectedSegment == 0) FactoryInvoiceRepository.endDateFilter else FactoryReceiptRepository.endDateFilter
+                        val todayText = K.today.tr()
+                        val yesterdayText = K.yesterday.tr()
+                        val filterText = remember(startMillis, endMillis, todayText, yesterdayText) {
+                            if (startMillis == null && endMillis == null) {
+                                ""
+                            } else if (startMillis != null && endMillis != null) {
+                                val startKey = DateGroupUtils.getDayKey(startMillis)
+                                val endKey = DateGroupUtils.getDayKey(endMillis)
+                                if (startKey == endKey) {
+                                    val now = System.currentTimeMillis()
+                                    val todayKey = DateGroupUtils.getDayKey(now)
+                                    val yesterdayKey = DateGroupUtils.getDayKey(now - 86400000L)
+                                    when (startKey) {
+                                        todayKey -> todayText
+                                        yesterdayKey -> yesterdayText
+                                        else -> DateUtils.formatDate(startMillis)
+                                    }
+                                } else {
+                                    "${DateUtils.formatDate(startMillis)} - ${DateUtils.formatDate(endMillis)}"
+                                }
+                            } else if (startMillis != null) {
+                                ">= ${DateUtils.formatDate(startMillis)}"
+                            } else {
+                                "<= ${DateUtils.formatDate(endMillis!!)}"
+                            }
                         }
 
-                        val filterText = when {
-                            sDate != null && eDate != null -> "${DateUtils.formatDate(sDate)} - ${DateUtils.formatDate(eDate)}"
-                            sDate != null -> "${DateUtils.formatDate(sDate)} ${K.fromWord.tr()}"
-                            eDate != null -> "${DateUtils.formatDate(eDate)} ${K.untilWord.tr()}"
-                            else -> ""
-                        }
-
-                        Row(
+                        Box(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(horizontal = Dimens.ContentPadding),
-                            verticalAlignment = Alignment.CenterVertically
+                            contentAlignment = Alignment.Center
                         ) {
                             Surface(
                                 shape = CircleShape,
@@ -187,15 +203,12 @@ fun FactoryCreateScreen(
                                 modifier = Modifier
                                     .clip(CircleShape)
                                     .clickable {
-                                        if (selectedSegment == 0) {
-                                            FactoryInvoiceRepository.clearDateFilter()
-                                        } else {
-                                            FactoryReceiptRepository.clearDateFilter()
-                                        }
+                                        FactoryInvoiceRepository.clearDateFilter()
+                                        FactoryReceiptRepository.clearDateFilter()
                                     }
                             ) {
                                 Row(
-                                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                                    modifier = Modifier.padding(horizontal = 14.dp, vertical = 6.dp),
                                     verticalAlignment = Alignment.CenterVertically,
                                     horizontalArrangement = Arrangement.spacedBy(6.dp)
                                 ) {
@@ -256,17 +269,16 @@ fun FactoryCreateScreen(
                                     tint = LocalShellColors.current.textQuaternary,
                                     modifier = Modifier.size(48.dp)
                                 )
-                                Spacer(modifier = Modifier.height(12.dp))
+                                Spacer(modifier = Modifier.height(14.dp))
                                 Text(
                                     text = if (isSearchActive || FactoryInvoiceRepository.isDateFilterActive) {
-                                        K.noMatchingInvoices.tr()
+                                        K.noMatchingInvoices.tr().preventBrokenLigatures()
                                     } else {
-                                        K.noInvoicesYet.tr()
+                                        K.noInvoicesYet.tr().preventBrokenLigatures()
                                     },
                                     style = TextStyle(
                                         fontFamily = ff,
-                                        fontSize = 14.sp,
-                                        fontWeight = FontWeight.Medium,
+                                        fontSize = 15.sp,
                                         color = LocalShellColors.current.textTertiary
                                     )
                                 )
@@ -327,12 +339,12 @@ fun FactoryCreateScreen(
                                 contentAlignment = Alignment.Center
                             ) {
                                 CircularProgressIndicator(
-                                    color = colors.accent,
-                                    modifier = Modifier.size(24.dp),
-                                    strokeWidth = 2.dp
+                                    modifier = Modifier.size(26.dp),
+                                    strokeWidth = 2.5.dp,
+                                    color = colors.accent
                                 )
                                 LaunchedEffect(Unit) {
-                                    delay(400)
+                                    delay(350)
                                     visibleInvoiceCount += pageSize
                                 }
                             }
@@ -358,17 +370,16 @@ fun FactoryCreateScreen(
                                     tint = LocalShellColors.current.textQuaternary,
                                     modifier = Modifier.size(48.dp)
                                 )
-                                Spacer(modifier = Modifier.height(12.dp))
+                                Spacer(modifier = Modifier.height(14.dp))
                                 Text(
                                     text = if (isSearchActive || FactoryReceiptRepository.isDateFilterActive) {
-                                        K.noMatchingReceipts.tr()
+                                        K.noMatchingReceipts.tr().preventBrokenLigatures()
                                     } else {
-                                        K.noReceiptsYet.tr()
+                                        K.noReceiptsYet.tr().preventBrokenLigatures()
                                     },
                                     style = TextStyle(
                                         fontFamily = ff,
-                                        fontSize = 14.sp,
-                                        fontWeight = FontWeight.Medium,
+                                        fontSize = 15.sp,
                                         color = LocalShellColors.current.textTertiary
                                     )
                                 )
@@ -429,12 +440,12 @@ fun FactoryCreateScreen(
                                 contentAlignment = Alignment.Center
                             ) {
                                 CircularProgressIndicator(
-                                    color = colors.accent,
-                                    modifier = Modifier.size(24.dp),
-                                    strokeWidth = 2.dp
+                                    modifier = Modifier.size(26.dp),
+                                    strokeWidth = 2.5.dp,
+                                    color = colors.accent
                                 )
                                 LaunchedEffect(Unit) {
-                                    delay(400)
+                                    delay(350)
                                     visibleReceiptCount += pageSize
                                 }
                             }
