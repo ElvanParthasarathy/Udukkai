@@ -59,6 +59,7 @@ fun ElvanShell(
     isAllSelected: Boolean = false,
     onSelectAll: () -> Unit = {},
     onCancelSelection: () -> Unit = {},
+    showBottomFade: Boolean = false,
     content: @Composable () -> Unit
 ) {
     val colors = rememberShellColors()
@@ -489,7 +490,7 @@ fun ElvanShell(
                 ) {
                     navbar()
                 }
-            } else {
+            } else if (showBottomFade) {
                 // Subpages: Bottom Shadow Fade Mask above System Navigation Bar
                 Box(
                     modifier = Modifier

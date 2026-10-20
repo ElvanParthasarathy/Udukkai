@@ -2,6 +2,7 @@ package com.elvan.udukkai.ui.screens.editor
 
 import androidx.compose.animation.*
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
@@ -39,6 +40,7 @@ import com.elvan.udukkai.theme.preventBrokenLigatures
 import com.elvan.udukkai.theme.rememberShellColors
 import com.elvan.udukkai.theme.gradientFor
 import com.elvan.udukkai.ui.components.shell.ElvanSelectionBottomSheet
+import com.elvan.udukkai.ui.components.shell.ElvanSnackbar
 import com.elvan.udukkai.ui.navigation.MaterialSymbols
 import com.elvan.udukkai.theme.LocalShellColors
 
@@ -632,7 +634,7 @@ fun ElvanThiruthiPothan(
 
 /**
  * Bottom Floating Action Bar for Elvan Editors (One UI pattern).
- * Replaces the cramped top-right action button with a primary thumb-accessible button at the bottom.
+ * Replaces the cramped top-right action button with a primary thumb-accessible floating pill at the bottom.
  */
 @Composable
 fun ElvanEditorBottomBar(
@@ -648,31 +650,44 @@ fun ElvanEditorBottomBar(
     val ff = LocalAppFontFamily.current
     val btnColor = accentColor ?: LocalEditorAccentColor.current ?: colors.accent
 
+    DisposableEffect(Unit) {
+        ElvanSnackbar.isBottomBarVisible = true
+        onDispose { }
+    }
+
     Box(
         modifier = modifier
             .fillMaxWidth()
             .navigationBarsPaddingIfMobile()
-            .padding(horizontal = 20.dp, vertical = 16.dp),
+            .padding(bottom = 16.dp),
         contentAlignment = Alignment.Center
     ) {
         Box(
             modifier = Modifier
-                .fillMaxWidth()
-                .height(52.dp)
+                .height(56.dp)
                 .cssShadow(
                     color = Color.Black,
                     alpha = if (isDark) 0.25f else 0.12f,
                     blurRadius = 16.dp,
                     offsetY = 4.dp
                 )
+                .background(
+                    color = if (enabled) btnColor else btnColor.copy(alpha = 0.4f),
+                    shape = CircleShape
+                )
+                .border(
+                    width = 0.5.dp,
+                    color = Color.White.copy(alpha = if (isDark) 0.18f else 0.35f),
+                    shape = CircleShape
+                )
                 .clip(CircleShape)
-                .background(if (enabled) btnColor else btnColor.copy(alpha = 0.4f))
                 .clickable(
                     interactionSource = remember { MutableInteractionSource() },
                     indication = ripple(bounded = true, color = Color.White),
                     enabled = enabled && !isLoading,
                     onClick = onClick
-                ),
+                )
+                .padding(horizontal = 32.dp),
             contentAlignment = Alignment.Center
         ) {
             Row(
@@ -699,7 +714,7 @@ fun ElvanEditorBottomBar(
                     text = label.preventBrokenLigatures(),
                     style = TextStyle(
                         fontFamily = ff,
-                        fontSize = 16.sp,
+                        fontSize = 15.sp,
                         fontWeight = FontWeight.Bold,
                         color = Color.White,
                         letterSpacing = 0.2.sp

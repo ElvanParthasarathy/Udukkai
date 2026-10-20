@@ -214,7 +214,7 @@ fun FactoryHomeScreen() {
     ) {
         val isWideScreen = isDesktop && maxWidth >= 768.dp
 
-        val shouldShowBottomBarForSnackbar = (activeSubpage == null || activeSubpage is ActiveSubpage.RecycleBin) && !isWideScreen
+        val shouldShowBottomBarForSnackbar = (activeSubpage !is ActiveSubpage.Settings) && !isWideScreen
         SideEffect {
             ElvanSnackbar.isBottomBarVisible = shouldShowBottomBarForSnackbar
         }

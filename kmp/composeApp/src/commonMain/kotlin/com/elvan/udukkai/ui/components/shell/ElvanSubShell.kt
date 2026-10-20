@@ -38,6 +38,7 @@ fun ElvanSubShell(
     leadingIcon: ImageVector? = null,
     hasActions: Boolean = false,
     actions: @Composable RowScope.() -> Unit = {},
+    showBottomFade: Boolean = false,
     content: @Composable () -> Unit
 ) {
     val colors = rememberShellColors()
@@ -46,6 +47,7 @@ fun ElvanSubShell(
         onBack = onBack,
         leadingIcon = leadingIcon,
         showNavbar = false,
+        showBottomFade = showBottomFade,
         scrollState = scrollState,
         hasActions = hasActions,
         actions = actions,

@@ -12,6 +12,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -27,6 +28,7 @@ import com.elvan.udukkai.localization.K
 import com.elvan.udukkai.localization.tr
 import com.elvan.udukkai.theme.LocalAppFontFamily
 import com.elvan.udukkai.theme.rememberShellColors
+import com.elvan.udukkai.ui.components.shell.ElvanSnackbar
 import com.elvan.udukkai.ui.components.shell.ElvanSubShell
 import com.elvan.udukkai.ui.navigation.MaterialSymbols
 
@@ -49,6 +51,11 @@ fun ElvanViewActionBar(
     val printLabel = K.printBtn.tr()
     val copyLabel = K.copyBtn.tr()
     val editLabel = K.editRecord.tr()
+
+    DisposableEffect(Unit) {
+        ElvanSnackbar.isBottomBarVisible = true
+        onDispose { }
+    }
 
     val actionCount = (if (onPrint != null) 1 else 0) + (if (onCopy != null) 1 else 0) + (if (onEdit != null) 1 else 0)
     if (actionCount == 0) return
