@@ -1,5 +1,8 @@
 package com.elvan.udukkai.factory.ui.screens.editor
 
+import androidx.compose.ui.Alignment
+import com.elvan.udukkai.ui.screens.editor.ElvanEditorBottomBar
+
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -51,6 +54,7 @@ fun FactoryCustomerEditorScreen(
 
     var nameValidationError by remember { mutableStateOf<String?>(null) }
     var showDiscardDialog by remember { mutableStateOf(false) }
+    var isExiting by remember { mutableStateOf(false) }
 
     val hasChanges = remember(peyarMap, tholaipaesi, oorMap, mugavariMap) {
         if (merchant == null) {
@@ -63,14 +67,17 @@ fun FactoryCustomerEditorScreen(
     }
 
     val handleBackAttempt: () -> Unit = {
-        if (hasChanges) {
-            showDiscardDialog = true
-        } else {
-            onBack()
+        if (!isExiting) {
+            if (hasChanges) {
+                showDiscardDialog = true
+            } else {
+                isExiting = true
+                onBack()
+            }
         }
     }
 
-    AppBackHandler(enabled = true) {
+    AppBackHandler(enabled = !isExiting) {
         handleBackAttempt()
     }
 
@@ -104,6 +111,7 @@ fun FactoryCustomerEditorScreen(
 
         val newId = FactoryCustomerRepository.save(merchantToSave)
         if (newId > 0L) {
+            isExiting = true
             ElvanSnackbar.show(saveSuccessMsg)
             onBack()
         } else {
@@ -117,25 +125,21 @@ fun FactoryCustomerEditorScreen(
         title = pageTitle,
         onBack = handleBackAttempt,
         scrollState = scrollState,
-        hasActions = true,
-        actions = {
-            ElvanActionButton(
-                label = K.saveBtn.tr(),
-                onClick = { handleSave() }
-            )
-        }
+        hasActions = false,
+        actions = {}
     ) {
-        CompositionLocalProvider(LocalEditorAccentColor provides colors.customerColor) {
-            LazyColumn(
-                state = scrollState,
-                modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(
-                    start = 16.dp,
-                    end = 16.dp,
-                    bottom = Dimens.SubpageContentPaddingBottom
-                ),
-                verticalArrangement = Arrangement.spacedBy(24.dp)
-            ) {
+        Box(modifier = Modifier.fillMaxSize()) {
+            CompositionLocalProvider(LocalEditorAccentColor provides colors.customerColor) {
+                LazyColumn(
+                    state = scrollState,
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = PaddingValues(
+                        start = 16.dp,
+                        end = 16.dp,
+                        bottom = Dimens.SubpageContentPaddingBottom + 72.dp
+                    ),
+                    verticalArrangement = Arrangement.spacedBy(24.dp)
+                ) {
                 item(key = "top_spacer") {
                     Spacer(modifier = Modifier.height(LocalElvanTopSpacerHeight.current))
                 }
@@ -220,13 +224,22 @@ fun FactoryCustomerEditorScreen(
                     }
                 }
             }
+
+            ElvanEditorBottomBar(
+                label = K.saveBtn.tr(),
+                onClick = { handleSave() },
+                accentColor = colors.customerColor,
+                modifier = Modifier.align(Alignment.BottomCenter)
+            )
         }
     }
+    }
 
-    if (showDiscardDialog) {
+    if (showDiscardDialog && !isExiting) {
         ElvanDiscardChangesDialog(
             onKeepEditing = { showDiscardDialog = false },
             onDiscard = {
+                isExiting = true
                 showDiscardDialog = false
                 onBack()
             }

@@ -1,4 +1,7 @@
-﻿package com.elvan.udukkai.factory.ui.screens.editor
+package com.elvan.udukkai.factory.ui.screens.editor
+
+import androidx.compose.ui.Alignment
+import com.elvan.udukkai.ui.screens.editor.ElvanEditorBottomBar
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -9,7 +12,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
@@ -166,6 +168,7 @@ fun FactoryReceiptEditorScreen(
 
     var hasUnsavedChanges by remember { mutableStateOf(false) }
     var showUnsavedDialog by remember { mutableStateOf(false) }
+    var isExiting by remember { mutableStateOf(false) }
     var isSaving by remember { mutableStateOf(false) }
     var isSeluthiVagaiSheetOpen by remember { mutableStateOf(false) }
 
@@ -303,6 +306,7 @@ fun FactoryReceiptEditorScreen(
 
             val savedId = com.elvan.udukkai.factory.data.FactoryReceiptRepository.saveWithLinks(entryToSave, links)
             if (savedId > 0L) {
+                isExiting = true
                 ElvanSnackbar.show(savedMsg)
                 onBack()
             } else {
@@ -317,14 +321,15 @@ fun FactoryReceiptEditorScreen(
 
     // Back navigation guard
     fun handleBackAttempt() {
-        if (hasUnsavedChanges) {
+                if (hasUnsavedChanges) {
             showUnsavedDialog = true
         } else {
+            isExiting = true
             onBack()
         }
     }
 
-    AppBackHandler(enabled = hasUnsavedChanges || showUnsavedDialog) {
+    AppBackHandler(enabled = !isExiting && (hasUnsavedChanges || showUnsavedDialog)) {
         handleBackAttempt()
     }
 
@@ -336,26 +341,21 @@ fun FactoryReceiptEditorScreen(
         title = pageTitle,
         onBack = { handleBackAttempt() },
         scrollState = scrollState,
-        hasActions = true,
-        actions = {
-            ElvanActionButton(
-                label = K.saveBtn.tr(),
-                onClick = { handleSave() },
-                enabled = !isSaving
-            )
-        }
+        hasActions = false,
+        actions = {}
     ) {
-        CompositionLocalProvider(LocalEditorAccentColor provides colors.receiptColor) {
-            LazyColumn(
-                state = scrollState,
-                modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(
-                    start = 16.dp,
-                    end = 16.dp,
-                    bottom = Dimens.SubpageContentPaddingBottom
-                ),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
+        Box(modifier = Modifier.fillMaxSize()) {
+            CompositionLocalProvider(LocalEditorAccentColor provides colors.receiptColor) {
+                LazyColumn(
+                    state = scrollState,
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = PaddingValues(
+                        start = 16.dp,
+                        end = 16.dp,
+                        bottom = Dimens.SubpageContentPaddingBottom + 72.dp
+                    ),
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
             item(key = "top_spacer") {
                 Spacer(modifier = Modifier.height(LocalElvanTopSpacerHeight.current))
             }
@@ -682,7 +682,17 @@ fun FactoryReceiptEditorScreen(
                         }
                     }
                 }
+            }
         }
+
+        ElvanEditorBottomBar(
+            label = K.saveBtn.tr(),
+            onClick = { handleSave() },
+            enabled = !isSaving,
+            isLoading = isSaving,
+            accentColor = colors.receiptColor,
+            modifier = Modifier.align(Alignment.BottomCenter)
+        )
     }
 }
 
@@ -734,7 +744,7 @@ fun FactoryReceiptEditorScreen(
     }
 
     // Modal: Unsaved Changes Action Sheet
-    if (showUnsavedDialog) {
+    if (showUnsavedDialog && !isExiting) {
         ElvanActionSheet(
             title = K.pendingSave.tr(),
             cancelText = K.continueBtn.tr(),
@@ -746,7 +756,9 @@ fun FactoryReceiptEditorScreen(
                 handleSave()
             },
             onTertiary = {
+                isExiting = true
                 showUnsavedDialog = false
+                hasUnsavedChanges = false
                 onBack()
             }
         )

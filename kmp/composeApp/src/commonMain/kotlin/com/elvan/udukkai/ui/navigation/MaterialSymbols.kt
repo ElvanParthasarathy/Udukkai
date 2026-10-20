@@ -420,6 +420,7 @@ object MaterialSymbols {
         val Restore: ImageVector get() = LibSymbols.Rounded.Settings_backup_restore
         val ContentCopy: ImageVector get() = LibSymbols.Rounded.Content_copy
         val ContentPaste: ImageVector get() = LibSymbols.Rounded.Content_paste
+        val Print: ImageVector get() = LibSymbols.Rounded.Print
 
         // ── Settings Categories & Badges (Filled / Solid as per old Flutter design) ──
         val BusinessCenter: ImageVector get() = LibSymbols.RoundedFilled.Business_center

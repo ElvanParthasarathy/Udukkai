@@ -30,6 +30,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.elvan.udukkai.core.extensions.cssShadow
+import com.elvan.udukkai.core.platform.navigationBarsPaddingIfMobile
 import com.elvan.udukkai.localization.K
 import com.elvan.udukkai.localization.tr
 import com.elvan.udukkai.theme.LocalAppFontFamily
@@ -626,3 +628,84 @@ fun ElvanThiruthiPothan(
     }
 }
 
+
+
+/**
+ * Bottom Floating Action Bar for Elvan Editors (One UI pattern).
+ * Replaces the cramped top-right action button with a primary thumb-accessible button at the bottom.
+ */
+@Composable
+fun ElvanEditorBottomBar(
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    label: String = K.saveBtn.tr(),
+    enabled: Boolean = true,
+    isLoading: Boolean = false,
+    accentColor: Color? = null
+) {
+    val colors = rememberShellColors()
+    val isDark = colors.isDark
+    val ff = LocalAppFontFamily.current
+    val btnColor = accentColor ?: LocalEditorAccentColor.current ?: colors.accent
+
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .navigationBarsPaddingIfMobile()
+            .padding(horizontal = 20.dp, vertical = 16.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(52.dp)
+                .cssShadow(
+                    color = Color.Black,
+                    alpha = if (isDark) 0.25f else 0.12f,
+                    blurRadius = 16.dp,
+                    offsetY = 4.dp
+                )
+                .clip(CircleShape)
+                .background(if (enabled) btnColor else btnColor.copy(alpha = 0.4f))
+                .clickable(
+                    interactionSource = remember { MutableInteractionSource() },
+                    indication = ripple(bounded = true, color = Color.White),
+                    enabled = enabled && !isLoading,
+                    onClick = onClick
+                ),
+            contentAlignment = Alignment.Center
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.Center
+            ) {
+                if (isLoading) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(20.dp),
+                        color = Color.White,
+                        strokeWidth = 2.dp
+                    )
+                    Spacer(modifier = Modifier.width(10.dp))
+                } else {
+                    Icon(
+                        imageVector = MaterialSymbols.Rounded.CheckCircleFill,
+                        contentDescription = label,
+                        tint = Color.White,
+                        modifier = Modifier.size(20.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                }
+                Text(
+                    text = label.preventBrokenLigatures(),
+                    style = TextStyle(
+                        fontFamily = ff,
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White,
+                        letterSpacing = 0.2.sp
+                    )
+                )
+            }
+        }
+    }
+}

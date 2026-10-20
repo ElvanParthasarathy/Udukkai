@@ -73,7 +73,7 @@ fun ProductViewScreen(
             contentPadding = PaddingValues(
                 start = 16.dp,
                 end = 16.dp,
-                bottom = Dimens.SubpageContentPaddingBottom
+                bottom = Dimens.SubpageContentPaddingBottom + 64.dp
             ),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
