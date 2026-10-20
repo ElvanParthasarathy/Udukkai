@@ -712,7 +712,7 @@ fun ReceiptEditorScreen(
                 isInvoicePickerOpen = false
             },
             onDismissRequest = { isInvoicePickerOpen = false },
-            isTextiles = isTextiles
+            merchants = if (isTextiles) com.elvan.udukkai.textiles.data.TextilesCustomerRepository.customers else com.elvan.udukkai.factory.data.FactoryCustomerRepository.customers
         )
     }
 

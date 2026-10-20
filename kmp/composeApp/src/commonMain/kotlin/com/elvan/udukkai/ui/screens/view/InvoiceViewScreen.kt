@@ -20,6 +20,7 @@ import com.elvan.udukkai.core.platform.AppBackHandler
 import com.elvan.udukkai.core.utils.CurrencyUtils
 import com.elvan.udukkai.core.utils.DateUtils
 import com.elvan.udukkai.data.model.PattiyalTharavuru
+import com.elvan.udukkai.data.settings.NiruvanaTharavugal
 import com.elvan.udukkai.localization.PrintLanguageManager
 import com.elvan.udukkai.localization.K
 import com.elvan.udukkai.localization.tr
@@ -37,23 +38,22 @@ import com.elvan.udukkai.theme.LocalShellColors
 @Composable
 fun InvoiceViewScreen(
     invoice: PattiyalTharavuru,
+    profile: NiruvanaTharavugal,
+    allProfiles: List<NiruvanaTharavugal>,
     onBack: () -> Unit,
     onEdit: () -> Unit,
     onPrint: (() -> Unit)? = null,
-    onCopy: (() -> Unit)? = null,
-    isTextiles: Boolean = false
+    onCopy: (() -> Unit)? = null
 ) {
-        val colors = rememberShellColors()
+    val colors = rememberShellColors()
     val isDark = colors.isDark
     val ff = LocalAppFontFamily.current
 
-    val profiles = if (isTextiles) com.elvan.udukkai.textiles.data.TextilesProfileRepository.allProfiles else com.elvan.udukkai.factory.data.FactoryProfileRepository.allProfiles
-    val defaultProfile = if (isTextiles) com.elvan.udukkai.textiles.data.TextilesProfileRepository.profile else com.elvan.udukkai.factory.data.FactoryProfileRepository.profile
-    val profile = (if (invoice.niruvanamId != null) profiles.find { it.id == invoice.niruvanamId } else null)
-        ?: defaultProfile
-    val isBilingual = profile.iruMozhi
-    val primaryLang = profile.mudhanMozhi.ifEmpty { "ta" }
-    val secondaryLang = profile.thunaiMozhi.ifEmpty { "en" }
+    val activeProfile = (if (invoice.niruvanamId != null) allProfiles.find { it.id == invoice.niruvanamId } else null)
+        ?: profile
+    val isBilingual = activeProfile.iruMozhi
+    val primaryLang = activeProfile.mudhanMozhi.ifEmpty { "ta" }
+    val secondaryLang = activeProfile.thunaiMozhi.ifEmpty { "en" }
 
     val customerName = invoice.vaangunarPeyar[primaryLang]
         ?: invoice.vaangunarPeyar[secondaryLang]

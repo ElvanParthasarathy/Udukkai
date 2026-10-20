@@ -33,17 +33,17 @@ fun ReceiptCard(
     isSelected: Boolean = false,
     onClick: () -> Unit = {},
     onLongClick: (() -> Unit)? = null,
-    isTextiles: Boolean = false
+    profile: com.elvan.udukkai.data.settings.NiruvanaTharavugal? = null,
+    allProfiles: List<com.elvan.udukkai.data.settings.NiruvanaTharavugal> = emptyList()
 ) {
     val ff = LocalAppFontFamily.current
 
-    val profiles = if (isTextiles) com.elvan.udukkai.textiles.data.TextilesProfileRepository.allProfiles else com.elvan.udukkai.factory.data.FactoryProfileRepository.allProfiles
-    val defaultProfile = if (isTextiles) com.elvan.udukkai.textiles.data.TextilesProfileRepository.profile else com.elvan.udukkai.factory.data.FactoryProfileRepository.profile
-    val profile = (if (receipt.niruvanamId != null) profiles.find { it.id == receipt.niruvanamId } else null)
-        ?: defaultProfile
-    val isBilingual = profile.iruMozhi
-    val primaryLang = profile.mudhanMozhi.ifEmpty { "ta" }
-    val secondaryLang = profile.thunaiMozhi.ifEmpty { "en" }
+    val resolvedProfile = (if (receipt.niruvanamId != null) allProfiles.find { it.id == receipt.niruvanamId } else null)
+        ?: profile
+        ?: com.elvan.udukkai.data.settings.NiruvanaTharavugal()
+    val isBilingual = resolvedProfile.iruMozhi
+    val primaryLang = resolvedProfile.mudhanMozhi.ifEmpty { "ta" }
+    val secondaryLang = resolvedProfile.thunaiMozhi.ifEmpty { "en" }
 
     val primary = receipt.vaangunarPeyar[primaryLang]
         ?: receipt.vaangunarPeyar["ta"]

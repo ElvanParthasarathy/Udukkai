@@ -425,7 +425,9 @@ fun FactoryCreateScreen(
                                     isSelectionMode = isSelectionMode,
                                     isSelected = isSelected,
                                     onClick = onCardClick,
-                                    onLongClick = onCardLongClick
+                                    onLongClick = onCardLongClick,
+                                    profile = FactoryProfileRepository.profile,
+                                    allProfiles = FactoryProfileRepository.allProfiles
                                 )
                             }
                         }

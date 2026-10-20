@@ -1,4 +1,4 @@
-﻿package com.elvan.udukkai.core.backup
+package com.elvan.udukkai.core.backup
 
 import com.elvan.udukkai.data.DesktopDbPaths
 import java.io.File
@@ -338,7 +338,8 @@ class DesktopUdukkaiBackupService : UdukkaiBackupService {
             }
 
             // Immediately reload in-memory repositories across app
-            reloadAllRepositories()
+            reloadFactoryRepositories()
+            reloadTextilesRepositories()
             true
         } catch (e: Exception) {
             println("Desktop unpack failed: ${e.message}")

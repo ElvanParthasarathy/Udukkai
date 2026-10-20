@@ -36,6 +36,7 @@ import com.elvan.udukkai.ui.components.shell.*
 import com.elvan.udukkai.ui.navigation.MaterialSymbols
 import com.elvan.udukkai.ui.screens.settings.SettingsRoute
 import com.elvan.udukkai.ui.screens.settings.screens.*
+import com.elvan.udukkai.factory.ui.screens.settings.*
 
 @Composable
 fun FactorySettingsScreen(
@@ -126,13 +127,13 @@ fun FactorySettingsScreen(
                         onSelectProfile = { FactoryProfileRepository.setActiveProfile(it) },
                         isTextiles = false
                     )
-                    SettingsRoute.ManageProfiles -> ManageProfilesScreen(
+                    SettingsRoute.ManageProfiles -> FactoryManageProfilesScreen(
                         onBack = { currentRoute = SettingsRoute.Merchant },
                         scrollState = scrollState,
                         colors = colors
                     )
                     SettingsRoute.FactoryIdentity -> FactoryIdentityScreen(scrollState = scrollState, colors = colors)
-                    SettingsRoute.TextilesIdentity -> TextilesIdentityScreen(scrollState = scrollState, colors = colors)
+                    SettingsRoute.TextilesIdentity -> {}
                     SettingsRoute.Address -> AddressSettingsScreen(
                         scrollState = scrollState,
                         colors = colors,
@@ -153,8 +154,8 @@ fun FactorySettingsScreen(
                         onUpdateProfile = { FactoryProfileRepository.updateProfile(it) },
                         isTextiles = false
                     )
-                    SettingsRoute.StorageBackup -> StorageBackupSettingsScreen(scrollState = scrollState, colors = colors)
-                    SettingsRoute.Security -> SecuritySettingsScreen(scrollState = scrollState, colors = colors)
+                    SettingsRoute.StorageBackup -> FactoryStorageBackupScreen(scrollState = scrollState, colors = colors)
+                    SettingsRoute.Security -> FactorySecuritySettingsScreen(scrollState = scrollState, colors = colors)
                     SettingsRoute.AboutDeveloper -> AboutDeveloperScreen(scrollState = scrollState, colors = colors)
                     SettingsRoute.AboutApp -> AboutAppScreen(scrollState = scrollState, colors = colors)
                     SettingsRoute.ElvanNavil -> TransliteratorSettingsScreen(scrollState = scrollState, colors = colors)

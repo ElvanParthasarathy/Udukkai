@@ -1,4 +1,4 @@
-﻿package com.elvan.udukkai.core.backup
+package com.elvan.udukkai.core.backup
 
 import android.content.Intent
 import android.util.Log
@@ -490,8 +490,12 @@ class AndroidUdukkaiBackupService : UdukkaiBackupService {
                 }
             }
 
-            // Immediately reload in-memory cached repositories across app
-            reloadAllRepositories()
+            // Immediately reload in-memory cached repositories for the active app
+            if (isFactory()) {
+                reloadFactoryRepositories()
+            } else {
+                reloadTextilesRepositories()
+            }
 
             Log.i(tag, "Restore completed successfully from ${sourceFile.absolutePath}")
             true

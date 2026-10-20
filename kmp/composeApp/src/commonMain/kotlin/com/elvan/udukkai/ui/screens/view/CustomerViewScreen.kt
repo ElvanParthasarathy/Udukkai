@@ -21,6 +21,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.elvan.udukkai.core.platform.AppBackHandler
 import com.elvan.udukkai.data.model.VaangunarTharavuru
+import com.elvan.udukkai.data.settings.NiruvanaTharavugal
 import com.elvan.udukkai.localization.K
 import com.elvan.udukkai.localization.tr
 import com.elvan.udukkai.theme.Dimens
@@ -37,16 +38,15 @@ import com.elvan.udukkai.ui.navigation.MaterialSymbols
 @Composable
 fun CustomerViewScreen(
     merchant: VaangunarTharavuru,
+    profile: NiruvanaTharavugal,
     onBack: () -> Unit,
     onEdit: () -> Unit,
-    onCopy: (() -> Unit)? = null,
-    isTextiles: Boolean = false
+    onCopy: (() -> Unit)? = null
 ) {
     val colors = rememberShellColors()
     val isDark = colors.isDark
     val ff = LocalAppFontFamily.current
 
-    val profile = if (isTextiles) com.elvan.udukkai.textiles.data.TextilesProfileRepository.profile else com.elvan.udukkai.factory.data.FactoryProfileRepository.profile
     val isBilingual = profile.iruMozhi
     val primaryLang = profile.mudhanMozhi.ifEmpty { "ta" }
     val secondaryLang = profile.thunaiMozhi.ifEmpty { "en" }

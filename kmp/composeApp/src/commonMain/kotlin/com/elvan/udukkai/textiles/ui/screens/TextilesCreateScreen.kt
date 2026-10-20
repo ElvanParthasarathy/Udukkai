@@ -425,7 +425,9 @@ fun TextilesCreateScreen(
                                     isSelectionMode = isSelectionMode,
                                     isSelected = isSelected,
                                     onClick = onCardClick,
-                                    onLongClick = onCardLongClick
+                                    onLongClick = onCardLongClick,
+                                    profile = TextilesProfileRepository.profile,
+                                    allProfiles = TextilesProfileRepository.allProfiles
                                 )
                             }
                         }

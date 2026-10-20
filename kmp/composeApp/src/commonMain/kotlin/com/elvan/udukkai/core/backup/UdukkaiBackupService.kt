@@ -41,10 +41,9 @@ data class DatabaseLiveStats(
 )
 
 /**
- * Invalidate in-memory cached state across all repositories and reload from SQLite.
- * Must be invoked immediately after any database file restoration.
+ * Invalidate in-memory cached state for Factory repositories and reload from SQLite.
  */
-fun reloadAllRepositories() {
+fun reloadFactoryRepositories() {
     try { com.elvan.udukkai.factory.data.FactoryInvoiceRepository.loadAll() } catch (_: Exception) {}
     try { com.elvan.udukkai.factory.data.FactoryInvoiceRepository.loadDeleted() } catch (_: Exception) {}
     try { com.elvan.udukkai.factory.data.FactoryReceiptRepository.loadAll() } catch (_: Exception) {}
@@ -54,7 +53,12 @@ fun reloadAllRepositories() {
     try { com.elvan.udukkai.factory.data.FactoryCustomerRepository.loadAll() } catch (_: Exception) {}
     try { com.elvan.udukkai.factory.data.FactoryCustomerRepository.loadDeleted() } catch (_: Exception) {}
     try { com.elvan.udukkai.factory.data.FactoryProfileRepository.refreshFromDatabase() } catch (_: Exception) {}
+}
 
+/**
+ * Invalidate in-memory cached state for Textiles repositories and reload from SQLite.
+ */
+fun reloadTextilesRepositories() {
     try { com.elvan.udukkai.textiles.data.TextilesInvoiceRepository.loadAll() } catch (_: Exception) {}
     try { com.elvan.udukkai.textiles.data.TextilesInvoiceRepository.loadDeleted() } catch (_: Exception) {}
     try { com.elvan.udukkai.textiles.data.TextilesReceiptRepository.loadAll() } catch (_: Exception) {}
@@ -64,6 +68,14 @@ fun reloadAllRepositories() {
     try { com.elvan.udukkai.textiles.data.TextilesCustomerRepository.loadAll() } catch (_: Exception) {}
     try { com.elvan.udukkai.textiles.data.TextilesCustomerRepository.loadDeleted() } catch (_: Exception) {}
     try { com.elvan.udukkai.textiles.data.TextilesProfileRepository.refreshFromDatabase() } catch (_: Exception) {}
+}
+
+/**
+ * Backwards-compatible reload dispatch.
+ */
+fun reloadAllRepositories() {
+    reloadFactoryRepositories()
+    reloadTextilesRepositories()
 }
 
 interface UdukkaiBackupService {

@@ -50,9 +50,9 @@ fun ReceiptInvoiceSelectionSheet(
     onDismissRequest: () -> Unit,
     modifier: Modifier = Modifier,
     colors: ShellColors = rememberShellColors(),
-    isTextiles: Boolean = false
+    merchants: List<com.elvan.udukkai.data.model.VaangunarTharavuru> = emptyList()
 ) {
-    val allMerchants = if (isTextiles) com.elvan.udukkai.textiles.data.TextilesCustomerRepository.customers else com.elvan.udukkai.factory.data.FactoryCustomerRepository.customers
+    val allMerchants = merchants
     val ff = LocalAppFontFamily.current
     val sheetBg = LocalShellColors.current.surface
 

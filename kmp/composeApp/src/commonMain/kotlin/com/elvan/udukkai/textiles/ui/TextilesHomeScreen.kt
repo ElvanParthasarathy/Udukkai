@@ -49,8 +49,8 @@ import com.elvan.udukkai.ui.navigation.MaterialSymbols
 import com.elvan.udukkai.ui.navigation.NavTab
 import com.elvan.udukkai.ui.screens.home.desktop.DesktopSideBar
 import com.elvan.udukkai.ui.screens.create.components.CreateDateFilterSheet
-import com.elvan.udukkai.ui.screens.editor.receipt.ReceiptEditorScreen
-import com.elvan.udukkai.ui.screens.recyclebin.RecycleBinScreen
+import com.elvan.udukkai.textiles.ui.screens.TextilesRecycleBinScreen
+import com.elvan.udukkai.textiles.ui.screens.editor.TextilesReceiptEditorScreen
 import com.elvan.udukkai.ui.screens.view.CustomerViewScreen
 import com.elvan.udukkai.ui.screens.view.InvoiceViewScreen
 import com.elvan.udukkai.ui.screens.view.ProductViewScreen
@@ -231,7 +231,7 @@ fun TextilesHomeScreen() {
                     )
                 }
                 is ActiveSubpage.RecycleBin -> {
-                    RecycleBinScreen(
+                    TextilesRecycleBinScreen(
                         onBack = popSubpage
                     )
                 }
@@ -254,7 +254,7 @@ fun TextilesHomeScreen() {
                     )
                 }
                 is ActiveSubpage.ReceiptEditor -> {
-                    ReceiptEditorScreen(
+                    TextilesReceiptEditorScreen(
                         receipt = subpage.receipt,
                         onBack = popSubpage
                     )
@@ -262,32 +262,35 @@ fun TextilesHomeScreen() {
                 is ActiveSubpage.CustomerView -> {
                     CustomerViewScreen(
                         merchant = subpage.customer,
+                        profile = TextilesProfileRepository.profile,
                         onBack = popSubpage,
                         onEdit = {
                             navigateToSubpage(ActiveSubpage.MerchantEditor(subpage.customer))
                         },
                         onCopy = {
                             copyCustomerAndEdit(subpage.customer)
-                        },
-                        isTextiles = true
+                        }
                     )
                 }
                 is ActiveSubpage.ProductView -> {
                     ProductViewScreen(
                         item = subpage.product,
+                        profile = TextilesProfileRepository.profile,
+                        allProfiles = TextilesProfileRepository.profiles,
                         onBack = popSubpage,
                         onEdit = {
                             navigateToSubpage(ActiveSubpage.ItemEditor(subpage.product))
                         },
                         onCopy = {
                             copyProductAndEdit(subpage.product)
-                        },
-                        isTextiles = true
+                        }
                     )
                 }
                 is ActiveSubpage.InvoiceView -> {
                     InvoiceViewScreen(
                         invoice = subpage.invoice,
+                        profile = TextilesProfileRepository.profile,
+                        allProfiles = TextilesProfileRepository.profiles,
                         onBack = popSubpage,
                         onEdit = {
                             navigateToSubpage(ActiveSubpage.InvoiceEditor(subpage.invoice))
@@ -300,6 +303,8 @@ fun TextilesHomeScreen() {
                 is ActiveSubpage.ReceiptView -> {
                     ReceiptViewScreen(
                         receipt = subpage.receipt,
+                        profile = TextilesProfileRepository.profile,
+                        allProfiles = TextilesProfileRepository.profiles,
                         onBack = popSubpage,
                         onEdit = {
                             navigateToSubpage(ActiveSubpage.ReceiptEditor(subpage.receipt))

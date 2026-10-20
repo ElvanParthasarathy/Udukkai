@@ -49,8 +49,8 @@ import com.elvan.udukkai.ui.navigation.MaterialSymbols
 import com.elvan.udukkai.ui.navigation.NavTab
 import com.elvan.udukkai.ui.screens.home.desktop.DesktopSideBar
 import com.elvan.udukkai.ui.screens.create.components.CreateDateFilterSheet
-import com.elvan.udukkai.ui.screens.editor.receipt.ReceiptEditorScreen
-import com.elvan.udukkai.ui.screens.recyclebin.RecycleBinScreen
+import com.elvan.udukkai.factory.ui.screens.FactoryRecycleBinScreen
+import com.elvan.udukkai.factory.ui.screens.editor.FactoryReceiptEditorScreen
 import com.elvan.udukkai.ui.screens.view.CustomerViewScreen
 import com.elvan.udukkai.ui.screens.view.InvoiceViewScreen
 import com.elvan.udukkai.ui.screens.view.ProductViewScreen
@@ -231,7 +231,7 @@ fun FactoryHomeScreen() {
                     )
                 }
                 is ActiveSubpage.RecycleBin -> {
-                    RecycleBinScreen(
+                    FactoryRecycleBinScreen(
                         onBack = popSubpage
                     )
                 }
@@ -254,7 +254,7 @@ fun FactoryHomeScreen() {
                     )
                 }
                 is ActiveSubpage.ReceiptEditor -> {
-                    ReceiptEditorScreen(
+                    FactoryReceiptEditorScreen(
                         receipt = subpage.receipt,
                         onBack = popSubpage
                     )
@@ -262,32 +262,35 @@ fun FactoryHomeScreen() {
                 is ActiveSubpage.CustomerView -> {
                     CustomerViewScreen(
                         merchant = subpage.customer,
+                        profile = FactoryProfileRepository.profile,
                         onBack = popSubpage,
                         onEdit = {
                             navigateToSubpage(ActiveSubpage.MerchantEditor(subpage.customer))
                         },
                         onCopy = {
                             copyCustomerAndEdit(subpage.customer)
-                        },
-                        isTextiles = false
+                        }
                     )
                 }
                 is ActiveSubpage.ProductView -> {
                     ProductViewScreen(
                         item = subpage.product,
+                        profile = FactoryProfileRepository.profile,
+                        allProfiles = FactoryProfileRepository.profiles,
                         onBack = popSubpage,
                         onEdit = {
                             navigateToSubpage(ActiveSubpage.ItemEditor(subpage.product))
                         },
                         onCopy = {
                             copyProductAndEdit(subpage.product)
-                        },
-                        isTextiles = false
+                        }
                     )
                 }
                 is ActiveSubpage.InvoiceView -> {
                     InvoiceViewScreen(
                         invoice = subpage.invoice,
+                        profile = FactoryProfileRepository.profile,
+                        allProfiles = FactoryProfileRepository.profiles,
                         onBack = popSubpage,
                         onEdit = {
                             navigateToSubpage(ActiveSubpage.InvoiceEditor(subpage.invoice))
@@ -300,6 +303,8 @@ fun FactoryHomeScreen() {
                 is ActiveSubpage.ReceiptView -> {
                     ReceiptViewScreen(
                         receipt = subpage.receipt,
+                        profile = FactoryProfileRepository.profile,
+                        allProfiles = FactoryProfileRepository.profiles,
                         onBack = popSubpage,
                         onEdit = {
                             navigateToSubpage(ActiveSubpage.ReceiptEditor(subpage.receipt))
