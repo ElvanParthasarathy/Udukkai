@@ -23,9 +23,9 @@ import java.nio.file.Files
 import java.nio.file.StandardCopyOption
 import java.util.zip.CRC32
 
-class AndroidNirilBackupService : NirilBackupService {
+class AndroidUdukkaiBackupService : UdukkaiBackupService {
 
-    private val tag = "NirilBackup"
+    private val tag = "UdukkaiBackup"
     private val magicConstant = 0x5544554B4B414921L // "UDUKKAI!"
 
     private fun currentMode(): AppMode? = AppLaunchConfig.fixedMode ?: ModeManager.currentMode
@@ -788,6 +788,9 @@ class AndroidNirilBackupService : NirilBackupService {
     }
 }
 
-private val androidBackupInstance by lazy { AndroidNirilBackupService() }
+@Deprecated("Use AndroidUdukkaiBackupService", ReplaceWith("AndroidUdukkaiBackupService"))
+typealias AndroidNirilBackupService = AndroidUdukkaiBackupService
 
-actual fun getNirilBackupService(): NirilBackupService = androidBackupInstance
+private val androidBackupInstance by lazy { AndroidUdukkaiBackupService() }
+
+actual fun getUdukkaiBackupService(): UdukkaiBackupService = androidBackupInstance

@@ -8,7 +8,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.elvan.udukkai.core.backup.getNirilBackupService
+import com.elvan.udukkai.core.backup.getUdukkaiBackupService
 import kotlinx.coroutines.delay
 
 @Composable
@@ -18,7 +18,7 @@ fun BackupCheckStep(
 ) {
     LaunchedEffect(Unit) {
         delay(1500)
-        val backupService = getNirilBackupService()
+        val backupService = getUdukkaiBackupService()
         if (backupService.hasBackup()) {
             onBackupFound()
         } else {

@@ -45,7 +45,7 @@ object AutoBackupManager {
         while (!success && attempts <= maxRetries) {
             attempts++
             try {
-                success = getNirilBackupService().createBackup()
+                success = getUdukkaiBackupService().createBackup()
             } catch (_: Exception) {
                 success = false
             }

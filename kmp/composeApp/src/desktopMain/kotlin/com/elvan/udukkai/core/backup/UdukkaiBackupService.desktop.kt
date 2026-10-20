@@ -20,7 +20,7 @@ import java.nio.file.StandardCopyOption
 import java.sql.DriverManager
 import java.util.zip.CRC32
 
-class DesktopNirilBackupService : NirilBackupService {
+class DesktopUdukkaiBackupService : UdukkaiBackupService {
 
     private val magicConstant = 0x5544554B4B414921L // "UDUKKAI!"
 
@@ -575,6 +575,9 @@ class DesktopNirilBackupService : NirilBackupService {
     }
 }
 
-private val desktopBackupInstance by lazy { DesktopNirilBackupService() }
+@Deprecated("Use DesktopUdukkaiBackupService", ReplaceWith("DesktopUdukkaiBackupService"))
+typealias DesktopNirilBackupService = DesktopUdukkaiBackupService
 
-actual fun getNirilBackupService(): NirilBackupService = desktopBackupInstance
+private val desktopBackupInstance by lazy { DesktopUdukkaiBackupService() }
+
+actual fun getUdukkaiBackupService(): UdukkaiBackupService = desktopBackupInstance

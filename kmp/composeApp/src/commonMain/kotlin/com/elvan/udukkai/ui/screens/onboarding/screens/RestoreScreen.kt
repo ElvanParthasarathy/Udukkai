@@ -8,7 +8,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.elvan.udukkai.core.backup.getNirilBackupService
+import com.elvan.udukkai.core.backup.getUdukkaiBackupService
 import com.elvan.udukkai.localization.K
 import com.elvan.udukkai.localization.tr
 import com.elvan.udukkai.ui.screens.onboarding.components.AuthButton
@@ -22,7 +22,7 @@ fun RestorePage(
 ) {
     val coroutineScope = rememberCoroutineScope()
     var isLoading by remember { mutableStateOf(false) }
-    val backupService = getNirilBackupService()
+    val backupService = getUdukkaiBackupService()
 
     val failedMsg = K.backupFailed.tr()
 

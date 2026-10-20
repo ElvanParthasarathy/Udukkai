@@ -23,7 +23,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.elvan.udukkai.core.backup.BackupItemMetadata
 import com.elvan.udukkai.core.backup.BackupSlot
-import com.elvan.udukkai.core.backup.getNirilBackupService
+import com.elvan.udukkai.core.backup.getUdukkaiBackupService
 import com.elvan.udukkai.core.mode.AppLaunchConfig
 import com.elvan.udukkai.core.mode.AppMode
 import com.elvan.udukkai.core.utils.DateUtils
@@ -60,7 +60,7 @@ fun StorageBackupSettingsScreen(
 ) {
     val ff = LocalAppFontFamily.current
     val scope = rememberCoroutineScope()
-    val backupService = remember { getNirilBackupService() }
+    val backupService = remember { getUdukkaiBackupService() }
 
     var showBackupConfirm by remember { mutableStateOf(false) }
     var showRestoreSelectSheet by remember { mutableStateOf(false) }

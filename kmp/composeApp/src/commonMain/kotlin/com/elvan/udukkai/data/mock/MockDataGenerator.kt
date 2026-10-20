@@ -1,7 +1,7 @@
 package com.elvan.udukkai.data.mock
 
 import com.elvan.udukkai.core.auth.AuthManager
-import com.elvan.udukkai.core.backup.getNirilBackupService
+import com.elvan.udukkai.core.backup.getUdukkaiBackupService
 import com.elvan.udukkai.core.mode.AppMode
 import com.elvan.udukkai.core.mode.ModeManager
 import com.elvan.udukkai.core.utils.DateUtils
@@ -137,7 +137,7 @@ object SodhanaiTharavuUruvakki {
         ModeManager.resetStartupState()
 
         try {
-            getNirilBackupService().deleteBackup()
+            getUdukkaiBackupService().deleteBackup()
         } catch (_: Exception) {}
     }
 
@@ -180,7 +180,7 @@ object SodhanaiTharavuUruvakki {
 
         // Create unified backup surviving reinstall
         try {
-            getNirilBackupService().createBackup()
+            getUdukkaiBackupService().createBackup()
         } catch (_: Exception) {}
     }
 
@@ -530,7 +530,7 @@ object SodhanaiTharavuUruvakki {
         }
         NiruvanaTharavugalRepository.refreshFromDatabase()
         try {
-            getNirilBackupService().createBackup()
+            getUdukkaiBackupService().createBackup()
         } catch (_: Exception) {}
         return msg
     }
@@ -552,7 +552,7 @@ object SodhanaiTharavuUruvakki {
         }
         NiruvanaTharavugalRepository.refreshFromDatabase()
         try {
-            getNirilBackupService().createBackup()
+            getUdukkaiBackupService().createBackup()
         } catch (_: Exception) {}
         return msg
     }
@@ -579,7 +579,7 @@ object SodhanaiTharavuUruvakki {
         NiruvanaTharavugalRepository.updateProfile(ModeManager.currentMode, updated)
         NiruvanaTharavugalRepository.refreshFromDatabase()
         try {
-            getNirilBackupService().createBackup()
+            getUdukkaiBackupService().createBackup()
         } catch (_: Exception) {}
         return if (updated.iruMozhi) "Bilingual Mode: ON ✓" else "Bilingual Mode: OFF ✗"
     }
@@ -605,7 +605,7 @@ object SodhanaiTharavuUruvakki {
         }
         NiruvanaTharavugalRepository.refreshFromDatabase()
         try {
-            getNirilBackupService().createBackup()
+            getUdukkaiBackupService().createBackup()
         } catch (_: Exception) {}
         return "Swapped: $currentSecondary ↔ $currentPrimary"
     }

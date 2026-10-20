@@ -6,7 +6,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.elvan.udukkai.core.auth.AuthManager
-import com.elvan.udukkai.core.backup.getNirilBackupService
+import com.elvan.udukkai.core.backup.getUdukkaiBackupService
 import com.elvan.udukkai.core.mode.AppMode
 import com.elvan.udukkai.data.settings.NiruvanaTharavugal
 import com.elvan.udukkai.data.settings.NiruvanaTharavugalRepository
@@ -112,7 +112,7 @@ fun VanakkamThirai(
 
                         // Create backup and refresh profile status
                         AuthManager.refreshProfileStatus()
-                        getNirilBackupService().createBackup()
+                        getUdukkaiBackupService().createBackup()
                         onSetupComplete()
                     } finally {
                         isSaving = false

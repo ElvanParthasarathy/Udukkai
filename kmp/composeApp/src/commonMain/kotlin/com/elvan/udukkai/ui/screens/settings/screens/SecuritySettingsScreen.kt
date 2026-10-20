@@ -9,7 +9,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import com.elvan.udukkai.core.auth.AuthManager
 import com.elvan.udukkai.core.backup.BackupSlot
-import com.elvan.udukkai.core.backup.getNirilBackupService
+import com.elvan.udukkai.core.backup.getUdukkaiBackupService
 import com.elvan.udukkai.core.mode.AppLaunchConfig
 import com.elvan.udukkai.core.mode.AppMode
 import com.elvan.udukkai.core.mode.ModeManager
@@ -236,7 +236,7 @@ fun SecuritySettingsScreen(
                     scope.launch {
                         try {
                             // 1. Take safety vault backup first so user never loses data by accident
-                            getNirilBackupService().createSafetySnapshot()
+                            getUdukkaiBackupService().createSafetySnapshot()
 
                             // 2. Wipe SQLite business tables & company profile tables for all modes
                             val bizHelper = getBusinessDatabaseHelper()

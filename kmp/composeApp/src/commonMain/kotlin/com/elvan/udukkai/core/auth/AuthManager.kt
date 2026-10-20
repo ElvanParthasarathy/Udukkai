@@ -15,7 +15,8 @@ import com.elvan.udukkai.data.settings.NiruvanaTharavugalRepository
 object AuthManager {
 
     private const val PREF_KEY_LOGGED_IN = "is_logged_in"
-    private const val PREF_KEY_BILLING_LANG = "elvanniril_setup_billingLang"
+    private const val PREF_KEY_BILLING_LANG = "udukkai_setup_billingLang"
+    private const val LEGACY_PREF_KEY_BILLING_LANG = "elvanniril_setup_billingLang"
     private const val PREF_KEY_SKIP_RESTORE = "skip_restore"
 
     var isLoggedIn by mutableStateOf(false)
@@ -69,7 +70,10 @@ object AuthManager {
 
     fun getBillingLanguage(): String {
         return try {
-            getPreferencesHelper().getString(PREF_KEY_BILLING_LANG, "ta") ?: "ta"
+            val prefs = getPreferencesHelper()
+            prefs.getString(PREF_KEY_BILLING_LANG)
+                ?: prefs.getString(LEGACY_PREF_KEY_BILLING_LANG)
+                ?: "ta"
         } catch (_: Exception) { "ta" }
     }
 

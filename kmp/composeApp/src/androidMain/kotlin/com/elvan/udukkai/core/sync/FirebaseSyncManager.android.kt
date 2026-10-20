@@ -3,7 +3,7 @@ package com.elvan.udukkai.core.sync
 import android.util.Log
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
-import com.elvan.udukkai.core.backup.getNirilBackupService
+import com.elvan.udukkai.core.backup.getUdukkaiBackupService
 import com.elvan.udukkai.core.mode.AppMode
 import com.elvan.udukkai.core.mode.ModeManager
 import com.elvan.udukkai.core.platform.AppContext
@@ -92,7 +92,7 @@ class AndroidFirebaseSyncManager : FirebaseSyncManager {
 
         // Take automatic Copy 2 Safety Snapshot before sync session
         try {
-            getNirilBackupService().createSafetySnapshot()
+            getUdukkaiBackupService().createSafetySnapshot()
             Log.i(tag, "Copy 2 Safety Snapshot created prior to RTDB sync session.")
         } catch (e: Exception) {
             Log.w(tag, "Pre-sync safety snapshot warning: ${e.message}")
@@ -335,7 +335,7 @@ class AndroidFirebaseSyncManager : FirebaseSyncManager {
 
     private fun triggerAntiErasureGuard(entityName: String, localCount: Int) {
         Log.w(tag, "Anti-Erasure Guard Triggered! Prevented remote wipe of $localCount $entityName.")
-        getNirilBackupService().createSafetySnapshot() // Copy 2 Safety Vault locked
+        getUdukkaiBackupService().createSafetySnapshot() // Copy 2 Safety Vault locked
         _guardAlertMessage.value = "Anti-Erasure Guard: Remote wipe of $localCount $entityName was blocked. Local data & Copy 2 Safety Vault are safe."
         _syncStatus.value = SyncStatus.GUARD_TRIGGERED
     }

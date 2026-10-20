@@ -1,6 +1,6 @@
 # Agent Customization Rules
 
-## Language Policy for Elvan Niril
+## Language Policy for Udukkai
 1. **Pure Tamil (Senthamizh) Only**: When creating Tamil translations or UI labels (e.g., in `ta.dart`), STRICTLY use Pure Tamil words. 
 2. **NO Sanskrit**: Do NOT use Sanskrit-derived words.
    - *Bad*: விவரங்கள் (Vivarangal), வசூல் (Vasool), ஆயத்தம் (Aayatham), மகா/மாகாணம் (Maha/Maakaanam), சின்னம் (Chinnam), திட்டம் (Thittam), விகிதம் (Vigitham).

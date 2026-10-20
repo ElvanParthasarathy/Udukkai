@@ -66,7 +66,7 @@ val LocalElvanBottomSheetController = staticCompositionLocalOf<ElvanBottomSheetC
 }
 
 /**
- * Host composable to place at the top level of the screen hierarchy / NirilChattagam.
+ * Host composable to place at the top level of the screen hierarchy / UdukkaiChattagam.
  * Automatically renders any active selection bottom sheet from the controller.
  */
 @Composable

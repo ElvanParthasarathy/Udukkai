@@ -12,7 +12,7 @@ import com.elvan.udukkai.data.settings.NiruvanaTharavugalRepository
  * Cross-platform backup service interface.
  * Binary format: 48-byte header (6 x 8-byte little-endian longs) + raw file data.
  * Files packed: coolie.db, coolie.db-wal, coolie.db-shm, silk.db, silk.db-wal, silk.db-shm.
- * 100% compatible with Flutter's NirilBackupService binary format, enhanced with
+ * 100% compatible with Udukkai backup binary format, enhanced with
  * atomic writes, rolling 3-slot versioning (Latest, Previous, Safety Vault), and trailer metadata.
  */
 
@@ -65,7 +65,7 @@ fun reloadAllRepositories() {
     try { NiruvanaTharavugalRepository.refreshFromDatabase() } catch (_: Exception) {}
 }
 
-interface NirilBackupService {
+interface UdukkaiBackupService {
     /**
      * Performs an atomic backup to [BackupSlot.LATEST].
      * Automatically rotates previous latest to [BackupSlot.PREVIOUS].
@@ -108,4 +108,10 @@ interface NirilBackupService {
     fun shareBackup(slot: BackupSlot = BackupSlot.LATEST): Boolean
 }
 
-expect fun getNirilBackupService(): NirilBackupService
+@Deprecated("Use UdukkaiBackupService instead", ReplaceWith("UdukkaiBackupService"))
+typealias NirilBackupService = UdukkaiBackupService
+
+expect fun getUdukkaiBackupService(): UdukkaiBackupService
+
+@Deprecated("Use getUdukkaiBackupService instead", ReplaceWith("getUdukkaiBackupService()"))
+fun getNirilBackupService(): UdukkaiBackupService = getUdukkaiBackupService()

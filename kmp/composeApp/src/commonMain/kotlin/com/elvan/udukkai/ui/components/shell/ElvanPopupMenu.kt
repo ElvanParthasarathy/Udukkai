@@ -35,7 +35,7 @@ object ElvanMenuState {
 }
 
 /**
- * Reproduction of Neram / Flutter Niril's ElvanPopupMenu.
+ * ElvanPopupMenu for Udukkai.
  * Spawns directly on top of the 3-dot icon button, scales from 20% to 100%
  * with an easeOutCubic curve anchored at the top-right corner, and uses
  * frosted translucent styling with 24dp rounded corners.
