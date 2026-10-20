@@ -142,12 +142,18 @@ fun FactoryCreateScreen(
                         .padding(bottom = 8.dp),
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
-                    ElvanPillShifter(
-                        items = shifterItems,
-                        selectedIndex = selectedSegment,
-                        onIndexSelected = onSegmentSelected,
-                        colors = colors
-                    )
+                    Box(
+                        modifier = Modifier.fillMaxWidth(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        ElvanPillShifter(
+                            items = shifterItems,
+                            selectedIndex = selectedSegment,
+                            onIndexSelected = onSegmentSelected,
+                            colors = colors,
+                            isFullWidth = false
+                        )
+                    }
 
                     val isDateFilterActive = if (selectedSegment == 0) {
                         FactoryInvoiceRepository.isDateFilterActive
