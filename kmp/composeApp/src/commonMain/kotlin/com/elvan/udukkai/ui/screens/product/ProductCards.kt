@@ -11,19 +11,18 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.elvan.udukkai.core.utils.CurrencyUtils
 import com.elvan.udukkai.data.model.PorulTharavuru
 import com.elvan.udukkai.factory.data.FactoryProfileRepository
 import com.elvan.udukkai.textiles.data.TextilesProfileRepository
 import com.elvan.udukkai.theme.Dimens
 import com.elvan.udukkai.theme.LocalAppFontFamily
+import com.elvan.udukkai.theme.LocalShellColors
 import com.elvan.udukkai.theme.ShellColors
 import com.elvan.udukkai.theme.preventBrokenLigatures
-import com.elvan.udukkai.ui.components.ElvanCommonCard
-import com.elvan.udukkai.ui.components.ElvanCardSelector
 import com.elvan.udukkai.ui.components.ElvanCardLeadingIcon
+import com.elvan.udukkai.ui.components.ElvanCardSelector
+import com.elvan.udukkai.ui.components.ElvanCommonCard
 import com.elvan.udukkai.ui.navigation.MaterialSymbols
-import com.elvan.udukkai.theme.LocalShellColors
 
 private fun getDynamicField(
     map: Map<String, String>,
@@ -32,14 +31,16 @@ private fun getDynamicField(
     primaryLang: String,
     secondaryLang: String
 ): String {
-    return if (isPrimary) {
-        map[primaryLang]?.takeIf { it.isNotBlank() }
-            ?: map[secondaryLang]?.takeIf { it.isNotBlank() }
-            ?: map.values.firstOrNull { it.isNotBlank() }.orEmpty()
-    } else {
-        if (!isBilingual) ""
-        else map[secondaryLang]?.takeIf { it.isNotBlank() }.orEmpty()
+    if (!isBilingual && !isPrimary) return ""
+    val targetLang = if (isPrimary) primaryLang else secondaryLang
+    val exactVal = map[targetLang]?.trim()
+    if (!exactVal.isNullOrEmpty()) return exactVal
+    if (!isBilingual && isPrimary) {
+        val fallbackVal = map[secondaryLang]?.trim()
+        if (!fallbackVal.isNullOrEmpty()) return fallbackVal
     }
+    if (isPrimary) return map.values.firstOrNull { it.isNotBlank() } ?: ""
+    return ""
 }
 
 @Composable
@@ -62,17 +63,15 @@ fun FactoryProductCard(
         .ifEmpty { porul.porulPeyar.values.firstOrNull() ?: "-" }
     val secondary = getDynamicField(porul.porulPeyar, isPrimary = false, isBilingual = isBilingual, primaryLang, secondaryLang)
 
-    val rateStr = if (porul.vilai > 0.0) CurrencyUtils.formatInr(porul.vilai) else ""
-
     ElvanCommonCard(
         onClick = onClick,
         onLongClick = onLongClick,
         isSelected = isSelectionMode && isSelected,
         padding = PaddingValues(
-            horizontal = 16.dp,
-            vertical = 16.dp
+            horizontal = Dimens.CardPaddingHorizontal,
+            vertical = Dimens.CardPaddingVertical
         ),
-        borderRadius = 24.dp
+        borderRadius = Dimens.CardRadius
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -90,59 +89,53 @@ fun FactoryProductCard(
 
             Spacer(modifier = Modifier.width(12.dp))
 
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = primary.preventBrokenLigatures(),
-                    style = TextStyle(
-                        fontFamily = ff,
-                        fontSize = 16.5.sp,
-                        fontWeight = FontWeight.ExtraBold,
-                        color = colors.textPrimary
-                    ),
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.Center
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Text(
+                            text = primary.preventBrokenLigatures(),
+                            style = TextStyle(
+                                fontFamily = ff,
+                                fontSize = 15.2.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = colors.textPrimary
+                            ),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
 
-                if (secondary.isNotEmpty()) {
-                    Spacer(modifier = Modifier.height(2.dp))
-                    Text(
-                        text = secondary.preventBrokenLigatures(),
-                        style = TextStyle(
-                            fontFamily = ff,
-                            fontSize = 13.sp,
-                            color = LocalShellColors.current.textSecondary
-                        ),
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                }
+                        if (isBilingual && secondary.isNotBlank() && secondary != primary) {
+                            Spacer(modifier = Modifier.height(2.dp))
+                            Text(
+                                text = secondary.preventBrokenLigatures(),
+                                style = TextStyle(
+                                    fontFamily = ff,
+                                    fontSize = 13.sp,
+                                    fontWeight = FontWeight.Medium,
+                                    color = LocalShellColors.current.textSecondary
+                                ),
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                        }
+                    }
 
-                if (rateStr.isNotEmpty() || porul.alagu.isNotEmpty()) {
-                    Spacer(modifier = Modifier.height(4.dp))
-                    val subtitle = listOfNotNull(
-                        rateStr.takeIf { it.isNotEmpty() },
-                        porul.alagu.takeIf { it.isNotEmpty() }
-                    ).joinToString("  •  ")
-
-                    Text(
-                        text = subtitle.preventBrokenLigatures(),
-                        style = TextStyle(
-                            fontFamily = ff,
-                            fontSize = 13.sp,
-                            color = LocalShellColors.current.textSecondary
-                        ),
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
+                    Icon(
+                        imageVector = MaterialSymbols.Rounded.ChevronRight,
+                        contentDescription = null,
+                        tint = LocalShellColors.current.border,
+                        modifier = Modifier.size(18.dp)
                     )
                 }
             }
-
-            Icon(
-                imageVector = MaterialSymbols.Rounded.ChevronRight,
-                contentDescription = null,
-                tint = LocalShellColors.current.border,
-                modifier = Modifier.size(18.dp)
-            )
         }
     }
 }
@@ -167,21 +160,19 @@ fun TextilesProductCard(
         .ifEmpty { porul.porulPeyar.values.firstOrNull() ?: "-" }
     val secondary = getDynamicField(porul.porulPeyar, isPrimary = false, isBilingual = isBilingual, primaryLang, secondaryLang)
 
-    val rateStr = if (porul.vilai > 0.0) CurrencyUtils.formatInr(porul.vilai) else ""
-
     ElvanCommonCard(
         onClick = onClick,
         onLongClick = onLongClick,
         isSelected = isSelectionMode && isSelected,
         padding = PaddingValues(
-            horizontal = 16.dp,
-            vertical = 16.dp
+            horizontal = Dimens.CardPaddingHorizontal,
+            vertical = Dimens.CardPaddingVertical
         ),
-        borderRadius = 24.dp
+        borderRadius = Dimens.CardRadius
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = Alignment.Top
         ) {
             ElvanCardSelector(
                 isSelectionMode = isSelectionMode,
@@ -195,59 +186,116 @@ fun TextilesProductCard(
 
             Spacer(modifier = Modifier.width(12.dp))
 
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = primary.preventBrokenLigatures(),
-                    style = TextStyle(
-                        fontFamily = ff,
-                        fontSize = 16.5.sp,
-                        fontWeight = FontWeight.ExtraBold,
-                        color = colors.textPrimary
-                    ),
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.Center
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.Top
+                ) {
+                    Column(
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Text(
+                            text = primary.preventBrokenLigatures(),
+                            style = TextStyle(
+                                fontFamily = ff,
+                                fontSize = 15.2.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = colors.textPrimary
+                            ),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
 
-                if (secondary.isNotEmpty()) {
-                    Spacer(modifier = Modifier.height(2.dp))
-                    Text(
-                        text = secondary.preventBrokenLigatures(),
-                        style = TextStyle(
-                            fontFamily = ff,
-                            fontSize = 13.sp,
-                            color = LocalShellColors.current.textSecondary
-                        ),
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
+                        if (isBilingual && secondary.isNotBlank() && secondary != primary) {
+                            Spacer(modifier = Modifier.height(2.dp))
+                            Text(
+                                text = secondary.preventBrokenLigatures(),
+                                style = TextStyle(
+                                    fontFamily = ff,
+                                    fontSize = 13.sp,
+                                    fontWeight = FontWeight.Medium,
+                                    color = LocalShellColors.current.textSecondary
+                                ),
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                        }
+                    }
+
+                    Icon(
+                        imageVector = MaterialSymbols.Rounded.ChevronRight,
+                        contentDescription = null,
+                        tint = LocalShellColors.current.border,
+                        modifier = Modifier.size(18.dp)
                     )
                 }
 
-                if (rateStr.isNotEmpty() || porul.alagu.isNotEmpty()) {
-                    Spacer(modifier = Modifier.height(4.dp))
-                    val subtitle = listOfNotNull(
-                        rateStr.takeIf { it.isNotEmpty() },
-                        porul.alagu.takeIf { it.isNotEmpty() }
-                    ).joinToString("  •  ")
+                Spacer(modifier = Modifier.height(4.dp))
 
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.Bottom
+                ) {
+                    Column(
+                        modifier = Modifier.weight(1f, fill = false)
+                    ) {
+                        val hsnText = if (porul.hsnCode.isNotBlank()) "HSN: ${porul.hsnCode}" else ""
+                        val gstRate = if (porul.variVeetham % 1.0 == 0.0) porul.variVeetham.toLong().toString() else porul.variVeetham.toString()
+                        val taxText = if (porul.variVeetham > 0.0) "Tax: $gstRate%" else ""
+                        val hsnTaxLine = if (hsnText.isNotBlank() && taxText.isNotBlank()) "$hsnText • $taxText" else "$hsnText$taxText"
+
+                        if (hsnTaxLine.isNotBlank()) {
+                            Text(
+                                text = hsnTaxLine,
+                                style = TextStyle(
+                                    fontFamily = ff,
+                                    fontSize = 13.6.sp,
+                                    color = colors.textSecondary
+                                ),
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                        }
+
+                        val measureLabel = if (porul.alavuVagai == "weight") "எடை • Weight" else "அளவு • Quantity"
+                        Text(
+                            text = measureLabel,
+                            style = TextStyle(
+                                fontFamily = ff,
+                                fontSize = 12.8.sp,
+                                fontWeight = FontWeight.Medium,
+                                color = colors.accent
+                            ),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier.padding(top = 2.dp)
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.width(8.dp))
+
+                    val priceText = if (porul.vilai > 0.0) {
+                        val formatted = if (porul.vilai % 1.0 == 0.0) porul.vilai.toLong().toString() else porul.vilai.toString()
+                        "₹$formatted"
+                    } else {
+                        "-"
+                    }
                     Text(
-                        text = subtitle.preventBrokenLigatures(),
+                        text = priceText,
                         style = TextStyle(
                             fontFamily = ff,
-                            fontSize = 13.sp,
-                            color = LocalShellColors.current.textSecondary
+                            fontWeight = FontWeight.ExtraBold,
+                            fontSize = if (priceText.length > 11) 12.8.sp else 15.2.sp,
+                            color = colors.accent
                         ),
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
+                        maxLines = 1
                     )
                 }
             }
-
-            Icon(
-                imageVector = MaterialSymbols.Rounded.ChevronRight,
-                contentDescription = null,
-                tint = LocalShellColors.current.border,
-                modifier = Modifier.size(18.dp)
-            )
         }
     }
 }

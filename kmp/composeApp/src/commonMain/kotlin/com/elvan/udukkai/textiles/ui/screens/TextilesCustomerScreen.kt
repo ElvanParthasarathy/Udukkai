@@ -21,6 +21,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.elvan.udukkai.data.model.VaangunarTharavuru
+import com.elvan.udukkai.ui.screens.customer.TextilesCustomerCard
 import com.elvan.udukkai.textiles.data.TextilesCustomerRepository
 import com.elvan.udukkai.textiles.data.TextilesProfileRepository
 import com.elvan.udukkai.localization.K
@@ -82,23 +83,19 @@ fun TextilesCustomerScreen(
             state = scrollState,
             modifier = Modifier.fillMaxSize(),
             contentPadding = PaddingValues(
+                start = Dimens.ContentPadding,
+                end = Dimens.ContentPadding,
                 bottom = Dimens.ContentPaddingBottom
             ),
-            verticalArrangement = Arrangement.spacedBy(14.dp)
+            verticalArrangement = Arrangement.spacedBy(Dimens.ItemSpacing)
         ) {
             item(key = "customer_top_spacer") {
                 Spacer(modifier = Modifier.height(LocalElvanTopSpacerHeight.current))
             }
 
             if (isSearchLoading || isRefreshing) {
-                items(6) {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = Dimens.ContentPadding)
-                    ) {
-                        VaangunarCardSkeleton()
-                    }
+                items(10) {
+                    VaangunarCardSkeleton()
                 }
             } else if (customers.isEmpty()) {
                 item(key = "empty_customers") {
@@ -152,21 +149,15 @@ fun TextilesCustomerScreen(
                         onCustomerLongClick?.invoke(item.id)
                     }
 
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = Dimens.ContentPadding)
-                    ) {
-                        TextilesCustomerItemCard(
-                            index = index,
-                            merchant = item,
-                            onClick = onCardClick,
-                            colors = colors,
-                            isSelectionMode = isSelectionMode,
-                            isSelected = isSelected,
-                            onLongClick = onCardLongClick
-                        )
-                    }
+                    TextilesCustomerCard(
+                        index = index,
+                        merchant = item,
+                        onClick = onCardClick,
+                        colors = colors,
+                        isSelectionMode = isSelectionMode,
+                        isSelected = isSelected,
+                        onLongClick = onCardLongClick
+                    )
                 }
 
                 if (hasMoreCustomers) {
@@ -188,154 +179,6 @@ fun TextilesCustomerScreen(
                             }
                         }
                     }
-                }
-            }
-        }
-    }
-}
-
-@Composable
-internal fun TextilesCustomerItemCard(
-    index: Int,
-    merchant: VaangunarTharavuru,
-    onClick: () -> Unit,
-    colors: ShellColors,
-    isSelectionMode: Boolean = false,
-    isSelected: Boolean = false,
-    onLongClick: (() -> Unit)? = null
-) {
-    val ff = LocalAppFontFamily.current
-    val profile = TextilesProfileRepository.profile
-    val isBilingual = profile.iruMozhi
-    val primaryLang = profile.mudhanMozhi.ifEmpty { "ta" }
-    val secondaryLang = profile.thunaiMozhi.ifEmpty { "en" }
-
-    val primaryName = merchant.peyar[primaryLang]
-        ?: merchant.peyar["ta"]
-        ?: merchant.peyar.values.firstOrNull()
-        ?: "-"
-    val secondaryName = if (isBilingual) merchant.peyar[secondaryLang].orEmpty() else ""
-
-    val primaryCity = merchant.oor[primaryLang]
-        ?: merchant.oor["ta"]
-        ?: merchant.oor.values.firstOrNull()
-        ?: ""
-    val secondaryCity = if (isBilingual) merchant.oor[secondaryLang].orEmpty() else ""
-
-    ElvanCommonCard(
-        onClick = onClick,
-        onLongClick = onLongClick,
-        isSelected = isSelectionMode && isSelected,
-        padding = PaddingValues(
-            horizontal = Dimens.CardPaddingHorizontal,
-            vertical = Dimens.CardPaddingVertical
-        ),
-        borderRadius = Dimens.CardRadius
-    ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.Top
-        ) {
-            ElvanCardSelector(
-                isSelectionMode = isSelectionMode,
-                isSelected = isSelected
-            )
-
-            ElvanCardLeadingIcon(
-                icon = MaterialSymbols.CustomNav.CustomersFill,
-                tint = colors.customerColor
-            )
-
-            Spacer(modifier = Modifier.width(12.dp))
-
-            Column(
-                modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.Center
-            ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.Top
-                ) {
-                    Column(
-                        modifier = Modifier.weight(1f)
-                    ) {
-                        Text(
-                            text = primaryName.preventBrokenLigatures(),
-                            style = TextStyle(
-                                fontFamily = ff,
-                                fontSize = 15.2.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = colors.textPrimary
-                            ),
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
-                        )
-
-                        if (isBilingual && secondaryName.isNotBlank() && secondaryName != primaryName) {
-                            Spacer(modifier = Modifier.height(2.dp))
-                            Text(
-                                text = secondaryName.preventBrokenLigatures(),
-                                style = TextStyle(
-                                    fontFamily = ff,
-                                    fontSize = 13.sp,
-                                    fontWeight = FontWeight.Medium,
-                                    color = colors.textTertiary
-                                ),
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis
-                            )
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.width(8.dp))
-
-                    Icon(
-                        imageVector = MaterialSymbols.Rounded.ChevronRight,
-                        contentDescription = null,
-                        tint = colors.textTertiary.copy(alpha = 0.6f),
-                        modifier = Modifier.size(16.dp)
-                    )
-                }
-
-                if (merchant.gstin.isNotBlank()) {
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Box(
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(4.dp))
-                            .background(colors.accent.copy(alpha = 0.12f))
-                            .padding(horizontal = 6.dp, vertical = 2.dp)
-                    ) {
-                        Text(
-                            text = "GSTIN: ${merchant.gstin}",
-                            style = TextStyle(
-                                fontFamily = ff,
-                                fontSize = 11.sp,
-                                fontWeight = FontWeight.SemiBold,
-                                color = colors.accent
-                            )
-                        )
-                    }
-                }
-
-                val cityDisplay = if (isBilingual && secondaryCity.isNotBlank() && secondaryCity != primaryCity) {
-                    "$primaryCity ($secondaryCity)"
-                } else {
-                    primaryCity
-                }
-
-                val details = listOf(cityDisplay, merchant.tholaipaesi).filter { it.isNotBlank() }.joinToString(" • ")
-                if (details.isNotBlank()) {
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text(
-                        text = details,
-                        style = TextStyle(
-                            fontFamily = ff,
-                            fontSize = 12.sp,
-                            color = colors.textTertiary
-                        ),
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
                 }
             }
         }

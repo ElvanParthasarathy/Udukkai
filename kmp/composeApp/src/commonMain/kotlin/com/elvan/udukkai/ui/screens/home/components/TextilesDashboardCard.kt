@@ -50,12 +50,6 @@ fun TextilesDashboardCard(
     val secondary = if (isBilingual) pattiyal.vaangunarPeyar[secondaryLang].orEmpty() else ""
     val showSecondary = isBilingual && secondary.isNotBlank() && secondary != primary
 
-    val primaryOor = pattiyal.vaangunarMunvari[primaryLang]
-        ?: pattiyal.vaangunarMunvari["ta"]
-        ?: pattiyal.vaangunarMunvari["en"]
-        ?: pattiyal.vaangunarMunvari.values.firstOrNull()
-        ?: ""
-
     val amountStr = CurrencyUtils.formatInr(pattiyal.mothaThogai)
     val dateStr = DateUtils.formatEpochMillis(pattiyal.pattiyalNaal)
 
@@ -140,23 +134,9 @@ fun TextilesDashboardCard(
 
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
+                    horizontalArrangement = Arrangement.End,
                     verticalAlignment = Alignment.Bottom
                 ) {
-                    Text(
-                        text = primaryOor.preventBrokenLigatures(),
-                        style = TextStyle(
-                            fontFamily = ff,
-                            fontSize = 13.5.sp,
-                            color = LocalShellColors.current.textSecondary
-                        ),
-                        modifier = Modifier.weight(1f, fill = false),
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
-
-                    Spacer(modifier = Modifier.width(8.dp))
-
                     Text(
                         text = amountStr,
                         style = TextStyle(

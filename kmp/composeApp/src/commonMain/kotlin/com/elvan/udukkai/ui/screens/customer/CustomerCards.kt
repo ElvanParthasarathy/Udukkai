@@ -16,13 +16,13 @@ import com.elvan.udukkai.factory.data.FactoryProfileRepository
 import com.elvan.udukkai.textiles.data.TextilesProfileRepository
 import com.elvan.udukkai.theme.Dimens
 import com.elvan.udukkai.theme.LocalAppFontFamily
+import com.elvan.udukkai.theme.LocalShellColors
 import com.elvan.udukkai.theme.ShellColors
 import com.elvan.udukkai.theme.preventBrokenLigatures
-import com.elvan.udukkai.ui.components.ElvanCommonCard
-import com.elvan.udukkai.ui.components.ElvanCardSelector
 import com.elvan.udukkai.ui.components.ElvanCardLeadingIcon
+import com.elvan.udukkai.ui.components.ElvanCardSelector
+import com.elvan.udukkai.ui.components.ElvanCommonCard
 import com.elvan.udukkai.ui.navigation.MaterialSymbols
-import com.elvan.udukkai.theme.LocalShellColors
 
 private fun getDynamicField(
     map: Map<String, String>,
@@ -31,14 +31,16 @@ private fun getDynamicField(
     primaryLang: String,
     secondaryLang: String
 ): String {
-    return if (isPrimary) {
-        map[primaryLang]?.takeIf { it.isNotBlank() }
-            ?: map[secondaryLang]?.takeIf { it.isNotBlank() }
-            ?: map.values.firstOrNull { it.isNotBlank() }.orEmpty()
-    } else {
-        if (!isBilingual) ""
-        else map[secondaryLang]?.takeIf { it.isNotBlank() }.orEmpty()
+    if (!isBilingual && !isPrimary) return ""
+    val targetLang = if (isPrimary) primaryLang else secondaryLang
+    val exactVal = map[targetLang]?.trim()
+    if (!exactVal.isNullOrEmpty()) return exactVal
+    if (!isBilingual && isPrimary) {
+        val fallbackVal = map[secondaryLang]?.trim()
+        if (!fallbackVal.isNullOrEmpty()) return fallbackVal
     }
+    if (isPrimary) return map.values.firstOrNull { it.isNotBlank() } ?: ""
+    return ""
 }
 
 @Composable
@@ -69,14 +71,14 @@ fun FactoryCustomerCard(
         onLongClick = onLongClick,
         isSelected = isSelectionMode && isSelected,
         padding = PaddingValues(
-            horizontal = 16.dp,
-            vertical = 16.dp
+            horizontal = Dimens.CardPaddingHorizontal,
+            vertical = Dimens.CardPaddingVertical
         ),
-        borderRadius = 24.dp
+        borderRadius = Dimens.CardRadius
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = Alignment.Top
         ) {
             ElvanCardSelector(
                 isSelectionMode = isSelectionMode,
@@ -90,59 +92,82 @@ fun FactoryCustomerCard(
 
             Spacer(modifier = Modifier.width(12.dp))
 
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = primaryName.preventBrokenLigatures(),
-                    style = TextStyle(
-                        fontFamily = ff,
-                        fontSize = 16.5.sp,
-                        fontWeight = FontWeight.ExtraBold,
-                        color = colors.textPrimary
-                    ),
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.Center
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.Top
+                ) {
+                    Column(
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Text(
+                            text = primaryName.preventBrokenLigatures(),
+                            style = TextStyle(
+                                fontFamily = ff,
+                                fontSize = 15.2.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = colors.textPrimary
+                            ),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
 
-                if (secondaryName.isNotEmpty()) {
-                    Spacer(modifier = Modifier.height(2.dp))
-                    Text(
-                        text = secondaryName.preventBrokenLigatures(),
-                        style = TextStyle(
-                            fontFamily = ff,
-                            fontSize = 13.sp,
-                            color = LocalShellColors.current.textSecondary
-                        ),
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
+                        if (secondaryName.isNotBlank() && secondaryName != primaryName) {
+                            Spacer(modifier = Modifier.height(2.dp))
+                            Text(
+                                text = secondaryName.preventBrokenLigatures(),
+                                style = TextStyle(
+                                    fontFamily = ff,
+                                    fontSize = 13.sp,
+                                    fontWeight = FontWeight.Medium,
+                                    color = colors.textSecondary
+                                ),
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                        }
+                    }
+
+                    Icon(
+                        imageVector = MaterialSymbols.Rounded.ChevronRight,
+                        contentDescription = null,
+                        tint = LocalShellColors.current.border,
+                        modifier = Modifier.size(18.dp)
                     )
                 }
 
-                if (primaryCity.isNotEmpty() || merchant.tholaipaesi.isNotEmpty()) {
+                if (primaryCity.isNotBlank() || secondaryCity.isNotBlank()) {
                     Spacer(modifier = Modifier.height(4.dp))
-                    val detail = listOfNotNull(
-                        primaryCity.takeIf { it.isNotEmpty() },
-                        merchant.tholaipaesi.takeIf { it.isNotEmpty() }
-                    ).joinToString("  •  ")
-
-                    Text(
-                        text = detail.preventBrokenLigatures(),
-                        style = TextStyle(
-                            fontFamily = ff,
-                            fontSize = 13.sp,
-                            color = LocalShellColors.current.textSecondary
-                        ),
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
+                    if (primaryCity.isNotBlank()) {
+                        Text(
+                            text = primaryCity.preventBrokenLigatures(),
+                            style = TextStyle(
+                                fontFamily = ff,
+                                fontSize = 13.6.sp,
+                                color = colors.textSecondary
+                            ),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    }
+                    if (secondaryCity.isNotBlank() && secondaryCity != primaryCity) {
+                        Spacer(modifier = Modifier.height(2.dp))
+                        Text(
+                            text = secondaryCity.preventBrokenLigatures(),
+                            style = TextStyle(
+                                fontFamily = ff,
+                                fontSize = 12.8.sp,
+                                color = colors.textSecondary.copy(alpha = 0.8f)
+                            ),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    }
                 }
             }
-
-            Icon(
-                imageVector = MaterialSymbols.Rounded.ChevronRight,
-                contentDescription = null,
-                tint = LocalShellColors.current.border,
-                modifier = Modifier.size(18.dp)
-            )
         }
     }
 }
@@ -168,20 +193,23 @@ fun TextilesCustomerCard(
     val secondaryName = getDynamicField(merchant.peyar, isPrimary = false, isBilingual = isBilingual, primaryLang, secondaryLang)
 
     val primaryCity = getDynamicField(merchant.oor, isPrimary = true, isBilingual = isBilingual, primaryLang, secondaryLang)
+    val secondaryCity = getDynamicField(merchant.oor, isPrimary = false, isBilingual = isBilingual, primaryLang, secondaryLang)
+
+    val gstin = merchant.gstin.trim()
 
     ElvanCommonCard(
         onClick = onClick,
         onLongClick = onLongClick,
         isSelected = isSelectionMode && isSelected,
         padding = PaddingValues(
-            horizontal = 16.dp,
-            vertical = 16.dp
+            horizontal = Dimens.CardPaddingHorizontal,
+            vertical = Dimens.CardPaddingVertical
         ),
-        borderRadius = 24.dp
+        borderRadius = Dimens.CardRadius
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = Alignment.Top
         ) {
             ElvanCardSelector(
                 isSelectionMode = isSelectionMode,
@@ -195,59 +223,90 @@ fun TextilesCustomerCard(
 
             Spacer(modifier = Modifier.width(12.dp))
 
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = primaryName.preventBrokenLigatures(),
-                    style = TextStyle(
-                        fontFamily = ff,
-                        fontSize = 16.5.sp,
-                        fontWeight = FontWeight.ExtraBold,
-                        color = colors.textPrimary
-                    ),
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.Center
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.Top
+                ) {
+                    Column(
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Text(
+                            text = primaryName.preventBrokenLigatures(),
+                            style = TextStyle(
+                                fontFamily = ff,
+                                fontSize = 15.2.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = colors.textPrimary
+                            ),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
 
-                if (secondaryName.isNotEmpty()) {
-                    Spacer(modifier = Modifier.height(2.dp))
-                    Text(
-                        text = secondaryName.preventBrokenLigatures(),
-                        style = TextStyle(
-                            fontFamily = ff,
-                            fontSize = 13.sp,
-                            color = LocalShellColors.current.textSecondary
-                        ),
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
+                        if (isBilingual && secondaryName.isNotBlank() && secondaryName != primaryName) {
+                            Spacer(modifier = Modifier.height(2.dp))
+                            Text(
+                                text = secondaryName.preventBrokenLigatures(),
+                                style = TextStyle(
+                                    fontFamily = ff,
+                                    fontSize = 13.sp,
+                                    fontWeight = FontWeight.Medium,
+                                    color = colors.textSecondary
+                                ),
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                        }
+                    }
+
+                    Icon(
+                        imageVector = MaterialSymbols.Rounded.ChevronRight,
+                        contentDescription = null,
+                        tint = LocalShellColors.current.border,
+                        modifier = Modifier.size(18.dp)
                     )
                 }
 
-                if (primaryCity.isNotEmpty() || merchant.tholaipaesi.isNotEmpty()) {
-                    Spacer(modifier = Modifier.height(4.dp))
-                    val detail = listOfNotNull(
-                        primaryCity.takeIf { it.isNotEmpty() },
-                        merchant.tholaipaesi.takeIf { it.isNotEmpty() }
-                    ).joinToString("  •  ")
+                val cityText = if (isBilingual && secondaryCity.isNotBlank() && secondaryCity != primaryCity) {
+                    if (primaryCity.isNotBlank()) "$primaryCity • $secondaryCity" else secondaryCity
+                } else {
+                    primaryCity
+                }
 
-                    Text(
-                        text = detail.preventBrokenLigatures(),
-                        style = TextStyle(
-                            fontFamily = ff,
-                            fontSize = 13.sp,
-                            color = LocalShellColors.current.textSecondary
-                        ),
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
+                if (cityText.isNotBlank() || gstin.isNotBlank()) {
+                    Spacer(modifier = Modifier.height(4.dp))
+                    if (cityText.isNotBlank()) {
+                        Text(
+                            text = cityText.preventBrokenLigatures(),
+                            style = TextStyle(
+                                fontFamily = ff,
+                                fontSize = 13.6.sp,
+                                color = colors.textSecondary
+                            ),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    }
+
+                    if (gstin.isNotBlank()) {
+                        Spacer(modifier = Modifier.height(2.dp))
+                        Text(
+                            text = "GSTIN: $gstin",
+                            style = TextStyle(
+                                fontFamily = ff,
+                                fontSize = 12.8.sp,
+                                fontWeight = FontWeight.Medium,
+                                color = colors.textSecondary
+                            ),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    }
                 }
             }
-
-            Icon(
-                imageVector = MaterialSymbols.Rounded.ChevronRight,
-                contentDescription = null,
-                tint = LocalShellColors.current.border,
-                modifier = Modifier.size(18.dp)
-            )
         }
     }
 }
