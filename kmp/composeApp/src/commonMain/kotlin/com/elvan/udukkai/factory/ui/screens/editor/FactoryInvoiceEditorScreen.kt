@@ -387,7 +387,16 @@ fun FactoryInvoiceEditorScreen(
         onBack = handleBack,
         scrollState = scrollState,
         hasActions = false,
-        actions = {}
+        actions = {},
+        floatingBar = {
+            ElvanEditorBottomBar(
+                label = saveBtnLabel,
+                onClick = handleSave,
+                enabled = !isSaving,
+                isLoading = isSaving,
+                accentColor = colors.invoiceColor
+            )
+        }
     ) {
         Box(modifier = Modifier.fillMaxSize()) {
             CompositionLocalProvider(LocalEditorAccentColor provides colors.invoiceColor) {
@@ -699,15 +708,6 @@ fun FactoryInvoiceEditorScreen(
                     }
                 }
             }
-
-            ElvanEditorBottomBar(
-                label = saveBtnLabel,
-                onClick = handleSave,
-                enabled = !isSaving,
-                isLoading = isSaving,
-                accentColor = colors.invoiceColor,
-                modifier = Modifier.align(Alignment.BottomCenter)
-            )
         }
     }
     }

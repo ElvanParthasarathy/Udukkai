@@ -129,7 +129,14 @@ fun FactoryProductEditorScreen(
         onBack = handleBackAttempt,
         scrollState = scrollState,
         hasActions = false,
-        actions = {}
+        actions = {},
+        floatingBar = {
+            ElvanEditorBottomBar(
+                label = K.saveBtn.tr(),
+                onClick = { handleSave() },
+                accentColor = colors.productColor
+            )
+        }
     ) {
         Box(modifier = Modifier.fillMaxSize()) {
             CompositionLocalProvider(LocalEditorAccentColor provides colors.productColor) {
@@ -206,13 +213,6 @@ fun FactoryProductEditorScreen(
                     }
                 }
             }
-
-            ElvanEditorBottomBar(
-                label = K.saveBtn.tr(),
-                onClick = { handleSave() },
-                accentColor = colors.productColor,
-                modifier = Modifier.align(Alignment.BottomCenter)
-            )
         }
     }
     }

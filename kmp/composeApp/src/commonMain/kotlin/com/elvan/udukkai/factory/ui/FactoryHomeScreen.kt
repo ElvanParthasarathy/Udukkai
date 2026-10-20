@@ -218,9 +218,7 @@ fun FactoryHomeScreen() {
         SideEffect {
             ElvanSnackbar.isBottomBarVisible = shouldShowBottomBarForSnackbar
         }
-        DisposableEffect(Unit) {
-            onDispose { ElvanSnackbar.isBottomBarVisible = false }
-        }
+
 
         @Composable
         fun RenderSubpage(subpage: ActiveSubpage) {

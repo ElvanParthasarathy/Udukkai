@@ -342,7 +342,16 @@ fun FactoryReceiptEditorScreen(
         onBack = { handleBackAttempt() },
         scrollState = scrollState,
         hasActions = false,
-        actions = {}
+        actions = {},
+        floatingBar = {
+            ElvanEditorBottomBar(
+                label = K.saveBtn.tr(),
+                onClick = { handleSave() },
+                enabled = !isSaving,
+                isLoading = isSaving,
+                accentColor = colors.receiptColor
+            )
+        }
     ) {
         Box(modifier = Modifier.fillMaxSize()) {
             CompositionLocalProvider(LocalEditorAccentColor provides colors.receiptColor) {
@@ -684,15 +693,6 @@ fun FactoryReceiptEditorScreen(
                 }
             }
         }
-
-        ElvanEditorBottomBar(
-            label = K.saveBtn.tr(),
-            onClick = { handleSave() },
-            enabled = !isSaving,
-            isLoading = isSaving,
-            accentColor = colors.receiptColor,
-            modifier = Modifier.align(Alignment.BottomCenter)
-        )
     }
 }
 

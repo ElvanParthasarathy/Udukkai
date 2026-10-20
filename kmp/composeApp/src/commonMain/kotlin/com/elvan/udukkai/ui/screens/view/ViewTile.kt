@@ -1,245 +1,92 @@
 package com.elvan.udukkai.ui.screens.view
 
+import androidx.compose.animation.*
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material3.Icon
-import androidx.compose.material3.Text
-import androidx.compose.material3.ripple
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import com.elvan.udukkai.core.extensions.cssShadow
-import com.elvan.udukkai.core.platform.navigationBarsPaddingIfMobile
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
+import androidx.compose.ui.zIndex
+import com.elvan.udukkai.core.platform.AppBackHandler
 import com.elvan.udukkai.localization.K
 import com.elvan.udukkai.localization.tr
-import com.elvan.udukkai.theme.LocalAppFontFamily
 import com.elvan.udukkai.theme.rememberShellColors
+import com.elvan.udukkai.ui.components.shell.ElvanFloatingAction
+import com.elvan.udukkai.ui.components.shell.ElvanFloatingActionBar
 import com.elvan.udukkai.ui.components.shell.ElvanSnackbar
 import com.elvan.udukkai.ui.components.shell.ElvanSubShell
 import com.elvan.udukkai.ui.navigation.MaterialSymbols
+import com.elvan.udukkai.ui.screens.preview.PreviewScreen
 
 /**
  * Floating action bar for View (Paarvai) screens.
- * Displays Print, Copy, and Edit in a unified floating pill at the bottom of the screen,
- * exactly matching the design language and dimensions of ElvanSelectionBar.
+ * Displays Edit ("மாற்றியமை"), Preview ("முன்னோட்டம்"), Print ("அச்சிடு"), and Share ("பகிர்") in a unified floating pill.
+ * Powered by the shared ElvanFloatingActionBar component.
  */
 @Composable
 fun ElvanViewActionBar(
-    onPrint: (() -> Unit)?,
-    onCopy: (() -> Unit)?,
-    onEdit: (() -> Unit)?,
+    onEdit: (() -> Unit)? = null,
+    onPreview: (() -> Unit)? = null,
+    onPrint: (() -> Unit)? = null,
+    onShare: (() -> Unit)? = null,
+    onCopy: (() -> Unit)? = null, // Deprecated / Ignored per requirement
     modifier: Modifier = Modifier
 ) {
-    val colors = rememberShellColors()
-    val isDark = colors.isDark
-    val ff = LocalAppFontFamily.current
-
-    val printLabel = K.printBtn.tr()
-    val copyLabel = K.copyBtn.tr()
     val editLabel = K.editRecord.tr()
+    val previewLabel = K.previewBtn.tr()
+    val printLabel = K.printBtn.tr()
+    val shareLabel = K.shareBtn.tr()
+    val underConstructionMsg = K.previewUnderConstruction.tr()
 
-    DisposableEffect(Unit) {
-        ElvanSnackbar.isBottomBarVisible = true
-        onDispose { }
+    val actions = mutableListOf<ElvanFloatingAction>()
+    if (onEdit != null) {
+        actions.add(
+            ElvanFloatingAction(
+                label = editLabel,
+                icon = MaterialSymbols.Rounded.Edit,
+                onClick = onEdit
+            )
+        )
     }
+    actions.add(
+        ElvanFloatingAction(
+            label = previewLabel,
+            icon = MaterialSymbols.Rounded.Visibility,
+            onClick = onPreview ?: { ElvanSnackbar.show(underConstructionMsg) }
+        )
+    )
+    actions.add(
+        ElvanFloatingAction(
+            label = printLabel,
+            icon = MaterialSymbols.Rounded.Print,
+            onClick = onPrint ?: { ElvanSnackbar.show(underConstructionMsg) }
+        )
+    )
+    actions.add(
+        ElvanFloatingAction(
+            label = shareLabel,
+            icon = MaterialSymbols.Rounded.Share,
+            onClick = onShare ?: { ElvanSnackbar.show(underConstructionMsg) }
+        )
+    )
 
-    val actionCount = (if (onPrint != null) 1 else 0) + (if (onCopy != null) 1 else 0) + (if (onEdit != null) 1 else 0)
-    if (actionCount == 0) return
-
-    val barWidth = when (actionCount) {
-        3 -> 246.dp
-        2 -> 168.dp
-        else -> 96.dp
-    }
-
-    Box(
+    ElvanFloatingActionBar(
+        actions = actions,
         modifier = modifier
-            .fillMaxWidth()
-            .navigationBarsPaddingIfMobile()
-            .padding(bottom = 16.dp),
-        contentAlignment = Alignment.Center
-    ) {
-        Box(
-            modifier = Modifier
-                .width(barWidth)
-                .height(56.dp)
-                .cssShadow(
-                    color = Color.Black,
-                    alpha = if (isDark) 0.25f else 0.06f,
-                    blurRadius = 16.dp,
-                    offsetY = 4.dp
-                )
-                .background(
-                    color = colors.floatingBg.copy(alpha = 0.92f),
-                    shape = CircleShape
-                )
-                .border(
-                    width = 0.5.dp,
-                    color = colors.floatingBorder.copy(alpha = if (isDark) 0.15f else 0.6f),
-                    shape = CircleShape
-                )
-                .padding(horizontal = 4.dp, vertical = 4.dp),
-            contentAlignment = Alignment.Center
-        ) {
-            Row(
-                modifier = Modifier.fillMaxSize(),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.Center
-            ) {
-                if (onPrint != null) {
-                    Box(
-                        modifier = Modifier
-                            .weight(1f)
-                            .fillMaxHeight()
-                            .clip(CircleShape)
-                            .clickable(
-                                interactionSource = remember { MutableInteractionSource() },
-                                indication = ripple(bounded = true),
-                                onClick = onPrint
-                            ),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Column(
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.Center
-                        ) {
-                            Icon(
-                                imageVector = MaterialSymbols.Rounded.Print,
-                                contentDescription = printLabel,
-                                tint = colors.textPrimary,
-                                modifier = Modifier.size(19.dp)
-                            )
-                            Spacer(modifier = Modifier.height(2.dp))
-                            Text(
-                                text = printLabel,
-                                maxLines = 1,
-                                style = TextStyle(
-                                    fontFamily = ff,
-                                    fontSize = 11.sp,
-                                    fontWeight = FontWeight.Medium,
-                                    color = colors.textPrimary
-                                )
-                            )
-                        }
-                    }
-                }
-
-                if (onPrint != null && (onCopy != null || onEdit != null)) {
-                    Box(
-                        modifier = Modifier
-                            .width(1.dp)
-                            .height(24.dp)
-                            .background(colors.floatingBorder.copy(alpha = if (isDark) 0.2f else 0.4f))
-                    )
-                }
-
-                if (onCopy != null) {
-                    Box(
-                        modifier = Modifier
-                            .weight(1f)
-                            .fillMaxHeight()
-                            .clip(CircleShape)
-                            .clickable(
-                                interactionSource = remember { MutableInteractionSource() },
-                                indication = ripple(bounded = true),
-                                onClick = onCopy
-                            ),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Column(
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.Center
-                        ) {
-                            Icon(
-                                imageVector = MaterialSymbols.Rounded.ContentCopy,
-                                contentDescription = copyLabel,
-                                tint = colors.textPrimary,
-                                modifier = Modifier.size(19.dp)
-                            )
-                            Spacer(modifier = Modifier.height(2.dp))
-                            Text(
-                                text = copyLabel,
-                                maxLines = 1,
-                                style = TextStyle(
-                                    fontFamily = ff,
-                                    fontSize = 11.sp,
-                                    fontWeight = FontWeight.Medium,
-                                    color = colors.textPrimary
-                                )
-                            )
-                        }
-                    }
-                }
-
-                if (onCopy != null && onEdit != null) {
-                    Box(
-                        modifier = Modifier
-                            .width(1.dp)
-                            .height(24.dp)
-                            .background(colors.floatingBorder.copy(alpha = if (isDark) 0.2f else 0.4f))
-                    )
-                }
-
-                if (onEdit != null) {
-                    Box(
-                        modifier = Modifier
-                            .weight(1f)
-                            .fillMaxHeight()
-                            .clip(CircleShape)
-                            .clickable(
-                                interactionSource = remember { MutableInteractionSource() },
-                                indication = ripple(bounded = true),
-                                onClick = onEdit
-                            ),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Column(
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.Center
-                        ) {
-                            Icon(
-                                imageVector = MaterialSymbols.Rounded.Edit,
-                                contentDescription = editLabel,
-                                tint = colors.textPrimary,
-                                modifier = Modifier.size(19.dp)
-                            )
-                            Spacer(modifier = Modifier.height(2.dp))
-                            Text(
-                                text = editLabel,
-                                maxLines = 1,
-                                style = TextStyle(
-                                    fontFamily = ff,
-                                    fontSize = 11.sp,
-                                    fontWeight = FontWeight.Medium,
-                                    color = colors.textPrimary
-                                )
-                            )
-                        }
-                    }
-                }
-            }
-        }
-    }
+    )
 }
 
 /**
  * Universal View Shell (Paarvai) for Compose Multiplatform.
  * Replicates Flutter's `elvan_paarvai_oadu.dart`.
- * Wraps read-only detail & print views with bottom floating action pill: "அச்சிடு" (Print), "நகலெடு" (Copy), and "மாற்றியமை" (Edit).
+ * Wraps read-only detail views with One UI collapsible shell, smooth bottom fade mask,
+ * and unified bottom floating action pill: Edit, Preview, Print, and Share.
  */
 @Composable
 fun ViewTile(
@@ -249,10 +96,13 @@ fun ViewTile(
     scrollState: LazyListState = rememberLazyListState(),
     onEdit: (() -> Unit)? = null,
     onPrint: (() -> Unit)? = null,
-    onCopy: (() -> Unit)? = null,
+    onCopy: (() -> Unit)? = null, // Deprecated / Ignored
+    onShare: (() -> Unit)? = null,
+    onPreview: (() -> Unit)? = null,
     content: @Composable () -> Unit
 ) {
-    val hasActions = onEdit != null || onPrint != null || onCopy != null
+    val colors = rememberShellColors()
+    var showPreview by remember { mutableStateOf(false) }
 
     ElvanSubShell(
         title = title,
@@ -260,19 +110,32 @@ fun ViewTile(
         scrollState = scrollState,
         hasActions = false,
         actions = {},
+        showBottomFade = true,
+        floatingBar = {
+            ElvanViewActionBar(
+                onEdit = onEdit,
+                onPreview = onPreview ?: { showPreview = true },
+                onPrint = onPrint,
+                onShare = onShare
+            )
+        },
         content = {
             Box(modifier = modifier.fillMaxSize()) {
                 content()
-
-                if (hasActions) {
-                    ElvanViewActionBar(
-                        onPrint = onPrint,
-                        onCopy = onCopy,
-                        onEdit = onEdit,
-                        modifier = Modifier.align(Alignment.BottomCenter)
-                    )
-                }
             }
         }
     )
+
+    if (showPreview) {
+        Dialog(
+            onDismissRequest = { showPreview = false },
+            properties = DialogProperties(usePlatformDefaultWidth = false)
+        ) {
+            PreviewScreen(
+                title = K.previewBtn.tr(),
+                subtitle = title,
+                onBack = { showPreview = false }
+            )
+        }
+    }
 }

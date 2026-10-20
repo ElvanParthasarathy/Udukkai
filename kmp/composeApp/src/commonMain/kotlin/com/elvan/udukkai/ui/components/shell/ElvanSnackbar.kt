@@ -28,7 +28,7 @@ object ElvanSnackbar {
 
     private var messageId by mutableStateOf(0L)
 
-    var isBottomBarVisible by mutableStateOf(false)
+    var isBottomBarVisible by mutableStateOf(true)
 
     fun show(message: String) {
         currentMessage = message
@@ -67,19 +67,14 @@ fun ElvanSnackbarHost(
     }
 
     val navBarsPadding = com.elvan.udukkai.core.platform.getNavBarBottomPadding()
-    // When the floating app BottomNavBar is present (HomeScreen):
-    // BottomNavBar height (56.dp) + bottom margin (16.dp) + breathing room (16.dp) = 88.dp above system nav bar.
-    // When BottomNavBar is not present (subpages, settings, editors):
-    // Position cleanly above system navigation bar with standard breathing room.
+    // When the floating app BottomNavBar or editor/view floating toolbar is present:
+    // Floating bar height (56.dp) + bottom margin (16.dp) + breathing room (18.dp) = 90.dp above system nav bar.
+    // When no bottom bar is present (e.g. Settings):
+    // Position cleanly above system navigation bar with 24.dp breathing room.
     val effectiveBottomPadding = if (ElvanSnackbar.isBottomBarVisible) {
         navBarsPadding + 90.dp
     } else {
-        val isThreeButtonNav = navBarsPadding >= 36.dp
-        if (isThreeButtonNav) {
-            maxOf(bottomPadding.dp, navBarsPadding + 20.dp)
-        } else {
-            bottomPadding.dp
-        }
+        navBarsPadding + 24.dp
     }
 
     Box(

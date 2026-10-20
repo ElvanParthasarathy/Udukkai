@@ -1,0 +1,270 @@
+package com.elvan.udukkai.ui.screens.preview
+
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Icon
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import com.elvan.udukkai.core.extensions.cssShadow
+import com.elvan.udukkai.localization.K
+import com.elvan.udukkai.localization.tr
+import com.elvan.udukkai.theme.Dimens
+import com.elvan.udukkai.theme.LocalAppFontFamily
+import com.elvan.udukkai.ui.components.shell.LocalElvanTopSpacerHeight
+import com.elvan.udukkai.theme.preventBrokenLigatures
+import com.elvan.udukkai.theme.rememberShellColors
+import com.elvan.udukkai.ui.components.shell.ElvanSubShell
+import com.elvan.udukkai.ui.navigation.MaterialSymbols
+
+/**
+ * Universal Dummy Preview Screen (முன்னோட்டம்).
+ * Provides a clean One UI document preview placeholder for Invoices, Receipts, and Reports.
+ */
+@Composable
+fun PreviewScreen(
+    title: String = K.previewBtn.tr(),
+    subtitle: String? = null,
+    onBack: () -> Unit
+) {
+    val colors = rememberShellColors()
+    val isDark = colors.isDark
+    val ff = LocalAppFontFamily.current
+    val scrollState = rememberLazyListState()
+
+    ElvanSubShell(
+        title = title,
+        onBack = onBack,
+        scrollState = scrollState,
+        hasActions = false,
+        showBottomFade = true
+    ) {
+        LazyColumn(
+            state = scrollState,
+            modifier = Modifier.fillMaxSize(),
+            contentPadding = PaddingValues(
+                start = 16.dp,
+                end = 16.dp,
+                bottom = Dimens.SubpageContentPaddingBottom + 32.dp
+            ),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            item(key = "top_spacer") {
+                Spacer(modifier = Modifier.height(LocalElvanTopSpacerHeight.current))
+            }
+
+            // Info Notice Banner
+            item(key = "notice_card") {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(16.dp))
+                        .background(if (isDark) Color.White.copy(alpha = 0.06f) else Color.Black.copy(alpha = 0.04f))
+                        .border(
+                            width = 0.5.dp,
+                            color = colors.floatingBorder.copy(alpha = if (isDark) 0.15f else 0.4f),
+                            shape = RoundedCornerShape(16.dp)
+                        )
+                        .padding(horizontal = 16.dp, vertical = 12.dp)
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(36.dp)
+                                .clip(CircleShape)
+                                .background(colors.accent.copy(alpha = 0.15f)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = MaterialSymbols.Rounded.Visibility,
+                                contentDescription = null,
+                                tint = colors.textPrimary,
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
+                        Column {
+                            Text(
+                                text = (subtitle ?: title).preventBrokenLigatures(),
+                                style = TextStyle(
+                                    fontFamily = ff,
+                                    fontSize = 14.sp,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = colors.textPrimary
+                                )
+                            )
+                            Spacer(modifier = Modifier.height(2.dp))
+                            Text(
+                                text = K.previewUnderConstruction.tr().preventBrokenLigatures(),
+                                style = TextStyle(
+                                    fontFamily = ff,
+                                    fontSize = 12.5.sp,
+                                    fontWeight = FontWeight.Normal,
+                                    color = colors.textSecondary
+                                )
+                            )
+                        }
+                    }
+                }
+            }
+
+            // Simulated Document Sheet (A4-Style Sheet)
+            item(key = "sheet_preview") {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(440.dp)
+                        .cssShadow(
+                            color = Color.Black,
+                            alpha = if (isDark) 0.3f else 0.08f,
+                            blurRadius = 20.dp,
+                            offsetY = 6.dp
+                        )
+                        .clip(RoundedCornerShape(20.dp))
+                        .background(if (isDark) Color(0xFF181818) else Color.White)
+                        .border(
+                            width = 0.5.dp,
+                            color = colors.floatingBorder.copy(alpha = if (isDark) 0.2f else 0.5f),
+                            shape = RoundedCornerShape(20.dp)
+                        )
+                        .padding(24.dp)
+                ) {
+                    Column(
+                        modifier = Modifier.fillMaxSize(),
+                        verticalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        // Header simulated lines
+                        Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .width(140.dp)
+                                        .height(18.dp)
+                                        .clip(RoundedCornerShape(6.dp))
+                                        .background(colors.textPrimary.copy(alpha = 0.8f))
+                                )
+                                Box(
+                                    modifier = Modifier
+                                        .width(80.dp)
+                                        .height(14.dp)
+                                        .clip(RoundedCornerShape(4.dp))
+                                        .background(colors.textSecondary.copy(alpha = 0.3f))
+                                )
+                            }
+                            Box(
+                                modifier = Modifier
+                                    .width(200.dp)
+                                    .height(12.dp)
+                                    .clip(RoundedCornerShape(4.dp))
+                                    .background(colors.textSecondary.copy(alpha = 0.25f))
+                            )
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(1.dp)
+                                    .background(colors.floatingBorder.copy(alpha = 0.3f))
+                            )
+                        }
+
+                        // Middle simulated rows
+                        Column(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalArrangement = Arrangement.spacedBy(14.dp)
+                        ) {
+                            repeat(4) { idx ->
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween
+                                ) {
+                                    Box(
+                                        modifier = Modifier
+                                            .width((100 + (idx * 25)).dp)
+                                            .height(12.dp)
+                                            .clip(RoundedCornerShape(4.dp))
+                                            .background(colors.textSecondary.copy(alpha = 0.2f))
+                                    )
+                                    Box(
+                                        modifier = Modifier
+                                            .width(50.dp)
+                                            .height(12.dp)
+                                            .clip(RoundedCornerShape(4.dp))
+                                            .background(colors.textSecondary.copy(alpha = 0.25f))
+                                    )
+                                }
+                            }
+                        }
+
+                        // Watermark in Center
+                        Box(
+                            modifier = Modifier.fillMaxWidth(),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = K.previewBtn.tr().preventBrokenLigatures(),
+                                style = TextStyle(
+                                    fontFamily = ff,
+                                    fontSize = 24.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = colors.textPrimary.copy(alpha = 0.12f),
+                                    letterSpacing = 2.sp
+                                )
+                            )
+                        }
+
+                        // Footer simulated total
+                        Column(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(1.dp)
+                                    .background(colors.floatingBorder.copy(alpha = 0.3f))
+                            )
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .width(70.dp)
+                                        .height(14.dp)
+                                        .clip(RoundedCornerShape(4.dp))
+                                        .background(colors.textSecondary.copy(alpha = 0.35f))
+                                )
+                                Box(
+                                    modifier = Modifier
+                                        .width(100.dp)
+                                        .height(20.dp)
+                                        .clip(RoundedCornerShape(6.dp))
+                                        .background(colors.textPrimary.copy(alpha = 0.85f))
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

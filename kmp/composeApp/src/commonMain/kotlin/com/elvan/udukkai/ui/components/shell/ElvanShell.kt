@@ -59,7 +59,8 @@ fun ElvanShell(
     isAllSelected: Boolean = false,
     onSelectAll: () -> Unit = {},
     onCancelSelection: () -> Unit = {},
-    showBottomFade: Boolean = false,
+    showBottomFade: Boolean = true,
+    floatingBar: @Composable () -> Unit = {},
     content: @Composable () -> Unit
 ) {
     val colors = rememberShellColors()
@@ -490,22 +491,35 @@ fun ElvanShell(
                 ) {
                     navbar()
                 }
-            } else if (showBottomFade) {
-                // Subpages: Bottom Shadow Fade Mask above System Navigation Bar
+            } else {
+                if (showBottomFade) {
+                    // Subpages: Bottom Shadow Fade Mask above System Navigation Bar (Layer 4)
+                    Box(
+                        modifier = Modifier
+                            .align(Alignment.BottomCenter)
+                            .fillMaxWidth()
+                            .height(72.dp + navBarsPadding)
+                            .background(
+                                Brush.verticalGradient(
+                                    0.0f to Color.Transparent,
+                                    0.3f to colors.background.copy(alpha = 0.16f),
+                                    0.65f to colors.background.copy(alpha = 0.55f),
+                                    1.0f to colors.background
+                                )
+                            )
+                    )
+                }
+
+                // Subpage floating bar rendered ABOVE the bottom shadow fade mask (Layer 5)
                 Box(
                     modifier = Modifier
                         .align(Alignment.BottomCenter)
                         .fillMaxWidth()
-                        .height(48.dp + navBarsPadding)
-                        .background(
-                            Brush.verticalGradient(
-                                0.0f to Color.Transparent,
-                                0.3f to colors.background.copy(alpha = 0.16f),
-                                0.65f to colors.background.copy(alpha = 0.55f),
-                                1.0f to colors.background
-                            )
-                        )
-                )
+                        .zIndex(100f),
+                    contentAlignment = Alignment.BottomCenter
+                ) {
+                    floatingBar()
+                }
             }
         }
     }

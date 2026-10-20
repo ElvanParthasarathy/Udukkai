@@ -39,9 +39,14 @@ import com.elvan.udukkai.theme.LocalAppFontFamily
 import com.elvan.udukkai.theme.preventBrokenLigatures
 import com.elvan.udukkai.theme.rememberShellColors
 import com.elvan.udukkai.theme.gradientFor
+import com.elvan.udukkai.ui.components.shell.ElvanFloatingAction
+import com.elvan.udukkai.ui.components.shell.ElvanFloatingActionBar
 import com.elvan.udukkai.ui.components.shell.ElvanSelectionBottomSheet
 import com.elvan.udukkai.ui.components.shell.ElvanSnackbar
 import com.elvan.udukkai.ui.navigation.MaterialSymbols
+import com.elvan.udukkai.ui.screens.preview.PreviewScreen
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import com.elvan.udukkai.theme.LocalShellColors
 
 val LocalEditorAccentColor = compositionLocalOf<Color?> { null }
@@ -635,7 +640,7 @@ fun ElvanThiruthiPothan(
 /**
  * Bottom Floating Action Bar for Elvan Editors (One UI pattern).
  * Replaces the cramped top-right action button with a primary thumb-accessible floating pill at the bottom.
- * Exactly matches the design language and dimensions of ElvanViewActionBar and ElvanSelectionBar.
+ * Powered by the shared ElvanFloatingActionBar component.
  */
 @Composable
 fun ElvanEditorBottomBar(
@@ -644,83 +649,43 @@ fun ElvanEditorBottomBar(
     label: String = K.saveBtn.tr(),
     enabled: Boolean = true,
     isLoading: Boolean = false,
-    accentColor: Color? = null
+    accentColor: Color? = null,
+    onPreview: (() -> Unit)? = null
 ) {
-    val colors = rememberShellColors()
-    val isDark = colors.isDark
-    val ff = LocalAppFontFamily.current
+    var showPreviewDialog by remember { mutableStateOf(false) }
+    val previewLabel = K.previewBtn.tr()
 
-    DisposableEffect(Unit) {
-        ElvanSnackbar.isBottomBarVisible = true
-        onDispose { }
+    val actions = remember(label, enabled, isLoading, onClick, onPreview, previewLabel) {
+        listOf(
+            ElvanFloatingAction(
+                label = previewLabel,
+                icon = MaterialSymbols.Rounded.Visibility,
+                onClick = onPreview ?: { showPreviewDialog = true }
+            ),
+            ElvanFloatingAction(
+                label = label,
+                icon = MaterialSymbols.Rounded.CheckCircleFill,
+                onClick = onClick,
+                enabled = enabled,
+                isLoading = isLoading
+            )
+        )
     }
 
-    Box(
+    ElvanFloatingActionBar(
+        actions = actions,
         modifier = modifier
-            .fillMaxWidth()
-            .navigationBarsPaddingIfMobile()
-            .padding(bottom = 16.dp),
-        contentAlignment = Alignment.Center
-    ) {
-        Box(
-            modifier = Modifier
-                .height(56.dp)
-                .cssShadow(
-                    color = Color.Black,
-                    alpha = if (isDark) 0.25f else 0.06f,
-                    blurRadius = 16.dp,
-                    offsetY = 4.dp
-                )
-                .background(
-                    color = colors.floatingBg.copy(alpha = 0.92f),
-                    shape = CircleShape
-                )
-                .border(
-                    width = 0.5.dp,
-                    color = colors.floatingBorder.copy(alpha = if (isDark) 0.15f else 0.6f),
-                    shape = CircleShape
-                )
-                .clip(CircleShape)
-                .clickable(
-                    interactionSource = remember { MutableInteractionSource() },
-                    indication = ripple(bounded = true),
-                    enabled = enabled && !isLoading,
-                    onClick = onClick
-                )
-                .padding(horizontal = 28.dp),
-            contentAlignment = Alignment.Center
+    )
+
+    if (showPreviewDialog) {
+        Dialog(
+            onDismissRequest = { showPreviewDialog = false },
+            properties = DialogProperties(usePlatformDefaultWidth = false)
         ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.Center
-            ) {
-                if (isLoading) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(18.dp),
-                        color = colors.textPrimary,
-                        strokeWidth = 2.dp
-                    )
-                    Spacer(modifier = Modifier.width(10.dp))
-                } else {
-                    Icon(
-                        imageVector = MaterialSymbols.Rounded.CheckCircleFill,
-                        contentDescription = label,
-                        tint = colors.textPrimary,
-                        modifier = Modifier.size(20.dp)
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                }
-                Text(
-                    text = label.preventBrokenLigatures(),
-                    style = TextStyle(
-                        fontFamily = ff,
-                        fontSize = 15.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        color = colors.textPrimary,
-                        letterSpacing = 0.2.sp
-                    )
-                )
-            }
+            PreviewScreen(
+                title = K.previewBtn.tr(),
+                onBack = { showPreviewDialog = false }
+            )
         }
     }
 }

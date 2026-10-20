@@ -38,10 +38,18 @@ fun ElvanSubShell(
     leadingIcon: ImageVector? = null,
     hasActions: Boolean = false,
     actions: @Composable RowScope.() -> Unit = {},
-    showBottomFade: Boolean = false,
+    showBottomFade: Boolean = true,
+    floatingBar: @Composable () -> Unit = {},
     content: @Composable () -> Unit
 ) {
     val colors = rememberShellColors()
+
+    androidx.compose.runtime.SideEffect {
+        if (floatingBar != {}) {
+            ElvanSnackbar.isBottomBarVisible = true
+        }
+    }
+
     ElvanShell(
         title = title,
         onBack = onBack,
@@ -52,6 +60,7 @@ fun ElvanSubShell(
         hasActions = hasActions,
         actions = actions,
         navbar = {},
+        floatingBar = floatingBar,
         content = content
     )
 }
