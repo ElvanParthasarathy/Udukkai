@@ -635,6 +635,7 @@ fun ElvanThiruthiPothan(
 /**
  * Bottom Floating Action Bar for Elvan Editors (One UI pattern).
  * Replaces the cramped top-right action button with a primary thumb-accessible floating pill at the bottom.
+ * Exactly matches the design language and dimensions of ElvanViewActionBar and ElvanSelectionBar.
  */
 @Composable
 fun ElvanEditorBottomBar(
@@ -648,7 +649,6 @@ fun ElvanEditorBottomBar(
     val colors = rememberShellColors()
     val isDark = colors.isDark
     val ff = LocalAppFontFamily.current
-    val btnColor = accentColor ?: LocalEditorAccentColor.current ?: colors.accent
 
     DisposableEffect(Unit) {
         ElvanSnackbar.isBottomBarVisible = true
@@ -667,27 +667,27 @@ fun ElvanEditorBottomBar(
                 .height(56.dp)
                 .cssShadow(
                     color = Color.Black,
-                    alpha = if (isDark) 0.25f else 0.12f,
+                    alpha = if (isDark) 0.25f else 0.06f,
                     blurRadius = 16.dp,
                     offsetY = 4.dp
                 )
                 .background(
-                    color = if (enabled) btnColor else btnColor.copy(alpha = 0.4f),
+                    color = colors.floatingBg.copy(alpha = 0.92f),
                     shape = CircleShape
                 )
                 .border(
                     width = 0.5.dp,
-                    color = Color.White.copy(alpha = if (isDark) 0.18f else 0.35f),
+                    color = colors.floatingBorder.copy(alpha = if (isDark) 0.15f else 0.6f),
                     shape = CircleShape
                 )
                 .clip(CircleShape)
                 .clickable(
                     interactionSource = remember { MutableInteractionSource() },
-                    indication = ripple(bounded = true, color = Color.White),
+                    indication = ripple(bounded = true),
                     enabled = enabled && !isLoading,
                     onClick = onClick
                 )
-                .padding(horizontal = 32.dp),
+                .padding(horizontal = 28.dp),
             contentAlignment = Alignment.Center
         ) {
             Row(
@@ -696,8 +696,8 @@ fun ElvanEditorBottomBar(
             ) {
                 if (isLoading) {
                     CircularProgressIndicator(
-                        modifier = Modifier.size(20.dp),
-                        color = Color.White,
+                        modifier = Modifier.size(18.dp),
+                        color = colors.textPrimary,
                         strokeWidth = 2.dp
                     )
                     Spacer(modifier = Modifier.width(10.dp))
@@ -705,7 +705,7 @@ fun ElvanEditorBottomBar(
                     Icon(
                         imageVector = MaterialSymbols.Rounded.CheckCircleFill,
                         contentDescription = label,
-                        tint = Color.White,
+                        tint = colors.textPrimary,
                         modifier = Modifier.size(20.dp)
                     )
                     Spacer(modifier = Modifier.width(8.dp))
@@ -715,8 +715,8 @@ fun ElvanEditorBottomBar(
                     style = TextStyle(
                         fontFamily = ff,
                         fontSize = 15.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Color.White,
+                        fontWeight = FontWeight.SemiBold,
+                        color = colors.textPrimary,
                         letterSpacing = 0.2.sp
                     )
                 )
