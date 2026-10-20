@@ -4,6 +4,8 @@ enum class PlatformType { ANDROID, DESKTOP }
 
 expect val currentPlatform: PlatformType
 
+expect val isDebugBuild: Boolean
+
 @androidx.compose.runtime.Composable
 expect fun ConfigureDialogWindow(
     isDark: Boolean,

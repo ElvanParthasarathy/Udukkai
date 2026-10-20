@@ -1,4 +1,4 @@
-﻿package com.elvan.udukkai.ui.screens.settings.screens
+﻿package com.elvan.udukkai.factory.ui.screens.settings
 
 import com.elvan.udukkai.data.settings.NiruvanaTharavugal
 import androidx.compose.foundation.background
@@ -27,6 +27,7 @@ import com.elvan.udukkai.theme.ShellColors
 import com.elvan.udukkai.theme.ShellDefaults
 import com.elvan.udukkai.theme.rememberShellColors
 import com.elvan.udukkai.ui.components.shell.*
+import com.elvan.udukkai.factory.data.FactoryProfileRepository
 import com.elvan.udukkai.ui.navigation.MaterialSymbols
 
 /**
@@ -39,7 +40,7 @@ import com.elvan.udukkai.ui.navigation.MaterialSymbols
  * - PDF color theme customization
  */
 @Composable
-fun InvoiceCreationSettingsScreen(
+fun FactoryInvoiceCreationSettingsScreen(
     scrollState: LazyListState = rememberLazyListState(),
     colors: ShellColors = rememberShellColors(),
     customProfile: NiruvanaTharavugal? = null,
@@ -157,7 +158,7 @@ fun InvoiceCreationSettingsScreen(
                                     val updated = profile.copy()
                                     updated.mudhanMozhi = tempPrimaryLang
                                     updated.thunaiMozhi = tempSecondaryLang
-                                    if (onUpdateProfile != null) onUpdateProfile(updated) else if (isPattu) com.elvan.udukkai.textiles.data.TextilesProfileRepository.updateProfile(updated) else com.elvan.udukkai.factory.data.FactoryProfileRepository.updateProfile(updated)
+                                    FactoryProfileRepository.updateProfile(updated)
                                     isEditingLanguages = false
                                     ElvanSnackbar.show(saveSuccessMsg)
                                 },
@@ -212,7 +213,7 @@ fun InvoiceCreationSettingsScreen(
                                 checked = profile.iruMozhi,
                                 onCheckedChange = { isChecked ->
                                     val updated = profile.copy(iruMozhi = isChecked)
-                                    if (onUpdateProfile != null) onUpdateProfile(updated) else if (isPattu) com.elvan.udukkai.textiles.data.TextilesProfileRepository.updateProfile(updated) else com.elvan.udukkai.factory.data.FactoryProfileRepository.updateProfile(updated)
+                                    FactoryProfileRepository.updateProfile(updated)
                                     ElvanSnackbar.show(saveSuccessMsg)
                                 },
                                 colors = colors
@@ -221,25 +222,7 @@ fun InvoiceCreationSettingsScreen(
                         colors = colors
                     )
 
-                    // GST Split Toggle (Only for Goods / Pattu Mode)
-                    if (isPattu) {
-                        ElvanSettingsDivider(colors = colors)
-                        ElvanSimpleSettingsRow(
-                            title = K.showGstSplitsInTable.tr(),
-                            trailing = {
-                                ElvanSettingsSwitch(
-                                    checked = profile.gstPirippugal,
-                                    onCheckedChange = { isChecked ->
-                                        val updated = profile.copy(gstPirippugal = isChecked)
-                                        if (onUpdateProfile != null) onUpdateProfile(updated) else if (isPattu) com.elvan.udukkai.textiles.data.TextilesProfileRepository.updateProfile(updated) else com.elvan.udukkai.factory.data.FactoryProfileRepository.updateProfile(updated)
-                                        ElvanSnackbar.show(saveSuccessMsg)
-                                    },
-                                    colors = colors
-                                )
-                            },
-                            colors = colors
-                        )
-                    }
+
                 }
             }
 
@@ -289,7 +272,7 @@ fun InvoiceCreationSettingsScreen(
                                 onSelected = { selectedColor ->
                                     val updated = profile.copy()
                                     updated.thoatraNiram = selectedColor
-                                    if (onUpdateProfile != null) onUpdateProfile(updated) else if (isPattu) com.elvan.udukkai.textiles.data.TextilesProfileRepository.updateProfile(updated) else com.elvan.udukkai.factory.data.FactoryProfileRepository.updateProfile(updated)
+                                    FactoryProfileRepository.updateProfile(updated)
                                     ElvanSnackbar.show(saveSuccessMsg)
                                 }
                             )

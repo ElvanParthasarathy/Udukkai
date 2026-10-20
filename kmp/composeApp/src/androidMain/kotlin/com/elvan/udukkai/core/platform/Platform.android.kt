@@ -24,6 +24,8 @@ import androidx.core.view.WindowCompat
 
 actual val currentPlatform: PlatformType = PlatformType.ANDROID
 
+actual val isDebugBuild: Boolean = com.elvan.udukkai.BuildConfig.DEBUG
+
 @Composable
 actual fun ConfigureDialogWindow(
     isDark: Boolean,

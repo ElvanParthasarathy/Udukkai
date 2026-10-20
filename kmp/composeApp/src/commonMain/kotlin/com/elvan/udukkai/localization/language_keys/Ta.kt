@@ -484,11 +484,7 @@ val ta: Map<String, String> = mapOf(
     K.noBackupsAvailable to "காப்புகள் ஏதுமில்லை",
     K.emailMismatch to "மின்னஞ்சல் முகவரி பொருந்தவில்லை",
     K.passwordRequired to "கடவுச்சொல் தேவை",
-)
-
-
-/**
- * Dynamically generated Tamil Latin (Tanglish/Romanized    K.productName to "பொருட்பெயர்",
+    K.productName to "பொருட்பெயர்",
     K.ratePerUnit to "அலகு விலை",
     K.editCustomer to "வாங்குநர் திருத்து",
     K.createCustomer to "புதிய வாங்குநர்",
@@ -514,7 +510,9 @@ val ta: Map<String, String> = mapOf(
     K.selectedCount to "தேர்ந்தெடுக்கப்பட்டது",
     K.taxRate to "வரி வீதம்",
 )
- translations
+
+/**
+ * Dynamically generated Tamil Latin (Tanglish/Romanized) translations
  * using the pure Kotlin Tolkappiyam NavilEngine.
  * Eliminates the need for a separate static TaLatn.kt file.
  */

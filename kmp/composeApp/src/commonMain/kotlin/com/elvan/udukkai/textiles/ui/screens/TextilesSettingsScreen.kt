@@ -117,15 +117,10 @@ fun TextilesSettingsScreen(
                     )
                     SettingsRoute.Display -> DisplaySettingsScreen(scrollState = scrollState, colors = colors)
                     SettingsRoute.Language -> LanguageSettingsScreen(scrollState = scrollState, colors = colors)
-                    SettingsRoute.Merchant -> MerchantSettingsScreen(
+                    SettingsRoute.Merchant -> TextilesMerchantSettingsScreen(
                         onNavigateToManageProfiles = { currentRoute = SettingsRoute.ManageProfiles },
                         scrollState = scrollState,
-                        colors = colors,
-                        customProfile = TextilesProfileRepository.profile,
-                        customProfiles = TextilesProfileRepository.profiles,
-                        onUpdateProfile = { TextilesProfileRepository.updateProfile(it) },
-                        onSelectProfile = { TextilesProfileRepository.setActiveProfile(it) },
-                        isTextiles = true
+                        colors = colors
                     )
                     SettingsRoute.ManageProfiles -> TextilesManageProfilesScreen(
                         onBack = { currentRoute = SettingsRoute.Merchant },
@@ -134,25 +129,19 @@ fun TextilesSettingsScreen(
                     )
                     SettingsRoute.FactoryIdentity -> {}
                     SettingsRoute.TextilesIdentity -> TextilesIdentityScreen(scrollState = scrollState, colors = colors)
-                    SettingsRoute.Address -> AddressSettingsScreen(
+                    SettingsRoute.Address -> TextilesAddressSettingsScreen(
                         scrollState = scrollState,
-                        colors = colors,
-                        customProfile = TextilesProfileRepository.profile,
-                        onUpdateProfile = { TextilesProfileRepository.updateProfile(it) },
-                        isTextiles = true
+                        colors = colors
                     )
                     SettingsRoute.Bank -> BankSettingsScreen(
                         scrollState = scrollState,
                         colors = colors,
-                        customProfile = TextilesProfileRepository.profile,
+                        profile = TextilesProfileRepository.profile,
                         onUpdateProfile = { TextilesProfileRepository.updateProfile(it) }
                     )
-                    SettingsRoute.InvoiceCreation -> InvoiceCreationSettingsScreen(
+                    SettingsRoute.InvoiceCreation -> TextilesInvoiceCreationSettingsScreen(
                         scrollState = scrollState,
-                        colors = colors,
-                        customProfile = TextilesProfileRepository.profile,
-                        onUpdateProfile = { TextilesProfileRepository.updateProfile(it) },
-                        isTextiles = true
+                        colors = colors
                     )
                     SettingsRoute.StorageBackup -> TextilesStorageBackupScreen(scrollState = scrollState, colors = colors)
                     SettingsRoute.Security -> TextilesSecuritySettingsScreen(scrollState = scrollState, colors = colors)

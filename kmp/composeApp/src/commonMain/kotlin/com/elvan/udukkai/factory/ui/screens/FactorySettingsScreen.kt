@@ -117,15 +117,10 @@ fun FactorySettingsScreen(
                     )
                     SettingsRoute.Display -> DisplaySettingsScreen(scrollState = scrollState, colors = colors)
                     SettingsRoute.Language -> LanguageSettingsScreen(scrollState = scrollState, colors = colors)
-                    SettingsRoute.Merchant -> MerchantSettingsScreen(
+                    SettingsRoute.Merchant -> FactoryMerchantSettingsScreen(
                         onNavigateToManageProfiles = { currentRoute = SettingsRoute.ManageProfiles },
                         scrollState = scrollState,
-                        colors = colors,
-                        customProfile = FactoryProfileRepository.profile,
-                        customProfiles = FactoryProfileRepository.profiles,
-                        onUpdateProfile = { FactoryProfileRepository.updateProfile(it) },
-                        onSelectProfile = { FactoryProfileRepository.setActiveProfile(it) },
-                        isTextiles = false
+                        colors = colors
                     )
                     SettingsRoute.ManageProfiles -> FactoryManageProfilesScreen(
                         onBack = { currentRoute = SettingsRoute.Merchant },
@@ -134,25 +129,19 @@ fun FactorySettingsScreen(
                     )
                     SettingsRoute.FactoryIdentity -> FactoryIdentityScreen(scrollState = scrollState, colors = colors)
                     SettingsRoute.TextilesIdentity -> {}
-                    SettingsRoute.Address -> AddressSettingsScreen(
+                    SettingsRoute.Address -> FactoryAddressSettingsScreen(
                         scrollState = scrollState,
-                        colors = colors,
-                        customProfile = FactoryProfileRepository.profile,
-                        onUpdateProfile = { FactoryProfileRepository.updateProfile(it) },
-                        isTextiles = false
+                        colors = colors
                     )
                     SettingsRoute.Bank -> BankSettingsScreen(
                         scrollState = scrollState,
                         colors = colors,
-                        customProfile = FactoryProfileRepository.profile,
+                        profile = FactoryProfileRepository.profile,
                         onUpdateProfile = { FactoryProfileRepository.updateProfile(it) }
                     )
-                    SettingsRoute.InvoiceCreation -> InvoiceCreationSettingsScreen(
+                    SettingsRoute.InvoiceCreation -> FactoryInvoiceCreationSettingsScreen(
                         scrollState = scrollState,
-                        colors = colors,
-                        customProfile = FactoryProfileRepository.profile,
-                        onUpdateProfile = { FactoryProfileRepository.updateProfile(it) },
-                        isTextiles = false
+                        colors = colors
                     )
                     SettingsRoute.StorageBackup -> FactoryStorageBackupScreen(scrollState = scrollState, colors = colors)
                     SettingsRoute.Security -> FactorySecuritySettingsScreen(scrollState = scrollState, colors = colors)

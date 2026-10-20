@@ -1,0 +1,371 @@
+package com.elvan.udukkai.textiles.dev
+
+import com.elvan.udukkai.core.backup.AutoBackupManager
+import com.elvan.udukkai.core.utils.DateUtils
+import com.elvan.udukkai.data.database.getTextilesDatabaseHelper
+import com.elvan.udukkai.data.mock.*
+import com.elvan.udukkai.data.model.PattiyalTharavuru
+import com.elvan.udukkai.data.model.PatruPattiyalInaippuTharavuru
+import com.elvan.udukkai.data.model.PatrugalTharavuru
+import com.elvan.udukkai.data.model.PorulTharavuru
+import com.elvan.udukkai.data.model.VaangunarTharavuru
+import com.elvan.udukkai.data.settings.NiruvanaTharavugal
+import com.elvan.udukkai.localization.Language
+import com.elvan.udukkai.localization.LanguageManager
+import com.elvan.udukkai.textiles.data.*
+import com.elvan.udukkai.textiles.ui.screens.editor.TextilesCalculation
+import com.elvan.udukkai.textiles.ui.screens.editor.TextilesItem
+
+/**
+ * Textiles mock data seeder & testing utilities.
+ * Dedicated exclusively to Udukkai Textiles (சவுளி) with zero cross-app dependencies.
+ */
+object TextilesMockDataSeeder {
+
+    fun parseDate(dateStr: String): Long {
+        if (dateStr.contains("/")) {
+            val parts = dateStr.split("/")
+            if (parts.size == 3) {
+                val d = parts[0].toIntOrNull() ?: 1
+                val m = parts[1].toIntOrNull() ?: 1
+                val y = parts[2].toIntOrNull() ?: 2026
+                val dStr = if (d < 10) "0$d" else "$d"
+                val mStr = if (m < 10) "0$m" else "$m"
+                return DateUtils.parseToEpochMillis("$dStr/$mStr/$y") ?: System.currentTimeMillis()
+            }
+        }
+        if (dateStr.contains("-")) {
+            val parts = dateStr.split("-")
+            if (parts.size == 3) {
+                val y = parts[0].toIntOrNull() ?: 2026
+                val m = parts[1].toIntOrNull() ?: 1
+                val d = parts[2].toIntOrNull() ?: 1
+                val dStr = if (d < 10) "0$d" else "$d"
+                val mStr = if (m < 10) "0$m" else "$m"
+                return DateUtils.parseToEpochMillis("$dStr/$mStr/$y") ?: System.currentTimeMillis()
+            }
+        }
+        return System.currentTimeMillis()
+    }
+
+    fun profileFromMap(d: Map<String, Any>): NiruvanaTharavugal {
+        return NiruvanaTharavugal(
+            mudhanMozhi = d["mudhanMozhi"] as? String ?: "ta",
+            thunaiMozhi = d["thunaiMozhi"] as? String ?: "en",
+            iruMozhi = d["iruMozhi"] as? Boolean ?: true,
+            niruvanathinPeyar = mutableMapOf(
+                "ta" to (d["niruvanathinPeyar_ta"] as? String ?: ""),
+                "en" to (d["niruvanathinPeyar_en"] as? String ?: "")
+            ),
+            kurumPeyar = d["kurumPeyar"] as? String ?: "",
+            tholaipaesi1 = d["tholaipesi_1"] as? String ?: "",
+            tholaipaesi2 = d["tholaipesi_2"] as? String ?: "",
+            minnanjal = d["minnanjal"] as? String ?: "",
+            gstin = d["gstin"] as? String ?: "",
+            mugavari = mutableMapOf(
+                "ta" to (d["mugavari_ta"] as? String ?: ""),
+                "en" to (d["mugavari_en"] as? String ?: "")
+            ),
+            oor = mutableMapOf(
+                "ta" to (d["oor_ta"] as? String ?: ""),
+                "en" to (d["oor_en"] as? String ?: "")
+            ),
+            maavattam = mutableMapOf(
+                "ta" to (d["maavattam_ta"] as? String ?: ""),
+                "en" to (d["maavattam_en"] as? String ?: "")
+            ),
+            maanilam = mutableMapOf(
+                "ta" to (d["maanilam_ta"] as? String ?: ""),
+                "en" to (d["maanilam_en"] as? String ?: "")
+            ),
+            naadu = mutableMapOf(
+                "ta" to (d["naadu_ta"] as? String ?: ""),
+                "en" to (d["naadu_en"] as? String ?: "")
+            ),
+            anjalKuriyeedu = d["anjalKuriyeedu"] as? String ?: "",
+            vangiPeyar = mutableMapOf(
+                "ta" to (d["vangiPeyar_ta"] as? String ?: ""),
+                "en" to (d["vangiPeyar_en"] as? String ?: "")
+            ),
+            kilai = mutableMapOf(
+                "ta" to (d["kilai_ta"] as? String ?: ""),
+                "en" to (d["kilai_en"] as? String ?: "")
+            ),
+            vangiKanakku = d["vangiKanakku"] as? String ?: "",
+            ifsc = d["ifsc"] as? String ?: "",
+            oavuru = d["oavuru"] as? String ?: "",
+            agalaOavuru = d["agalaOavuru"] as? String ?: "",
+            thalaippuVadivu = d["thalaippuVadivu"] as? String ?: "wide",
+            kaiyoppam = d["kaiyoppam"] as? String ?: "",
+            oppamPeyar = d["oppamPeyar"] as? String ?: "",
+            adaimozhi = mutableMapOf(
+                "ta" to (d["adaimozhi_ta"] as? String ?: ""),
+                "en" to (d["adaimozhi_en"] as? String ?: "")
+            ),
+            upiId = d["upiId"] as? String ?: "",
+            thoatraNiram = d["thoatraNiram"] as? String ?: "#6a1b9a"
+        )
+    }
+
+    private fun parseSilkItems(rawJson: String, items: List<PorulTharavuru>): List<TextilesItem> {
+        val parsed = TextilesCalculation.itemsFromJson(rawJson)
+        return parsed.map { item ->
+            val matched = items.find {
+                it.porulPeyar["ta"] == item.porulPeyar ||
+                    (item.porulPeyarEn.isNotEmpty() && it.porulPeyar["en"] == item.porulPeyarEn)
+            }
+            val id = matched?.id?.toString() ?: item.porulId
+            val hsn = if (item.hsnKuriyeedu.isNotEmpty()) item.hsnKuriyeedu else (matched?.hsnCode ?: "")
+            val vilai = if (item.vilai > 0.0) item.vilai else (matched?.vilai ?: 0.0)
+            val vari = if (item.variVizhukkaadu > 0.0) item.variVizhukkaadu else (matched?.variVeetham ?: 0.0)
+            val alagu = if (item.alagu.isNotEmpty()) item.alagu else (matched?.alagu ?: "Nos")
+            val mozhiMap = if (item.mozhiMap.isNotEmpty()) item.mozhiMap else (matched?.porulPeyar ?: mapOf("ta" to item.porulPeyar, "en" to item.porulPeyarEn))
+            item.copy(
+                porulId = id,
+                porulPeyarEn = mozhiMap["en"] ?: item.porulPeyarEn,
+                hsnKuriyeedu = hsn,
+                alagu = alagu,
+                vilai = vilai,
+                variVizhukkaadu = vari,
+                mozhiMap = mozhiMap
+            )
+        }
+    }
+
+    private fun buildReceiptLinks(
+        againstInvoice: String,
+        amount: Double,
+        invEnToId: Map<String, Long>,
+        invEnToTotal: Map<String, Double>
+    ): List<PatruPattiyalInaippuTharavuru> {
+        val links = mutableListOf<PatruPattiyalInaippuTharavuru>()
+        val invList = againstInvoice.split(",").map { it.trim() }.filter { it.isNotEmpty() }
+        var remaining = amount
+        for (invEn in invList) {
+            val id = invEnToId[invEn] ?: continue
+            val balance = invEnToTotal[invEn] ?: 0.0
+            val apply = remaining.coerceIn(0.0, balance)
+            if (apply > 0.0) {
+                links.add(PatruPattiyalInaippuTharavuru(pattiyalId = id, poruthiyaThogai = apply))
+                remaining -= apply
+            }
+        }
+        return links
+    }
+
+    suspend fun seedAllData() {
+        val helper = getTextilesDatabaseHelper()
+
+        // 0. Erase existing
+        TextilesProfileRepository.clearProfiles()
+        helper.clearAllData()
+
+        // 1. Seed Profiles
+        for (map in mockSilkProfiles) {
+            val p = profileFromMap(map)
+            TextilesProfileRepository.createProfile(p)
+        }
+        val textilesProfiles = helper.loadAllProfiles()
+        val profileMap = textilesProfiles.associateBy { it.kurumPeyar }
+
+        // 2. Products
+        for (item in mockSilkPorulgal) {
+            val peyarTa = item["peyar_ta"] as? String ?: ""
+            val peyarEn = item["peyar_en"] as? String ?: ""
+            val hsn = item["hsnCode"] as? String ?: ""
+            val vilai = (item["vilai"] as? Number)?.toDouble() ?: 0.0
+            val vari = (item["variVeetham"] as? Number)?.toDouble() ?: 0.0
+            val alagu = item["alagu"] as? String ?: "Nos"
+            val vagai = item["alavuVagai"] as? String ?: "quantity"
+
+            helper.saveItem(
+                PorulTharavuru(
+                    porulPeyar = mapOf("ta" to peyarTa, "en" to peyarEn),
+                    hsnCode = hsn,
+                    vilai = vilai,
+                    variVeetham = vari,
+                    alagu = alagu,
+                    alavuVagai = vagai
+                )
+            )
+        }
+        val textilesItems = helper.loadAllItems()
+
+        // 3. Customers
+        for (m in mockSilkVaangunargal) {
+            helper.saveMerchant(
+                VaangunarTharavuru(
+                    peyar = mapOf("ta" to (m["peyar_ta"] ?: ""), "en" to (m["peyar_en"] ?: "")),
+                    mugavari = mapOf("ta" to (m["mugavari_ta"] ?: ""), "en" to (m["mugavari_en"] ?: "")),
+                    oor = mapOf("ta" to (m["oor_ta"] ?: ""), "en" to (m["oor_en"] ?: "")),
+                    maavattam = mapOf("ta" to (m["maavattam_ta"] ?: ""), "en" to (m["maavattam_en"] ?: "")),
+                    maanilam = mapOf("ta" to (m["maanilam_ta"] ?: ""), "en" to (m["maanilam_en"] ?: "")),
+                    naadu = mapOf("ta" to (m["naadu_ta"] ?: "இந்தியா"), "en" to (m["naadu_en"] ?: "India")),
+                    anjalKuriyeedu = m["anjalKuriyeedu"] ?: "",
+                    gstin = m["gstin"] ?: ""
+                )
+            )
+        }
+        val textilesCustomers = helper.loadAllMerchants()
+
+        // 4. Invoices
+        for (data in mockSilkPattiyalgal) {
+            val dateStr = data["invoiceDate"] as? String ?: "2026-06-11"
+            val dateMillis = parseDate(dateStr)
+            val invoiceNo = data["invoiceNumber"] as? String ?: "SJPS-1"
+            val prefix = invoiceNo.split("-").firstOrNull() ?: ""
+            val vanakkamNum = invoiceNo.split("-").lastOrNull()?.toIntOrNull() ?: 1
+            val profileId = profileMap[prefix]?.id
+
+            val custName = data["customer_name"] as? String ?: ""
+            val matchedCust = textilesCustomers.find { it.peyar["ta"] == custName }
+            val custId = matchedCust?.id
+            val custPeyar = matchedCust?.peyar ?: mapOf("ta" to custName, "en" to (data["customer_name_en"] as? String ?: custName))
+            val custOor = matchedCust?.oor ?: emptyMap()
+
+            val rawItems = data["items"] as? String ?: "[]"
+            val parsedItems = parseSilkItems(rawItems, textilesItems)
+            val enrichedJson = TextilesCalculation.itemsToJson(parsedItems)
+
+            val grandTotal = (data["grandTotal"] as? Number)?.toDouble() ?: 0.0
+            val discTotal = (data["totalDiscount"] as? Number)?.toDouble() ?: 0.0
+            val taxTotal = (data["totalTax"] as? Number)?.toDouble() ?: 0.0
+
+            helper.saveInvoice(
+                PattiyalTharavuru(
+                    niruvanamId = profileId,
+                    patrucheettuEn = invoiceNo,
+                    finYear = 2026,
+                    vanakkam = vanakkamNum,
+                    pattiyalVagai = "tax-invoice",
+                    vaangunarId = custId,
+                    vaangunarPeyar = custPeyar,
+                    vaangunarMunvari = custOor,
+                    pattiyalNaal = dateMillis,
+                    tharavugal = enrichedJson,
+                    mothaThogai = grandTotal,
+                    thallupadi = discTotal,
+                    podhuThallupadiMathippu = discTotal,
+                    podhuThallupadiVagai = "₹",
+                    podhuThallupadiThogai = discTotal,
+                    variThogai = taxTotal,
+                    createdAt = dateMillis,
+                    updatedAt = dateMillis
+                )
+            )
+        }
+        val textilesInvoices = helper.loadAllInvoices()
+        val invEnToId = textilesInvoices.associate { it.patrucheettuEn to it.id }
+        val invEnToTotal = textilesInvoices.associate { it.patrucheettuEn to it.mothaThogai }
+
+        // 5. Receipts with Links
+        for (r in mockSilkPatrugal) {
+            val dateStr = r["date"] as? String ?: "2026-06-11"
+            val dateMillis = parseDate(dateStr)
+            val patruEn = r["receiptNo"] as? String ?: "RCP/SJPS/01"
+            val parts = patruEn.split("/")
+            val prefix = if (parts.size > 1) parts[1] else ""
+            val vanakkamNum = parts.lastOrNull()?.toIntOrNull() ?: 1
+            val profileId = profileMap[prefix]?.id
+
+            val clientName = r["clientName"] as? String ?: ""
+            val matchedCust = textilesCustomers.find { it.peyar["ta"] == clientName }
+            val amount = (r["amount"] as? Number)?.toDouble() ?: 0.0
+            val pMode = (r["paymentMode"] as? String) ?: "cash"
+
+            val against = r["againstInvoice"] as? String ?: ""
+            val links = buildReceiptLinks(against, amount, invEnToId, invEnToTotal)
+
+            helper.saveReceiptWithLinks(
+                PatrugalTharavuru(
+                    niruvanamId = profileId,
+                    patruEn = patruEn,
+                    vanakkam = vanakkamNum,
+                    finYear = "2026",
+                    vaangunarId = matchedCust?.id,
+                    vaangunarPeyar = mapOf("ta" to clientName, "en" to ((r["clientNameEn"] as? String) ?: clientName)),
+                    patruNaal = dateMillis,
+                    thogai = amount,
+                    seluthumMurai = pMode,
+                    parivarthanaiEn = r["referenceNo"] as? String,
+                    createdAt = dateMillis,
+                    updatedAt = dateMillis
+                ),
+                links
+            )
+        }
+
+        // Reload all reactive repositories
+        TextilesProfileRepository.refreshFromDatabase()
+        TextilesCustomerRepository.loadAll()
+        TextilesProductRepository.loadAll()
+        TextilesInvoiceRepository.loadAll()
+        TextilesReceiptRepository.loadAll()
+        AutoBackupManager.onDataChanged()
+    }
+
+    suspend fun eraseAllData() {
+        val helper = getTextilesDatabaseHelper()
+        TextilesProfileRepository.clearProfiles()
+        helper.clearAllData()
+
+        TextilesProfileRepository.refreshFromDatabase()
+        TextilesCustomerRepository.loadAll()
+        TextilesProductRepository.loadAll()
+        TextilesInvoiceRepository.loadAll()
+        TextilesReceiptRepository.loadAll()
+        AutoBackupManager.onDataChanged()
+    }
+
+    suspend fun toggleExtraProfile(): String {
+        val profiles = TextilesProfileRepository.allProfiles
+        val existing = profiles.find { it.kurumPeyar == "EPS" }
+        val msg = if (existing != null && existing.id != null) {
+            TextilesProfileRepository.deleteProfile(existing.id!!)
+            "Textiles EPS Removed ✗"
+        } else {
+            if (mockSilkProfiles.size > 1) {
+                TextilesProfileRepository.createProfile(profileFromMap(mockSilkProfiles[1]))
+            }
+            "Textiles EPS Added ✓"
+        }
+        TextilesProfileRepository.refreshFromDatabase()
+        AutoBackupManager.onDataChanged()
+        return msg
+    }
+
+    fun toggleLanguage(): String {
+        val next = when (LanguageManager.currentLanguage) {
+            Language.TAMIL -> Language.ENGLISH
+            Language.ENGLISH -> Language.TAMIL_LATIN
+            else -> Language.TAMIL
+        }
+        LanguageManager.setLanguage(next)
+        return "Language: ${next.displayName}"
+    }
+
+    suspend fun toggleBilingual(): String {
+        val profile = TextilesProfileRepository.profile
+        val updated = profile.copy(iruMozhi = !profile.iruMozhi)
+        TextilesProfileRepository.updateProfile(updated)
+        return if (updated.iruMozhi) "Bilingual Mode: ON ✓" else "Bilingual Mode: OFF ✗"
+    }
+
+    suspend fun swapDataLanguages(): String {
+        val allProfiles = TextilesProfileRepository.allProfiles
+        val activeProfile = TextilesProfileRepository.profile
+        val currentPrimary = activeProfile.mudhanMozhi.ifEmpty { "ta" }
+        val currentSecondary = activeProfile.thunaiMozhi.ifEmpty { "en" }
+
+        allProfiles.forEach { p ->
+            val pPrimary = p.mudhanMozhi.ifEmpty { "ta" }
+            val pSecondary = p.thunaiMozhi.ifEmpty { "en" }
+            val updated = p.copy(
+                mudhanMozhi = if (pPrimary == currentPrimary) currentSecondary else currentPrimary,
+                thunaiMozhi = if (pSecondary == currentSecondary) currentPrimary else currentSecondary
+            )
+            TextilesProfileRepository.updateProfile(updated)
+        }
+        return "Swapped: $currentSecondary ↔ $currentPrimary"
+    }
+}

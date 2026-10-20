@@ -5,11 +5,14 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.zIndex
 import com.elvan.udukkai.core.platform.PlatformType
 import com.elvan.udukkai.core.platform.currentPlatform
+import com.elvan.udukkai.core.platform.isDebugBuild
 import com.elvan.udukkai.core.platform.isStoragePermissionGranted
 import com.elvan.udukkai.localization.ProvideAppLanguage
 import com.elvan.udukkai.textiles.data.TextilesProfileRepository
+import com.elvan.udukkai.textiles.dev.TextilesDevMenu
 import com.elvan.udukkai.textiles.ui.TextilesHomeScreen
 import com.elvan.udukkai.theme.UdukkaiTheme
 import com.elvan.udukkai.theme.rememberShellColors
@@ -59,6 +62,16 @@ fun TextilesApp() {
 
                     ElvanBottomSheetHost(bottomSheetController)
                     ElvanSnackbarHost(colors = colors)
+
+                    if (isDebugBuild) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .zIndex(999f)
+                        ) {
+                            TextilesDevMenu()
+                        }
+                    }
                 }
             }
         }

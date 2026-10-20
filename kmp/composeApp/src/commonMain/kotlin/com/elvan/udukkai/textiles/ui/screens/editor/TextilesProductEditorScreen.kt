@@ -87,7 +87,7 @@ fun TextilesProductEditorScreen(
         handleBackAttempt()
     }
 
-    val pageTitle = if (isEditing) K.editRecord.tr() else K.createRecord.tr()
+    val pageTitle = if (isEditing) K.editProduct.tr() else K.createProduct.tr()
     val nameRequiredMsg = K.productNameRequired.tr()
     val savedMsg = K.productSavedSuccessfully.tr()
     val saveFailedMsg = K.couldNotSavePrefix.tr()

@@ -1,4 +1,4 @@
-﻿package com.elvan.udukkai.ui.screens.settings.screens
+﻿package com.elvan.udukkai.factory.ui.screens.settings
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -31,13 +31,14 @@ import com.elvan.udukkai.theme.ShellDefaults
 import com.elvan.udukkai.theme.rememberShellColors
 import com.elvan.udukkai.ui.components.shell.*
 import com.elvan.udukkai.ui.navigation.MaterialSymbols
+import com.elvan.udukkai.factory.data.FactoryProfileRepository
 
 /**
  * Company Settings (நிறுவன அமைப்புகள்) Screen matching Flutter's `niruvana_amaippugal_thirai.dart` 1:1.
  * Supports smooth accordion edit expand/collapse with bilingual values and live repository updates.
  */
 @Composable
-fun MerchantSettingsScreen(
+fun FactoryMerchantSettingsScreen(
     onNavigateToManageProfiles: () -> Unit = {},
     scrollState: LazyListState = rememberLazyListState(),
     colors: ShellColors = rememberShellColors(),
@@ -58,7 +59,7 @@ fun MerchantSettingsScreen(
     var tempSecondary by remember { mutableStateOf("") }
     var showExtraPhone by remember { mutableStateOf(false) }
 
-    val isPattu = isTextiles
+    val isPattu = false
     val isBilingual = profile.iruMozhi
     val saveSuccessMsg = K.profileSaved.tr()
     val defaultProfileName = K.activeCompany.tr()
@@ -67,13 +68,7 @@ fun MerchantSettingsScreen(
 
     fun saveField(action: () -> Unit) {
         action()
-        if (onUpdateProfile != null) {
-            onUpdateProfile(profile)
-        } else if (isTextiles) {
-            com.elvan.udukkai.textiles.data.TextilesProfileRepository.updateProfile(profile)
-        } else {
-            com.elvan.udukkai.factory.data.FactoryProfileRepository.updateProfile(profile)
-        }
+        FactoryProfileRepository.updateProfile(profile)
         editingSection = null
         showExtraPhone = false
         ElvanSnackbar.show(saveSuccessMsg)
@@ -147,7 +142,7 @@ fun MerchantSettingsScreen(
                                         subtitleBuilder = { if (it.iruMozhi) it.getSecondary("niruvanathinPeyar").takeIf { s -> s.isNotBlank() } else null },
                                         onSelected = { selected ->
                                             if (selected.id != null) {
-                                                if (onSelectProfile != null) onSelectProfile(selected.id!!) else if (isTextiles) com.elvan.udukkai.textiles.data.TextilesProfileRepository.setActiveProfile(selected.id!!) else com.elvan.udukkai.factory.data.FactoryProfileRepository.setActiveProfile(selected.id!!)
+                                                FactoryProfileRepository.setActiveProfile(selected.id!!)
                                             }
                                         }
                                     )
