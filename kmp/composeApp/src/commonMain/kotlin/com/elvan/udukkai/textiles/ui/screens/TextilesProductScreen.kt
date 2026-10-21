@@ -35,6 +35,8 @@ import com.elvan.udukkai.ui.components.ElvanCommonCard
 import com.elvan.udukkai.ui.components.shell.LocalElvanTopSpacerHeight
 import com.elvan.udukkai.ui.components.shell.ProductCardSkeleton
 import com.elvan.udukkai.ui.navigation.MaterialSymbols
+import com.elvan.udukkai.ui.screens.create.components.ElvanPillShifter
+import com.elvan.udukkai.ui.screens.create.components.PillShifterItem
 import kotlinx.coroutines.delay
 
 @Composable
@@ -51,18 +53,43 @@ fun TextilesProductScreen(
 ) {
     val items = TextilesProductRepository.filteredItems
     val ff = LocalAppFontFamily.current
+    val profile = TextilesProfileRepository.profile
+    val isBilingual = profile.isBilingual
+    val primaryLang = profile.primaryLanguage.ifEmpty { "ta" }
+
+    var selectedTabIndex by remember { mutableIntStateOf(0) }
+
+    val allTabLabel = if (isBilingual) (if (primaryLang == "ta") "எல்லாம் • All" else "All • எல்லாம்") else K.all.tr()
+    val quantityTabLabel = if (isBilingual) (if (primaryLang == "ta") "அளவு • Quantity" else "Quantity • அளவு") else K.quantity.tr()
+    val weightTabLabel = if (isBilingual) (if (primaryLang == "ta") "எடை • Weight" else "Weight • எடை") else K.weight.tr()
+
+    val shifterItems = remember(allTabLabel, quantityTabLabel, weightTabLabel) {
+        listOf(
+            PillShifterItem(label = allTabLabel),
+            PillShifterItem(label = quantityTabLabel),
+            PillShifterItem(label = weightTabLabel)
+        )
+    }
+
+    val tabFilteredItems = remember(items, selectedTabIndex) {
+        when (selectedTabIndex) {
+            1 -> items.filter { it.quantityType.lowercase() != "weight" }
+            2 -> items.filter { it.quantityType.lowercase() == "weight" }
+            else -> items
+        }
+    }
 
     val pageSize = 10
     var visibleItemCount by remember { mutableIntStateOf(pageSize) }
 
-    LaunchedEffect(TextilesProductRepository.searchQuery) {
+    LaunchedEffect(TextilesProductRepository.searchQuery, selectedTabIndex) {
         visibleItemCount = pageSize
     }
 
-    val displayedItems = remember(items, visibleItemCount) {
-        items.take(visibleItemCount)
+    val displayedItems = remember(tabFilteredItems, visibleItemCount) {
+        tabFilteredItems.take(visibleItemCount)
     }
-    val hasMoreItems = items.size > visibleItemCount
+    val hasMoreItems = tabFilteredItems.size > visibleItemCount
 
     var isSearchLoading by remember { mutableStateOf(false) }
     LaunchedEffect(TextilesProductRepository.searchQuery) {
@@ -90,11 +117,30 @@ fun TextilesProductScreen(
                 Spacer(modifier = Modifier.height(LocalElvanTopSpacerHeight.current))
             }
 
+            item(key = "product_measure_type_pill_shifter") {
+                Box(
+                    contentAlignment = Alignment.Center,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 6.dp)
+                ) {
+                    ElvanPillShifter(
+                        items = shifterItems,
+                        selectedIndex = selectedTabIndex,
+                        onIndexSelected = {
+                            selectedTabIndex = it
+                        },
+                        colors = colors,
+                        isFullWidth = true
+                    )
+                }
+            }
+
             if (isSearchLoading || isRefreshing) {
                 items(10) {
                     ProductCardSkeleton()
                 }
-            } else if (items.isEmpty()) {
+            } else if (tabFilteredItems.isEmpty()) {
                 item(key = "empty_products") {
                     Box(
                         modifier = Modifier
