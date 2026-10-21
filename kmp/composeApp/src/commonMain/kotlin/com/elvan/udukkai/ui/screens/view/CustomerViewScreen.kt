@@ -175,6 +175,10 @@ fun CustomerViewScreen(
                     modifier = Modifier.fillMaxWidth(),
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
+                    val districtVal = if (isBilingual) (merchant.district[primaryLang] ?: merchant.district["en"] ?: "") else (merchant.district.values.firstOrNull() ?: "")
+                    val stateVal = if (isBilingual) (merchant.state[primaryLang] ?: merchant.state["en"] ?: "") else (merchant.state.values.firstOrNull() ?: "")
+                    val countryVal = if (isBilingual) (merchant.country[primaryLang] ?: merchant.country["en"] ?: "") else (merchant.country.values.firstOrNull() ?: "")
+
                     DetailCard(
                         title = K.city.tr(),
                         value = cityVal.ifEmpty { "-" },
@@ -182,6 +186,36 @@ fun CustomerViewScreen(
                         colors = colors,
                         ff = ff
                     )
+
+                    if (districtVal.isNotBlank()) {
+                        DetailCard(
+                            title = K.district.tr(),
+                            value = districtVal,
+                            icon = MaterialSymbols.Rounded.LocationOn,
+                            colors = colors,
+                            ff = ff
+                        )
+                    }
+
+                    if (stateVal.isNotBlank()) {
+                        DetailCard(
+                            title = K.state.tr(),
+                            value = stateVal,
+                            icon = MaterialSymbols.Rounded.LocationOn,
+                            colors = colors,
+                            ff = ff
+                        )
+                    }
+
+                    if (countryVal.isNotBlank() && countryVal != "India" && countryVal != "இந்தியா") {
+                        DetailCard(
+                            title = K.country.tr(),
+                            value = countryVal,
+                            icon = MaterialSymbols.Rounded.LocationOn,
+                            colors = colors,
+                            ff = ff
+                        )
+                    }
 
                     DetailCard(
                         title = K.address.tr(),

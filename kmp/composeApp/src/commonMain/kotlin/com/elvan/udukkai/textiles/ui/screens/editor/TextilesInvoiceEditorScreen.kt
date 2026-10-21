@@ -517,7 +517,10 @@ fun TextilesInvoiceEditorScreen(
                                     placeOfSupplyEn = ""
                                     placeOfSupplyTa = ""
                                     hasUnsavedChanges = true
-                                }
+                                },
+                                isBilingual = selectedProfile.isBilingual,
+                                primaryLang = selectedProfile.primaryLanguage.ifEmpty { "ta" },
+                                secondaryLang = selectedProfile.secondaryLanguage.ifEmpty { "en" }
                             )
 
                             // Invoice Type Selector (Tax Invoice / Proforma)

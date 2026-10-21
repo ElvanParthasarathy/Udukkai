@@ -24,9 +24,11 @@ import com.elvan.udukkai.localization.tr
 import com.elvan.udukkai.theme.LocalAppFontFamily
 import com.elvan.udukkai.theme.preventBrokenLigatures
 import com.elvan.udukkai.theme.rememberShellColors
+import com.elvan.udukkai.localization.LanguageManager
 import com.elvan.udukkai.ui.components.shell.ElvanSelectionBottomSheet
 import com.elvan.udukkai.ui.navigation.MaterialSymbols
 import com.elvan.udukkai.ui.screens.editor.ElvanEditorLabel
+import com.elvan.udukkai.ui.screens.editor.ElvanIrumozhiPulan
 
 /**
  * Place of Supply (வழங்கல் இடம்) selection widget with bottom sheet for Textiles mode.
@@ -37,6 +39,9 @@ fun TextilesPlaceOfSupplyField(
     placeOfSupplyTa: String,
     onSelected: (en: String, ta: String) -> Unit,
     onCleared: () -> Unit,
+    isBilingual: Boolean = false,
+    primaryLang: String = "ta",
+    secondaryLang: String = "en",
     modifier: Modifier = Modifier
 ) {
     val colors = rememberShellColors()
@@ -45,7 +50,19 @@ fun TextilesPlaceOfSupplyField(
 
     var isSheetOpen by remember { mutableStateOf(false) }
 
+    val presetState = remember(placeOfSupplyEn, placeOfSupplyTa) {
+        indianStates.filter { it.en != "Custom" && it.ta != "தனிப்பயன்" }
+            .firstOrNull { it.en.equals(placeOfSupplyEn, ignoreCase = true) || it.ta == placeOfSupplyTa }
+    }
+    var isCustom by remember(placeOfSupplyEn, placeOfSupplyTa) {
+        mutableStateOf(
+            (placeOfSupplyEn.isNotBlank() || placeOfSupplyTa.isNotBlank()) &&
+            (presetState == null || placeOfSupplyEn == "Custom" || placeOfSupplyTa == "தனிப்பயன்")
+        )
+    }
+
     val displayText = when {
+        isCustom -> if (LanguageManager.activeLanguageCode == "ta") "தனிப்பயன்" else "Custom"
         placeOfSupplyTa.isNotBlank() -> placeOfSupplyTa
         placeOfSupplyEn.isNotBlank() -> placeOfSupplyEn
         else -> ""
@@ -89,7 +106,10 @@ fun TextilesPlaceOfSupplyField(
                         modifier = Modifier
                             .size(24.dp)
                             .clip(CircleShape)
-                            .clickable { onCleared() },
+                            .clickable {
+                                isCustom = false
+                                onCleared()
+                            },
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
@@ -109,21 +129,48 @@ fun TextilesPlaceOfSupplyField(
                 }
             }
         }
+
+        if (isCustom) {
+            Spacer(modifier = Modifier.height(10.dp))
+            val currentMap = mapOf(
+                primaryLang to (if (primaryLang == "ta") placeOfSupplyTa else placeOfSupplyEn),
+                secondaryLang to (if (secondaryLang == "ta") placeOfSupplyTa else placeOfSupplyEn)
+            )
+            ElvanIrumozhiPulan(
+                label = "${K.placeOfSupply.tr()} (${K.customBtn.tr()})",
+                value = currentMap,
+                onChanged = { map ->
+                    val ta = map["ta"] ?: ""
+                    val en = map["en"] ?: ""
+                    onSelected(en, ta)
+                },
+                isBilingual = isBilingual,
+                primaryLang = primaryLang,
+                secondaryLang = secondaryLang,
+                placeholder = K.placeOfSupply.tr()
+            )
+        }
     }
 
     if (isSheetOpen) {
         ElvanSelectionBottomSheet(
             title = K.placeOfSupply.tr(),
             items = indianStates,
-            currentValue = indianStates.firstOrNull { it.en.equals(placeOfSupplyEn, ignoreCase = true) },
+            currentValue = if (isCustom) indianStates.last() else presetState,
             showSearch = true,
             onDismissRequest = { isSheetOpen = false },
             onSelected = { state ->
-                onSelected(state.en, state.ta)
+                if (state.en == "Custom" || state.ta == "தனிப்பயன்") {
+                    isCustom = true
+                    onSelected("", "")
+                } else {
+                    isCustom = false
+                    onSelected(state.en, state.ta)
+                }
                 isSheetOpen = false
             },
-            itemLabelBuilder = { s -> s.ta },
-            subtitleBuilder = { s -> s.en },
+            itemLabelBuilder = { s -> if (LanguageManager.activeLanguageCode == "ta") s.ta else s.en },
+            subtitleBuilder = { s -> if (LanguageManager.activeLanguageCode == "ta") s.en else s.ta },
             searchFilter = { s, query ->
                 val q = query.lowercase()
                 s.ta.lowercase().contains(q) || s.en.lowercase().contains(q)
@@ -132,7 +179,7 @@ fun TextilesPlaceOfSupplyField(
     }
 }
 
-@Deprecated("Use TextilesPlaceOfSupplyField", ReplaceWith("TextilesPlaceOfSupplyField(placeOfSupplyEn, placeOfSupplyTa, onSelected, onCleared, modifier)"))
+@Deprecated("Use TextilesPlaceOfSupplyField", ReplaceWith("TextilesPlaceOfSupplyField(placeOfSupplyEn, placeOfSupplyTa, onSelected, onCleared, modifier = modifier)"))
 @Composable
 fun PattuVilippiIdam(
     placeOfSupplyEn: String,
@@ -140,4 +187,4 @@ fun PattuVilippiIdam(
     onSelected: (en: String, ta: String) -> Unit,
     onCleared: () -> Unit,
     modifier: Modifier = Modifier
-) = TextilesPlaceOfSupplyField(placeOfSupplyEn, placeOfSupplyTa, onSelected, onCleared, modifier)
+) = TextilesPlaceOfSupplyField(placeOfSupplyEn, placeOfSupplyTa, onSelected, onCleared, modifier = modifier)

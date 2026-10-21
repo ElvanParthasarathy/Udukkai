@@ -63,30 +63,70 @@ fun TextilesCustomerEditorScreen(
     var addressMap by remember { mutableStateOf(merchant?.address ?: emptyMap()) }
     var pinCode by remember { mutableStateOf(merchant?.pinCode ?: "") }
 
+    val initialPresetCountry = remember(merchant) {
+        val c = merchant?.country
+        if (c.isNullOrEmpty()) worldCountries.first()
+        else worldCountries.filter { it.en != "Custom" && it.ta != "தனிப்பயன்" }
+            .firstOrNull { it.en.equals(c["en"], ignoreCase = true) || it.ta == c["ta"] }
+    }
+    var isCustomCountry by remember {
+        mutableStateOf(merchant != null && merchant.country.isNotEmpty() && initialPresetCountry == null)
+    }
+
+    val initialPresetState = remember(merchant) {
+        val s = merchant?.state
+        if (s.isNullOrEmpty()) indianStates.first()
+        else indianStates.filter { it.en != "Custom" && it.ta != "தனிப்பயன்" }
+            .firstOrNull { it.en.equals(s["en"], ignoreCase = true) || it.ta == s["ta"] }
+    }
+    var isCustomState by remember {
+        mutableStateOf(merchant != null && merchant.state.isNotEmpty() && initialPresetState == null)
+    }
+
+    val initialPresetDistrict = remember(merchant) {
+        val d = merchant?.district
+        if (d.isNullOrEmpty()) null
+        else tamilNaduDistricts.filter { it.en != "Custom" && it.ta != "தனிப்பயன்" }
+            .firstOrNull { it.en.equals(d["en"], ignoreCase = true) || it.ta == d["ta"] }
+    }
+    var isCustomDistrict by remember {
+        mutableStateOf(merchant != null && merchant.district.isNotEmpty() && initialPresetDistrict == null)
+    }
+
     var nameValidationError by remember { mutableStateOf<String?>(null) }
     var showDiscardDialog by remember { mutableStateOf(false) }
     var isExiting by remember { mutableStateOf(false) }
 
-    val isIndia = remember(countryMap) {
-        val en = countryMap["en"]?.lowercase() ?: ""
-        val ta = countryMap["ta"] ?: ""
-        en == "india" || ta == "இந்தியா"
+    val isIndia = remember(countryMap, isCustomCountry) {
+        if (isCustomCountry) false else {
+            val en = countryMap["en"]?.lowercase() ?: ""
+            val ta = countryMap["ta"] ?: ""
+            en == "india" || ta == "இந்தியா"
+        }
     }
 
-    val isTamilNadu = remember(stateMap, isIndia) {
-        if (!isIndia) false else {
+    val isTamilNadu = remember(stateMap, isIndia, isCustomState) {
+        if (!isIndia || isCustomState) false else {
             val en = stateMap["en"]?.lowercase() ?: ""
             val ta = stateMap["ta"] ?: ""
             en.contains("tamil nadu") || ta.contains("தமிழ்நாடு")
         }
     }
 
-    val hasChanges = remember(nameMap, gstin, phone, email, countryMap, stateMap, districtMap, cityMap, addressMap, pinCode) {
+    val hasChanges = remember(nameMap, gstin, phone, email, countryMap, stateMap, districtMap, cityMap, addressMap, pinCode, isCustomCountry, isCustomState, isCustomDistrict) {
         if (merchant == null) {
-            nameMap.values.any { it.isNotBlank() } || gstin.isNotBlank() || phone.isNotBlank()
+            nameMap.values.any { it.isNotBlank() } || gstin.isNotBlank() || phone.isNotBlank() ||
+                countryMap != mapOf("en" to "India", "ta" to "இந்தியா") ||
+                stateMap != mapOf("en" to "Tamil Nadu", "ta" to "தமிழ்நாடு") ||
+                districtMap.values.any { it.isNotBlank() } ||
+                cityMap.values.any { it.isNotBlank() } ||
+                addressMap.values.any { it.isNotBlank() } ||
+                pinCode.isNotBlank()
         } else {
             nameMap != merchant.name || gstin != merchant.gstin || phone != merchant.phone ||
-                email != merchant.email || cityMap != merchant.city || addressMap != merchant.address
+                email != merchant.email || countryMap != merchant.country || stateMap != merchant.state ||
+                districtMap != merchant.district || cityMap != merchant.city || addressMap != merchant.address ||
+                pinCode != merchant.pinCode
         }
     }
 
@@ -244,12 +284,21 @@ fun TextilesCustomerEditorScreen(
                             modifier = Modifier.fillMaxWidth(),
                             verticalArrangement = Arrangement.spacedBy(16.dp)
                         ) {
+                            val presetCountry = worldCountries.filter { it.en != "Custom" && it.ta != "தனிப்பயன்" }
+                                .firstOrNull { it.en.equals(countryMap["en"], ignoreCase = true) || it.ta == countryMap["ta"] }
+
                             ElvanEditorDropdown<LocationName>(
                                 label = K.country.tr(),
-                                value = worldCountries.firstOrNull { it.en.equals(countryMap["en"], ignoreCase = true) || it.ta == countryMap["ta"] } ?: worldCountries.first(),
+                                value = if (isCustomCountry) worldCountries.last() else (presetCountry ?: worldCountries.first()),
                                 items = worldCountries,
                                 onSelected = { picked ->
-                                    countryMap = mapOf("en" to picked.en, "ta" to picked.ta)
+                                    if (picked.en == "Custom" || picked.ta == "தனிப்பயன்") {
+                                        isCustomCountry = true
+                                        countryMap = emptyMap()
+                                    } else {
+                                        isCustomCountry = false
+                                        countryMap = mapOf("en" to picked.en, "ta" to picked.ta)
+                                    }
                                 },
                                 itemLabelBuilder = { if (LanguageManager.activeLanguageCode == "ta") it.ta else it.en },
                                 subtitleBuilder = { if (LanguageManager.activeLanguageCode == "ta") it.en else it.ta },
@@ -259,15 +308,37 @@ fun TextilesCustomerEditorScreen(
                                 }
                             )
 
+                            if (isCustomCountry) {
+                                ElvanIrumozhiPulan(
+                                    label = "${K.country.tr()} (${K.customBtn.tr()})",
+                                    value = countryMap,
+                                    onChanged = { countryMap = it },
+                                    isBilingual = isBilingual,
+                                    primaryLang = primaryLang,
+                                    secondaryLang = secondaryLang,
+                                    placeholder = K.country.tr()
+                                )
+                            }
+
                             if (isIndia) {
+                                val presetState = indianStates.filter { it.en != "Custom" && it.ta != "தனிப்பயன்" }
+                                    .firstOrNull { it.en.equals(stateMap["en"], ignoreCase = true) || it.ta == stateMap["ta"] }
+
                                 ElvanEditorDropdown<LocationName>(
                                     label = K.state.tr(),
-                                    value = indianStates.firstOrNull { it.en.equals(stateMap["en"], ignoreCase = true) || it.ta == stateMap["ta"] },
+                                    value = if (isCustomState) indianStates.last() else (presetState ?: indianStates.first()),
                                     items = indianStates,
                                     onSelected = { picked ->
-                                        stateMap = mapOf("en" to picked.en, "ta" to picked.ta)
-                                        if (picked.en != "Tamil Nadu" && picked.ta != "தமிழ்நாடு") {
+                                        if (picked.en == "Custom" || picked.ta == "தனிப்பயன்") {
+                                            isCustomState = true
+                                            stateMap = emptyMap()
                                             districtMap = emptyMap()
+                                        } else {
+                                            isCustomState = false
+                                            stateMap = mapOf("en" to picked.en, "ta" to picked.ta)
+                                            if (picked.en != "Tamil Nadu" && picked.ta != "தமிழ்நாடு") {
+                                                districtMap = emptyMap()
+                                            }
                                         }
                                     },
                                     itemLabelBuilder = { if (LanguageManager.activeLanguageCode == "ta") it.ta else it.en },
@@ -278,13 +349,34 @@ fun TextilesCustomerEditorScreen(
                                     }
                                 )
 
+                                if (isCustomState) {
+                                    ElvanIrumozhiPulan(
+                                        label = "${K.state.tr()} (${K.customBtn.tr()})",
+                                        value = stateMap,
+                                        onChanged = { stateMap = it },
+                                        isBilingual = isBilingual,
+                                        primaryLang = primaryLang,
+                                        secondaryLang = secondaryLang,
+                                        placeholder = K.state.tr()
+                                    )
+                                }
+
                                 if (isTamilNadu) {
+                                    val presetDistrict = tamilNaduDistricts.filter { it.en != "Custom" && it.ta != "தனிப்பயன்" }
+                                        .firstOrNull { it.en.equals(districtMap["en"], ignoreCase = true) || it.ta == districtMap["ta"] }
+
                                     ElvanEditorDropdown<LocationName>(
                                         label = K.district.tr(),
-                                        value = tamilNaduDistricts.firstOrNull { it.en.equals(districtMap["en"], ignoreCase = true) || it.ta == districtMap["ta"] },
+                                        value = if (isCustomDistrict) tamilNaduDistricts.last() else presetDistrict,
                                         items = tamilNaduDistricts,
                                         onSelected = { picked ->
-                                            districtMap = mapOf("en" to picked.en, "ta" to picked.ta)
+                                            if (picked.en == "Custom" || picked.ta == "தனிப்பயன்") {
+                                                isCustomDistrict = true
+                                                districtMap = emptyMap()
+                                            } else {
+                                                isCustomDistrict = false
+                                                districtMap = mapOf("en" to picked.en, "ta" to picked.ta)
+                                            }
                                         },
                                         itemLabelBuilder = { if (LanguageManager.activeLanguageCode == "ta") it.ta else it.en },
                                         subtitleBuilder = { if (LanguageManager.activeLanguageCode == "ta") it.en else it.ta },
@@ -293,7 +385,51 @@ fun TextilesCustomerEditorScreen(
                                             item.en.contains(query, ignoreCase = true) || item.ta.contains(query, ignoreCase = true)
                                         }
                                     )
+
+                                    if (isCustomDistrict) {
+                                        ElvanIrumozhiPulan(
+                                            label = "${K.district.tr()} (${K.customBtn.tr()})",
+                                            value = districtMap,
+                                            onChanged = { districtMap = it },
+                                            isBilingual = isBilingual,
+                                            primaryLang = primaryLang,
+                                            secondaryLang = secondaryLang,
+                                            placeholder = K.district.tr()
+                                        )
+                                    }
+                                } else {
+                                    // Other Indian state or custom state: allow entering district directly
+                                    ElvanIrumozhiPulan(
+                                        label = K.district.tr(),
+                                        value = districtMap,
+                                        onChanged = { districtMap = it },
+                                        isBilingual = isBilingual,
+                                        primaryLang = primaryLang,
+                                        secondaryLang = secondaryLang,
+                                        placeholder = K.district.tr()
+                                    )
                                 }
+                            } else {
+                                // International / Custom country: allow entering State and District directly
+                                ElvanIrumozhiPulan(
+                                    label = K.state.tr(),
+                                    value = stateMap,
+                                    onChanged = { stateMap = it },
+                                    isBilingual = isBilingual,
+                                    primaryLang = primaryLang,
+                                    secondaryLang = secondaryLang,
+                                    placeholder = K.state.tr()
+                                )
+
+                                ElvanIrumozhiPulan(
+                                    label = K.district.tr(),
+                                    value = districtMap,
+                                    onChanged = { districtMap = it },
+                                    isBilingual = isBilingual,
+                                    primaryLang = primaryLang,
+                                    secondaryLang = secondaryLang,
+                                    placeholder = K.district.tr()
+                                )
                             }
 
                             ElvanIrumozhiPulan(
