@@ -895,7 +895,6 @@ class DesktopUdukkaiDatabaseHelper(
         list
     }
 
-    override fun getLinksForPatru(patruId: Long): List<ReceiptInvoiceLinkModel> = getLinksForReceipt(patruId)
 
     override fun saveReceiptWithLinks(receipt: ReceiptModel, links: List<ReceiptInvoiceLinkModel>): Long = useConn { conn ->
         val autoCommit = conn.autoCommit
@@ -1141,12 +1140,12 @@ class DesktopUdukkaiDatabaseHelper(
     )
 
     private fun rsToInvoice(rs: ResultSet): InvoiceModel {
-        val mothaEdai = if (isFactory) getDoubleCol(rs, "total_weight", "motha_edai") else 0.0
-        val setharamGrams = if (isFactory) getDoubleCol(rs, "wastage_grams", "setharam_grams") else 0.0
-        val thabaalThogai = if (isFactory) getDoubleCol(rs, "postal_charges", "thabaal_thogai") else 0.0
-        val ahimsaPattuThogai = if (isFactory) getDoubleCol(rs, "ahimsa_silk_amount", "ahimsa_pattu_thogai") else 0.0
-        val piravariVugal = if (isFactory) getStringCol(rs, "other_taxes_json", "piravari_vugal", default = "[]") else "[]"
-        val vangiTharavugal = if (isFactory) getStringCol(rs, "bank_details_json", "vangi_tharavugal", default = "{}") else "{}"
+        val totalWeight = if (isFactory) getDoubleCol(rs, "total_weight", "motha_edai") else 0.0
+        val wastageGrams = if (isFactory) getDoubleCol(rs, "wastage_grams", "setharam_grams") else 0.0
+        val postalCharges = if (isFactory) getDoubleCol(rs, "postal_charges", "thabaal_thogai") else 0.0
+        val ahimsaSilkAmount = if (isFactory) getDoubleCol(rs, "ahimsa_silk_amount", "ahimsa_pattu_thogai") else 0.0
+        val otherTaxesJson = if (isFactory) getStringCol(rs, "other_taxes_json", "piravari_vugal", default = "[]") else "[]"
+        val bankDetailsJson = if (isFactory) getStringCol(rs, "bank_details_json", "vangi_tharavugal", default = "{}") else "{}"
 
         return InvoiceModel(
             id = getLongCol(rs, "id"),
@@ -1167,15 +1166,15 @@ class DesktopUdukkaiDatabaseHelper(
             globalDiscountAmount = getDoubleCol(rs, "global_discount_amount", "podhu_thallupadi_thogai"),
             taxAmount = getDoubleCol(rs, "tax_amount", "vari_thogai"),
             taxDataJson = getStringCol(rs, "tax_data_json", "vari_tharavugal", default = "{}"),
-            totalWeight = mothaEdai,
-            wastageGrams = setharamGrams,
-            postalCharges = thabaalThogai,
-            ahimsaSilkAmount = ahimsaPattuThogai,
-            otherTaxesJson = piravariVugal,
+            totalWeight = totalWeight,
+            wastageGrams = wastageGrams,
+            postalCharges = postalCharges,
+            ahimsaSilkAmount = ahimsaSilkAmount,
+            otherTaxesJson = otherTaxesJson,
             customPreferencesJson = getStringCol(rs, "custom_preferences_json", "sontha_viruppangal", default = "{}"),
             termsAndConditions = getStringCol(rs, "terms_and_conditions", "nibandhanaigal"),
             notes = getStringCol(rs, "notes", "ullkurippu"),
-            bankDetailsJson = vangiTharavugal,
+            bankDetailsJson = bankDetailsJson,
             createdAt = getLongCol(rs, "created_at"),
             updatedAt = getLongCol(rs, "updated_at"),
             isDeleted = getIntCol(rs, "is_deleted") == 1,

@@ -15,42 +15,36 @@ fun generatePattuId(): String = generateTextilesId()
  */
 data class TextilesItem(
     val id: String = generateTextilesId(),
-    val porulId: String? = null,
-    val porulPeyar: String = "",
-    val porulPeyarEn: String = "",
-    val hsnKuriyeedu: String = "",
-    val alavu: Double = 1.0,
-    val alagu: String = "Nos",
-    val vilai: Double = 0.0,
-    val variVizhukkaadu: Double = 5.0,
-    val thallupadi: Double = 0.0,
-    val thallupadiVagai: String = "%",
-    val mozhiMap: Map<String, String> = emptyMap()
+    val productId: String? = null,
+    val productName: String = "",
+    val productNameEn: String = "",
+    val hsnCode: String = "",
+    val quantity: Double = 1.0,
+    val unit: String = "Nos",
+    val price: Double = 0.0,
+    val taxRate: Double = 5.0,
+    val discount: Double = 0.0,
+    val discountType: String = "%",
+    val languageMap: Map<String, String> = emptyMap()
 ) {
-    val name: String get() = porulPeyar
-    val price: Double get() = vilai
-    val hsnCode: String get() = hsnKuriyeedu
-    val quantity: Double get() = alavu
-    val unit: String get() = alagu
-    val rate: Double get() = vilai
-    val taxRate: Double get() = variVizhukkaadu
-    val discount: Double get() = thallupadi
-    val discountType: String get() = thallupadiVagai
+    val name: String get() = productName
+    val rate: Double get() = price
 
-    val baseAmount: Double get() = alavu * vilai
+    val baseAmount: Double get() = quantity * price
     val adippadaiThogai: Double get() = baseAmount
 
     val discountAmount: Double
-        get() = if (thallupadiVagai == "%") {
-            adippadaiThogai * (thallupadi / 100.0)
+        get() = if (discountType == "%") {
+            baseAmount * (discount / 100.0)
         } else {
-            thallupadi
+            discount
         }
-    val thallupadiThogai: Double get() = discountAmount
 
-    val taxableAmount: Double get() = (adippadaiThogai - thallupadiThogai).coerceAtLeast(0.0)
-    val rowTax: Double get() = taxableAmount * (variVizhukkaadu / 100.0)
+    val taxableAmount: Double get() = (baseAmount - discountAmount).coerceAtLeast(0.0)
+    val rowTax: Double get() = taxableAmount * (taxRate / 100.0)
     val rowTotal: Double get() = taxableAmount + rowTax
+
+
 }
 
 
@@ -67,13 +61,7 @@ data class TextilesTotals(
     val totalTax: Double = 0.0,
     val roundOff: Double = 0.0,
     val grandTotal: Double = 0.0
-) {
-    val adippadaiMothangal: Double get() = subtotal
-    val thallupadiMothangal: Double get() = totalDiscount
-    val variMothangal: Double get() = totalTax
-    val suttruOff: Double get() = roundOff
-    val mothaMothangal: Double get() = grandTotal
-}
+)
 
 
 
@@ -106,9 +94,9 @@ object TextilesCalculation {
         var itemDiscounts = 0.0
 
         for (item in items) {
-            val amount = item.alavu * item.price
+            val amount = item.quantity * item.price
             val rawDiscount = item.discount
-            val discountAmount = if (item.thallupadiVagai == "%") {
+            val discountAmount = if (item.discountType == "%") {
                 amount * (rawDiscount / 100.0)
             } else {
                 rawDiscount
@@ -130,9 +118,9 @@ object TextilesCalculation {
         var taxTotal = 0.0
 
         for (item in items) {
-            val amount = item.alavu * item.price
+            val amount = item.quantity * item.price
             val rawDiscount = item.discount
-            val itemDiscount = if (item.thallupadiVagai == "%") {
+            val itemDiscount = if (item.discountType == "%") {
                 amount * (rawDiscount / 100.0)
             } else {
                 rawDiscount
@@ -148,7 +136,7 @@ object TextilesCalculation {
             val itemGlobalDiscount = globalDiscountAmount * itemWeight
             val taxableAmount = (afterItemDiscount - itemGlobalDiscount).coerceAtLeast(0.0)
 
-            taxTotal += (taxableAmount * item.variVizhukkaadu) / 100.0
+            taxTotal += (taxableAmount * item.taxRate) / 100.0
         }
 
         val isIndia = country.equals("india", ignoreCase = true) || country.equals("in", ignoreCase = true)
@@ -200,18 +188,31 @@ object TextilesCalculation {
         items.forEachIndexed { idx, item ->
             if (idx > 0) sb.append(",")
             sb.append("{")
-            sb.append("\"porulId\":").append(if (item.porulId != null) "\"${escapeJson(item.porulId)}\"" else "null").append(",")
+            val pId = item.productId
+            sb.append("\"productId\":").append(if (pId != null) "\"${escapeJson(pId)}\"" else "null").append(",")
+            sb.append("\"porulId\":").append(if (pId != null) "\"${escapeJson(pId)}\"" else "null").append(",")
+            sb.append("\"productName\":\"${escapeJson(item.name)}\",")
             sb.append("\"porulPeyar\":\"${escapeJson(item.name)}\",")
-            sb.append("\"porulPeyarEn\":\"${escapeJson(item.porulPeyarEn)}\",")
-            sb.append("\"hsnKuriyeedu\":\"${escapeJson(item.hsnKuriyeedu)}\",")
-            sb.append("\"alavu\":${item.alavu},")
+            sb.append("\"productNameEn\":\"${escapeJson(item.productNameEn)}\",")
+            sb.append("\"porulPeyarEn\":\"${escapeJson(item.productNameEn)}\",")
+            sb.append("\"hsnCode\":\"${escapeJson(item.hsnCode)}\",")
+            sb.append("\"hsnKuriyeedu\":\"${escapeJson(item.hsnCode)}\",")
+            sb.append("\"quantity\":${item.quantity},")
+            sb.append("\"alavu\":${item.quantity},")
+            sb.append("\"unit\":\"${escapeJson(item.unit)}\",")
             sb.append("\"alagu\":\"${escapeJson(item.unit)}\",")
+            sb.append("\"price\":${item.price},")
             sb.append("\"vilai\":${item.price},")
-            sb.append("\"variVizhukkaadu\":${item.variVizhukkaadu},")
+            sb.append("\"taxRate\":${item.taxRate},")
+            sb.append("\"variVizhukkaadu\":${item.taxRate},")
+            sb.append("\"discount\":${item.discount},")
             sb.append("\"thallupadi\":${item.discount},")
-            sb.append("\"thallupadiVagai\":\"${escapeJson(item.thallupadiVagai)}\",")
-            sb.append("\"thallupadiThogai\":${item.thallupadiThogai},")
-            sb.append("\"mozhiMap\":${LanguageJsonConverter.stringify(item.mozhiMap)}")
+            sb.append("\"discountType\":\"${escapeJson(item.discountType)}\",")
+            sb.append("\"thallupadiVagai\":\"${escapeJson(item.discountType)}\",")
+            sb.append("\"discountAmount\":${item.discountAmount},")
+            sb.append("\"thallupadiThogai\":${item.discountAmount},")
+            sb.append("\"languageMap\":${LanguageJsonConverter.stringify(item.languageMap)},")
+            sb.append("\"mozhiMap\":${LanguageJsonConverter.stringify(item.languageMap)}")
             sb.append("}")
         }
         sb.append("]")
@@ -223,39 +224,39 @@ object TextilesCalculation {
         val objects = splitJsonObjects(json)
         return objects.mapNotNull { body ->
             try {
-                val porulId = Regex(""""porulId"\s*:\s*(?:"([^"]*)"|null)""").find(body)?.let {
+                val pId = Regex(""""(?:productId|porulId)"\s*:\s*(?:"([^"]*)"|null)""").find(body)?.let {
                     if (it.groupValues[1].isNotEmpty()) it.groupValues[1] else null
                 }
-                val porulPeyar = Regex(""""porulPeyar"\s*:\s*"((?:\\.|[^"\\])*)"""").find(body)?.groupValues?.get(1)
+                val pName = Regex(""""(?:productName|porulPeyar)"\s*:\s*"((?:\\.|[^"\\])*)"""").find(body)?.groupValues?.get(1)
                     ?.replace("\\\"", "\"")?.replace("\\\\", "\\") ?: ""
-                val porulPeyarEn = Regex(""""porulPeyarEn"\s*:\s*"((?:\\.|[^"\\])*)"""").find(body)?.groupValues?.get(1)
+                val pNameEn = Regex(""""(?:productNameEn|porulPeyarEn)"\s*:\s*"((?:\\.|[^"\\])*)"""").find(body)?.groupValues?.get(1)
                     ?.replace("\\\"", "\"")?.replace("\\\\", "\\") ?: ""
-                val hsnKuriyeedu = Regex(""""hsnKuriyeedu"\s*:\s*"((?:\\.|[^"\\])*)"""").find(body)?.groupValues?.get(1)
+                val hsn = Regex(""""(?:hsnCode|hsnKuriyeedu)"\s*:\s*"((?:\\.|[^"\\])*)"""").find(body)?.groupValues?.get(1)
                     ?.replace("\\\"", "\"")?.replace("\\\\", "\\") ?: ""
-                val alavu = Regex(""""alavu"\s*:\s*([0-9.]+)""").find(body)?.groupValues?.get(1)?.toDoubleOrNull() ?: 1.0
-                val alagu = Regex(""""alagu"\s*:\s*"((?:\\.|[^"\\])*)"""").find(body)?.groupValues?.get(1)
+                val quantity = Regex(""""(?:quantity|alavu)"\s*:\s*([0-9.]+)""").find(body)?.groupValues?.get(1)?.toDoubleOrNull() ?: 1.0
+                val unit = Regex(""""(?:unit|alagu)"\s*:\s*"((?:\\.|[^"\\])*)"""").find(body)?.groupValues?.get(1)
                     ?.replace("\\\"", "\"")?.replace("\\\\", "\\") ?: "Nos"
-                val vilai = Regex(""""vilai"\s*:\s*([0-9.]+)""").find(body)?.groupValues?.get(1)?.toDoubleOrNull() ?: 0.0
-                val variVizhukkaadu = Regex(""""variVizhukkaadu"\s*:\s*([0-9.]+)""").find(body)?.groupValues?.get(1)?.toDoubleOrNull() ?: 0.0
-                val thallupadi = Regex(""""thallupadi"\s*:\s*([0-9.]+)""").find(body)?.groupValues?.get(1)?.toDoubleOrNull() ?: 0.0
-                val thallupadiVagai = Regex(""""thallupadiVagai"\s*:\s*"((?:\\.|[^"\\])*)"""").find(body)?.groupValues?.get(1)
+                val price = Regex(""""(?:price|vilai)"\s*:\s*([0-9.]+)""").find(body)?.groupValues?.get(1)?.toDoubleOrNull() ?: 0.0
+                val taxRate = Regex(""""(?:taxRate|variVizhukkaadu)"\s*:\s*([0-9.]+)""").find(body)?.groupValues?.get(1)?.toDoubleOrNull() ?: 0.0
+                val discount = Regex(""""(?:discount|thallupadi)"\s*:\s*([0-9.]+)""").find(body)?.groupValues?.get(1)?.toDoubleOrNull() ?: 0.0
+                val discountType = Regex(""""(?:discountType|thallupadiVagai)"\s*:\s*"((?:\\.|[^"\\])*)"""").find(body)?.groupValues?.get(1)
                     ?.replace("\\\"", "\"")?.replace("\\\\", "\\") ?: "%"
 
-                val mozhiMapMatch = Regex(""""mozhiMap"\s*:\s*(\{[^}]*\})""").find(body)?.groupValues?.get(1)
-                val mozhiMap = LanguageJsonConverter.parse(mozhiMapMatch)
+                val langMapMatch = Regex(""""(?:languageMap|mozhiMap)"\s*:\s*(\{[^}]*\})""").find(body)?.groupValues?.get(1)
+                val langMap = LanguageJsonConverter.parse(langMapMatch)
 
                 TextilesItem(
-                    porulId = porulId,
-                    porulPeyar = porulPeyar,
-                    porulPeyarEn = porulPeyarEn,
-                    hsnKuriyeedu = hsnKuriyeedu,
-                    alavu = alavu,
-                    alagu = alagu,
-                    vilai = vilai,
-                    variVizhukkaadu = variVizhukkaadu,
-                    thallupadi = thallupadi,
-                    thallupadiVagai = thallupadiVagai,
-                    mozhiMap = mozhiMap
+                    productId = pId,
+                    productName = pName,
+                    productNameEn = pNameEn,
+                    hsnCode = hsn,
+                    quantity = quantity,
+                    unit = unit,
+                    price = price,
+                    taxRate = taxRate,
+                    discount = discount,
+                    discountType = discountType,
+                    languageMap = langMap
                 )
             } catch (_: Exception) {
                 null

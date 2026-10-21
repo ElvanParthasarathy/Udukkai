@@ -17,19 +17,18 @@ fun generateKooliId(): String = generateFactoryId()
  */
 data class FactoryItem(
     val id: String = generateFactoryId(),
-    val porulId: String? = null,
-    val porulPeyar: String = "",
-    val porulPeyarEn: String = "",
-    val edai: Double = 0.0,
-    val vilai: Double = 0.0,
-    val mozhiMap: Map<String, String> = emptyMap()
+    val productId: String? = null,
+    val productName: String = "",
+    val productNameEn: String = "",
+    val weight: Double = 0.0,
+    val price: Double = 0.0,
+    val languageMap: Map<String, String> = emptyMap()
 ) {
-    val name: String get() = porulPeyar
-    val price: Double get() = vilai
-    val weight: Double get() = edai
-    val rate: Double get() = vilai
-    val rowTotal: Int get() = floor(edai * vilai).toInt()
-    val varisaiThogai: Int get() = rowTotal
+    val name: String get() = productName
+    val rate: Double get() = price
+    val rowTotal: Int get() = floor(weight * price).toInt()
+
+
 }
 
 
@@ -39,12 +38,9 @@ data class FactoryItem(
  */
 data class FactoryAdditionalCharge(
     val id: String = System.currentTimeMillis().toString() + (0..999).random(),
-    val peyar: String = "",
-    val thogai: Double = 0.0
-) {
-    val name: String get() = peyar
-    val amount: Double get() = thogai
-}
+    val name: String = "",
+    val amount: Double = 0.0
+)
 
 
 
@@ -55,11 +51,7 @@ data class FactoryTotals(
     val subtotal: Double = 0.0,
     val totalWeight: Double = 0.0,
     val grandTotal: Double = 0.0
-) {
-    val adippadaiMothangal: Double get() = subtotal
-    val mothaEdai: Double get() = totalWeight
-    val perumMothangal: Double get() = grandTotal
-}
+)
 
 
 
@@ -82,9 +74,9 @@ object FactoryCalculation {
         var totalKg = 0.0
 
         for (item in items) {
-            val rowTotal = floor(item.edai * item.price)
+            val rowTotal = floor(item.weight * item.price)
             subtotal += rowTotal
-            totalKg += item.edai
+            totalKg += item.weight
         }
 
         totalKg += setharamGrams / 1000.0
@@ -118,12 +110,19 @@ object FactoryCalculation {
         items.forEachIndexed { idx, item ->
             if (idx > 0) sb.append(",")
             sb.append("{")
-            sb.append("\"porulId\":").append(if (item.porulId != null) "\"${escapeJson(item.porulId)}\"" else "null").append(",")
+            val pId = item.productId
+            sb.append("\"productId\":").append(if (pId != null) "\"${escapeJson(pId)}\"" else "null").append(",")
+            sb.append("\"porulId\":").append(if (pId != null) "\"${escapeJson(pId)}\"" else "null").append(",")
+            sb.append("\"productName\":\"${escapeJson(item.name)}\",")
             sb.append("\"porulPeyar\":\"${escapeJson(item.name)}\",")
-            sb.append("\"porulPeyarEn\":\"${escapeJson(item.porulPeyarEn)}\",")
-            sb.append("\"edai\":${item.edai},")
+            sb.append("\"productNameEn\":\"${escapeJson(item.productNameEn)}\",")
+            sb.append("\"porulPeyarEn\":\"${escapeJson(item.productNameEn)}\",")
+            sb.append("\"weight\":${item.weight},")
+            sb.append("\"edai\":${item.weight},")
+            sb.append("\"price\":${item.price},")
             sb.append("\"vilai\":${item.price},")
-            sb.append("\"mozhiMap\":${LanguageJsonConverter.stringify(item.mozhiMap)}")
+            sb.append("\"languageMap\":${LanguageJsonConverter.stringify(item.languageMap)},")
+            sb.append("\"mozhiMap\":${LanguageJsonConverter.stringify(item.languageMap)}")
             sb.append("}")
         }
         sb.append("]")
@@ -135,26 +134,26 @@ object FactoryCalculation {
         val objects = splitJsonObjects(json)
         return objects.mapNotNull { body ->
             try {
-                val porulId = Regex(""""porulId"\s*:\s*(?:"([^"]*)"|null)""").find(body)?.let {
+                val pId = Regex(""""(?:productId|porulId)"\s*:\s*(?:"([^"]*)"|null)""").find(body)?.let {
                     if (it.groupValues[1].isNotEmpty()) it.groupValues[1] else null
                 }
-                val porulPeyar = Regex(""""porulPeyar"\s*:\s*"((?:\\.|[^"\\])*)"""").find(body)?.groupValues?.get(1)
+                val pName = Regex(""""(?:productName|porulPeyar)"\s*:\s*"((?:\\.|[^"\\])*)"""").find(body)?.groupValues?.get(1)
                     ?.replace("\\\"", "\"")?.replace("\\\\", "\\") ?: ""
-                val porulPeyarEn = Regex(""""porulPeyarEn"\s*:\s*"((?:\\.|[^"\\])*)"""").find(body)?.groupValues?.get(1)
+                val pNameEn = Regex(""""(?:productNameEn|porulPeyarEn)"\s*:\s*"((?:\\.|[^"\\])*)"""").find(body)?.groupValues?.get(1)
                     ?.replace("\\\"", "\"")?.replace("\\\\", "\\") ?: ""
-                val edai = Regex(""""edai"\s*:\s*([0-9.]+)""").find(body)?.groupValues?.get(1)?.toDoubleOrNull() ?: 0.0
-                val vilai = Regex(""""vilai"\s*:\s*([0-9.]+)""").find(body)?.groupValues?.get(1)?.toDoubleOrNull() ?: 0.0
+                val weight = Regex(""""(?:weight|edai)"\s*:\s*([0-9.]+)""").find(body)?.groupValues?.get(1)?.toDoubleOrNull() ?: 0.0
+                val price = Regex(""""(?:price|vilai)"\s*:\s*([0-9.]+)""").find(body)?.groupValues?.get(1)?.toDoubleOrNull() ?: 0.0
 
-                val mozhiMapMatch = Regex(""""mozhiMap"\s*:\s*(\{[^}]*\})""").find(body)?.groupValues?.get(1)
-                val mozhiMap = LanguageJsonConverter.parse(mozhiMapMatch)
+                val langMapMatch = Regex(""""(?:languageMap|mozhiMap)"\s*:\s*(\{[^}]*\})""").find(body)?.groupValues?.get(1)
+                val langMap = LanguageJsonConverter.parse(langMapMatch)
 
                 FactoryItem(
-                    porulId = porulId,
-                    porulPeyar = porulPeyar,
-                    porulPeyarEn = porulPeyarEn,
-                    edai = edai,
-                    vilai = vilai,
-                    mozhiMap = mozhiMap
+                    productId = pId,
+                    productName = pName,
+                    productNameEn = pNameEn,
+                    weight = weight,
+                    price = price,
+                    languageMap = langMap
                 )
             } catch (_: Exception) {
                 null
@@ -169,7 +168,9 @@ object FactoryCalculation {
             if (idx > 0) sb.append(",")
             sb.append("{")
             sb.append("\"id\":\"${escapeJson(charge.id)}\",")
+            sb.append("\"name\":\"${escapeJson(charge.name)}\",")
             sb.append("\"peyar\":\"${escapeJson(charge.name)}\",")
+            sb.append("\"amount\":${charge.amount},")
             sb.append("\"thogai\":${charge.amount}")
             sb.append("}")
         }
@@ -184,14 +185,14 @@ object FactoryCalculation {
             try {
                 val id = Regex(""""id"\s*:\s*"((?:\\.|[^"\\])*)"""").find(body)?.groupValues?.get(1)
                     ?.replace("\\\"", "\"")?.replace("\\\\", "\\") ?: ""
-                val peyar = Regex(""""peyar"\s*:\s*"((?:\\.|[^"\\])*)"""").find(body)?.groupValues?.get(1)
+                val name = Regex(""""(?:name|peyar)"\s*:\s*"((?:\\.|[^"\\])*)"""").find(body)?.groupValues?.get(1)
                     ?.replace("\\\"", "\"")?.replace("\\\\", "\\") ?: ""
-                val thogai = Regex(""""thogai"\s*:\s*([0-9.]+)""").find(body)?.groupValues?.get(1)?.toDoubleOrNull() ?: 0.0
+                val amount = Regex(""""(?:amount|thogai)"\s*:\s*([0-9.]+)""").find(body)?.groupValues?.get(1)?.toDoubleOrNull() ?: 0.0
 
                 FactoryAdditionalCharge(
                     id = id,
-                    peyar = peyar,
-                    thogai = thogai
+                    name = name,
+                    amount = amount
                 )
             } catch (_: Exception) {
                 null

@@ -25,7 +25,7 @@ import com.elvan.udukkai.theme.LocalShellColors
  * Welcome Landing Page matching Flutter's WelcomePage (nalvaravu_thirai.dart) 1:1.
  */
 @Composable
-fun NalvaravuThirai(
+fun WelcomeScreen(
     onNavigateToLogin: () -> Unit
 ) {
     val isDark = ThemeManager.isDark()

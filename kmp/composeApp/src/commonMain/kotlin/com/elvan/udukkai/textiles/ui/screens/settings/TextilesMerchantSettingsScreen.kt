@@ -159,7 +159,7 @@ fun TextilesMerchantSettingsScreen(
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Text(
-                                text = profile.getPrimary("niruvanathinPeyar").ifEmpty { K.activeCompany.tr() },
+                                text = profile.getPrimary("businessName").ifEmpty { K.activeCompany.tr() },
                                 style = TextStyle(
                                     fontFamily = ff,
                                     fontSize = 14.sp,
@@ -190,11 +190,11 @@ fun TextilesMerchantSettingsScreen(
                     displayContent = {
                         ElvanSettingsDisplayRow(
                             title = K.companyName.tr(),
-                            primaryValue = profile.getPrimary("niruvanathinPeyar"),
-                            secondaryValue = if (isBilingual) profile.getSecondary("niruvanathinPeyar") else null,
+                            primaryValue = profile.getPrimary("businessName"),
+                            secondaryValue = if (isBilingual) profile.getSecondary("businessName") else null,
                             onEdit = {
-                                tempPrimary = profile.getPrimary("niruvanathinPeyar")
-                                tempSecondary = profile.getSecondary("niruvanathinPeyar")
+                                tempPrimary = profile.getPrimary("businessName")
+                                tempSecondary = profile.getSecondary("businessName")
                                 editingSection = "niruvanathinPeyar"
                             },
                             colors = colors
@@ -276,11 +276,11 @@ fun TextilesMerchantSettingsScreen(
                     displayContent = {
                         ElvanSettingsDisplayRow(
                             title = K.tagline.tr(),
-                            primaryValue = profile.getPrimary("adaimozhi"),
-                            secondaryValue = if (isBilingual) profile.getSecondary("adaimozhi") else null,
+                            primaryValue = profile.getPrimary("tagline"),
+                            secondaryValue = if (isBilingual) profile.getSecondary("tagline") else null,
                             onEdit = {
-                                tempPrimary = profile.getPrimary("adaimozhi")
-                                tempSecondary = profile.getSecondary("adaimozhi")
+                                tempPrimary = profile.getPrimary("tagline")
+                                tempSecondary = profile.getSecondary("tagline")
                                 editingSection = "adaimozhi"
                             },
                             colors = colors
@@ -412,14 +412,14 @@ fun TextilesMerchantSettingsScreen(
 
                 // 5. Email (மின்னஞ்சல்)
                 ElvanSettingsAnimatedExpand(
-                    isEditing = editingSection == "minnanjal",
+                    isEditing = editingSection == "email",
                     displayContent = {
                         ElvanSettingsDisplayRow(
                             title = K.email.tr(),
                             primaryValue = profile.email,
                             onEdit = {
                                 tempPrimary = profile.email
-                                editingSection = "minnanjal"
+                                editingSection = "email"
                             },
                             colors = colors
                         )

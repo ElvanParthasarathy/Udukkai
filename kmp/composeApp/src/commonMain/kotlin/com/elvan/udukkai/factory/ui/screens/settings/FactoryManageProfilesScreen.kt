@@ -86,7 +86,7 @@ fun FactoryManageProfilesScreen(
                         ElvanSettingsSection(colors = colors) {
                             profiles.forEachIndexed { index, profileItem ->
                                 val isActive = profileItem.id == activeProfile.id
-                                val primaryName = profileItem.getPrimary("niruvanathinPeyar")
+                                val primaryName = profileItem.getPrimary("businessName")
                                     .ifEmpty { K.activeCompany.tr() }
                                 val isBilingual = profileItem.isBilingual
 

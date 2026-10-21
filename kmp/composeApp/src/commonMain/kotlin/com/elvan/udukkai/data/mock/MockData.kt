@@ -4,10 +4,10 @@ package com.elvan.udukkai.data.mock
  * Mock Seed Data — Extracted from Firebase RTDB Export.
  * Matches Flutter `sodhanai_tharavugal.dart` 1:1.
  */
-const val MOCK_OAVURU: String =
+const val MOCK_LOGO: String =
     "iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAIAAAD8GO2jAAAAK0lEQVR4nGPIkp5FU8QwasGoBaMWjFowasGoBaMWjFowasGoBaMWSA8RCwCj8Hw9ZAkoRwAAAABJRU5ErkJggg=="
 
-val mockSilkProfiles: List<Map<String, Any>> = listOf(
+val mockTextilesProfiles: List<Map<String, Any>> = listOf(
     mapOf(
         "mudhanMozhi" to "ta",
         "thunaiMozhi" to "en",
@@ -36,10 +36,10 @@ val mockSilkProfiles: List<Map<String, Any>> = listOf(
         "kilai_en" to "Arani",
         "vangiKanakku" to "309150050800239",
         "ifsc" to "TMBL0000309",
-        "oavuru" to MOCK_OAVURU,
-        "agalaOavuru" to MOCK_OAVURU,
+        "oavuru" to MOCK_LOGO,
+        "agalaOavuru" to MOCK_LOGO,
         "thalaippuVadivu" to "wide",
-        "kaiyoppam" to MOCK_OAVURU,
+        "kaiyoppam" to MOCK_LOGO,
         "oppamPeyar" to "பா. வனிதாஶ்ரீ",
         "adaimozhi_ta" to "கைத்தறி பட்டு சேலைகள் & ராசில்க்",
         "adaimozhi_en" to "Handloom Silk Sarees & Rawsilk",
@@ -74,10 +74,10 @@ val mockSilkProfiles: List<Map<String, Any>> = listOf(
         "kilai_en" to "Kanchipuram",
         "vangiKanakku" to "456789012345",
         "ifsc" to "IDIB000K123",
-        "oavuru" to MOCK_OAVURU,
-        "agalaOavuru" to MOCK_OAVURU,
+        "oavuru" to MOCK_LOGO,
+        "agalaOavuru" to MOCK_LOGO,
         "thalaippuVadivu" to "small",
-        "kaiyoppam" to MOCK_OAVURU,
+        "kaiyoppam" to MOCK_LOGO,
         "oppamPeyar" to "எ. பார்த்தசாரதி",
         "adaimozhi_ta" to "கைத்தறி மற்றும் விசைத்தறி பட்டு",
         "adaimozhi_en" to "Handloom & Powerloom Silk",
@@ -86,7 +86,7 @@ val mockSilkProfiles: List<Map<String, Any>> = listOf(
     )
 )
 
-val mockCoolieProfiles: List<Map<String, Any>> = listOf(
+val mockFactoryProfiles: List<Map<String, Any>> = listOf(
     mapOf(
         "mudhanMozhi" to "ta",
         "thunaiMozhi" to "en",
@@ -115,10 +115,10 @@ val mockCoolieProfiles: List<Map<String, Any>> = listOf(
         "kilai_en" to "Arani",
         "vangiKanakku" to "309150050800162",
         "ifsc" to "TMBL0000309",
-        "oavuru" to MOCK_OAVURU,
-        "agalaOavuru" to MOCK_OAVURU,
+        "oavuru" to MOCK_LOGO,
+        "agalaOavuru" to MOCK_LOGO,
         "thalaippuVadivu" to "small",
-        "kaiyoppam" to MOCK_OAVURU,
+        "kaiyoppam" to MOCK_LOGO,
         "oppamPeyar" to "இரா. பார்த்தசாரதி",
         "adaimozhi_ta" to "",
         "adaimozhi_en" to "",
@@ -153,10 +153,10 @@ val mockCoolieProfiles: List<Map<String, Any>> = listOf(
         "kilai_en" to "Arani",
         "vangiKanakku" to "309150050800162",
         "ifsc" to "TMBL0000309",
-        "oavuru" to MOCK_OAVURU,
-        "agalaOavuru" to MOCK_OAVURU,
+        "oavuru" to MOCK_LOGO,
+        "agalaOavuru" to MOCK_LOGO,
         "thalaippuVadivu" to "small",
-        "kaiyoppam" to MOCK_OAVURU,
+        "kaiyoppam" to MOCK_LOGO,
         "oppamPeyar" to "பா. வனிதாஶ்ரீ",
         "adaimozhi_ta" to "",
         "adaimozhi_en" to "",
@@ -165,7 +165,7 @@ val mockCoolieProfiles: List<Map<String, Any>> = listOf(
     )
 )
 
-val mockCooliePorulgal: List<Map<String, String>> = listOf(
+val mockFactoryProducts: List<Map<String, String>> = listOf(
     mapOf(
         "peyar_ta" to "இரண்டு இழை சப்புரி செய்ய கூலி",
         "peyar_en" to "Irandu Izhai Sappuri Seiyya Coolie"
@@ -188,7 +188,7 @@ val mockCooliePorulgal: List<Map<String, String>> = listOf(
     )
 )
 
-val mockSilkPorulgal: List<Map<String, Any>> = listOf(
+val mockTextilesProducts: List<Map<String, Any>> = listOf(
     mapOf(
         "peyar_ta" to "கச்சா பட்டு",
         "peyar_en" to "Raw Silk",
@@ -236,7 +236,7 @@ val mockSilkPorulgal: List<Map<String, Any>> = listOf(
     )
 )
 
-val mockCoolieVaangunargal: List<Map<String, String>> = listOf(
+val mockFactoryCustomers: List<Map<String, String>> = listOf(
     mapOf(
         "peyar_ta" to "சுந்தரி சில்க்ஸ் இந்தியா",
         "peyar_en" to "Sundari Silks India",
@@ -251,7 +251,7 @@ val mockCoolieVaangunargal: List<Map<String, String>> = listOf(
     )
 )
 
-val mockSilkVaangunargal: List<Map<String, String>> = listOf(
+val mockTextilesCustomers: List<Map<String, String>> = listOf(
     mapOf(
         "peyar_ta" to "ஸ்ரீ சிவராம் சில்க் சாரீஸ்",
         "peyar_en" to "Sri Sivaram Silk Sarees",
@@ -270,7 +270,7 @@ val mockSilkVaangunargal: List<Map<String, String>> = listOf(
     )
 )
 
-val mockCooliePattiyalgal: List<Map<String, Any>> = listOf(
+val mockFactoryInvoices: List<Map<String, Any>> = listOf(
     mapOf(
         "bill_no" to "VRM-103",
         "customer_name" to "சுந்தரி சில்க்ஸ் இந்தியா",
@@ -546,7 +546,7 @@ val mockCooliePattiyalgal: List<Map<String, Any>> = listOf(
     )
 )
 
-val mockSilkPattiyalgal: List<Map<String, Any>> = listOf(
+val mockTextilesInvoices: List<Map<String, Any>> = listOf(
     mapOf(
         "invoiceNumber" to "SJPS-29",
         "invoiceDate" to "2026-06-11",
@@ -582,7 +582,7 @@ val mockSilkPattiyalgal: List<Map<String, Any>> = listOf(
     )
 )
 
-val mockCooliePatrugal: List<Map<String, Any>> = listOf(
+val mockFactoryReceipts: List<Map<String, Any>> = listOf(
     mapOf(
         "againstInvoice" to "PVS-20, PVS-23, PVS-18, PVS-16, PVS-17, PVS-21",
         "amount" to 90021.0,
@@ -640,7 +640,7 @@ val mockCooliePatrugal: List<Map<String, Any>> = listOf(
     )
 )
 
-val mockSilkPatrugal: List<Map<String, Any>> = listOf(
+val mockTextilesReceipts: List<Map<String, Any>> = listOf(
     mapOf(
         "againstInvoice" to "SJPS-32",
         "amount" to 77532.0,

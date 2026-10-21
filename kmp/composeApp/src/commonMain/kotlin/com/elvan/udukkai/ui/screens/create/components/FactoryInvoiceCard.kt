@@ -60,7 +60,7 @@ fun FactoryInvoiceCard(
     val secondary = if (isBilingual) invoice.customerName[secondaryLang].orEmpty() else ""
     val showSecondary = isBilingual && secondary.isNotBlank() && secondary != primary
 
-    val primaryOor = invoice.customerAddress[primaryLang]
+    val primaryCity = invoice.customerAddress[primaryLang]
         ?: invoice.customerAddress["ta"]
         ?: invoice.customerAddress["en"]
         ?: invoice.customerAddress.values.firstOrNull()
@@ -162,7 +162,7 @@ fun FactoryInvoiceCard(
                     verticalAlignment = Alignment.Bottom
                 ) {
                     Text(
-                        text = primaryOor.preventBrokenLigatures(),
+                        text = primaryCity.preventBrokenLigatures(),
                         style = TextStyle(
                             fontFamily = ff,
                             fontSize = 13.5.sp,

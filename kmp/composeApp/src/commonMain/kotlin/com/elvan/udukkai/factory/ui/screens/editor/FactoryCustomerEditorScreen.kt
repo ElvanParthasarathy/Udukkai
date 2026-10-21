@@ -47,22 +47,22 @@ fun FactoryCustomerEditorScreen(
     val primaryLang = profile.primaryLanguage.ifEmpty { "ta" }
     val secondaryLang = profile.secondaryLanguage.ifEmpty { "en" }
 
-    var peyarMap by remember { mutableStateOf(merchant?.name ?: emptyMap()) }
-    var tholaipaesi by remember { mutableStateOf(merchant?.phone ?: "") }
-    var oorMap by remember { mutableStateOf(merchant?.city ?: emptyMap()) }
-    var mugavariMap by remember { mutableStateOf(merchant?.address ?: emptyMap()) }
+    var nameMap by remember { mutableStateOf(merchant?.name ?: emptyMap()) }
+    var phone by remember { mutableStateOf(merchant?.phone ?: "") }
+    var cityMap by remember { mutableStateOf(merchant?.city ?: emptyMap()) }
+    var addressMap by remember { mutableStateOf(merchant?.address ?: emptyMap()) }
 
     var nameValidationError by remember { mutableStateOf<String?>(null) }
     var showDiscardDialog by remember { mutableStateOf(false) }
     var isExiting by remember { mutableStateOf(false) }
 
-    val hasChanges = remember(peyarMap, tholaipaesi, oorMap, mugavariMap) {
+    val hasChanges = remember(nameMap, phone, cityMap, addressMap) {
         if (merchant == null) {
-            peyarMap.values.any { it.isNotBlank() } || tholaipaesi.isNotBlank() ||
-                oorMap.values.any { it.isNotBlank() } || mugavariMap.values.any { it.isNotBlank() }
+            nameMap.values.any { it.isNotBlank() } || phone.isNotBlank() ||
+                cityMap.values.any { it.isNotBlank() } || addressMap.values.any { it.isNotBlank() }
         } else {
-            peyarMap != merchant.name || tholaipaesi != merchant.phone ||
-                oorMap != merchant.city || mugavariMap != merchant.address
+            nameMap != merchant.name || phone != merchant.phone ||
+                cityMap != merchant.city || addressMap != merchant.address
         }
     }
 
@@ -87,7 +87,7 @@ fun FactoryCustomerEditorScreen(
     val saveFailedMsg = K.couldNotSavePrefix.tr()
 
     fun handleSave() {
-        val hasName = peyarMap.values.any { it.trim().isNotBlank() }
+        val hasName = nameMap.values.any { it.trim().isNotBlank() }
         if (!hasName) {
             nameValidationError = fillNameMsg
             return
@@ -95,10 +95,10 @@ fun FactoryCustomerEditorScreen(
 
         val merchantToSave = CustomerModel(
             id = merchant?.id ?: 0L,
-            name = peyarMap.filterValues { it.isNotBlank() },
-            phone = tholaipaesi.trim(),
-            address = mugavariMap.filterValues { it.isNotBlank() },
-            city = oorMap.filterValues { it.isNotBlank() },
+            name = nameMap.filterValues { it.isNotBlank() },
+            phone = phone.trim(),
+            address = addressMap.filterValues { it.isNotBlank() },
+            city = cityMap.filterValues { it.isNotBlank() },
             createdAt = merchant?.createdAt ?: System.currentTimeMillis(),
             updatedAt = System.currentTimeMillis()
         )
@@ -157,9 +157,9 @@ fun FactoryCustomerEditorScreen(
                         ) {
                             ElvanIrumozhiPulan(
                                 label = K.customerName.tr(),
-                                value = peyarMap,
+                                value = nameMap,
                                 onChanged = {
-                                    peyarMap = it
+                                    nameMap = it
                                     nameValidationError = null
                                 },
                                 isBilingual = isBilingual,
@@ -181,8 +181,8 @@ fun FactoryCustomerEditorScreen(
                             }
 
                             ElvanEditorTextField(
-                                value = tholaipaesi,
-                                onValueChange = { tholaipaesi = it },
+                                value = phone,
+                                onValueChange = { phone = it },
                                 label = K.phone.tr(),
                                 placeholder = "+91 98765 43210"
                             )
@@ -202,8 +202,8 @@ fun FactoryCustomerEditorScreen(
                         ) {
                             ElvanIrumozhiPulan(
                                 label = K.city.tr(),
-                                value = oorMap,
-                                onChanged = { oorMap = it },
+                                value = cityMap,
+                                onChanged = { cityMap = it },
                                 isBilingual = isBilingual,
                                 primaryLang = primaryLang,
                                 secondaryLang = secondaryLang,
@@ -212,8 +212,8 @@ fun FactoryCustomerEditorScreen(
 
                             ElvanIrumozhiPulan(
                                 label = K.address.tr(),
-                                value = mugavariMap,
-                                onChanged = { mugavariMap = it },
+                                value = addressMap,
+                                onChanged = { addressMap = it },
                                 isBilingual = isBilingual,
                                 primaryLang = primaryLang,
                                 secondaryLang = secondaryLang,

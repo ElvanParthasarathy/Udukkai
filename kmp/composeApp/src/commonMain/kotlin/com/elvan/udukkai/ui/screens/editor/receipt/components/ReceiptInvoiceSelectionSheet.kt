@@ -89,14 +89,14 @@ fun ReceiptInvoiceSelectionSheet(
         searchFilter = { inv, q ->
             val query = q.trim().lowercase()
             val enMatch = inv.invoiceNumber.lowercase().contains(query)
-            val peyarTa = inv.customerName["ta"]?.lowercase().orEmpty()
-            val peyarEn = inv.customerName["en"]?.lowercase().orEmpty()
-            enMatch || peyarTa.contains(query) || peyarEn.contains(query)
+            val nameTa = inv.customerName["ta"]?.lowercase().orEmpty()
+            val nameEn = inv.customerName["en"]?.lowercase().orEmpty()
+            enMatch || nameTa.contains(query) || nameEn.contains(query)
         },
         itemLabelBuilder = { it.invoiceNumber },
         itemRowContent = { inv, isSelected, onToggle ->
             val customer = allMerchants.firstOrNull { it.id == inv.customerId }
-            val oorText = customer?.city?.get("ta")
+            val cityText = customer?.city?.get("ta")
                 ?: customer?.city?.get("en")
                 ?: ""
 
@@ -189,7 +189,7 @@ fun ReceiptInvoiceSelectionSheet(
                         )
                     }
 
-                    val amountDetail = if (oorText.isNotEmpty()) "$oorText • $formattedAmount" else formattedAmount
+                    val amountDetail = if (cityText.isNotEmpty()) "$cityText • $formattedAmount" else formattedAmount
                     Spacer(modifier = Modifier.height(2.dp))
                     Text(
                         text = amountDetail.preventBrokenLigatures(),

@@ -143,18 +143,18 @@ fun FactoryItemCard(
                 val secondaryLang = config.secondaryLanguage.code
                 val isBilingual = config.isBilingual
 
-                val primaryName = if (item.mozhiMap.isNotEmpty()) {
-                    item.mozhiMap[primaryLang] ?: item.mozhiMap.values.firstOrNull().orEmpty()
+                val primaryName = if (item.languageMap.isNotEmpty()) {
+                    item.languageMap[primaryLang] ?: item.languageMap.values.firstOrNull().orEmpty()
                 } else {
-                    if (primaryLang == "ta") item.name.ifEmpty { item.porulPeyarEn }
-                    else item.porulPeyarEn.ifEmpty { item.name }
+                    if (primaryLang == "ta") item.productName.ifEmpty { item.productNameEn }
+                    else item.productNameEn.ifEmpty { item.productName }
                 }
-                val secondaryName = if (item.mozhiMap.isNotEmpty()) {
-                    item.mozhiMap[secondaryLang] ?: ""
+                val secondaryName = if (item.languageMap.isNotEmpty()) {
+                    item.languageMap[secondaryLang] ?: ""
                 } else {
-                    if (secondaryLang == "en") item.porulPeyarEn else item.name
+                    if (secondaryLang == "en") item.productNameEn else item.productName
                 }
-                val displayName = primaryName.ifEmpty { item.name.ifEmpty { item.porulPeyarEn } }
+                val displayName = primaryName.ifEmpty { item.productName.ifEmpty { item.productNameEn } }
                 val containerBg = colors.iconBg
 
                 val productSearchPill = @Composable {
@@ -238,10 +238,10 @@ fun FactoryItemCard(
                 val weightInput = @Composable {
                     ElvanEditorTextField(
                         label = "${K.weight.tr()} (Kg)",
-                        value = if (item.edai == 0.0) "" else cleanNum(item.edai, isWeight = true),
+                        value = if (item.weight == 0.0) "" else cleanNum(item.weight, isWeight = true),
                         onValueChange = {
                             val parsed = it.toDoubleOrNull() ?: 0.0
-                            onItemUpdated(item.copy(edai = parsed))
+                            onItemUpdated(item.copy(weight = parsed))
                             onDirty()
                         },
                         placeholder = "0.000",
@@ -255,7 +255,7 @@ fun FactoryItemCard(
                         value = if (item.price == 0.0) "" else cleanNum(item.price),
                         onValueChange = {
                             val parsed = it.toDoubleOrNull() ?: 0.0
-                            onItemUpdated(item.copy(vilai = parsed))
+                            onItemUpdated(item.copy(price = parsed))
                             onDirty()
                         },
                         prefixText = "₹ ",
@@ -277,7 +277,7 @@ fun FactoryItemCard(
                             contentAlignment = Alignment.CenterStart
                         ) {
                             Text(
-                                text = CurrencyUtils.formatInr(item.varisaiThogai.toDouble()),
+                                text = CurrencyUtils.formatInr(item.rowTotal.toDouble()),
                                 style = TextStyle(
                                     fontFamily = ff,
                                     fontSize = 15.sp,
@@ -421,7 +421,7 @@ fun FactoryItemCard(
         ElvanSelectionBottomSheet(
             title = K.products.tr(),
             items = availableProducts,
-            currentValue = availableProducts.firstOrNull { it.id.toString() == item.porulId },
+            currentValue = availableProducts.firstOrNull { it.id.toString() == item.productId },
             showSearch = true,
             onDismissRequest = { isPickerOpen = false },
             onSelected = { p: ProductModel ->
@@ -440,11 +440,11 @@ fun FactoryItemCard(
 
                 onItemUpdated(
                     item.copy(
-                        porulId = p.id.toString(),
-                        porulPeyar = primary,
-                        porulPeyarEn = secondary,
-                        vilai = if (priceForCompany > 0) priceForCompany else item.price,
-                        mozhiMap = p.name
+                        productId = p.id.toString(),
+                        productName = primary,
+                        productNameEn = secondary,
+                        price = if (priceForCompany > 0) priceForCompany else item.price,
+                        languageMap = p.name
                     )
                 )
                 onDirty()
@@ -548,7 +548,7 @@ fun FactoryAdditionalChargeCard(
                         label = K.chargeName.tr(),
                         value = charge.name,
                         onValueChange = {
-                            onUpdated(charge.copy(peyar = it))
+                            onUpdated(charge.copy(name = it))
                             onDirty()
                         },
                         placeholder = K.chargeName.tr()
@@ -561,7 +561,7 @@ fun FactoryAdditionalChargeCard(
                         value = if (charge.amount == 0.0) "" else cleanNum(charge.amount),
                         onValueChange = {
                             val parsed = it.toDoubleOrNull() ?: 0.0
-                            onUpdated(charge.copy(thogai = parsed))
+                            onUpdated(charge.copy(amount = parsed))
                             onDirty()
                         },
                         prefixText = "₹ ",

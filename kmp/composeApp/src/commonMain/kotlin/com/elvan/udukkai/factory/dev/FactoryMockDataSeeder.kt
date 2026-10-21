@@ -112,9 +112,9 @@ object FactoryMockDataSeeder {
         return parsed.map { item ->
             val matched = items.find { it.name["ta"] == item.name }
             item.copy(
-                porulId = matched?.id?.toString(),
-                porulPeyarEn = matched?.name?.get("en") ?: item.porulPeyarEn,
-                mozhiMap = matched?.name ?: emptyMap()
+                productId = matched?.id?.toString(),
+                productNameEn = matched?.name?.get("en") ?: item.productNameEn,
+                languageMap = matched?.name ?: emptyMap()
             )
         }
     }
@@ -148,7 +148,7 @@ object FactoryMockDataSeeder {
         helper.clearAllData()
 
         // 1. Seed Profiles
-        for (map in mockCoolieProfiles) {
+        for (map in mockFactoryProfiles) {
             val p = profileFromMap(map)
             FactoryProfileRepository.createProfile(p)
         }
@@ -156,19 +156,19 @@ object FactoryMockDataSeeder {
         val profileMap = factoryProfiles.associateBy { it.shortName }
 
         // 2. Products
-        for (item in mockCooliePorulgal) {
-            val peyarTa = item["peyar_ta"] ?: ""
-            val peyarEn = item["peyar_en"] ?: ""
+        for (item in mockFactoryProducts) {
+            val nameTa = item["peyar_ta"] ?: ""
+            val nameEn = item["peyar_en"] ?: ""
             helper.saveProduct(
                 ProductModel(
-                    name = mapOf("ta" to peyarTa, "en" to peyarEn)
+                    name = mapOf("ta" to nameTa, "en" to nameEn)
                 )
             )
         }
         val factoryItems = helper.loadAllProducts()
 
         // 3. Customers
-        for (m in mockCoolieVaangunargal) {
+        for (m in mockFactoryCustomers) {
             helper.saveCustomer(
                 CustomerModel(
                     name = mapOf("ta" to (m["peyar_ta"] ?: ""), "en" to (m["peyar_en"] ?: "")),
@@ -179,7 +179,7 @@ object FactoryMockDataSeeder {
         val factoryCustomers = helper.loadAllCustomers()
 
         // 4. Invoices
-        for (data in mockCooliePattiyalgal) {
+        for (data in mockFactoryInvoices) {
             val dateStr = data["date"] as? String ?: "21/02/2026"
             val dateMillis = parseDate(dateStr)
             val billNo = data["bill_no"] as? String ?: "VRM-101"
@@ -188,21 +188,21 @@ object FactoryMockDataSeeder {
             val profileId = profileMap[prefix]?.id
 
             val custName = data["customer_name"] as? String ?: ""
-            val custOor = data["customer_oor"] as? String ?: ""
+            val custCity = data["customer_oor"] as? String ?: ""
             val matchedCust = factoryCustomers.find {
-                it.name["ta"] == custName && (custOor.isEmpty() || it.city["ta"] == custOor)
+                it.name["ta"] == custName && (custCity.isEmpty() || it.city["ta"] == custCity)
             } ?: factoryCustomers.find { it.name["ta"] == custName }
 
             val custId = matchedCust?.id
-            val custPeyar = matchedCust?.name ?: mapOf("ta" to custName, "en" to (data["customer_name_en"] as? String ?: custName))
-            val custMunvari = matchedCust?.city ?: mapOf("ta" to custOor, "en" to custOor)
+            val custNameMap = matchedCust?.name ?: mapOf("ta" to custName, "en" to (data["customer_name_en"] as? String ?: custName))
+            val custAddressMap = matchedCust?.city ?: mapOf("ta" to custCity, "en" to custCity)
 
             val rawItems = data["items"] as? String ?: "[]"
             val parsedItems = parseCoolieItems(rawItems, factoryItems)
             val enrichedJson = FactoryCalculation.itemsToJson(parsedItems)
 
             val grandTotal = (data["grand_total"] as? Number)?.toDouble() ?: 0.0
-            val mothaEdai = (data["mothaEdai"] as? Number)?.toDouble() ?: 0.0
+            val totalWeight = (data["mothaEdai"] as? Number)?.toDouble() ?: 0.0
             val setharam = (data["setharamGrams"] as? Number)?.toDouble() ?: 0.0
             val thabaal = (data["thabaalThogai"] as? Number)?.toDouble() ?: 0.0
             val ahimsa = (data["ahimsaPattuThogai"] as? Number)?.toDouble() ?: 0.0
@@ -215,12 +215,12 @@ object FactoryMockDataSeeder {
                     vanakkam = vanakkamNum,
                     invoiceType = "tax-invoice",
                     customerId = custId,
-                    customerName = custPeyar,
-                    customerAddress = custMunvari,
+                    customerName = custNameMap,
+                    customerAddress = custAddressMap,
                     invoiceDate = dateMillis,
                     itemsJson = enrichedJson,
                     totalAmount = grandTotal,
-                    totalWeight = mothaEdai,
+                    totalWeight = totalWeight,
                     wastageGrams = setharam,
                     postalCharges = thabaal,
                     ahimsaSilkAmount = ahimsa,
@@ -234,11 +234,11 @@ object FactoryMockDataSeeder {
         val invEnToTotal = factoryInvoices.associate { it.invoiceNumber to it.totalAmount }
 
         // 5. Receipts with Links
-        for (r in mockCooliePatrugal) {
+        for (r in mockFactoryReceipts) {
             val dateStr = r["date"] as? String ?: "2026-06-08"
             val dateMillis = parseDate(dateStr)
-            val patruEn = r["receiptNo"] as? String ?: "RCP/PVS/01"
-            val parts = patruEn.split("/")
+            val receiptNo = r["receiptNo"] as? String ?: "RCP/PVS/01"
+            val parts = receiptNo.split("/")
             val prefix = if (parts.size > 1) parts[1] else ""
             val vanakkamNum = parts.lastOrNull()?.toIntOrNull() ?: 1
             val profileId = profileMap[prefix]?.id
@@ -254,7 +254,7 @@ object FactoryMockDataSeeder {
             helper.saveReceiptWithLinks(
                 ReceiptModel(
                     companyId = profileId,
-                    receiptNumber = patruEn,
+                    receiptNumber = receiptNo,
                     vanakkam = vanakkamNum,
                     finYear = "2026",
                     customerId = matchedCust?.id,
@@ -299,8 +299,8 @@ object FactoryMockDataSeeder {
             FactoryProfileRepository.deleteProfile(existing.id!!)
             "Factory PVS Removed ✗"
         } else {
-            if (mockCoolieProfiles.size > 1) {
-                FactoryProfileRepository.createProfile(profileFromMap(mockCoolieProfiles[1]))
+            if (mockFactoryProfiles.size > 1) {
+                FactoryProfileRepository.createProfile(profileFromMap(mockFactoryProfiles[1]))
             }
             "Factory PVS Added ✓"
         }

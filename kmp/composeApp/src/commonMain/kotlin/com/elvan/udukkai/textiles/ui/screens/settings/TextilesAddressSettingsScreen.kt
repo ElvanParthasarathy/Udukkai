@@ -9,9 +9,9 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
-import com.elvan.udukkai.core.data.IdangalinPeyar
-import com.elvan.udukkai.core.data.indhiyaMaanilangal
-import com.elvan.udukkai.core.data.tamizhnaattuMaavattangal
+import com.elvan.udukkai.core.data.LocationName
+import com.elvan.udukkai.core.data.indianStates
+import com.elvan.udukkai.core.data.tamilNaduDistricts
 import com.elvan.udukkai.textiles.data.TextilesProfileRepository
 import com.elvan.udukkai.localization.K
 import com.elvan.udukkai.localization.tr
@@ -58,10 +58,10 @@ fun TextilesAddressSettingsScreen(
     val openStateSelection = {
         bottomSheet.showSelection(
             title = stateTitle,
-            items = indhiyaMaanilangal,
-            currentValue = indhiyaMaanilangal.find {
-                it.ta == profile.getPrimary("maanilam") || it.en == profile.getPrimary("maanilam")
-            } ?: if (profile.getPrimary("maanilam").isNotBlank()) indhiyaMaanilangal.lastOrNull() else null,
+            items = indianStates,
+            currentValue = indianStates.find {
+                it.ta == profile.getPrimary("state") || it.en == profile.getPrimary("state")
+            } ?: if (profile.getPrimary("state").isNotBlank()) indianStates.lastOrNull() else null,
             itemLabelBuilder = { if (profile.primaryLanguage == "ta") it.ta else it.en },
             subtitleBuilder = { if (isBilingual) (if (profile.primaryLanguage == "ta") it.en else it.ta) else null },
             showSearch = true,
@@ -70,9 +70,9 @@ fun TextilesAddressSettingsScreen(
             },
             onSelected = { stateItem ->
                 if (stateItem.en == "Custom" || stateItem.ta == "தனிப்பயன்") {
-                    val currP = profile.getPrimary("maanilam")
-                    val currS = profile.getSecondary("maanilam")
-                    val isAlreadyPreset = indhiyaMaanilangal.any { (it.ta == currP || it.en == currP) && it.en != "Custom" && it.ta != "தனிப்பயன்" }
+                    val currP = profile.getPrimary("state")
+                    val currS = profile.getSecondary("state")
+                    val isAlreadyPreset = indianStates.any { (it.ta == currP || it.en == currP) && it.en != "Custom" && it.ta != "தனிப்பயன்" }
                     val initialP = if (isAlreadyPreset || currP == "Custom" || currP == "தனிப்பயன்") "" else currP
                     val initialS = if (isAlreadyPreset || currS == "Custom" || currS == "தனிப்பயன்") "" else currS
                     beginEdit("maanilam", initialP, initialS)
@@ -93,10 +93,10 @@ fun TextilesAddressSettingsScreen(
     val openDistrictSelection = {
         bottomSheet.showSelection(
             title = districtTitle,
-            items = tamizhnaattuMaavattangal,
-            currentValue = tamizhnaattuMaavattangal.find {
-                it.ta == profile.getPrimary("maavattam") || it.en == profile.getPrimary("maavattam")
-            } ?: if (profile.getPrimary("maavattam").isNotBlank()) tamizhnaattuMaavattangal.lastOrNull() else null,
+            items = tamilNaduDistricts,
+            currentValue = tamilNaduDistricts.find {
+                it.ta == profile.getPrimary("district") || it.en == profile.getPrimary("district")
+            } ?: if (profile.getPrimary("district").isNotBlank()) tamilNaduDistricts.lastOrNull() else null,
             itemLabelBuilder = { if (profile.primaryLanguage == "ta") it.ta else it.en },
             subtitleBuilder = { if (isBilingual) (if (profile.primaryLanguage == "ta") it.en else it.ta) else null },
             showSearch = true,
@@ -105,9 +105,9 @@ fun TextilesAddressSettingsScreen(
             },
             onSelected = { districtItem ->
                 if (districtItem.en == "Custom" || districtItem.ta == "தனிப்பயன்") {
-                    val currP = profile.getPrimary("maavattam")
-                    val currS = profile.getSecondary("maavattam")
-                    val isAlreadyPreset = tamizhnaattuMaavattangal.any { (it.ta == currP || it.en == currP) && it.en != "Custom" && it.ta != "தனிப்பயன்" }
+                    val currP = profile.getPrimary("district")
+                    val currS = profile.getSecondary("district")
+                    val isAlreadyPreset = tamilNaduDistricts.any { (it.ta == currP || it.en == currP) && it.en != "Custom" && it.ta != "தனிப்பயன்" }
                     val initialP = if (isAlreadyPreset || currP == "Custom" || currP == "தனிப்பயன்") "" else currP
                     val initialS = if (isAlreadyPreset || currS == "Custom" || currS == "தனிப்பயன்") "" else currS
                     beginEdit("maavattam", initialP, initialS)
@@ -163,27 +163,27 @@ fun TextilesAddressSettingsScreen(
                 if (isPattu) {
                     // ── Pattu Order ──
                     // 1. Country (India - locked)
-                    val naaduPrimary = profile.getPrimary("naadu")
-                    val naaduSecondary = profile.getSecondary("naadu")
+                    val countryPrimary = profile.getPrimary("country")
+                    val countrySecondary = profile.getSecondary("country")
                     ElvanSettingsDisplayRow(
                         title = K.country.tr(),
-                        primaryValue = naaduPrimary,
-                        secondaryValue = if (isBilingual) naaduSecondary else null,
+                        primaryValue = countryPrimary,
+                        secondaryValue = if (isBilingual) countrySecondary else null,
                         onEdit = null,
                         colors = colors
                     )
                     ElvanSettingsDivider(colors = colors)
 
                     // 2. State (Maanilam)
-                    val maanilamPrimary = profile.getPrimary("maanilam")
-                    val maanilamSecondary = profile.getSecondary("maanilam")
+                    val statePrimary = profile.getPrimary("state")
+                    val stateSecondary = profile.getSecondary("state")
                     ElvanSettingsAnimatedExpand(
                         isEditing = editingSection == "maanilam",
                         displayContent = {
                             ElvanSettingsDisplayRow(
                                 title = K.state.tr(),
-                                primaryValue = maanilamPrimary,
-                                secondaryValue = if (isBilingual) maanilamSecondary else null,
+                                primaryValue = statePrimary,
+                                secondaryValue = if (isBilingual) stateSecondary else null,
                                 onEdit = openStateSelection,
                                 colors = colors
                             )
@@ -216,18 +216,18 @@ fun TextilesAddressSettingsScreen(
                     ElvanSettingsDivider(colors = colors)
 
                     // 3. District (Maavattam)
-                    val maavattamPrimary = profile.getPrimary("maavattam")
-                    val maavattamSecondary = profile.getSecondary("maavattam")
-                    val isTamilNadu = maanilamPrimary.trim() in listOf("Tamil Nadu", "தமிழ்நாடு") || maanilamSecondary.trim() in listOf("Tamil Nadu", "தமிழ்நாடு")
+                    val districtPrimary = profile.getPrimary("district")
+                    val districtSecondary = profile.getSecondary("district")
+                    val isTamilNadu = statePrimary.trim() in listOf("Tamil Nadu", "தமிழ்நாடு") || stateSecondary.trim() in listOf("Tamil Nadu", "தமிழ்நாடு")
 
                     ElvanSettingsAnimatedExpand(
                         isEditing = editingSection == "maavattam",
                         displayContent = {
                             ElvanSettingsDisplayRow(
                                 title = K.district.tr(),
-                                primaryValue = maavattamPrimary,
-                                secondaryValue = if (isBilingual) maavattamSecondary else null,
-                                onEdit = if (isTamilNadu) openDistrictSelection else { { beginEdit("maavattam", maavattamPrimary, maavattamSecondary) } },
+                                primaryValue = districtPrimary,
+                                secondaryValue = if (isBilingual) districtSecondary else null,
+                                onEdit = if (isTamilNadu) openDistrictSelection else { { beginEdit("maavattam", districtPrimary, districtSecondary) } },
                                 colors = colors
                             )
                         },
@@ -259,16 +259,16 @@ fun TextilesAddressSettingsScreen(
                     ElvanSettingsDivider(colors = colors)
 
                     // 4. City (Oor)
-                    val oorPrimary = profile.getPrimary("oor")
-                    val oorSecondary = profile.getSecondary("oor")
+                    val cityPrimary = profile.getPrimary("city")
+                    val citySecondary = profile.getSecondary("city")
                     ElvanSettingsAnimatedExpand(
                         isEditing = editingSection == "oor",
                         displayContent = {
                             ElvanSettingsDisplayRow(
                                 title = K.city.tr(),
-                                primaryValue = oorPrimary,
-                                secondaryValue = if (isBilingual) oorSecondary else null,
-                                onEdit = { beginEdit("oor", oorPrimary, oorSecondary) },
+                                primaryValue = cityPrimary,
+                                secondaryValue = if (isBilingual) citySecondary else null,
+                                onEdit = { beginEdit("oor", cityPrimary, citySecondary) },
                                 colors = colors
                             )
                         },
@@ -300,16 +300,16 @@ fun TextilesAddressSettingsScreen(
                     ElvanSettingsDivider(colors = colors)
 
                     // 5. Address (Mugavari)
-                    val mugavariPrimary = profile.getPrimary("mugavari")
-                    val mugavariSecondary = profile.getSecondary("mugavari")
+                    val addressPrimary = profile.getPrimary("address")
+                    val addressSecondary = profile.getSecondary("address")
                     ElvanSettingsAnimatedExpand(
                         isEditing = editingSection == "mugavari",
                         displayContent = {
                             ElvanSettingsDisplayRow(
                                 title = K.address.tr(),
-                                primaryValue = mugavariPrimary,
-                                secondaryValue = if (isBilingual) mugavariSecondary else null,
-                                onEdit = { beginEdit("mugavari", mugavariPrimary, mugavariSecondary) },
+                                primaryValue = addressPrimary,
+                                secondaryValue = if (isBilingual) addressSecondary else null,
+                                onEdit = { beginEdit("mugavari", addressPrimary, addressSecondary) },
                                 colors = colors
                             )
                         },
@@ -349,12 +349,12 @@ fun TextilesAddressSettingsScreen(
                     // 6. PIN Code (Anjal Kuriyeedu)
                     val pin = profile.pinCode
                     ElvanSettingsAnimatedExpand(
-                        isEditing = editingSection == "anjalKuriyeedu",
+                        isEditing = editingSection == "pinCode",
                         displayContent = {
                             ElvanSettingsDisplayRow(
                                 title = K.pincode.tr(),
                                 primaryValue = pin,
-                                onEdit = { beginEdit("anjalKuriyeedu", pin) },
+                                onEdit = { beginEdit("pinCode", pin) },
                                 colors = colors
                             )
                         },
@@ -379,16 +379,16 @@ fun TextilesAddressSettingsScreen(
                 } else {
                     // ── Kooli Order ──
                     // 1. Address (Mugavari)
-                    val mugavariPrimary = profile.getPrimary("mugavari")
-                    val mugavariSecondary = profile.getSecondary("mugavari")
+                    val addressPrimary = profile.getPrimary("address")
+                    val addressSecondary = profile.getSecondary("address")
                     ElvanSettingsAnimatedExpand(
                         isEditing = editingSection == "mugavari",
                         displayContent = {
                             ElvanSettingsDisplayRow(
                                 title = K.address.tr(),
-                                primaryValue = mugavariPrimary,
-                                secondaryValue = mugavariSecondary,
-                                onEdit = { beginEdit("mugavari", mugavariPrimary, mugavariSecondary) },
+                                primaryValue = addressPrimary,
+                                secondaryValue = addressSecondary,
+                                onEdit = { beginEdit("mugavari", addressPrimary, addressSecondary) },
                                 colors = colors
                             )
                         },
@@ -424,16 +424,16 @@ fun TextilesAddressSettingsScreen(
                     ElvanSettingsDivider(colors = colors)
 
                     // 2. City (Oor)
-                    val oorPrimary = profile.getPrimary("oor")
-                    val oorSecondary = profile.getSecondary("oor")
+                    val cityPrimary = profile.getPrimary("city")
+                    val citySecondary = profile.getSecondary("city")
                     ElvanSettingsAnimatedExpand(
                         isEditing = editingSection == "oor",
                         displayContent = {
                             ElvanSettingsDisplayRow(
                                 title = K.city.tr(),
-                                primaryValue = oorPrimary,
-                                secondaryValue = oorSecondary,
-                                onEdit = { beginEdit("oor", oorPrimary, oorSecondary) },
+                                primaryValue = cityPrimary,
+                                secondaryValue = citySecondary,
+                                onEdit = { beginEdit("oor", cityPrimary, citySecondary) },
                                 colors = colors
                             )
                         },
@@ -463,15 +463,15 @@ fun TextilesAddressSettingsScreen(
                     ElvanSettingsDivider(colors = colors)
 
                     // 3. District (Maavattam)
-                    val maavattamPrimary = profile.getPrimary("maavattam")
-                    val maavattamSecondary = profile.getSecondary("maavattam")
+                    val districtPrimary = profile.getPrimary("district")
+                    val districtSecondary = profile.getSecondary("district")
                     ElvanSettingsAnimatedExpand(
                         isEditing = editingSection == "maavattam",
                         displayContent = {
                             ElvanSettingsDisplayRow(
                                 title = K.district.tr(),
-                                primaryValue = maavattamPrimary,
-                                secondaryValue = maavattamSecondary,
+                                primaryValue = districtPrimary,
+                                secondaryValue = districtSecondary,
                                 onEdit = openDistrictSelection,
                                 colors = colors
                             )
@@ -504,12 +504,12 @@ fun TextilesAddressSettingsScreen(
                     // 4. PIN Code (Anjal Kuriyeedu)
                     val pin = profile.pinCode
                     ElvanSettingsAnimatedExpand(
-                        isEditing = editingSection == "anjalKuriyeedu",
+                        isEditing = editingSection == "pinCode",
                         displayContent = {
                             ElvanSettingsDisplayRow(
                                 title = K.pincode.tr(),
                                 primaryValue = pin,
-                                onEdit = { beginEdit("anjalKuriyeedu", pin) },
+                                onEdit = { beginEdit("pinCode", pin) },
                                 colors = colors
                             )
                         },

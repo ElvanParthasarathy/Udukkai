@@ -70,13 +70,3 @@ fun TextilesDiscountField(
         )
     }
 }
-
-@Deprecated("Use TextilesDiscountField", ReplaceWith("TextilesDiscountField(discountValue, discountType, onValueChanged, onTypeChanged, modifier)"))
-@Composable
-fun PattuThallupadiKooru(
-    discountValue: String,
-    discountType: String,
-    onValueChanged: (String) -> Unit,
-    onTypeChanged: (String) -> Unit,
-    modifier: Modifier = Modifier
-) = TextilesDiscountField(discountValue, discountType, onValueChanged, onTypeChanged, modifier)

@@ -559,23 +559,23 @@ class AndroidFirebaseSyncManager : FirebaseSyncManager {
     private fun snapshotToMerchant(s: DataSnapshot): CustomerModel? {
         return try {
             val id = (s.child("id").value as? Number)?.toLong() ?: s.key?.toLongOrNull() ?: return null
-            val peyarStr = (s.child("name").value ?: s.child("peyar").value) as? String ?: "{}"
-            val mugavariStr = (s.child("address").value ?: s.child("mugavari").value) as? String ?: "{}"
-            val oorStr = (s.child("city").value ?: s.child("oor").value) as? String ?: "{}"
-            val maavattamStr = (s.child("district").value ?: s.child("maavattam").value) as? String ?: "{}"
-            val maanilamStr = (s.child("state").value ?: s.child("maanilam").value) as? String ?: "{}"
-            val naaduStr = (s.child("country").value ?: s.child("naadu").value) as? String ?: """{"en":"India","ta":"இந்தியா"}"""
-            val velinaadStr = (s.child("internationalAddress").value ?: s.child("velinaadMugavari").value) as? String ?: "{}"
+            val nameStr = (s.child("name").value ?: s.child("peyar").value) as? String ?: "{}"
+            val addressStr = (s.child("address").value ?: s.child("mugavari").value) as? String ?: "{}"
+            val cityStr = (s.child("city").value ?: s.child("oor").value) as? String ?: "{}"
+            val districtStr = (s.child("district").value ?: s.child("maavattam").value) as? String ?: "{}"
+            val stateStr = (s.child("state").value ?: s.child("maanilam").value) as? String ?: "{}"
+            val countryStr = (s.child("country").value ?: s.child("naadu").value) as? String ?: """{"en":"India","ta":"இந்தியா"}"""
+            val intlAddressStr = (s.child("internationalAddress").value ?: s.child("velinaadMugavari").value) as? String ?: "{}"
 
             CustomerModel(
                 id = id,
-                name = LanguageJsonConverter.parse(peyarStr),
-                address = LanguageJsonConverter.parse(mugavariStr),
-                city = LanguageJsonConverter.parse(oorStr),
-                district = LanguageJsonConverter.parse(maavattamStr),
-                state = LanguageJsonConverter.parse(maanilamStr),
-                country = LanguageJsonConverter.parse(naaduStr),
-                internationalAddress = LanguageJsonConverter.parse(velinaadStr),
+                name = LanguageJsonConverter.parse(nameStr),
+                address = LanguageJsonConverter.parse(addressStr),
+                city = LanguageJsonConverter.parse(cityStr),
+                district = LanguageJsonConverter.parse(districtStr),
+                state = LanguageJsonConverter.parse(stateStr),
+                country = LanguageJsonConverter.parse(countryStr),
+                internationalAddress = LanguageJsonConverter.parse(intlAddressStr),
                 pinCode = (s.child("pinCode").value ?: s.child("anjalKuriyeedu").value) as? String ?: "",
                 gstin = s.child("gstin").value as? String ?: "",
                 email = (s.child("email").value ?: s.child("minnanjal").value) as? String ?: "",
@@ -594,9 +594,9 @@ class AndroidFirebaseSyncManager : FirebaseSyncManager {
     private fun snapshotToItem(s: DataSnapshot): ProductModel? {
         return try {
             val id = (s.child("id").value as? Number)?.toLong() ?: s.key?.toLongOrNull() ?: return null
-            val porulPeyarStr = (s.child("name").value ?: s.child("productName").value ?: s.child("porulPeyar").value) as? String ?: "{}"
+            val productNameStr = (s.child("name").value ?: s.child("productName").value ?: s.child("porulPeyar").value) as? String ?: "{}"
 
-            val niruvanamIds = if (s.hasChild("companyIds") || s.hasChild("niruvanamIds")) {
+            val companyIds = if (s.hasChild("companyIds") || s.hasChild("niruvanamIds")) {
                 val rawVal = s.child("companyIds").value ?: s.child("niruvanamIds").value
                 val parsed = ProductFirebasePayloadConverter.parseCompanyIds(rawVal)
                 if (parsed.isNotEmpty()) {
@@ -632,13 +632,13 @@ class AndroidFirebaseSyncManager : FirebaseSyncManager {
 
             ProductModel(
                 id = id,
-                name = LanguageJsonConverter.parse(porulPeyarStr),
+                name = LanguageJsonConverter.parse(productNameStr),
                 hsnCode = s.child("hsnCode").value as? String ?: "",
                 price = (s.child("price").value as? Number)?.toDouble() ?: (s.child("vilai").value as? Number)?.toDouble() ?: 0.0,
                 taxRate = (s.child("taxRate").value as? Number)?.toDouble() ?: (s.child("variVeetham").value as? Number)?.toDouble() ?: 0.0,
                 quantityType = (s.child("quantityType").value ?: s.child("alavuVagai").value) as? String ?: "quantity",
                 unit = (s.child("unit").value ?: s.child("alagu").value) as? String ?: "Nos",
-                companyIds = niruvanamIds,
+                companyIds = companyIds,
                 companyPrices = companyPrices,
                 createdAt = (s.child("createdAt").value as? Number)?.toLong() ?: (System.currentTimeMillis() / 1000),
                 updatedAt = (s.child("updatedAt").value as? Number)?.toLong() ?: (System.currentTimeMillis() / 1000),
@@ -654,8 +654,8 @@ class AndroidFirebaseSyncManager : FirebaseSyncManager {
     private fun snapshotToInvoice(s: DataSnapshot): InvoiceModel? {
         return try {
             val id = (s.child("id").value as? Number)?.toLong() ?: s.key?.toLongOrNull() ?: return null
-            val vaangunarPeyarStr = (s.child("customerName").value ?: s.child("vaangunarPeyar").value) as? String ?: "{}"
-            val vaangunarMunvariStr = (s.child("customerAddress").value ?: s.child("vaangunarMunvari").value) as? String ?: "{}"
+            val customerNameStr = (s.child("customerName").value ?: s.child("vaangunarPeyar").value) as? String ?: "{}"
+            val customerAddressStr = (s.child("customerAddress").value ?: s.child("vaangunarMunvari").value) as? String ?: "{}"
 
             InvoiceModel(
                 id = id,
@@ -665,8 +665,8 @@ class AndroidFirebaseSyncManager : FirebaseSyncManager {
                 vanakkam = (s.child("vanakkam").value as? Number)?.toInt() ?: 1,
                 invoiceType = (s.child("invoiceType").value ?: s.child("pattiyalVagai").value) as? String ?: "tax-invoice",
                 customerId = ((s.child("customerId").value ?: s.child("vaangunarId").value) as? Number)?.toLong(),
-                customerName = LanguageJsonConverter.parse(vaangunarPeyarStr),
-                customerAddress = LanguageJsonConverter.parse(vaangunarMunvariStr),
+                customerName = LanguageJsonConverter.parse(customerNameStr),
+                customerAddress = LanguageJsonConverter.parse(customerAddressStr),
                 invoiceDate = ((s.child("invoiceDate").value ?: s.child("pattiyalNaal").value) as? Number)?.toLong() ?: (System.currentTimeMillis() / 1000),
                 itemsJson = (s.child("itemsJson").value ?: s.child("tharavugal").value) as? String ?: "[]",
                 totalAmount = ((s.child("totalAmount").value ?: s.child("mothaThogai").value) as? Number)?.toDouble() ?: 0.0,
@@ -699,8 +699,8 @@ class AndroidFirebaseSyncManager : FirebaseSyncManager {
     private fun snapshotToReceipt(s: DataSnapshot): ReceiptModel? {
         return try {
             val id = (s.child("id").value as? Number)?.toLong() ?: s.key?.toLongOrNull() ?: return null
-            val vaangunarPeyarStr = (s.child("customerName").value ?: s.child("vaangunarPeyar").value) as? String ?: "{}"
-            val vaangunarMunvariStr = (s.child("customerAddress").value ?: s.child("vaangunarMunvari").value) as? String ?: "{}"
+            val customerNameStr = (s.child("customerName").value ?: s.child("vaangunarPeyar").value) as? String ?: "{}"
+            val customerAddressStr = (s.child("customerAddress").value ?: s.child("vaangunarMunvari").value) as? String ?: "{}"
 
             ReceiptModel(
                 id = id,
@@ -709,8 +709,8 @@ class AndroidFirebaseSyncManager : FirebaseSyncManager {
                 finYear = s.child("finYear").value as? String ?: "",
                 vanakkam = (s.child("vanakkam").value as? Number)?.toInt() ?: 1,
                 customerId = ((s.child("customerId").value ?: s.child("vaangunarId").value) as? Number)?.toLong(),
-                customerName = LanguageJsonConverter.parse(vaangunarPeyarStr),
-                customerAddress = LanguageJsonConverter.parse(vaangunarMunvariStr),
+                customerName = LanguageJsonConverter.parse(customerNameStr),
+                customerAddress = LanguageJsonConverter.parse(customerAddressStr),
                 receiptDate = ((s.child("receiptDate").value ?: s.child("patruNaal").value) as? Number)?.toLong() ?: (System.currentTimeMillis() / 1000),
                 amount = ((s.child("amount").value ?: s.child("thogai").value) as? Number)?.toDouble() ?: 0.0,
                 paymentMode = (s.child("paymentMode").value ?: s.child("seluthumMurai").value) as? String ?: "cash",

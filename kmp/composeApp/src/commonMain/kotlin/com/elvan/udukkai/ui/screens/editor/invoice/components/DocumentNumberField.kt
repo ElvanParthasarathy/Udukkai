@@ -26,7 +26,7 @@ import com.elvan.udukkai.ui.screens.editor.ElvanEditorLabel
 import com.elvan.udukkai.ui.screens.editor.ElvanEditorTextField
 
 @Composable
-fun ElvanAavanaEnnKooru(
+fun ElvanDocumentNumberField(
     label: String,
     prefix: String,
     initialFullNumber: String,

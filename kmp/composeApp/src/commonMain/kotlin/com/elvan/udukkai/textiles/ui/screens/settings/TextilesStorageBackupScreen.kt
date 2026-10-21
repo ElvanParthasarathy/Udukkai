@@ -248,7 +248,7 @@ fun TextilesStorageBackupScreen(
                 val list = mutableListOf<TextilesBusinessDisplayItem>()
                 if (profiles.isEmpty()) {
                     val name = fallback.shortName.ifBlank {
-                        fallback.getPrimary("niruvanathinPeyar")
+                        fallback.getPrimary("businessName")
                     }.ifBlank {
                         fallback.getSecondary("niruvanathinPeyar")
                     }.ifBlank { appBadge }
@@ -274,7 +274,7 @@ fun TextilesStorageBackupScreen(
                 } else {
                     profiles.forEachIndexed { index, p ->
                         val bName = p.shortName.ifBlank {
-                            p.getPrimary("niruvanathinPeyar")
+                            p.getPrimary("businessName")
                         }.ifBlank {
                             p.getSecondary("niruvanathinPeyar")
                         }.ifBlank {

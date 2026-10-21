@@ -24,7 +24,7 @@ import com.elvan.udukkai.core.platform.AppBackHandler
 import com.elvan.udukkai.data.model.InvoiceModel
 import com.elvan.udukkai.data.model.ReceiptInvoiceLinkModel
 import com.elvan.udukkai.data.model.ReceiptModel
-import com.elvan.udukkai.data.model.SeluthiVagai
+import com.elvan.udukkai.data.model.PaymentType
 import com.elvan.udukkai.data.settings.BusinessProfile
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.text.input.KeyboardType
@@ -42,7 +42,7 @@ import com.elvan.udukkai.ui.screens.editor.ElvanEditorDropdown
 import com.elvan.udukkai.ui.screens.editor.ElvanEditorLabel
 import com.elvan.udukkai.ui.screens.editor.ElvanEditorTextField
 import com.elvan.udukkai.ui.screens.editor.receipt.components.ReceiptInvoiceSelectionSheet
-import com.elvan.udukkai.ui.screens.editor.invoice.components.ElvanAavanaEnnKooru
+import com.elvan.udukkai.ui.screens.editor.invoice.components.ElvanDocumentNumberField
 import com.elvan.udukkai.ui.screens.editor.invoice.components.InvoiceDateField
 import com.elvan.udukkai.core.utils.DateUtils
 import com.elvan.udukkai.ui.components.shell.LocalElvanTopSpacerHeight
@@ -129,7 +129,7 @@ fun FactoryReceiptEditorScreen(
     LaunchedEffect(receipt?.id, allInvoices) {
         if (receipt != null && !isInitialized && allInvoices.isNotEmpty()) {
             isInitialized = true
-            val links = com.elvan.udukkai.factory.data.FactoryReceiptRepository.getLinksForPatru(receipt.id)
+            val links = com.elvan.udukkai.factory.data.FactoryReceiptRepository.getLinksForReceipt(receipt.id)
             val matching = links.mapNotNull { link ->
                 allInvoices.firstOrNull { it.id == link.invoiceId }
             }
@@ -148,9 +148,9 @@ fun FactoryReceiptEditorScreen(
     }
 
     // Receipt Data
-    var patruNaal by remember { mutableStateOf(receipt?.receiptDate ?: System.currentTimeMillis()) }
+    var receiptDate by remember { mutableStateOf(receipt?.receiptDate ?: System.currentTimeMillis()) }
     var vanakkam by remember { mutableStateOf(receipt?.vanakkam ?: 1) }
-    var patruEn by remember { mutableStateOf(receipt?.receiptNumber.orEmpty()) }
+    var receiptNumber by remember { mutableStateOf(receipt?.receiptNumber.orEmpty()) }
 
     // Payment Details
     var thogai by remember {
@@ -160,8 +160,8 @@ fun FactoryReceiptEditorScreen(
             } else ""
         )
     }
-    var seluthiVagai by remember {
-        mutableStateOf(SeluthiVagai.fromStored(receipt?.paymentMode))
+    var paymentType by remember {
+        mutableStateOf(PaymentType.fromStored(receipt?.paymentMode))
     }
     var suttruEn by remember { mutableStateOf(receipt?.transactionNumber.orEmpty()) }
     var ullkurippu by remember { mutableStateOf(receipt?.notes.orEmpty()) }
@@ -170,10 +170,10 @@ fun FactoryReceiptEditorScreen(
     var showUnsavedDialog by remember { mutableStateOf(false) }
     var isExiting by remember { mutableStateOf(false) }
     var isSaving by remember { mutableStateOf(false) }
-    var isSeluthiVagaiSheetOpen by remember { mutableStateOf(false) }
+    var isPaymentTypeSheetOpen by remember { mutableStateOf(false) }
 
-    val amaippugalStr = K.settings.tr()
-    val pattiyalaiThaernheduMsg = K.selectInvoice.tr()
+    val settingsStr = K.settings.tr()
+    val selectInvoiceMsg = K.selectInvoice.tr()
     val customerNameRequiredMsg = K.customerNameRequired.tr()
     val thogaiInvalidMsg = K.amountMustBeGreaterThanZero.tr()
     val duplicateMsg = K.receiptNumberAlreadyExists.tr()
@@ -182,7 +182,7 @@ fun FactoryReceiptEditorScreen(
     val selectCompanyProfileMsg = K.selectCompanyProfile.tr()
 
     // Helper: auto-calculate receipt number
-    fun generatePatruEn(profile: BusinessProfile?) {
+    fun generateReceiptNumber(profile: BusinessProfile?) {
         if (isEditing) return
         val bizShort = profile?.shortName?.trim()?.ifEmpty { null }
             ?: profile?.businessName?.get("en")?.split(" ")?.mapNotNull { it.firstOrNull()?.uppercaseChar() }?.joinToString("")?.take(4)?.ifEmpty { null }
@@ -190,13 +190,13 @@ fun FactoryReceiptEditorScreen(
 
         val nextSeq = com.elvan.udukkai.factory.data.FactoryReceiptRepository.getNextVanakkam(profile?.id)
         vanakkam = nextSeq
-        patruEn = com.elvan.udukkai.factory.data.FactoryReceiptRepository.formatReceiptNumber(bizShort, nextSeq)
+        receiptNumber = com.elvan.udukkai.factory.data.FactoryReceiptRepository.formatReceiptNumber(bizShort, nextSeq)
     }
 
     // Auto-generate receipt number on profile selection if new
     LaunchedEffect(selectedCompanyId) {
-        if (!isEditing && patruEn.isEmpty() && selectedCompanyId != null) {
-            generatePatruEn(selectedProfile)
+        if (!isEditing && receiptNumber.isEmpty() && selectedCompanyId != null) {
+            generateReceiptNumber(selectedProfile)
         }
     }
 
@@ -232,12 +232,12 @@ fun FactoryReceiptEditorScreen(
         }
 
         if (selectedInvoices.isEmpty()) {
-            ElvanSnackbar.show(pattiyalaiThaernheduMsg)
+            ElvanSnackbar.show(selectInvoiceMsg)
             return
         }
 
-        val peyarTamil = selectedCustomerNameMap["ta"] ?: selectedCustomerNameMap.values.firstOrNull().orEmpty()
-        if (peyarTamil.trim().isEmpty()) {
+        val customerNameTamil = selectedCustomerNameMap["ta"] ?: selectedCustomerNameMap.values.firstOrNull().orEmpty()
+        if (customerNameTamil.trim().isEmpty()) {
             ElvanSnackbar.show(customerNameRequiredMsg)
             return
         }
@@ -249,9 +249,9 @@ fun FactoryReceiptEditorScreen(
         }
 
         // Duplicate check
-        val isDuplicate = com.elvan.udukkai.factory.data.FactoryReceiptRepository.isReceiptNumberDuplicate(patruEn, selectedCompanyId, receipt?.id)
+        val isDuplicate = com.elvan.udukkai.factory.data.FactoryReceiptRepository.isReceiptNumberDuplicate(receiptNumber, selectedCompanyId, receipt?.id)
         if (isDuplicate) {
-            ElvanSnackbar.show("$patruEn - $duplicateMsg")
+            ElvanSnackbar.show("$receiptNumber - $duplicateMsg")
             return
         }
 
@@ -287,17 +287,17 @@ fun FactoryReceiptEditorScreen(
             val entryToSave = ReceiptModel(
                 id = receipt?.id ?: 0L,
                 companyId = selectedCompanyId,
-                receiptNumber = patruEn.trim(),
+                receiptNumber = receiptNumber.trim(),
                 finYear = receipt?.finYear ?: defaultFinYear,
                 vanakkam = vanakkam,
                 customerId = selectedCustomerId,
                 customerName = selectedCustomerNameMap,
                 customerAddress = selectedCustomerAddressMap,
-                receiptDate = patruNaal,
+                receiptDate = receiptDate,
                 amount = amount,
-                paymentMode = seluthiVagai.storedValue,
+                paymentMode = paymentType.storedValue,
                 bankName = receipt?.bankName,
-                transactionNumber = if (seluthiVagai.needsReference) suttruEn.trim() else null,
+                transactionNumber = if (paymentType.needsReference) suttruEn.trim() else null,
                 notes = ullkurippu.trim(),
                 createdAt = receipt?.createdAt ?: now,
                 updatedAt = now,
@@ -494,9 +494,9 @@ fun FactoryReceiptEditorScreen(
                             Column(modifier = Modifier.fillMaxWidth()) {
                                 ElvanEditorLabel(label = K.receiptDate.tr())
                                 InvoiceDateField(
-                                    selectedDate = patruNaal,
+                                    selectedDate = receiptDate,
                                     onDateChanged = {
-                                        patruNaal = it
+                                        receiptDate = it
                                         hasUnsavedChanges = true
                                     }
                                 )
@@ -574,12 +574,12 @@ fun FactoryReceiptEditorScreen(
                             } else {
                                 "RCP/BIZ/"
                             }
-                            ElvanAavanaEnnKooru(
+                            ElvanDocumentNumberField(
                                 label = K.receiptNumber.tr(),
                                 prefix = bizPrefix,
-                                initialFullNumber = patruEn,
+                                initialFullNumber = receiptNumber,
                                 onFullNumberChanged = {
-                                    patruEn = it
+                                    receiptNumber = it
                                     hasUnsavedChanges = true
                                 },
                                 onDirty = { hasUnsavedChanges = true }
@@ -616,7 +616,7 @@ fun FactoryReceiptEditorScreen(
                                         .height(48.dp)
                                         .clip(RoundedCornerShape(100.dp))
                                         .background(pillBg)
-                                        .clickable { isSeluthiVagaiSheetOpen = true }
+                                        .clickable { isPaymentTypeSheetOpen = true }
                                         .padding(start = 20.dp, end = 8.dp),
                                     contentAlignment = Alignment.CenterStart
                                 ) {
@@ -630,14 +630,14 @@ fun FactoryReceiptEditorScreen(
                                             verticalAlignment = Alignment.CenterVertically
                                         ) {
                                             Icon(
-                                                imageVector = seluthiVagai.icon,
+                                                imageVector = paymentType.icon,
                                                 contentDescription = null,
                                                 tint = colors.textPrimary.copy(alpha = 0.7f),
                                                 modifier = Modifier.size(18.dp)
                                             )
                                             Spacer(modifier = Modifier.width(8.dp))
                                             Text(
-                                                text = seluthiVagai.label().preventBrokenLigatures(),
+                                                text = paymentType.label().preventBrokenLigatures(),
                                                 style = TextStyle(
                                                     fontFamily = ff,
                                                     fontSize = 14.sp,
@@ -665,7 +665,7 @@ fun FactoryReceiptEditorScreen(
                             }
 
                             // 3. Reference Number (shown when payment mode requires it)
-                            if (seluthiVagai.needsReference) {
+                            if (paymentType.needsReference) {
                                 ElvanEditorTextField(
                                     value = suttruEn,
                                     onValueChange = {
@@ -717,22 +717,22 @@ fun FactoryReceiptEditorScreen(
     }
 
     // Modal: Payment Mode Bottom Sheet
-    if (isSeluthiVagaiSheetOpen) {
-        ElvanSelectionBottomSheet<SeluthiVagai>(
+    if (isPaymentTypeSheetOpen) {
+        ElvanSelectionBottomSheet<PaymentType>(
             title = K.selectPaymentMode.tr(),
-            items = SeluthiVagai.entries,
-            currentValue = seluthiVagai,
+            items = PaymentType.entries,
+            currentValue = paymentType,
             onSelected = { mode ->
-                seluthiVagai = mode
-                if (mode == SeluthiVagai.PANAM) {
+                paymentType = mode
+                if (mode == PaymentType.CASH) {
                     suttruEn = ""
                 }
                 hasUnsavedChanges = true
-                isSeluthiVagaiSheetOpen = false
+                isPaymentTypeSheetOpen = false
             },
-            onDismissRequest = { isSeluthiVagaiSheetOpen = false },
+            onDismissRequest = { isPaymentTypeSheetOpen = false },
             itemLabelBuilder = { it.labelString() },
-            leadingBuilder = { mode ->
+            leadingBuilder = @Composable { mode ->
                 Icon(
                     imageVector = mode.icon,
                     contentDescription = null,

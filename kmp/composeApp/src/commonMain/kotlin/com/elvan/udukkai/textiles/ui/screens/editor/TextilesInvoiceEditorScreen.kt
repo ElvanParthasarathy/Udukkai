@@ -238,14 +238,14 @@ fun TextilesInvoiceEditorScreen(
             val custId = Regex(""""(?:selectedCustomerId|vaangunarId)"\s*:\s*(\d+)""").find(json)?.groupValues?.get(1)?.toLongOrNull()
             if (custId != null) selectedCustomerId = custId
 
-            val peyarMatch = Regex(""""(?:customerName|vaangunarPeyar)"\s*:\s*(\{[^}]*\})""").find(json)?.groupValues?.get(1)
-            if (peyarMatch != null) selectedCustomerNameMap = LanguageJsonConverter.parse(peyarMatch)
+            val nameMatch = Regex(""""(?:customerName|vaangunarPeyar)"\s*:\s*(\{[^}]*\})""").find(json)?.groupValues?.get(1)
+            if (nameMatch != null) selectedCustomerNameMap = LanguageJsonConverter.parse(nameMatch)
 
-            val munvariMatch = Regex(""""(?:customerAddress|vaangunarMunvari)"\s*:\s*(\{[^}]*\})""").find(json)?.groupValues?.get(1)
-            if (munvariMatch != null) selectedCustomerAddressMap = LanguageJsonConverter.parse(munvariMatch)
+            val addressMatch = Regex(""""(?:customerAddress|vaangunarMunvari)"\s*:\s*(\{[^}]*\})""").find(json)?.groupValues?.get(1)
+            if (addressMatch != null) selectedCustomerAddressMap = LanguageJsonConverter.parse(addressMatch)
 
-            val vagai = Regex(""""(?:invoiceType|invoiceType)"\s*:\s*"([^"]*)"""").find(json)?.groupValues?.get(1)
-            if (!vagai.isNullOrEmpty()) invoiceType = vagai
+            val typeMatch = Regex(""""(?:invoiceType|invoiceType)"\s*:\s*"([^"]*)"""").find(json)?.groupValues?.get(1)
+            if (!typeMatch.isNullOrEmpty()) invoiceType = typeMatch
 
             val date = Regex(""""invoiceDate"\s*:\s*(\d+)""").find(json)?.groupValues?.get(1)?.toLongOrNull()
             if (date != null && date > 0) invoiceDate = date
@@ -327,7 +327,7 @@ fun TextilesInvoiceEditorScreen(
         } else if (invoiceNumber.isBlank()) {
             errorMessage = receiptNumberRequiredMsg
         } else {
-            val validItems = activeItems.filter { it.alavu > 0 && it.price > 0 }
+            val validItems = activeItems.filter { it.quantity > 0 && it.price > 0 }
             if (validItems.isEmpty()) {
                 errorMessage = productRequiredMsg
             } else {
@@ -482,7 +482,7 @@ fun TextilesInvoiceEditorScreen(
                             }
 
                             // Invoice Number with pencil edit pill
-                            ElvanAavanaEnnKooru(
+                            ElvanDocumentNumberField(
                                 label = K.invoiceNumber.tr(),
                                 prefix = profilePrefix,
                                 initialFullNumber = invoiceNumber,

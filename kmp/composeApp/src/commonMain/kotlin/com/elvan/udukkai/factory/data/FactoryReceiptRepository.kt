@@ -142,11 +142,12 @@ object FactoryReceiptRepository {
         return success
     }
 
-    fun getLinks(patruId: Long): List<ReceiptInvoiceLinkModel> =
-        getFactoryDatabaseHelper().getLinksForPatru(patruId)
+    fun getLinks(receiptId: Long): List<ReceiptInvoiceLinkModel> =
+        getFactoryDatabaseHelper().getLinksForReceipt(receiptId)
 
-    fun getLinksForPatru(patruId: Long): List<ReceiptInvoiceLinkModel> =
-        getLinks(patruId)
+    fun getLinksForReceipt(receiptId: Long): List<ReceiptInvoiceLinkModel> =
+        getLinks(receiptId)
+
 
     fun getPaidAmount(invoiceId: Long): Double =
         getFactoryDatabaseHelper().getPaidAmountForInvoice(invoiceId)
@@ -203,7 +204,7 @@ object FactoryReceiptRepository {
             val totalPaid = getPaidAmount(link.invoiceId)
             var currentReceiptAllocation = 0.0
             if (excludePatruId != null && excludePatruId > 0) {
-                val existingLinks = getLinksForPatru(excludePatruId)
+                val existingLinks = getLinksForReceipt(excludePatruId)
                 currentReceiptAllocation = existingLinks.find { it.invoiceId == link.invoiceId }?.appliedAmount ?: 0.0
             }
             val remaining = (invoice.totalAmount - (totalPaid - currentReceiptAllocation)).coerceAtLeast(0.0)

@@ -51,42 +51,42 @@ fun TextilesCustomerEditorScreen(
     val primaryLang = profile.primaryLanguage.ifEmpty { "ta" }
     val secondaryLang = profile.secondaryLanguage.ifEmpty { "en" }
 
-    var peyarMap by remember { mutableStateOf(merchant?.name ?: emptyMap()) }
+    var nameMap by remember { mutableStateOf(merchant?.name ?: emptyMap()) }
     var gstin by remember { mutableStateOf(merchant?.gstin ?: "") }
-    var tholaipaesi by remember { mutableStateOf(merchant?.phone ?: "") }
-    var minnanjal by remember { mutableStateOf(merchant?.email ?: "") }
+    var phone by remember { mutableStateOf(merchant?.phone ?: "") }
+    var email by remember { mutableStateOf(merchant?.email ?: "") }
 
-    var naaduMap by remember { mutableStateOf(merchant?.country ?: mapOf("en" to "India", "ta" to "இந்தியா")) }
-    var maanilamMap by remember { mutableStateOf(merchant?.state ?: mapOf("en" to "Tamil Nadu", "ta" to "தமிழ்நாடு")) }
-    var maavattamMap by remember { mutableStateOf(merchant?.district ?: emptyMap()) }
-    var oorMap by remember { mutableStateOf(merchant?.city ?: emptyMap()) }
-    var mugavariMap by remember { mutableStateOf(merchant?.address ?: emptyMap()) }
-    var anjalKuriyeedu by remember { mutableStateOf(merchant?.pinCode ?: "") }
+    var countryMap by remember { mutableStateOf(merchant?.country ?: mapOf("en" to "India", "ta" to "இந்தியா")) }
+    var stateMap by remember { mutableStateOf(merchant?.state ?: mapOf("en" to "Tamil Nadu", "ta" to "தமிழ்நாடு")) }
+    var districtMap by remember { mutableStateOf(merchant?.district ?: emptyMap()) }
+    var cityMap by remember { mutableStateOf(merchant?.city ?: emptyMap()) }
+    var addressMap by remember { mutableStateOf(merchant?.address ?: emptyMap()) }
+    var pinCode by remember { mutableStateOf(merchant?.pinCode ?: "") }
 
     var nameValidationError by remember { mutableStateOf<String?>(null) }
     var showDiscardDialog by remember { mutableStateOf(false) }
     var isExiting by remember { mutableStateOf(false) }
 
-    val isIndia = remember(naaduMap) {
-        val en = naaduMap["en"]?.lowercase() ?: ""
-        val ta = naaduMap["ta"] ?: ""
+    val isIndia = remember(countryMap) {
+        val en = countryMap["en"]?.lowercase() ?: ""
+        val ta = countryMap["ta"] ?: ""
         en == "india" || ta == "இந்தியா"
     }
 
-    val isTamilNadu = remember(maanilamMap, isIndia) {
+    val isTamilNadu = remember(stateMap, isIndia) {
         if (!isIndia) false else {
-            val en = maanilamMap["en"]?.lowercase() ?: ""
-            val ta = maanilamMap["ta"] ?: ""
+            val en = stateMap["en"]?.lowercase() ?: ""
+            val ta = stateMap["ta"] ?: ""
             en.contains("tamil nadu") || ta.contains("தமிழ்நாடு")
         }
     }
 
-    val hasChanges = remember(peyarMap, gstin, tholaipaesi, minnanjal, naaduMap, maanilamMap, maavattamMap, oorMap, mugavariMap, anjalKuriyeedu) {
+    val hasChanges = remember(nameMap, gstin, phone, email, countryMap, stateMap, districtMap, cityMap, addressMap, pinCode) {
         if (merchant == null) {
-            peyarMap.values.any { it.isNotBlank() } || gstin.isNotBlank() || tholaipaesi.isNotBlank()
+            nameMap.values.any { it.isNotBlank() } || gstin.isNotBlank() || phone.isNotBlank()
         } else {
-            peyarMap != merchant.name || gstin != merchant.gstin || tholaipaesi != merchant.phone ||
-                minnanjal != merchant.email || oorMap != merchant.city || mugavariMap != merchant.address
+            nameMap != merchant.name || gstin != merchant.gstin || phone != merchant.phone ||
+                email != merchant.email || cityMap != merchant.city || addressMap != merchant.address
         }
     }
 
@@ -111,7 +111,7 @@ fun TextilesCustomerEditorScreen(
     val saveFailedMsg = K.couldNotSavePrefix.tr()
 
     fun handleSave() {
-        val hasName = peyarMap.values.any { it.trim().isNotBlank() }
+        val hasName = nameMap.values.any { it.trim().isNotBlank() }
         if (!hasName) {
             nameValidationError = fillNameMsg
             return
@@ -119,16 +119,16 @@ fun TextilesCustomerEditorScreen(
 
         val merchantToSave = CustomerModel(
             id = merchant?.id ?: 0L,
-            name = peyarMap.filterValues { it.isNotBlank() },
-            phone = tholaipaesi.trim(),
-            email = minnanjal.trim(),
+            name = nameMap.filterValues { it.isNotBlank() },
+            phone = phone.trim(),
+            email = email.trim(),
             gstin = gstin.trim().uppercase(),
-            address = mugavariMap.filterValues { it.isNotBlank() },
-            city = oorMap.filterValues { it.isNotBlank() },
-            district = maavattamMap.filterValues { it.isNotBlank() },
-            state = maanilamMap.filterValues { it.isNotBlank() },
-            country = naaduMap.filterValues { it.isNotBlank() },
-            pinCode = anjalKuriyeedu.trim(),
+            address = addressMap.filterValues { it.isNotBlank() },
+            city = cityMap.filterValues { it.isNotBlank() },
+            district = districtMap.filterValues { it.isNotBlank() },
+            state = stateMap.filterValues { it.isNotBlank() },
+            country = countryMap.filterValues { it.isNotBlank() },
+            pinCode = pinCode.trim(),
             createdAt = merchant?.createdAt ?: System.currentTimeMillis(),
             updatedAt = System.currentTimeMillis()
         )
@@ -187,9 +187,9 @@ fun TextilesCustomerEditorScreen(
                         ) {
                             ElvanIrumozhiPulan(
                                 label = K.customerName.tr(),
-                                value = peyarMap,
+                                value = nameMap,
                                 onChanged = {
-                                    peyarMap = it
+                                    nameMap = it
                                     nameValidationError = null
                                 },
                                 isBilingual = isBilingual,
@@ -218,15 +218,15 @@ fun TextilesCustomerEditorScreen(
                             )
 
                             ElvanEditorTextField(
-                                value = tholaipaesi,
-                                onValueChange = { tholaipaesi = it },
+                                value = phone,
+                                onValueChange = { phone = it },
                                 label = K.phone.tr(),
                                 placeholder = "+91 98765 43210"
                             )
 
                             ElvanEditorTextField(
-                                value = minnanjal,
-                                onValueChange = { minnanjal = it },
+                                value = email,
+                                onValueChange = { email = it },
                                 label = K.email.tr(),
                                 placeholder = "customer@example.com"
                             )
@@ -244,12 +244,12 @@ fun TextilesCustomerEditorScreen(
                             modifier = Modifier.fillMaxWidth(),
                             verticalArrangement = Arrangement.spacedBy(16.dp)
                         ) {
-                            ElvanEditorDropdown<IdangalinPeyar>(
+                            ElvanEditorDropdown<LocationName>(
                                 label = K.country.tr(),
-                                value = ulagaNaadugal.firstOrNull { it.en.equals(naaduMap["en"], ignoreCase = true) || it.ta == naaduMap["ta"] } ?: ulagaNaadugal.first(),
-                                items = ulagaNaadugal,
+                                value = worldCountries.firstOrNull { it.en.equals(countryMap["en"], ignoreCase = true) || it.ta == countryMap["ta"] } ?: worldCountries.first(),
+                                items = worldCountries,
                                 onSelected = { picked ->
-                                    naaduMap = mapOf("en" to picked.en, "ta" to picked.ta)
+                                    countryMap = mapOf("en" to picked.en, "ta" to picked.ta)
                                 },
                                 itemLabelBuilder = { if (LanguageManager.activeLanguageCode == "ta") it.ta else it.en },
                                 subtitleBuilder = { if (LanguageManager.activeLanguageCode == "ta") it.en else it.ta },
@@ -260,14 +260,14 @@ fun TextilesCustomerEditorScreen(
                             )
 
                             if (isIndia) {
-                                ElvanEditorDropdown<IdangalinPeyar>(
+                                ElvanEditorDropdown<LocationName>(
                                     label = K.state.tr(),
-                                    value = indhiyaMaanilangal.firstOrNull { it.en.equals(maanilamMap["en"], ignoreCase = true) || it.ta == maanilamMap["ta"] },
-                                    items = indhiyaMaanilangal,
+                                    value = indianStates.firstOrNull { it.en.equals(stateMap["en"], ignoreCase = true) || it.ta == stateMap["ta"] },
+                                    items = indianStates,
                                     onSelected = { picked ->
-                                        maanilamMap = mapOf("en" to picked.en, "ta" to picked.ta)
+                                        stateMap = mapOf("en" to picked.en, "ta" to picked.ta)
                                         if (picked.en != "Tamil Nadu" && picked.ta != "தமிழ்நாடு") {
-                                            maavattamMap = emptyMap()
+                                            districtMap = emptyMap()
                                         }
                                     },
                                     itemLabelBuilder = { if (LanguageManager.activeLanguageCode == "ta") it.ta else it.en },
@@ -279,12 +279,12 @@ fun TextilesCustomerEditorScreen(
                                 )
 
                                 if (isTamilNadu) {
-                                    ElvanEditorDropdown<IdangalinPeyar>(
+                                    ElvanEditorDropdown<LocationName>(
                                         label = K.district.tr(),
-                                        value = tamizhnaattuMaavattangal.firstOrNull { it.en.equals(maavattamMap["en"], ignoreCase = true) || it.ta == maavattamMap["ta"] },
-                                        items = tamizhnaattuMaavattangal,
+                                        value = tamilNaduDistricts.firstOrNull { it.en.equals(districtMap["en"], ignoreCase = true) || it.ta == districtMap["ta"] },
+                                        items = tamilNaduDistricts,
                                         onSelected = { picked ->
-                                            maavattamMap = mapOf("en" to picked.en, "ta" to picked.ta)
+                                            districtMap = mapOf("en" to picked.en, "ta" to picked.ta)
                                         },
                                         itemLabelBuilder = { if (LanguageManager.activeLanguageCode == "ta") it.ta else it.en },
                                         subtitleBuilder = { if (LanguageManager.activeLanguageCode == "ta") it.en else it.ta },
@@ -298,8 +298,8 @@ fun TextilesCustomerEditorScreen(
 
                             ElvanIrumozhiPulan(
                                 label = K.city.tr(),
-                                value = oorMap,
-                                onChanged = { oorMap = it },
+                                value = cityMap,
+                                onChanged = { cityMap = it },
                                 isBilingual = isBilingual,
                                 primaryLang = primaryLang,
                                 secondaryLang = secondaryLang,
@@ -308,8 +308,8 @@ fun TextilesCustomerEditorScreen(
 
                             ElvanIrumozhiPulan(
                                 label = K.address.tr(),
-                                value = mugavariMap,
-                                onChanged = { mugavariMap = it },
+                                value = addressMap,
+                                onChanged = { addressMap = it },
                                 isBilingual = isBilingual,
                                 primaryLang = primaryLang,
                                 secondaryLang = secondaryLang,
@@ -319,8 +319,8 @@ fun TextilesCustomerEditorScreen(
                             )
 
                             ElvanEditorTextField(
-                                value = anjalKuriyeedu,
-                                onValueChange = { anjalKuriyeedu = it },
+                                value = pinCode,
+                                onValueChange = { pinCode = it },
                                 label = K.pincode.tr(),
                                 placeholder = "638001",
                                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)

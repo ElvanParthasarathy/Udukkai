@@ -56,8 +56,8 @@ fun CustomerViewScreen(
     val primaryName = p1.ifEmpty { p2.ifEmpty { "-" } }
     val secondaryName = if (isBilingual && p1.isNotEmpty() && p2.isNotEmpty() && p1 != p2) p2 else ""
 
-    val oorVal = merchant.city[primaryLang] ?: merchant.city[secondaryLang] ?: merchant.city.values.firstOrNull().orEmpty()
-    val mugavariVal = merchant.address[primaryLang] ?: merchant.address[secondaryLang] ?: merchant.address.values.firstOrNull().orEmpty()
+    val cityVal = merchant.city[primaryLang] ?: merchant.city[secondaryLang] ?: merchant.city.values.firstOrNull().orEmpty()
+    val addressVal = merchant.address[primaryLang] ?: merchant.address[secondaryLang] ?: merchant.address.values.firstOrNull().orEmpty()
 
     val scrollState = rememberLazyListState()
 
@@ -177,7 +177,7 @@ fun CustomerViewScreen(
                 ) {
                     DetailCard(
                         title = K.city.tr(),
-                        value = oorVal.ifEmpty { "-" },
+                        value = cityVal.ifEmpty { "-" },
                         icon = MaterialSymbols.Rounded.LocationOn,
                         colors = colors,
                         ff = ff
@@ -185,7 +185,7 @@ fun CustomerViewScreen(
 
                     DetailCard(
                         title = K.address.tr(),
-                        value = mugavariVal.ifEmpty { "-" },
+                        value = addressVal.ifEmpty { "-" },
                         icon = MaterialSymbols.Rounded.Apartment,
                         colors = colors,
                         ff = ff

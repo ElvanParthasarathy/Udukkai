@@ -111,16 +111,16 @@ fun TextilesItemCard(
                 ElvanEditorLabel(label = K.product.tr())
 
                 val config = PrintLanguageManager.getTextilesConfig()
-                val primaryName = if (item.mozhiMap.isNotEmpty()) {
-                    item.mozhiMap[config.primaryLanguage.code] ?: item.mozhiMap.values.firstOrNull().orEmpty()
+                val primaryName = if (item.languageMap.isNotEmpty()) {
+                    item.languageMap[config.primaryLanguage.code] ?: item.languageMap.values.firstOrNull().orEmpty()
                 } else {
                     item.name
                 }
                 val secondaryName = if (config.isBilingual) {
-                    if (item.mozhiMap.isNotEmpty()) {
-                        item.mozhiMap[config.secondaryLanguage.code].orEmpty()
+                    if (item.languageMap.isNotEmpty()) {
+                        item.languageMap[config.secondaryLanguage.code].orEmpty()
                     } else {
-                        item.porulPeyarEn
+                        item.productNameEn
                     }
                 } else ""
                 val displayName = primaryName.ifEmpty { secondaryName }
@@ -188,8 +188,8 @@ fun TextilesItemCard(
                 if (config.isBilingual && secondaryName.isNotEmpty() && secondaryName != displayName) {
                     subtitleParts.add(secondaryName)
                 }
-                if (item.variVizhukkaadu > 0) {
-                    subtitleParts.add("GST ${item.variVizhukkaadu.toInt()}%")
+                if (item.taxRate > 0) {
+                    subtitleParts.add("GST ${item.taxRate.toInt()}%")
                 }
                 if (subtitleParts.isNotEmpty()) {
                     Text(
@@ -214,10 +214,10 @@ fun TextilesItemCard(
                 Box(modifier = Modifier.weight(1f)) {
                     ElvanEditorTextField(
                         label = if (isWeightItem) K.weight.tr() else K.quantity.tr(),
-                        value = if (item.alavu == 0.0) "" else if (item.alavu % 1.0 == 0.0) item.alavu.toInt().toString() else item.alavu.toString(),
+                        value = if (item.quantity == 0.0) "" else if (item.quantity % 1.0 == 0.0) item.quantity.toInt().toString() else item.quantity.toString(),
                         onValueChange = { str ->
                             val qty = str.toDoubleOrNull() ?: 0.0
-                            onItemUpdated(item.copy(alavu = qty))
+                            onItemUpdated(item.copy(quantity = qty))
                             onDirty()
                         },
                         placeholder = if (isWeightItem) "0.000" else "1",
@@ -231,7 +231,7 @@ fun TextilesItemCard(
                         value = if (item.price == 0.0) "" else if (item.price % 1.0 == 0.0) item.price.toInt().toString() else item.price.toString(),
                         onValueChange = { str ->
                             val rate = str.toDoubleOrNull() ?: 0.0
-                            onItemUpdated(item.copy(vilai = rate))
+                            onItemUpdated(item.copy(price = rate))
                             onDirty()
                         },
                         prefixText = "₹ ",
@@ -253,7 +253,7 @@ fun TextilesItemCard(
                         value = if (item.discount == 0.0) "" else if (item.discount % 1.0 == 0.0) item.discount.toInt().toString() else item.discount.toString(),
                         onValueChange = { str ->
                             val disc = str.toDoubleOrNull() ?: 0.0
-                            onItemUpdated(item.copy(thallupadi = disc))
+                            onItemUpdated(item.copy(discount = disc))
                             onDirty()
                         },
                         placeholder = "0",
@@ -264,14 +264,14 @@ fun TextilesItemCard(
                                     .size(32.dp)
                                     .clip(CircleShape)
                                     .clickable {
-                                        val newType = if (item.thallupadiVagai == "%") "₹" else "%"
-                                        onItemUpdated(item.copy(thallupadiVagai = newType))
+                                        val newType = if (item.discountType == "%") "₹" else "%"
+                                        onItemUpdated(item.copy(discountType = newType))
                                         onDirty()
                                     },
                                 contentAlignment = Alignment.Center
                             ) {
                                 Text(
-                                    text = if (item.thallupadiVagai == "%") "%" else "₹",
+                                    text = if (item.discountType == "%") "%" else "₹",
                                     style = TextStyle(
                                         fontFamily = ff,
                                         fontSize = 15.sp,
@@ -301,7 +301,7 @@ fun TextilesItemCard(
         ElvanSelectionBottomSheet(
             title = K.products.tr(),
             items = availableProducts,
-            currentValue = availableProducts.firstOrNull { it.id.toString() == item.porulId },
+            currentValue = availableProducts.firstOrNull { it.id.toString() == item.productId },
             showSearch = true,
             onDismissRequest = { isPickerOpen = false },
             onSelected = { selected ->
@@ -312,14 +312,14 @@ fun TextilesItemCard(
                 val priceToUse = if (effectivePrice > 0.0) effectivePrice else selected.price
                 onItemUpdated(
                     item.copy(
-                        porulId = selected.id.toString(),
-                        porulPeyar = primaryName,
-                        porulPeyarEn = secondaryName,
-                        mozhiMap = selected.name,
-                        hsnKuriyeedu = selected.hsnCode,
-                        vilai = priceToUse,
-                        variVizhukkaadu = if (selected.taxRate > 0) selected.taxRate else 5.0,
-                        alagu = selected.unit
+                        productId = selected.id.toString(),
+                        productName = primaryName,
+                        productNameEn = secondaryName,
+                        languageMap = selected.name,
+                        hsnCode = selected.hsnCode,
+                        price = priceToUse,
+                        taxRate = if (selected.taxRate > 0) selected.taxRate else 5.0,
+                        unit = selected.unit
                     )
                 )
                 onDirty()

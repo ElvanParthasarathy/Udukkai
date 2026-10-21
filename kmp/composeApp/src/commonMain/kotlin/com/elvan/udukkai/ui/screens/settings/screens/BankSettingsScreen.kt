@@ -62,10 +62,10 @@ fun BankSettingsScreen(
         ElvanSnackbar.show(saveSuccessMsg)
     }
 
-    val vangiPeyarPrimary = profile.getPrimary("vangiPeyar")
-    val vangiPeyarSecondary = profile.getSecondary("vangiPeyar")
-    val kilaiPrimary = profile.getPrimary("kilai")
-    val kilaiSecondary = profile.getSecondary("kilai")
+    val bankNamePrimary = profile.getPrimary("bankName")
+    val bankNameSecondary = profile.getSecondary("bankName")
+    val branchPrimary = profile.getPrimary("branch")
+    val branchSecondary = profile.getSecondary("branch")
 
     LazyColumn(
         state = scrollState,
@@ -90,9 +90,9 @@ fun BankSettingsScreen(
                     displayContent = {
                         ElvanSettingsDisplayRow(
                             title = K.bankName.tr(),
-                            primaryValue = vangiPeyarPrimary,
-                            secondaryValue = if (isBilingual) vangiPeyarSecondary else null,
-                            onEdit = { beginEdit("vangiPeyar", vangiPeyarPrimary, vangiPeyarSecondary) },
+                            primaryValue = bankNamePrimary,
+                            secondaryValue = if (isBilingual) bankNameSecondary else null,
+                            onEdit = { beginEdit("vangiPeyar", bankNamePrimary, bankNameSecondary) },
                             colors = colors
                         )
                     },
@@ -129,9 +129,9 @@ fun BankSettingsScreen(
                     displayContent = {
                         ElvanSettingsDisplayRow(
                             title = K.branchName.tr(),
-                            primaryValue = kilaiPrimary,
-                            secondaryValue = if (isBilingual) kilaiSecondary else null,
-                            onEdit = { beginEdit("vangiKilai", kilaiPrimary, kilaiSecondary) },
+                            primaryValue = branchPrimary,
+                            secondaryValue = if (isBilingual) branchSecondary else null,
+                            onEdit = { beginEdit("vangiKilai", branchPrimary, branchSecondary) },
                             colors = colors
                         )
                     },

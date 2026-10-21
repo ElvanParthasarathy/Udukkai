@@ -67,7 +67,6 @@ interface UdukkaiDatabaseHelper {
 
     // ── Receipt ↔ Invoice Junction Links ─────────────────────────────────────
     fun getLinksForReceipt(receiptId: Long): List<ReceiptInvoiceLinkModel>
-    fun getLinksForPatru(patruId: Long): List<ReceiptInvoiceLinkModel> = getLinksForReceipt(patruId)
     fun saveReceiptWithLinks(receipt: ReceiptModel, links: List<ReceiptInvoiceLinkModel>): Long
     fun getPaidAmountForInvoice(invoiceId: Long): Double
     fun getPaidAmountsForInvoices(invoiceIds: List<Long>): Map<Long, Double>

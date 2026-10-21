@@ -161,13 +161,13 @@ fun TextilesCustomerField(
                     }
 
                     // Address & Oor — bilingual
-                    val primMugavari = selectedCustomer.address[primaryLang]
+                    val primAddress = selectedCustomer.address[primaryLang]
                         ?: selectedCustomer.address.values.firstOrNull().orEmpty()
-                    val primOor = selectedCustomer.city[primaryLang]
+                    val primCity = selectedCustomer.city[primaryLang]
                         ?: selectedCustomer.city.values.firstOrNull().orEmpty()
-                    val primMaanilam = selectedCustomer.state[primaryLang]
+                    val primState = selectedCustomer.state[primaryLang]
                         ?: selectedCustomer.state.values.firstOrNull().orEmpty()
-                    val primAddressCombined = listOf(primMugavari, primOor, primMaanilam, selectedCustomer.pinCode)
+                    val primAddressCombined = listOf(primAddress, primCity, primState, selectedCustomer.pinCode)
                         .filter { it.isNotBlank() }
                         .joinToString(", ")
 
@@ -185,10 +185,10 @@ fun TextilesCustomerField(
 
                     // Secondary language address
                     if (isBilingual) {
-                        val secMugavari = selectedCustomer.address[secondaryLang].orEmpty()
-                        val secOor = selectedCustomer.city[secondaryLang].orEmpty()
-                        val secMaanilam = selectedCustomer.state[secondaryLang].orEmpty()
-                        val secAddressCombined = listOf(secMugavari, secOor, secMaanilam)
+                        val secAddress = selectedCustomer.address[secondaryLang].orEmpty()
+                        val secCity = selectedCustomer.city[secondaryLang].orEmpty()
+                        val secState = selectedCustomer.state[secondaryLang].orEmpty()
+                        val secAddressCombined = listOf(secAddress, secCity, secState)
                             .filter { it.isNotBlank() }
                             .joinToString(", ")
 
@@ -239,8 +239,8 @@ fun TextilesCustomerField(
             },
             subtitleBuilder = { c ->
                 val sec = if (isBilingual) c.name[secondaryLang].orEmpty() else ""
-                val oor = c.city[primaryLang] ?: c.city.values.firstOrNull().orEmpty()
-                listOf(sec, oor).filter { it.isNotEmpty() }.joinToString(" - ")
+                val city = c.city[primaryLang] ?: c.city.values.firstOrNull().orEmpty()
+                listOf(sec, city).filter { it.isNotEmpty() }.joinToString(" - ")
             },
             searchFilter = { c, query ->
                 val q = query.lowercase()

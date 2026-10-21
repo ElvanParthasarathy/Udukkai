@@ -13,7 +13,7 @@ enum class WelcomePhase {
 }
 
 @Composable
-fun NalvaravuWelcomeScreen(
+fun WelcomeSlideScreen(
     onSetupComplete: () -> Unit
 ) {
     var currentPhase by remember { 
@@ -81,4 +81,3 @@ fun NalvaravuWelcomeScreen(
         }
     }
 }
-

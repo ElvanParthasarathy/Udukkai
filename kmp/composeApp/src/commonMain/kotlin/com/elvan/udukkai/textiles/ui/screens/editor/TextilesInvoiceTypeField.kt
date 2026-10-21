@@ -105,11 +105,3 @@ fun TextilesInvoiceTypeField(
         )
     }
 }
-
-@Deprecated("Use TextilesInvoiceTypeField", ReplaceWith("TextilesInvoiceTypeField(invoiceType, onChanged, modifier)"))
-@Composable
-fun PattuinvoiceTypeKooru(
-    invoiceType: String,
-    onChanged: (String) -> Unit,
-    modifier: Modifier = Modifier
-) = TextilesInvoiceTypeField(invoiceType, onChanged, modifier)

@@ -48,9 +48,9 @@ fun TextilesProductEditorScreen(
     val primaryLang = profile.primaryLanguage.ifEmpty { "ta" }
     val secondaryLang = profile.secondaryLanguage.ifEmpty { "en" }
 
-    var porulPeyarMap by remember { mutableStateOf(item?.name ?: emptyMap()) }
+    var productNameMap by remember { mutableStateOf(item?.name ?: emptyMap()) }
     var hsnCode by remember { mutableStateOf(item?.hsnCode ?: "") }
-    var vilai by remember {
+    var price by remember {
         mutableStateOf(
             if (item != null && item.price > 0) {
                 if (item.price % 1.0 == 0.0) item.price.toLong().toString() else item.price.toString()
@@ -64,20 +64,20 @@ fun TextilesProductEditorScreen(
             } else "5"
         )
     }
-    var alavuVagai by remember { mutableStateOf(item?.quantityType?.ifEmpty { "quantity" } ?: "quantity") }
+    var quantityType by remember { mutableStateOf(item?.quantityType?.ifEmpty { "quantity" } ?: "quantity") }
 
     var validationError by remember { mutableStateOf<String?>(null) }
     var showDiscardDialog by remember { mutableStateOf(false) }
     var isExiting by remember { mutableStateOf(false) }
 
-    val hasChanges = remember(porulPeyarMap, hsnCode, vilai, variVeetham, alavuVagai) {
+    val hasChanges = remember(productNameMap, hsnCode, price, variVeetham, quantityType) {
         if (item == null) {
-            porulPeyarMap.values.any { it.isNotBlank() } || hsnCode.isNotBlank() || vilai.isNotBlank()
+            productNameMap.values.any { it.isNotBlank() } || hsnCode.isNotBlank() || price.isNotBlank()
         } else {
-            porulPeyarMap != item.name || hsnCode != item.hsnCode ||
-                (vilai.toDoubleOrNull() ?: 0.0) != item.price ||
+            productNameMap != item.name || hsnCode != item.hsnCode ||
+                (price.toDoubleOrNull() ?: 0.0) != item.price ||
                 (variVeetham.toDoubleOrNull() ?: 0.0) != item.taxRate ||
-                alavuVagai != item.quantityType
+                quantityType != item.quantityType
         }
     }
 
@@ -102,22 +102,22 @@ fun TextilesProductEditorScreen(
     val saveFailedMsg = K.couldNotSavePrefix.tr()
 
     fun handleSave() {
-        val hasName = porulPeyarMap.values.any { it.trim().isNotBlank() }
+        val hasName = productNameMap.values.any { it.trim().isNotBlank() }
         if (!hasName) {
             validationError = nameRequiredMsg
             return
         }
 
-        val priceVal = vilai.toDoubleOrNull() ?: 0.0
+        val priceVal = price.toDoubleOrNull() ?: 0.0
         val taxVal = variVeetham.toDoubleOrNull() ?: 0.0
 
         val itemToSave = ProductModel(
             id = item?.id ?: 0L,
-            name = porulPeyarMap.filterValues { it.isNotBlank() },
+            name = productNameMap.filterValues { it.isNotBlank() },
             hsnCode = hsnCode.trim(),
             price = priceVal,
             taxRate = taxVal,
-            quantityType = alavuVagai,
+            quantityType = quantityType,
             createdAt = item?.createdAt ?: System.currentTimeMillis(),
             updatedAt = System.currentTimeMillis()
         )
@@ -176,9 +176,9 @@ fun TextilesProductEditorScreen(
                         ) {
                             ElvanIrumozhiPulan(
                                 label = K.productName.tr(),
-                                value = porulPeyarMap,
+                                value = productNameMap,
                                 onChanged = {
-                                    porulPeyarMap = it
+                                    productNameMap = it
                                     validationError = null
                                 },
                                 isBilingual = isBilingual,
@@ -212,15 +212,15 @@ fun TextilesProductEditorScreen(
                             )
                             ElvanEditorDropdown<Pair<String, String>>(
                                 label = K.unitOfMeasurement.tr(),
-                                value = measureUnits.firstOrNull { it.first == alavuVagai } ?: measureUnits.first(),
+                                value = measureUnits.firstOrNull { it.first == quantityType } ?: measureUnits.first(),
                                 items = measureUnits,
-                                onSelected = { alavuVagai = it.first },
+                                onSelected = { quantityType = it.first },
                                 itemLabelBuilder = { it.second }
                             )
 
                             ElvanEditorTextField(
-                                value = vilai,
-                                onValueChange = { vilai = it },
+                                value = price,
+                                onValueChange = { price = it },
                                 label = K.ratePerUnit.tr(),
                                 placeholder = "0.00",
                                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)

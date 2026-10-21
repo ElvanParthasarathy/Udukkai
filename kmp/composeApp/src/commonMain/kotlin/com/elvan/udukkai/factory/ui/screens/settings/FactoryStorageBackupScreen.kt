@@ -248,7 +248,7 @@ fun FactoryStorageBackupScreen(
                 val list = mutableListOf<FactoryBusinessDisplayItem>()
                 if (profiles.isEmpty()) {
                     val name = fallback.shortName.ifBlank {
-                        fallback.getPrimary("niruvanathinPeyar")
+                        fallback.getPrimary("businessName")
                     }.ifBlank {
                         fallback.getSecondary("niruvanathinPeyar")
                     }.ifBlank { appBadge }
@@ -274,7 +274,7 @@ fun FactoryStorageBackupScreen(
                 } else {
                     profiles.forEachIndexed { index, p ->
                         val bName = p.shortName.ifBlank {
-                            p.getPrimary("niruvanathinPeyar")
+                            p.getPrimary("businessName")
                         }.ifBlank {
                             p.getSecondary("niruvanathinPeyar")
                         }.ifBlank {

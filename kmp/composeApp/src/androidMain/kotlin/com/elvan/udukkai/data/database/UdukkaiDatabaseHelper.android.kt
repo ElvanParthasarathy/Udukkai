@@ -780,7 +780,6 @@ class AndroidUdukkaiDatabaseHelper(
         list
     } ?: emptyList()
 
-    override fun getLinksForPatru(patruId: Long): List<ReceiptInvoiceLinkModel> = getLinksForReceipt(patruId)
 
     override fun saveReceiptWithLinks(receipt: ReceiptModel, links: List<ReceiptInvoiceLinkModel>): Long = useDb { db ->
         db.beginTransaction()

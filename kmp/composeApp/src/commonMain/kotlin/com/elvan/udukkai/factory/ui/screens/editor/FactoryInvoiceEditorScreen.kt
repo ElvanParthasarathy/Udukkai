@@ -165,19 +165,19 @@ fun FactoryInvoiceEditorScreen(
     LaunchedEffect(FactoryProductRepository.items) {
         if (FactoryProductRepository.items.isNotEmpty()) {
             items = items.map { item ->
-                if (item.mozhiMap.isEmpty()) {
-                    val matched = FactoryProductRepository.items.firstOrNull { it.id.toString() == item.porulId }
-                        ?: FactoryProductRepository.items.firstOrNull { it.name.values.any { v -> v.equals(item.name, ignoreCase = true) || v.equals(item.porulPeyarEn, ignoreCase = true) } }
+                if (item.languageMap.isEmpty()) {
+                    val matched = FactoryProductRepository.items.firstOrNull { it.id.toString() == item.productId }
+                        ?: FactoryProductRepository.items.firstOrNull { it.name.values.any { v -> v.equals(item.productName, ignoreCase = true) || v.equals(item.productNameEn, ignoreCase = true) } }
                     if (matched != null && matched.name.isNotEmpty()) {
                         item.copy(
-                            porulId = matched.id.toString(),
-                            porulPeyar = matched.name["ta"] ?: item.name,
-                            porulPeyarEn = matched.name["en"] ?: item.porulPeyarEn,
-                            mozhiMap = matched.name
+                            productId = matched.id.toString(),
+                            productName = matched.name["ta"] ?: item.productName,
+                            productNameEn = matched.name["en"] ?: item.productNameEn,
+                            languageMap = matched.name
                         )
-                    } else if (item.name.isNotEmpty() || item.porulPeyarEn.isNotEmpty()) {
+                    } else if (item.productName.isNotEmpty() || item.productNameEn.isNotEmpty()) {
                         item.copy(
-                            mozhiMap = mapOf("ta" to item.name, "en" to item.porulPeyarEn).filterValues { it.isNotEmpty() }
+                            languageMap = mapOf("ta" to item.productName, "en" to item.productNameEn).filterValues { it.isNotEmpty() }
                         )
                     } else {
                         item
@@ -329,24 +329,24 @@ fun FactoryInvoiceEditorScreen(
 
     AppBackHandler(enabled = !isExiting, onBack = handleBack)
 
-    val niruvanamRequiredMsg = K.selectCompanyProfile.tr()
-    val vaangunarRequiredMsg = K.selectCustomer.tr()
-    val porulRequiredMsg = K.addAtLeastOneProduct.tr()
+    val companyRequiredMsg = K.selectCompanyProfile.tr()
+    val customerRequiredMsg = K.selectCustomer.tr()
+    val productRequiredMsg = K.addAtLeastOneProduct.tr()
     val receiptNumberRequiredMsg = K.receiptNumber.tr()
     val saveBtnLabel = K.saveBtn.tr()
 
     val handleSave: () -> Unit = {
         errorMessage = null
         if (!isProfileConfigured) {
-            errorMessage = niruvanamRequiredMsg
+            errorMessage = companyRequiredMsg
         } else if (selectedCustomerId == null && selectedCustomerNameMap.isEmpty()) {
-            errorMessage = vaangunarRequiredMsg
+            errorMessage = customerRequiredMsg
         } else if (invoiceNumber.isBlank()) {
             errorMessage = receiptNumberRequiredMsg
         } else {
-            val validItems = activeItems.filter { it.edai > 0 && it.price > 0 }
+            val validItems = activeItems.filter { it.weight > 0 && it.price > 0 }
             if (validItems.isEmpty()) {
-                errorMessage = porulRequiredMsg
+                errorMessage = productRequiredMsg
             } else {
                 isSaving = true
                 val vanakkam = FactoryInvoiceRepository.getNextVanakkam(selectedCompanyId)
@@ -475,7 +475,7 @@ fun FactoryInvoiceEditorScreen(
                             modifier = Modifier.fillMaxWidth(),
                             verticalArrangement = Arrangement.spacedBy(16.dp)
                         ) {
-                            ElvanAavanaEnnKooru(
+                            ElvanDocumentNumberField(
                                 label = K.receiptNumber.tr(),
                                 prefix = "$currentPrefix-",
                                 initialFullNumber = invoiceNumber,

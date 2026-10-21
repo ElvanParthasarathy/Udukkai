@@ -17,8 +17,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.elvan.udukkai.core.data.IdangalinPeyar
-import com.elvan.udukkai.core.data.indhiyaMaanilangal
+import com.elvan.udukkai.core.data.LocationName
+import com.elvan.udukkai.core.data.indianStates
 import com.elvan.udukkai.localization.K
 import com.elvan.udukkai.localization.tr
 import com.elvan.udukkai.theme.LocalAppFontFamily
@@ -114,8 +114,8 @@ fun TextilesPlaceOfSupplyField(
     if (isSheetOpen) {
         ElvanSelectionBottomSheet(
             title = K.placeOfSupply.tr(),
-            items = indhiyaMaanilangal,
-            currentValue = indhiyaMaanilangal.firstOrNull { it.en.equals(placeOfSupplyEn, ignoreCase = true) },
+            items = indianStates,
+            currentValue = indianStates.firstOrNull { it.en.equals(placeOfSupplyEn, ignoreCase = true) },
             showSearch = true,
             onDismissRequest = { isSheetOpen = false },
             onSelected = { state ->

@@ -163,8 +163,6 @@ object ProductFirebasePayloadConverter {
         }
     }
 
-    @Deprecated("Use parseCompanyIds", ReplaceWith("parseCompanyIds(raw)"))
-    fun parseNiruvanamIds(raw: Any?): List<Long> = parseCompanyIds(raw)
 
     /**
      * Parses companyPrices from a raw object.

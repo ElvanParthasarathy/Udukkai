@@ -111,23 +111,23 @@ object TextilesMockDataSeeder {
         val parsed = TextilesCalculation.itemsFromJson(rawJson)
         return parsed.map { item ->
             val matched = items.find {
-                it.name["ta"] == item.name ||
-                    (item.porulPeyarEn.isNotEmpty() && it.name["en"] == item.porulPeyarEn)
+                it.name["ta"] == item.productName ||
+                    (item.productNameEn.isNotEmpty() && it.name["en"] == item.productNameEn)
             }
-            val id = matched?.id?.toString() ?: item.porulId
-            val hsn = if (item.hsnKuriyeedu.isNotEmpty()) item.hsnKuriyeedu else (matched?.hsnCode ?: "")
-            val vilai = if (item.price > 0.0) item.price else (matched?.price ?: 0.0)
-            val vari = if (item.variVizhukkaadu > 0.0) item.variVizhukkaadu else (matched?.taxRate ?: 0.0)
-            val alagu = if (item.unit.isNotEmpty()) item.unit else (matched?.unit ?: "Nos")
-            val mozhiMap = if (item.mozhiMap.isNotEmpty()) item.mozhiMap else (matched?.name ?: mapOf("ta" to item.name, "en" to item.porulPeyarEn))
+            val id = matched?.id?.toString() ?: item.productId
+            val hsn = if (item.hsnCode.isNotEmpty()) item.hsnCode else (matched?.hsnCode ?: "")
+            val price = if (item.price > 0.0) item.price else (matched?.price ?: 0.0)
+            val taxRate = if (item.taxRate > 0.0) item.taxRate else (matched?.taxRate ?: 0.0)
+            val unit = if (item.unit.isNotEmpty()) item.unit else (matched?.unit ?: "Nos")
+            val langMap = if (item.languageMap.isNotEmpty()) item.languageMap else (matched?.name ?: mapOf("ta" to item.productName, "en" to item.productNameEn))
             item.copy(
-                porulId = id,
-                porulPeyarEn = mozhiMap["en"] ?: item.porulPeyarEn,
-                hsnKuriyeedu = hsn,
-                alagu = alagu,
-                vilai = vilai,
-                variVizhukkaadu = vari,
-                mozhiMap = mozhiMap
+                productId = id,
+                productNameEn = langMap["en"] ?: item.productNameEn,
+                hsnCode = hsn,
+                unit = unit,
+                price = price,
+                taxRate = taxRate,
+                languageMap = langMap
             )
         }
     }
@@ -161,7 +161,7 @@ object TextilesMockDataSeeder {
         helper.clearAllData()
 
         // 1. Seed Profiles
-        for (map in mockSilkProfiles) {
+        for (map in mockTextilesProfiles) {
             val p = profileFromMap(map)
             TextilesProfileRepository.createProfile(p)
         }
@@ -169,30 +169,30 @@ object TextilesMockDataSeeder {
         val profileMap = textilesProfiles.associateBy { it.shortName }
 
         // 2. Products
-        for (item in mockSilkPorulgal) {
-            val peyarTa = item["peyar_ta"] as? String ?: ""
-            val peyarEn = item["peyar_en"] as? String ?: ""
+        for (item in mockTextilesProducts) {
+            val nameTa = item["peyar_ta"] as? String ?: ""
+            val nameEn = item["peyar_en"] as? String ?: ""
             val hsn = item["hsnCode"] as? String ?: ""
-            val vilai = (item["vilai"] as? Number)?.toDouble() ?: 0.0
-            val vari = (item["variVeetham"] as? Number)?.toDouble() ?: 0.0
-            val alagu = item["alagu"] as? String ?: "Nos"
-            val vagai = item["alavuVagai"] as? String ?: "quantity"
+            val price = (item["vilai"] as? Number)?.toDouble() ?: 0.0
+            val taxRate = (item["variVeetham"] as? Number)?.toDouble() ?: 0.0
+            val unit = item["alagu"] as? String ?: "Nos"
+            val quantityType = item["alavuVagai"] as? String ?: "quantity"
 
             helper.saveProduct(
                 ProductModel(
-                    name = mapOf("ta" to peyarTa, "en" to peyarEn),
+                    name = mapOf("ta" to nameTa, "en" to nameEn),
                     hsnCode = hsn,
-                    price = vilai,
-                    taxRate = vari,
-                    unit = alagu,
-                    quantityType = vagai
+                    price = price,
+                    taxRate = taxRate,
+                    unit = unit,
+                    quantityType = quantityType
                 )
             )
         }
         val textilesItems = helper.loadAllProducts()
 
         // 3. Customers
-        for (m in mockSilkVaangunargal) {
+        for (m in mockTextilesCustomers) {
             helper.saveCustomer(
                 CustomerModel(
                     name = mapOf("ta" to (m["peyar_ta"] ?: ""), "en" to (m["peyar_en"] ?: "")),
@@ -209,7 +209,7 @@ object TextilesMockDataSeeder {
         val textilesCustomers = helper.loadAllCustomers()
 
         // 4. Invoices
-        for (data in mockSilkPattiyalgal) {
+        for (data in mockTextilesInvoices) {
             val dateStr = data["invoiceDate"] as? String ?: "2026-06-11"
             val dateMillis = parseDate(dateStr)
             val invoiceNo = data["invoiceNumber"] as? String ?: "SJPS-1"
@@ -220,8 +220,8 @@ object TextilesMockDataSeeder {
             val custName = data["customer_name"] as? String ?: ""
             val matchedCust = textilesCustomers.find { it.name["ta"] == custName }
             val custId = matchedCust?.id
-            val custPeyar = matchedCust?.name ?: mapOf("ta" to custName, "en" to (data["customer_name_en"] as? String ?: custName))
-            val custOor = matchedCust?.city ?: emptyMap()
+            val custNameMap = matchedCust?.name ?: mapOf("ta" to custName, "en" to (data["customer_name_en"] as? String ?: custName))
+            val custCityMap = matchedCust?.city ?: emptyMap()
 
             val rawItems = data["items"] as? String ?: "[]"
             val parsedItems = parseSilkItems(rawItems, textilesItems)
@@ -239,8 +239,8 @@ object TextilesMockDataSeeder {
                     vanakkam = vanakkamNum,
                     invoiceType = "tax-invoice",
                     customerId = custId,
-                    customerName = custPeyar,
-                    customerAddress = custOor,
+                    customerName = custNameMap,
+                    customerAddress = custCityMap,
                     invoiceDate = dateMillis,
                     itemsJson = enrichedJson,
                     totalAmount = grandTotal,
@@ -259,11 +259,11 @@ object TextilesMockDataSeeder {
         val invEnToTotal = textilesInvoices.associate { it.invoiceNumber to it.totalAmount }
 
         // 5. Receipts with Links
-        for (r in mockSilkPatrugal) {
+        for (r in mockTextilesReceipts) {
             val dateStr = r["date"] as? String ?: "2026-06-11"
             val dateMillis = parseDate(dateStr)
-            val patruEn = r["receiptNo"] as? String ?: "RCP/SJPS/01"
-            val parts = patruEn.split("/")
+            val receiptNo = r["receiptNo"] as? String ?: "RCP/SJPS/01"
+            val parts = receiptNo.split("/")
             val prefix = if (parts.size > 1) parts[1] else ""
             val vanakkamNum = parts.lastOrNull()?.toIntOrNull() ?: 1
             val profileId = profileMap[prefix]?.id
@@ -279,7 +279,7 @@ object TextilesMockDataSeeder {
             helper.saveReceiptWithLinks(
                 ReceiptModel(
                     companyId = profileId,
-                    receiptNumber = patruEn,
+                    receiptNumber = receiptNo,
                     vanakkam = vanakkamNum,
                     finYear = "2026",
                     customerId = matchedCust?.id,
@@ -324,8 +324,8 @@ object TextilesMockDataSeeder {
             TextilesProfileRepository.deleteProfile(existing.id!!)
             "Textiles EPS Removed ✗"
         } else {
-            if (mockSilkProfiles.size > 1) {
-                TextilesProfileRepository.createProfile(profileFromMap(mockSilkProfiles[1]))
+            if (mockTextilesProfiles.size > 1) {
+                TextilesProfileRepository.createProfile(profileFromMap(mockTextilesProfiles[1]))
             }
             "Textiles EPS Added ✓"
         }

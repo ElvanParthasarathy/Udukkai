@@ -13,32 +13,32 @@ import com.elvan.udukkai.ui.navigation.MaterialSymbols
  * Type-safe payment mode enum with localized display names.
  * Stored as lowercase string in DB (e.g. 'cash', 'upi', 'bank_transfer', 'cheque', 'card').
  */
-enum class SeluthiVagai(
+enum class PaymentType(
     val storedValue: String,
     val needsReference: Boolean
 ) {
-    VANGI_MAATRAM("bank_transfer", true), // Bank Transfer — வங்கி மாற்றம்
+    BANK_TRANSFER("bank_transfer", true), // Bank Transfer — வங்கி மாற்றம்
     UPI("upi", true),                    // UPI
-    PANAM("cash", false),                // Cash — காசு / பணம்
-    KAASOALAI("cheque", true),           // Cheque — காசோலை
-    ATTAI("card", true);                 // Card — அட்டை
+    CASH("cash", false),                 // Cash — காசு / பணம்
+    CHEQUE("cheque", true),              // Cheque — காசோலை
+    CARD("card", true);                  // Card — அட்டை
 
     val icon: ImageVector
         get() = when (this) {
-            PANAM -> MaterialSymbols.Rounded.Payments
+            CASH -> MaterialSymbols.Rounded.Payments
             UPI -> MaterialSymbols.Rounded.QrCode
-            VANGI_MAATRAM -> MaterialSymbols.Rounded.AccountBalance
-            KAASOALAI -> MaterialSymbols.Rounded.ReceiptLong
-            ATTAI -> MaterialSymbols.Rounded.CreditCard
+            BANK_TRANSFER -> MaterialSymbols.Rounded.AccountBalance
+            CHEQUE -> MaterialSymbols.Rounded.ReceiptLong
+            CARD -> MaterialSymbols.Rounded.CreditCard
         }
 
     fun labelString(langCode: String = LanguageManager.activeLanguageCode): String {
         return when (this) {
-            PANAM -> K.cash.trWithLang(langCode)
+            CASH -> K.cash.trWithLang(langCode)
             UPI -> "UPI"
-            VANGI_MAATRAM -> K.bankTransfer.trWithLang(langCode)
-            KAASOALAI -> K.cheque.trWithLang(langCode)
-            ATTAI -> K.card.trWithLang(langCode)
+            BANK_TRANSFER -> K.bankTransfer.trWithLang(langCode)
+            CHEQUE -> K.cheque.trWithLang(langCode)
+            CARD -> K.card.trWithLang(langCode)
         }
     }
 
@@ -50,24 +50,30 @@ enum class SeluthiVagai(
     }
 
     companion object {
-        fun fromStored(value: String?): SeluthiVagai {
-            if (value.isNullOrBlank()) return PANAM
+        val VANGI_MAATRAM get() = BANK_TRANSFER
+        val PANAM get() = CASH
+        val KAASOALAI get() = CHEQUE
+        val ATTAI get() = CARD
+
+        fun fromStored(value: String?): PaymentType {
+            if (value.isNullOrBlank()) return CASH
             return when (value.trim().lowercase()) {
-                "bank_transfer", "vangimaatram", "vangi_maatram" -> VANGI_MAATRAM
+                "bank_transfer", "vangimaatram", "vangi_maatram" -> BANK_TRANSFER
                 "upi" -> UPI
-                "cash", "panam", "roakkam" -> PANAM
-                "cheque", "kaasoalai" -> KAASOALAI
-                "card", "attai" -> ATTAI
-                else -> PANAM
+                "cash", "panam", "roakkam" -> CASH
+                "cheque", "kaasoalai" -> CHEQUE
+                "card", "attai" -> CARD
+                else -> CASH
             }
         }
 
         fun allOptions(langCode: String = LanguageManager.activeLanguageCode): List<Pair<String, String>> = listOf(
-            PANAM.name to PANAM.labelString(langCode),
+            CASH.name to CASH.labelString(langCode),
             UPI.name to UPI.labelString(langCode),
-            VANGI_MAATRAM.name to VANGI_MAATRAM.labelString(langCode),
-            KAASOALAI.name to KAASOALAI.labelString(langCode),
-            ATTAI.name to ATTAI.labelString(langCode)
+            BANK_TRANSFER.name to BANK_TRANSFER.labelString(langCode),
+            CHEQUE.name to CHEQUE.labelString(langCode),
+            CARD.name to CARD.labelString(langCode)
         )
     }
 }
+
