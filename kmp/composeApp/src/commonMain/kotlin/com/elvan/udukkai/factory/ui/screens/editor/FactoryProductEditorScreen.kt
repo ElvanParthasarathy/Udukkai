@@ -77,7 +77,7 @@ fun FactoryProductEditorScreen(
 
     val initialCompanyId = item?.companyIds?.firstOrNull()
     val currentCompanyId = selectedCompanyOption.id
-    val companyChanged = item != null && item.companyIds.isNotEmpty() && initialCompanyId != currentCompanyId
+    val companyChanged = item != null && initialCompanyId != currentCompanyId
 
     val hasChanges = remember(productNameMap, companyChanged) {
         if (item == null) {

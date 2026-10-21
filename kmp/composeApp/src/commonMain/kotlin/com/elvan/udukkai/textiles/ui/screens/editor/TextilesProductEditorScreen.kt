@@ -104,7 +104,7 @@ fun TextilesProductEditorScreen(
 
     val initialCompanyId = item?.companyIds?.firstOrNull()
     val currentCompanyId = selectedCompanyOption.id
-    val companyChanged = item != null && item.companyIds.isNotEmpty() && initialCompanyId != currentCompanyId
+    val companyChanged = item != null && initialCompanyId != currentCompanyId
 
     val hasChanges = remember(productNameMap, hsnCode, price, variVeetham, quantityType, companyChanged) {
         if (item == null) {

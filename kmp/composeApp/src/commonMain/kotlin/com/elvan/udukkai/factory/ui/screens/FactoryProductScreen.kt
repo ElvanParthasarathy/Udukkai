@@ -50,7 +50,7 @@ fun FactoryProductScreen(
     val items = FactoryProductRepository.filteredItems
     val ff = LocalAppFontFamily.current
 
-    val pageSize = 10
+    val pageSize = 30
     var visibleItemCount by remember { mutableIntStateOf(pageSize) }
 
     LaunchedEffect(FactoryProductRepository.searchQuery) {
@@ -169,7 +169,6 @@ fun FactoryProductScreen(
                                 strokeWidth = 2.dp
                             )
                             LaunchedEffect(Unit) {
-                                delay(400)
                                 visibleItemCount += pageSize
                             }
                         }

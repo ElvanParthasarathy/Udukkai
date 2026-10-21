@@ -23,10 +23,9 @@ object FactoryProductRepository {
     val filteredProducts: List<ProductModel>
         get() {
             val activeId = FactoryProfileRepository.profile.id
-            val legacyOwnerId = FactoryProfileRepository.profiles.firstOrNull()?.id
             return products.filter { product ->
                 val belongsToActiveCompany = if (product.companyIds.isEmpty()) {
-                    activeId == null || activeId == legacyOwnerId
+                    true
                 } else {
                     activeId != null && product.companyIds.contains(activeId)
                 }

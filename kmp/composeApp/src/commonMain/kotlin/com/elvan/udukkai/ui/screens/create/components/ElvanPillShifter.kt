@@ -229,10 +229,7 @@ fun ElvanPillShifter(
                         hoverIndex = null
 
                         if (finalIndex != null) {
-                            coroutineScope.launch {
-                                delay(150)
-                                onIndexSelected(finalIndex)
-                            }
+                            onIndexSelected(finalIndex)
                         }
                     }
                 },

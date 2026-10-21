@@ -162,7 +162,7 @@ fun CustomerEditorScreen(
 
     val initialCompanyId = merchant?.companyIds?.firstOrNull()
     val currentCompanyId = selectedCompanyOption.id
-    val companyChanged = merchant != null && merchant.companyIds.isNotEmpty() && initialCompanyId != currentCompanyId
+    val companyChanged = merchant != null && initialCompanyId != currentCompanyId
 
     val hasChanges = remember(
         nameMap, gstin, phone, email, countryMap, stateMap, districtMap,

@@ -87,7 +87,7 @@ fun TextilesProductScreen(
         }
     }
 
-    val pageSize = 10
+    val pageSize = 30
     var visibleItemCount by remember { mutableIntStateOf(pageSize) }
 
     LaunchedEffect(TextilesProductRepository.searchQuery, selectedTabIndex) {
@@ -226,7 +226,6 @@ fun TextilesProductScreen(
                                 strokeWidth = 2.dp
                             )
                             LaunchedEffect(Unit) {
-                                delay(400)
                                 visibleItemCount += pageSize
                             }
                         }
