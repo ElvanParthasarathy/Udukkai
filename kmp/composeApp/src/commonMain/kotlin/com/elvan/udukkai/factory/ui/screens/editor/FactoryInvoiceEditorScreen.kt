@@ -30,6 +30,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.elvan.udukkai.core.platform.AppBackHandler
 import com.elvan.udukkai.core.platform.getPreferencesHelper
+import com.elvan.udukkai.data.model.InvoiceModel
 import com.elvan.udukkai.data.model.PattiyalTharavuru
 import com.elvan.udukkai.factory.data.FactoryInvoiceRepository
 import com.elvan.udukkai.factory.data.FactoryProductRepository
@@ -352,21 +353,21 @@ fun FactoryInvoiceEditorScreen(
                 val vanakkam = FactoryInvoiceRepository.getNextVanakkam(selectedNiruvanamId)
                 val newInvoice = PattiyalTharavuru(
                     id = invoice?.id ?: 0L,
-                    niruvanamId = selectedNiruvanamId,
-                    patrucheettuEn = invoiceNumber,
+                    companyId = selectedNiruvanamId,
+                    invoiceNumber = invoiceNumber,
                     vanakkam = if (invoice != null && invoice.vanakkam > 0) invoice.vanakkam else vanakkam,
-                    pattiyalVagai = "",
-                    vaangunarId = selectedVaangunarId,
-                    vaangunarPeyar = selectedVaangunarPeyarMap,
-                    vaangunarMunvari = selectedVaangunarMunvariMap,
-                    pattiyalNaal = invoiceDate,
-                    tharavugal = FactoryCalculation.itemsToJson(validItems),
-                    mothaThogai = totals.perumMothangal,
-                    mothaEdai = totals.mothaEdai,
-                    setharamGrams = setharamGrams,
-                    thabaalThogai = thabaalThogai,
-                    ahimsaPattuThogai = ahimsaPattuThogai,
-                    piravariVugal = FactoryCalculation.chargesToJson(piraVarivugal),
+                    invoiceType = "",
+                    customerId = selectedVaangunarId,
+                    customerName = selectedVaangunarPeyarMap,
+                    customerAddress = selectedVaangunarMunvariMap,
+                    invoiceDate = invoiceDate,
+                    itemsJson = FactoryCalculation.itemsToJson(validItems),
+                    totalAmount = totals.perumMothangal,
+                    totalWeight = totals.mothaEdai,
+                    wastageGrams = setharamGrams,
+                    postalCharges = thabaalThogai,
+                    ahimsaSilkAmount = ahimsaPattuThogai,
+                    otherTaxesJson = FactoryCalculation.chargesToJson(piraVarivugal),
                     updatedAt = System.currentTimeMillis()
                 )
                 FactoryInvoiceRepository.save(newInvoice)

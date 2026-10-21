@@ -224,7 +224,7 @@ fun ReceiptViewScreen(
                             modifier = Modifier.fillMaxWidth(),
                             verticalArrangement = Arrangement.spacedBy(10.dp)
                         ) {
-                            if (!receipt.parivarthanaiEn.isNullOrBlank()) {
+                            if (!receipt.transactionNumber.isNullOrBlank()) {
                                 Row(
                                     modifier = Modifier.fillMaxWidth(),
                                     horizontalArrangement = Arrangement.SpaceBetween
@@ -234,12 +234,12 @@ fun ReceiptViewScreen(
                                         style = TextStyle(fontFamily = ff, fontSize = 14.sp, color = colors.textSecondary)
                                     )
                                     Text(
-                                        text = receipt.parivarthanaiEn,
+                                        text = receipt.transactionNumber ?: "",
                                         style = TextStyle(fontFamily = ff, fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = colors.textPrimary)
                                     )
                                 }
                             }
-                            if (!receipt.vangiPeyar.isNullOrBlank()) {
+                            if (!receipt.bankName.isNullOrBlank()) {
                                 Row(
                                     modifier = Modifier.fillMaxWidth(),
                                     horizontalArrangement = Arrangement.SpaceBetween
@@ -249,7 +249,7 @@ fun ReceiptViewScreen(
                                         style = TextStyle(fontFamily = ff, fontSize = 14.sp, color = colors.textSecondary)
                                     )
                                     Text(
-                                        text = receipt.vangiPeyar,
+                                        text = receipt.bankName ?: "",
                                         style = TextStyle(fontFamily = ff, fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = colors.textPrimary)
                                     )
                                 }

@@ -84,10 +84,10 @@ object PrintLanguageManager {
     fun setPrimaryLanguage(scope: String = "factory", language: BillingLanguage) {
         if (scope.equals("textiles", ignoreCase = true) || scope.equals("pattu", ignoreCase = true)) {
             val profile = TextilesProfileRepository.profile
-            TextilesProfileRepository.updateProfile(profile.copy(mudhanMozhi = language.code))
+            TextilesProfileRepository.updateProfile(profile.copy(primaryLanguage = language.code))
         } else {
             val profile = FactoryProfileRepository.profile
-            FactoryProfileRepository.updateProfile(profile.copy(mudhanMozhi = language.code))
+            FactoryProfileRepository.updateProfile(profile.copy(primaryLanguage = language.code))
         }
     }
 
@@ -97,10 +97,10 @@ object PrintLanguageManager {
     fun setSecondaryLanguage(scope: String = "factory", language: BillingLanguage) {
         if (scope.equals("textiles", ignoreCase = true) || scope.equals("pattu", ignoreCase = true)) {
             val profile = TextilesProfileRepository.profile
-            TextilesProfileRepository.updateProfile(profile.copy(thunaiMozhi = language.code))
+            TextilesProfileRepository.updateProfile(profile.copy(secondaryLanguage = language.code))
         } else {
             val profile = FactoryProfileRepository.profile
-            FactoryProfileRepository.updateProfile(profile.copy(thunaiMozhi = language.code))
+            FactoryProfileRepository.updateProfile(profile.copy(secondaryLanguage = language.code))
         }
     }
 
@@ -110,10 +110,10 @@ object PrintLanguageManager {
     fun setBilingual(scope: String = "factory", enabled: Boolean) {
         if (scope.equals("textiles", ignoreCase = true) || scope.equals("pattu", ignoreCase = true)) {
             val profile = TextilesProfileRepository.profile
-            TextilesProfileRepository.updateProfile(profile.copy(iruMozhi = enabled))
+            TextilesProfileRepository.updateProfile(profile.copy(isBilingual = enabled))
         } else {
             val profile = FactoryProfileRepository.profile
-            FactoryProfileRepository.updateProfile(profile.copy(iruMozhi = enabled))
+            FactoryProfileRepository.updateProfile(profile.copy(isBilingual = enabled))
         }
     }
 

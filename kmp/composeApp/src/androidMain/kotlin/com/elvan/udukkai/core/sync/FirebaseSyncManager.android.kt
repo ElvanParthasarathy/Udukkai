@@ -1,13 +1,17 @@
-﻿package com.elvan.udukkai.core.sync
+package com.elvan.udukkai.core.sync
 
 import android.util.Log
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
 import com.elvan.udukkai.core.backup.getUdukkaiBackupService
 import com.elvan.udukkai.core.platform.AppContext
+import com.elvan.udukkai.data.model.CustomerModel
+import com.elvan.udukkai.data.model.InvoiceModel
 import com.elvan.udukkai.data.model.PattiyalTharavuru
 import com.elvan.udukkai.data.model.PatruPattiyalInaippuTharavuru
 import com.elvan.udukkai.data.model.PatrugalTharavuru
+import com.elvan.udukkai.data.model.ReceiptModel
+import com.elvan.udukkai.data.model.ProductModel
 import com.elvan.udukkai.data.model.PorulFirebasePayloadConverter
 import com.elvan.udukkai.data.model.PorulTharavuru
 import com.elvan.udukkai.data.model.VaangunarTharavuru
@@ -522,19 +526,19 @@ class AndroidFirebaseSyncManager : FirebaseSyncManager {
             val naaduStr = s.child("naadu").value as? String ?: """{"en":"India","ta":"இந்தியா"}"""
             val velinaadStr = s.child("velinaadMugavari").value as? String ?: "{}"
 
-            VaangunarTharavuru(
+            CustomerModel(
                 id = id,
-                peyar = MozhiJsonConverter.parse(peyarStr),
-                mugavari = MozhiJsonConverter.parse(mugavariStr),
-                oor = MozhiJsonConverter.parse(oorStr),
-                maavattam = MozhiJsonConverter.parse(maavattamStr),
-                maanilam = MozhiJsonConverter.parse(maanilamStr),
-                naadu = MozhiJsonConverter.parse(naaduStr),
-                velinaadMugavari = MozhiJsonConverter.parse(velinaadStr),
-                anjalKuriyeedu = s.child("anjalKuriyeedu").value as? String ?: "",
+                name = MozhiJsonConverter.parse(peyarStr),
+                address = MozhiJsonConverter.parse(mugavariStr),
+                city = MozhiJsonConverter.parse(oorStr),
+                district = MozhiJsonConverter.parse(maavattamStr),
+                state = MozhiJsonConverter.parse(maanilamStr),
+                country = MozhiJsonConverter.parse(naaduStr),
+                internationalAddress = MozhiJsonConverter.parse(velinaadStr),
+                pinCode = s.child("anjalKuriyeedu").value as? String ?: "",
                 gstin = s.child("gstin").value as? String ?: "",
-                minnanjal = s.child("minnanjal").value as? String ?: "",
-                tholaipaesi = s.child("tholaipaesi").value as? String ?: "",
+                email = s.child("minnanjal").value as? String ?: "",
+                phone = s.child("tholaipaesi").value as? String ?: "",
                 createdAt = (s.child("createdAt").value as? Number)?.toLong() ?: (System.currentTimeMillis() / 1000),
                 updatedAt = (s.child("updatedAt").value as? Number)?.toLong() ?: (System.currentTimeMillis() / 1000),
                 isDeleted = s.child("isDeleted").value as? Boolean ?: false,
@@ -585,15 +589,15 @@ class AndroidFirebaseSyncManager : FirebaseSyncManager {
                 emptyMap()
             }
 
-            PorulTharavuru(
+            ProductModel(
                 id = id,
-                porulPeyar = MozhiJsonConverter.parse(porulPeyarStr),
+                name = MozhiJsonConverter.parse(porulPeyarStr),
                 hsnCode = s.child("hsnCode").value as? String ?: "",
-                vilai = (s.child("vilai").value as? Number)?.toDouble() ?: 0.0,
-                variVeetham = (s.child("variVeetham").value as? Number)?.toDouble() ?: 0.0,
-                alavuVagai = s.child("alavuVagai").value as? String ?: "quantity",
-                alagu = s.child("alagu").value as? String ?: "Nos",
-                niruvanamIds = niruvanamIds,
+                price = (s.child("price").value as? Number)?.toDouble() ?: (s.child("vilai").value as? Number)?.toDouble() ?: 0.0,
+                taxRate = (s.child("taxRate").value as? Number)?.toDouble() ?: (s.child("variVeetham").value as? Number)?.toDouble() ?: 0.0,
+                quantityType = (s.child("quantityType").value ?: s.child("alavuVagai").value) as? String ?: "quantity",
+                unit = (s.child("unit").value ?: s.child("alagu").value) as? String ?: "Nos",
+                companyIds = niruvanamIds,
                 companyPrices = companyPrices,
                 createdAt = (s.child("createdAt").value as? Number)?.toLong() ?: (System.currentTimeMillis() / 1000),
                 updatedAt = (s.child("updatedAt").value as? Number)?.toLong() ?: (System.currentTimeMillis() / 1000),
@@ -614,32 +618,32 @@ class AndroidFirebaseSyncManager : FirebaseSyncManager {
 
             PattiyalTharavuru(
                 id = id,
-                niruvanamId = (s.child("niruvanamId").value as? Number)?.toLong(),
-                patrucheettuEn = s.child("patrucheettuEn").value as? String ?: "",
+                companyId = (s.child("niruvanamId").value as? Number)?.toLong(),
+                invoiceNumber = s.child("patrucheettuEn").value as? String ?: "",
                 finYear = (s.child("finYear").value as? Number)?.toInt() ?: 0,
                 vanakkam = (s.child("vanakkam").value as? Number)?.toInt() ?: 1,
-                pattiyalVagai = s.child("pattiyalVagai").value as? String ?: "tax-invoice",
-                vaangunarId = (s.child("vaangunarId").value as? Number)?.toLong(),
-                vaangunarPeyar = MozhiJsonConverter.parse(vaangunarPeyarStr),
-                vaangunarMunvari = MozhiJsonConverter.parse(vaangunarMunvariStr),
-                pattiyalNaal = (s.child("pattiyalNaal").value as? Number)?.toLong() ?: (System.currentTimeMillis() / 1000),
-                tharavugal = s.child("tharavugal").value as? String ?: "[]",
-                mothaThogai = (s.child("mothaThogai").value as? Number)?.toDouble() ?: 0.0,
-                thallupadi = (s.child("thallupadi").value as? Number)?.toDouble() ?: 0.0,
-                podhuThallupadiMathippu = (s.child("podhuThallupadiMathippu").value as? Number)?.toDouble() ?: 0.0,
-                podhuThallupadiVagai = s.child("podhuThallupadiVagai").value as? String ?: "%",
-                podhuThallupadiThogai = (s.child("podhuThallupadiThogai").value as? Number)?.toDouble() ?: 0.0,
-                variThogai = (s.child("variThogai").value as? Number)?.toDouble() ?: 0.0,
-                variTharavugal = s.child("variTharavugal").value as? String ?: "{}",
-                mothaEdai = (s.child("mothaEdai").value as? Number)?.toDouble() ?: 0.0,
-                setharamGrams = (s.child("setharamGrams").value as? Number)?.toDouble() ?: 0.0,
-                thabaalThogai = (s.child("thabaalThogai").value as? Number)?.toDouble() ?: 0.0,
-                ahimsaPattuThogai = (s.child("ahimsaPattuThogai").value as? Number)?.toDouble() ?: 0.0,
-                piravariVugal = s.child("piravariVugal").value as? String ?: "[]",
-                sonthaViruppangal = s.child("sonthaViruppangal").value as? String ?: "{}",
-                nibandhanaigal = s.child("nibandhanaigal").value as? String ?: "",
-                ullkurippu = s.child("ullkurippu").value as? String ?: "",
-                vangiTharavugal = s.child("vangiTharavugal").value as? String ?: "{}",
+                invoiceType = s.child("pattiyalVagai").value as? String ?: "tax-invoice",
+                customerId = (s.child("vaangunarId").value as? Number)?.toLong(),
+                customerName = MozhiJsonConverter.parse(vaangunarPeyarStr),
+                customerAddress = MozhiJsonConverter.parse(vaangunarMunvariStr),
+                invoiceDate = (s.child("pattiyalNaal").value as? Number)?.toLong() ?: (System.currentTimeMillis() / 1000),
+                itemsJson = s.child("tharavugal").value as? String ?: "[]",
+                totalAmount = (s.child("mothaThogai").value as? Number)?.toDouble() ?: 0.0,
+                discount = (s.child("thallupadi").value as? Number)?.toDouble() ?: 0.0,
+                globalDiscountValue = (s.child("podhuThallupadiMathippu").value as? Number)?.toDouble() ?: 0.0,
+                globalDiscountType = s.child("podhuThallupadiVagai").value as? String ?: "%",
+                globalDiscountAmount = (s.child("podhuThallupadiThogai").value as? Number)?.toDouble() ?: 0.0,
+                taxAmount = (s.child("variThogai").value as? Number)?.toDouble() ?: 0.0,
+                taxDataJson = s.child("variTharavugal").value as? String ?: "{}",
+                totalWeight = (s.child("mothaEdai").value as? Number)?.toDouble() ?: 0.0,
+                wastageGrams = (s.child("setharamGrams").value as? Number)?.toDouble() ?: 0.0,
+                postalCharges = (s.child("thabaalThogai").value as? Number)?.toDouble() ?: 0.0,
+                ahimsaSilkAmount = (s.child("ahimsaPattuThogai").value as? Number)?.toDouble() ?: 0.0,
+                otherTaxesJson = s.child("piravariVugal").value as? String ?: "[]",
+                customPreferencesJson = s.child("sonthaViruppangal").value as? String ?: "{}",
+                termsAndConditions = s.child("nibandhanaigal").value as? String ?: "",
+                notes = s.child("ullkurippu").value as? String ?: "",
+                bankDetailsJson = s.child("vangiTharavugal").value as? String ?: "{}",
                 createdAt = (s.child("createdAt").value as? Number)?.toLong() ?: (System.currentTimeMillis() / 1000),
                 updatedAt = (s.child("updatedAt").value as? Number)?.toLong() ?: (System.currentTimeMillis() / 1000),
                 isDeleted = s.child("isDeleted").value as? Boolean ?: false,
@@ -659,19 +663,19 @@ class AndroidFirebaseSyncManager : FirebaseSyncManager {
 
             PatrugalTharavuru(
                 id = id,
-                niruvanamId = (s.child("niruvanamId").value as? Number)?.toLong(),
-                patruEn = s.child("patruEn").value as? String ?: "",
+                companyId = (s.child("niruvanamId").value as? Number)?.toLong(),
+                receiptNumber = s.child("patruEn").value as? String ?: "",
                 finYear = s.child("finYear").value as? String ?: "",
                 vanakkam = (s.child("vanakkam").value as? Number)?.toInt() ?: 1,
-                vaangunarId = (s.child("vaangunarId").value as? Number)?.toLong(),
-                vaangunarPeyar = MozhiJsonConverter.parse(vaangunarPeyarStr),
-                vaangunarMunvari = MozhiJsonConverter.parse(vaangunarMunvariStr),
-                patruNaal = (s.child("patruNaal").value as? Number)?.toLong() ?: (System.currentTimeMillis() / 1000),
-                thogai = (s.child("thogai").value as? Number)?.toDouble() ?: 0.0,
-                seluthumMurai = s.child("seluthumMurai").value as? String ?: "cash",
-                vangiPeyar = s.child("vangiPeyar").value as? String,
-                parivarthanaiEn = s.child("parivarthanaiEn").value as? String,
-                ullkurippu = s.child("ullkurippu").value as? String ?: "",
+                customerId = (s.child("vaangunarId").value as? Number)?.toLong(),
+                customerName = MozhiJsonConverter.parse(vaangunarPeyarStr),
+                customerAddress = MozhiJsonConverter.parse(vaangunarMunvariStr),
+                receiptDate = (s.child("patruNaal").value as? Number)?.toLong() ?: (System.currentTimeMillis() / 1000),
+                amount = (s.child("thogai").value as? Number)?.toDouble() ?: 0.0,
+                paymentMode = s.child("seluthumMurai").value as? String ?: "cash",
+                bankName = s.child("vangiPeyar").value as? String,
+                transactionNumber = s.child("parivarthanaiEn").value as? String,
+                notes = s.child("ullkurippu").value as? String ?: "",
                 createdAt = (s.child("createdAt").value as? Number)?.toLong() ?: (System.currentTimeMillis() / 1000),
                 updatedAt = (s.child("updatedAt").value as? Number)?.toLong() ?: (System.currentTimeMillis() / 1000),
                 isDeleted = s.child("isDeleted").value as? Boolean ?: false,

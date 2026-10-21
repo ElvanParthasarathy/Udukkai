@@ -5,13 +5,18 @@ import android.database.Cursor
 import android.database.sqlite.SQLiteDatabase
 import android.util.Log
 import com.elvan.udukkai.core.platform.AppContext
+import com.elvan.udukkai.data.model.CustomerModel
+import com.elvan.udukkai.data.model.InvoiceModel
 import com.elvan.udukkai.data.model.PattiyalTharavuru
 import com.elvan.udukkai.data.model.PatruPattiyalInaippuTharavuru
 import com.elvan.udukkai.data.model.PatrugalTharavuru
+import com.elvan.udukkai.data.model.ReceiptInvoiceLinkModel
+import com.elvan.udukkai.data.model.ReceiptModel
 import com.elvan.udukkai.data.model.PorulJsonConverter
 import com.elvan.udukkai.data.model.PorulTharavuru
 import com.elvan.udukkai.data.model.VaangunarTharavuru
 import com.elvan.udukkai.data.settings.MozhiJsonConverter
+import com.elvan.udukkai.data.settings.BusinessProfile
 import com.elvan.udukkai.data.settings.NiruvanaTharavugal
 import java.io.File
 
@@ -595,9 +600,9 @@ class AndroidUdukkaiDatabaseHelper(
             while (c.moveToNext()) {
                 list.add(PatruPattiyalInaippuTharavuru(
                     id = c.getLong(idIdx),
-                    patruId = c.getLong(pIdIdx),
-                    pattiyalId = c.getLong(invIdIdx),
-                    poruthiyaThogai = c.getDouble(amountIdx)
+                    receiptId = c.getLong(pIdIdx),
+                    invoiceId = c.getLong(invIdIdx),
+                    appliedAmount = c.getDouble(amountIdx)
                 ))
             }
         }
@@ -747,17 +752,17 @@ class AndroidUdukkaiDatabaseHelper(
     // ── Helper Cursor Parsers ────────────────────────────────────────────────
     private fun cursorToMerchant(c: Cursor): VaangunarTharavuru = VaangunarTharavuru(
         id = c.getLong(c.getColumnIndexOrThrow("id")),
-        peyar = MozhiJsonConverter.parse(c.getString(c.getColumnIndexOrThrow("peyar"))),
-        mugavari = MozhiJsonConverter.parse(c.getString(c.getColumnIndexOrThrow("mugavari"))),
-        oor = MozhiJsonConverter.parse(c.getString(c.getColumnIndexOrThrow("oor"))),
-        maavattam = MozhiJsonConverter.parse(c.getString(c.getColumnIndexOrThrow("maavattam"))),
-        maanilam = MozhiJsonConverter.parse(c.getString(c.getColumnIndexOrThrow("maanilam"))),
-        naadu = MozhiJsonConverter.parse(c.getString(c.getColumnIndexOrThrow("naadu"))),
-        velinaadMugavari = MozhiJsonConverter.parse(c.getString(c.getColumnIndexOrThrow("velinaad_mugavari"))),
-        anjalKuriyeedu = c.getString(c.getColumnIndexOrThrow("anjal_kuriyeedu")),
+        name = MozhiJsonConverter.parse(c.getString(c.getColumnIndexOrThrow("peyar"))),
+        address = MozhiJsonConverter.parse(c.getString(c.getColumnIndexOrThrow("mugavari"))),
+        city = MozhiJsonConverter.parse(c.getString(c.getColumnIndexOrThrow("oor"))),
+        district = MozhiJsonConverter.parse(c.getString(c.getColumnIndexOrThrow("maavattam"))),
+        state = MozhiJsonConverter.parse(c.getString(c.getColumnIndexOrThrow("maanilam"))),
+        country = MozhiJsonConverter.parse(c.getString(c.getColumnIndexOrThrow("naadu"))),
+        internationalAddress = MozhiJsonConverter.parse(c.getString(c.getColumnIndexOrThrow("velinaad_mugavari"))),
+        pinCode = c.getString(c.getColumnIndexOrThrow("anjal_kuriyeedu")),
         gstin = c.getString(c.getColumnIndexOrThrow("gstin")),
-        minnanjal = c.getString(c.getColumnIndexOrThrow("minnanjal")),
-        tholaipaesi = c.getString(c.getColumnIndexOrThrow("tholaipaesi")),
+        email = c.getString(c.getColumnIndexOrThrow("minnanjal")),
+        phone = c.getString(c.getColumnIndexOrThrow("tholaipaesi")),
         createdAt = c.getLong(c.getColumnIndexOrThrow("created_at")),
         updatedAt = c.getLong(c.getColumnIndexOrThrow("updated_at")),
         isDeleted = c.getInt(c.getColumnIndexOrThrow("is_deleted")) == 1,
@@ -766,13 +771,13 @@ class AndroidUdukkaiDatabaseHelper(
 
     private fun cursorToItem(c: Cursor): PorulTharavuru = PorulTharavuru(
         id = c.getLong(c.getColumnIndexOrThrow("id")),
-        porulPeyar = MozhiJsonConverter.parse(c.getString(c.getColumnIndexOrThrow("porul_peyar"))),
+        name = MozhiJsonConverter.parse(c.getString(c.getColumnIndexOrThrow("porul_peyar"))),
         hsnCode = c.getString(c.getColumnIndexOrThrow("hsn_code")),
-        vilai = c.getDouble(c.getColumnIndexOrThrow("vilai")),
-        variVeetham = c.getDouble(c.getColumnIndexOrThrow("vari_veetham")),
-        alavuVagai = c.getString(c.getColumnIndexOrThrow("alavu_vagai")),
-        alagu = c.getString(c.getColumnIndexOrThrow("alagu")),
-        niruvanamIds = PorulJsonConverter.parseLongList(c.getString(c.getColumnIndexOrThrow("niruvanam_ids"))),
+        price = c.getDouble(c.getColumnIndexOrThrow("vilai")),
+        taxRate = c.getDouble(c.getColumnIndexOrThrow("vari_veetham")),
+        quantityType = c.getString(c.getColumnIndexOrThrow("alavu_vagai")),
+        unit = c.getString(c.getColumnIndexOrThrow("alagu")),
+        companyIds = PorulJsonConverter.parseLongList(c.getString(c.getColumnIndexOrThrow("niruvanam_ids"))),
         companyPrices = PorulJsonConverter.parseCompanyPrices(c.getString(c.getColumnIndexOrThrow("company_prices"))),
         createdAt = c.getLong(c.getColumnIndexOrThrow("created_at")),
         updatedAt = c.getLong(c.getColumnIndexOrThrow("updated_at")),
@@ -782,32 +787,32 @@ class AndroidUdukkaiDatabaseHelper(
 
     private fun cursorToInvoice(c: Cursor): PattiyalTharavuru = PattiyalTharavuru(
         id = c.getLong(c.getColumnIndexOrThrow("id")),
-        niruvanamId = if (c.isNull(c.getColumnIndexOrThrow("niruvanam_id"))) null else c.getLong(c.getColumnIndexOrThrow("niruvanam_id")),
-        patrucheettuEn = c.getString(c.getColumnIndexOrThrow("patrucheettu_en")),
+        companyId = if (c.isNull(c.getColumnIndexOrThrow("niruvanam_id"))) null else c.getLong(c.getColumnIndexOrThrow("niruvanam_id")),
+        invoiceNumber = c.getString(c.getColumnIndexOrThrow("patrucheettu_en")),
         finYear = c.getInt(c.getColumnIndexOrThrow("fin_year")),
         vanakkam = c.getInt(c.getColumnIndexOrThrow("vanakkam")),
-        pattiyalVagai = c.getString(c.getColumnIndexOrThrow("pattiyal_vagai")),
-        vaangunarId = if (c.isNull(c.getColumnIndexOrThrow("vaangunar_id"))) null else c.getLong(c.getColumnIndexOrThrow("vaangunar_id")),
-        vaangunarPeyar = MozhiJsonConverter.parse(c.getString(c.getColumnIndexOrThrow("vaangunar_peyar"))),
-        vaangunarMunvari = MozhiJsonConverter.parse(c.getString(c.getColumnIndexOrThrow("vaangunar_munvari"))),
-        pattiyalNaal = c.getLong(c.getColumnIndexOrThrow("pattiyal_naal")),
-        tharavugal = c.getString(c.getColumnIndexOrThrow("tharavugal")) ?: "[]",
-        mothaThogai = c.getDouble(c.getColumnIndexOrThrow("motha_thogai")),
-        thallupadi = c.getDouble(c.getColumnIndexOrThrow("thallupadi")),
-        podhuThallupadiMathippu = c.getDouble(c.getColumnIndexOrThrow("podhu_thallupadi_mathippu")),
-        podhuThallupadiVagai = c.getString(c.getColumnIndexOrThrow("podhu_thallupadi_vagai")),
-        podhuThallupadiThogai = c.getDouble(c.getColumnIndexOrThrow("podhu_thallupadi_thogai")),
-        variThogai = c.getDouble(c.getColumnIndexOrThrow("vari_thogai")),
-        variTharavugal = c.getString(c.getColumnIndexOrThrow("vari_tharavugal")) ?: "{}",
-        mothaEdai = if (isFactory && c.getColumnIndex("motha_edai") >= 0 && !c.isNull(c.getColumnIndex("motha_edai"))) c.getDouble(c.getColumnIndex("motha_edai")) else 0.0,
-        setharamGrams = if (isFactory && c.getColumnIndex("setharam_grams") >= 0 && !c.isNull(c.getColumnIndex("setharam_grams"))) c.getDouble(c.getColumnIndex("setharam_grams")) else 0.0,
-        thabaalThogai = if (isFactory && c.getColumnIndex("thabaal_thogai") >= 0 && !c.isNull(c.getColumnIndex("thabaal_thogai"))) c.getDouble(c.getColumnIndex("thabaal_thogai")) else 0.0,
-        ahimsaPattuThogai = if (isFactory && c.getColumnIndex("ahimsa_pattu_thogai") >= 0 && !c.isNull(c.getColumnIndex("ahimsa_pattu_thogai"))) c.getDouble(c.getColumnIndex("ahimsa_pattu_thogai")) else 0.0,
-        piravariVugal = if (isFactory && c.getColumnIndex("piravari_vugal") >= 0) (c.getString(c.getColumnIndex("piravari_vugal")) ?: "[]") else "[]",
-        sonthaViruppangal = c.getString(c.getColumnIndexOrThrow("sontha_viruppangal")) ?: "{}",
-        nibandhanaigal = c.getString(c.getColumnIndexOrThrow("nibandhanaigal")),
-        ullkurippu = c.getString(c.getColumnIndexOrThrow("ullkurippu")),
-        vangiTharavugal = if (isFactory && c.getColumnIndex("vangi_tharavugal") >= 0) (c.getString(c.getColumnIndex("vangi_tharavugal")) ?: "{}") else "{}",
+        invoiceType = c.getString(c.getColumnIndexOrThrow("pattiyal_vagai")),
+        customerId = if (c.isNull(c.getColumnIndexOrThrow("vaangunar_id"))) null else c.getLong(c.getColumnIndexOrThrow("vaangunar_id")),
+        customerName = MozhiJsonConverter.parse(c.getString(c.getColumnIndexOrThrow("vaangunar_peyar"))),
+        customerAddress = MozhiJsonConverter.parse(c.getString(c.getColumnIndexOrThrow("vaangunar_munvari"))),
+        invoiceDate = c.getLong(c.getColumnIndexOrThrow("pattiyal_naal")),
+        itemsJson = c.getString(c.getColumnIndexOrThrow("tharavugal")) ?: "[]",
+        totalAmount = c.getDouble(c.getColumnIndexOrThrow("motha_thogai")),
+        discount = c.getDouble(c.getColumnIndexOrThrow("thallupadi")),
+        globalDiscountValue = c.getDouble(c.getColumnIndexOrThrow("podhu_thallupadi_mathippu")),
+        globalDiscountType = c.getString(c.getColumnIndexOrThrow("podhu_thallupadi_vagai")),
+        globalDiscountAmount = c.getDouble(c.getColumnIndexOrThrow("podhu_thallupadi_thogai")),
+        taxAmount = c.getDouble(c.getColumnIndexOrThrow("vari_thogai")),
+        taxDataJson = c.getString(c.getColumnIndexOrThrow("vari_tharavugal")) ?: "{}",
+        totalWeight = if (isFactory && c.getColumnIndex("motha_edai") >= 0 && !c.isNull(c.getColumnIndex("motha_edai"))) c.getDouble(c.getColumnIndex("motha_edai")) else 0.0,
+        wastageGrams = if (isFactory && c.getColumnIndex("setharam_grams") >= 0 && !c.isNull(c.getColumnIndex("setharam_grams"))) c.getDouble(c.getColumnIndex("setharam_grams")) else 0.0,
+        postalCharges = if (isFactory && c.getColumnIndex("thabaal_thogai") >= 0 && !c.isNull(c.getColumnIndex("thabaal_thogai"))) c.getDouble(c.getColumnIndex("thabaal_thogai")) else 0.0,
+        ahimsaSilkAmount = if (isFactory && c.getColumnIndex("ahimsa_pattu_thogai") >= 0 && !c.isNull(c.getColumnIndex("ahimsa_pattu_thogai"))) c.getDouble(c.getColumnIndex("ahimsa_pattu_thogai")) else 0.0,
+        otherTaxesJson = if (isFactory && c.getColumnIndex("piravari_vugal") >= 0) (c.getString(c.getColumnIndex("piravari_vugal")) ?: "[]") else "[]",
+        customPreferencesJson = c.getString(c.getColumnIndexOrThrow("sontha_viruppangal")) ?: "{}",
+        termsAndConditions = c.getString(c.getColumnIndexOrThrow("nibandhanaigal")),
+        notes = c.getString(c.getColumnIndexOrThrow("ullkurippu")),
+        bankDetailsJson = if (isFactory && c.getColumnIndex("vangi_tharavugal") >= 0) (c.getString(c.getColumnIndex("vangi_tharavugal")) ?: "{}") else "{}",
         createdAt = c.getLong(c.getColumnIndexOrThrow("created_at")),
         updatedAt = c.getLong(c.getColumnIndexOrThrow("updated_at")),
         isDeleted = c.getInt(c.getColumnIndexOrThrow("is_deleted")) == 1,
@@ -816,19 +821,19 @@ class AndroidUdukkaiDatabaseHelper(
 
     private fun cursorToReceipt(c: Cursor): PatrugalTharavuru = PatrugalTharavuru(
         id = c.getLong(c.getColumnIndexOrThrow("id")),
-        niruvanamId = if (c.isNull(c.getColumnIndexOrThrow("niruvanam_id"))) null else c.getLong(c.getColumnIndexOrThrow("niruvanam_id")),
-        patruEn = c.getString(c.getColumnIndexOrThrow("patru_en")),
+        companyId = if (c.isNull(c.getColumnIndexOrThrow("niruvanam_id"))) null else c.getLong(c.getColumnIndexOrThrow("niruvanam_id")),
+        receiptNumber = c.getString(c.getColumnIndexOrThrow("patru_en")),
         finYear = c.getString(c.getColumnIndexOrThrow("fin_year")),
         vanakkam = c.getInt(c.getColumnIndexOrThrow("vanakkam")),
-        vaangunarId = if (c.isNull(c.getColumnIndexOrThrow("vaangunar_id"))) null else c.getLong(c.getColumnIndexOrThrow("vaangunar_id")),
-        vaangunarPeyar = MozhiJsonConverter.parse(c.getString(c.getColumnIndexOrThrow("vaangunar_peyar"))),
-        vaangunarMunvari = MozhiJsonConverter.parse(c.getString(c.getColumnIndexOrThrow("vaangunar_munvari"))),
-        patruNaal = c.getLong(c.getColumnIndexOrThrow("patru_naal")),
-        thogai = c.getDouble(c.getColumnIndexOrThrow("thogai")),
-        seluthumMurai = c.getString(c.getColumnIndexOrThrow("seluthum_murai")),
-        vangiPeyar = if (c.isNull(c.getColumnIndexOrThrow("vangi_peyar"))) null else c.getString(c.getColumnIndexOrThrow("vangi_peyar")),
-        parivarthanaiEn = if (c.isNull(c.getColumnIndexOrThrow("parivarthanai_en"))) null else c.getString(c.getColumnIndexOrThrow("parivarthanai_en")),
-        ullkurippu = c.getString(c.getColumnIndexOrThrow("ullkurippu")),
+        customerId = if (c.isNull(c.getColumnIndexOrThrow("vaangunar_id"))) null else c.getLong(c.getColumnIndexOrThrow("vaangunar_id")),
+        customerName = MozhiJsonConverter.parse(c.getString(c.getColumnIndexOrThrow("vaangunar_peyar"))),
+        customerAddress = MozhiJsonConverter.parse(c.getString(c.getColumnIndexOrThrow("vaangunar_munvari"))),
+        receiptDate = c.getLong(c.getColumnIndexOrThrow("patru_naal")),
+        amount = c.getDouble(c.getColumnIndexOrThrow("thogai")),
+        paymentMode = c.getString(c.getColumnIndexOrThrow("seluthum_murai")),
+        bankName = if (c.isNull(c.getColumnIndexOrThrow("vangi_peyar"))) null else c.getString(c.getColumnIndexOrThrow("vangi_peyar")),
+        transactionNumber = if (c.isNull(c.getColumnIndexOrThrow("parivarthanai_en"))) null else c.getString(c.getColumnIndexOrThrow("parivarthanai_en")),
+        notes = c.getString(c.getColumnIndexOrThrow("ullkurippu")),
         createdAt = c.getLong(c.getColumnIndexOrThrow("created_at")),
         updatedAt = c.getLong(c.getColumnIndexOrThrow("updated_at")),
         isDeleted = c.getInt(c.getColumnIndexOrThrow("is_deleted")) == 1,
@@ -837,36 +842,36 @@ class AndroidUdukkaiDatabaseHelper(
 
     private fun cursorToProfile(c: Cursor): NiruvanaTharavugal = NiruvanaTharavugal(
         id = c.getLong(c.getColumnIndexOrThrow("id")),
-        mudhanMozhi = c.getString(c.getColumnIndexOrThrow("mudhan_mozhi")),
-        thunaiMozhi = c.getString(c.getColumnIndexOrThrow("thunai_mozhi")),
-        iruMozhi = c.getInt(c.getColumnIndexOrThrow("iru_mozhi")) == 1,
-        gstPirippugal = c.getInt(c.getColumnIndexOrThrow("gst_pirippugal")) == 1,
-        niruvanathinPeyar = MozhiJsonConverter.parse(c.getString(c.getColumnIndexOrThrow("niruvanathin_peyar"))),
-        kurumPeyar = c.getString(c.getColumnIndexOrThrow("kurum_peyar")),
-        tholaipaesi1 = c.getString(c.getColumnIndexOrThrow("tholaipaesi1")),
-        tholaipaesi2 = c.getString(c.getColumnIndexOrThrow("tholaipaesi2")),
-        minnanjal = c.getString(c.getColumnIndexOrThrow("minnanjal")),
+        primaryLanguage = c.getString(c.getColumnIndexOrThrow("mudhan_mozhi")),
+        secondaryLanguage = c.getString(c.getColumnIndexOrThrow("thunai_mozhi")),
+        isBilingual = c.getInt(c.getColumnIndexOrThrow("iru_mozhi")) == 1,
+        splitGst = c.getInt(c.getColumnIndexOrThrow("gst_pirippugal")) == 1,
+        businessName = MozhiJsonConverter.parse(c.getString(c.getColumnIndexOrThrow("niruvanathin_peyar"))),
+        shortName = c.getString(c.getColumnIndexOrThrow("kurum_peyar")),
+        phone1 = c.getString(c.getColumnIndexOrThrow("tholaipaesi1")),
+        phone2 = c.getString(c.getColumnIndexOrThrow("tholaipaesi2")),
+        email = c.getString(c.getColumnIndexOrThrow("minnanjal")),
         gstin = c.getString(c.getColumnIndexOrThrow("gstin")),
-        mugavari = MozhiJsonConverter.parse(c.getString(c.getColumnIndexOrThrow("mugavari"))),
-        oor = MozhiJsonConverter.parse(c.getString(c.getColumnIndexOrThrow("oor"))),
-        maavattam = MozhiJsonConverter.parse(c.getString(c.getColumnIndexOrThrow("maavattam"))),
-        maanilam = MozhiJsonConverter.parse(c.getString(c.getColumnIndexOrThrow("maanilam"))),
-        naadu = MozhiJsonConverter.parse(c.getString(c.getColumnIndexOrThrow("naadu"))),
-        anjalKuriyeedu = c.getString(c.getColumnIndexOrThrow("anjal_kuriyeedu")),
-        vangiPeyar = MozhiJsonConverter.parse(c.getString(c.getColumnIndexOrThrow("vangi_peyar"))),
-        kilai = MozhiJsonConverter.parse(c.getString(c.getColumnIndexOrThrow("kilai"))),
-        vangiKanakku = c.getString(c.getColumnIndexOrThrow("vangi_kanakku")),
+        address = MozhiJsonConverter.parse(c.getString(c.getColumnIndexOrThrow("mugavari"))),
+        city = MozhiJsonConverter.parse(c.getString(c.getColumnIndexOrThrow("oor"))),
+        district = MozhiJsonConverter.parse(c.getString(c.getColumnIndexOrThrow("maavattam"))),
+        state = MozhiJsonConverter.parse(c.getString(c.getColumnIndexOrThrow("maanilam"))),
+        country = MozhiJsonConverter.parse(c.getString(c.getColumnIndexOrThrow("naadu"))),
+        pinCode = c.getString(c.getColumnIndexOrThrow("anjal_kuriyeedu")),
+        bankName = MozhiJsonConverter.parse(c.getString(c.getColumnIndexOrThrow("vangi_peyar"))),
+        branch = MozhiJsonConverter.parse(c.getString(c.getColumnIndexOrThrow("kilai"))),
+        accountNumber = c.getString(c.getColumnIndexOrThrow("vangi_kanakku")),
         ifsc = c.getString(c.getColumnIndexOrThrow("ifsc")),
-        oavuru = c.getString(c.getColumnIndexOrThrow("oavuru")),
-        agalaOavuru = c.getString(c.getColumnIndexOrThrow("agala_oavuru")),
-        thalaippuVadivu = c.getString(c.getColumnIndexOrThrow("thalaippu_vadivu")),
-        kaiyoppam = c.getString(c.getColumnIndexOrThrow("kaiyoppam")),
-        oppamPeyar = c.getString(c.getColumnIndexOrThrow("oppam_peyar")),
-        oppamMudhalPeyar = c.getString(c.getColumnIndexOrThrow("oppam_mudhal_peyar")),
-        oppamIrudhiPeyar = c.getString(c.getColumnIndexOrThrow("oppam_irudhi_peyar")),
-        adaimozhi = MozhiJsonConverter.parse(c.getString(c.getColumnIndexOrThrow("adaimozhi"))),
+        logo = c.getString(c.getColumnIndexOrThrow("oavuru")),
+        wideLogo = c.getString(c.getColumnIndexOrThrow("agala_oavuru")),
+        headerLayout = c.getString(c.getColumnIndexOrThrow("thalaippu_vadivu")),
+        signature = c.getString(c.getColumnIndexOrThrow("kaiyoppam")),
+        signatoryName = c.getString(c.getColumnIndexOrThrow("oppam_peyar")),
+        signatoryFirstName = c.getString(c.getColumnIndexOrThrow("oppam_mudhal_peyar")),
+        signatoryLastName = c.getString(c.getColumnIndexOrThrow("oppam_irudhi_peyar")),
+        tagline = MozhiJsonConverter.parse(c.getString(c.getColumnIndexOrThrow("adaimozhi"))),
         upiId = c.getString(c.getColumnIndexOrThrow("upi_id")),
-        thoatraNiram = c.getString(c.getColumnIndexOrThrow("thoatra_niram"))
+        themeColor = c.getString(c.getColumnIndexOrThrow("thoatra_niram"))
     )
 }
 

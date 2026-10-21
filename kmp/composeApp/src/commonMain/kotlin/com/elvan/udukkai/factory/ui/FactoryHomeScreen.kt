@@ -95,8 +95,8 @@ fun FactoryHomeScreen() {
     val copyInvoiceAndEdit: (PattiyalTharavuru) -> Unit = { invoice ->
         val copied = invoice.copy(
             id = 0L,
-            patrucheettuEn = "",
-            pattiyalNaal = System.currentTimeMillis(),
+            invoiceNumber = "",
+            invoiceDate = System.currentTimeMillis(),
             createdAt = System.currentTimeMillis(),
             updatedAt = System.currentTimeMillis()
         )
@@ -110,7 +110,7 @@ fun FactoryHomeScreen() {
     val copyProductAndEdit: (PorulTharavuru) -> Unit = { item ->
         val copied = item.copy(
             id = 0L,
-            porulPeyar = item.porulPeyar.mapValues { "${it.value}$copySuffix" },
+            name = item.name.mapValues { "${it.value}$copySuffix" },
             createdAt = System.currentTimeMillis(),
             updatedAt = System.currentTimeMillis()
         )
@@ -122,7 +122,7 @@ fun FactoryHomeScreen() {
     val copyCustomerAndEdit: (VaangunarTharavuru) -> Unit = { merchant ->
         val copied = merchant.copy(
             id = 0L,
-            peyar = merchant.peyar.mapValues { "${it.value}$copySuffix" },
+            name = merchant.name.mapValues { "${it.value}$copySuffix" },
             gstin = "",
             createdAt = System.currentTimeMillis(),
             updatedAt = System.currentTimeMillis()

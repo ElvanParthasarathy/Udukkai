@@ -4,10 +4,12 @@ import com.elvan.udukkai.core.backup.AutoBackupManager
 import com.elvan.udukkai.core.utils.DateUtils
 import com.elvan.udukkai.data.database.getTextilesDatabaseHelper
 import com.elvan.udukkai.data.mock.*
+import com.elvan.udukkai.data.model.CustomerModel
 import com.elvan.udukkai.data.model.PattiyalTharavuru
 import com.elvan.udukkai.data.model.PatruPattiyalInaippuTharavuru
 import com.elvan.udukkai.data.model.PatrugalTharavuru
 import com.elvan.udukkai.data.model.PorulTharavuru
+import com.elvan.udukkai.data.model.ProductModel
 import com.elvan.udukkai.data.model.VaangunarTharavuru
 import com.elvan.udukkai.data.settings.NiruvanaTharavugal
 import com.elvan.udukkai.localization.Language
@@ -50,60 +52,60 @@ object TextilesMockDataSeeder {
 
     fun profileFromMap(d: Map<String, Any>): NiruvanaTharavugal {
         return NiruvanaTharavugal(
-            mudhanMozhi = d["mudhanMozhi"] as? String ?: "ta",
-            thunaiMozhi = d["thunaiMozhi"] as? String ?: "en",
-            iruMozhi = d["iruMozhi"] as? Boolean ?: true,
-            niruvanathinPeyar = mutableMapOf(
+            primaryLanguage = d["mudhanMozhi"] as? String ?: "ta",
+            secondaryLanguage = d["thunaiMozhi"] as? String ?: "en",
+            isBilingual = d["iruMozhi"] as? Boolean ?: true,
+            businessName = mutableMapOf(
                 "ta" to (d["niruvanathinPeyar_ta"] as? String ?: ""),
                 "en" to (d["niruvanathinPeyar_en"] as? String ?: "")
             ),
-            kurumPeyar = d["kurumPeyar"] as? String ?: "",
-            tholaipaesi1 = d["tholaipesi_1"] as? String ?: "",
-            tholaipaesi2 = d["tholaipesi_2"] as? String ?: "",
-            minnanjal = d["minnanjal"] as? String ?: "",
+            shortName = d["kurumPeyar"] as? String ?: "",
+            phone1 = d["tholaipesi_1"] as? String ?: "",
+            phone2 = d["tholaipesi_2"] as? String ?: "",
+            email = d["minnanjal"] as? String ?: "",
             gstin = d["gstin"] as? String ?: "",
-            mugavari = mutableMapOf(
+            address = mutableMapOf(
                 "ta" to (d["mugavari_ta"] as? String ?: ""),
                 "en" to (d["mugavari_en"] as? String ?: "")
             ),
-            oor = mutableMapOf(
+            city = mutableMapOf(
                 "ta" to (d["oor_ta"] as? String ?: ""),
                 "en" to (d["oor_en"] as? String ?: "")
             ),
-            maavattam = mutableMapOf(
+            district = mutableMapOf(
                 "ta" to (d["maavattam_ta"] as? String ?: ""),
                 "en" to (d["maavattam_en"] as? String ?: "")
             ),
-            maanilam = mutableMapOf(
+            state = mutableMapOf(
                 "ta" to (d["maanilam_ta"] as? String ?: ""),
                 "en" to (d["maanilam_en"] as? String ?: "")
             ),
-            naadu = mutableMapOf(
+            country = mutableMapOf(
                 "ta" to (d["naadu_ta"] as? String ?: ""),
                 "en" to (d["naadu_en"] as? String ?: "")
             ),
-            anjalKuriyeedu = d["anjalKuriyeedu"] as? String ?: "",
-            vangiPeyar = mutableMapOf(
+            pinCode = d["anjalKuriyeedu"] as? String ?: "",
+            bankName = mutableMapOf(
                 "ta" to (d["vangiPeyar_ta"] as? String ?: ""),
                 "en" to (d["vangiPeyar_en"] as? String ?: "")
             ),
-            kilai = mutableMapOf(
+            branch = mutableMapOf(
                 "ta" to (d["kilai_ta"] as? String ?: ""),
                 "en" to (d["kilai_en"] as? String ?: "")
             ),
-            vangiKanakku = d["vangiKanakku"] as? String ?: "",
+            accountNumber = d["vangiKanakku"] as? String ?: "",
             ifsc = d["ifsc"] as? String ?: "",
-            oavuru = d["oavuru"] as? String ?: "",
-            agalaOavuru = d["agalaOavuru"] as? String ?: "",
-            thalaippuVadivu = d["thalaippuVadivu"] as? String ?: "wide",
-            kaiyoppam = d["kaiyoppam"] as? String ?: "",
-            oppamPeyar = d["oppamPeyar"] as? String ?: "",
-            adaimozhi = mutableMapOf(
+            logo = d["oavuru"] as? String ?: "",
+            wideLogo = d["agalaOavuru"] as? String ?: "",
+            headerLayout = d["thalaippuVadivu"] as? String ?: "wide",
+            signature = d["kaiyoppam"] as? String ?: "",
+            signatoryName = d["oppamPeyar"] as? String ?: "",
+            tagline = mutableMapOf(
                 "ta" to (d["adaimozhi_ta"] as? String ?: ""),
                 "en" to (d["adaimozhi_en"] as? String ?: "")
             ),
             upiId = d["upiId"] as? String ?: "",
-            thoatraNiram = d["thoatraNiram"] as? String ?: "#6a1b9a"
+            themeColor = d["thoatraNiram"] as? String ?: "#6a1b9a"
         )
     }
 
@@ -146,7 +148,7 @@ object TextilesMockDataSeeder {
             val balance = invEnToTotal[invEn] ?: 0.0
             val apply = remaining.coerceIn(0.0, balance)
             if (apply > 0.0) {
-                links.add(PatruPattiyalInaippuTharavuru(pattiyalId = id, poruthiyaThogai = apply))
+                links.add(PatruPattiyalInaippuTharavuru(invoiceId = id, appliedAmount = apply))
                 remaining -= apply
             }
         }
@@ -179,13 +181,13 @@ object TextilesMockDataSeeder {
             val vagai = item["alavuVagai"] as? String ?: "quantity"
 
             helper.saveItem(
-                PorulTharavuru(
-                    porulPeyar = mapOf("ta" to peyarTa, "en" to peyarEn),
+                ProductModel(
+                    name = mapOf("ta" to peyarTa, "en" to peyarEn),
                     hsnCode = hsn,
-                    vilai = vilai,
-                    variVeetham = vari,
-                    alagu = alagu,
-                    alavuVagai = vagai
+                    price = vilai,
+                    taxRate = vari,
+                    unit = alagu,
+                    quantityType = vagai
                 )
             )
         }
@@ -194,14 +196,14 @@ object TextilesMockDataSeeder {
         // 3. Customers
         for (m in mockSilkVaangunargal) {
             helper.saveMerchant(
-                VaangunarTharavuru(
-                    peyar = mapOf("ta" to (m["peyar_ta"] ?: ""), "en" to (m["peyar_en"] ?: "")),
-                    mugavari = mapOf("ta" to (m["mugavari_ta"] ?: ""), "en" to (m["mugavari_en"] ?: "")),
-                    oor = mapOf("ta" to (m["oor_ta"] ?: ""), "en" to (m["oor_en"] ?: "")),
-                    maavattam = mapOf("ta" to (m["maavattam_ta"] ?: ""), "en" to (m["maavattam_en"] ?: "")),
-                    maanilam = mapOf("ta" to (m["maanilam_ta"] ?: ""), "en" to (m["maanilam_en"] ?: "")),
-                    naadu = mapOf("ta" to (m["naadu_ta"] ?: "இந்தியா"), "en" to (m["naadu_en"] ?: "India")),
-                    anjalKuriyeedu = m["anjalKuriyeedu"] ?: "",
+                CustomerModel(
+                    name = mapOf("ta" to (m["peyar_ta"] ?: ""), "en" to (m["peyar_en"] ?: "")),
+                    address = mapOf("ta" to (m["mugavari_ta"] ?: ""), "en" to (m["mugavari_en"] ?: "")),
+                    city = mapOf("ta" to (m["oor_ta"] ?: ""), "en" to (m["oor_en"] ?: "")),
+                    district = mapOf("ta" to (m["maavattam_ta"] ?: ""), "en" to (m["maavattam_en"] ?: "")),
+                    state = mapOf("ta" to (m["maanilam_ta"] ?: ""), "en" to (m["maanilam_en"] ?: "")),
+                    country = mapOf("ta" to (m["naadu_ta"] ?: "இந்தியா"), "en" to (m["naadu_en"] ?: "India")),
+                    pinCode = m["anjalKuriyeedu"] ?: "",
                     gstin = m["gstin"] ?: ""
                 )
             )
@@ -233,22 +235,22 @@ object TextilesMockDataSeeder {
 
             helper.saveInvoice(
                 PattiyalTharavuru(
-                    niruvanamId = profileId,
-                    patrucheettuEn = invoiceNo,
+                    companyId = profileId,
+                    invoiceNumber = invoiceNo,
                     finYear = 2026,
                     vanakkam = vanakkamNum,
-                    pattiyalVagai = "tax-invoice",
-                    vaangunarId = custId,
-                    vaangunarPeyar = custPeyar,
-                    vaangunarMunvari = custOor,
-                    pattiyalNaal = dateMillis,
-                    tharavugal = enrichedJson,
-                    mothaThogai = grandTotal,
-                    thallupadi = discTotal,
-                    podhuThallupadiMathippu = discTotal,
-                    podhuThallupadiVagai = "₹",
-                    podhuThallupadiThogai = discTotal,
-                    variThogai = taxTotal,
+                    invoiceType = "tax-invoice",
+                    customerId = custId,
+                    customerName = custPeyar,
+                    customerAddress = custOor,
+                    invoiceDate = dateMillis,
+                    itemsJson = enrichedJson,
+                    totalAmount = grandTotal,
+                    discount = discTotal,
+                    globalDiscountValue = discTotal,
+                    globalDiscountType = "₹",
+                    globalDiscountAmount = discTotal,
+                    taxAmount = taxTotal,
                     createdAt = dateMillis,
                     updatedAt = dateMillis
                 )
@@ -278,16 +280,16 @@ object TextilesMockDataSeeder {
 
             helper.saveReceiptWithLinks(
                 PatrugalTharavuru(
-                    niruvanamId = profileId,
-                    patruEn = patruEn,
+                    companyId = profileId,
+                    receiptNumber = patruEn,
                     vanakkam = vanakkamNum,
                     finYear = "2026",
-                    vaangunarId = matchedCust?.id,
-                    vaangunarPeyar = mapOf("ta" to clientName, "en" to ((r["clientNameEn"] as? String) ?: clientName)),
-                    patruNaal = dateMillis,
-                    thogai = amount,
-                    seluthumMurai = pMode,
-                    parivarthanaiEn = r["referenceNo"] as? String,
+                    customerId = matchedCust?.id,
+                    customerName = mapOf("ta" to clientName, "en" to ((r["clientNameEn"] as? String) ?: clientName)),
+                    receiptDate = dateMillis,
+                    amount = amount,
+                    paymentMode = pMode,
+                    transactionNumber = r["referenceNo"] as? String,
                     createdAt = dateMillis,
                     updatedAt = dateMillis
                 ),
@@ -346,7 +348,7 @@ object TextilesMockDataSeeder {
 
     suspend fun toggleBilingual(): String {
         val profile = TextilesProfileRepository.profile
-        val updated = profile.copy(iruMozhi = !profile.iruMozhi)
+        val updated = profile.copy(isBilingual = !profile.isBilingual)
         TextilesProfileRepository.updateProfile(updated)
         return if (updated.iruMozhi) "Bilingual Mode: ON ✓" else "Bilingual Mode: OFF ✗"
     }
@@ -361,8 +363,8 @@ object TextilesMockDataSeeder {
             val pPrimary = p.mudhanMozhi.ifEmpty { "ta" }
             val pSecondary = p.thunaiMozhi.ifEmpty { "en" }
             val updated = p.copy(
-                mudhanMozhi = if (pPrimary == currentPrimary) currentSecondary else currentPrimary,
-                thunaiMozhi = if (pSecondary == currentSecondary) currentPrimary else currentSecondary
+                primaryLanguage = if (pPrimary == currentPrimary) currentSecondary else currentPrimary,
+                secondaryLanguage = if (pSecondary == currentSecondary) currentPrimary else currentSecondary
             )
             TextilesProfileRepository.updateProfile(updated)
         }

@@ -19,6 +19,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.elvan.udukkai.core.data.*
 import com.elvan.udukkai.core.platform.AppBackHandler
+import com.elvan.udukkai.data.model.CustomerModel
 import com.elvan.udukkai.data.model.VaangunarTharavuru
 import com.elvan.udukkai.data.settings.*
 import com.elvan.udukkai.textiles.data.TextilesCustomerRepository
@@ -117,18 +118,18 @@ fun TextilesCustomerEditorScreen(
             return
         }
 
-        val merchantToSave = VaangunarTharavuru(
+        val merchantToSave = CustomerModel(
             id = merchant?.id ?: 0L,
-            peyar = peyarMap.filterValues { it.isNotBlank() },
-            tholaipaesi = tholaipaesi.trim(),
-            minnanjal = minnanjal.trim(),
+            name = peyarMap.filterValues { it.isNotBlank() },
+            phone = tholaipaesi.trim(),
+            email = minnanjal.trim(),
             gstin = gstin.trim().uppercase(),
-            mugavari = mugavariMap.filterValues { it.isNotBlank() },
-            oor = oorMap.filterValues { it.isNotBlank() },
-            maavattam = maavattamMap.filterValues { it.isNotBlank() },
-            maanilam = maanilamMap.filterValues { it.isNotBlank() },
-            naadu = naaduMap.filterValues { it.isNotBlank() },
-            anjalKuriyeedu = anjalKuriyeedu.trim(),
+            address = mugavariMap.filterValues { it.isNotBlank() },
+            city = oorMap.filterValues { it.isNotBlank() },
+            district = maavattamMap.filterValues { it.isNotBlank() },
+            state = maanilamMap.filterValues { it.isNotBlank() },
+            country = naaduMap.filterValues { it.isNotBlank() },
+            pinCode = anjalKuriyeedu.trim(),
             createdAt = merchant?.createdAt ?: System.currentTimeMillis(),
             updatedAt = System.currentTimeMillis()
         )

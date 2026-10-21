@@ -20,21 +20,21 @@ class ElvanCompanySelectionBottomSheetTest {
     ): NiruvanaTharavugal {
         return NiruvanaTharavugal(
             id = id,
-            mudhanMozhi = primaryLang,
-            thunaiMozhi = secondaryLang,
-            iruMozhi = iruMozhi,
-            niruvanathinPeyar = mutableMapOf(
+            primaryLanguage = primaryLang,
+            secondaryLanguage = secondaryLang,
+            isBilingual = iruMozhi,
+            businessName = mutableMapOf(
                 "ta" to taName,
                 "en" to enName
             ),
-            kurumPeyar = kurumPeyar,
-            mugavari = mutableMapOf(
+            shortName = kurumPeyar,
+            address = mutableMapOf(
                 "ta" to addressTa,
                 "en" to addressEn
             ),
-            oor = mutableMapOf("ta" to "திண்டுக்கல்", "en" to "Dindigul"),
-            maavattam = mutableMapOf("ta" to "திண்டுக்கல்", "en" to "Dindigul"),
-            anjalKuriyeedu = "624301"
+            city = mutableMapOf("ta" to "திண்டுக்கல்", "en" to "Dindigul"),
+            district = mutableMapOf("ta" to "திண்டுக்கல்", "en" to "Dindigul"),
+            pinCode = "624301"
         )
     }
 

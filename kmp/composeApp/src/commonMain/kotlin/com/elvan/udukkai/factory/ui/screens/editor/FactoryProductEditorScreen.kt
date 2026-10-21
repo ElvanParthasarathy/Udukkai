@@ -17,6 +17,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.elvan.udukkai.core.platform.AppBackHandler
 import com.elvan.udukkai.data.model.PorulTharavuru
+import com.elvan.udukkai.data.model.ProductModel
 import com.elvan.udukkai.factory.data.FactoryProductRepository
 import com.elvan.udukkai.factory.data.FactoryProfileRepository
 import com.elvan.udukkai.localization.K
@@ -99,15 +100,13 @@ fun FactoryProductEditorScreen(
 
         val priceVal = vilai.toDoubleOrNull() ?: 0.0
 
-        val itemToSave = PorulTharavuru(
+        val itemToSave = ProductModel(
             id = item?.id ?: 0L,
-            porulPeyar = porulPeyarMap.filterValues { it.isNotBlank() },
+            name = porulPeyarMap.filterValues { it.isNotBlank() },
             hsnCode = "",
-            vilai = priceVal,
-            variVeetham = 0.0,
-            alavuVagai = alavuVagai,
-            niruvanamIds = emptyList(),
-            companyPrices = emptyMap(),
+            price = priceVal,
+            taxRate = 0.0,
+            quantityType = alavuVagai,
             createdAt = item?.createdAt ?: System.currentTimeMillis(),
             updatedAt = System.currentTimeMillis()
         )

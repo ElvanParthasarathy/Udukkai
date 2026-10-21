@@ -189,18 +189,18 @@ fun FactoryNewProfileBottomSheet(
                 }
 
                 val newProfile = NiruvanaTharavugal(
-                    mudhanMozhi = "ta",
-                    thunaiMozhi = "en",
-                    iruMozhi = true,
-                    gstPirippugal = false,
-                    niruvanathinPeyar = mutableMapOf(
+                    primaryLanguage = "ta",
+                    secondaryLanguage = "en",
+                    isBilingual = true,
+                    splitGst = false,
+                    businessName = mutableMapOf(
                         "ta" to newNamePrimary.trim(),
                         "en" to newNameSecondary.trim()
                     ),
-                    kurumPeyar = newNamePrimary.trim().take(15),
-                    naadu = mutableMapOf("en" to "India", "ta" to "இந்தியா"),
-                    thalaippuVadivu = "small",
-                    thoatraNiram = "#388e3c"
+                    shortName = newNamePrimary.trim().take(15),
+                    country = mutableMapOf("en" to "India", "ta" to "இந்தியா"),
+                    headerLayout = "small",
+                    themeColor = "#388e3c"
                 )
                 val success = FactoryProfileRepository.createProfile(newProfile)
                 if (success) {

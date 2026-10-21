@@ -94,18 +94,18 @@ fun VanakkamThirai(
                     try {
                         if (needsSilk) {
                             val silkProfile = NiruvanaTharavugal(
-                                mudhanMozhi = billingLanguage,
-                                niruvanathinPeyar = mutableMapOf(billingLanguage to gstBusinessName.trim()),
-                                kurumPeyar = gstBusinessName.trim()
+                                primaryLanguage = billingLanguage,
+                                businessName = mutableMapOf(billingLanguage to gstBusinessName.trim()),
+                                shortName = gstBusinessName.trim()
                             )
                             TextilesProfileRepository.createProfile(silkProfile)
                         }
 
                         if (needsCoolie) {
                             val coolieProfile = NiruvanaTharavugal(
-                                mudhanMozhi = billingLanguage,
-                                niruvanathinPeyar = mutableMapOf(billingLanguage to coolieBusinessName.trim()),
-                                kurumPeyar = coolieBusinessName.trim()
+                                primaryLanguage = billingLanguage,
+                                businessName = mutableMapOf(billingLanguage to coolieBusinessName.trim()),
+                                shortName = coolieBusinessName.trim()
                             )
                             FactoryProfileRepository.createProfile(coolieProfile)
                         }

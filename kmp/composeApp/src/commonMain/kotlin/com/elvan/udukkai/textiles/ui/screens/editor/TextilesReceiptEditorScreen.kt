@@ -24,6 +24,8 @@ import com.elvan.udukkai.core.platform.AppBackHandler
 import com.elvan.udukkai.data.model.PattiyalTharavuru
 import com.elvan.udukkai.data.model.PatruPattiyalInaippuTharavuru
 import com.elvan.udukkai.data.model.PatrugalTharavuru
+import com.elvan.udukkai.data.model.ReceiptInvoiceLinkModel
+import com.elvan.udukkai.data.model.ReceiptModel
 import com.elvan.udukkai.data.model.SeluthiVagai
 import com.elvan.udukkai.data.settings.NiruvanaTharavugal
 import androidx.compose.foundation.text.KeyboardOptions
@@ -264,9 +266,9 @@ fun TextilesReceiptEditorScreen(
             if (apply > 0.0) {
                 links.add(
                     PatruPattiyalInaippuTharavuru(
-                        patruId = receipt?.id ?: 0L,
-                        pattiyalId = inv.id,
-                        poruthiyaThogai = apply
+                        receiptId = receipt?.id ?: 0L,
+                        invoiceId = inv.id,
+                        appliedAmount = apply
                     )
                 )
                 remaining -= apply
@@ -286,19 +288,19 @@ fun TextilesReceiptEditorScreen(
             val defaultFinYear = DateUtils.formatEpochMillis(now).split("/").last()
             val entryToSave = PatrugalTharavuru(
                 id = receipt?.id ?: 0L,
-                niruvanamId = selectedNiruvanamId,
-                patruEn = patruEn.trim(),
+                companyId = selectedNiruvanamId,
+                receiptNumber = patruEn.trim(),
                 finYear = receipt?.finYear ?: defaultFinYear,
                 vanakkam = vanakkam,
-                vaangunarId = selectedVaangunarId,
-                vaangunarPeyar = selectedVaangunarPeyarMap,
-                vaangunarMunvari = selectedVaangunarMunvariMap,
-                patruNaal = patruNaal,
-                thogai = amount,
-                seluthumMurai = seluthiVagai.storedValue,
-                vangiPeyar = receipt?.vangiPeyar,
-                parivarthanaiEn = if (seluthiVagai.needsReference) suttruEn.trim() else null,
-                ullkurippu = ullkurippu.trim(),
+                customerId = selectedVaangunarId,
+                customerName = selectedVaangunarPeyarMap,
+                customerAddress = selectedVaangunarMunvariMap,
+                receiptDate = patruNaal,
+                amount = amount,
+                paymentMode = seluthiVagai.storedValue,
+                bankName = receipt?.vangiPeyar,
+                transactionNumber = if (seluthiVagai.needsReference) suttruEn.trim() else null,
+                notes = ullkurippu.trim(),
                 createdAt = receipt?.createdAt ?: now,
                 updatedAt = now,
                 isDeleted = false

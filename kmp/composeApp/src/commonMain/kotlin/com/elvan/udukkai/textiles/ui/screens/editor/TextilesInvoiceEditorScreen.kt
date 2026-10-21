@@ -32,6 +32,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.elvan.udukkai.core.platform.AppBackHandler
 import com.elvan.udukkai.core.platform.getPreferencesHelper
+import com.elvan.udukkai.data.model.InvoiceModel
 import com.elvan.udukkai.data.model.PattiyalTharavuru
 import com.elvan.udukkai.textiles.data.TextilesInvoiceRepository
 import com.elvan.udukkai.textiles.data.TextilesProductRepository
@@ -335,23 +336,23 @@ fun TextilesInvoiceEditorScreen(
                 val nextVanakkam = TextilesInvoiceRepository.getNextVanakkam(selectedNiruvanamId)
                 val newInvoice = PattiyalTharavuru(
                     id = invoice?.id ?: 0L,
-                    niruvanamId = selectedNiruvanamId,
-                    patrucheettuEn = invoiceNumber,
+                    companyId = selectedNiruvanamId,
+                    invoiceNumber = invoiceNumber,
                     vanakkam = if (invoice != null && invoice.vanakkam > 0) invoice.vanakkam else nextVanakkam,
-                    pattiyalVagai = pattiyalVagai,
-                    vaangunarId = selectedVaangunarId,
-                    vaangunarPeyar = selectedVaangunarPeyarMap,
-                    vaangunarMunvari = selectedVaangunarMunvariMap,
-                    pattiyalNaal = invoiceDate,
-                    tharavugal = TextilesCalculation.itemsToJson(validItems),
-                    mothaThogai = totals.mothaMothangal,
-                    thallupadi = totals.thallupadiMothangal,
-                    podhuThallupadiMathippu = globalDiscountValue.toDoubleOrNull() ?: 0.0,
-                    podhuThallupadiVagai = globalDiscountType,
-                    podhuThallupadiThogai = 0.0,
-                    variThogai = totals.variMothangal,
-                    variTharavugal = TextilesCalculation.taxToJson(totals),
-                    sonthaViruppangal = TextilesCalculation.preferencesToJson(
+                    invoiceType = pattiyalVagai,
+                    customerId = selectedVaangunarId,
+                    customerName = selectedVaangunarPeyarMap,
+                    customerAddress = selectedVaangunarMunvariMap,
+                    invoiceDate = invoiceDate,
+                    itemsJson = TextilesCalculation.itemsToJson(validItems),
+                    totalAmount = totals.mothaMothangal,
+                    discount = totals.thallupadiMothangal,
+                    globalDiscountValue = globalDiscountValue.toDoubleOrNull() ?: 0.0,
+                    globalDiscountType = globalDiscountType,
+                    globalDiscountAmount = 0.0,
+                    taxAmount = totals.variMothangal,
+                    taxDataJson = TextilesCalculation.taxToJson(totals),
+                    customPreferencesJson = TextilesCalculation.preferencesToJson(
                         TextilesPreferences(
                             globalDiscountValue = globalDiscountValue.toDoubleOrNull() ?: 0.0,
                             globalDiscountType = globalDiscountType,

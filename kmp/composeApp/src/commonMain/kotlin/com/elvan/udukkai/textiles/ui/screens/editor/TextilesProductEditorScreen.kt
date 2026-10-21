@@ -19,6 +19,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.elvan.udukkai.core.platform.AppBackHandler
 import com.elvan.udukkai.data.model.PorulTharavuru
+import com.elvan.udukkai.data.model.ProductModel
 import com.elvan.udukkai.textiles.data.TextilesProductRepository
 import com.elvan.udukkai.textiles.data.TextilesProfileRepository
 import com.elvan.udukkai.localization.K
@@ -111,15 +112,13 @@ fun TextilesProductEditorScreen(
         val priceVal = vilai.toDoubleOrNull() ?: 0.0
         val taxVal = variVeetham.toDoubleOrNull() ?: 0.0
 
-        val itemToSave = PorulTharavuru(
+        val itemToSave = ProductModel(
             id = item?.id ?: 0L,
-            porulPeyar = porulPeyarMap.filterValues { it.isNotBlank() },
+            name = porulPeyarMap.filterValues { it.isNotBlank() },
             hsnCode = hsnCode.trim(),
-            vilai = priceVal,
-            variVeetham = taxVal,
-            alavuVagai = alavuVagai,
-            niruvanamIds = emptyList(),
-            companyPrices = emptyMap(),
+            price = priceVal,
+            taxRate = taxVal,
+            quantityType = alavuVagai,
             createdAt = item?.createdAt ?: System.currentTimeMillis(),
             updatedAt = System.currentTimeMillis()
         )

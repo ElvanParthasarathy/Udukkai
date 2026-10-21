@@ -2,11 +2,19 @@ package com.elvan.udukkai.data.model
 
 /**
  * Domain model representing a link between a Payment Receipt and an Invoice.
- * Maps to `pattu_patru_pattiyal_table` / `kooli_patru_pattiyal_table`.
+ * Standardized English property names with backward-compatible Tanglish accessors.
  */
-data class PatruPattiyalInaippuTharavuru(
+data class ReceiptInvoiceLinkModel(
     val id: Long = 0L,
-    val patruId: Long = 0L,
-    val pattiyalId: Long = 0L,
-    val poruthiyaThogai: Double = 0.0
-)
+    val receiptId: Long = 0L,
+    val invoiceId: Long = 0L,
+    val appliedAmount: Double = 0.0
+) {
+    // Backward-compatible accessors
+    val patruId: Long get() = receiptId
+    val pattiyalId: Long get() = invoiceId
+    val poruthiyaThogai: Double get() = appliedAmount
+}
+
+typealias PatruPattiyalInaippuTharavuru = ReceiptInvoiceLinkModel
+typealias ReceiptInvoiceLink = ReceiptInvoiceLinkModel

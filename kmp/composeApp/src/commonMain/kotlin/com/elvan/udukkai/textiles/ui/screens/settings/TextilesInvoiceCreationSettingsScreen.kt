@@ -212,7 +212,7 @@ fun TextilesInvoiceCreationSettingsScreen(
                             ElvanSettingsSwitch(
                                 checked = profile.iruMozhi,
                                 onCheckedChange = { isChecked ->
-                                    val updated = profile.copy(iruMozhi = isChecked)
+                                    val updated = profile.copy(isBilingual = isChecked)
                                     TextilesProfileRepository.updateProfile(updated)
                                     ElvanSnackbar.show(saveSuccessMsg)
                                 },
@@ -231,7 +231,7 @@ fun TextilesInvoiceCreationSettingsScreen(
                                 ElvanSettingsSwitch(
                                     checked = profile.gstPirippugal,
                                     onCheckedChange = { isChecked ->
-                                        val updated = profile.copy(gstPirippugal = isChecked)
+                                        val updated = profile.copy(splitGst = isChecked)
                                         TextilesProfileRepository.updateProfile(updated)
                                         ElvanSnackbar.show(saveSuccessMsg)
                                     },

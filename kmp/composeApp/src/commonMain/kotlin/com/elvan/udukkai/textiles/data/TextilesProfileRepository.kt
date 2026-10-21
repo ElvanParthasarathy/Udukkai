@@ -19,49 +19,49 @@ object TextilesProfileRepository {
 
     private val defaultProfile = NiruvanaTharavugal(
         id = 1L,
-        mudhanMozhi = "ta",
-        thunaiMozhi = "en",
-        iruMozhi = true,
-        niruvanathinPeyar = mutableMapOf(
+        primaryLanguage = "ta",
+        secondaryLanguage = "en",
+        isBilingual = true,
+        businessName = mutableMapOf(
             "ta" to "கல்பனா சில்க்ஸ் & டெக்ஸ்டைல்ஸ்",
             "en" to "Kalpana Silks & Textiles"
         ),
-        kurumPeyar = "கல்பனா சில்க்ஸ்",
-        tholaipaesi1 = "+91 94433 22110",
-        tholaipaesi2 = "+91 98840 12345",
-        minnanjal = "sales@kalpanasilks.com",
+        shortName = "கல்பனா சில்க்ஸ்",
+        phone1 = "+91 94433 22110",
+        phone2 = "+91 98840 12345",
+        email = "sales@kalpanasilks.com",
         gstin = "33AABCK1234F1Z5",
-        mugavari = mutableMapOf(
+        address = mutableMapOf(
             "ta" to "12, காந்தி சாலை, பெரியார் நகர்",
             "en" to "12, Gandhi Road, Periyar Nagar"
         ),
-        oor = mutableMapOf(
+        city = mutableMapOf(
             "ta" to "ஈரோடு",
             "en" to "Erode"
         ),
-        maavattam = mutableMapOf(
+        district = mutableMapOf(
             "ta" to "ஈரோடு",
             "en" to "Erode"
         ),
-        anjalKuriyeedu = "638001",
-        vangiPeyar = mutableMapOf(
+        pinCode = "638001",
+        bankName = mutableMapOf(
             "ta" to "ஸ்டேட் பாங்க் ஆப் இந்தியா",
             "en" to "State Bank of India"
         ),
-        kilai = mutableMapOf(
+        branch = mutableMapOf(
             "ta" to "ஈரோடு முதன்மைக் கிளை",
             "en" to "Erode Main Branch"
         ),
-        vangiKanakku = "309845217634",
+        accountNumber = "309845217634",
         ifsc = "SBIN0000837",
-        oppamPeyar = "உரிமையாளர் / மேலாளர்",
-        oppamMudhalPeyar = "உரிமையாளர்",
-        oppamIrudhiPeyar = "மேலாளர்",
-        adaimozhi = mutableMapOf(
+        signatoryName = "உரிமையாளர் / மேலாளர்",
+        signatoryFirstName = "உரிமையாளர்",
+        signatoryLastName = "மேலாளர்",
+        tagline = mutableMapOf(
             "ta" to "உயர்தர பட்டு மற்றும் சவுளி ரகங்கள்",
             "en" to "Premium Silk & Textiles"
         ),
-        thoatraNiram = "#6a1b9a"
+        themeColor = "#6a1b9a"
     )
 
     const val MAX_PROFILES = 5

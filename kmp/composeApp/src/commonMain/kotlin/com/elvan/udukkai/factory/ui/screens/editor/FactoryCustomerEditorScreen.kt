@@ -14,6 +14,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.elvan.udukkai.core.platform.AppBackHandler
+import com.elvan.udukkai.data.model.CustomerModel
 import com.elvan.udukkai.data.model.VaangunarTharavuru
 import com.elvan.udukkai.factory.data.FactoryCustomerRepository
 import com.elvan.udukkai.factory.data.FactoryProfileRepository
@@ -93,18 +94,12 @@ fun FactoryCustomerEditorScreen(
             return
         }
 
-        val merchantToSave = VaangunarTharavuru(
+        val merchantToSave = CustomerModel(
             id = merchant?.id ?: 0L,
-            peyar = peyarMap.filterValues { it.isNotBlank() },
-            tholaipaesi = tholaipaesi.trim(),
-            minnanjal = "",
-            gstin = "",
-            mugavari = mugavariMap.filterValues { it.isNotBlank() },
-            oor = oorMap.filterValues { it.isNotBlank() },
-            maavattam = emptyMap(),
-            maanilam = emptyMap(),
-            naadu = emptyMap(),
-            anjalKuriyeedu = "",
+            name = peyarMap.filterValues { it.isNotBlank() },
+            phone = tholaipaesi.trim(),
+            address = mugavariMap.filterValues { it.isNotBlank() },
+            city = oorMap.filterValues { it.isNotBlank() },
             createdAt = merchant?.createdAt ?: System.currentTimeMillis(),
             updatedAt = System.currentTimeMillis()
         )

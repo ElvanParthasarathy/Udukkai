@@ -2,45 +2,56 @@ package com.elvan.udukkai.data.model
 
 import com.elvan.udukkai.data.settings.MozhiJsonConverter
 
-data class PorulTharavuru(
+data class ProductModel(
     val id: Long = 0,
-    val porulPeyar: Map<String, String> = emptyMap(),
+    val name: Map<String, String> = emptyMap(),
     val hsnCode: String = "",
-    val vilai: Double = 0.0,
-    val variVeetham: Double = 0.0,
-    val alavuVagai: String = "quantity",
-    val alagu: String = "Nos",
-    val niruvanamIds: List<Long> = emptyList(),
+    val price: Double = 0.0,
+    val taxRate: Double = 0.0,
+    val quantityType: String = "quantity",
+    val unit: String = "Nos",
+    val companyIds: List<Long> = emptyList(),
     val companyPrices: Map<Long, Double> = emptyMap(),
     val createdAt: Long = System.currentTimeMillis(),
     val updatedAt: Long = System.currentTimeMillis(),
     val isDeleted: Boolean = false,
     val deletedAt: Long? = null
 ) {
+    // Backward-compatible accessors for legacy Tanglish property names
+    val porulPeyar: Map<String, String> get() = name
+    val vilai: Double get() = price
+    val variVeetham: Double get() = taxRate
+    val alavuVagai: String get() = quantityType
+    val alagu: String get() = unit
+    val niruvanamIds: List<Long> get() = companyIds
+
     /**
      * Determines whether this product is available for the given company.
-     * If [niruvanamIds] is empty, the product is shared across all companies.
+     * If [companyIds] is empty, the product is shared across all companies.
      * If [companyId] is null, it is available if the product is shared.
      */
     fun isAvailableForCompany(companyId: Long?): Boolean {
-        if (niruvanamIds.isEmpty()) return true
+        if (companyIds.isEmpty()) return true
         if (companyId == null) return false
-        return niruvanamIds.contains(companyId)
+        return companyIds.contains(companyId)
     }
 
     /**
      * Returns the effective selling price for the given company.
      * If a company-specific price override exists (> 0), it is returned;
-     * otherwise, the default selling price [vilai] is returned.
+     * otherwise, the default selling price [price] is returned.
      */
     fun getEffectivePrice(companyId: Long?): Double {
         if (companyId != null && companyPrices.containsKey(companyId)) {
-            val price = companyPrices[companyId]
-            if (price != null && price > 0.0) return price
+            val p = companyPrices[companyId]
+            if (p != null && p > 0.0) return p
         }
-        return vilai
+        return price
     }
 }
+
+typealias PorulTharavuru = ProductModel
+typealias Product = ProductModel
 
 object PorulJsonConverter {
     fun parseLongList(json: String?): List<Long> {
@@ -98,13 +109,20 @@ object PorulFirebasePayloadConverter {
 
         return hashMapOf(
             "id" to item.id,
-            "porulPeyar" to MozhiJsonConverter.stringify(item.porulPeyar),
+            "name" to MozhiJsonConverter.stringify(item.name),
+            "productName" to MozhiJsonConverter.stringify(item.name),
+            "porulPeyar" to MozhiJsonConverter.stringify(item.name),
             "hsnCode" to item.hsnCode,
-            "vilai" to item.vilai,
-            "variVeetham" to item.variVeetham,
-            "alavuVagai" to item.alavuVagai,
-            "alagu" to item.alagu,
-            "niruvanamIds" to item.niruvanamIds,
+            "price" to item.price,
+            "vilai" to item.price,
+            "taxRate" to item.taxRate,
+            "variVeetham" to item.taxRate,
+            "quantityType" to item.quantityType,
+            "alavuVagai" to item.quantityType,
+            "unit" to item.unit,
+            "alagu" to item.unit,
+            "companyIds" to item.companyIds,
+            "niruvanamIds" to item.companyIds,
             "companyPrices" to pricesMap,
             "createdAt" to item.createdAt,
             "updatedAt" to item.updatedAt,
@@ -201,20 +219,20 @@ object PorulFirebasePayloadConverter {
         }
         if (id <= 0L) return null
 
-        val porulPeyarStr = map["porulPeyar"] as? String ?: "{}"
+        val nameStr = (map["productName"] ?: map["name"] ?: map["porulPeyar"]) as? String ?: "{}"
         val hsnCode = map["hsnCode"] as? String ?: ""
-        val vilai = when (val rawVilai = map["vilai"]) {
-            is Number -> rawVilai.toDouble()
-            is String -> rawVilai.trim().toDoubleOrNull() ?: 0.0
+        val price = when (val rawPrice = map["price"] ?: map["vilai"]) {
+            is Number -> rawPrice.toDouble()
+            is String -> rawPrice.trim().toDoubleOrNull() ?: 0.0
             else -> 0.0
         }
-        val variVeetham = when (val rawVari = map["variVeetham"]) {
-            is Number -> rawVari.toDouble()
-            is String -> rawVari.trim().toDoubleOrNull() ?: 0.0
+        val taxRate = when (val rawTax = map["taxRate"] ?: map["variVeetham"]) {
+            is Number -> rawTax.toDouble()
+            is String -> rawTax.trim().toDoubleOrNull() ?: 0.0
             else -> 0.0
         }
-        val alavuVagai = map["alavuVagai"] as? String ?: "quantity"
-        val alagu = map["alagu"] as? String ?: "Nos"
+        val quantityType = (map["quantityType"] ?: map["alavuVagai"]) as? String ?: "quantity"
+        val unit = (map["unit"] ?: map["alagu"]) as? String ?: "Nos"
         val createdAt = when (val raw = map["createdAt"]) {
             is Number -> raw.toLong()
             is String -> raw.trim().toLongOrNull() ?: (System.currentTimeMillis() / 1000)
@@ -235,15 +253,15 @@ object PorulFirebasePayloadConverter {
         val niruvanamIds = parseNiruvanamIds(map["niruvanamIds"])
         val companyPrices = parseCompanyPrices(map["companyPrices"])
 
-        return PorulTharavuru(
+        return ProductModel(
             id = id,
-            porulPeyar = MozhiJsonConverter.parse(porulPeyarStr),
+            name = MozhiJsonConverter.parse(nameStr),
             hsnCode = hsnCode,
-            vilai = vilai,
-            variVeetham = variVeetham,
-            alavuVagai = alavuVagai,
-            alagu = alagu,
-            niruvanamIds = niruvanamIds,
+            price = price,
+            taxRate = taxRate,
+            quantityType = quantityType,
+            unit = unit,
+            companyIds = niruvanamIds,
             companyPrices = companyPrices,
             createdAt = createdAt,
             updatedAt = updatedAt,

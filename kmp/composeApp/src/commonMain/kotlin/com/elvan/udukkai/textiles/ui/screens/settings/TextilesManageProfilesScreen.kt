@@ -189,18 +189,18 @@ fun TextilesNewProfileBottomSheet(
                 }
 
                 val newProfile = NiruvanaTharavugal(
-                    mudhanMozhi = "ta",
-                    thunaiMozhi = "en",
-                    iruMozhi = true,
-                    gstPirippugal = true,
-                    niruvanathinPeyar = mutableMapOf(
+                    primaryLanguage = "ta",
+                    secondaryLanguage = "en",
+                    isBilingual = true,
+                    splitGst = true,
+                    businessName = mutableMapOf(
                         "ta" to newNamePrimary.trim(),
                         "en" to newNameSecondary.trim()
                     ),
-                    kurumPeyar = newNamePrimary.trim().take(15),
-                    naadu = mutableMapOf("en" to "India", "ta" to "இந்தியா"),
-                    thalaippuVadivu = "small",
-                    thoatraNiram = "#6a1b9a"
+                    shortName = newNamePrimary.trim().take(15),
+                    country = mutableMapOf("en" to "India", "ta" to "இந்தியா"),
+                    headerLayout = "small",
+                    themeColor = "#6a1b9a"
                 )
                 val success = TextilesProfileRepository.createProfile(newProfile)
                 if (success) {

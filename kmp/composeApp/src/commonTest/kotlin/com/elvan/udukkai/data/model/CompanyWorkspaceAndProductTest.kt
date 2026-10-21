@@ -17,8 +17,8 @@ class CompanyWorkspaceAndProductTest {
     fun testProductSharedByDefault() {
         val sharedProduct = PorulTharavuru(
             id = 1,
-            vilai = 1200.0,
-            niruvanamIds = emptyList()
+            price = 1200.0,
+            companyIds = emptyList()
         )
         // Available for all companies
         assertTrue(sharedProduct.isAvailableForCompany(10L))
@@ -33,8 +33,8 @@ class CompanyWorkspaceAndProductTest {
     fun testProductRestrictedToSpecificCompanies() {
         val restrictedProduct = PorulTharavuru(
             id = 2,
-            vilai = 1500.0,
-            niruvanamIds = listOf(101L, 102L)
+            price = 1500.0,
+            companyIds = listOf(101L, 102L)
         )
         assertTrue(restrictedProduct.isAvailableForCompany(101L))
         assertTrue(restrictedProduct.isAvailableForCompany(102L))
@@ -46,7 +46,7 @@ class CompanyWorkspaceAndProductTest {
     fun testCompanySpecificPriceOverrides() {
         val productWithOverrides = PorulTharavuru(
             id = 3,
-            vilai = 1000.0,
+            price = 1000.0,
             companyPrices = mapOf(101L to 1250.0, 102L to 1400.0)
         )
         // Company 101 gets override 1250.0
@@ -98,9 +98,9 @@ class CompanyWorkspaceAndProductTest {
     fun testPorulFirebasePayloadGeneration() {
         val product = PorulTharavuru(
             id = 42,
-            porulPeyar = mapOf("ta" to "பட்டு", "en" to "Kanchipuram Pattu"),
-            vilai = 4500.0,
-            niruvanamIds = listOf(101L, 102L),
+            name = mapOf("ta" to "பட்டு", "en" to "Kanchipuram Pattu"),
+            price = 4500.0,
+            companyIds = listOf(101L, 102L),
             companyPrices = mapOf(101L to 4200.0, 102L to 4600.0)
         )
         val payload = PorulFirebasePayloadConverter.toFirebasePayload(product)
@@ -192,12 +192,12 @@ class CompanyWorkspaceAndProductTest {
     fun testPorulFirebaseRoundtrip() {
         val original = PorulTharavuru(
             id = 55,
-            porulPeyar = mapOf("ta" to "சட்டை", "en" to "Silk Shirt"),
-            vilai = 2200.0,
-            alavuVagai = "quantity",
-            alagu = "Piece",
+            name = mapOf("ta" to "சட்டை", "en" to "Silk Shirt"),
+            price = 2200.0,
+            quantityType = "quantity",
+            unit = "Piece",
             hsnCode = "6205",
-            niruvanamIds = listOf(201L, 202L),
+            companyIds = listOf(201L, 202L),
             companyPrices = mapOf(201L to 2100.0, 202L to 2300.0)
         )
         val payload = PorulFirebasePayloadConverter.toFirebasePayload(original)
@@ -219,8 +219,8 @@ class CompanyWorkspaceAndProductTest {
         // Product restricted to exactly one company
         val singleCompanyProduct = PorulTharavuru(
             id = 77,
-            vilai = 3000.0,
-            niruvanamIds = listOf(101L),
+            price = 3000.0,
+            companyIds = listOf(101L),
             companyPrices = mapOf(101L to 2800.0, 102L to 3200.0)
         )
         // Availability
@@ -239,16 +239,16 @@ class CompanyWorkspaceAndProductTest {
     fun testProductEditPreservesAvailabilityAndPriceOverrides() {
         val initialProduct = PorulTharavuru(
             id = 88,
-            porulPeyar = mapOf("en" to "Cotton Saree"),
-            vilai = 1500.0,
-            niruvanamIds = listOf(101L),
+            name = mapOf("en" to "Cotton Saree"),
+            price = 1500.0,
+            companyIds = listOf(101L),
             companyPrices = mapOf(101L to 1350.0)
         )
 
         // Perform edit: changing base price and name, leaving company metadata intact
         val editedProduct = initialProduct.copy(
-            porulPeyar = mapOf("en" to "Premium Cotton Saree"),
-            vilai = 1600.0,
+            name = mapOf("en" to "Premium Cotton Saree"),
+            price = 1600.0,
             updatedAt = System.currentTimeMillis()
         )
 
@@ -271,14 +271,14 @@ class CompanyWorkspaceAndProductTest {
         val factoryInitial = com.elvan.udukkai.factory.data.FactoryProfileRepository.profile
 
         com.elvan.udukkai.factory.data.FactoryProfileRepository.updateProfile(
-            factoryInitial.copy(iruMozhi = false, mudhanMozhi = "ta", thunaiMozhi = "en")
+            factoryInitial.copy(isBilingual = false, primaryLanguage = "ta", secondaryLanguage = "en")
         )
         val factorySingle = PrintLanguageManager.getConfig("factory")
         assertFalse(factorySingle.isBilingual)
         assertEquals(BillingLanguage.TAMIL, factorySingle.primaryLanguage)
 
         com.elvan.udukkai.factory.data.FactoryProfileRepository.updateProfile(
-            factoryInitial.copy(iruMozhi = true, mudhanMozhi = "ta", thunaiMozhi = "en")
+            factoryInitial.copy(isBilingual = true, primaryLanguage = "ta", secondaryLanguage = "en")
         )
         val factoryBilingual = PrintLanguageManager.getConfig("factory")
         assertTrue(factoryBilingual.isBilingual)
@@ -287,14 +287,14 @@ class CompanyWorkspaceAndProductTest {
         val textilesInitial = com.elvan.udukkai.textiles.data.TextilesProfileRepository.profile
 
         com.elvan.udukkai.textiles.data.TextilesProfileRepository.updateProfile(
-            textilesInitial.copy(iruMozhi = false, mudhanMozhi = "en", thunaiMozhi = "ta")
+            textilesInitial.copy(isBilingual = false, primaryLanguage = "en", secondaryLanguage = "ta")
         )
         val textilesSingle = PrintLanguageManager.getConfig("textiles")
         assertFalse(textilesSingle.isBilingual)
         assertEquals(BillingLanguage.ENGLISH, textilesSingle.primaryLanguage)
 
         com.elvan.udukkai.textiles.data.TextilesProfileRepository.updateProfile(
-            textilesInitial.copy(iruMozhi = true, mudhanMozhi = "en", thunaiMozhi = "ta")
+            textilesInitial.copy(isBilingual = true, primaryLanguage = "en", secondaryLanguage = "ta")
         )
         val textilesBilingual = PrintLanguageManager.getConfig("textiles")
         assertTrue(textilesBilingual.isBilingual)
@@ -326,14 +326,14 @@ class CompanyWorkspaceAndProductTest {
         val companyBId = 202L
 
         val deletedInvoices = listOf(
-            PattiyalTharavuru(id = 1, patrucheettuEn = "INV-001", niruvanamId = companyAId, isDeleted = true),
-            PattiyalTharavuru(id = 2, patrucheettuEn = "INV-002", niruvanamId = companyBId, isDeleted = true),
-            PattiyalTharavuru(id = 3, patrucheettuEn = "INV-003", niruvanamId = companyAId, isDeleted = true)
+            PattiyalTharavuru(id = 1, invoiceNumber = "INV-001", companyId = companyAId, isDeleted = true),
+            PattiyalTharavuru(id = 2, invoiceNumber = "INV-002", companyId = companyBId, isDeleted = true),
+            PattiyalTharavuru(id = 3, invoiceNumber = "INV-003", companyId = companyAId, isDeleted = true)
         )
 
         val deletedReceipts = listOf(
-            PatrugalTharavuru(id = 10, patruEn = "REC-010", niruvanamId = companyAId, isDeleted = true),
-            PatrugalTharavuru(id = 11, patruEn = "REC-011", niruvanamId = companyBId, isDeleted = true)
+            PatrugalTharavuru(id = 10, receiptNumber = "REC-010", companyId = companyAId, isDeleted = true),
+            PatrugalTharavuru(id = 11, receiptNumber = "REC-011", companyId = companyBId, isDeleted = true)
         )
 
         // Workspace Company A filter:
@@ -360,8 +360,8 @@ class CompanyWorkspaceAndProductTest {
 
         val deletedInvoice = PattiyalTharavuru(
             id = 55,
-            patrucheettuEn = "INV-055",
-            niruvanamId = originalCompanyId,
+            invoiceNumber = "INV-055",
+            companyId = originalCompanyId,
             isDeleted = true,
             deletedAt = 1000L
         )
@@ -381,8 +381,8 @@ class CompanyWorkspaceAndProductTest {
         val companyAId = 101L
         val companyBId = 202L
 
-        val sharedProduct = PorulTharavuru(id = 1, niruvanamIds = emptyList(), isDeleted = true)
-        val restrictedProductA = PorulTharavuru(id = 2, niruvanamIds = listOf(companyAId), isDeleted = true)
+        val sharedProduct = PorulTharavuru(id = 1, companyIds = emptyList(), isDeleted = true)
+        val restrictedProductA = PorulTharavuru(id = 2, companyIds = listOf(companyAId), isDeleted = true)
 
         val deletedProducts = listOf(sharedProduct, restrictedProductA)
 

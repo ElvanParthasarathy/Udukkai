@@ -19,48 +19,48 @@ object FactoryProfileRepository {
 
     private val defaultProfile = NiruvanaTharavugal(
         id = 1L,
-        mudhanMozhi = "ta",
-        thunaiMozhi = "en",
-        iruMozhi = true,
-        niruvanathinPeyar = mutableMapOf(
+        primaryLanguage = "ta",
+        secondaryLanguage = "en",
+        isBilingual = true,
+        businessName = mutableMapOf(
             "ta" to "முருகன் கைத்தறி நெசவகம்",
             "en" to "Murugan Handloom Weaving"
         ),
-        kurumPeyar = "முருகன் நெசவு",
-        tholaipaesi1 = "+91 98765 43210",
-        tholaipaesi2 = "+91 94432 10987",
-        minnanjal = "murugan.loom@udukkai.in",
-        mugavari = mutableMapOf(
+        shortName = "முருகன் நெசவு",
+        phone1 = "+91 98765 43210",
+        phone2 = "+91 94432 10987",
+        email = "murugan.loom@udukkai.in",
+        address = mutableMapOf(
             "ta" to "45, நெசவாளர் தெரு, சின்னாளபட்டி",
             "en" to "45, Weaver Street, Chinnalapatti"
         ),
-        oor = mutableMapOf(
+        city = mutableMapOf(
             "ta" to "திண்டுக்கல்",
             "en" to "Dindigul"
         ),
-        maavattam = mutableMapOf(
+        district = mutableMapOf(
             "ta" to "திண்டுக்கல்",
             "en" to "Dindigul"
         ),
-        anjalKuriyeedu = "624301",
-        vangiPeyar = mutableMapOf(
+        pinCode = "624301",
+        bankName = mutableMapOf(
             "ta" to "இந்தியன் வங்கி",
             "en" to "Indian Bank"
         ),
-        kilai = mutableMapOf(
+        branch = mutableMapOf(
             "ta" to "சின்னாளபட்டி கிளை",
             "en" to "Chinnalapatti Branch"
         ),
-        vangiKanakku = "502394857219",
+        accountNumber = "502394857219",
         ifsc = "IDIB000C024",
-        oppamPeyar = "உரிமையாளர் / மேலாளர்",
-        oppamMudhalPeyar = "உரிமையாளர்",
-        oppamIrudhiPeyar = "மேலாளர்",
-        adaimozhi = mutableMapOf(
+        signatoryName = "உரிமையாளர் / மேலாளர்",
+        signatoryFirstName = "உரிமையாளர்",
+        signatoryLastName = "மேலாளர்",
+        tagline = mutableMapOf(
             "ta" to "பாரம்பரிய கைத்தறி நெசவு",
             "en" to "Traditional Handloom Weaving"
         ),
-        thoatraNiram = "#2e7d32"
+        themeColor = "#2e7d32"
     )
 
     const val MAX_PROFILES = 5

@@ -1,13 +1,18 @@
 package com.elvan.udukkai.data.database
 
 import com.elvan.udukkai.data.DesktopDbPaths
+import com.elvan.udukkai.data.model.CustomerModel
+import com.elvan.udukkai.data.model.InvoiceModel
 import com.elvan.udukkai.data.model.PattiyalTharavuru
 import com.elvan.udukkai.data.model.PatruPattiyalInaippuTharavuru
 import com.elvan.udukkai.data.model.PatrugalTharavuru
+import com.elvan.udukkai.data.model.ReceiptInvoiceLinkModel
+import com.elvan.udukkai.data.model.ReceiptModel
 import com.elvan.udukkai.data.model.PorulJsonConverter
 import com.elvan.udukkai.data.model.PorulTharavuru
 import com.elvan.udukkai.data.model.VaangunarTharavuru
 import com.elvan.udukkai.data.settings.MozhiJsonConverter
+import com.elvan.udukkai.data.settings.BusinessProfile
 import com.elvan.udukkai.data.settings.NiruvanaTharavugal
 import java.io.File
 import java.sql.Connection
@@ -682,9 +687,9 @@ class DesktopUdukkaiDatabaseHelper(
                 while (rs.next()) {
                     list.add(PatruPattiyalInaippuTharavuru(
                         id = rs.getLong("id"),
-                        patruId = rs.getLong("patru_id"),
-                        pattiyalId = rs.getLong("pattiyal_id"),
-                        poruthiyaThogai = rs.getDouble("inaippu_thogai")
+                        receiptId = rs.getLong("patru_id"),
+                        invoiceId = rs.getLong("pattiyal_id"),
+                        appliedAmount = rs.getDouble("inaippu_thogai")
                     ))
                 }
             }
@@ -863,17 +868,17 @@ class DesktopUdukkaiDatabaseHelper(
     // ── ResultSet Helpers ────────────────────────────────────────────────────
     private fun rsToMerchant(rs: ResultSet): VaangunarTharavuru = VaangunarTharavuru(
         id = rs.getLong("id"),
-        peyar = MozhiJsonConverter.parse(rs.getString("peyar")),
-        mugavari = MozhiJsonConverter.parse(rs.getString("mugavari")),
-        oor = MozhiJsonConverter.parse(rs.getString("oor")),
-        maavattam = MozhiJsonConverter.parse(rs.getString("maavattam")),
-        maanilam = MozhiJsonConverter.parse(rs.getString("maanilam")),
-        naadu = MozhiJsonConverter.parse(rs.getString("naadu")),
-        velinaadMugavari = MozhiJsonConverter.parse(rs.getString("velinaad_mugavari")),
-        anjalKuriyeedu = rs.getString("anjal_kuriyeedu") ?: "",
+        name = MozhiJsonConverter.parse(rs.getString("peyar")),
+        address = MozhiJsonConverter.parse(rs.getString("mugavari")),
+        city = MozhiJsonConverter.parse(rs.getString("oor")),
+        district = MozhiJsonConverter.parse(rs.getString("maavattam")),
+        state = MozhiJsonConverter.parse(rs.getString("maanilam")),
+        country = MozhiJsonConverter.parse(rs.getString("naadu")),
+        internationalAddress = MozhiJsonConverter.parse(rs.getString("velinaad_mugavari")),
+        pinCode = rs.getString("anjal_kuriyeedu") ?: "",
         gstin = rs.getString("gstin") ?: "",
-        minnanjal = rs.getString("minnanjal") ?: "",
-        tholaipaesi = rs.getString("tholaipaesi") ?: "",
+        email = rs.getString("minnanjal") ?: "",
+        phone = rs.getString("tholaipaesi") ?: "",
         createdAt = rs.getLong("created_at"),
         updatedAt = rs.getLong("updated_at"),
         isDeleted = rs.getInt("is_deleted") == 1,
@@ -882,13 +887,13 @@ class DesktopUdukkaiDatabaseHelper(
 
     private fun rsToItem(rs: ResultSet): PorulTharavuru = PorulTharavuru(
         id = rs.getLong("id"),
-        porulPeyar = MozhiJsonConverter.parse(rs.getString("porul_peyar")),
+        name = MozhiJsonConverter.parse(rs.getString("porul_peyar")),
         hsnCode = rs.getString("hsn_code") ?: "",
-        vilai = rs.getDouble("vilai"),
-        variVeetham = rs.getDouble("vari_veetham"),
-        alavuVagai = rs.getString("alavu_vagai") ?: "quantity",
-        alagu = rs.getString("alagu") ?: "Nos",
-        niruvanamIds = PorulJsonConverter.parseLongList(rs.getString("niruvanam_ids")),
+        price = rs.getDouble("vilai"),
+        taxRate = rs.getDouble("vari_veetham"),
+        quantityType = rs.getString("alavu_vagai") ?: "quantity",
+        unit = rs.getString("alagu") ?: "Nos",
+        companyIds = PorulJsonConverter.parseLongList(rs.getString("niruvanam_ids")),
         companyPrices = PorulJsonConverter.parseCompanyPrices(rs.getString("company_prices")),
         createdAt = rs.getLong("created_at"),
         updatedAt = rs.getLong("updated_at"),
@@ -907,32 +912,32 @@ class DesktopUdukkaiDatabaseHelper(
 
         return PattiyalTharavuru(
             id = rs.getLong("id"),
-            niruvanamId = if (rs.getObject("niruvanam_id") == null) null else rs.getLong("niruvanam_id"),
-            patrucheettuEn = rs.getString("patrucheettu_en") ?: "",
+            companyId = if (rs.getObject("niruvanam_id") == null) null else rs.getLong("niruvanam_id"),
+            invoiceNumber = rs.getString("patrucheettu_en") ?: "",
             finYear = rs.getInt("fin_year"),
             vanakkam = rs.getInt("vanakkam"),
-            pattiyalVagai = rs.getString("pattiyal_vagai") ?: "tax-invoice",
-            vaangunarId = if (rs.getObject("vaangunar_id") == null) null else rs.getLong("vaangunar_id"),
-            vaangunarPeyar = MozhiJsonConverter.parse(rs.getString("vaangunar_peyar")),
-            vaangunarMunvari = MozhiJsonConverter.parse(rs.getString("vaangunar_munvari")),
-            pattiyalNaal = rs.getLong("pattiyal_naal"),
-            tharavugal = rs.getString("tharavugal") ?: "[]",
-            mothaThogai = rs.getDouble("motha_thogai"),
-            thallupadi = rs.getDouble("thallupadi"),
-            podhuThallupadiMathippu = rs.getDouble("podhu_thallupadi_mathippu"),
-            podhuThallupadiVagai = rs.getString("podhu_thallupadi_vagai") ?: "%",
-            podhuThallupadiThogai = rs.getDouble("podhu_thallupadi_thogai"),
-            variThogai = rs.getDouble("vari_thogai"),
-            variTharavugal = rs.getString("vari_tharavugal") ?: "{}",
-            mothaEdai = mothaEdai,
-            setharamGrams = setharamGrams,
-            thabaalThogai = thabaalThogai,
-            ahimsaPattuThogai = ahimsaPattuThogai,
-            piravariVugal = piravariVugal,
-            sonthaViruppangal = rs.getString("sontha_viruppangal") ?: "{}",
-            nibandhanaigal = rs.getString("nibandhanaigal") ?: "",
-            ullkurippu = rs.getString("ullkurippu") ?: "",
-            vangiTharavugal = vangiTharavugal,
+            invoiceType = rs.getString("pattiyal_vagai") ?: "tax-invoice",
+            customerId = if (rs.getObject("vaangunar_id") == null) null else rs.getLong("vaangunar_id"),
+            customerName = MozhiJsonConverter.parse(rs.getString("vaangunar_peyar")),
+            customerAddress = MozhiJsonConverter.parse(rs.getString("vaangunar_munvari")),
+            invoiceDate = rs.getLong("pattiyal_naal"),
+            itemsJson = rs.getString("tharavugal") ?: "[]",
+            totalAmount = rs.getDouble("motha_thogai"),
+            discount = rs.getDouble("thallupadi"),
+            globalDiscountValue = rs.getDouble("podhu_thallupadi_mathippu"),
+            globalDiscountType = rs.getString("podhu_thallupadi_vagai") ?: "%",
+            globalDiscountAmount = rs.getDouble("podhu_thallupadi_thogai"),
+            taxAmount = rs.getDouble("vari_thogai"),
+            taxDataJson = rs.getString("vari_tharavugal") ?: "{}",
+            totalWeight = mothaEdai,
+            wastageGrams = setharamGrams,
+            postalCharges = thabaalThogai,
+            ahimsaSilkAmount = ahimsaPattuThogai,
+            otherTaxesJson = piravariVugal,
+            customPreferencesJson = rs.getString("sontha_viruppangal") ?: "{}",
+            termsAndConditions = rs.getString("nibandhanaigal") ?: "",
+            notes = rs.getString("ullkurippu") ?: "",
+            bankDetailsJson = vangiTharavugal,
             createdAt = rs.getLong("created_at"),
             updatedAt = rs.getLong("updated_at"),
             isDeleted = rs.getInt("is_deleted") == 1,
@@ -942,19 +947,19 @@ class DesktopUdukkaiDatabaseHelper(
 
     private fun rsToReceipt(rs: ResultSet): PatrugalTharavuru = PatrugalTharavuru(
         id = rs.getLong("id"),
-        niruvanamId = if (rs.getObject("niruvanam_id") == null) null else rs.getLong("niruvanam_id"),
-        patruEn = rs.getString("patru_en") ?: "",
+        companyId = if (rs.getObject("niruvanam_id") == null) null else rs.getLong("niruvanam_id"),
+        receiptNumber = rs.getString("patru_en") ?: "",
         finYear = rs.getString("fin_year") ?: "",
         vanakkam = rs.getInt("vanakkam"),
-        vaangunarId = if (rs.getObject("vaangunar_id") == null) null else rs.getLong("vaangunar_id"),
-        vaangunarPeyar = MozhiJsonConverter.parse(rs.getString("vaangunar_peyar")),
-        vaangunarMunvari = MozhiJsonConverter.parse(rs.getString("vaangunar_munvari")),
-        patruNaal = rs.getLong("patru_naal"),
-        thogai = rs.getDouble("thogai"),
-        seluthumMurai = rs.getString("seluthum_murai") ?: "cash",
-        vangiPeyar = rs.getString("vangi_peyar"),
-        parivarthanaiEn = rs.getString("parivarthanai_en"),
-        ullkurippu = rs.getString("ullkurippu") ?: "",
+        customerId = if (rs.getObject("vaangunar_id") == null) null else rs.getLong("vaangunar_id"),
+        customerName = MozhiJsonConverter.parse(rs.getString("vaangunar_peyar")),
+        customerAddress = MozhiJsonConverter.parse(rs.getString("vaangunar_munvari")),
+        receiptDate = rs.getLong("patru_naal"),
+        amount = rs.getDouble("thogai"),
+        paymentMode = rs.getString("seluthum_murai") ?: "cash",
+        bankName = rs.getString("vangi_peyar"),
+        transactionNumber = rs.getString("parivarthanai_en"),
+        notes = rs.getString("ullkurippu") ?: "",
         createdAt = rs.getLong("created_at"),
         updatedAt = rs.getLong("updated_at"),
         isDeleted = rs.getInt("is_deleted") == 1,
@@ -963,36 +968,36 @@ class DesktopUdukkaiDatabaseHelper(
 
     private fun rsToProfile(rs: ResultSet): NiruvanaTharavugal = NiruvanaTharavugal(
         id = rs.getLong("id"),
-        mudhanMozhi = rs.getString("mudhan_mozhi") ?: "ta",
-        thunaiMozhi = rs.getString("thunai_mozhi") ?: "en",
-        iruMozhi = rs.getInt("iru_mozhi") == 1,
-        gstPirippugal = rs.getInt("gst_pirippugal") == 1,
-        niruvanathinPeyar = MozhiJsonConverter.parse(rs.getString("niruvanathin_peyar")),
-        kurumPeyar = rs.getString("kurum_peyar") ?: "",
-        tholaipaesi1 = rs.getString("tholaipaesi1") ?: "",
-        tholaipaesi2 = rs.getString("tholaipaesi2") ?: "",
-        minnanjal = rs.getString("minnanjal") ?: "",
+        primaryLanguage = rs.getString("mudhan_mozhi") ?: "ta",
+        secondaryLanguage = rs.getString("thunai_mozhi") ?: "en",
+        isBilingual = rs.getInt("iru_mozhi") == 1,
+        splitGst = rs.getInt("gst_pirippugal") == 1,
+        businessName = MozhiJsonConverter.parse(rs.getString("niruvanathin_peyar")),
+        shortName = rs.getString("kurum_peyar") ?: "",
+        phone1 = rs.getString("tholaipaesi1") ?: "",
+        phone2 = rs.getString("tholaipaesi2") ?: "",
+        email = rs.getString("minnanjal") ?: "",
         gstin = rs.getString("gstin") ?: "",
-        mugavari = MozhiJsonConverter.parse(rs.getString("mugavari")),
-        oor = MozhiJsonConverter.parse(rs.getString("oor")),
-        maavattam = MozhiJsonConverter.parse(rs.getString("maavattam")),
-        maanilam = MozhiJsonConverter.parse(rs.getString("maanilam")),
-        naadu = MozhiJsonConverter.parse(rs.getString("naadu")),
-        anjalKuriyeedu = rs.getString("anjal_kuriyeedu") ?: "",
-        vangiPeyar = MozhiJsonConverter.parse(rs.getString("vangi_peyar")),
-        kilai = MozhiJsonConverter.parse(rs.getString("kilai")),
-        vangiKanakku = rs.getString("vangi_kanakku") ?: "",
+        address = MozhiJsonConverter.parse(rs.getString("mugavari")),
+        city = MozhiJsonConverter.parse(rs.getString("oor")),
+        district = MozhiJsonConverter.parse(rs.getString("maavattam")),
+        state = MozhiJsonConverter.parse(rs.getString("maanilam")),
+        country = MozhiJsonConverter.parse(rs.getString("naadu")),
+        pinCode = rs.getString("anjal_kuriyeedu") ?: "",
+        bankName = MozhiJsonConverter.parse(rs.getString("vangi_peyar")),
+        branch = MozhiJsonConverter.parse(rs.getString("kilai")),
+        accountNumber = rs.getString("vangi_kanakku") ?: "",
         ifsc = rs.getString("ifsc") ?: "",
-        oavuru = rs.getString("oavuru") ?: "",
-        agalaOavuru = rs.getString("agala_oavuru") ?: "",
-        thalaippuVadivu = rs.getString("thalaippu_vadivu") ?: "small",
-        kaiyoppam = rs.getString("kaiyoppam") ?: "",
-        oppamPeyar = rs.getString("oppam_peyar") ?: "",
-        oppamMudhalPeyar = rs.getString("oppam_mudhal_peyar") ?: "",
-        oppamIrudhiPeyar = rs.getString("oppam_irudhi_peyar") ?: "",
-        adaimozhi = MozhiJsonConverter.parse(rs.getString("adaimozhi")),
+        logo = rs.getString("oavuru") ?: "",
+        wideLogo = rs.getString("agala_oavuru") ?: "",
+        headerLayout = rs.getString("thalaippu_vadivu") ?: "small",
+        signature = rs.getString("kaiyoppam") ?: "",
+        signatoryName = rs.getString("oppam_peyar") ?: "",
+        signatoryFirstName = rs.getString("oppam_mudhal_peyar") ?: "",
+        signatoryLastName = rs.getString("oppam_irudhi_peyar") ?: "",
+        tagline = MozhiJsonConverter.parse(rs.getString("adaimozhi")),
         upiId = rs.getString("upi_id") ?: "",
-        thoatraNiram = rs.getString("thoatra_niram") ?: ""
+        themeColor = rs.getString("thoatraNiram") ?: ""
     )
 }
 

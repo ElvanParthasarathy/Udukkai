@@ -212,7 +212,7 @@ fun FactoryInvoiceCreationSettingsScreen(
                             ElvanSettingsSwitch(
                                 checked = profile.iruMozhi,
                                 onCheckedChange = { isChecked ->
-                                    val updated = profile.copy(iruMozhi = isChecked)
+                                    val updated = profile.copy(isBilingual = isChecked)
                                     FactoryProfileRepository.updateProfile(updated)
                                     ElvanSnackbar.show(saveSuccessMsg)
                                 },
