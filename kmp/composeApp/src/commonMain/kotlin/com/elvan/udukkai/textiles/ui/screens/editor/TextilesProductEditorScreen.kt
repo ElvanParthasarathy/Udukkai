@@ -177,15 +177,15 @@ fun TextilesProductEditorScreen(
         title = pageTitle,
         onBack = handleBackAttempt,
         scrollState = scrollState,
-        hasActions = false,
-        actions = {},
-        floatingBar = {
-            ElvanEditorBottomBar(
+        hasActions = true,
+        actions = {
+            ElvanActionButton(
                 label = K.saveBtn.tr(),
-                onClick = { handleSave() },
-                accentColor = colors.productColor
+                onClick = { handleSave() }
             )
-        }
+        },
+        showBottomFade = false,
+        floatingBar = {}
     ) {
         Box(modifier = Modifier.fillMaxSize()) {
             CompositionLocalProvider(LocalEditorAccentColor provides colors.productColor) {
@@ -195,7 +195,7 @@ fun TextilesProductEditorScreen(
                     contentPadding = PaddingValues(
                         start = 16.dp,
                         end = 16.dp,
-                        bottom = Dimens.SubpageContentPaddingBottom + 72.dp
+                        bottom = Dimens.SubpageContentPaddingBottom
                     ),
                     verticalArrangement = Arrangement.spacedBy(24.dp)
                 ) {

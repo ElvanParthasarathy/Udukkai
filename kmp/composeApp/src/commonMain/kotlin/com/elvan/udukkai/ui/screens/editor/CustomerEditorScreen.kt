@@ -247,15 +247,15 @@ fun CustomerEditorScreen(
         title = pageTitle,
         onBack = handleBackAttempt,
         scrollState = scrollState,
-        hasActions = false,
-        actions = {},
-        floatingBar = {
-            ElvanEditorBottomBar(
+        hasActions = true,
+        actions = {
+            ElvanActionButton(
                 label = K.saveBtn.tr(),
-                onClick = { handleSave() },
-                accentColor = editorAccent
+                onClick = { handleSave() }
             )
-        }
+        },
+        showBottomFade = false,
+        floatingBar = {}
     ) {
         Box(modifier = Modifier.fillMaxSize()) {
             CompositionLocalProvider(LocalEditorAccentColor provides editorAccent) {
@@ -265,7 +265,7 @@ fun CustomerEditorScreen(
                     contentPadding = PaddingValues(
                         start = 16.dp,
                         end = 16.dp,
-                        bottom = Dimens.SubpageContentPaddingBottom + 72.dp
+                        bottom = Dimens.SubpageContentPaddingBottom
                     ),
                     verticalArrangement = Arrangement.spacedBy(24.dp)
                 ) {

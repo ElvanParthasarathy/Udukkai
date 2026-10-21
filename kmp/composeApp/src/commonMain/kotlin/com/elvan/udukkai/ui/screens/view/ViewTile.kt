@@ -17,6 +17,7 @@ import com.elvan.udukkai.core.platform.AppBackHandler
 import com.elvan.udukkai.localization.K
 import com.elvan.udukkai.localization.tr
 import com.elvan.udukkai.theme.rememberShellColors
+import com.elvan.udukkai.ui.components.shell.ElvanActionButton
 import com.elvan.udukkai.ui.components.shell.ElvanFloatingAction
 import com.elvan.udukkai.ui.components.shell.ElvanFloatingActionBar
 import com.elvan.udukkai.ui.components.shell.ElvanSnackbar
@@ -129,18 +130,27 @@ fun ViewTile(
         title = title,
         onBack = onBack,
         scrollState = scrollState,
-        hasActions = false,
-        actions = {},
-        showBottomFade = true,
+        hasActions = !isDocument && onEdit != null,
+        actions = {
+            if (!isDocument && onEdit != null) {
+                ElvanActionButton(
+                    label = K.editRecord.tr(),
+                    onClick = onEdit
+                )
+            }
+        },
+        showBottomFade = isDocument,
         floatingBar = {
-            ElvanViewActionBar(
-                onEdit = onEdit,
-                onPreview = onPreview ?: { showPreview = true },
-                onPrint = onPrint,
-                onShare = onShare,
-                onCopy = onCopy,
-                isDocument = isDocument
-            )
+            if (isDocument) {
+                ElvanViewActionBar(
+                    onEdit = onEdit,
+                    onPreview = onPreview ?: { showPreview = true },
+                    onPrint = onPrint,
+                    onShare = onShare,
+                    onCopy = onCopy,
+                    isDocument = true
+                )
+            }
         },
         content = {
             Box(modifier = modifier.fillMaxSize()) {
