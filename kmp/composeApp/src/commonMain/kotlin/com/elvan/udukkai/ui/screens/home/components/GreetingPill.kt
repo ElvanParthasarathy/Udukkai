@@ -10,7 +10,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -59,8 +58,16 @@ fun GreetingPill(
 
     var showCompanySheet by remember { mutableStateOf(false) }
 
-    // Welcome transition state: defaults to showing for DurationMs (3 seconds) like Neram
-    var internalShowWelcome by rememberSaveable { mutableStateOf(true) }
+    // Welcome transition state: only triggers once during initial app launch.
+    // Once triggered, hasShownOnAppLaunch is immediately set to true so navigating
+    // to other tabs/screens and returning will never replay the welcome greeting.
+    var internalShowWelcome by remember {
+        val shouldShowOnLaunch = !HomeAnimations.WelcomeTransition.hasShownOnAppLaunch
+        if (shouldShowOnLaunch) {
+            HomeAnimations.WelcomeTransition.hasShownOnAppLaunch = true
+        }
+        mutableStateOf(shouldShowOnLaunch)
+    }
     val isWelcomeVisible = showWelcomeMessage ?: internalShowWelcome
 
     LaunchedEffect(Unit) {
@@ -98,7 +105,10 @@ fun GreetingPill(
                             .clickable(
                                 interactionSource = remember { MutableInteractionSource() },
                                 indication = ShellDefaults.ripple(colors, bounded = true),
-                                onClick = { internalShowWelcome = false }
+                                onClick = {
+                                    internalShowWelcome = false
+                                    HomeAnimations.WelcomeTransition.hasShownOnAppLaunch = true
+                                }
                             )
                             .padding(start = 11.dp, end = 16.dp),
                         verticalAlignment = Alignment.CenterVertically

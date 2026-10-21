@@ -18,6 +18,10 @@ object HomeAnimations {
     object WelcomeTransition {
         const val DurationMs = 3000L // 3 seconds before transition
 
+        // App-launch gate: ensures the greeting animation only ever plays
+        // once when the app is launched, and never when switching tabs/screens.
+        var hasShownOnAppLaunch: Boolean = false
+
         // Motion specs: slides up and fades in/out concurrently
         val EnterTransition = slideInVertically { height -> height } + fadeIn()
         val ExitTransition = slideOutVertically { height -> -height } + fadeOut()
