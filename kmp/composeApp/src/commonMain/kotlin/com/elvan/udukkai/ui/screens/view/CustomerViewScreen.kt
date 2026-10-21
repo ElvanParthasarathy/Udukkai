@@ -40,6 +40,7 @@ fun CustomerViewScreen(
     merchant: CustomerModel,
     profile: BusinessProfile,
     allProfiles: List<BusinessProfile> = emptyList(),
+    showGst: Boolean = true,
     onBack: () -> Unit,
     onEdit: () -> Unit,
     onCopy: (() -> Unit)? = null
@@ -236,7 +237,7 @@ fun CustomerViewScreen(
                         )
                     }
 
-                    if (!merchant.gstin.isNullOrBlank()) {
+                    if (showGst && !merchant.gstin.isNullOrBlank()) {
                         DetailCard(
                             title = "GSTIN",
                             value = merchant.gstin,

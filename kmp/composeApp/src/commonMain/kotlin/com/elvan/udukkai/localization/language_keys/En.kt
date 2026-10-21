@@ -7,7 +7,7 @@ import com.elvan.udukkai.localization.K
  */
 val en: Map<String, String> = mapOf(
     K.make to "Make",
-    K.enCode to "en",
+    K.enCode to "English",
     K.identifier to "Identifier",
     K.loading to "Loading...",
     K.wideLogoOnly to "Wide Logo Only",
@@ -138,7 +138,7 @@ val en: Map<String, String> = mapOf(
     K.search to "Search...",
     K.select to "Select",
     K.discShort to "Disc",
-    K.taCode to "ta",
+    K.taCode to "Tamil",
     K.tamilEnglishAuto to "Tamil, English, Auto",
     K.restoringData to "Restoring data...",
     K.permanentlyEraseData to "Permanently erase data.",

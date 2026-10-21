@@ -262,6 +262,7 @@ fun FactoryHomeScreen() {
                         merchant = subpage.customer,
                         profile = FactoryProfileRepository.profile,
                         allProfiles = FactoryProfileRepository.profiles,
+                        showGst = false,
                         onBack = popSubpage,
                         onEdit = {
                             navigateToSubpage(ActiveSubpage.MerchantEditor(subpage.customer))

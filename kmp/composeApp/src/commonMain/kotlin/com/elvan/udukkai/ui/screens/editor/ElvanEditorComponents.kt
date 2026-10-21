@@ -456,8 +456,16 @@ fun ElvanIrumozhiPulan(
     val cleanBaseLabel = label.replace("*", "").trim()
     val starSuffix = if (hasAsterisk) "*" else ""
 
-    val primaryLangLabel = if (primaryLang == "ta") K.taCode.tr() else K.enCode.tr()
-    val secondaryLangLabel = if (secondaryLang == "en") K.enCode.tr() else K.taCode.tr()
+    val primaryLangLabel = when (primaryLang.lowercase()) {
+        "en" -> K.enCode.tr()
+        "ta" -> K.taCode.tr()
+        else -> primaryLang
+    }
+    val secondaryLangLabel = when (secondaryLang.lowercase()) {
+        "en" -> K.enCode.tr()
+        "ta" -> K.taCode.tr()
+        else -> secondaryLang
+    }
 
     val primaryValue = value[primaryLang] ?: ""
     val secondaryValue = value[secondaryLang] ?: ""
