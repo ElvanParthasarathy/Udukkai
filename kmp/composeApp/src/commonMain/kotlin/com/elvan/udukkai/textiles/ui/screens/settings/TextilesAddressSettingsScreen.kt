@@ -60,9 +60,9 @@ fun TextilesAddressSettingsScreen(
         if (onUpdateProfile != null) {
             onUpdateProfile(updated)
         } else if (isTextiles) {
-            com.elvan.udukkai.textiles.data.persistProfile(updated)
+            com.elvan.udukkai.textiles.data.TextilesProfileRepository.updateProfile(updated)
         } else {
-            com.elvan.udukkai.factory.data.persistProfile(updated)
+            com.elvan.udukkai.factory.data.FactoryProfileRepository.updateProfile(updated)
         }
     }
 
