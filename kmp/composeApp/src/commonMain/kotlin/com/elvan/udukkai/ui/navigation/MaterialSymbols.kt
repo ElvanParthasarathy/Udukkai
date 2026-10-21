@@ -465,6 +465,12 @@ object MaterialSymbols {
         val Straighten: ImageVector get() = LibSymbols.Rounded.Straighten
         val LocalShipping: ImageVector get() = LibSymbols.Rounded.Local_shipping
         val Share: ImageVector get() = LibSymbols.Rounded.Share
+        val Apps: ImageVector get() = LibSymbols.Rounded.Apps
+        val AppsFill: ImageVector get() = LibSymbols.RoundedFilled.Apps
+        val Numbers: ImageVector get() = LibSymbols.Rounded.Numbers
+        val NumbersFill: ImageVector get() = LibSymbols.RoundedFilled.Numbers
+        val Scale: ImageVector get() = LibSymbols.Rounded.Scale
+        val ScaleFill: ImageVector get() = LibSymbols.RoundedFilled.Scale
     }
 
     /**

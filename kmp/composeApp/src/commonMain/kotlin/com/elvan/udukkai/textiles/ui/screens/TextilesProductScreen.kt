@@ -61,9 +61,21 @@ fun TextilesProductScreen(
 
     val shifterItems = remember(allTabLabel, quantityTabLabel, weightTabLabel) {
         listOf(
-            PillShifterItem(label = allTabLabel),
-            PillShifterItem(label = quantityTabLabel),
-            PillShifterItem(label = weightTabLabel)
+            PillShifterItem(
+                label = allTabLabel,
+                icon = MaterialSymbols.Rounded.Apps,
+                activeIcon = MaterialSymbols.Rounded.AppsFill
+            ),
+            PillShifterItem(
+                label = quantityTabLabel,
+                icon = MaterialSymbols.Rounded.Numbers,
+                activeIcon = MaterialSymbols.Rounded.NumbersFill
+            ),
+            PillShifterItem(
+                label = weightTabLabel,
+                icon = MaterialSymbols.Rounded.Scale,
+                activeIcon = MaterialSymbols.Rounded.ScaleFill
+            )
         )
     }
 
@@ -115,7 +127,7 @@ fun TextilesProductScreen(
 
             item(key = "product_measure_type_pill_shifter") {
                 Box(
-                    contentAlignment = Alignment.Center,
+                    contentAlignment = Alignment.CenterStart,
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(bottom = 6.dp)
@@ -127,7 +139,8 @@ fun TextilesProductScreen(
                             selectedTabIndex = it
                         },
                         colors = colors,
-                        isFullWidth = true
+                        isSmall = true,
+                        isFullWidth = false
                     )
                 }
             }

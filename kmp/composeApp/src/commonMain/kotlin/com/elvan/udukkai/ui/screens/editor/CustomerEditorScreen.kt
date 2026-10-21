@@ -20,7 +20,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.togetherWith
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.animation.fadeIn
@@ -333,65 +335,64 @@ fun CustomerEditorScreen(
                                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email)
                                 )
 
-                                AnimatedVisibility(
-                                    visible = !showGstField,
-                                    enter = fadeIn(tween(200)) + expandVertically(tween(250)),
-                                    exit = fadeOut(tween(150)) + shrinkVertically(tween(200))
-                                ) {
-                                    ElvanEditorButton(
-                                        onClick = { showGstField = true },
-                                        modifier = Modifier.fillMaxWidth()
-                                    ) {
-                                        Row(
-                                            verticalAlignment = Alignment.CenterVertically,
-                                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                AnimatedContent(
+                                    targetState = showGstField,
+                                    transitionSpec = {
+                                        fadeIn(animationSpec = tween(220, delayMillis = 40)) togetherWith
+                                            fadeOut(animationSpec = tween(140))
+                                    },
+                                    label = "CustomerGstFieldTransition"
+                                ) { hasGst ->
+                                    if (!hasGst) {
+                                        ElvanEditorButton(
+                                            onClick = { showGstField = true },
+                                            modifier = Modifier.fillMaxWidth()
                                         ) {
-                                            Icon(
-                                                imageVector = MaterialSymbols.Rounded.Add,
-                                                contentDescription = null,
-                                                tint = colors.accent,
-                                                modifier = Modifier.size(18.dp)
-                                            )
-                                            Text(
-                                                text = "${K.add.tr()} GSTIN",
-                                                style = TextStyle(
-                                                    fontFamily = ff,
-                                                    fontSize = 14.sp,
-                                                    fontWeight = FontWeight.Medium,
-                                                    color = colors.accent
-                                                )
-                                            )
-                                        }
-                                    }
-                                }
-
-                                AnimatedVisibility(
-                                    visible = showGstField,
-                                    enter = fadeIn(tween(250)) + expandVertically(tween(300)),
-                                    exit = fadeOut(tween(150)) + shrinkVertically(tween(200))
-                                ) {
-                                    ElvanEditorTextField(
-                                        value = gstin,
-                                        onValueChange = { gstin = it.uppercase() },
-                                        label = "GSTIN",
-                                        placeholder = "33AAAAA0000A1Z5",
-                                        suffixIcon = {
-                                            IconButton(
-                                                onClick = {
-                                                    gstin = ""
-                                                    showGstField = false
-                                                },
-                                                modifier = Modifier.size(28.dp)
+                                            Row(
+                                                verticalAlignment = Alignment.CenterVertically,
+                                                horizontalArrangement = Arrangement.spacedBy(8.dp)
                                             ) {
                                                 Icon(
-                                                    imageVector = MaterialSymbols.Rounded.Close,
-                                                    contentDescription = "Remove GSTIN",
-                                                    tint = colors.textSecondary,
-                                                    modifier = Modifier.size(16.dp)
+                                                    imageVector = MaterialSymbols.Rounded.Add,
+                                                    contentDescription = null,
+                                                    tint = colors.accent,
+                                                    modifier = Modifier.size(18.dp)
+                                                )
+                                                Text(
+                                                    text = "${K.add.tr()} GSTIN",
+                                                    style = TextStyle(
+                                                        fontFamily = ff,
+                                                        fontSize = 14.sp,
+                                                        fontWeight = FontWeight.Medium,
+                                                        color = colors.accent
+                                                    )
                                                 )
                                             }
                                         }
-                                    )
+                                    } else {
+                                        ElvanEditorTextField(
+                                            value = gstin,
+                                            onValueChange = { gstin = it.uppercase() },
+                                            label = "GSTIN",
+                                            placeholder = "33AAAAA0000A1Z5",
+                                            suffixIcon = {
+                                                IconButton(
+                                                    onClick = {
+                                                        gstin = ""
+                                                        showGstField = false
+                                                    },
+                                                    modifier = Modifier.size(28.dp)
+                                                ) {
+                                                    Icon(
+                                                        imageVector = MaterialSymbols.Rounded.Close,
+                                                        contentDescription = "Remove GSTIN",
+                                                        tint = colors.textSecondary,
+                                                        modifier = Modifier.size(16.dp)
+                                                    )
+                                                }
+                                            }
+                                        )
+                                    }
                                 }
                             }
                         }

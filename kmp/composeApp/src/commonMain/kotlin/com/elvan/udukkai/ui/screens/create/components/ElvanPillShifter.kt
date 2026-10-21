@@ -61,8 +61,9 @@ fun ElvanPillShifter(
     onIndexSelected: (Int) -> Unit,
     colors: ShellColors = rememberShellColors(),
     modifier: Modifier = Modifier,
+    isSmall: Boolean = false,
     isFullWidth: Boolean = false,
-    height: Dp = if (isFullWidth) 40.dp else 48.dp,
+    height: Dp = if (isFullWidth || isSmall) 40.dp else 48.dp,
     onInteraction: (Boolean) -> Unit = {},
     onDragProgress: (Float) -> Unit = {}
 ) {
@@ -117,8 +118,8 @@ fun ElvanPillShifter(
         label = "pillScaleY"
     )
 
-    val fixedLayoutWidth = 136.dp
-    val fixedHorizontalPadding = 8.dp
+    val fixedLayoutWidth = if (isSmall) 104.dp else 136.dp
+    val fixedHorizontalPadding = if (isSmall) 4.dp else 8.dp
     val fixedTotalWidth = (fixedLayoutWidth * itemCount) + (fixedHorizontalPadding * 2)
 
     BoxWithConstraints(
@@ -132,16 +133,16 @@ fun ElvanPillShifter(
             .then(if (isFullWidth) Modifier.fillMaxWidth() else Modifier.width(fixedTotalWidth)),
         contentAlignment = Alignment.Center
     ) {
-        val horizontalPadding = if (isFullWidth) 4.dp else 8.dp
-        val verticalPadding = if (isFullWidth) 3.dp else 4.dp
+        val horizontalPadding = if (isFullWidth || isSmall) 4.dp else 8.dp
+        val verticalPadding = if (isFullWidth || isSmall) 3.dp else 4.dp
 
         val (layoutWidth, bgWidth, contentWidth) = if (isFullWidth) {
             val available = (maxWidth - (horizontalPadding * 2)).coerceAtLeast(0.dp)
             val slot = available / itemCount
             Triple(slot, slot, available)
         } else {
-            val fixedSlot = 136.dp
-            val fixedBg = 144.dp
+            val fixedSlot = if (isSmall) 104.dp else 136.dp
+            val fixedBg = if (isSmall) 104.dp else 144.dp
             Triple(fixedSlot, fixedBg, fixedSlot * itemCount)
         }
 
