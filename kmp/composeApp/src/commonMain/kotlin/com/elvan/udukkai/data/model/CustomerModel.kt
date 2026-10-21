@@ -11,7 +11,7 @@ data class CustomerModel(
     val city: Map<String, String> = emptyMap(),
     val district: Map<String, String> = emptyMap(),
     val state: Map<String, String> = emptyMap(),
-    val country: Map<String, String> = mapOf("en" to "India", "ta" to "இந்தியா"),
+    val country: Map<String, String> = emptyMap(),
     val internationalAddress: Map<String, String> = emptyMap(),
     val pinCode: String = "",
     val gstin: String = "",
