@@ -53,15 +53,11 @@ fun TextilesProductScreen(
 ) {
     val items = TextilesProductRepository.filteredItems
     val ff = LocalAppFontFamily.current
-    val profile = TextilesProfileRepository.profile
-    val isBilingual = profile.isBilingual
-    val primaryLang = profile.primaryLanguage.ifEmpty { "ta" }
-
     var selectedTabIndex by remember { mutableIntStateOf(0) }
 
-    val allTabLabel = if (isBilingual) (if (primaryLang == "ta") "எல்லாம் • All" else "All • எல்லாம்") else K.all.tr()
-    val quantityTabLabel = if (isBilingual) (if (primaryLang == "ta") "அளவு • Quantity" else "Quantity • அளவு") else K.quantity.tr()
-    val weightTabLabel = if (isBilingual) (if (primaryLang == "ta") "எடை • Weight" else "Weight • எடை") else K.weight.tr()
+    val allTabLabel = K.all.tr()
+    val quantityTabLabel = K.quantity.tr()
+    val weightTabLabel = K.weight.tr()
 
     val shifterItems = remember(allTabLabel, quantityTabLabel, weightTabLabel) {
         listOf(
