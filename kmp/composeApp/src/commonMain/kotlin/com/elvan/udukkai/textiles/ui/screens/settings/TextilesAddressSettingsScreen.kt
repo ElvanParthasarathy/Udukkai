@@ -59,10 +59,8 @@ fun TextilesAddressSettingsScreen(
     fun persistProfile(updated: com.elvan.udukkai.data.settings.BusinessProfile) {
         if (onUpdateProfile != null) {
             onUpdateProfile(updated)
-        } else if (isTextiles) {
-            com.elvan.udukkai.textiles.data.TextilesProfileRepository.updateProfile(updated)
         } else {
-            com.elvan.udukkai.factory.data.FactoryProfileRepository.updateProfile(updated)
+            TextilesProfileRepository.updateProfile(updated)
         }
     }
 
