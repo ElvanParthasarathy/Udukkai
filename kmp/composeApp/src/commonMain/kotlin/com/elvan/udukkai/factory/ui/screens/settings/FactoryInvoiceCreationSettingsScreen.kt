@@ -42,13 +42,10 @@ import com.elvan.udukkai.ui.navigation.MaterialSymbols
 @Composable
 fun FactoryInvoiceCreationSettingsScreen(
     scrollState: LazyListState = rememberLazyListState(),
-    colors: ShellColors = rememberShellColors(),
-    customProfile: BusinessProfile? = null,
-    onUpdateProfile: ((BusinessProfile) -> Unit)? = null,
-    isTextiles: Boolean? = null
+    colors: ShellColors = rememberShellColors()
 ) {
-    val isPattu = isTextiles ?: false
-    val profile = customProfile ?: if (isPattu) com.elvan.udukkai.textiles.data.TextilesProfileRepository.profile else com.elvan.udukkai.factory.data.FactoryProfileRepository.profile
+    val isPattu = false
+    val profile = FactoryProfileRepository.profile
     val ff = LocalAppFontFamily.current
 
     var isEditingLanguages by remember { mutableStateOf(false) }

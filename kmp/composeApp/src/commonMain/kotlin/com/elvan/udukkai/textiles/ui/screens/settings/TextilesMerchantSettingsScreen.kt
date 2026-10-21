@@ -41,15 +41,10 @@ import com.elvan.udukkai.textiles.data.TextilesProfileRepository
 fun TextilesMerchantSettingsScreen(
     onNavigateToManageProfiles: () -> Unit = {},
     scrollState: LazyListState = rememberLazyListState(),
-    colors: ShellColors = rememberShellColors(),
-    customProfile: com.elvan.udukkai.data.settings.BusinessProfile? = null,
-    customProfiles: List<com.elvan.udukkai.data.settings.BusinessProfile>? = null,
-    onUpdateProfile: ((com.elvan.udukkai.data.settings.BusinessProfile) -> Unit)? = null,
-    onSelectProfile: ((Long) -> Unit)? = null,
-    isTextiles: Boolean = false
+    colors: ShellColors = rememberShellColors()
 ) {
-    val profile = customProfile ?: if (isTextiles) com.elvan.udukkai.textiles.data.TextilesProfileRepository.profile else com.elvan.udukkai.factory.data.FactoryProfileRepository.profile
-    val allProfilesList = customProfiles ?: if (isTextiles) com.elvan.udukkai.textiles.data.TextilesProfileRepository.profiles else com.elvan.udukkai.factory.data.FactoryProfileRepository.profiles
+    val profile = TextilesProfileRepository.profile
+    val allProfilesList = TextilesProfileRepository.profiles
     val ff = LocalAppFontFamily.current
 
     var editingSection by remember { mutableStateOf<String?>(null) }

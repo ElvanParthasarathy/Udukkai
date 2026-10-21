@@ -327,20 +327,33 @@ object FactoryMockDataSeeder {
     }
 
     suspend fun swapDataLanguages(): String {
-        val allProfiles = FactoryProfileRepository.allProfiles
+        val helper = getFactoryDatabaseHelper()
+        val allProfiles = helper.loadAllProfiles()
         val activeProfile = FactoryProfileRepository.profile
+        val activeId = activeProfile.id
         val currentPrimary = activeProfile.primaryLanguage.ifEmpty { "ta" }
         val currentSecondary = activeProfile.secondaryLanguage.ifEmpty { "en" }
 
+        val newPrimary = currentSecondary
+        val newSecondary = currentPrimary
+
         allProfiles.forEach { p ->
-            val pPrimary = p.primaryLanguage.ifEmpty { "ta" }
-            val pSecondary = p.secondaryLanguage.ifEmpty { "en" }
             val updated = p.copy(
-                primaryLanguage = if (pPrimary == currentPrimary) currentSecondary else currentPrimary,
-                secondaryLanguage = if (pSecondary == currentSecondary) currentPrimary else currentSecondary
+                primaryLanguage = newPrimary,
+                secondaryLanguage = newSecondary
             )
-            FactoryProfileRepository.updateProfile(updated)
+            helper.saveProfile(updated)
         }
-        return "Swapped: $currentSecondary ↔ $currentPrimary"
+        FactoryProfileRepository.refreshFromDatabase()
+        if (activeId != null) {
+            FactoryProfileRepository.setActiveProfile(activeId)
+        }
+        FactoryCustomerRepository.loadAll()
+        FactoryProductRepository.loadAll()
+        FactoryInvoiceRepository.loadAll()
+        FactoryReceiptRepository.loadAll()
+        AutoBackupManager.onDataChanged()
+
+        return "Swapped: $newPrimary ↔ $newSecondary"
     }
 }

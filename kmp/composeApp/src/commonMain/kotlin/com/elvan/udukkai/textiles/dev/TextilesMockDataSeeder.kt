@@ -352,20 +352,33 @@ object TextilesMockDataSeeder {
     }
 
     suspend fun swapDataLanguages(): String {
-        val allProfiles = TextilesProfileRepository.allProfiles
+        val helper = getTextilesDatabaseHelper()
+        val allProfiles = helper.loadAllProfiles()
         val activeProfile = TextilesProfileRepository.profile
+        val activeId = activeProfile.id
         val currentPrimary = activeProfile.primaryLanguage.ifEmpty { "ta" }
         val currentSecondary = activeProfile.secondaryLanguage.ifEmpty { "en" }
 
+        val newPrimary = currentSecondary
+        val newSecondary = currentPrimary
+
         allProfiles.forEach { p ->
-            val pPrimary = p.primaryLanguage.ifEmpty { "ta" }
-            val pSecondary = p.secondaryLanguage.ifEmpty { "en" }
             val updated = p.copy(
-                primaryLanguage = if (pPrimary == currentPrimary) currentSecondary else currentPrimary,
-                secondaryLanguage = if (pSecondary == currentSecondary) currentPrimary else currentSecondary
+                primaryLanguage = newPrimary,
+                secondaryLanguage = newSecondary
             )
-            TextilesProfileRepository.updateProfile(updated)
+            helper.saveProfile(updated)
         }
-        return "Swapped: $currentSecondary ↔ $currentPrimary"
+        TextilesProfileRepository.refreshFromDatabase()
+        if (activeId != null) {
+            TextilesProfileRepository.setActiveProfile(activeId)
+        }
+        TextilesCustomerRepository.loadAll()
+        TextilesProductRepository.loadAll()
+        TextilesInvoiceRepository.loadAll()
+        TextilesReceiptRepository.loadAll()
+        AutoBackupManager.onDataChanged()
+
+        return "Swapped: $newPrimary ↔ $newSecondary"
     }
 }

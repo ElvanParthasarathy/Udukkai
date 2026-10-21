@@ -14,7 +14,6 @@ import com.elvan.udukkai.core.data.indianStates
 import com.elvan.udukkai.core.data.worldCountries
 import com.elvan.udukkai.core.data.tamilNaduDistricts
 import com.elvan.udukkai.factory.data.FactoryProfileRepository
-import com.elvan.udukkai.textiles.data.TextilesProfileRepository
 import com.elvan.udukkai.localization.K
 import com.elvan.udukkai.localization.tr
 import com.elvan.udukkai.theme.Dimens
@@ -30,13 +29,10 @@ import com.elvan.udukkai.ui.components.shell.*
 @Composable
 fun FactoryAddressSettingsScreen(
     scrollState: LazyListState = rememberLazyListState(),
-    colors: ShellColors = rememberShellColors(),
-    customProfile: com.elvan.udukkai.data.settings.BusinessProfile? = null,
-    onUpdateProfile: ((com.elvan.udukkai.data.settings.BusinessProfile) -> Unit)? = null,
-    isTextiles: Boolean = false
+    colors: ShellColors = rememberShellColors()
 ) {
-    val isPattu = isTextiles
-    val profile = customProfile ?: if (isTextiles) com.elvan.udukkai.textiles.data.TextilesProfileRepository.profile else com.elvan.udukkai.factory.data.FactoryProfileRepository.profile
+    val isPattu = false
+    val profile = FactoryProfileRepository.profile
     val isBilingual = profile.isBilingual
 
     var editingSection by remember { mutableStateOf<String?>(null) }
@@ -59,13 +55,7 @@ fun FactoryAddressSettingsScreen(
     }
 
     fun persistProfile(updated: com.elvan.udukkai.data.settings.BusinessProfile) {
-        if (onUpdateProfile != null) {
-            onUpdateProfile(updated)
-        } else if (isTextiles) {
-            com.elvan.udukkai.textiles.data.TextilesProfileRepository.updateProfile(updated)
-        } else {
-            com.elvan.udukkai.factory.data.FactoryProfileRepository.updateProfile(updated)
-        }
+        FactoryProfileRepository.updateProfile(updated)
     }
 
     val openCountrySelection = {

@@ -29,13 +29,10 @@ import com.elvan.udukkai.ui.components.shell.*
 @Composable
 fun TextilesAddressSettingsScreen(
     scrollState: LazyListState = rememberLazyListState(),
-    colors: ShellColors = rememberShellColors(),
-    customProfile: com.elvan.udukkai.data.settings.BusinessProfile? = null,
-    onUpdateProfile: ((com.elvan.udukkai.data.settings.BusinessProfile) -> Unit)? = null,
-    isTextiles: Boolean = false
+    colors: ShellColors = rememberShellColors()
 ) {
-    val isPattu = isTextiles
-    val profile = customProfile ?: if (isTextiles) com.elvan.udukkai.textiles.data.TextilesProfileRepository.profile else com.elvan.udukkai.factory.data.FactoryProfileRepository.profile
+    val isPattu = true
+    val profile = TextilesProfileRepository.profile
     val isBilingual = profile.isBilingual
 
     var editingSection by remember { mutableStateOf<String?>(null) }
@@ -58,11 +55,7 @@ fun TextilesAddressSettingsScreen(
     }
 
     fun persistProfile(updated: com.elvan.udukkai.data.settings.BusinessProfile) {
-        if (onUpdateProfile != null) {
-            onUpdateProfile(updated)
-        } else {
-            TextilesProfileRepository.updateProfile(updated)
-        }
+        TextilesProfileRepository.updateProfile(updated)
     }
 
     val openCountrySelection = {

@@ -45,23 +45,16 @@ private fun resolveCustomerCompanyTag(
     }.joinToString(", ").ifEmpty { K.allCompanies.tr() }
 }
 
-private fun getDynamicField(
+private fun getMainLanguageField(
     map: Map<String, String>,
-    isPrimary: Boolean,
-    isBilingual: Boolean,
     primaryLang: String,
     secondaryLang: String
 ): String {
-    if (!isBilingual && !isPrimary) return ""
-    val targetLang = if (isPrimary) primaryLang else secondaryLang
-    val exactVal = map[targetLang]?.trim()
+    val exactVal = map[primaryLang]?.trim()
     if (!exactVal.isNullOrEmpty()) return exactVal
-    if (!isBilingual && isPrimary) {
-        val fallbackVal = map[secondaryLang]?.trim()
-        if (!fallbackVal.isNullOrEmpty()) return fallbackVal
-    }
-    if (isPrimary) return map.values.firstOrNull { it.isNotBlank() } ?: ""
-    return ""
+    val fallbackVal = map[secondaryLang]?.trim()
+    if (!fallbackVal.isNullOrEmpty()) return fallbackVal
+    return map.values.firstOrNull { it.isNotBlank() }?.trim() ?: ""
 }
 
 @Composable
@@ -77,16 +70,12 @@ fun FactoryCustomerCard(
     val ff = LocalAppFontFamily.current
     val profile = FactoryProfileRepository.profile
     val profiles = FactoryProfileRepository.allProfiles
-    val isBilingual = profile.isBilingual
     val primaryLang = profile.primaryLanguage.ifEmpty { "ta" }
     val secondaryLang = profile.secondaryLanguage.ifEmpty { "en" }
 
-    val primaryName = getDynamicField(merchant.name, isPrimary = true, isBilingual = isBilingual, primaryLang, secondaryLang)
-        .ifEmpty { merchant.name.values.firstOrNull() ?: "-" }
-    val secondaryName = getDynamicField(merchant.name, isPrimary = false, isBilingual = isBilingual, primaryLang, secondaryLang)
-
-    val primaryCity = getDynamicField(merchant.city, isPrimary = true, isBilingual = isBilingual, primaryLang, secondaryLang)
-    val secondaryCity = getDynamicField(merchant.city, isPrimary = false, isBilingual = isBilingual, primaryLang, secondaryLang)
+    val primaryName = getMainLanguageField(merchant.name, primaryLang, secondaryLang)
+        .ifEmpty { "-" }
+    val primaryCity = getMainLanguageField(merchant.city, primaryLang, secondaryLang)
 
     ElvanCommonCard(
         onClick = onClick,
@@ -120,37 +109,20 @@ fun FactoryCustomerCard(
             ) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.Top
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Column(
+                    Text(
+                        text = primaryName.preventBrokenLigatures(),
+                        style = TextStyle(
+                            fontFamily = ff,
+                            fontSize = 16.5.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = colors.textPrimary
+                        ),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
                         modifier = Modifier.weight(1f)
-                    ) {
-                        Text(
-                            text = primaryName.preventBrokenLigatures(),
-                            style = TextStyle(
-                                fontFamily = ff,
-                                fontSize = 16.5.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = colors.textPrimary
-                            ),
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
-                        )
-
-                        if (secondaryName.isNotBlank() && secondaryName != primaryName) {
-                            Spacer(modifier = Modifier.height(2.dp))
-                            Text(
-                                text = secondaryName.preventBrokenLigatures(),
-                                style = TextStyle(
-                                    fontFamily = ff,
-                                    fontSize = 13.5.sp,
-                                    color = colors.textSecondary
-                                ),
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis
-                            )
-                        }
-                    }
+                    )
 
                     Icon(
                         imageVector = MaterialSymbols.Rounded.ChevronRight,
@@ -161,11 +133,7 @@ fun FactoryCustomerCard(
                 }
 
                 val companyTag = resolveCustomerCompanyTag(merchant, profiles, primaryLang)
-                val cityLine = if (primaryCity.isNotBlank() && secondaryCity.isNotBlank() && secondaryCity != primaryCity) {
-                    "$primaryCity • $secondaryCity"
-                } else {
-                    primaryCity.ifBlank { secondaryCity }
-                }
+                val cityLine = primaryCity
 
                 if (cityLine.isNotBlank()) {
                     Spacer(modifier = Modifier.height(4.dp))
@@ -212,17 +180,12 @@ fun TextilesCustomerCard(
     val ff = LocalAppFontFamily.current
     val profile = TextilesProfileRepository.profile
     val profiles = TextilesProfileRepository.allProfiles
-    val isBilingual = profile.isBilingual
     val primaryLang = profile.primaryLanguage.ifEmpty { "ta" }
     val secondaryLang = profile.secondaryLanguage.ifEmpty { "en" }
 
-    val primaryName = getDynamicField(merchant.name, isPrimary = true, isBilingual = isBilingual, primaryLang, secondaryLang)
-        .ifEmpty { merchant.name.values.firstOrNull() ?: "-" }
-    val secondaryName = getDynamicField(merchant.name, isPrimary = false, isBilingual = isBilingual, primaryLang, secondaryLang)
-
-    val primaryCity = getDynamicField(merchant.city, isPrimary = true, isBilingual = isBilingual, primaryLang, secondaryLang)
-    val secondaryCity = getDynamicField(merchant.city, isPrimary = false, isBilingual = isBilingual, primaryLang, secondaryLang)
-
+    val primaryName = getMainLanguageField(merchant.name, primaryLang, secondaryLang)
+        .ifEmpty { "-" }
+    val primaryCity = getMainLanguageField(merchant.city, primaryLang, secondaryLang)
     val gstin = merchant.gstin.trim()
 
     ElvanCommonCard(
@@ -257,37 +220,20 @@ fun TextilesCustomerCard(
             ) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.Top
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Column(
+                    Text(
+                        text = primaryName.preventBrokenLigatures(),
+                        style = TextStyle(
+                            fontFamily = ff,
+                            fontSize = 16.5.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = colors.textPrimary
+                        ),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
                         modifier = Modifier.weight(1f)
-                    ) {
-                        Text(
-                            text = primaryName.preventBrokenLigatures(),
-                            style = TextStyle(
-                                fontFamily = ff,
-                                fontSize = 16.5.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = colors.textPrimary
-                            ),
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
-                        )
-
-                        if (isBilingual && secondaryName.isNotBlank() && secondaryName != primaryName) {
-                            Spacer(modifier = Modifier.height(2.dp))
-                            Text(
-                                text = secondaryName.preventBrokenLigatures(),
-                                style = TextStyle(
-                                    fontFamily = ff,
-                                    fontSize = 13.5.sp,
-                                    color = colors.textSecondary
-                                ),
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis
-                            )
-                        }
-                    }
+                    )
 
                     Icon(
                         imageVector = MaterialSymbols.Rounded.ChevronRight,
@@ -297,12 +243,7 @@ fun TextilesCustomerCard(
                     )
                 }
 
-                val cityText = if (isBilingual && secondaryCity.isNotBlank() && secondaryCity != primaryCity) {
-                    if (primaryCity.isNotBlank()) "$primaryCity • $secondaryCity" else secondaryCity
-                } else {
-                    primaryCity
-                }
-
+                val cityText = primaryCity
                 val companyTag = resolveCustomerCompanyTag(merchant, profiles, primaryLang)
                 val hasCity = cityText.isNotBlank()
                 val hasGstin = gstin.isNotBlank()
