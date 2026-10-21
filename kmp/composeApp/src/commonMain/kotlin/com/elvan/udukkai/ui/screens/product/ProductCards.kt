@@ -1,6 +1,11 @@
 package com.elvan.udukkai.ui.screens.product
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.background
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import com.elvan.udukkai.data.settings.BusinessProfile
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -25,6 +30,24 @@ import com.elvan.udukkai.ui.components.ElvanCommonCard
 import com.elvan.udukkai.ui.navigation.MaterialSymbols
 import com.elvan.udukkai.localization.K
 import com.elvan.udukkai.localization.tr
+
+@Composable
+private fun resolveProductCompanyTag(
+    product: ProductModel,
+    profiles: List<BusinessProfile>,
+    primaryLang: String
+): String {
+    if (product.companyIds.isEmpty()) {
+        return K.allCompanies.tr()
+    }
+    return product.companyIds.mapNotNull { cId ->
+        val p = profiles.find { it.id == cId }
+        p?.shortName?.trim()?.takeIf { it.isNotEmpty() }
+            ?: p?.businessName?.get(primaryLang)?.trim()?.takeIf { it.isNotEmpty() }
+            ?: p?.businessName?.values?.firstOrNull { it.isNotBlank() }?.trim()
+            ?: "Company #$cId"
+    }.joinToString(", ").ifEmpty { K.allCompanies.tr() }
+}
 
 private fun getDynamicField(
     map: Map<String, String>,
@@ -57,103 +80,7 @@ fun FactoryProductCard(
 ) {
     val ff = LocalAppFontFamily.current
     val profile = FactoryProfileRepository.profile
-    val isBilingual = profile.isBilingual
-    val primaryLang = profile.primaryLanguage.ifEmpty { "ta" }
-    val secondaryLang = profile.secondaryLanguage.ifEmpty { "en" }
-
-    val primary = getDynamicField(product.name, isPrimary = true, isBilingual = isBilingual, primaryLang, secondaryLang)
-        .ifEmpty { product.name.values.firstOrNull() ?: "-" }
-    val secondary = getDynamicField(product.name, isPrimary = false, isBilingual = isBilingual, primaryLang, secondaryLang)
-
-    ElvanCommonCard(
-        onClick = onClick,
-        onLongClick = onLongClick,
-        isSelected = isSelectionMode && isSelected,
-        padding = PaddingValues(
-            horizontal = Dimens.CardPaddingHorizontal,
-            vertical = Dimens.CardPaddingVertical
-        ),
-        borderRadius = Dimens.CardRadius
-    ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            ElvanCardSelector(
-                isSelectionMode = isSelectionMode,
-                isSelected = isSelected
-            )
-
-            ElvanCardLeadingIcon(
-                icon = MaterialSymbols.Rounded.Inventory2,
-                tint = colors.productColor
-            )
-
-            Spacer(modifier = Modifier.width(12.dp))
-
-            Column(
-                modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.Center
-            ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Column(
-                        modifier = Modifier.weight(1f)
-                    ) {
-                        Text(
-                            text = primary.preventBrokenLigatures(),
-                            style = TextStyle(
-                                fontFamily = ff,
-                                fontSize = 15.2.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = colors.textPrimary
-                            ),
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
-                        )
-
-                        if (isBilingual && secondary.isNotBlank() && secondary != primary) {
-                            Spacer(modifier = Modifier.height(2.dp))
-                            Text(
-                                text = secondary.preventBrokenLigatures(),
-                                style = TextStyle(
-                                    fontFamily = ff,
-                                    fontSize = 13.sp,
-                                    fontWeight = FontWeight.Medium,
-                                    color = LocalShellColors.current.textSecondary
-                                ),
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis
-                            )
-                        }
-                    }
-
-                    Icon(
-                        imageVector = MaterialSymbols.Rounded.ChevronRight,
-                        contentDescription = null,
-                        tint = LocalShellColors.current.border,
-                        modifier = Modifier.size(18.dp)
-                    )
-                }
-            }
-        }
-    }
-}
-
-@Composable
-fun TextilesProductCard(
-    index: Int,
-    product: ProductModel,
-    onClick: () -> Unit,
-    colors: ShellColors,
-    isSelectionMode: Boolean = false,
-    isSelected: Boolean = false,
-    onLongClick: (() -> Unit)? = null
-) {
-    val ff = LocalAppFontFamily.current
-    val profile = TextilesProfileRepository.profile
+    val profiles = FactoryProfileRepository.allProfiles
     val isBilingual = profile.isBilingual
     val primaryLang = profile.primaryLanguage.ifEmpty { "ta" }
     val secondaryLang = profile.secondaryLanguage.ifEmpty { "en" }
@@ -203,7 +130,7 @@ fun TextilesProductCard(
                             text = primary.preventBrokenLigatures(),
                             style = TextStyle(
                                 fontFamily = ff,
-                                fontSize = 15.2.sp,
+                                fontSize = 16.5.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = colors.textPrimary
                             ),
@@ -217,14 +144,127 @@ fun TextilesProductCard(
                                 text = secondary.preventBrokenLigatures(),
                                 style = TextStyle(
                                     fontFamily = ff,
-                                    fontSize = 13.sp,
-                                    fontWeight = FontWeight.Medium,
+                                    fontSize = 13.5.sp,
                                     color = LocalShellColors.current.textSecondary
                                 ),
                                 maxLines = 1,
                                 overflow = TextOverflow.Ellipsis
                             )
                         }
+
+                        val companyTag = resolveProductCompanyTag(product, profiles, primaryLang)
+                        if (companyTag.isNotBlank()) {
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(
+                                text = companyTag.preventBrokenLigatures(),
+                                style = TextStyle(
+                                    fontFamily = ff,
+                                    fontSize = 13.5.sp,
+                                    color = colors.textSecondary
+                                ),
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                        }
+                    }
+
+                    Icon(
+                        imageVector = MaterialSymbols.Rounded.ChevronRight,
+                        contentDescription = null,
+                        tint = LocalShellColors.current.border,
+                        modifier = Modifier.size(18.dp)
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun TextilesProductCard(
+    index: Int,
+    product: ProductModel,
+    onClick: () -> Unit,
+    colors: ShellColors,
+    isSelectionMode: Boolean = false,
+    isSelected: Boolean = false,
+    onLongClick: (() -> Unit)? = null
+) {
+    val ff = LocalAppFontFamily.current
+    val profile = TextilesProfileRepository.profile
+    val profiles = TextilesProfileRepository.allProfiles
+    val isBilingual = profile.isBilingual
+    val primaryLang = profile.primaryLanguage.ifEmpty { "ta" }
+    val secondaryLang = profile.secondaryLanguage.ifEmpty { "en" }
+
+    val primary = getDynamicField(product.name, isPrimary = true, isBilingual = isBilingual, primaryLang, secondaryLang)
+        .ifEmpty { product.name.values.firstOrNull() ?: "-" }
+    val secondary = getDynamicField(product.name, isPrimary = false, isBilingual = isBilingual, primaryLang, secondaryLang)
+
+    ElvanCommonCard(
+        onClick = onClick,
+        onLongClick = onLongClick,
+        isSelected = isSelectionMode && isSelected,
+        padding = PaddingValues(
+            horizontal = Dimens.CardPaddingHorizontal,
+            vertical = Dimens.CardPaddingVertical
+        ),
+        borderRadius = Dimens.CardRadius
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.Top
+        ) {
+            ElvanCardSelector(
+                isSelectionMode = isSelectionMode,
+                isSelected = isSelected
+            )
+
+            ElvanCardLeadingIcon(
+                icon = MaterialSymbols.Rounded.Inventory2,
+                tint = colors.productColor
+            )
+
+            Spacer(modifier = Modifier.width(12.dp))
+
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.Center
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.Top
+                ) {
+                    Column(
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Text(
+                            text = primary.preventBrokenLigatures(),
+                            style = TextStyle(
+                                fontFamily = ff,
+                                fontSize = 16.5.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = colors.textPrimary
+                            ),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+
+                        if (isBilingual && secondary.isNotBlank() && secondary != primary) {
+                            Spacer(modifier = Modifier.height(2.dp))
+                            Text(
+                                text = secondary.preventBrokenLigatures(),
+                                style = TextStyle(
+                                    fontFamily = ff,
+                                    fontSize = 13.5.sp,
+                                    color = LocalShellColors.current.textSecondary
+                                ),
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                        }
+
+
                     }
 
                     Icon(
@@ -255,7 +295,7 @@ fun TextilesProductCard(
                                 text = hsnTaxLine,
                                 style = TextStyle(
                                     fontFamily = ff,
-                                    fontSize = 13.6.sp,
+                                    fontSize = 13.5.sp,
                                     color = colors.textSecondary
                                 ),
                                 maxLines = 1,
@@ -265,17 +305,31 @@ fun TextilesProductCard(
 
                         val measureLabel = if (product.quantityType == "weight") K.weight.tr() else K.quantity.tr()
                         Text(
-                            text = measureLabel,
+                            text = measureLabel.preventBrokenLigatures(),
                             style = TextStyle(
                                 fontFamily = ff,
-                                fontSize = 12.sp,
-                                fontWeight = FontWeight.Normal,
+                                fontSize = 13.5.sp,
                                 color = colors.textSecondary
                             ),
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
                             modifier = Modifier.padding(top = 2.dp)
                         )
+
+                        val companyTag = resolveProductCompanyTag(product, profiles, primaryLang)
+                        if (companyTag.isNotBlank()) {
+                            Text(
+                                text = companyTag.preventBrokenLigatures(),
+                                style = TextStyle(
+                                    fontFamily = ff,
+                                    fontSize = 13.5.sp,
+                                    color = colors.textSecondary
+                                ),
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                                modifier = Modifier.padding(top = 2.dp)
+                            )
+                        }
                     }
 
                     Spacer(modifier = Modifier.width(8.dp))

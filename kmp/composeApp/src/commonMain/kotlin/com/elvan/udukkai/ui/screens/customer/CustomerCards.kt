@@ -23,6 +23,27 @@ import com.elvan.udukkai.ui.components.ElvanCardLeadingIcon
 import com.elvan.udukkai.ui.components.ElvanCardSelector
 import com.elvan.udukkai.ui.components.ElvanCommonCard
 import com.elvan.udukkai.ui.navigation.MaterialSymbols
+import com.elvan.udukkai.data.settings.BusinessProfile
+import com.elvan.udukkai.localization.K
+import com.elvan.udukkai.localization.tr
+
+@Composable
+private fun resolveCustomerCompanyTag(
+    merchant: CustomerModel,
+    profiles: List<BusinessProfile>,
+    primaryLang: String
+): String {
+    if (merchant.companyIds.isEmpty()) {
+        return K.allCompanies.tr()
+    }
+    return merchant.companyIds.mapNotNull { cId ->
+        val p = profiles.find { it.id == cId }
+        p?.shortName?.trim()?.takeIf { it.isNotEmpty() }
+            ?: p?.businessName?.get(primaryLang)?.trim()?.takeIf { it.isNotEmpty() }
+            ?: p?.businessName?.values?.firstOrNull { it.isNotBlank() }?.trim()
+            ?: "Company #$cId"
+    }.joinToString(", ").ifEmpty { K.allCompanies.tr() }
+}
 
 private fun getDynamicField(
     map: Map<String, String>,
@@ -55,6 +76,7 @@ fun FactoryCustomerCard(
 ) {
     val ff = LocalAppFontFamily.current
     val profile = FactoryProfileRepository.profile
+    val profiles = FactoryProfileRepository.allProfiles
     val isBilingual = profile.isBilingual
     val primaryLang = profile.primaryLanguage.ifEmpty { "ta" }
     val secondaryLang = profile.secondaryLanguage.ifEmpty { "en" }
@@ -107,7 +129,7 @@ fun FactoryCustomerCard(
                             text = primaryName.preventBrokenLigatures(),
                             style = TextStyle(
                                 fontFamily = ff,
-                                fontSize = 15.2.sp,
+                                fontSize = 16.5.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = colors.textPrimary
                             ),
@@ -121,8 +143,7 @@ fun FactoryCustomerCard(
                                 text = secondaryName.preventBrokenLigatures(),
                                 style = TextStyle(
                                     fontFamily = ff,
-                                    fontSize = 13.sp,
-                                    fontWeight = FontWeight.Medium,
+                                    fontSize = 13.5.sp,
                                     color = colors.textSecondary
                                 ),
                                 maxLines = 1,
@@ -139,33 +160,39 @@ fun FactoryCustomerCard(
                     )
                 }
 
-                if (primaryCity.isNotBlank() || secondaryCity.isNotBlank()) {
+                val companyTag = resolveCustomerCompanyTag(merchant, profiles, primaryLang)
+                val cityLine = if (primaryCity.isNotBlank() && secondaryCity.isNotBlank() && secondaryCity != primaryCity) {
+                    "$primaryCity • $secondaryCity"
+                } else {
+                    primaryCity.ifBlank { secondaryCity }
+                }
+
+                if (cityLine.isNotBlank()) {
                     Spacer(modifier = Modifier.height(4.dp))
-                    if (primaryCity.isNotBlank()) {
-                        Text(
-                            text = primaryCity.preventBrokenLigatures(),
-                            style = TextStyle(
-                                fontFamily = ff,
-                                fontSize = 13.6.sp,
-                                color = colors.textSecondary
-                            ),
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
-                        )
-                    }
-                    if (secondaryCity.isNotBlank() && secondaryCity != primaryCity) {
-                        Spacer(modifier = Modifier.height(2.dp))
-                        Text(
-                            text = secondaryCity.preventBrokenLigatures(),
-                            style = TextStyle(
-                                fontFamily = ff,
-                                fontSize = 12.8.sp,
-                                color = colors.textSecondary.copy(alpha = 0.8f)
-                            ),
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
-                        )
-                    }
+                    Text(
+                        text = cityLine.preventBrokenLigatures(),
+                        style = TextStyle(
+                            fontFamily = ff,
+                            fontSize = 13.5.sp,
+                            color = colors.textSecondary
+                        ),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
+
+                if (companyTag.isNotBlank()) {
+                    Spacer(modifier = Modifier.height(if (cityLine.isNotBlank()) 2.dp else 4.dp))
+                    Text(
+                        text = companyTag.preventBrokenLigatures(),
+                        style = TextStyle(
+                            fontFamily = ff,
+                            fontSize = 13.5.sp,
+                            color = colors.textSecondary
+                        ),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
                 }
             }
         }
@@ -184,6 +211,7 @@ fun TextilesCustomerCard(
 ) {
     val ff = LocalAppFontFamily.current
     val profile = TextilesProfileRepository.profile
+    val profiles = TextilesProfileRepository.allProfiles
     val isBilingual = profile.isBilingual
     val primaryLang = profile.primaryLanguage.ifEmpty { "ta" }
     val secondaryLang = profile.secondaryLanguage.ifEmpty { "en" }
@@ -238,7 +266,7 @@ fun TextilesCustomerCard(
                             text = primaryName.preventBrokenLigatures(),
                             style = TextStyle(
                                 fontFamily = ff,
-                                fontSize = 15.2.sp,
+                                fontSize = 16.5.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = colors.textPrimary
                             ),
@@ -252,8 +280,7 @@ fun TextilesCustomerCard(
                                 text = secondaryName.preventBrokenLigatures(),
                                 style = TextStyle(
                                     fontFamily = ff,
-                                    fontSize = 13.sp,
-                                    fontWeight = FontWeight.Medium,
+                                    fontSize = 13.5.sp,
                                     color = colors.textSecondary
                                 ),
                                 maxLines = 1,
@@ -276,29 +303,45 @@ fun TextilesCustomerCard(
                     primaryCity
                 }
 
-                if (cityText.isNotBlank() || gstin.isNotBlank()) {
+                val companyTag = resolveCustomerCompanyTag(merchant, profiles, primaryLang)
+                val hasCity = cityText.isNotBlank()
+                val hasGstin = gstin.isNotBlank()
+                val hasCompany = companyTag.isNotBlank()
+
+                if (hasCity || hasGstin || hasCompany) {
                     Spacer(modifier = Modifier.height(4.dp))
-                    if (cityText.isNotBlank()) {
+                    if (hasCity) {
                         Text(
                             text = cityText.preventBrokenLigatures(),
                             style = TextStyle(
                                 fontFamily = ff,
-                                fontSize = 13.6.sp,
+                                fontSize = 13.5.sp,
                                 color = colors.textSecondary
                             ),
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis
                         )
                     }
-
-                    if (gstin.isNotBlank()) {
-                        Spacer(modifier = Modifier.height(2.dp))
+                    if (hasGstin) {
+                        if (hasCity) Spacer(modifier = Modifier.height(2.dp))
                         Text(
                             text = "GSTIN: $gstin",
                             style = TextStyle(
                                 fontFamily = ff,
-                                fontSize = 12.8.sp,
-                                fontWeight = FontWeight.Medium,
+                                fontSize = 13.5.sp,
+                                color = colors.textSecondary
+                            ),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    }
+                    if (hasCompany) {
+                        if (hasCity || hasGstin) Spacer(modifier = Modifier.height(2.dp))
+                        Text(
+                            text = companyTag.preventBrokenLigatures(),
+                            style = TextStyle(
+                                fontFamily = ff,
+                                fontSize = 13.5.sp,
                                 color = colors.textSecondary
                             ),
                             maxLines = 1,

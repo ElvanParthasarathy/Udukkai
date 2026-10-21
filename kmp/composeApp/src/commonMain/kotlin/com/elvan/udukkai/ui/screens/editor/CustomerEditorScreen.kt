@@ -415,6 +415,16 @@ fun CustomerEditorScreen(
                                     label = K.country.tr(),
                                     value = if (isCustomCountry) worldCountries.last() else presetCountry,
                                     items = worldCountries,
+                                    onClear = if (presetCountry != null || isCustomCountry) {
+                                        {
+                                            countryMap = emptyMap()
+                                            isCustomCountry = false
+                                            stateMap = emptyMap()
+                                            districtMap = emptyMap()
+                                            isCustomState = false
+                                            isCustomDistrict = false
+                                        }
+                                    } else null,
                                     onSelected = { picked ->
                                         if (picked.en == "Custom" || picked.ta == "தனிப்பயன்") {
                                             isCustomCountry = true
@@ -457,6 +467,14 @@ fun CustomerEditorScreen(
                                         label = K.state.tr(),
                                         value = if (isCustomState) indianStates.last() else presetState,
                                         items = indianStates,
+                                        onClear = if (presetState != null || isCustomState) {
+                                            {
+                                                stateMap = emptyMap()
+                                                districtMap = emptyMap()
+                                                isCustomState = false
+                                                isCustomDistrict = false
+                                            }
+                                        } else null,
                                         onSelected = { picked ->
                                             if (picked.en == "Custom" || picked.ta == "தனிப்பயன்") {
                                                 isCustomState = true
@@ -498,6 +516,12 @@ fun CustomerEditorScreen(
                                             label = K.district.tr(),
                                             value = if (isCustomDistrict) tamilNaduDistricts.last() else presetDistrict,
                                             items = tamilNaduDistricts,
+                                            onClear = if (presetDistrict != null || isCustomDistrict) {
+                                                {
+                                                    districtMap = emptyMap()
+                                                    isCustomDistrict = false
+                                                }
+                                            } else null,
                                             onSelected = { picked ->
                                                 if (picked.en == "Custom" || picked.ta == "தனிப்பயன்") {
                                                     isCustomDistrict = true

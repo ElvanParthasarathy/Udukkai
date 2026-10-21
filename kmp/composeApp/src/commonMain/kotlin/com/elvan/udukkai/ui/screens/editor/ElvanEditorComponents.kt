@@ -228,8 +228,16 @@ fun ElvanEditorLabel(
     val colors = rememberShellColors()
     val ff = LocalAppFontFamily.current
 
+    // Ensure compulsory asterisk appears after language bracket: e.g. "பெயர் (தமிழ்)*"
+    val formattedLabel = if (label.contains("*") && label.contains("(") && label.contains(")")) {
+        val clean = label.replace("*", "").trim()
+        "$clean*"
+    } else {
+        label
+    }
+
     Text(
-        text = label.preventBrokenLigatures(),
+        text = formattedLabel.preventBrokenLigatures(),
         style = TextStyle(
             fontFamily = ff,
             fontSize = 12.5.sp,
@@ -444,6 +452,10 @@ fun ElvanIrumozhiPulan(
     minLines: Int = if (maxLines > 1) 2 else 1,
     placeholder: String? = null
 ) {
+    val hasAsterisk = label.contains("*")
+    val cleanBaseLabel = label.replace("*", "").trim()
+    val starSuffix = if (hasAsterisk) "*" else ""
+
     val primaryLangLabel = if (primaryLang == "ta") K.taCode.tr() else K.enCode.tr()
     val secondaryLangLabel = if (secondaryLang == "en") K.enCode.tr() else K.taCode.tr()
 
@@ -465,7 +477,7 @@ fun ElvanIrumozhiPulan(
                     updated[primaryLang] = newText
                     onChanged(updated)
                 },
-                label = "$label ($primaryLangLabel)",
+                label = "$cleanBaseLabel ($primaryLangLabel)$starSuffix",
                 placeholder = placeholder,
                 enabled = enabled,
                 singleLine = !isMultiline,
@@ -488,7 +500,7 @@ fun ElvanIrumozhiPulan(
                         updated[secondaryLang] = newText
                         onChanged(updated)
                     },
-                    label = "$label ($secondaryLangLabel)",
+                    label = "$cleanBaseLabel ($secondaryLangLabel)$starSuffix",
                     placeholder = placeholder,
                     enabled = enabled,
                     singleLine = !isMultiline,
