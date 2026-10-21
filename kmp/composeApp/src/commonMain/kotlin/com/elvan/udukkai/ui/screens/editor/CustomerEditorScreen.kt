@@ -81,13 +81,14 @@ fun CustomerEditorScreen(
         }
     }
 
-    var selectedCompanyOption by remember(merchant, companyOptions, activeCompanyId) {
+    val activeCompanyLabel = K.activeCompany.tr()
+    var selectedCompanyOption by remember(merchant, companyOptions, activeCompanyId, activeCompanyLabel) {
         mutableStateOf(
             companyOptions.firstOrNull { option ->
                 option.id == (merchant?.companyIds?.firstOrNull { it == activeCompanyId }
                     ?: merchant?.companyIds?.firstOrNull()
                     ?: activeCompanyId)
-            } ?: CompanyOption(id = activeCompanyId, name = K.activeCompany.tr())
+            } ?: CompanyOption(id = activeCompanyId, name = activeCompanyLabel)
         )
     }
 

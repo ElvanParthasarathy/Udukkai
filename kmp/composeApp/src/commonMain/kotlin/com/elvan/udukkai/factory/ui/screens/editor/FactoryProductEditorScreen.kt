@@ -54,13 +54,14 @@ fun FactoryProductEditorScreen(
         }
     }
 
-    var selectedCompanyOption by remember(item, companyOptions, activeCompanyId) {
+    val activeCompanyLabel = K.activeCompany.tr()
+    var selectedCompanyOption by remember(item, companyOptions, activeCompanyId, activeCompanyLabel) {
         mutableStateOf(
             companyOptions.firstOrNull { option ->
                 option.id == (item?.companyIds?.firstOrNull { it == activeCompanyId }
                     ?: item?.companyIds?.firstOrNull()
                     ?: activeCompanyId)
-            } ?: CompanyOption(id = activeCompanyId, name = K.activeCompany.tr())
+            } ?: CompanyOption(id = activeCompanyId, name = activeCompanyLabel)
         )
     }
 

@@ -43,6 +43,7 @@ fun FactoryAddressSettingsScreen(
     var tempPrimary by remember { mutableStateOf("") }
     var tempSecondary by remember { mutableStateOf("") }
 
+    val countryTitle = K.country.tr()
     val stateTitle = K.state.tr()
     val districtTitle = K.district.tr()
     val primaryLangLabel = if (profile.primaryLanguage.lowercase().startsWith("ta")) K.taCode.tr() else K.enCode.tr()
@@ -69,7 +70,7 @@ fun FactoryAddressSettingsScreen(
 
     val openCountrySelection = {
         bottomSheet.showSelection(
-            title = K.country.tr(),
+            title = countryTitle,
             items = worldCountries,
             currentValue = worldCountries.find {
                 it.ta == profile.getPrimary("country") || it.en == profile.getPrimary("country")
