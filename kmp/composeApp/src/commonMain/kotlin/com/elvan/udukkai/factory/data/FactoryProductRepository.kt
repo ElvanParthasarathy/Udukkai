@@ -23,9 +23,14 @@ object FactoryProductRepository {
     val filteredProducts: List<ProductModel>
         get() {
             val activeId = FactoryProfileRepository.profile.id
+            val legacyOwnerId = FactoryProfileRepository.profiles.firstOrNull()?.id
             return products.filter { product ->
-                (activeId == null || product.isAvailableForCompany(activeId)) &&
-                    SearchHelper.matchesProduct(product, searchQuery)
+                val belongsToActiveCompany = if (product.companyIds.isEmpty()) {
+                    activeId == null || activeId == legacyOwnerId
+                } else {
+                    activeId != null && product.companyIds.contains(activeId)
+                }
+                belongsToActiveCompany && SearchHelper.matchesProduct(product, searchQuery)
             }
         }
 
