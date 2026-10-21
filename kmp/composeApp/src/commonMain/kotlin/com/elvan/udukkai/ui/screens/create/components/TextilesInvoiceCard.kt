@@ -19,6 +19,8 @@ import androidx.compose.ui.unit.sp
 import com.elvan.udukkai.core.utils.CurrencyUtils
 import com.elvan.udukkai.core.utils.DateUtils
 import com.elvan.udukkai.data.model.InvoiceModel
+import com.elvan.udukkai.localization.K
+import com.elvan.udukkai.localization.tr
 import com.elvan.udukkai.theme.LocalAppFontFamily
 import com.elvan.udukkai.theme.ShellColors
 import com.elvan.udukkai.theme.preventBrokenLigatures
@@ -69,6 +71,8 @@ fun TextilesInvoiceCard(
 
     val amountStr = CurrencyUtils.formatInr(invoice.totalAmount)
     val dateStr = DateUtils.formatEpochMillis(invoice.invoiceDate)
+    val docTypeLabel = if (invoice.invoiceType == "proforma") K.proforma.tr() else K.taxInvoice.tr()
+    val leftDetail = if (primaryCity.isNotBlank()) "$docTypeLabel  •  ${primaryCity.preventBrokenLigatures()}" else docTypeLabel
 
     ElvanCommonCard(
         onClick = onClick,
@@ -163,7 +167,7 @@ fun TextilesInvoiceCard(
                     verticalAlignment = Alignment.Bottom
                 ) {
                     Text(
-                        text = primaryCity.preventBrokenLigatures(),
+                        text = leftDetail,
                         style = TextStyle(
                             fontFamily = ff,
                             fontSize = 13.5.sp,
