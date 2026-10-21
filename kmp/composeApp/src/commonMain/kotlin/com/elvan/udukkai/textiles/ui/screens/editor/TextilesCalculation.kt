@@ -43,11 +43,7 @@ data class TextilesItem(
     val taxableAmount: Double get() = (baseAmount - discountAmount).coerceAtLeast(0.0)
     val rowTax: Double get() = taxableAmount * (taxRate / 100.0)
     val rowTotal: Double get() = taxableAmount + rowTax
-
-
 }
-
-
 
 /**
  * Computed totals result for Textiles mode invoices.
@@ -60,10 +56,9 @@ data class TextilesTotals(
     val igst: Double = 0.0,
     val totalTax: Double = 0.0,
     val roundOff: Double = 0.0,
-    val grandTotal: Double = 0.0
+    val grandTotal: Double = 0.0,
+    val isTaxInclusive: Boolean = false
 )
-
-
 
 /**
  * Optional invoicing preferences for Textiles mode.
@@ -75,11 +70,10 @@ data class TextilesPreferences(
     val placeOfSupplyTa: String = "தமிழ்நாடு"
 )
 
-
-
 /**
  * Textiles invoice calculation engine.
  * Full intra-state (CGST + SGST) and inter-state (IGST) support.
+ * Also supports tax-inclusive pricing with reverse tax calculation.
  */
 object TextilesCalculation {
     fun calculate(
@@ -88,7 +82,8 @@ object TextilesCalculation {
         globalDiscountType: String = "%",
         businessState: String = "",
         customerState: String = "",
-        country: String = "India"
+        country: String = "India",
+        taxInclusive: Boolean = false
     ): TextilesTotals {
         var rawSubtotal = 0.0
         var itemDiscounts = 0.0
@@ -134,9 +129,14 @@ object TextilesCalculation {
                 0.0
             }
             val itemGlobalDiscount = globalDiscountAmount * itemWeight
-            val taxableAmount = (afterItemDiscount - itemGlobalDiscount).coerceAtLeast(0.0)
+            val netAfterDiscount = (afterItemDiscount - itemGlobalDiscount).coerceAtLeast(0.0)
 
-            taxTotal += (taxableAmount * item.taxRate) / 100.0
+            if (taxInclusive && item.taxRate > 0) {
+                val taxableAmount = netAfterDiscount / (1.0 + (item.taxRate / 100.0))
+                taxTotal += (netAfterDiscount - taxableAmount)
+            } else {
+                taxTotal += (netAfterDiscount * item.taxRate) / 100.0
+            }
         }
 
         val isIndia = country.equals("india", ignoreCase = true) || country.equals("in", ignoreCase = true)
@@ -158,7 +158,11 @@ object TextilesCalculation {
             igst = 0.0
         }
 
-        val exactTotal = (rawSubtotal - totalDiscount + taxTotal).coerceAtLeast(0.0)
+        val exactTotal = if (taxInclusive) {
+            (rawSubtotal - totalDiscount).coerceAtLeast(0.0)
+        } else {
+            (rawSubtotal - totalDiscount + taxTotal).coerceAtLeast(0.0)
+        }
         val roundedTotal = round(exactTotal)
         val suttruOff = roundedTotal - exactTotal
 
@@ -170,7 +174,8 @@ object TextilesCalculation {
             igst = igst,
             totalTax = taxTotal,
             roundOff = suttruOff,
-            grandTotal = roundedTotal
+            grandTotal = roundedTotal,
+            isTaxInclusive = taxInclusive
         )
     }
 

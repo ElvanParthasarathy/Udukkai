@@ -33,6 +33,7 @@ import androidx.compose.ui.unit.sp
 import com.elvan.udukkai.core.platform.AppBackHandler
 import com.elvan.udukkai.core.platform.getPreferencesHelper
 import com.elvan.udukkai.data.model.InvoiceModel
+import com.elvan.udukkai.data.model.InvoiceDisplayOptions
 import com.elvan.udukkai.textiles.data.TextilesInvoiceRepository
 import com.elvan.udukkai.textiles.data.TextilesProductRepository
 import com.elvan.udukkai.textiles.data.TextilesCustomerRepository
@@ -143,8 +144,12 @@ fun TextilesInvoiceEditorScreen(
     var selectedCustomerAddressMap by remember { mutableStateOf(invoice?.customerAddress ?: emptyMap()) }
     var customerState by remember { mutableStateOf("") }
 
-    val initialViruppangal = remember(invoice) {
-        TextilesCalculation.preferencesFromJson(invoice?.customPreferencesJson)
+    val initialDisplayOptions = remember(invoice) {
+        InvoiceDisplayOptions.fromJson(invoice?.customPreferencesJson)
+    }
+    var displayOptions by remember { mutableStateOf(initialDisplayOptions) }
+    var selectedAccountId by remember {
+        mutableStateOf(displayOptions.selectedAccountId ?: selectedProfile.getDefaultPaymentAccount()?.id)
     }
 
     // Metadata
@@ -152,12 +157,12 @@ fun TextilesInvoiceEditorScreen(
     var invoiceDate by remember { mutableStateOf(invoice?.invoiceDate ?: System.currentTimeMillis()) }
     var placeOfSupplyEn by remember {
         mutableStateOf(
-            if (invoice != null && initialViruppangal.placeOfSupply.isNotEmpty()) initialViruppangal.placeOfSupply else "Tamil Nadu"
+            if (invoice != null && initialDisplayOptions.placeOfSupply.isNotEmpty()) initialDisplayOptions.placeOfSupply else "Tamil Nadu"
         )
     }
     var placeOfSupplyTa by remember {
         mutableStateOf(
-            if (invoice != null && initialViruppangal.placeOfSupplyTa.isNotEmpty()) initialViruppangal.placeOfSupplyTa else "தமிழ்நாடு"
+            if (invoice != null && initialDisplayOptions.placeOfSupplyTa.isNotEmpty()) initialDisplayOptions.placeOfSupplyTa else "தமிழ்நாடு"
         )
     }
 
@@ -180,14 +185,14 @@ fun TextilesInvoiceEditorScreen(
         mutableStateOf(
             if (invoice != null && invoice.globalDiscountValue > 0) {
                 invoice.globalDiscountValue.toString()
-            } else if (invoice != null && initialViruppangal.globalDiscountValue > 0) {
-                initialViruppangal.globalDiscountValue.toString()
+            } else if (invoice != null && initialDisplayOptions.globalDiscountValue > 0) {
+                initialDisplayOptions.globalDiscountValue.toString()
             } else ""
         )
     }
     var globalDiscountType by remember {
         mutableStateOf(
-            invoice?.globalDiscountType?.ifEmpty { initialViruppangal.globalDiscountType } ?: initialViruppangal.globalDiscountType
+            invoice?.globalDiscountType?.ifEmpty { initialDisplayOptions.globalDiscountType } ?: initialDisplayOptions.globalDiscountType
         )
     }
 
@@ -286,7 +291,7 @@ fun TextilesInvoiceEditorScreen(
     }
 
     // Automatic calculation engine
-    val totals = remember(activeItems, globalDiscountValue, globalDiscountType, selectedProfile.state, customerState) {
+    val totals = remember(activeItems, globalDiscountValue, globalDiscountType, selectedProfile.state, customerState, displayOptions.taxInclusive) {
         val discountVal = globalDiscountValue.toDoubleOrNull() ?: 0.0
         val bState = selectedProfile.state["en"] ?: selectedProfile.state.values.firstOrNull().orEmpty()
         TextilesCalculation.calculate(
@@ -295,7 +300,8 @@ fun TextilesInvoiceEditorScreen(
             globalDiscountType = globalDiscountType,
             businessState = bState,
             customerState = placeOfSupplyEn,
-            country = selectedProfile.country["en"] ?: "India"
+            country = selectedProfile.country["en"] ?: "India",
+            taxInclusive = displayOptions.taxInclusive
         )
     }
 
@@ -333,6 +339,8 @@ fun TextilesInvoiceEditorScreen(
             } else {
                 isSaving = true
                 val nextVanakkam = TextilesInvoiceRepository.getNextVanakkam(selectedCompanyId)
+                val selectedAcc = selectedProfile.getPaymentAccounts().find { it.id == selectedAccountId }
+                    ?: selectedProfile.getDefaultPaymentAccount()
                 val newInvoice = InvoiceModel(
                     id = invoice?.id ?: 0L,
                     companyId = selectedCompanyId,
@@ -351,14 +359,12 @@ fun TextilesInvoiceEditorScreen(
                     globalDiscountAmount = 0.0,
                     taxAmount = totals.totalTax,
                     taxDataJson = TextilesCalculation.taxToJson(totals),
-                    customPreferencesJson = TextilesCalculation.preferencesToJson(
-                        TextilesPreferences(
-                            globalDiscountValue = globalDiscountValue.toDoubleOrNull() ?: 0.0,
-                            globalDiscountType = globalDiscountType,
-                            placeOfSupply = placeOfSupplyEn,
-                            placeOfSupplyTa = placeOfSupplyTa
-                        )
-                    ),
+                    customPreferencesJson = displayOptions.copy(
+                        selectedAccountId = selectedAccountId,
+                        placeOfSupply = placeOfSupplyEn,
+                        placeOfSupplyTa = placeOfSupplyTa
+                    ).toJson(),
+                    bankDetailsJson = selectedAcc?.toJson() ?: "{}",
                     updatedAt = System.currentTimeMillis()
                 )
                 TextilesInvoiceRepository.save(newInvoice)
@@ -480,11 +486,12 @@ fun TextilesInvoiceEditorScreen(
                             } else {
                                 "INV-"
                             }
+                            val currentDocPrefix = if (invoiceType == "proforma") "EST-" else profilePrefix
 
                             // Invoice Number with pencil edit pill
                             ElvanDocumentNumberField(
-                                label = K.invoiceNumber.tr(),
-                                prefix = profilePrefix,
+                                label = if (invoiceType == "proforma") K.proforma.tr() else K.invoiceNumber.tr(),
+                                prefix = currentDocPrefix,
                                 initialFullNumber = invoiceNumber,
                                 onFullNumberChanged = {
                                     invoiceNumber = it
@@ -524,10 +531,14 @@ fun TextilesInvoiceEditorScreen(
                             )
 
                             // Invoice Type Selector (Tax Invoice / Proforma)
-                            TextilesInvoiceTypeField(
+                            InvoiceTypeField(
                                 invoiceType = invoiceType,
-                                onChanged = {
-                                    invoiceType = it
+                                onChanged = { newType ->
+                                    invoiceType = newType
+                                    val pfx = if (newType == "proforma") "EST" else (selectedProfile.shortName.ifEmpty { "INV" })
+                                    if (!isInvoiceNumberOverridden) {
+                                        invoiceNumber = TextilesInvoiceRepository.getNextInvoiceNumber(selectedCompanyId, pfx)
+                                    }
                                     hasUnsavedChanges = true
                                 }
                             )
@@ -647,6 +658,31 @@ fun TextilesInvoiceEditorScreen(
                     ElvanEditorSection(index = 4, title = K.totals.tr()) {
                         TextilesTotalsField(totals = totals)
                     }
+                }
+
+                // ── Section 5: Bill Options (பட்டியல் விருப்பங்கள்) ──
+                item(key = "bill_options_section") {
+                    InvoiceBillOptionsSection(
+                        options = displayOptions,
+                        onOptionsChanged = {
+                            displayOptions = it
+                            hasUnsavedChanges = true
+                        },
+                        showTaxInclusiveOption = true
+                    )
+                }
+
+                // ── Section 6: Bank Account (வங்கிக் கணக்கு) ──
+                item(key = "bank_account_section") {
+                    InvoiceBankAccountPicker(
+                        accounts = selectedProfile.getPaymentAccounts(),
+                        selectedAccountId = selectedAccountId,
+                        onAccountSelected = { acc ->
+                            selectedAccountId = acc.id
+                            displayOptions = displayOptions.copy(selectedAccountId = acc.id)
+                            hasUnsavedChanges = true
+                        }
+                    )
                 }
             }
         }

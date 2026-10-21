@@ -296,6 +296,17 @@ fun TextilesHomeScreen() {
                         },
                         onCopy = {
                             copyInvoiceAndEdit(subpage.invoice)
+                        },
+                        onConvertToTaxInvoice = {
+                            val converted = subpage.invoice.copy(
+                                id = 0L,
+                                invoiceNumber = "",
+                                invoiceType = "tax-invoice",
+                                invoiceDate = System.currentTimeMillis(),
+                                createdAt = System.currentTimeMillis(),
+                                updatedAt = System.currentTimeMillis()
+                            )
+                            navigateToSubpage(ActiveSubpage.InvoiceEditor(converted))
                         }
                     )
                 }

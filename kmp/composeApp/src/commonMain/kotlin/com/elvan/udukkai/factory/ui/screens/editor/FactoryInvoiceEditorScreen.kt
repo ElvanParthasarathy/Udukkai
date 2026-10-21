@@ -31,6 +31,8 @@ import androidx.compose.ui.unit.sp
 import com.elvan.udukkai.core.platform.AppBackHandler
 import com.elvan.udukkai.core.platform.getPreferencesHelper
 import com.elvan.udukkai.data.model.InvoiceModel
+import com.elvan.udukkai.data.model.InvoiceDisplayOptions
+import com.elvan.udukkai.ui.screens.editor.invoice.components.*
 import com.elvan.udukkai.factory.data.FactoryInvoiceRepository
 import com.elvan.udukkai.factory.data.FactoryProductRepository
 import com.elvan.udukkai.factory.data.FactoryCustomerRepository
@@ -144,6 +146,16 @@ fun FactoryInvoiceEditorScreen(
     var selectedCustomerId by remember { mutableStateOf(invoice?.customerId) }
     var selectedCustomerNameMap by remember { mutableStateOf(invoice?.customerName ?: emptyMap()) }
     var selectedCustomerAddressMap by remember { mutableStateOf(invoice?.customerAddress ?: emptyMap()) }
+
+    // Invoice Type & Options
+    var invoiceType by remember { mutableStateOf(invoice?.invoiceType?.ifEmpty { "tax-invoice" } ?: "tax-invoice") }
+    val initialDisplayOptions = remember(invoice) {
+        InvoiceDisplayOptions.fromJson(invoice?.customPreferencesJson)
+    }
+    var displayOptions by remember { mutableStateOf(initialDisplayOptions) }
+    var selectedAccountId by remember {
+        mutableStateOf(displayOptions.selectedAccountId ?: selectedProfile.getDefaultPaymentAccount()?.id)
+    }
 
     // Date
     var invoiceDate by remember { mutableStateOf(invoice?.invoiceDate ?: System.currentTimeMillis()) }
@@ -350,12 +362,14 @@ fun FactoryInvoiceEditorScreen(
             } else {
                 isSaving = true
                 val vanakkam = FactoryInvoiceRepository.getNextVanakkam(selectedCompanyId)
+                val selectedAcc = selectedProfile.getPaymentAccounts().find { it.id == selectedAccountId }
+                    ?: selectedProfile.getDefaultPaymentAccount()
                 val newInvoice = InvoiceModel(
                     id = invoice?.id ?: 0L,
                     companyId = selectedCompanyId,
                     invoiceNumber = invoiceNumber,
                     vanakkam = if (invoice != null && invoice.vanakkam > 0) invoice.vanakkam else vanakkam,
-                    invoiceType = "",
+                    invoiceType = invoiceType,
                     customerId = selectedCustomerId,
                     customerName = selectedCustomerNameMap,
                     customerAddress = selectedCustomerAddressMap,
@@ -367,6 +381,8 @@ fun FactoryInvoiceEditorScreen(
                     postalCharges = thabaalThogai,
                     ahimsaSilkAmount = ahimsaPattuThogai,
                     otherTaxesJson = FactoryCalculation.chargesToJson(additionalCharges),
+                    customPreferencesJson = displayOptions.copy(selectedAccountId = selectedAccountId).toJson(),
+                    bankDetailsJson = selectedAcc?.toJson() ?: "{}",
                     updatedAt = System.currentTimeMillis()
                 )
                 FactoryInvoiceRepository.save(newInvoice)
@@ -470,13 +486,13 @@ fun FactoryInvoiceEditorScreen(
                 // ── Section 1: Invoice Details (பட்டியல் தரவுகள்) ──
                 item(key = "invoice_details_section") {
                     ElvanEditorSection(index = 1, title = K.invoiceDetails.tr()) {
-                        val currentPrefix = computePrefix(selectedProfile)
+                        val currentPrefix = if (invoiceType == "proforma") "EST" else computePrefix(selectedProfile)
                         Column(
                             modifier = Modifier.fillMaxWidth(),
                             verticalArrangement = Arrangement.spacedBy(16.dp)
                         ) {
                             ElvanDocumentNumberField(
-                                label = K.receiptNumber.tr(),
+                                label = if (invoiceType == "proforma") K.proforma.tr() else K.receiptNumber.tr(),
                                 prefix = "$currentPrefix-",
                                 initialFullNumber = invoiceNumber,
                                 onFullNumberChanged = { newNum ->
@@ -492,6 +508,18 @@ fun FactoryInvoiceEditorScreen(
                                 selectedDate = invoiceDate,
                                 onDateChanged = { newDate ->
                                     invoiceDate = newDate
+                                    hasUnsavedChanges = true
+                                }
+                            )
+
+                            InvoiceTypeField(
+                                invoiceType = invoiceType,
+                                onChanged = { newType ->
+                                    invoiceType = newType
+                                    val pfx = if (newType == "proforma") "EST" else computePrefix(selectedProfile)
+                                    if (!isInvoiceNumberOverridden) {
+                                        invoiceNumber = FactoryInvoiceRepository.getNextInvoiceNumber(selectedCompanyId, pfx)
+                                    }
                                     hasUnsavedChanges = true
                                 }
                             )
@@ -706,6 +734,31 @@ fun FactoryInvoiceEditorScreen(
                             )
                         }
                     }
+                }
+
+                // ── Section 4: Bill Options (பட்டியல் விருப்பங்கள்) ──
+                item(key = "bill_options_section") {
+                    InvoiceBillOptionsSection(
+                        options = displayOptions,
+                        onOptionsChanged = {
+                            displayOptions = it
+                            hasUnsavedChanges = true
+                        },
+                        showTaxInclusiveOption = false
+                    )
+                }
+
+                // ── Section 5: Bank Account (வங்கிக் கணக்கு) ──
+                item(key = "bank_account_section") {
+                    InvoiceBankAccountPicker(
+                        accounts = selectedProfile.getPaymentAccounts(),
+                        selectedAccountId = selectedAccountId,
+                        onAccountSelected = { acc ->
+                            selectedAccountId = acc.id
+                            displayOptions = displayOptions.copy(selectedAccountId = acc.id)
+                            hasUnsavedChanges = true
+                        }
+                    )
                 }
             }
         }
