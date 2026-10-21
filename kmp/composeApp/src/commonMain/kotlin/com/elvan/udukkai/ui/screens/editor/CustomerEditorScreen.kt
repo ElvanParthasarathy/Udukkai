@@ -74,10 +74,26 @@ fun CustomerEditorScreen(
 
     var nameMap by remember { mutableStateOf(merchant?.name ?: emptyMap()) }
     var gstin by remember { mutableStateOf(merchant?.gstin ?: "") }
-    var phone by remember { mutableStateOf(merchant?.phone ?: "") }
+    var countryMap by remember { mutableStateOf(merchant?.country ?: emptyMap()) }
+
+    val currentCallingCode = remember(countryMap) {
+        val cName = countryMap["en"] ?: countryMap["ta"]
+        getCountryCallingCode(cName)
+    }
+
+    val initialPhoneDigits = remember(merchant?.phone) {
+        val raw = merchant?.phone.orEmpty().trim()
+        val matched = worldCallingCodes.firstOrNull { raw.startsWith(it) }
+        if (matched != null) {
+            raw.removePrefix(matched).trim()
+        } else {
+            raw
+        }
+    }
+    var phoneDigits by remember { mutableStateOf(initialPhoneDigits) }
     var email by remember { mutableStateOf(merchant?.email ?: "") }
 
-    var countryMap by remember { mutableStateOf(merchant?.country ?: emptyMap()) }
+    val fullPhone = if (phoneDigits.isNotBlank()) "$currentCallingCode ${phoneDigits.trim()}" else ""
     var stateMap by remember { mutableStateOf(merchant?.state ?: emptyMap()) }
     var districtMap by remember { mutableStateOf(merchant?.district ?: emptyMap()) }
     var cityMap by remember { mutableStateOf(merchant?.city ?: emptyMap()) }
@@ -163,11 +179,11 @@ fun CustomerEditorScreen(
     val companyChanged = merchant != null && initialCompanyId != currentCompanyId
 
     val hasChanges = remember(
-        nameMap, gstin, phone, email, countryMap, stateMap, districtMap,
+        nameMap, gstin, fullPhone, email, countryMap, stateMap, districtMap,
         cityMap, addressMap, pinCode, isCustomCountry, isCustomState, isCustomDistrict, companyChanged
     ) {
         if (merchant == null) {
-            nameMap.values.any { it.isNotBlank() } || gstin.isNotBlank() || phone.isNotBlank() ||
+            nameMap.values.any { it.isNotBlank() } || gstin.isNotBlank() || fullPhone.isNotBlank() ||
                 email.isNotBlank() ||
                 countryMap.values.any { it.isNotBlank() } ||
                 stateMap.values.any { it.isNotBlank() } ||
@@ -176,7 +192,7 @@ fun CustomerEditorScreen(
                 addressMap.values.any { it.isNotBlank() } ||
                 pinCode.isNotBlank() || companyChanged
         } else {
-            nameMap != merchant.name || gstin != merchant.gstin || phone != merchant.phone ||
+            nameMap != merchant.name || gstin != merchant.gstin || fullPhone != merchant.phone ||
                 email != merchant.email || countryMap != merchant.country || stateMap != merchant.state ||
                 districtMap != merchant.district || cityMap != merchant.city || addressMap != merchant.address ||
                 pinCode != merchant.pinCode || companyChanged
@@ -215,7 +231,7 @@ fun CustomerEditorScreen(
         val merchantToSave = CustomerModel(
             id = merchant?.id ?: 0L,
             name = nameMap.filterValues { it.isNotBlank() },
-            phone = phone.trim(),
+            phone = fullPhone.trim(),
             email = email.trim(),
             gstin = gstin.trim().uppercase(),
             address = addressMap.filterValues { it.isNotBlank() },
@@ -316,22 +332,6 @@ fun CustomerEditorScreen(
                                         subtitleBuilder = { it.subtitle }
                                     )
                                 }
-
-                                ElvanEditorTextField(
-                                    value = phone,
-                                    onValueChange = { phone = it },
-                                    label = K.phone.tr(),
-                                    placeholder = "+91 98765 43210",
-                                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone)
-                                )
-
-                                ElvanEditorTextField(
-                                    value = email,
-                                    onValueChange = { email = it },
-                                    label = K.email.tr(),
-                                    placeholder = "customer@example.com",
-                                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email)
-                                )
 
                                 if (showGst) {
                                     ElvanEditorTextField(
@@ -558,6 +558,23 @@ fun CustomerEditorScreen(
                                     label = K.pincode.tr(),
                                     placeholder = "638001",
                                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                                )
+
+                                ElvanEditorTextField(
+                                    value = phoneDigits,
+                                    onValueChange = { phoneDigits = it.filter { ch -> ch.isDigit() || ch == ' ' || ch == '-' } },
+                                    label = K.phone.tr(),
+                                    prefixText = "$currentCallingCode ",
+                                    placeholder = "98765 43210",
+                                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone)
+                                )
+
+                                ElvanEditorTextField(
+                                    value = email,
+                                    onValueChange = { email = it },
+                                    label = K.email.tr(),
+                                    placeholder = "customer@example.com",
+                                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email)
                                 )
                             }
                         }

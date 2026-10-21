@@ -486,13 +486,13 @@ fun FactoryInvoiceEditorScreen(
                 // ── Section 1: Invoice Details (பட்டியல் தரவுகள்) ──
                 item(key = "invoice_details_section") {
                     ElvanEditorSection(index = 1, title = K.invoiceDetails.tr()) {
-                        val currentPrefix = if (invoiceType == "proforma") "EST" else computePrefix(selectedProfile)
+                        val currentPrefix = computePrefix(selectedProfile)
                         Column(
                             modifier = Modifier.fillMaxWidth(),
                             verticalArrangement = Arrangement.spacedBy(16.dp)
                         ) {
                             ElvanDocumentNumberField(
-                                label = if (invoiceType == "proforma") K.proforma.tr() else K.receiptNumber.tr(),
+                                label = K.receiptNumber.tr(),
                                 prefix = "$currentPrefix-",
                                 initialFullNumber = invoiceNumber,
                                 onFullNumberChanged = { newNum ->
@@ -508,18 +508,6 @@ fun FactoryInvoiceEditorScreen(
                                 selectedDate = invoiceDate,
                                 onDateChanged = { newDate ->
                                     invoiceDate = newDate
-                                    hasUnsavedChanges = true
-                                }
-                            )
-
-                            InvoiceTypeField(
-                                invoiceType = invoiceType,
-                                onChanged = { newType ->
-                                    invoiceType = newType
-                                    val pfx = if (newType == "proforma") "EST" else computePrefix(selectedProfile)
-                                    if (!isInvoiceNumberOverridden) {
-                                        invoiceNumber = FactoryInvoiceRepository.getNextInvoiceNumber(selectedCompanyId, pfx)
-                                    }
                                     hasUnsavedChanges = true
                                 }
                             )
@@ -575,6 +563,35 @@ fun FactoryInvoiceEditorScreen(
                                         }
                                     }
                                 }
+
+                                additionalCharges.forEachIndexed { cIdx, charge ->
+                                        key(charge.id) {
+                                            ElvanAnimatedCard(
+                                                key = charge.id,
+                                                isInitial = charge.id in initialChargeIds,
+                                                onDeleted = {
+                                                    deletingChargeIds = deletingChargeIds - charge.id
+                                                    additionalCharges = additionalCharges.filter { it.id != charge.id }
+                                                    hasUnsavedChanges = true
+                                                }
+                                            ) { requestDelete ->
+                                                FactoryAdditionalChargeCard(
+                                                    charge = charge,
+                                                    index = cIdx,
+                                                    onUpdated = { updated ->
+                                                        additionalCharges = additionalCharges.map { if (it.id == charge.id) updated else it }
+                                                        hasUnsavedChanges = true
+                                                    },
+                                                    onDeleted = {
+                                                        deletingChargeIds = deletingChargeIds + charge.id
+                                                        hasUnsavedChanges = true
+                                                        requestDelete()
+                                                    },
+                                                    onDirty = { hasUnsavedChanges = true }
+                                                )
+                                            }
+                                        }
+                                    }
                             }
 
                             // ── Add Item & Add Charge Buttons ──
@@ -661,40 +678,6 @@ fun FactoryInvoiceEditorScreen(
                                 }
                             }
 
-                            // ── Other Charges Animated Cards ──
-                            if (additionalCharges.isNotEmpty()) {
-                                Spacer(modifier = Modifier.height(6.dp))
-                                ElvanAnimatedList {
-                                    additionalCharges.forEachIndexed { cIdx, charge ->
-                                        key(charge.id) {
-                                            ElvanAnimatedCard(
-                                                key = charge.id,
-                                                isInitial = charge.id in initialChargeIds,
-                                                onDeleted = {
-                                                    deletingChargeIds = deletingChargeIds - charge.id
-                                                    additionalCharges = additionalCharges.filter { it.id != charge.id }
-                                                    hasUnsavedChanges = true
-                                                }
-                                            ) { requestDelete ->
-                                                FactoryAdditionalChargeCard(
-                                                    charge = charge,
-                                                    index = cIdx,
-                                                    onUpdated = { updated ->
-                                                        additionalCharges = additionalCharges.map { if (it.id == charge.id) updated else it }
-                                                        hasUnsavedChanges = true
-                                                    },
-                                                    onDeleted = {
-                                                        deletingChargeIds = deletingChargeIds + charge.id
-                                                        hasUnsavedChanges = true
-                                                        requestDelete()
-                                                    },
-                                                    onDirty = { hasUnsavedChanges = true }
-                                                )
-                                            }
-                                        }
-                                    }
-                                }
-                            }
                         }
                     }
                 }

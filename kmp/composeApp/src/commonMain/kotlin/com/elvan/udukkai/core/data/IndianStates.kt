@@ -75,3 +75,42 @@ val worldCountries: List<LocationName> = listOf(
     LocationName(en = "Custom", ta = "தனிப்பயன்")
 )
 
+val worldCallingCodes: List<String> = listOf(
+    "+971", "+880", "+977", "+966", "+852",
+    "+91", "+44", "+61", "+64", "+81", "+82", "+86", "+33", "+49",
+    "+39", "+34", "+31", "+65", "+60", "+62", "+66", "+27", "+94",
+    "+92", "+63", "+1"
+)
+
+fun getCountryCallingCode(countryName: String?): String {
+    val c = countryName?.trim()?.lowercase() ?: ""
+    return when {
+        c == "india" || c == "இந்தியா" -> "+91"
+        c == "united states" || c == "அமெரிக்க ஒன்றிணைந்த நாடுகள்" -> "+1"
+        c == "united kingdom" || c == "ஒன்றிணைந்த பேரரசு" -> "+44"
+        c == "canada" || c == "கனடா" -> "+1"
+        c == "australia" || c == "ஆஸ்திரேலியா" -> "+61"
+        c == "new zealand" || c == "நியூசிலாந்து" -> "+64"
+        c == "japan" || c == "நிஹொன்" -> "+81"
+        c == "south korea" || c == "ஹங்குக்கு" -> "+82"
+        c == "china" || c == "சீனா" -> "+86"
+        c == "france" || c == "ஃபிரான்சு" -> "+33"
+        c == "germany" || c == "டொயிச்சுலாந்து" -> "+49"
+        c == "italy" || c == "இத்தாலியா" -> "+39"
+        c == "spain" || c == "எசுப்பானியா" -> "+34"
+        c == "netherlands" || c == "நெதர்லாந்து" -> "+31"
+        c == "singapore" || c == "சிங்கப்பூர்" -> "+65"
+        c == "malaysia" || c == "மலேசியா" -> "+60"
+        c == "indonesia" || c == "இந்தோனேசியா" -> "+62"
+        c == "thailand" || c == "தாய்லாந்து" -> "+66"
+        c == "united arab emirates" || c == "ஒன்றிணைந்த அரபு அமீரகம்" -> "+971"
+        c == "saudi arabia" || c == "சவுதி அரேபியா" -> "+966"
+        c == "south africa" || c == "தென் ஆப்பிரிக்கா" -> "+27"
+        c == "sri lanka" || c == "இலங்கை" -> "+94"
+        c == "bangladesh" || c == "வங்காளதேசம்" -> "+880"
+        c == "nepal" || c == "நேபாளம்" -> "+977"
+        c == "pakistan" || c == "பாகிஸ்தான்" -> "+92"
+        c == "philippines" || c == "பிலிப்பினாசு" -> "+63"
+        else -> "+91"
+    }
+}
