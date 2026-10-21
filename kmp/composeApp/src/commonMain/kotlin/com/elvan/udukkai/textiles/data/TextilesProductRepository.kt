@@ -24,9 +24,14 @@ object TextilesProductRepository {
     val filteredProducts: List<ProductModel>
         get() {
             val activeId = TextilesProfileRepository.profile.id
+            val legacyOwnerId = TextilesProfileRepository.profiles.firstOrNull()?.id
             return products.filter { product ->
-                (activeId == null || product.isAvailableForCompany(activeId)) &&
-                    SearchHelper.matchesProduct(product, searchQuery)
+                val belongsToActiveCompany = if (product.companyIds.isEmpty()) {
+                    activeId == null || activeId == legacyOwnerId
+                } else {
+                    activeId != null && product.companyIds.contains(activeId)
+                }
+                belongsToActiveCompany && SearchHelper.matchesProduct(product, searchQuery)
             }
         }
 
