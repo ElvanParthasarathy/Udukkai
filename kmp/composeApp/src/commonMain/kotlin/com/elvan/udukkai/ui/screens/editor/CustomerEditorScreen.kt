@@ -62,8 +62,8 @@ fun CustomerEditorScreen(
     var phone by remember { mutableStateOf(merchant?.phone ?: "") }
     var email by remember { mutableStateOf(merchant?.email ?: "") }
 
-    var countryMap by remember { mutableStateOf(merchant?.country ?: mapOf("en" to "India", "ta" to "இந்தியா")) }
-    var stateMap by remember { mutableStateOf(merchant?.state ?: mapOf("en" to "Tamil Nadu", "ta" to "தமிழ்நாடு")) }
+    var countryMap by remember { mutableStateOf(merchant?.country ?: emptyMap()) }
+    var stateMap by remember { mutableStateOf(merchant?.state ?: emptyMap()) }
     var districtMap by remember { mutableStateOf(merchant?.district ?: emptyMap()) }
     var cityMap by remember { mutableStateOf(merchant?.city ?: emptyMap()) }
     var addressMap by remember { mutableStateOf(merchant?.address ?: emptyMap()) }
@@ -71,30 +71,27 @@ fun CustomerEditorScreen(
 
     var showGstField by remember { mutableStateOf(showGst || merchant?.gstin?.isNotBlank() == true) }
 
-    val allCompaniesLabel = "${K.all.tr()} ${K.companies.tr()}"
+    // Customer records are owned by one business; do not offer a shared "All Companies" owner.
     val companyOptions = remember(allProfiles, primaryLang) {
-        listOf(CompanyOption(id = null, name = allCompaniesLabel)) +
-            allProfiles.map { p ->
-                val name = p.shortName.ifEmpty { p.businessName[primaryLang] ?: p.businessName.values.firstOrNull() ?: "Company #${p.id}" }
-                CompanyOption(id = p.id, name = name)
-            }
+        allProfiles.map { p ->
+            val name = p.shortName.ifEmpty { p.businessName[primaryLang] ?: p.businessName.values.firstOrNull() ?: "Company #" + p.id }
+            CompanyOption(id = p.id, name = name)
+        }
     }
 
-    var selectedCompanyOption by remember(merchant, companyOptions) {
+    var selectedCompanyOption by remember(merchant, companyOptions, activeCompanyId) {
         mutableStateOf(
-            if (merchant != null && merchant.companyIds.isNotEmpty()) {
-                companyOptions.firstOrNull { it.id == merchant.companyIds.first() } ?: companyOptions.first()
-            } else if (merchant == null && activeCompanyId != null && allProfiles.size > 1) {
-                companyOptions.firstOrNull { it.id == activeCompanyId } ?: companyOptions.first()
-            } else {
-                companyOptions.first()
-            }
+            companyOptions.firstOrNull { option ->
+                option.id == (merchant?.companyIds?.firstOrNull { it == activeCompanyId }
+                    ?: merchant?.companyIds?.firstOrNull()
+                    ?: activeCompanyId)
+            } ?: CompanyOption(id = activeCompanyId, name = K.activeCompany.tr())
         )
     }
 
     val initialPresetCountry = remember(merchant) {
         val c = merchant?.country
-        if (c.isNullOrEmpty()) worldCountries.first()
+        if (c.isNullOrEmpty()) null
         else worldCountries.filter { it.en != "Custom" && it.ta != "தனிப்பயன்" }
             .firstOrNull { it.en.equals(c["en"], ignoreCase = true) || it.ta == c["ta"] }
     }
@@ -104,7 +101,7 @@ fun CustomerEditorScreen(
 
     val initialPresetState = remember(merchant) {
         val s = merchant?.state
-        if (s.isNullOrEmpty()) indianStates.first()
+        if (s.isNullOrEmpty()) null
         else indianStates.filter { it.en != "Custom" && it.ta != "தனிப்பயன்" }
             .firstOrNull { it.en.equals(s["en"], ignoreCase = true) || it.ta == s["ta"] }
     }
@@ -153,8 +150,8 @@ fun CustomerEditorScreen(
         if (merchant == null) {
             nameMap.values.any { it.isNotBlank() } || gstin.isNotBlank() || phone.isNotBlank() ||
                 email.isNotBlank() ||
-                countryMap != mapOf("en" to "India", "ta" to "இந்தியா") ||
-                stateMap != mapOf("en" to "Tamil Nadu", "ta" to "தமிழ்நாடு") ||
+                countryMap.values.any { it.isNotBlank() } ||
+                stateMap.values.any { it.isNotBlank() } ||
                 districtMap.values.any { it.isNotBlank() } ||
                 cityMap.values.any { it.isNotBlank() } ||
                 addressMap.values.any { it.isNotBlank() } ||
@@ -194,7 +191,7 @@ fun CustomerEditorScreen(
             return
         }
 
-        val companyIds = if (selectedCompanyOption.id != null) listOf(selectedCompanyOption.id!!) else emptyList()
+        val companyIds = selectedCompanyOption.id?.let { listOf(it) } ?: emptyList()
 
         val merchantToSave = CustomerModel(
             id = merchant?.id ?: 0L,
@@ -357,7 +354,7 @@ fun CustomerEditorScreen(
 
                                 ElvanEditorDropdown<LocationName>(
                                     label = K.country.tr(),
-                                    value = if (isCustomCountry) worldCountries.last() else (presetCountry ?: worldCountries.first()),
+                                    value = if (isCustomCountry) worldCountries.last() else presetCountry,
                                     items = worldCountries,
                                     onSelected = { picked ->
                                         if (picked.en == "Custom" || picked.ta == "தனிப்பயன்") {
@@ -367,6 +364,11 @@ fun CustomerEditorScreen(
                                             isCustomCountry = false
                                             countryMap = mapOf("en" to picked.en, "ta" to picked.ta)
                                         }
+                                        // State and district depend on country; require a fresh selection.
+                                        stateMap = emptyMap()
+                                        districtMap = emptyMap()
+                                        isCustomState = false
+                                        isCustomDistrict = false
                                     },
                                     itemLabelBuilder = { if (LanguageManager.activeLanguageCode == "ta") it.ta else it.en },
                                     subtitleBuilder = { if (LanguageManager.activeLanguageCode == "ta") it.en else it.ta },
@@ -394,7 +396,7 @@ fun CustomerEditorScreen(
 
                                     ElvanEditorDropdown<LocationName>(
                                         label = K.state.tr(),
-                                        value = if (isCustomState) indianStates.last() else (presetState ?: indianStates.first()),
+                                        value = if (isCustomState) indianStates.last() else presetState,
                                         items = indianStates,
                                         onSelected = { picked ->
                                             if (picked.en == "Custom" || picked.ta == "தனிப்பயன்") {
