@@ -26,7 +26,7 @@ data class BusinessProfile(
     var city: MutableMap<String, String> = mutableMapOf(),
     var district: MutableMap<String, String> = mutableMapOf(),
     var state: MutableMap<String, String> = mutableMapOf(),
-    var country: MutableMap<String, String> = mutableMapOf("en" to "India", "ta" to "இந்தியா"),
+    var country: MutableMap<String, String> = mutableMapOf(),
     var pinCode: String = "",
 
     // Bank Details
@@ -58,19 +58,16 @@ data class BusinessProfile(
         }
 
     fun getPrimary(fieldName: String): String {
-        if (fieldName == "naadu" || fieldName == "country") return if (primaryLanguage.lowercase().startsWith("ta")) "இந்தியா" else "India"
         val map = getBilingualMap(fieldName)
         return map[primaryLanguage] ?: map["ta"] ?: ""
     }
 
     fun getSecondary(fieldName: String): String {
-        if (fieldName == "naadu" || fieldName == "country") return if (secondaryLanguage.lowercase().startsWith("ta")) "இந்தியா" else "India"
         val map = getBilingualMap(fieldName)
         return map[secondaryLanguage] ?: map["en"] ?: ""
     }
 
     fun setBilingual(fieldName: String, language: String, value: String) {
-        if (fieldName == "naadu" || fieldName == "country") return
         val map = getBilingualMap(fieldName)
         map[language] = value
     }
