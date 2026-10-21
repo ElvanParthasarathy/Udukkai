@@ -17,6 +17,8 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.input.pointer.PointerEventPass
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.Velocity
@@ -520,6 +522,27 @@ fun ElvanShell(
                 ) {
                     floatingBar()
                 }
+            }
+
+            // Layer 6: Android System Navigation Bar Touch Shield
+            // Blocks touches in the physical system navigation bar area from leaking to the list underneath,
+            // while keeping 100% edge-to-edge transparent rendering (Zero visual change).
+            if (navBarsPadding > 0.dp) {
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.BottomCenter)
+                        .fillMaxWidth()
+                        .height(navBarsPadding)
+                        .zIndex(200f)
+                        .pointerInput(Unit) {
+                            awaitPointerEventScope {
+                                while (true) {
+                                    val event = awaitPointerEvent(PointerEventPass.Initial)
+                                    event.changes.forEach { it.consume() }
+                                }
+                            }
+                        }
+                )
             }
         }
     }
