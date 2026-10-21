@@ -431,6 +431,8 @@ val ta: Map<String, String> = mapOf(
     K.printBtn to "அச்சிடு",
     K.shareBtn to "பகிர்",
     K.previewBtn to "முன்னோட்டம்",
+    K.maatruToolbarBtn to "மாற்று",
+    K.munvizhiToolbarBtn to "முன்விழி",
     K.previewUnderConstruction to "முன்னோட்டம் விரைவில் வரவுள்ளது...",
     K.storagePermissionRequired to "சேமிப்பக அனுமதி தேவை",
     K.storagePermissionDesc to "காப்புப்பிரதி மற்றும் பட்டியல்களைச் சேமிக்க இந்த அனுமதி தேவை.",

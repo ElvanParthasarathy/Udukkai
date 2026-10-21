@@ -5,6 +5,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.elvan.udukkai.core.backup.AutoBackupManager
 import com.elvan.udukkai.data.database.getTextilesDatabaseHelper
+import com.elvan.udukkai.core.utils.ThedalUdhavi
 import com.elvan.udukkai.data.model.VaangunarTharavuru
 
 /**
@@ -26,21 +27,8 @@ object TextilesCustomerRepository {
 
     val filteredMerchants: List<VaangunarTharavuru>
         get() {
-            val q = searchQuery.trim().lowercase()
-            if (q.isEmpty()) return merchants
-
             return merchants.filter { m ->
-                val nameMatches = m.peyar.values.any { it.lowercase().contains(q) }
-                val gstinMatches = m.gstin.lowercase().contains(q)
-                val phoneMatches = m.tholaipaesi.lowercase().contains(q)
-                val emailMatches = m.minnanjal.lowercase().contains(q)
-                val pinMatches = m.anjalKuriyeedu.lowercase().contains(q)
-                val stateMatches = m.maanilam.values.any { it.lowercase().contains(q) }
-                val districtMatches = m.maavattam.values.any { it.lowercase().contains(q) }
-                val cityMatches = m.oor.values.any { it.lowercase().contains(q) }
-                val addressMatches = m.mugavari.values.any { it.lowercase().contains(q) }
-
-                nameMatches || gstinMatches || phoneMatches || emailMatches || pinMatches || stateMatches || districtMatches || cityMatches || addressMatches
+                ThedalUdhavi.matchesCustomer(m, searchQuery)
             }
         }
 

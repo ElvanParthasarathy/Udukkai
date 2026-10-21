@@ -5,6 +5,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.elvan.udukkai.core.backup.AutoBackupManager
 import com.elvan.udukkai.data.database.getFactoryDatabaseHelper
+import com.elvan.udukkai.core.utils.ThedalUdhavi
 import com.elvan.udukkai.data.model.VaangunarTharavuru
 
 /**
@@ -26,15 +27,8 @@ object FactoryCustomerRepository {
 
     val filteredMerchants: List<VaangunarTharavuru>
         get() {
-            val q = searchQuery.trim().lowercase()
-            if (q.isEmpty()) return merchants
-
             return merchants.filter { m ->
-                val nameMatches = m.peyar.values.any { it.lowercase().contains(q) }
-                val cityMatches = m.oor.values.any { it.lowercase().contains(q) }
-                val addressMatches = m.mugavari.values.any { it.lowercase().contains(q) }
-                val phoneMatches = m.tholaipaesi.lowercase().contains(q)
-                nameMatches || cityMatches || addressMatches || phoneMatches
+                ThedalUdhavi.matchesCustomer(m, searchQuery)
             }
         }
 

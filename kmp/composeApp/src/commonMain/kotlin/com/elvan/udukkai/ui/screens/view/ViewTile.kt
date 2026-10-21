@@ -38,8 +38,8 @@ fun ElvanViewActionBar(
     onCopy: (() -> Unit)? = null, // Deprecated / Ignored per requirement
     modifier: Modifier = Modifier
 ) {
-    val editLabel = K.editRecord.tr()
-    val previewLabel = K.previewBtn.tr()
+    val editLabel = K.maatruToolbarBtn.tr()
+    val previewLabel = K.munvizhiToolbarBtn.tr()
     val printLabel = K.printBtn.tr()
     val shareLabel = K.shareBtn.tr()
     val underConstructionMsg = K.previewUnderConstruction.tr()

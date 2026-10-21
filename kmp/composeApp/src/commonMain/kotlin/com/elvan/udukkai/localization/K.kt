@@ -448,6 +448,8 @@ object K {
     const val printBtn = "printBtn"
     const val shareBtn = "shareBtn"
     const val previewBtn = "previewBtn"
+    const val maatruToolbarBtn = "maatruToolbarBtn"
+    const val munvizhiToolbarBtn = "munvizhiToolbarBtn"
     const val previewUnderConstruction = "previewUnderConstruction"
     const val storagePermissionRequired = "storagePermissionRequired"
     const val storagePermissionDesc = "storagePermissionDesc"

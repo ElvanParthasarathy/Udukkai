@@ -653,7 +653,7 @@ fun ElvanEditorBottomBar(
     onPreview: (() -> Unit)? = null
 ) {
     var showPreviewDialog by remember { mutableStateOf(false) }
-    val previewLabel = K.previewBtn.tr()
+    val previewLabel = K.munvizhiToolbarBtn.tr()
 
     val actions = remember(label, enabled, isLoading, onClick, onPreview, previewLabel) {
         listOf(
@@ -664,7 +664,7 @@ fun ElvanEditorBottomBar(
             ),
             ElvanFloatingAction(
                 label = label,
-                icon = MaterialSymbols.Rounded.CheckCircleFill,
+                icon = MaterialSymbols.Rounded.Save,
                 onClick = onClick,
                 enabled = enabled,
                 isLoading = isLoading

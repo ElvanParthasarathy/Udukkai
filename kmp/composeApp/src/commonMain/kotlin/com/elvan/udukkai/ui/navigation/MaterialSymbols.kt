@@ -392,6 +392,10 @@ object MaterialSymbols {
         }
         val ArrowForward: ImageVector get() = LibSymbols.Rounded.Arrow_forward
         val Visibility: ImageVector get() = LibSymbols.Rounded.Visibility
+        val Preview: ImageVector get() = LibSymbols.Rounded.Preview
+        val PreviewFill: ImageVector get() = LibSymbols.RoundedFilled.Preview
+        val Save: ImageVector get() = LibSymbols.Rounded.Save
+        val SaveFill: ImageVector get() = LibSymbols.RoundedFilled.Save
         val VisibilityOff: ImageVector get() = LibSymbols.Rounded.Visibility_off
         val Close: ImageVector get() = LibSymbols.Rounded.Close
         val Cancel: ImageVector get() = LibSymbols.RoundedFilled.Cancel

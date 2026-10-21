@@ -430,6 +430,8 @@ val en: Map<String, String> = mapOf(
     K.printBtn to "Print",
     K.shareBtn to "Share",
     K.previewBtn to "Preview",
+    K.maatruToolbarBtn to "Edit",
+    K.munvizhiToolbarBtn to "Preview",
     K.previewUnderConstruction to "Preview coming soon...",
     K.storagePermissionRequired to "Storage Permission Required",
     K.storagePermissionDesc to "This permission is needed to save backups and invoices.",

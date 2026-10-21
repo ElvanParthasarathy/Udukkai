@@ -116,13 +116,8 @@ fun FactoryRecycleBinScreen(
     // Filtered data sets scoped to active company and search query (sorted by deleted_at DESC)
     val allDeletedInvoices = com.elvan.udukkai.factory.data.FactoryInvoiceRepository.deletedInvoices
     val displayedInvoices = remember(allDeletedInvoices, activeId, searchQuery) {
-        val q = searchQuery.trim().lowercase()
         allDeletedInvoices.filter { invoice ->
-            val matchesQuery = if (q.isEmpty()) true else {
-                invoice.patrucheettuEn.lowercase().contains(q) ||
-                invoice.vaangunarPeyar.values.any { it.lowercase().contains(q) } ||
-                invoice.vaangunarMunvari.values.any { it.lowercase().contains(q) }
-            }
+            val matchesQuery = com.elvan.udukkai.core.utils.ThedalUdhavi.matchesInvoice(invoice, searchQuery)
             val matchesProfile = if (activeId != null) invoice.niruvanamId == activeId else true
             matchesQuery && matchesProfile
         }
@@ -130,13 +125,8 @@ fun FactoryRecycleBinScreen(
 
     val allDeletedReceipts = com.elvan.udukkai.factory.data.FactoryReceiptRepository.deletedReceipts
     val displayedReceipts = remember(allDeletedReceipts, activeId, searchQuery) {
-        val q = searchQuery.trim().lowercase()
         allDeletedReceipts.filter { receipt ->
-            val matchesQuery = if (q.isEmpty()) true else {
-                receipt.patruEn.lowercase().contains(q) ||
-                receipt.vaangunarPeyar.values.any { it.lowercase().contains(q) } ||
-                receipt.vaangunarMunvari.values.any { it.lowercase().contains(q) }
-            }
+            val matchesQuery = com.elvan.udukkai.core.utils.ThedalUdhavi.matchesReceipt(receipt, searchQuery)
             val matchesProfile = if (activeId != null) receipt.niruvanamId == activeId else true
             matchesQuery && matchesProfile
         }
@@ -144,26 +134,17 @@ fun FactoryRecycleBinScreen(
 
     val allDeletedProducts = com.elvan.udukkai.factory.data.FactoryProductRepository.deletedProducts
     val displayedProducts = remember(allDeletedProducts, activeId, searchQuery) {
-        val q = searchQuery.trim().lowercase()
         allDeletedProducts.filter { item ->
             val matchesCompany = if (activeId != null) item.isAvailableForCompany(activeId) else true
-            val matchesQuery = if (q.isEmpty()) true else {
-                item.porulPeyar.values.any { it.lowercase().contains(q) } ||
-                item.hsnCode.lowercase().contains(q)
-            }
+            val matchesQuery = com.elvan.udukkai.core.utils.ThedalUdhavi.matchesProduct(item, searchQuery)
             matchesCompany && matchesQuery
         }
     }
 
     val allDeletedCustomers = com.elvan.udukkai.factory.data.FactoryCustomerRepository.deletedCustomers
     val displayedCustomers = remember(allDeletedCustomers, searchQuery) {
-        val q = searchQuery.trim().lowercase()
-        if (q.isEmpty()) allDeletedCustomers else {
-            allDeletedCustomers.filter { merchant ->
-                merchant.peyar.values.any { it.lowercase().contains(q) } ||
-                merchant.oor.values.any { it.lowercase().contains(q) } ||
-                merchant.tholaipaesi.lowercase().contains(q)
-            }
+        allDeletedCustomers.filter { merchant ->
+            com.elvan.udukkai.core.utils.ThedalUdhavi.matchesCustomer(merchant, searchQuery)
         }
     }
 

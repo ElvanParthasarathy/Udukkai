@@ -103,8 +103,11 @@ fun <T> ElvanSelectionBottomSheet(
             items.filter { searchFilter(it, searchQuery) }
         } else {
             items.filter { item ->
-                itemLabelBuilder(item).contains(searchQuery, ignoreCase = true) ||
-                        (subtitleBuilder?.invoke(item)?.contains(searchQuery, ignoreCase = true) == true)
+                com.elvan.udukkai.core.utils.ThedalUdhavi.matchesRecord(
+                    itemLabelBuilder(item),
+                    subtitleBuilder?.invoke(item),
+                    query = searchQuery
+                )
             }
         }
     }

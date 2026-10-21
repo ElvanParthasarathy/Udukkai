@@ -5,6 +5,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.elvan.udukkai.core.backup.AutoBackupManager
 import com.elvan.udukkai.data.database.getFactoryDatabaseHelper
+import com.elvan.udukkai.core.utils.ThedalUdhavi
 import com.elvan.udukkai.data.model.PattiyalTharavuru
 
 object FactoryInvoiceRepository {
@@ -44,16 +45,8 @@ object FactoryInvoiceRepository {
 
     val filteredInvoices: List<PattiyalTharavuru>
         get() {
-            val q = searchQuery.trim().lowercase()
             return activeCompanyInvoices.filter { inv ->
-                val matchesQuery = if (q.isEmpty()) true else {
-                    val noMatches = inv.patrucheettuEn.lowercase().contains(q)
-                    val customerMatches = inv.vaangunarPeyar.values.any { it.lowercase().contains(q) }
-                    val itemMatches = inv.tharavugal.any { item ->
-                        (item as? Map<*, *>)?.get("porul_peyar")?.toString()?.lowercase()?.contains(q) == true
-                    }
-                    noMatches || customerMatches || itemMatches
-                }
+                val matchesQuery = ThedalUdhavi.matchesInvoice(inv, searchQuery)
 
                 val matchesDate = when {
                     startDateFilter != null && endDateFilter != null ->

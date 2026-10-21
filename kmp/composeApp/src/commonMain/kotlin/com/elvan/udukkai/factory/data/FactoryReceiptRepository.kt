@@ -6,6 +6,7 @@ import androidx.compose.runtime.setValue
 import com.elvan.udukkai.core.backup.AutoBackupManager
 import com.elvan.udukkai.data.database.getFactoryDatabaseHelper
 import com.elvan.udukkai.data.model.PatruPattiyalInaippuTharavuru
+import com.elvan.udukkai.core.utils.ThedalUdhavi
 import com.elvan.udukkai.data.model.PatrugalTharavuru
 import com.elvan.udukkai.data.model.PattiyalTharavuru
 
@@ -48,12 +49,8 @@ object FactoryReceiptRepository {
 
     val filteredReceipts: List<PatrugalTharavuru>
         get() {
-            val q = searchQuery.trim().lowercase()
             return activeCompanyReceipts.filter { r ->
-                val matchesQuery = if (q.isEmpty()) true else {
-                    r.patruEn.lowercase().contains(q) ||
-                    r.vaangunarPeyar.values.any { it.lowercase().contains(q) }
-                }
+                val matchesQuery = ThedalUdhavi.matchesReceipt(r, searchQuery)
                 val matchesDate = when {
                     startDateFilter != null && endDateFilter != null -> r.patruNaal in startDateFilter!!..endDateFilter!!
                     startDateFilter != null -> r.patruNaal >= startDateFilter!!
