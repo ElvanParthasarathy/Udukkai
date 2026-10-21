@@ -529,10 +529,7 @@ fun <T> ElvanEditorDropdown(
 
     var isSheetOpen by remember { mutableStateOf(false) }
     val containerBg = backgroundColor ?: colors.iconBg
-    val displayText = if (value != null) {
-        val sub = subtitleBuilder?.invoke(value)
-        if (!sub.isNullOrBlank()) "${itemLabelBuilder(value)} ($sub)" else itemLabelBuilder(value)
-    } else ""
+    val displayText = if (value != null) itemLabelBuilder(value) else ""
 
     Column(modifier = modifier.fillMaxWidth()) {
         if (!label.isNullOrBlank() && !hideLabel) {

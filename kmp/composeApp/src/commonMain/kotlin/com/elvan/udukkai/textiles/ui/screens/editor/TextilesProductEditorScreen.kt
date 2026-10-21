@@ -257,54 +257,17 @@ fun TextilesProductEditorScreen(
                             )
 
                             // Match the React Make/Create product editor's capsule measurement selector.
-                            Column(
-                                modifier = Modifier.fillMaxWidth()
-                            ) {
-                                ElvanEditorLabel(label = K.unitOfMeasurement.tr())
-                                Row(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .height(40.dp)
-                                        .clip(RoundedCornerShape(50.dp))
-                                        .background(colors.iconBg)
-                                        .padding(4.dp),
-                                    horizontalArrangement = Arrangement.spacedBy(2.dp)
-                                ) {
-                                    listOf(
-                                        "quantity" to K.measureQuantity.tr(),
-                                        "weight" to K.measureWeight.tr()
-                                    ).forEach { (value, label) ->
-                                        val selected = quantityType == value
-                                        Box(
-                                            modifier = Modifier
-                                                .weight(1f)
-                                                .fillMaxHeight()
-                                                .clip(RoundedCornerShape(50.dp))
-                                                .background(
-                                                    if (selected) colors.accent else Color.Transparent
-                                                )
-                                                .clickable(
-                                                    interactionSource = remember { MutableInteractionSource() },
-                                                    indication = null
-                                                ) {
-                                                    quantityType = value
-                                                },
-                                            contentAlignment = Alignment.Center
-                                        ) {
-                                            Text(
-                                                text = label,
-                                                style = TextStyle(
-                                                    fontFamily = ff,
-                                                    fontSize = 13.sp,
-                                                    fontWeight = FontWeight.SemiBold,
-                                                    color = if (selected) (if (colors.isDark) Color.Black else Color.White) else colors.textSecondary
-                                                ),
-                                                maxLines = 1
-                                            )
-                                        }
-                                    }
-                                }
-                            }
+                            val measureUnits = listOf(
+                                "quantity" to K.measureQuantity.tr(),
+                                "weight" to K.measureWeight.tr()
+                            )
+                            ElvanEditorDropdown<Pair<String, String>>(
+                                label = K.unitOfMeasurement.tr(),
+                                value = measureUnits.firstOrNull { it.first == quantityType } ?: measureUnits.first(),
+                                items = measureUnits,
+                                onSelected = { quantityType = it.first },
+                                itemLabelBuilder = { it.second }
+                            )
 
                             ElvanEditorTextField(
                                 value = price,
