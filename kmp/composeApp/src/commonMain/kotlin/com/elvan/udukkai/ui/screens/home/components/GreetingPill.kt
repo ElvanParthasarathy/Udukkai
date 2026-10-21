@@ -221,7 +221,7 @@ fun GreetingPill(
                                 Icon(
                                     imageVector = MaterialSymbols.Rounded.AutoAwesome,
                                     contentDescription = null,
-                                    tint = colors.accent,
+                                    tint = colors.textPrimary,
                                     modifier = Modifier.size(18.dp)
                                 )
                             }

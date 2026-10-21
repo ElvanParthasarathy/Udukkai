@@ -6,14 +6,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
 
-val RoseAccent = Color(0xFFBC275E)
-
 @Immutable
 data class ShellColors(
     val isDark: Boolean,
     val background: Color,
     val surface: Color,
-    val accent: Color = RoseAccent,
+    val accent: Color,
     val textPrimary: Color,
     val textSecondary: Color,
     val textTertiary: Color,
@@ -30,19 +28,19 @@ data class ShellColors(
     val divider: Color,
     val icon: Color,
     val iconInactive: Color,
-    val modeAccent: Color = RoseAccent,
+    val modeAccent: Color = if (isDark) Color.White else Color.Black,
     // Mode-aware design system tokens
     val accentBright: Color = accent,
     val accentDark: Color = accent,
     val accentContainer: Color = accent.copy(alpha = 0.15f),
-    val iconAccent: Color = RoseAccent,
+    val iconAccent: Color = accent,
     val error: Color = if (isDark) Color(0xFFFFB4AB) else Color(0xFFBA1A1A),
     val danger: Color = if (isDark) Color(0xFFFF5252) else Color(0xFFE53935),
-    // Unified entity card icon colors (Minimal Rose Accent)
-    val invoiceColor: Color = RoseAccent,
-    val receiptColor: Color = RoseAccent,
-    val productColor: Color = RoseAccent,
-    val customerColor: Color = RoseAccent,
+    // Unified entity card icon colors (Pure Monochrome)
+    val invoiceColor: Color = if (isDark) Color.White else Color.Black,
+    val receiptColor: Color = if (isDark) Color.White else Color.Black,
+    val productColor: Color = if (isDark) Color.White else Color.Black,
+    val customerColor: Color = if (isDark) Color.White else Color.Black,
     // Unified entity gradients for card icons (empty/neutral in monochrome)
     val invoiceGradient: List<Color> = emptyList(),
     val receiptGradient: List<Color> = emptyList(),
@@ -63,12 +61,14 @@ val LocalShellColors = staticCompositionLocalOf<ShellColors> {
 fun rememberShellColors(): ShellColors {
     val isDark = ThemeManager.isDark()
     return remember(isDark) {
+        val monoColor = if (isDark) Color.White else Color.Black
+
         if (isDark) {
             ShellColors(
                 isDark = true,
                 background = Color.Black,
                 surface = Color(0xFF111111),
-                accent = RoseAccent,
+                accent = Color.White,
                 textPrimary = Color.White,
                 textSecondary = Color.White.copy(alpha = 0.54f),
                 textTertiary = Color.White.copy(alpha = 0.38f),
@@ -84,23 +84,23 @@ fun rememberShellColors(): ShellColors {
                 divider = Color.White.copy(alpha = 0.04f),
                 icon = Color.White,
                 iconInactive = Color.White.copy(alpha = 0.45f),
-                modeAccent = RoseAccent,
-                accentBright = RoseAccent,
-                accentDark = RoseAccent,
-                accentContainer = RoseAccent.copy(alpha = 0.15f),
-                iconAccent = RoseAccent,
+                modeAccent = Color.White,
+                accentBright = Color.White,
+                accentDark = Color(0xFFE5E5EA),
+                accentContainer = Color.White.copy(alpha = 0.12f),
+                iconAccent = Color.White,
                 error = Color(0xFFFFB4AB),
-                invoiceColor = RoseAccent,
-                receiptColor = RoseAccent,
-                productColor = RoseAccent,
-                customerColor = RoseAccent
+                invoiceColor = monoColor,
+                receiptColor = monoColor,
+                productColor = monoColor,
+                customerColor = monoColor
             )
         } else {
             ShellColors(
                 isDark = false,
                 background = Color(0xFFF5F5F7),
                 surface = Color.White,
-                accent = RoseAccent,
+                accent = Color(0xFF1D1D1F),
                 textPrimary = Color.Black,
                 textSecondary = Color.Black.copy(alpha = 0.54f),
                 textTertiary = Color.Black.copy(alpha = 0.38f),
@@ -116,16 +116,16 @@ fun rememberShellColors(): ShellColors {
                 divider = Color.Black.copy(alpha = 0.04f),
                 icon = Color.Black,
                 iconInactive = Color.Black.copy(alpha = 0.45f),
-                modeAccent = RoseAccent,
-                accentBright = RoseAccent,
-                accentDark = RoseAccent,
-                accentContainer = RoseAccent.copy(alpha = 0.12f),
-                iconAccent = RoseAccent,
+                modeAccent = Color.Black,
+                accentBright = Color(0xFF1D1D1F),
+                accentDark = Color.Black,
+                accentContainer = Color.Black.copy(alpha = 0.08f),
+                iconAccent = Color(0xFF1D1D1F),
                 error = Color(0xFFBA1A1A),
-                invoiceColor = RoseAccent,
-                receiptColor = RoseAccent,
-                productColor = RoseAccent,
-                customerColor = RoseAccent
+                invoiceColor = monoColor,
+                receiptColor = monoColor,
+                productColor = monoColor,
+                customerColor = monoColor
             )
         }
     }
