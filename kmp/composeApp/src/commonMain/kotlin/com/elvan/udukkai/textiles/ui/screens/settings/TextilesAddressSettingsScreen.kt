@@ -11,6 +11,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.elvan.udukkai.core.data.LocationName
 import com.elvan.udukkai.core.data.indianStates
+import com.elvan.udukkai.core.data.worldCountries
 import com.elvan.udukkai.core.data.tamilNaduDistricts
 import com.elvan.udukkai.textiles.data.TextilesProfileRepository
 import com.elvan.udukkai.localization.K
@@ -53,6 +54,51 @@ fun TextilesAddressSettingsScreen(
         editingSection = section
         tempPrimary = primary
         tempSecondary = secondary
+    }
+
+    fun persistProfile(updated: com.elvan.udukkai.data.settings.BusinessProfile) {
+        if (onUpdateProfile != null) {
+            onUpdateProfile(updated)
+        } else if (isTextiles) {
+            com.elvan.udukkai.textiles.data.persistProfile(updated)
+        } else {
+            com.elvan.udukkai.factory.data.persistProfile(updated)
+        }
+    }
+
+    val openCountrySelection = {
+        bottomSheet.showSelection(
+            title = K.country.tr(),
+            items = worldCountries,
+            currentValue = worldCountries.find {
+                it.ta == profile.getPrimary("country") || it.en == profile.getPrimary("country")
+            } ?: if (profile.getPrimary("country").isNotBlank()) worldCountries.lastOrNull() else null,
+            itemLabelBuilder = { if (profile.primaryLanguage == "ta") it.ta else it.en },
+            subtitleBuilder = { if (isBilingual) (if (profile.primaryLanguage == "ta") it.en else it.ta) else null },
+            showSearch = true,
+            searchFilter = { item, query ->
+                item.ta.contains(query, ignoreCase = true) || item.en.contains(query, ignoreCase = true)
+            },
+            onSelected = { countryItem ->
+                if (countryItem.en == "Custom" || countryItem.ta == "தனிப்பயன்") {
+                    val currP = profile.getPrimary("country")
+                    val currS = profile.getSecondary("country")
+                    val isAlreadyPreset = worldCountries.any { (it.ta == currP || it.en == currP) && it.en != "Custom" && it.ta != "தனிப்பயன்" }
+                    beginEdit("naadu", if (isAlreadyPreset) "" else currP, if (isAlreadyPreset) "" else currS)
+                } else {
+                    val p = if (profile.primaryLanguage == "ta") countryItem.ta else countryItem.en
+                    val s = if (profile.primaryLanguage == "ta") countryItem.en else countryItem.ta
+                    val updated = profile.copy()
+                    updated.setBilingual("naadu", profile.primaryLanguage, p)
+                    updated.setBilingual("naadu", profile.secondaryLanguage, s)
+                    updated.state.clear()
+                    updated.district.clear()
+                    persistProfile(updated)
+                    editingSection = null
+                    ElvanSnackbar.show(saveSuccessMsg)
+                }
+            }
+        )
     }
 
     val openStateSelection = {
@@ -162,15 +208,44 @@ fun TextilesAddressSettingsScreen(
             ElvanSettingsSection(colors = colors) {
                 if (isPattu) {
                     // ── Pattu Order ──
-                    // 1. Country (India - locked)
+                    // 1. Country: deliberately unselected for new profiles; tap to choose.
                     val countryPrimary = profile.getPrimary("country")
                     val countrySecondary = profile.getSecondary("country")
-                    ElvanSettingsDisplayRow(
-                        title = K.country.tr(),
-                        primaryValue = countryPrimary,
-                        secondaryValue = if (isBilingual) countrySecondary else null,
-                        onEdit = null,
-                        colors = colors
+                    ElvanSettingsAnimatedExpand(
+                        isEditing = editingSection == "naadu",
+                        displayContent = {
+                            ElvanSettingsDisplayRow(
+                                title = K.country.tr(),
+                                primaryValue = countryPrimary,
+                                secondaryValue = if (isBilingual) countrySecondary else null,
+                                onEdit = openCountrySelection,
+                                colors = colors
+                            )
+                        },
+                        editContent = {
+                            ElvanSettingsEditContainer(
+                                title = K.country.tr(),
+                                onCancel = { editingSection = null },
+                                onSave = { saveBilingual("naadu") },
+                                colors = colors
+                            ) {
+                                ElvanSettingsTextField(
+                                    label = "${K.country.tr()} ($primaryLangLabel)",
+                                    value = tempPrimary,
+                                    onValueChange = { tempPrimary = it },
+                                    colors = colors
+                                )
+                                if (isBilingual) {
+                                    Spacer(modifier = Modifier.height(12.dp))
+                                    ElvanSettingsTextField(
+                                        label = "${K.country.tr()} ($secondaryLangLabel)",
+                                        value = tempSecondary,
+                                        onValueChange = { tempSecondary = it },
+                                        colors = colors
+                                    )
+                                }
+                            }
+                        }
                     )
                     ElvanSettingsDivider(colors = colors)
 
@@ -184,7 +259,7 @@ fun TextilesAddressSettingsScreen(
                                 title = K.state.tr(),
                                 primaryValue = statePrimary,
                                 secondaryValue = if (isBilingual) stateSecondary else null,
-                                onEdit = openStateSelection,
+                                onEdit = if (profile.getPrimary("country").equals("India", true) || profile.getPrimary("country") == "இந்தியா") openStateSelection else { { beginEdit("maanilam", statePrimary, stateSecondary) } },
                                 colors = colors
                             )
                         },
@@ -378,6 +453,47 @@ fun TextilesAddressSettingsScreen(
                     )
                 } else {
                     // ── Kooli Order ──
+                    // 1. Country selection is available in both Factory and Textiles.
+                    val countryPrimary = profile.getPrimary("country")
+                    val countrySecondary = profile.getSecondary("country")
+                    ElvanSettingsAnimatedExpand(
+                        isEditing = editingSection == "naadu",
+                        displayContent = {
+                            ElvanSettingsDisplayRow(
+                                title = K.country.tr(),
+                                primaryValue = countryPrimary,
+                                secondaryValue = if (isBilingual) countrySecondary else null,
+                                onEdit = openCountrySelection,
+                                colors = colors
+                            )
+                        },
+                        editContent = {
+                            ElvanSettingsEditContainer(
+                                title = K.country.tr(),
+                                onCancel = { editingSection = null },
+                                onSave = { saveBilingual("naadu") },
+                                colors = colors
+                            ) {
+                                ElvanSettingsTextField(
+                                    label = "${K.country.tr()} ($primaryLangLabel)",
+                                    value = tempPrimary,
+                                    onValueChange = { tempPrimary = it },
+                                    colors = colors
+                                )
+                                if (isBilingual) {
+                                    Spacer(modifier = Modifier.height(12.dp))
+                                    ElvanSettingsTextField(
+                                        label = "${K.country.tr()} ($secondaryLangLabel)",
+                                        value = tempSecondary,
+                                        onValueChange = { tempSecondary = it },
+                                        colors = colors
+                                    )
+                                }
+                            }
+                        }
+                    )
+                    ElvanSettingsDivider(colors = colors)
+
                     // 1. Address (Mugavari)
                     val addressPrimary = profile.getPrimary("address")
                     val addressSecondary = profile.getSecondary("address")
