@@ -39,7 +39,7 @@ import com.elvan.udukkai.ui.screens.editor.ElvanEditorLabel
  */
 @Composable
 fun TextilesCustomerField(
-    selectedVaangunarId: Long?,
+    selectedCustomerId: Long?,
     onCustomerSelected: (CustomerModel) -> Unit,
     onCustomerCleared: () -> Unit,
     onRequestAddNewCustomer: () -> Unit,
@@ -56,17 +56,17 @@ fun TextilesCustomerField(
     var isBottomSheetOpen by remember { mutableStateOf(false) }
     val allMerchants = TextilesCustomerRepository.customers
 
-    val selectedVaangunar = remember(selectedVaangunarId, allMerchants) {
-        allMerchants.firstOrNull { it.id == selectedVaangunarId }
+    val selectedCustomer = remember(selectedCustomerId, allMerchants) {
+        allMerchants.firstOrNull { it.id == selectedCustomerId }
     }
 
     Column(modifier = modifier.fillMaxWidth()) {
         ElvanEditorLabel(label = K.clientNameSearch.tr())
 
         val containerBg = colors.iconBg
-        val customerName = selectedVaangunar?.name?.get(primaryLang)
-            ?: selectedVaangunar?.name?.get(secondaryLang)
-            ?: selectedVaangunar?.name?.values?.firstOrNull()
+        val customerName = selectedCustomer?.name?.get(primaryLang)
+            ?: selectedCustomer?.name?.get(secondaryLang)
+            ?: selectedCustomer?.name?.values?.firstOrNull()
             ?: ""
 
         // ── Customer Selector Pill ──
@@ -98,7 +98,7 @@ fun TextilesCustomerField(
                     modifier = Modifier.weight(1f)
                 )
 
-                if (selectedVaangunar != null) {
+                if (selectedCustomer != null) {
                     Box(
                         modifier = Modifier
                             .size(24.dp)
@@ -125,7 +125,7 @@ fun TextilesCustomerField(
         }
 
         // ── Saved Details Card ──
-        if (selectedVaangunar != null) {
+        if (selectedCustomer != null) {
             Spacer(modifier = Modifier.height(24.dp))
             ElvanEditorCard(
                 padding = PaddingValues(16.dp),
@@ -147,7 +147,7 @@ fun TextilesCustomerField(
                     )
 
                     // Secondary language name if bilingual
-                    val secName = if (isBilingual) selectedVaangunar.name[secondaryLang].orEmpty() else ""
+                    val secName = if (isBilingual) selectedCustomer.name[secondaryLang].orEmpty() else ""
                     if (secName.isNotEmpty()) {
                         Text(
                             text = secName.preventBrokenLigatures(),
@@ -161,13 +161,13 @@ fun TextilesCustomerField(
                     }
 
                     // Address & Oor — bilingual
-                    val primMugavari = selectedVaangunar.address[primaryLang]
-                        ?: selectedVaangunar.address.values.firstOrNull().orEmpty()
-                    val primOor = selectedVaangunar.city[primaryLang]
-                        ?: selectedVaangunar.city.values.firstOrNull().orEmpty()
-                    val primMaanilam = selectedVaangunar.state[primaryLang]
-                        ?: selectedVaangunar.state.values.firstOrNull().orEmpty()
-                    val primAddressCombined = listOf(primMugavari, primOor, primMaanilam, selectedVaangunar.pinCode)
+                    val primMugavari = selectedCustomer.address[primaryLang]
+                        ?: selectedCustomer.address.values.firstOrNull().orEmpty()
+                    val primOor = selectedCustomer.city[primaryLang]
+                        ?: selectedCustomer.city.values.firstOrNull().orEmpty()
+                    val primMaanilam = selectedCustomer.state[primaryLang]
+                        ?: selectedCustomer.state.values.firstOrNull().orEmpty()
+                    val primAddressCombined = listOf(primMugavari, primOor, primMaanilam, selectedCustomer.pinCode)
                         .filter { it.isNotBlank() }
                         .joinToString(", ")
 
@@ -185,14 +185,14 @@ fun TextilesCustomerField(
 
                     // Secondary language address
                     if (isBilingual) {
-                        val secMugavari = selectedVaangunar.address[secondaryLang].orEmpty()
-                        val secOor = selectedVaangunar.city[secondaryLang].orEmpty()
-                        val secMaanilam = selectedVaangunar.state[secondaryLang].orEmpty()
+                        val secMugavari = selectedCustomer.address[secondaryLang].orEmpty()
+                        val secOor = selectedCustomer.city[secondaryLang].orEmpty()
+                        val secMaanilam = selectedCustomer.state[secondaryLang].orEmpty()
                         val secAddressCombined = listOf(secMugavari, secOor, secMaanilam)
                             .filter { it.isNotBlank() }
                             .joinToString(", ")
 
-                        if (secAddressCombined.isNotBlank() && secAddressCombined != primAddressCombined.replace(", ${selectedVaangunar.pinCode}", "")) {
+                        if (secAddressCombined.isNotBlank() && secAddressCombined != primAddressCombined.replace(", ${selectedCustomer.pinCode}", "")) {
                             Text(
                                 text = secAddressCombined.preventBrokenLigatures(),
                                 style = TextStyle(
@@ -206,9 +206,9 @@ fun TextilesCustomerField(
                     }
 
                     // GSTIN
-                    if (selectedVaangunar.gstin.isNotBlank()) {
+                    if (selectedCustomer.gstin.isNotBlank()) {
                         Text(
-                            text = "GSTIN: ${selectedVaangunar.gstin.trim()}",
+                            text = "GSTIN: ${selectedCustomer.gstin.trim()}",
                             style = TextStyle(
                                 fontFamily = ff,
                                 fontSize = 13.sp,
@@ -227,7 +227,7 @@ fun TextilesCustomerField(
         ElvanSelectionBottomSheet(
             title = K.selectCustomer.tr(),
             items = allMerchants,
-            currentValue = selectedVaangunar,
+            currentValue = selectedCustomer,
             showSearch = true,
             onDismissRequest = { isBottomSheetOpen = false },
             onSelected = { customer ->
@@ -257,15 +257,3 @@ fun TextilesCustomerField(
     }
 }
 
-/**
- * Backward-compatibility alias for legacy calls.
- */
-@Deprecated("Use TextilesCustomerField instead", ReplaceWith("TextilesCustomerField(selectedVaangunarId, onCustomerSelected, onCustomerCleared, onRequestAddNewCustomer, modifier)"))
-@Composable
-fun PattuVaangunargalKooru(
-    selectedVaangunarId: Long?,
-    onCustomerSelected: (CustomerModel) -> Unit,
-    onCustomerCleared: () -> Unit,
-    onRequestAddNewCustomer: () -> Unit,
-    modifier: Modifier = Modifier
-) = TextilesCustomerField(selectedVaangunarId, onCustomerSelected, onCustomerCleared, onRequestAddNewCustomer, modifier)

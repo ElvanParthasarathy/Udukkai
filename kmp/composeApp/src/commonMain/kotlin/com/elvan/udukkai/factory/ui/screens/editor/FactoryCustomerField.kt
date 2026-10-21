@@ -38,7 +38,7 @@ import com.elvan.udukkai.ui.screens.editor.ElvanEditorLabel
  */
 @Composable
 fun FactoryCustomerField(
-    selectedVaangunarId: Long?,
+    selectedCustomerId: Long?,
     onCustomerSelected: (CustomerModel) -> Unit,
     onCustomerCleared: () -> Unit,
     onRequestAddNewCustomer: () -> Unit,
@@ -55,17 +55,17 @@ fun FactoryCustomerField(
     var isBottomSheetOpen by remember { mutableStateOf(false) }
     val allMerchants = FactoryCustomerRepository.customers
 
-    val selectedVaangunar = remember(selectedVaangunarId, allMerchants) {
-        allMerchants.firstOrNull { it.id == selectedVaangunarId }
+    val selectedCustomer = remember(selectedCustomerId, allMerchants) {
+        allMerchants.firstOrNull { it.id == selectedCustomerId }
     }
 
     Column(modifier = modifier.fillMaxWidth()) {
         ElvanEditorLabel(label = K.clientNameSearch.tr())
 
         val containerBg = colors.iconBg
-        val customerName = selectedVaangunar?.name?.get(primaryLang)
-            ?: selectedVaangunar?.name?.get(secondaryLang)
-            ?: selectedVaangunar?.name?.values?.firstOrNull()
+        val customerName = selectedCustomer?.name?.get(primaryLang)
+            ?: selectedCustomer?.name?.get(secondaryLang)
+            ?: selectedCustomer?.name?.values?.firstOrNull()
             ?: ""
 
         // ── Customer Selector Pill ──
@@ -97,7 +97,7 @@ fun FactoryCustomerField(
                     modifier = Modifier.weight(1f)
                 )
 
-                if (selectedVaangunar != null) {
+                if (selectedCustomer != null) {
                     Box(
                         modifier = Modifier
                             .size(24.dp)
@@ -124,7 +124,7 @@ fun FactoryCustomerField(
         }
 
         // ── Saved Details Card ──
-        if (selectedVaangunar != null) {
+        if (selectedCustomer != null) {
             Spacer(modifier = Modifier.height(24.dp))
             ElvanEditorCard(
                 padding = PaddingValues(16.dp),
@@ -146,7 +146,7 @@ fun FactoryCustomerField(
                     )
 
                     // Secondary language name if bilingual
-                    val secName = if (isBilingual) selectedVaangunar.name[secondaryLang].orEmpty() else ""
+                    val secName = if (isBilingual) selectedCustomer.name[secondaryLang].orEmpty() else ""
                     if (secName.isNotEmpty()) {
                         Text(
                             text = secName.preventBrokenLigatures(),
@@ -160,10 +160,10 @@ fun FactoryCustomerField(
                     }
 
                     // Address & Town (Oor)
-                    val primMugavari = selectedVaangunar.address[primaryLang]
-                        ?: selectedVaangunar.address.values.firstOrNull().orEmpty()
-                    val primOor = selectedVaangunar.city[primaryLang]
-                        ?: selectedVaangunar.city.values.firstOrNull().orEmpty()
+                    val primMugavari = selectedCustomer.address[primaryLang]
+                        ?: selectedCustomer.address.values.firstOrNull().orEmpty()
+                    val primOor = selectedCustomer.city[primaryLang]
+                        ?: selectedCustomer.city.values.firstOrNull().orEmpty()
                     val primAddressCombined = listOf(primMugavari, primOor)
                         .filter { it.isNotBlank() }
                         .joinToString(", ")
@@ -181,8 +181,8 @@ fun FactoryCustomerField(
                     }
 
                     if (isBilingual) {
-                        val secMugavari = selectedVaangunar.address[secondaryLang].orEmpty()
-                        val secOor = selectedVaangunar.city[secondaryLang].orEmpty()
+                        val secMugavari = selectedCustomer.address[secondaryLang].orEmpty()
+                        val secOor = selectedCustomer.city[secondaryLang].orEmpty()
                         val secAddressCombined = listOf(secMugavari, secOor)
                             .filter { it.isNotBlank() }
                             .joinToString(", ")
@@ -209,7 +209,7 @@ fun FactoryCustomerField(
         ElvanSelectionBottomSheet(
             title = K.selectCustomer.tr(),
             items = allMerchants,
-            currentValue = selectedVaangunar,
+            currentValue = selectedCustomer,
             showSearch = true,
             onDismissRequest = { isBottomSheetOpen = false },
             onSelected = { customer ->

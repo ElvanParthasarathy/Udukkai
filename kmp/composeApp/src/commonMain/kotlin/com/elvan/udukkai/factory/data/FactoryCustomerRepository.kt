@@ -1,4 +1,4 @@
-﻿package com.elvan.udukkai.factory.data
+package com.elvan.udukkai.factory.data
 
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -13,24 +13,25 @@ import com.elvan.udukkai.data.model.CustomerModel
  * Distinct customer fields: Name, City, Address, Phone.
  */
 object FactoryCustomerRepository {
-    val customers: List<com.elvan.udukkai.data.model.CustomerModel> get() = merchants
-    val deletedCustomers: List<com.elvan.udukkai.data.model.CustomerModel> get() = deletedMerchants
-
-
-    var merchants by mutableStateOf<List<CustomerModel>>(emptyList())
+    var customers by mutableStateOf<List<CustomerModel>>(emptyList())
         private set
 
-    var deletedMerchants by mutableStateOf<List<CustomerModel>>(emptyList())
+    var deletedCustomers by mutableStateOf<List<CustomerModel>>(emptyList())
         private set
 
     var searchQuery by mutableStateOf("")
 
-    val filteredMerchants: List<CustomerModel>
+    val filteredCustomers: List<CustomerModel>
         get() {
-            return merchants.filter { m ->
-                SearchHelper.matchesCustomer(m, searchQuery)
+            return customers.filter { c ->
+                SearchHelper.matchesCustomer(c, searchQuery)
             }
         }
+
+    // Backward-compatible delegates
+    val merchants: List<CustomerModel> get() = customers
+    val deletedMerchants: List<CustomerModel> get() = deletedCustomers
+    val filteredMerchants: List<CustomerModel> get() = filteredCustomers
 
     init {
         loadAll()
@@ -39,29 +40,29 @@ object FactoryCustomerRepository {
 
     fun loadAll() {
         try {
-            merchants = getFactoryDatabaseHelper().loadAllMerchants()
+            customers = getFactoryDatabaseHelper().loadAllCustomers()
         } catch (_: Exception) {
-            merchants = emptyList()
+            customers = emptyList()
         }
     }
 
     fun purgeExpired(days: Int = 30): Int {
-        val count = getFactoryDatabaseHelper().purgeExpiredMerchants(days)
+        val count = getFactoryDatabaseHelper().purgeExpiredCustomers(days)
         if (count > 0) loadDeleted()
         return count
     }
 
     fun loadDeleted() {
         try {
-            deletedMerchants = getFactoryDatabaseHelper().loadDeletedMerchants()
+            deletedCustomers = getFactoryDatabaseHelper().loadDeletedCustomers()
         } catch (_: Exception) {
-            deletedMerchants = emptyList()
+            deletedCustomers = emptyList()
         }
     }
 
-    fun save(merchant: CustomerModel): Long {
+    fun save(customer: CustomerModel): Long {
         val helper = getFactoryDatabaseHelper()
-        val id = helper.saveMerchant(merchant)
+        val id = helper.saveCustomer(customer)
         if (id > 0) {
             loadAll()
             AutoBackupManager.onDataChanged()
@@ -70,7 +71,7 @@ object FactoryCustomerRepository {
     }
 
     fun delete(id: Long): Boolean {
-        val success = getFactoryDatabaseHelper().deleteMerchant(id)
+        val success = getFactoryDatabaseHelper().deleteCustomer(id)
         if (success) {
             loadAll()
             loadDeleted()
@@ -80,7 +81,7 @@ object FactoryCustomerRepository {
     }
 
     fun restore(id: Long): Boolean {
-        val success = getFactoryDatabaseHelper().restoreMerchant(id)
+        val success = getFactoryDatabaseHelper().restoreCustomer(id)
         if (success) {
             loadAll()
             loadDeleted()
@@ -90,7 +91,7 @@ object FactoryCustomerRepository {
     }
 
     fun permanentDelete(id: Long): Boolean {
-        val success = getFactoryDatabaseHelper().permanentDeleteMerchant(id)
+        val success = getFactoryDatabaseHelper().permanentDeleteCustomer(id)
         if (success) {
             loadDeleted()
             AutoBackupManager.onDataChanged()
@@ -98,5 +99,5 @@ object FactoryCustomerRepository {
         return success
     }
 
-    fun getById(id: Long): CustomerModel? = merchants.find { it.id == id }
+    fun getById(id: Long): CustomerModel? = customers.find { it.id == id }
 }

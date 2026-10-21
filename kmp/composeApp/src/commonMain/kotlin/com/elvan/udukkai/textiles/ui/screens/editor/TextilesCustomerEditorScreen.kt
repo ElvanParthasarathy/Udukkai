@@ -244,7 +244,7 @@ fun TextilesCustomerEditorScreen(
                             modifier = Modifier.fillMaxWidth(),
                             verticalArrangement = Arrangement.spacedBy(16.dp)
                         ) {
-                            ElvanThiruthiKeezhvirivu<IdangalinPeyar>(
+                            ElvanEditorDropdown<IdangalinPeyar>(
                                 label = K.country.tr(),
                                 value = ulagaNaadugal.firstOrNull { it.en.equals(naaduMap["en"], ignoreCase = true) || it.ta == naaduMap["ta"] } ?: ulagaNaadugal.first(),
                                 items = ulagaNaadugal,
@@ -260,7 +260,7 @@ fun TextilesCustomerEditorScreen(
                             )
 
                             if (isIndia) {
-                                ElvanThiruthiKeezhvirivu<IdangalinPeyar>(
+                                ElvanEditorDropdown<IdangalinPeyar>(
                                     label = K.state.tr(),
                                     value = indhiyaMaanilangal.firstOrNull { it.en.equals(maanilamMap["en"], ignoreCase = true) || it.ta == maanilamMap["ta"] },
                                     items = indhiyaMaanilangal,
@@ -279,7 +279,7 @@ fun TextilesCustomerEditorScreen(
                                 )
 
                                 if (isTamilNadu) {
-                                    ElvanThiruthiKeezhvirivu<IdangalinPeyar>(
+                                    ElvanEditorDropdown<IdangalinPeyar>(
                                         label = K.district.tr(),
                                         value = tamizhnaattuMaavattangal.firstOrNull { it.en.equals(maavattamMap["en"], ignoreCase = true) || it.ta == maavattamMap["ta"] },
                                         items = tamizhnaattuMaavattangal,

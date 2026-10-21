@@ -574,7 +574,7 @@ class DesktopUdukkaiBackupService : UdukkaiBackupService {
 }
 
 @Deprecated("Use DesktopUdukkaiBackupService", ReplaceWith("DesktopUdukkaiBackupService"))
-typealias DesktopNirilBackupService = DesktopUdukkaiBackupService
+
 
 private val desktopBackupInstance by lazy { DesktopUdukkaiBackupService() }
 

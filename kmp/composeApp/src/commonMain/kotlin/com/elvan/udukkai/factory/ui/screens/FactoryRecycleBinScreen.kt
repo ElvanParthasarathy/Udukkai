@@ -1,6 +1,6 @@
-﻿package com.elvan.udukkai.factory.ui.screens
+package com.elvan.udukkai.factory.ui.screens
 
-import com.elvan.udukkai.ui.screens.recyclebin.MeetpagamTab
+import com.elvan.udukkai.ui.screens.recyclebin.RecycleBinTab
 import com.elvan.udukkai.ui.screens.recyclebin.RecycleBinBottomNavBar
 import com.elvan.udukkai.ui.screens.recyclebin.RecycleBinSelectionBar
 
@@ -86,7 +86,7 @@ fun FactoryRecycleBinScreen(
         com.elvan.udukkai.factory.data.FactoryReceiptRepository.loadDeleted()
     }
 
-    var selectedTab by remember { mutableStateOf(MeetpagamTab.Create) }
+    var selectedTab by remember { mutableStateOf(RecycleBinTab.Create) }
     var createSegment by remember { mutableIntStateOf(0) } // 0 = Invoices, 1 = Receipts
 
     val createScrollState = rememberLazyListState()
@@ -150,12 +150,12 @@ fun FactoryRecycleBinScreen(
 
     // Active selection set
     val allSelectionIds: Set<Long> = when (selectedTab) {
-        MeetpagamTab.Create -> {
+        RecycleBinTab.Create -> {
             if (createSegment == 0) displayedInvoices.map { it.id }.toSet()
             else displayedReceipts.map { it.id }.toSet()
         }
-        MeetpagamTab.Products -> displayedProducts.map { it.id }.toSet()
-        MeetpagamTab.Customers -> displayedCustomers.map { it.id }.toSet()
+        RecycleBinTab.Products -> displayedProducts.map { it.id }.toSet()
+        RecycleBinTab.Customers -> displayedCustomers.map { it.id }.toSet()
     }
     val isAllSelected = selectedItemIds.isNotEmpty() && allSelectionIds.isNotEmpty() && selectedItemIds.size == allSelectionIds.size
 
@@ -184,17 +184,17 @@ fun FactoryRecycleBinScreen(
         if (selectedItemIds.isNotEmpty()) {
             scope.launch {
                 when (selectedTab) {
-                    MeetpagamTab.Create -> {
+                    RecycleBinTab.Create -> {
                         if (createSegment == 0) {
                             selectedItemIds.forEach { id -> com.elvan.udukkai.factory.data.FactoryInvoiceRepository.restore(id) }
                         } else {
                             selectedItemIds.forEach { id -> com.elvan.udukkai.factory.data.FactoryReceiptRepository.restore(id) }
                         }
                     }
-                    MeetpagamTab.Products -> {
+                    RecycleBinTab.Products -> {
                         selectedItemIds.forEach { id -> com.elvan.udukkai.factory.data.FactoryProductRepository.restore(id) }
                     }
-                    MeetpagamTab.Customers -> {
+                    RecycleBinTab.Customers -> {
                         selectedItemIds.forEach { id -> com.elvan.udukkai.factory.data.FactoryCustomerRepository.restore(id) }
                     }
                 }
@@ -209,17 +209,17 @@ fun FactoryRecycleBinScreen(
         if (selectedItemIds.isNotEmpty()) {
             scope.launch {
                 when (selectedTab) {
-                    MeetpagamTab.Create -> {
+                    RecycleBinTab.Create -> {
                         if (createSegment == 0) {
                             selectedItemIds.forEach { id -> com.elvan.udukkai.factory.data.FactoryInvoiceRepository.permanentDelete(id) }
                         } else {
                             selectedItemIds.forEach { id -> com.elvan.udukkai.factory.data.FactoryReceiptRepository.permanentDelete(id) }
                         }
                     }
-                    MeetpagamTab.Products -> {
+                    RecycleBinTab.Products -> {
                         selectedItemIds.forEach { id -> com.elvan.udukkai.factory.data.FactoryProductRepository.permanentDelete(id) }
                     }
-                    MeetpagamTab.Customers -> {
+                    RecycleBinTab.Customers -> {
                         selectedItemIds.forEach { id -> com.elvan.udukkai.factory.data.FactoryCustomerRepository.permanentDelete(id) }
                     }
                 }
@@ -232,9 +232,9 @@ fun FactoryRecycleBinScreen(
     }
 
     val currentScrollState = when (selectedTab) {
-        MeetpagamTab.Create -> createScrollState
-        MeetpagamTab.Products -> productsScrollState
-        MeetpagamTab.Customers -> customersScrollState
+        RecycleBinTab.Create -> createScrollState
+        RecycleBinTab.Products -> productsScrollState
+        RecycleBinTab.Customers -> customersScrollState
     }
 
     val shifterItems = listOf(
@@ -339,7 +339,7 @@ fun FactoryRecycleBinScreen(
         }
     ) {
         when (selectedTab) {
-            MeetpagamTab.Create -> {
+            RecycleBinTab.Create -> {
                 LazyColumn(
                     state = createScrollState,
                     modifier = Modifier.fillMaxSize(),
@@ -390,7 +390,7 @@ fun FactoryRecycleBinScreen(
 
                                 FactoryInvoiceCard(
                                     index = index + 1,
-                                    pattiyal = invoice,
+                                    invoice = invoice,
                                     colors = colors,
                                     isSelectionMode = isSelectionMode,
                                     isSelected = isSelected,
@@ -432,7 +432,7 @@ fun FactoryRecycleBinScreen(
                 }
             }
 
-            MeetpagamTab.Products -> {
+            RecycleBinTab.Products -> {
                 LazyColumn(
                     state = productsScrollState,
                     modifier = Modifier.fillMaxSize(),
@@ -460,7 +460,7 @@ fun FactoryRecycleBinScreen(
 
                             FactoryProductCard(
                                 index = index + 1,
-                                porul = item,
+                                product = item,
                                 onClick = onCardClick,
                                 onLongClick = onCardLongClick,
                                 colors = colors,
@@ -472,7 +472,7 @@ fun FactoryRecycleBinScreen(
                 }
             }
 
-            MeetpagamTab.Customers -> {
+            RecycleBinTab.Customers -> {
                 LazyColumn(
                     state = customersScrollState,
                     modifier = Modifier.fillMaxSize(),

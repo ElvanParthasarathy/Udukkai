@@ -38,12 +38,12 @@ import com.elvan.udukkai.ui.components.shell.*
 import com.elvan.udukkai.ui.navigation.MaterialSymbols
 import com.elvan.udukkai.ui.screens.editor.ElvanEditorSection
 import com.elvan.udukkai.ui.screens.editor.LocalEditorAccentColor
-import com.elvan.udukkai.ui.screens.editor.ElvanThiruthiKeezhvirivu
+import com.elvan.udukkai.ui.screens.editor.ElvanEditorDropdown
 import com.elvan.udukkai.ui.screens.editor.ElvanEditorLabel
 import com.elvan.udukkai.ui.screens.editor.ElvanEditorTextField
 import com.elvan.udukkai.ui.screens.editor.receipt.components.ReceiptInvoiceSelectionSheet
 import com.elvan.udukkai.ui.screens.editor.invoice.components.ElvanAavanaEnnKooru
-import com.elvan.udukkai.ui.screens.editor.invoice.components.PattiyalNaalKooru
+import com.elvan.udukkai.ui.screens.editor.invoice.components.InvoiceDateField
 import com.elvan.udukkai.core.utils.DateUtils
 import com.elvan.udukkai.ui.components.shell.LocalElvanTopSpacerHeight
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -110,8 +110,8 @@ fun TextilesReceiptEditorScreen(
             activeProfile
         }
     }
-    val selectedNiruvanamId = if (isEditing) (receipt?.companyId ?: selectedProfile.id) else (selectedProfile.id ?: profiles.firstOrNull()?.id)
-    val isProfileConfigured = profiles.isNotEmpty() && selectedNiruvanamId != null
+    val selectedCompanyId = if (isEditing) (receipt?.companyId ?: selectedProfile.id) else (selectedProfile.id ?: profiles.firstOrNull()?.id)
+    val isProfileConfigured = profiles.isNotEmpty() && selectedCompanyId != null
 
     // Refresh dependencies on launch
     LaunchedEffect(Unit) {
@@ -139,11 +139,11 @@ fun TextilesReceiptEditorScreen(
     }
 
     // Customer
-    var selectedVaangunarId by remember { mutableStateOf(receipt?.customerId) }
-    var selectedVaangunarPeyarMap by remember {
+    var selectedCustomerId by remember { mutableStateOf(receipt?.customerId) }
+    var selectedCustomerNameMap by remember {
         mutableStateOf(receipt?.customerName ?: emptyMap())
     }
-    var selectedVaangunarMunvariMap by remember {
+    var selectedCustomerAddressMap by remember {
         mutableStateOf(receipt?.customerAddress ?: emptyMap())
     }
 
@@ -174,7 +174,7 @@ fun TextilesReceiptEditorScreen(
 
     val amaippugalStr = K.settings.tr()
     val pattiyalaiThaernheduMsg = K.selectInvoice.tr()
-    val vaangunarPeyarThaevaiMsg = K.customerNameRequired.tr()
+    val customerNameRequiredMsg = K.customerNameRequired.tr()
     val thogaiInvalidMsg = K.amountMustBeGreaterThanZero.tr()
     val duplicateMsg = K.receiptNumberAlreadyExists.tr()
     val savedMsg = K.receiptSaved.tr()
@@ -194,8 +194,8 @@ fun TextilesReceiptEditorScreen(
     }
 
     // Auto-generate receipt number on profile selection if new
-    LaunchedEffect(selectedNiruvanamId) {
-        if (!isEditing && patruEn.isEmpty() && selectedNiruvanamId != null) {
+    LaunchedEffect(selectedCompanyId) {
+        if (!isEditing && patruEn.isEmpty() && selectedCompanyId != null) {
             generatePatruEn(selectedProfile)
         }
     }
@@ -211,16 +211,16 @@ fun TextilesReceiptEditorScreen(
             thogai = if (total % 1.0 == 0.0) total.toLong().toString() else ((total * 100).toLong() / 100.0).toString()
 
             val first = newList.first()
-            if (selectedVaangunarId == null || selectedVaangunarPeyarMap.isEmpty()) {
-                selectedVaangunarId = first.customerId
-                selectedVaangunarPeyarMap = first.customerName
-                selectedVaangunarMunvariMap = first.customerAddress
+            if (selectedCustomerId == null || selectedCustomerNameMap.isEmpty()) {
+                selectedCustomerId = first.customerId
+                selectedCustomerNameMap = first.customerName
+                selectedCustomerAddressMap = first.customerAddress
             }
         } else {
             thogai = ""
-            selectedVaangunarId = null
-            selectedVaangunarPeyarMap = emptyMap()
-            selectedVaangunarMunvariMap = emptyMap()
+            selectedCustomerId = null
+            selectedCustomerNameMap = emptyMap()
+            selectedCustomerAddressMap = emptyMap()
         }
     }
 
@@ -236,9 +236,9 @@ fun TextilesReceiptEditorScreen(
             return
         }
 
-        val peyarTamil = selectedVaangunarPeyarMap["ta"] ?: selectedVaangunarPeyarMap.values.firstOrNull().orEmpty()
+        val peyarTamil = selectedCustomerNameMap["ta"] ?: selectedCustomerNameMap.values.firstOrNull().orEmpty()
         if (peyarTamil.trim().isEmpty()) {
-            ElvanSnackbar.show(vaangunarPeyarThaevaiMsg)
+            ElvanSnackbar.show(customerNameRequiredMsg)
             return
         }
 
@@ -249,7 +249,7 @@ fun TextilesReceiptEditorScreen(
         }
 
         // Duplicate check
-        val isDuplicate = com.elvan.udukkai.textiles.data.TextilesReceiptRepository.isReceiptNumberDuplicate(patruEn, selectedNiruvanamId, receipt?.id)
+        val isDuplicate = com.elvan.udukkai.textiles.data.TextilesReceiptRepository.isReceiptNumberDuplicate(patruEn, selectedCompanyId, receipt?.id)
         if (isDuplicate) {
             ElvanSnackbar.show("$patruEn - $duplicateMsg")
             return
@@ -286,13 +286,13 @@ fun TextilesReceiptEditorScreen(
             val defaultFinYear = DateUtils.formatEpochMillis(now).split("/").last()
             val entryToSave = ReceiptModel(
                 id = receipt?.id ?: 0L,
-                companyId = selectedNiruvanamId,
+                companyId = selectedCompanyId,
                 receiptNumber = patruEn.trim(),
                 finYear = receipt?.finYear ?: defaultFinYear,
                 vanakkam = vanakkam,
-                customerId = selectedVaangunarId,
-                customerName = selectedVaangunarPeyarMap,
-                customerAddress = selectedVaangunarMunvariMap,
+                customerId = selectedCustomerId,
+                customerName = selectedCustomerNameMap,
+                customerAddress = selectedCustomerAddressMap,
                 receiptDate = patruNaal,
                 amount = amount,
                 paymentMode = seluthiVagai.storedValue,
@@ -493,7 +493,7 @@ fun TextilesReceiptEditorScreen(
                             // 1. Receipt Date
                             Column(modifier = Modifier.fillMaxWidth()) {
                                 ElvanEditorLabel(label = K.receiptDate.tr())
-                                PattiyalNaalKooru(
+                                InvoiceDateField(
                                     selectedDate = patruNaal,
                                     onDateChanged = {
                                         patruNaal = it
@@ -505,8 +505,8 @@ fun TextilesReceiptEditorScreen(
                             // 2. Customer Pill (Locked with lock icon when loaded from invoice)
                             Column(modifier = Modifier.fillMaxWidth()) {
                                 ElvanEditorLabel(label = K.customer.tr())
-                                val customerName = selectedVaangunarPeyarMap["ta"]
-                                    ?: selectedVaangunarPeyarMap.values.firstOrNull().orEmpty()
+                                val customerName = selectedCustomerNameMap["ta"]
+                                    ?: selectedCustomerNameMap.values.firstOrNull().orEmpty()
 
                                 Box(
                                     modifier = Modifier
@@ -698,8 +698,8 @@ fun TextilesReceiptEditorScreen(
 
     // Modal: Invoice Picker Bottom Sheet (Multi-select)
     if (isInvoicePickerOpen) {
-        val selectableInvoices = if (selectedNiruvanamId != null) {
-            allInvoices.filter { it.companyId == selectedNiruvanamId }
+        val selectableInvoices = if (selectedCompanyId != null) {
+            allInvoices.filter { it.companyId == selectedCompanyId }
         } else {
             allInvoices
         }

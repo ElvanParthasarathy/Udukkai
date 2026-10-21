@@ -1,4 +1,4 @@
-﻿package com.elvan.udukkai.textiles.data
+package com.elvan.udukkai.textiles.data
 
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -13,24 +13,25 @@ import com.elvan.udukkai.data.model.ProductModel
  * Finished goods, textiles merchandise, and retail/wholesale items.
  */
 object TextilesProductRepository {
-    val products: List<com.elvan.udukkai.data.model.ProductModel> get() = items
-    val deletedProducts: List<com.elvan.udukkai.data.model.ProductModel> get() = deletedItems
-
-
-    var items by mutableStateOf<List<ProductModel>>(emptyList())
+    var products by mutableStateOf<List<ProductModel>>(emptyList())
         private set
 
-    var deletedItems by mutableStateOf<List<ProductModel>>(emptyList())
+    var deletedProducts by mutableStateOf<List<ProductModel>>(emptyList())
         private set
 
     var searchQuery by mutableStateOf("")
 
-    val filteredItems: List<ProductModel>
+    val filteredProducts: List<ProductModel>
         get() {
-            return items.filter { item ->
-                SearchHelper.matchesProduct(item, searchQuery)
+            return products.filter { product ->
+                SearchHelper.matchesProduct(product, searchQuery)
             }
         }
+
+    // Backward-compatible delegates
+    val items: List<ProductModel> get() = products
+    val deletedItems: List<ProductModel> get() = deletedProducts
+    val filteredItems: List<ProductModel> get() = filteredProducts
 
     init {
         loadAll()
@@ -39,29 +40,29 @@ object TextilesProductRepository {
 
     fun loadAll() {
         try {
-            items = getTextilesDatabaseHelper().loadAllItems()
+            products = getTextilesDatabaseHelper().loadAllProducts()
         } catch (_: Exception) {
-            items = emptyList()
+            products = emptyList()
         }
     }
 
     fun purgeExpired(days: Int = 30): Int {
-        val count = getTextilesDatabaseHelper().purgeExpiredItems(days)
+        val count = getTextilesDatabaseHelper().purgeExpiredProducts(days)
         if (count > 0) loadDeleted()
         return count
     }
 
     fun loadDeleted() {
         try {
-            deletedItems = getTextilesDatabaseHelper().loadDeletedItems()
+            deletedProducts = getTextilesDatabaseHelper().loadDeletedProducts()
         } catch (_: Exception) {
-            deletedItems = emptyList()
+            deletedProducts = emptyList()
         }
     }
 
-    fun save(item: ProductModel): Long {
+    fun save(product: ProductModel): Long {
         val helper = getTextilesDatabaseHelper()
-        val id = helper.saveItem(item)
+        val id = helper.saveProduct(product)
         if (id > 0) {
             loadAll()
             AutoBackupManager.onDataChanged()
@@ -70,7 +71,7 @@ object TextilesProductRepository {
     }
 
     fun delete(id: Long): Boolean {
-        val success = getTextilesDatabaseHelper().deleteItem(id)
+        val success = getTextilesDatabaseHelper().deleteProduct(id)
         if (success) {
             loadAll()
             loadDeleted()
@@ -80,7 +81,7 @@ object TextilesProductRepository {
     }
 
     fun restore(id: Long): Boolean {
-        val success = getTextilesDatabaseHelper().restoreItem(id)
+        val success = getTextilesDatabaseHelper().restoreProduct(id)
         if (success) {
             loadAll()
             loadDeleted()
@@ -90,7 +91,7 @@ object TextilesProductRepository {
     }
 
     fun permanentDelete(id: Long): Boolean {
-        val success = getTextilesDatabaseHelper().permanentDeleteItem(id)
+        val success = getTextilesDatabaseHelper().permanentDeleteProduct(id)
         if (success) {
             loadDeleted()
             AutoBackupManager.onDataChanged()
@@ -98,5 +99,5 @@ object TextilesProductRepository {
         return success
     }
 
-    fun getById(id: Long): ProductModel? = items.find { it.id == id }
+    fun getById(id: Long): ProductModel? = products.find { it.id == id }
 }

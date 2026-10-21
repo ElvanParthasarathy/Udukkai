@@ -32,7 +32,7 @@ import com.elvan.udukkai.ui.components.ElvanCardLeadingIcon
 import com.elvan.udukkai.ui.components.ElvanCardSelector
 import com.elvan.udukkai.ui.components.ElvanCommonCard
 import com.elvan.udukkai.ui.components.shell.LocalElvanTopSpacerHeight
-import com.elvan.udukkai.ui.components.shell.VaangunarCardSkeleton
+import com.elvan.udukkai.ui.components.shell.CustomerCardSkeleton
 import com.elvan.udukkai.ui.navigation.MaterialSymbols
 import kotlinx.coroutines.delay
 
@@ -91,7 +91,7 @@ fun FactoryCustomerScreen(
 
             if (isSearchLoading || isRefreshing) {
                 items(10) {
-                    VaangunarCardSkeleton()
+                    CustomerCardSkeleton()
                 }
             } else if (customers.isEmpty()) {
                 item(key = "empty_customers") {

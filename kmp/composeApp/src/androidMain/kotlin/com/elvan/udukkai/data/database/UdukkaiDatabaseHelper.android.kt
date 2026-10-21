@@ -23,12 +23,12 @@ class AndroidUdukkaiDatabaseHelper(
 
     private val tag = "UdukkaiDbHelper"
 
-    private val vaangunarTable = "${tablePrefix}vaangunar_table"
-    private val porulTable = "${tablePrefix}porul_table"
-    private val pattiyalTable = "${tablePrefix}pattiyal_table"
-    private val patrugalTable = "${tablePrefix}patrugal_table"
-    private val junctionTable = "${tablePrefix}patru_pattiyal_table"
-    private val profileTable = "${tablePrefix}niruvana_tharavugal_table"
+    private val customersTable = "${tablePrefix}customers"
+    private val productsTable = "${tablePrefix}products"
+    private val invoicesTable = "${tablePrefix}invoices"
+    private val receiptsTable = "${tablePrefix}receipts"
+    private val linksTable = "${tablePrefix}receipt_invoice_links"
+    private val profilesTable = "${tablePrefix}business_profiles"
 
     private fun resolveActiveDatabase(): File? {
         if (!AppContext.isInitialized) {
@@ -77,38 +77,156 @@ class AndroidUdukkaiDatabaseHelper(
         }
     }
 
-    private fun ensureTables(db: SQLiteDatabase) {
-        if (isFactory) {
-            renameTableIfExists(db, "kooli_vaangunar_table", vaangunarTable)
-            renameTableIfExists(db, "kooli_porul_table", porulTable)
-            renameTableIfExists(db, "kooli_pattiyal_table", pattiyalTable)
-            renameTableIfExists(db, "kooli_patrugal_table", patrugalTable)
-            renameTableIfExists(db, "kooli_patru_pattiyal_table", junctionTable)
-            renameTableIfExists(db, "kooli_niruvana_tharavugal_table", profileTable)
-        } else {
-            renameTableIfExists(db, "pattu_vaangunar_table", vaangunarTable)
-            renameTableIfExists(db, "pattu_porul_table", porulTable)
-            renameTableIfExists(db, "pattu_pattiyal_table", pattiyalTable)
-            renameTableIfExists(db, "pattu_patrugal_table", patrugalTable)
-            renameTableIfExists(db, "pattu_patru_pattiyal_table", junctionTable)
-            renameTableIfExists(db, "pattu_niruvana_tharavugal_table", profileTable)
+    private fun renameColumnIfExists(db: SQLiteDatabase, tableName: String, oldCol: String, newCol: String) {
+        try {
+            val existingCols = mutableSetOf<String>()
+            db.rawQuery("PRAGMA table_info(\"$tableName\")", null).use { c ->
+                val nameIdx = c.getColumnIndex("name")
+                if (nameIdx >= 0) {
+                    while (c.moveToNext()) {
+                        existingCols.add(c.getString(nameIdx).lowercase())
+                    }
+                }
+            }
+            if (existingCols.contains(oldCol.lowercase()) && !existingCols.contains(newCol.lowercase())) {
+                Log.i(tag, "Renaming legacy column $tableName.$oldCol -> $newCol")
+                db.execSQL("ALTER TABLE \"$tableName\" RENAME COLUMN \"$oldCol\" TO \"$newCol\"")
+            }
+        } catch (e: Exception) {
+            Log.e(tag, "Column rename $tableName.$oldCol -> $newCol error: ${e.message}")
         }
+    }
+
+    private fun ensureTables(db: SQLiteDatabase) {
+        val legacyPrefix = if (isFactory) "kooli_" else "pattu_"
+
+        // 1. Rename any legacy / Tanglish tables to standardized English tables
+        renameTableIfExists(db, "${legacyPrefix}vaangunar_table", customersTable)
+        renameTableIfExists(db, "${tablePrefix}vaangunar_table", customersTable)
+
+        renameTableIfExists(db, "${legacyPrefix}porul_table", productsTable)
+        renameTableIfExists(db, "${tablePrefix}porul_table", productsTable)
+
+        renameTableIfExists(db, "${legacyPrefix}pattiyal_table", invoicesTable)
+        renameTableIfExists(db, "${tablePrefix}pattiyal_table", invoicesTable)
+
+        renameTableIfExists(db, "${legacyPrefix}patrugal_table", receiptsTable)
+        renameTableIfExists(db, "${tablePrefix}patrugal_table", receiptsTable)
+
+        renameTableIfExists(db, "${legacyPrefix}patru_pattiyal_table", linksTable)
+        renameTableIfExists(db, "${tablePrefix}patru_pattiyal_table", linksTable)
+
+        renameTableIfExists(db, "${legacyPrefix}niruvana_tharavugal_table", profilesTable)
+        renameTableIfExists(db, "${tablePrefix}niruvana_tharavugal_table", profilesTable)
+
+        // 2. Rename legacy columns in customersTable
+        renameColumnIfExists(db, customersTable, "peyar", "name")
+        renameColumnIfExists(db, customersTable, "mugavari", "address")
+        renameColumnIfExists(db, customersTable, "oor", "city")
+        renameColumnIfExists(db, customersTable, "maavattam", "district")
+        renameColumnIfExists(db, customersTable, "maanilam", "state")
+        renameColumnIfExists(db, customersTable, "naadu", "country")
+        renameColumnIfExists(db, customersTable, "velinaad_mugavari", "international_address")
+        renameColumnIfExists(db, customersTable, "anjal_kuriyeedu", "pin_code")
+        renameColumnIfExists(db, customersTable, "minnanjal", "email")
+        renameColumnIfExists(db, customersTable, "tholaipaesi", "phone")
+
+        // 3. Rename legacy columns in productsTable
+        renameColumnIfExists(db, productsTable, "porul_peyar", "name")
+        renameColumnIfExists(db, productsTable, "vilai", "price")
+        renameColumnIfExists(db, productsTable, "vari_veetham", "tax_rate")
+        renameColumnIfExists(db, productsTable, "alavu_vagai", "quantity_type")
+        renameColumnIfExists(db, productsTable, "alagu", "unit")
+        renameColumnIfExists(db, productsTable, "niruvanam_ids", "company_ids")
+
+        // 4. Rename legacy columns in invoicesTable
+        renameColumnIfExists(db, invoicesTable, "niruvanam_id", "company_id")
+        renameColumnIfExists(db, invoicesTable, "patrucheettu_en", "invoice_number")
+        renameColumnIfExists(db, invoicesTable, "pattiyal_vagai", "invoice_type")
+        renameColumnIfExists(db, invoicesTable, "vaangunar_id", "customer_id")
+        renameColumnIfExists(db, invoicesTable, "vaangunar_peyar", "customer_name")
+        renameColumnIfExists(db, invoicesTable, "vaangunar_munvari", "customer_address")
+        renameColumnIfExists(db, invoicesTable, "pattiyal_naal", "invoice_date")
+        renameColumnIfExists(db, invoicesTable, "tharavugal", "items_json")
+        renameColumnIfExists(db, invoicesTable, "motha_thogai", "total_amount")
+        renameColumnIfExists(db, invoicesTable, "thallupadi", "discount")
+        renameColumnIfExists(db, invoicesTable, "podhu_thallupadi_mathippu", "global_discount_value")
+        renameColumnIfExists(db, invoicesTable, "podhu_thallupadi_vagai", "global_discount_type")
+        renameColumnIfExists(db, invoicesTable, "podhu_thallupadi_thogai", "global_discount_amount")
+        renameColumnIfExists(db, invoicesTable, "vari_thogai", "tax_amount")
+        renameColumnIfExists(db, invoicesTable, "vari_tharavugal", "tax_data_json")
+        renameColumnIfExists(db, invoicesTable, "motha_edai", "total_weight")
+        renameColumnIfExists(db, invoicesTable, "setharam_grams", "wastage_grams")
+        renameColumnIfExists(db, invoicesTable, "thabaal_thogai", "postal_charges")
+        renameColumnIfExists(db, invoicesTable, "ahimsa_pattu_thogai", "ahimsa_silk_amount")
+        renameColumnIfExists(db, invoicesTable, "piravari_vugal", "other_taxes_json")
+        renameColumnIfExists(db, invoicesTable, "sontha_viruppangal", "custom_preferences_json")
+        renameColumnIfExists(db, invoicesTable, "nibandhanaigal", "terms_and_conditions")
+        renameColumnIfExists(db, invoicesTable, "ullkurippu", "notes")
+        renameColumnIfExists(db, invoicesTable, "vangi_tharavugal", "bank_details_json")
+
+        // 5. Rename legacy columns in receiptsTable
+        renameColumnIfExists(db, receiptsTable, "niruvanam_id", "company_id")
+        renameColumnIfExists(db, receiptsTable, "patru_en", "receipt_number")
+        renameColumnIfExists(db, receiptsTable, "vaangunar_id", "customer_id")
+        renameColumnIfExists(db, receiptsTable, "vaangunar_peyar", "customer_name")
+        renameColumnIfExists(db, receiptsTable, "vaangunar_munvari", "customer_address")
+        renameColumnIfExists(db, receiptsTable, "patru_naal", "receipt_date")
+        renameColumnIfExists(db, receiptsTable, "thogai", "amount")
+        renameColumnIfExists(db, receiptsTable, "seluthum_murai", "payment_mode")
+        renameColumnIfExists(db, receiptsTable, "vangi_peyar", "bank_name")
+        renameColumnIfExists(db, receiptsTable, "parivarthanai_en", "transaction_number")
+        renameColumnIfExists(db, receiptsTable, "ullkurippu", "notes")
+
+        // 6. Rename legacy columns in linksTable
+        renameColumnIfExists(db, linksTable, "patru_id", "receipt_id")
+        renameColumnIfExists(db, linksTable, "pattiyal_id", "invoice_id")
+        renameColumnIfExists(db, linksTable, "inaippu_thogai", "applied_amount")
+
+        // 7. Rename legacy columns in profilesTable
+        renameColumnIfExists(db, profilesTable, "mudhan_mozhi", "primary_language")
+        renameColumnIfExists(db, profilesTable, "thunai_mozhi", "secondary_language")
+        renameColumnIfExists(db, profilesTable, "iru_mozhi", "is_bilingual")
+        renameColumnIfExists(db, profilesTable, "gst_pirippugal", "split_gst")
+        renameColumnIfExists(db, profilesTable, "niruvanathin_peyar", "business_name")
+        renameColumnIfExists(db, profilesTable, "kurum_peyar", "short_name")
+        renameColumnIfExists(db, profilesTable, "tholaipaesi1", "phone1")
+        renameColumnIfExists(db, profilesTable, "tholaipaesi2", "phone2")
+        renameColumnIfExists(db, profilesTable, "minnanjal", "email")
+        renameColumnIfExists(db, profilesTable, "mugavari", "address")
+        renameColumnIfExists(db, profilesTable, "oor", "city")
+        renameColumnIfExists(db, profilesTable, "maavattam", "district")
+        renameColumnIfExists(db, profilesTable, "maanilam", "state")
+        renameColumnIfExists(db, profilesTable, "naadu", "country")
+        renameColumnIfExists(db, profilesTable, "anjal_kuriyeedu", "pin_code")
+        renameColumnIfExists(db, profilesTable, "vangi_peyar", "bank_name")
+        renameColumnIfExists(db, profilesTable, "kilai", "branch")
+        renameColumnIfExists(db, profilesTable, "vangi_kanakku", "account_number")
+        renameColumnIfExists(db, profilesTable, "oavuru", "logo")
+        renameColumnIfExists(db, profilesTable, "agala_oavuru", "wide_logo")
+        renameColumnIfExists(db, profilesTable, "thalaippu_vadivu", "header_layout")
+        renameColumnIfExists(db, profilesTable, "kaiyoppam", "signature")
+        renameColumnIfExists(db, profilesTable, "oppam_peyar", "signatory_name")
+        renameColumnIfExists(db, profilesTable, "oppam_mudhal_peyar", "signatory_first_name")
+        renameColumnIfExists(db, profilesTable, "oppam_irudhi_peyar", "signatory_last_name")
+        renameColumnIfExists(db, profilesTable, "adaimozhi", "tagline")
+        renameColumnIfExists(db, profilesTable, "thoatra_niram", "theme_color")
 
         // 1. Customers Table
         db.execSQL("""
-            CREATE TABLE IF NOT EXISTS "$vaangunarTable" (
+            CREATE TABLE IF NOT EXISTS "$customersTable" (
                 "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-                "peyar" TEXT NOT NULL DEFAULT '{}',
-                "mugavari" TEXT NOT NULL DEFAULT '{}',
-                "oor" TEXT NOT NULL DEFAULT '{}',
-                "maavattam" TEXT NOT NULL DEFAULT '{}',
-                "maanilam" TEXT NOT NULL DEFAULT '{}',
-                "naadu" TEXT NOT NULL DEFAULT '{"en": "India", "ta": "இந்தியா"}',
-                "velinaad_mugavari" TEXT NOT NULL DEFAULT '{}',
-                "anjal_kuriyeedu" TEXT NOT NULL DEFAULT '',
+                "name" TEXT NOT NULL DEFAULT '{}',
+                "address" TEXT NOT NULL DEFAULT '{}',
+                "city" TEXT NOT NULL DEFAULT '{}',
+                "district" TEXT NOT NULL DEFAULT '{}',
+                "state" TEXT NOT NULL DEFAULT '{}',
+                "country" TEXT NOT NULL DEFAULT '{"en": "India", "ta": "இந்தியா"}',
+                "international_address" TEXT NOT NULL DEFAULT '{}',
+                "pin_code" TEXT NOT NULL DEFAULT '',
                 "gstin" TEXT NOT NULL DEFAULT '',
-                "minnanjal" TEXT NOT NULL DEFAULT '',
-                "tholaipaesi" TEXT NOT NULL DEFAULT '',
+                "email" TEXT NOT NULL DEFAULT '',
+                "phone" TEXT NOT NULL DEFAULT '',
                 "created_at" INTEGER NOT NULL DEFAULT (CAST(strftime('%s', CURRENT_TIMESTAMP) AS INTEGER)),
                 "updated_at" INTEGER NOT NULL DEFAULT (CAST(strftime('%s', CURRENT_TIMESTAMP) AS INTEGER)),
                 "is_deleted" INTEGER NOT NULL DEFAULT 0 CHECK ("is_deleted" IN (0, 1)),
@@ -118,15 +236,15 @@ class AndroidUdukkaiDatabaseHelper(
 
         // 2. Products Table
         db.execSQL("""
-            CREATE TABLE IF NOT EXISTS "$porulTable" (
+            CREATE TABLE IF NOT EXISTS "$productsTable" (
                 "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-                "porul_peyar" TEXT NOT NULL DEFAULT '{}',
+                "name" TEXT NOT NULL DEFAULT '{}',
                 "hsn_code" TEXT NOT NULL DEFAULT '',
-                "vilai" REAL NOT NULL DEFAULT 0.0,
-                "vari_veetham" REAL NOT NULL DEFAULT 0.0,
-                "alavu_vagai" TEXT NOT NULL DEFAULT 'quantity',
-                "alagu" TEXT NOT NULL DEFAULT 'Nos',
-                "niruvanam_ids" TEXT NOT NULL DEFAULT '[]',
+                "price" REAL NOT NULL DEFAULT 0.0,
+                "tax_rate" REAL NOT NULL DEFAULT 0.0,
+                "quantity_type" TEXT NOT NULL DEFAULT 'quantity',
+                "unit" TEXT NOT NULL DEFAULT 'Nos',
+                "company_ids" TEXT NOT NULL DEFAULT '[]',
                 "company_prices" TEXT NOT NULL DEFAULT '{}',
                 "created_at" INTEGER NOT NULL DEFAULT (CAST(strftime('%s', CURRENT_TIMESTAMP) AS INTEGER)),
                 "updated_at" INTEGER NOT NULL DEFAULT (CAST(strftime('%s', CURRENT_TIMESTAMP) AS INTEGER)),
@@ -136,36 +254,36 @@ class AndroidUdukkaiDatabaseHelper(
         """.trimIndent())
 
         // 3. Invoices Table
-        val createPattiyalSql = if (isFactory) {
+        val createInvoiceSql = if (isFactory) {
             """
-            CREATE TABLE IF NOT EXISTS "$pattiyalTable" (
+            CREATE TABLE IF NOT EXISTS "$invoicesTable" (
                 "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-                "niruvanam_id" INTEGER NULL,
-                "patrucheettu_en" TEXT NOT NULL,
+                "company_id" INTEGER NULL,
+                "invoice_number" TEXT NOT NULL,
                 "fin_year" INTEGER NOT NULL,
                 "vanakkam" INTEGER NOT NULL DEFAULT 1,
-                "pattiyal_vagai" TEXT NOT NULL DEFAULT 'tax-invoice',
-                "vaangunar_id" INTEGER NULL,
-                "vaangunar_peyar" TEXT NOT NULL DEFAULT '{}',
-                "vaangunar_munvari" TEXT NOT NULL DEFAULT '{}',
-                "pattiyal_naal" INTEGER NOT NULL DEFAULT (CAST(strftime('%s', CURRENT_TIMESTAMP) AS INTEGER)),
-                "tharavugal" TEXT NOT NULL DEFAULT '[]',
-                "motha_thogai" REAL NOT NULL DEFAULT 0.0,
-                "thallupadi" REAL NOT NULL DEFAULT 0.0,
-                "podhu_thallupadi_mathippu" REAL NOT NULL DEFAULT 0.0,
-                "podhu_thallupadi_vagai" TEXT NOT NULL DEFAULT '%',
-                "podhu_thallupadi_thogai" REAL NOT NULL DEFAULT 0.0,
-                "vari_thogai" REAL NOT NULL DEFAULT 0.0,
-                "vari_tharavugal" TEXT NOT NULL DEFAULT '{}',
-                "motha_edai" REAL NOT NULL DEFAULT 0.0,
-                "setharam_grams" REAL NOT NULL DEFAULT 0.0,
-                "thabaal_thogai" REAL NOT NULL DEFAULT 0.0,
-                "ahimsa_pattu_thogai" REAL NOT NULL DEFAULT 0.0,
-                "piravari_vugal" TEXT NOT NULL DEFAULT '[]',
-                "sontha_viruppangal" TEXT NOT NULL DEFAULT '{}',
-                "nibandhanaigal" TEXT NOT NULL DEFAULT '',
-                "ullkurippu" TEXT NOT NULL DEFAULT '',
-                "vangi_tharavugal" TEXT NOT NULL DEFAULT '{}',
+                "invoice_type" TEXT NOT NULL DEFAULT 'tax-invoice',
+                "customer_id" INTEGER NULL,
+                "customer_name" TEXT NOT NULL DEFAULT '{}',
+                "customer_address" TEXT NOT NULL DEFAULT '{}',
+                "invoice_date" INTEGER NOT NULL DEFAULT (CAST(strftime('%s', CURRENT_TIMESTAMP) AS INTEGER)),
+                "items_json" TEXT NOT NULL DEFAULT '[]',
+                "total_amount" REAL NOT NULL DEFAULT 0.0,
+                "discount" REAL NOT NULL DEFAULT 0.0,
+                "global_discount_value" REAL NOT NULL DEFAULT 0.0,
+                "global_discount_type" TEXT NOT NULL DEFAULT '%',
+                "global_discount_amount" REAL NOT NULL DEFAULT 0.0,
+                "tax_amount" REAL NOT NULL DEFAULT 0.0,
+                "tax_data_json" TEXT NOT NULL DEFAULT '{}',
+                "total_weight" REAL NOT NULL DEFAULT 0.0,
+                "wastage_grams" REAL NOT NULL DEFAULT 0.0,
+                "postal_charges" REAL NOT NULL DEFAULT 0.0,
+                "ahimsa_silk_amount" REAL NOT NULL DEFAULT 0.0,
+                "other_taxes_json" TEXT NOT NULL DEFAULT '[]',
+                "custom_preferences_json" TEXT NOT NULL DEFAULT '{}',
+                "terms_and_conditions" TEXT NOT NULL DEFAULT '',
+                "notes" TEXT NOT NULL DEFAULT '',
+                "bank_details_json" TEXT NOT NULL DEFAULT '{}',
                 "created_at" INTEGER NOT NULL DEFAULT (CAST(strftime('%s', CURRENT_TIMESTAMP) AS INTEGER)),
                 "updated_at" INTEGER NOT NULL DEFAULT (CAST(strftime('%s', CURRENT_TIMESTAMP) AS INTEGER)),
                 "is_deleted" INTEGER NOT NULL DEFAULT 0 CHECK ("is_deleted" IN (0, 1)),
@@ -174,28 +292,28 @@ class AndroidUdukkaiDatabaseHelper(
             """.trimIndent()
         } else {
             """
-            CREATE TABLE IF NOT EXISTS "$pattiyalTable" (
+            CREATE TABLE IF NOT EXISTS "$invoicesTable" (
                 "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-                "niruvanam_id" INTEGER NULL,
-                "patrucheettu_en" TEXT NOT NULL,
+                "company_id" INTEGER NULL,
+                "invoice_number" TEXT NOT NULL,
                 "fin_year" INTEGER NOT NULL,
                 "vanakkam" INTEGER NOT NULL DEFAULT 1,
-                "pattiyal_vagai" TEXT NOT NULL DEFAULT 'tax-invoice',
-                "vaangunar_id" INTEGER NULL,
-                "vaangunar_peyar" TEXT NOT NULL DEFAULT '{}',
-                "vaangunar_munvari" TEXT NOT NULL DEFAULT '{}',
-                "pattiyal_naal" INTEGER NOT NULL DEFAULT (CAST(strftime('%s', CURRENT_TIMESTAMP) AS INTEGER)),
-                "tharavugal" TEXT NOT NULL DEFAULT '[]',
-                "motha_thogai" REAL NOT NULL DEFAULT 0.0,
-                "thallupadi" REAL NOT NULL DEFAULT 0.0,
-                "podhu_thallupadi_mathippu" REAL NOT NULL DEFAULT 0.0,
-                "podhu_thallupadi_vagai" TEXT NOT NULL DEFAULT '%',
-                "podhu_thallupadi_thogai" REAL NOT NULL DEFAULT 0.0,
-                "vari_thogai" REAL NOT NULL DEFAULT 0.0,
-                "vari_tharavugal" TEXT NOT NULL DEFAULT '{}',
-                "sontha_viruppangal" TEXT NOT NULL DEFAULT '{}',
-                "nibandhanaigal" TEXT NOT NULL DEFAULT '',
-                "ullkurippu" TEXT NOT NULL DEFAULT '',
+                "invoice_type" TEXT NOT NULL DEFAULT 'tax-invoice',
+                "customer_id" INTEGER NULL,
+                "customer_name" TEXT NOT NULL DEFAULT '{}',
+                "customer_address" TEXT NOT NULL DEFAULT '{}',
+                "invoice_date" INTEGER NOT NULL DEFAULT (CAST(strftime('%s', CURRENT_TIMESTAMP) AS INTEGER)),
+                "items_json" TEXT NOT NULL DEFAULT '[]',
+                "total_amount" REAL NOT NULL DEFAULT 0.0,
+                "discount" REAL NOT NULL DEFAULT 0.0,
+                "global_discount_value" REAL NOT NULL DEFAULT 0.0,
+                "global_discount_type" TEXT NOT NULL DEFAULT '%',
+                "global_discount_amount" REAL NOT NULL DEFAULT 0.0,
+                "tax_amount" REAL NOT NULL DEFAULT 0.0,
+                "tax_data_json" TEXT NOT NULL DEFAULT '{}',
+                "custom_preferences_json" TEXT NOT NULL DEFAULT '{}',
+                "terms_and_conditions" TEXT NOT NULL DEFAULT '',
+                "notes" TEXT NOT NULL DEFAULT '',
                 "created_at" INTEGER NOT NULL DEFAULT (CAST(strftime('%s', CURRENT_TIMESTAMP) AS INTEGER)),
                 "updated_at" INTEGER NOT NULL DEFAULT (CAST(strftime('%s', CURRENT_TIMESTAMP) AS INTEGER)),
                 "is_deleted" INTEGER NOT NULL DEFAULT 0 CHECK ("is_deleted" IN (0, 1)),
@@ -203,25 +321,25 @@ class AndroidUdukkaiDatabaseHelper(
             )
             """.trimIndent()
         }
-        db.execSQL(createPattiyalSql)
+        db.execSQL(createInvoiceSql)
 
         // 4. Receipts Table
         db.execSQL("""
-            CREATE TABLE IF NOT EXISTS "$patrugalTable" (
+            CREATE TABLE IF NOT EXISTS "$receiptsTable" (
                 "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-                "niruvanam_id" INTEGER NULL,
-                "patru_en" TEXT NOT NULL,
+                "company_id" INTEGER NULL,
+                "receipt_number" TEXT NOT NULL,
                 "fin_year" TEXT NOT NULL DEFAULT '',
                 "vanakkam" INTEGER NOT NULL DEFAULT 1,
-                "vaangunar_id" INTEGER NULL,
-                "vaangunar_peyar" TEXT NOT NULL DEFAULT '{}',
-                "vaangunar_munvari" TEXT NOT NULL DEFAULT '{}',
-                "patru_naal" INTEGER NOT NULL DEFAULT (CAST(strftime('%s', CURRENT_TIMESTAMP) AS INTEGER)),
-                "thogai" REAL NOT NULL DEFAULT 0.0,
-                "seluthum_murai" TEXT NOT NULL DEFAULT 'cash',
-                "vangi_peyar" TEXT NULL,
-                "parivarthanai_en" TEXT NULL,
-                "ullkurippu" TEXT NOT NULL DEFAULT '',
+                "customer_id" INTEGER NULL,
+                "customer_name" TEXT NOT NULL DEFAULT '{}',
+                "customer_address" TEXT NOT NULL DEFAULT '{}',
+                "receipt_date" INTEGER NOT NULL DEFAULT (CAST(strftime('%s', CURRENT_TIMESTAMP) AS INTEGER)),
+                "amount" REAL NOT NULL DEFAULT 0.0,
+                "payment_mode" TEXT NOT NULL DEFAULT 'cash',
+                "bank_name" TEXT NULL,
+                "transaction_number" TEXT NULL,
+                "notes" TEXT NOT NULL DEFAULT '',
                 "created_at" INTEGER NOT NULL DEFAULT (CAST(strftime('%s', CURRENT_TIMESTAMP) AS INTEGER)),
                 "updated_at" INTEGER NOT NULL DEFAULT (CAST(strftime('%s', CURRENT_TIMESTAMP) AS INTEGER)),
                 "is_deleted" INTEGER NOT NULL DEFAULT 0 CHECK ("is_deleted" IN (0, 1)),
@@ -231,51 +349,51 @@ class AndroidUdukkaiDatabaseHelper(
 
         // 5. Junction Table
         db.execSQL("""
-            CREATE TABLE IF NOT EXISTS "$junctionTable" (
+            CREATE TABLE IF NOT EXISTS "$linksTable" (
                 "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-                "patru_id" INTEGER NOT NULL,
-                "pattiyal_id" INTEGER NOT NULL,
-                "inaippu_thogai" REAL NOT NULL DEFAULT 0.0,
+                "receipt_id" INTEGER NOT NULL,
+                "invoice_id" INTEGER NOT NULL,
+                "applied_amount" REAL NOT NULL DEFAULT 0.0,
                 "created_at" INTEGER NOT NULL DEFAULT (CAST(strftime('%s', CURRENT_TIMESTAMP) AS INTEGER)),
-                FOREIGN KEY("patru_id") REFERENCES "$patrugalTable"("id") ON DELETE CASCADE,
-                FOREIGN KEY("pattiyal_id") REFERENCES "$pattiyalTable"("id") ON DELETE CASCADE
+                FOREIGN KEY("receipt_id") REFERENCES "$receiptsTable"("id") ON DELETE CASCADE,
+                FOREIGN KEY("invoice_id") REFERENCES "$invoicesTable"("id") ON DELETE CASCADE
             )
         """.trimIndent())
 
         // 6. Profiles Table
         db.execSQL("""
-            CREATE TABLE IF NOT EXISTS "$profileTable" (
+            CREATE TABLE IF NOT EXISTS "$profilesTable" (
                 "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-                "mudhan_mozhi" TEXT NOT NULL DEFAULT 'ta',
-                "thunai_mozhi" TEXT NOT NULL DEFAULT 'en',
-                "iru_mozhi" INTEGER NOT NULL DEFAULT 1 CHECK ("iru_mozhi" IN (0, 1)),
-                "gst_pirippugal" INTEGER NOT NULL DEFAULT 0 CHECK ("gst_pirippugal" IN (0, 1)),
-                "niruvanathin_peyar" TEXT NOT NULL DEFAULT '{}',
-                "kurum_peyar" TEXT NOT NULL DEFAULT '',
-                "tholaipaesi1" TEXT NOT NULL DEFAULT '',
-                "tholaipaesi2" TEXT NOT NULL DEFAULT '',
-                "minnanjal" TEXT NOT NULL DEFAULT '',
+                "primary_language" TEXT NOT NULL DEFAULT 'ta',
+                "secondary_language" TEXT NOT NULL DEFAULT 'en',
+                "is_bilingual" INTEGER NOT NULL DEFAULT 1 CHECK ("is_bilingual" IN (0, 1)),
+                "split_gst" INTEGER NOT NULL DEFAULT 0 CHECK ("split_gst" IN (0, 1)),
+                "business_name" TEXT NOT NULL DEFAULT '{}',
+                "short_name" TEXT NOT NULL DEFAULT '',
+                "phone1" TEXT NOT NULL DEFAULT '',
+                "phone2" TEXT NOT NULL DEFAULT '',
+                "email" TEXT NOT NULL DEFAULT '',
                 "gstin" TEXT NOT NULL DEFAULT '',
-                "mugavari" TEXT NOT NULL DEFAULT '{}',
-                "oor" TEXT NOT NULL DEFAULT '{}',
-                "maavattam" TEXT NOT NULL DEFAULT '{}',
-                "maanilam" TEXT NOT NULL DEFAULT '{}',
-                "naadu" TEXT NOT NULL DEFAULT '{"en": "India", "ta": "இந்தியா"}',
-                "anjal_kuriyeedu" TEXT NOT NULL DEFAULT '',
-                "vangi_peyar" TEXT NOT NULL DEFAULT '{}',
-                "kilai" TEXT NOT NULL DEFAULT '{}',
-                "vangi_kanakku" TEXT NOT NULL DEFAULT '',
+                "address" TEXT NOT NULL DEFAULT '{}',
+                "city" TEXT NOT NULL DEFAULT '{}',
+                "district" TEXT NOT NULL DEFAULT '{}',
+                "state" TEXT NOT NULL DEFAULT '{}',
+                "country" TEXT NOT NULL DEFAULT '{"en": "India", "ta": "இந்தியா"}',
+                "pin_code" TEXT NOT NULL DEFAULT '',
+                "bank_name" TEXT NOT NULL DEFAULT '{}',
+                "branch" TEXT NOT NULL DEFAULT '{}',
+                "account_number" TEXT NOT NULL DEFAULT '',
                 "ifsc" TEXT NOT NULL DEFAULT '',
-                "oavuru" TEXT NOT NULL DEFAULT '',
-                "agala_oavuru" TEXT NOT NULL DEFAULT '',
-                "thalaippu_vadivu" TEXT NOT NULL DEFAULT 'small',
-                "kaiyoppam" TEXT NOT NULL DEFAULT '',
-                "oppam_peyar" TEXT NOT NULL DEFAULT '',
-                "oppam_mudhal_peyar" TEXT NOT NULL DEFAULT '',
-                "oppam_irudhi_peyar" TEXT NOT NULL DEFAULT '',
-                "adaimozhi" TEXT NOT NULL DEFAULT '{}',
+                "logo" TEXT NOT NULL DEFAULT '',
+                "wide_logo" TEXT NOT NULL DEFAULT '',
+                "header_layout" TEXT NOT NULL DEFAULT 'small',
+                "signature" TEXT NOT NULL DEFAULT '',
+                "signatory_name" TEXT NOT NULL DEFAULT '',
+                "signatory_first_name" TEXT NOT NULL DEFAULT '',
+                "signatory_last_name" TEXT NOT NULL DEFAULT '',
+                "tagline" TEXT NOT NULL DEFAULT '{}',
                 "upi_id" TEXT NOT NULL DEFAULT '',
-                "thoatra_niram" TEXT NOT NULL DEFAULT '',
+                "theme_color" TEXT NOT NULL DEFAULT '',
                 "created_at" INTEGER NOT NULL DEFAULT (CAST(strftime('%s', CURRENT_TIMESTAMP) AS INTEGER)),
                 "updated_at" INTEGER NOT NULL DEFAULT (CAST(strftime('%s', CURRENT_TIMESTAMP) AS INTEGER)),
                 "is_deleted" INTEGER NOT NULL DEFAULT 0 CHECK ("is_deleted" IN (0, 1)),
@@ -299,141 +417,204 @@ class AndroidUdukkaiDatabaseHelper(
         }
     }
 
-    // ── Merchants / Customers ────────────────────────────────────────────────
-    override fun loadAllMerchants(): List<CustomerModel> = useDb { db ->
+    // ── Safe Cursor Parsing Helpers ──────────────────────────────────────────
+    private fun getColIdx(c: Cursor, vararg names: String): Int {
+        for (name in names) {
+            val idx = c.getColumnIndex(name)
+            if (idx >= 0) return idx
+        }
+        return -1
+    }
+
+    private fun getStringCol(c: Cursor, vararg names: String, default: String = ""): String {
+        val idx = getColIdx(c, *names)
+        if (idx < 0 || c.isNull(idx)) return default
+        return c.getString(idx)
+    }
+
+    private fun getDoubleCol(c: Cursor, vararg names: String, default: Double = 0.0): Double {
+        val idx = getColIdx(c, *names)
+        if (idx < 0 || c.isNull(idx)) return default
+        return c.getDouble(idx)
+    }
+
+    private fun getLongCol(c: Cursor, vararg names: String, default: Long = 0L): Long {
+        val idx = getColIdx(c, *names)
+        if (idx < 0 || c.isNull(idx)) return default
+        return c.getLong(idx)
+    }
+
+    private fun getLongOrNull(c: Cursor, vararg names: String): Long? {
+        val idx = getColIdx(c, *names)
+        if (idx < 0 || c.isNull(idx)) return null
+        return c.getLong(idx)
+    }
+
+    private fun getStringOrNull(c: Cursor, vararg names: String): String? {
+        val idx = getColIdx(c, *names)
+        if (idx < 0 || c.isNull(idx)) return null
+        return c.getString(idx)
+    }
+
+    private fun getIntCol(c: Cursor, vararg names: String, default: Int = 0): Int {
+        val idx = getColIdx(c, *names)
+        if (idx < 0 || c.isNull(idx)) return default
+        return c.getInt(idx)
+    }
+
+    // ── Customers ────────────────────────────────────────────────────────────
+    override fun loadAllCustomers(): List<CustomerModel> = useDb { db ->
         val list = mutableListOf<CustomerModel>()
-        db.rawQuery("SELECT * FROM \"$vaangunarTable\" WHERE is_deleted = 0 ORDER BY id DESC", null).use { c ->
+        db.rawQuery("SELECT * FROM \"$customersTable\" WHERE is_deleted = 0 ORDER BY id DESC", null).use { c ->
             while (c.moveToNext()) list.add(cursorToMerchant(c))
         }
         list
     } ?: emptyList()
 
-    override fun saveMerchant(merchant: CustomerModel): Long = useDb { db ->
+    override fun saveCustomer(customer: CustomerModel): Long = useDb { db ->
         val cv = ContentValues().apply {
-            put("peyar", LanguageJsonConverter.stringify(merchant.name))
-            put("mugavari", LanguageJsonConverter.stringify(merchant.address))
-            put("oor", LanguageJsonConverter.stringify(merchant.city))
-            put("maavattam", LanguageJsonConverter.stringify(merchant.district))
-            put("maanilam", LanguageJsonConverter.stringify(merchant.state))
-            put("naadu", LanguageJsonConverter.stringify(merchant.country))
-            put("velinaad_mugavari", LanguageJsonConverter.stringify(merchant.internationalAddress))
-            put("anjal_kuriyeedu", merchant.pinCode)
-            put("gstin", merchant.gstin)
-            put("minnanjal", merchant.email)
-            put("tholaipaesi", merchant.phone)
+            put("name", LanguageJsonConverter.stringify(customer.name))
+            put("address", LanguageJsonConverter.stringify(customer.address))
+            put("city", LanguageJsonConverter.stringify(customer.city))
+            put("district", LanguageJsonConverter.stringify(customer.district))
+            put("state", LanguageJsonConverter.stringify(customer.state))
+            put("country", LanguageJsonConverter.stringify(customer.country))
+            put("international_address", LanguageJsonConverter.stringify(customer.internationalAddress))
+            put("pin_code", customer.pinCode)
+            put("gstin", customer.gstin)
+            put("email", customer.email)
+            put("phone", customer.phone)
             put("updated_at", System.currentTimeMillis() / 1000)
             put("is_deleted", 0)
         }
-        if (merchant.id != null && merchant.id > 0) {
-            db.update("\"$vaangunarTable\"", cv, "id = ?", arrayOf(merchant.id.toString()))
-            merchant.id
+        if (customer.id != null && customer.id > 0) {
+            db.update("\"$customersTable\"", cv, "id = ?", arrayOf(customer.id.toString()))
+            customer.id
         } else {
             cv.put("created_at", System.currentTimeMillis() / 1000)
-            db.insert("\"$vaangunarTable\"", null, cv)
+            db.insert("\"$customersTable\"", null, cv)
         }
     } ?: -1L
 
-    override fun deleteMerchant(id: Long): Boolean = useDb { db ->
+    override fun deleteCustomer(id: Long): Boolean = useDb { db ->
         val cv = ContentValues().apply {
             put("is_deleted", 1)
             put("deleted_at", System.currentTimeMillis() / 1000)
         }
-        db.update("\"$vaangunarTable\"", cv, "id = ?", arrayOf(id.toString())) > 0
+        db.update("\"$customersTable\"", cv, "id = ?", arrayOf(id.toString())) > 0
     } ?: false
 
-    override fun loadDeletedMerchants(): List<CustomerModel> = useDb { db ->
+    override fun loadDeletedCustomers(): List<CustomerModel> = useDb { db ->
         val list = mutableListOf<CustomerModel>()
-        db.rawQuery("SELECT * FROM \"$vaangunarTable\" WHERE is_deleted = 1 ORDER BY deleted_at DESC", null).use { c ->
+        db.rawQuery("SELECT * FROM \"$customersTable\" WHERE is_deleted = 1 ORDER BY deleted_at DESC", null).use { c ->
             while (c.moveToNext()) list.add(cursorToMerchant(c))
         }
         list
     } ?: emptyList()
 
-    override fun restoreMerchant(id: Long): Boolean = useDb { db ->
+    override fun restoreCustomer(id: Long): Boolean = useDb { db ->
         val cv = ContentValues().apply {
             put("is_deleted", 0)
             putNull("deleted_at")
         }
-        db.update("\"$vaangunarTable\"", cv, "id = ?", arrayOf(id.toString())) > 0
+        db.update("\"$customersTable\"", cv, "id = ?", arrayOf(id.toString())) > 0
     } ?: false
 
-    override fun permanentDeleteMerchant(id: Long): Boolean = useDb { db ->
-        db.delete("\"$vaangunarTable\"", "id = ?", arrayOf(id.toString())) > 0
+    override fun permanentDeleteCustomer(id: Long): Boolean = useDb { db ->
+        db.delete("\"$customersTable\"", "id = ?", arrayOf(id.toString())) > 0
     } ?: false
 
-    override fun purgeExpiredMerchants(days: Int): Int = useDb { db ->
+    override fun purgeExpiredCustomers(days: Int): Int = useDb { db ->
         val threshold = (System.currentTimeMillis() / 1000) - (days * 86400L)
-        db.delete("\"$vaangunarTable\"", "is_deleted = 1 AND deleted_at < ?", arrayOf(threshold.toString()))
+        db.delete("\"$customersTable\"", "is_deleted = 1 AND deleted_at < ?", arrayOf(threshold.toString()))
     } ?: 0
 
-    // ── Products / Items ─────────────────────────────────────────────────────
-    override fun loadAllItems(): List<ProductModel> = useDb { db ->
+    // Backward-compatible delegates
+    override fun loadAllMerchants(): List<CustomerModel> = loadAllCustomers()
+    override fun saveMerchant(merchant: CustomerModel): Long = saveCustomer(merchant)
+    override fun deleteMerchant(id: Long): Boolean = deleteCustomer(id)
+    override fun loadDeletedMerchants(): List<CustomerModel> = loadDeletedCustomers()
+    override fun restoreMerchant(id: Long): Boolean = restoreCustomer(id)
+    override fun permanentDeleteMerchant(id: Long): Boolean = permanentDeleteCustomer(id)
+    override fun purgeExpiredMerchants(days: Int): Int = purgeExpiredCustomers(days)
+
+    // ── Products ─────────────────────────────────────────────────────────────
+    override fun loadAllProducts(): List<ProductModel> = useDb { db ->
         val list = mutableListOf<ProductModel>()
-        db.rawQuery("SELECT * FROM \"$porulTable\" WHERE is_deleted = 0 ORDER BY id DESC", null).use { c ->
+        db.rawQuery("SELECT * FROM \"$productsTable\" WHERE is_deleted = 0 ORDER BY id DESC", null).use { c ->
             while (c.moveToNext()) list.add(cursorToItem(c))
         }
         list
     } ?: emptyList()
 
-    override fun saveItem(item: ProductModel): Long = useDb { db ->
+    override fun saveProduct(product: ProductModel): Long = useDb { db ->
         val cv = ContentValues().apply {
-            put("porul_peyar", LanguageJsonConverter.stringify(item.name))
-            put("hsn_code", item.hsnCode)
-            put("vilai", item.price)
-            put("vari_veetham", item.taxRate)
-            put("alavu_vagai", item.quantityType)
-            put("alagu", item.unit)
-            put("niruvanam_ids", item.companyIds.toString())
-            put("company_prices", item.companyPrices.toString())
+            put("name", LanguageJsonConverter.stringify(product.name))
+            put("hsn_code", product.hsnCode)
+            put("price", product.price)
+            put("tax_rate", product.taxRate)
+            put("quantity_type", product.quantityType)
+            put("unit", product.unit)
+            put("company_ids", product.companyIds.toString())
+            put("company_prices", product.companyPrices.toString())
             put("updated_at", System.currentTimeMillis() / 1000)
             put("is_deleted", 0)
         }
-        if (item.id != null && item.id > 0) {
-            db.update("\"$porulTable\"", cv, "id = ?", arrayOf(item.id.toString()))
-            item.id
+        if (product.id != null && product.id > 0) {
+            db.update("\"$productsTable\"", cv, "id = ?", arrayOf(product.id.toString()))
+            product.id
         } else {
             cv.put("created_at", System.currentTimeMillis() / 1000)
-            db.insert("\"$porulTable\"", null, cv)
+            db.insert("\"$productsTable\"", null, cv)
         }
     } ?: -1L
 
-    override fun deleteItem(id: Long): Boolean = useDb { db ->
+    override fun deleteProduct(id: Long): Boolean = useDb { db ->
         val cv = ContentValues().apply {
             put("is_deleted", 1)
             put("deleted_at", System.currentTimeMillis() / 1000)
         }
-        db.update("\"$porulTable\"", cv, "id = ?", arrayOf(id.toString())) > 0
+        db.update("\"$productsTable\"", cv, "id = ?", arrayOf(id.toString())) > 0
     } ?: false
 
-    override fun loadDeletedItems(): List<ProductModel> = useDb { db ->
+    override fun loadDeletedProducts(): List<ProductModel> = useDb { db ->
         val list = mutableListOf<ProductModel>()
-        db.rawQuery("SELECT * FROM \"$porulTable\" WHERE is_deleted = 1 ORDER BY deleted_at DESC", null).use { c ->
+        db.rawQuery("SELECT * FROM \"$productsTable\" WHERE is_deleted = 1 ORDER BY deleted_at DESC", null).use { c ->
             while (c.moveToNext()) list.add(cursorToItem(c))
         }
         list
     } ?: emptyList()
 
-    override fun restoreItem(id: Long): Boolean = useDb { db ->
+    override fun restoreProduct(id: Long): Boolean = useDb { db ->
         val cv = ContentValues().apply {
             put("is_deleted", 0)
             putNull("deleted_at")
         }
-        db.update("\"$porulTable\"", cv, "id = ?", arrayOf(id.toString())) > 0
+        db.update("\"$productsTable\"", cv, "id = ?", arrayOf(id.toString())) > 0
     } ?: false
 
-    override fun permanentDeleteItem(id: Long): Boolean = useDb { db ->
-        db.delete("\"$porulTable\"", "id = ?", arrayOf(id.toString())) > 0
+    override fun permanentDeleteProduct(id: Long): Boolean = useDb { db ->
+        db.delete("\"$productsTable\"", "id = ?", arrayOf(id.toString())) > 0
     } ?: false
 
-    override fun purgeExpiredItems(days: Int): Int = useDb { db ->
+    override fun purgeExpiredProducts(days: Int): Int = useDb { db ->
         val threshold = (System.currentTimeMillis() / 1000) - (days * 86400L)
-        db.delete("\"$porulTable\"", "is_deleted = 1 AND deleted_at < ?", arrayOf(threshold.toString()))
+        db.delete("\"$productsTable\"", "is_deleted = 1 AND deleted_at < ?", arrayOf(threshold.toString()))
     } ?: 0
+
+    // Backward-compatible delegates
+    override fun loadAllItems(): List<ProductModel> = loadAllProducts()
+    override fun saveItem(item: ProductModel): Long = saveProduct(item)
+    override fun deleteItem(id: Long): Boolean = deleteProduct(id)
+    override fun loadDeletedItems(): List<ProductModel> = loadDeletedProducts()
+    override fun restoreItem(id: Long): Boolean = restoreProduct(id)
+    override fun permanentDeleteItem(id: Long): Boolean = permanentDeleteProduct(id)
+    override fun purgeExpiredItems(days: Int): Int = purgeExpiredProducts(days)
 
     // ── Invoices ─────────────────────────────────────────────────────────────
     override fun loadAllInvoices(): List<InvoiceModel> = useDb { db ->
         val list = mutableListOf<InvoiceModel>()
-        db.rawQuery("SELECT * FROM \"$pattiyalTable\" WHERE is_deleted = 0 ORDER BY pattiyal_naal DESC, id DESC", null).use { c ->
+        db.rawQuery("SELECT * FROM \"$invoicesTable\" WHERE is_deleted = 0 ORDER BY invoice_date DESC, id DESC", null).use { c ->
             while (c.moveToNext()) list.add(cursorToInvoice(c))
         }
         list
@@ -441,43 +622,43 @@ class AndroidUdukkaiDatabaseHelper(
 
     override fun saveInvoice(invoice: InvoiceModel): Long = useDb { db ->
         val cv = ContentValues().apply {
-            put("niruvanam_id", invoice.companyId)
-            put("patrucheettu_en", invoice.invoiceNumber)
+            put("company_id", invoice.companyId)
+            put("invoice_number", invoice.invoiceNumber)
             put("fin_year", invoice.finYear)
             put("vanakkam", invoice.vanakkam)
-            put("pattiyal_vagai", invoice.invoiceType)
-            put("vaangunar_id", invoice.customerId)
-            put("vaangunar_peyar", LanguageJsonConverter.stringify(invoice.customerName))
-            put("vaangunar_munvari", LanguageJsonConverter.stringify(invoice.customerAddress))
-            put("pattiyal_naal", invoice.invoiceDate)
-            put("tharavugal", invoice.itemsJson.toString())
-            put("motha_thogai", invoice.totalAmount)
-            put("thallupadi", invoice.discount)
-            put("podhu_thallupadi_mathippu", invoice.globalDiscountValue)
-            put("podhu_thallupadi_vagai", invoice.globalDiscountType)
-            put("podhu_thallupadi_thogai", invoice.globalDiscountAmount)
-            put("vari_thogai", invoice.taxAmount)
-            put("vari_tharavugal", invoice.taxDataJson.toString())
+            put("invoice_type", invoice.invoiceType)
+            put("customer_id", invoice.customerId)
+            put("customer_name", LanguageJsonConverter.stringify(invoice.customerName))
+            put("customer_address", LanguageJsonConverter.stringify(invoice.customerAddress))
+            put("invoice_date", invoice.invoiceDate)
+            put("items_json", invoice.itemsJson.toString())
+            put("total_amount", invoice.totalAmount)
+            put("discount", invoice.discount)
+            put("global_discount_value", invoice.globalDiscountValue)
+            put("global_discount_type", invoice.globalDiscountType)
+            put("global_discount_amount", invoice.globalDiscountAmount)
+            put("tax_amount", invoice.taxAmount)
+            put("tax_data_json", invoice.taxDataJson.toString())
             if (isFactory) {
-                put("motha_edai", invoice.totalWeight)
-                put("setharam_grams", invoice.wastageGrams)
-                put("thabaal_thogai", invoice.postalCharges)
-                put("ahimsa_pattu_thogai", invoice.ahimsaSilkAmount)
-                put("piravari_vugal", invoice.otherTaxesJson.toString())
-                put("vangi_tharavugal", invoice.bankDetailsJson.toString())
+                put("total_weight", invoice.totalWeight)
+                put("wastage_grams", invoice.wastageGrams)
+                put("postal_charges", invoice.postalCharges)
+                put("ahimsa_silk_amount", invoice.ahimsaSilkAmount)
+                put("other_taxes_json", invoice.otherTaxesJson.toString())
+                put("bank_details_json", invoice.bankDetailsJson.toString())
             }
-            put("sontha_viruppangal", invoice.customPreferencesJson)
-            put("nibandhanaigal", invoice.termsAndConditions)
-            put("ullkurippu", invoice.notes)
+            put("custom_preferences_json", invoice.customPreferencesJson)
+            put("terms_and_conditions", invoice.termsAndConditions)
+            put("notes", invoice.notes)
             put("updated_at", System.currentTimeMillis() / 1000)
             put("is_deleted", 0)
         }
         if (invoice.id != null && invoice.id > 0) {
-            db.update("\"$pattiyalTable\"", cv, "id = ?", arrayOf(invoice.id.toString()))
+            db.update("\"$invoicesTable\"", cv, "id = ?", arrayOf(invoice.id.toString()))
             invoice.id
         } else {
             cv.put("created_at", System.currentTimeMillis() / 1000)
-            db.insert("\"$pattiyalTable\"", null, cv)
+            db.insert("\"$invoicesTable\"", null, cv)
         }
     } ?: -1L
 
@@ -486,12 +667,12 @@ class AndroidUdukkaiDatabaseHelper(
             put("is_deleted", 1)
             put("deleted_at", System.currentTimeMillis() / 1000)
         }
-        db.update("\"$pattiyalTable\"", cv, "id = ?", arrayOf(id.toString())) > 0
+        db.update("\"$invoicesTable\"", cv, "id = ?", arrayOf(id.toString())) > 0
     } ?: false
 
     override fun loadDeletedInvoices(): List<InvoiceModel> = useDb { db ->
         val list = mutableListOf<InvoiceModel>()
-        db.rawQuery("SELECT * FROM \"$pattiyalTable\" WHERE is_deleted = 1 ORDER BY deleted_at DESC", null).use { c ->
+        db.rawQuery("SELECT * FROM \"$invoicesTable\" WHERE is_deleted = 1 ORDER BY deleted_at DESC", null).use { c ->
             while (c.moveToNext()) list.add(cursorToInvoice(c))
         }
         list
@@ -502,22 +683,22 @@ class AndroidUdukkaiDatabaseHelper(
             put("is_deleted", 0)
             putNull("deleted_at")
         }
-        db.update("\"$pattiyalTable\"", cv, "id = ?", arrayOf(id.toString())) > 0
+        db.update("\"$invoicesTable\"", cv, "id = ?", arrayOf(id.toString())) > 0
     } ?: false
 
     override fun permanentDeleteInvoice(id: Long): Boolean = useDb { db ->
-        db.delete("\"$pattiyalTable\"", "id = ?", arrayOf(id.toString())) > 0
+        db.delete("\"$invoicesTable\"", "id = ?", arrayOf(id.toString())) > 0
     } ?: false
 
     override fun purgeExpiredInvoices(days: Int): Int = useDb { db ->
         val threshold = (System.currentTimeMillis() / 1000) - (days * 86400L)
-        db.delete("\"$pattiyalTable\"", "is_deleted = 1 AND deleted_at < ?", arrayOf(threshold.toString()))
+        db.delete("\"$invoicesTable\"", "is_deleted = 1 AND deleted_at < ?", arrayOf(threshold.toString()))
     } ?: 0
 
     // ── Receipts ─────────────────────────────────────────────────────────────
     override fun loadAllReceipts(): List<ReceiptModel> = useDb { db ->
         val list = mutableListOf<ReceiptModel>()
-        db.rawQuery("SELECT * FROM \"$patrugalTable\" WHERE is_deleted = 0 ORDER BY patru_naal DESC, id DESC", null).use { c ->
+        db.rawQuery("SELECT * FROM \"$receiptsTable\" WHERE is_deleted = 0 ORDER BY receipt_date DESC, id DESC", null).use { c ->
             while (c.moveToNext()) list.add(cursorToReceipt(c))
         }
         list
@@ -525,28 +706,28 @@ class AndroidUdukkaiDatabaseHelper(
 
     override fun saveReceipt(receipt: ReceiptModel): Long = useDb { db ->
         val cv = ContentValues().apply {
-            put("niruvanam_id", receipt.companyId)
-            put("patru_en", receipt.receiptNumber)
+            put("company_id", receipt.companyId)
+            put("receipt_number", receipt.receiptNumber)
             put("fin_year", receipt.finYear)
             put("vanakkam", receipt.vanakkam)
-            put("vaangunar_id", receipt.customerId)
-            put("vaangunar_peyar", LanguageJsonConverter.stringify(receipt.customerName))
-            put("vaangunar_munvari", LanguageJsonConverter.stringify(receipt.customerAddress))
-            put("patru_naal", receipt.receiptDate)
-            put("thogai", receipt.amount)
-            put("seluthum_murai", receipt.paymentMode)
-            put("vangi_peyar", receipt.bankName)
-            put("parivarthanai_en", receipt.transactionNumber)
-            put("ullkurippu", receipt.notes)
+            put("customer_id", receipt.customerId)
+            put("customer_name", LanguageJsonConverter.stringify(receipt.customerName))
+            put("customer_address", LanguageJsonConverter.stringify(receipt.customerAddress))
+            put("receipt_date", receipt.receiptDate)
+            put("amount", receipt.amount)
+            put("payment_mode", receipt.paymentMode)
+            put("bank_name", receipt.bankName)
+            put("transaction_number", receipt.transactionNumber)
+            put("notes", receipt.notes)
             put("updated_at", System.currentTimeMillis() / 1000)
             put("is_deleted", 0)
         }
         if (receipt.id != null && receipt.id > 0) {
-            db.update("\"$patrugalTable\"", cv, "id = ?", arrayOf(receipt.id.toString()))
+            db.update("\"$receiptsTable\"", cv, "id = ?", arrayOf(receipt.id.toString()))
             receipt.id
         } else {
             cv.put("created_at", System.currentTimeMillis() / 1000)
-            db.insert("\"$patrugalTable\"", null, cv)
+            db.insert("\"$receiptsTable\"", null, cv)
         }
     } ?: -1L
 
@@ -555,12 +736,12 @@ class AndroidUdukkaiDatabaseHelper(
             put("is_deleted", 1)
             put("deleted_at", System.currentTimeMillis() / 1000)
         }
-        db.update("\"$patrugalTable\"", cv, "id = ?", arrayOf(id.toString())) > 0
+        db.update("\"$receiptsTable\"", cv, "id = ?", arrayOf(id.toString())) > 0
     } ?: false
 
     override fun loadDeletedReceipts(): List<ReceiptModel> = useDb { db ->
         val list = mutableListOf<ReceiptModel>()
-        db.rawQuery("SELECT * FROM \"$patrugalTable\" WHERE is_deleted = 1 ORDER BY deleted_at DESC", null).use { c ->
+        db.rawQuery("SELECT * FROM \"$receiptsTable\" WHERE is_deleted = 1 ORDER BY deleted_at DESC", null).use { c ->
             while (c.moveToNext()) list.add(cursorToReceipt(c))
         }
         list
@@ -571,53 +752,50 @@ class AndroidUdukkaiDatabaseHelper(
             put("is_deleted", 0)
             putNull("deleted_at")
         }
-        db.update("\"$patrugalTable\"", cv, "id = ?", arrayOf(id.toString())) > 0
+        db.update("\"$receiptsTable\"", cv, "id = ?", arrayOf(id.toString())) > 0
     } ?: false
 
     override fun permanentDeleteReceipt(id: Long): Boolean = useDb { db ->
-        db.delete("\"$patrugalTable\"", "id = ?", arrayOf(id.toString())) > 0
+        db.delete("\"$receiptsTable\"", "id = ?", arrayOf(id.toString())) > 0
     } ?: false
 
     override fun purgeExpiredReceipts(days: Int): Int = useDb { db ->
         val threshold = (System.currentTimeMillis() / 1000) - (days * 86400L)
-        db.delete("\"$patrugalTable\"", "is_deleted = 1 AND deleted_at < ?", arrayOf(threshold.toString()))
+        db.delete("\"$receiptsTable\"", "is_deleted = 1 AND deleted_at < ?", arrayOf(threshold.toString()))
     } ?: 0
 
     // ── Junction Links ───────────────────────────────────────────────────────
-    override fun getLinksForPatru(patruId: Long): List<ReceiptInvoiceLinkModel> = useDb { db ->
+    override fun getLinksForReceipt(receiptId: Long): List<ReceiptInvoiceLinkModel> = useDb { db ->
         val list = mutableListOf<ReceiptInvoiceLinkModel>()
-        db.rawQuery("SELECT * FROM \"$junctionTable\" WHERE patru_id = ?", arrayOf(patruId.toString())).use { c ->
-            val idIdx = c.getColumnIndexOrThrow("id")
-            val pIdIdx = c.getColumnIndexOrThrow("patru_id")
-            val invIdIdx = c.getColumnIndexOrThrow("pattiyal_id")
-            val amountIdx = c.getColumnIndexOrThrow("inaippu_thogai")
-            val dateIdx = c.getColumnIndexOrThrow("created_at")
+        db.rawQuery("SELECT * FROM \"$linksTable\" WHERE receipt_id = ?", arrayOf(receiptId.toString())).use { c ->
             while (c.moveToNext()) {
                 list.add(ReceiptInvoiceLinkModel(
-                    id = c.getLong(idIdx),
-                    receiptId = c.getLong(pIdIdx),
-                    invoiceId = c.getLong(invIdIdx),
-                    appliedAmount = c.getDouble(amountIdx)
+                    id = getLongCol(c, "id"),
+                    receiptId = getLongCol(c, "receipt_id", "patru_id"),
+                    invoiceId = getLongCol(c, "invoice_id", "pattiyal_id"),
+                    appliedAmount = getDoubleCol(c, "applied_amount", "inaippu_thogai")
                 ))
             }
         }
         list
     } ?: emptyList()
 
+    override fun getLinksForPatru(patruId: Long): List<ReceiptInvoiceLinkModel> = getLinksForReceipt(patruId)
+
     override fun saveReceiptWithLinks(receipt: ReceiptModel, links: List<ReceiptInvoiceLinkModel>): Long = useDb { db ->
         db.beginTransaction()
         try {
             val rId = saveReceipt(receipt)
             if (rId > 0) {
-                db.delete("\"$junctionTable\"", "patru_id = ?", arrayOf(rId.toString()))
+                db.delete("\"$linksTable\"", "receipt_id = ?", arrayOf(rId.toString()))
                 for (link in links) {
                     val cv = ContentValues().apply {
-                        put("patru_id", rId)
-                        put("pattiyal_id", link.invoiceId)
-                        put("inaippu_thogai", link.appliedAmount)
+                        put("receipt_id", rId)
+                        put("invoice_id", link.invoiceId)
+                        put("applied_amount", link.appliedAmount)
                         put("created_at", System.currentTimeMillis() / 1000)
                     }
-                    db.insert("\"$junctionTable\"", null, cv)
+                    db.insert("\"$linksTable\"", null, cv)
                 }
                 db.setTransactionSuccessful()
             }
@@ -629,7 +807,7 @@ class AndroidUdukkaiDatabaseHelper(
 
     override fun getPaidAmountForInvoice(invoiceId: Long): Double = useDb { db ->
         var sum = 0.0
-        db.rawQuery("SELECT SUM(inaippu_thogai) FROM \"$junctionTable\" WHERE pattiyal_id = ?", arrayOf(invoiceId.toString())).use { c ->
+        db.rawQuery("SELECT SUM(applied_amount) FROM \"$linksTable\" WHERE invoice_id = ?", arrayOf(invoiceId.toString())).use { c ->
             if (c.moveToFirst() && !c.isNull(0)) sum = c.getDouble(0)
         }
         sum
@@ -640,7 +818,7 @@ class AndroidUdukkaiDatabaseHelper(
         if (invoiceIds.isEmpty()) return@useDb result
         val placeholders = invoiceIds.joinToString(",") { "?" }
         val args = invoiceIds.map { it.toString() }.toTypedArray()
-        db.rawQuery("SELECT pattiyal_id, SUM(inaippu_thogai) FROM \"$junctionTable\" WHERE pattiyal_id IN ($placeholders) GROUP BY pattiyal_id", args).use { c ->
+        db.rawQuery("SELECT invoice_id, SUM(applied_amount) FROM \"$linksTable\" WHERE invoice_id IN ($placeholders) GROUP BY invoice_id", args).use { c ->
             while (c.moveToNext()) {
                 result[c.getLong(0)] = c.getDouble(1)
             }
@@ -652,9 +830,9 @@ class AndroidUdukkaiDatabaseHelper(
     override fun loadProfile(profileId: Long?): BusinessProfile? = useDb { db ->
         var p: BusinessProfile? = null
         val sql = if (profileId != null) {
-            "SELECT * FROM \"$profileTable\" WHERE id = ? AND is_deleted = 0 LIMIT 1"
+            "SELECT * FROM \"$profilesTable\" WHERE id = ? AND is_deleted = 0 LIMIT 1"
         } else {
-            "SELECT * FROM \"$profileTable\" WHERE is_deleted = 0 ORDER BY id ASC LIMIT 1"
+            "SELECT * FROM \"$profilesTable\" WHERE is_deleted = 0 ORDER BY id ASC LIMIT 1"
         }
         val args = if (profileId != null) arrayOf(profileId.toString()) else null
         db.rawQuery(sql, args).use { c ->
@@ -665,7 +843,7 @@ class AndroidUdukkaiDatabaseHelper(
 
     override fun loadAllProfiles(): List<BusinessProfile> = useDb { db ->
         val list = mutableListOf<BusinessProfile>()
-        db.rawQuery("SELECT * FROM \"$profileTable\" WHERE is_deleted = 0 ORDER BY id ASC", null).use { c ->
+        db.rawQuery("SELECT * FROM \"$profilesTable\" WHERE is_deleted = 0 ORDER BY id ASC", null).use { c ->
             while (c.moveToNext()) list.add(cursorToProfile(c))
         }
         list
@@ -673,52 +851,52 @@ class AndroidUdukkaiDatabaseHelper(
 
     override fun saveProfile(profile: BusinessProfile): Boolean = useDb { db ->
         val cv = ContentValues().apply {
-            put("mudhan_mozhi", profile.primaryLanguage)
-            put("thunai_mozhi", profile.secondaryLanguage)
-            put("iru_mozhi", if (profile.isBilingual) 1 else 0)
-            put("gst_pirippugal", if (profile.splitGst) 1 else 0)
-            put("niruvanathin_peyar", LanguageJsonConverter.stringify(profile.businessName))
-            put("kurum_peyar", profile.shortName)
-            put("tholaipaesi1", profile.phone1)
-            put("tholaipaesi2", profile.phone2)
-            put("minnanjal", profile.email)
+            put("primary_language", profile.primaryLanguage)
+            put("secondary_language", profile.secondaryLanguage)
+            put("is_bilingual", if (profile.isBilingual) 1 else 0)
+            put("split_gst", if (profile.splitGst) 1 else 0)
+            put("business_name", LanguageJsonConverter.stringify(profile.businessName))
+            put("short_name", profile.shortName)
+            put("phone1", profile.phone1)
+            put("phone2", profile.phone2)
+            put("email", profile.email)
             put("gstin", profile.gstin)
-            put("mugavari", LanguageJsonConverter.stringify(profile.address))
-            put("oor", LanguageJsonConverter.stringify(profile.city))
-            put("maavattam", LanguageJsonConverter.stringify(profile.district))
-            put("maanilam", LanguageJsonConverter.stringify(profile.state))
-            put("naadu", LanguageJsonConverter.stringify(profile.country))
-            put("anjal_kuriyeedu", profile.pinCode)
-            put("vangi_peyar", LanguageJsonConverter.stringify(profile.bankName))
-            put("kilai", LanguageJsonConverter.stringify(profile.branch))
-            put("vangi_kanakku", profile.accountNumber)
+            put("address", LanguageJsonConverter.stringify(profile.address))
+            put("city", LanguageJsonConverter.stringify(profile.city))
+            put("district", LanguageJsonConverter.stringify(profile.district))
+            put("state", LanguageJsonConverter.stringify(profile.state))
+            put("country", LanguageJsonConverter.stringify(profile.country))
+            put("pin_code", profile.pinCode)
+            put("bank_name", LanguageJsonConverter.stringify(profile.bankName))
+            put("branch", LanguageJsonConverter.stringify(profile.branch))
+            put("account_number", profile.accountNumber)
             put("ifsc", profile.ifsc)
-            put("oavuru", profile.logo)
-            put("agala_oavuru", profile.wideLogo)
-            put("thalaippu_vadivu", profile.headerLayout)
-            put("kaiyoppam", profile.signature)
-            put("oppam_peyar", profile.signatoryName)
-            put("oppam_mudhal_peyar", profile.signatoryFirstName)
-            put("oppam_irudhi_peyar", profile.signatoryLastName)
-            put("adaimozhi", LanguageJsonConverter.stringify(profile.tagline))
+            put("logo", profile.logo)
+            put("wide_logo", profile.wideLogo)
+            put("header_layout", profile.headerLayout)
+            put("signature", profile.signature)
+            put("signatory_name", profile.signatoryName)
+            put("signatory_first_name", profile.signatoryFirstName)
+            put("signatory_last_name", profile.signatoryLastName)
+            put("tagline", LanguageJsonConverter.stringify(profile.tagline))
             put("upi_id", profile.upiId)
-            put("thoatra_niram", profile.themeColor)
+            put("theme_color", profile.themeColor)
             put("updated_at", System.currentTimeMillis() / 1000)
             put("is_deleted", 0)
         }
         val exists = if (profile.id != null) {
-            val checkCur = db.rawQuery("SELECT id FROM \"$profileTable\" WHERE id = ?", arrayOf(profile.id.toString()))
+            val checkCur = db.rawQuery("SELECT id FROM \"$profilesTable\" WHERE id = ?", arrayOf(profile.id.toString()))
             val found = checkCur.moveToFirst()
             checkCur.close()
             found
         } else false
 
         if (exists) {
-            db.update("\"$profileTable\"", cv, "id = ?", arrayOf(profile.id.toString())) > 0
+            db.update("\"$profilesTable\"", cv, "id = ?", arrayOf(profile.id.toString())) > 0
         } else {
             cv.put("created_at", System.currentTimeMillis() / 1000)
             if (profile.id != null) cv.put("id", profile.id)
-            db.insert("\"$profileTable\"", null, cv) > 0
+            db.insert("\"$profilesTable\"", null, cv) > 0
         }
     } ?: false
 
@@ -727,146 +905,146 @@ class AndroidUdukkaiDatabaseHelper(
             put("is_deleted", 1)
             put("deleted_at", System.currentTimeMillis() / 1000)
         }
-        db.update("\"$profileTable\"", cv, "id = ?", arrayOf(profileId.toString())) > 0
+        db.update("\"$profilesTable\"", cv, "id = ?", arrayOf(profileId.toString())) > 0
     } ?: false
 
     override fun clearProfiles(): Boolean = useDb { db ->
-        db.delete("\"$profileTable\"", null, null) > 0
+        db.delete("\"$profilesTable\"", null, null) > 0
     } ?: false
 
     override fun clearAllData(): Boolean = useDb { db ->
-        db.delete("\"$junctionTable\"", null, null)
-        db.delete("\"$patrugalTable\"", null, null)
-        db.delete("\"$pattiyalTable\"", null, null)
-        db.delete("\"$porulTable\"", null, null)
-        db.delete("\"$vaangunarTable\"", null, null)
-        db.delete("\"$profileTable\"", null, null)
+        db.delete("\"$linksTable\"", null, null)
+        db.delete("\"$receiptsTable\"", null, null)
+        db.delete("\"$invoicesTable\"", null, null)
+        db.delete("\"$productsTable\"", null, null)
+        db.delete("\"$customersTable\"", null, null)
+        db.delete("\"$profilesTable\"", null, null)
         true
     } ?: false
 
     // ── Helper Cursor Parsers ────────────────────────────────────────────────
     private fun cursorToMerchant(c: Cursor): CustomerModel = CustomerModel(
-        id = c.getLong(c.getColumnIndexOrThrow("id")),
-        name = LanguageJsonConverter.parse(c.getString(c.getColumnIndexOrThrow("peyar"))),
-        address = LanguageJsonConverter.parse(c.getString(c.getColumnIndexOrThrow("mugavari"))),
-        city = LanguageJsonConverter.parse(c.getString(c.getColumnIndexOrThrow("oor"))),
-        district = LanguageJsonConverter.parse(c.getString(c.getColumnIndexOrThrow("maavattam"))),
-        state = LanguageJsonConverter.parse(c.getString(c.getColumnIndexOrThrow("maanilam"))),
-        country = LanguageJsonConverter.parse(c.getString(c.getColumnIndexOrThrow("naadu"))),
-        internationalAddress = LanguageJsonConverter.parse(c.getString(c.getColumnIndexOrThrow("velinaad_mugavari"))),
-        pinCode = c.getString(c.getColumnIndexOrThrow("anjal_kuriyeedu")),
-        gstin = c.getString(c.getColumnIndexOrThrow("gstin")),
-        email = c.getString(c.getColumnIndexOrThrow("minnanjal")),
-        phone = c.getString(c.getColumnIndexOrThrow("tholaipaesi")),
-        createdAt = c.getLong(c.getColumnIndexOrThrow("created_at")),
-        updatedAt = c.getLong(c.getColumnIndexOrThrow("updated_at")),
-        isDeleted = c.getInt(c.getColumnIndexOrThrow("is_deleted")) == 1,
-        deletedAt = if (c.isNull(c.getColumnIndexOrThrow("deleted_at"))) null else c.getLong(c.getColumnIndexOrThrow("deleted_at"))
+        id = getLongCol(c, "id"),
+        name = LanguageJsonConverter.parse(getStringCol(c, "name", "peyar")),
+        address = LanguageJsonConverter.parse(getStringCol(c, "address", "mugavari")),
+        city = LanguageJsonConverter.parse(getStringCol(c, "city", "oor")),
+        district = LanguageJsonConverter.parse(getStringCol(c, "district", "maavattam")),
+        state = LanguageJsonConverter.parse(getStringCol(c, "state", "maanilam")),
+        country = LanguageJsonConverter.parse(getStringCol(c, "country", "naadu", default = "{\"en\":\"India\",\"ta\":\"இந்தியா\"}")),
+        internationalAddress = LanguageJsonConverter.parse(getStringCol(c, "international_address", "velinaad_mugavari")),
+        pinCode = getStringCol(c, "pin_code", "anjal_kuriyeedu"),
+        gstin = getStringCol(c, "gstin"),
+        email = getStringCol(c, "email", "minnanjal"),
+        phone = getStringCol(c, "phone", "tholaipaesi"),
+        createdAt = getLongCol(c, "created_at"),
+        updatedAt = getLongCol(c, "updated_at"),
+        isDeleted = getIntCol(c, "is_deleted") == 1,
+        deletedAt = getLongOrNull(c, "deleted_at")
     )
 
     private fun cursorToItem(c: Cursor): ProductModel = ProductModel(
-        id = c.getLong(c.getColumnIndexOrThrow("id")),
-        name = LanguageJsonConverter.parse(c.getString(c.getColumnIndexOrThrow("porul_peyar"))),
-        hsnCode = c.getString(c.getColumnIndexOrThrow("hsn_code")),
-        price = c.getDouble(c.getColumnIndexOrThrow("vilai")),
-        taxRate = c.getDouble(c.getColumnIndexOrThrow("vari_veetham")),
-        quantityType = c.getString(c.getColumnIndexOrThrow("alavu_vagai")),
-        unit = c.getString(c.getColumnIndexOrThrow("alagu")),
-        companyIds = ProductJsonConverter.parseLongList(c.getString(c.getColumnIndexOrThrow("niruvanam_ids"))),
-        companyPrices = ProductJsonConverter.parseCompanyPrices(c.getString(c.getColumnIndexOrThrow("company_prices"))),
-        createdAt = c.getLong(c.getColumnIndexOrThrow("created_at")),
-        updatedAt = c.getLong(c.getColumnIndexOrThrow("updated_at")),
-        isDeleted = c.getInt(c.getColumnIndexOrThrow("is_deleted")) == 1,
-        deletedAt = if (c.isNull(c.getColumnIndexOrThrow("deleted_at"))) null else c.getLong(c.getColumnIndexOrThrow("deleted_at"))
+        id = getLongCol(c, "id"),
+        name = LanguageJsonConverter.parse(getStringCol(c, "name", "porul_peyar")),
+        hsnCode = getStringCol(c, "hsn_code"),
+        price = getDoubleCol(c, "price", "vilai"),
+        taxRate = getDoubleCol(c, "tax_rate", "vari_veetham"),
+        quantityType = getStringCol(c, "quantity_type", "alavu_vagai", default = "quantity"),
+        unit = getStringCol(c, "unit", "alagu", default = "Nos"),
+        companyIds = ProductJsonConverter.parseLongList(getStringCol(c, "company_ids", "niruvanam_ids", default = "[]")),
+        companyPrices = ProductJsonConverter.parseCompanyPrices(getStringCol(c, "company_prices", default = "{}")),
+        createdAt = getLongCol(c, "created_at"),
+        updatedAt = getLongCol(c, "updated_at"),
+        isDeleted = getIntCol(c, "is_deleted") == 1,
+        deletedAt = getLongOrNull(c, "deleted_at")
     )
 
     private fun cursorToInvoice(c: Cursor): InvoiceModel = InvoiceModel(
-        id = c.getLong(c.getColumnIndexOrThrow("id")),
-        companyId = if (c.isNull(c.getColumnIndexOrThrow("niruvanam_id"))) null else c.getLong(c.getColumnIndexOrThrow("niruvanam_id")),
-        invoiceNumber = c.getString(c.getColumnIndexOrThrow("patrucheettu_en")),
-        finYear = c.getInt(c.getColumnIndexOrThrow("fin_year")),
-        vanakkam = c.getInt(c.getColumnIndexOrThrow("vanakkam")),
-        invoiceType = c.getString(c.getColumnIndexOrThrow("pattiyal_vagai")),
-        customerId = if (c.isNull(c.getColumnIndexOrThrow("vaangunar_id"))) null else c.getLong(c.getColumnIndexOrThrow("vaangunar_id")),
-        customerName = LanguageJsonConverter.parse(c.getString(c.getColumnIndexOrThrow("vaangunar_peyar"))),
-        customerAddress = LanguageJsonConverter.parse(c.getString(c.getColumnIndexOrThrow("vaangunar_munvari"))),
-        invoiceDate = c.getLong(c.getColumnIndexOrThrow("pattiyal_naal")),
-        itemsJson = c.getString(c.getColumnIndexOrThrow("tharavugal")) ?: "[]",
-        totalAmount = c.getDouble(c.getColumnIndexOrThrow("motha_thogai")),
-        discount = c.getDouble(c.getColumnIndexOrThrow("thallupadi")),
-        globalDiscountValue = c.getDouble(c.getColumnIndexOrThrow("podhu_thallupadi_mathippu")),
-        globalDiscountType = c.getString(c.getColumnIndexOrThrow("podhu_thallupadi_vagai")),
-        globalDiscountAmount = c.getDouble(c.getColumnIndexOrThrow("podhu_thallupadi_thogai")),
-        taxAmount = c.getDouble(c.getColumnIndexOrThrow("vari_thogai")),
-        taxDataJson = c.getString(c.getColumnIndexOrThrow("vari_tharavugal")) ?: "{}",
-        totalWeight = if (isFactory && c.getColumnIndex("motha_edai") >= 0 && !c.isNull(c.getColumnIndex("motha_edai"))) c.getDouble(c.getColumnIndex("motha_edai")) else 0.0,
-        wastageGrams = if (isFactory && c.getColumnIndex("setharam_grams") >= 0 && !c.isNull(c.getColumnIndex("setharam_grams"))) c.getDouble(c.getColumnIndex("setharam_grams")) else 0.0,
-        postalCharges = if (isFactory && c.getColumnIndex("thabaal_thogai") >= 0 && !c.isNull(c.getColumnIndex("thabaal_thogai"))) c.getDouble(c.getColumnIndex("thabaal_thogai")) else 0.0,
-        ahimsaSilkAmount = if (isFactory && c.getColumnIndex("ahimsa_pattu_thogai") >= 0 && !c.isNull(c.getColumnIndex("ahimsa_pattu_thogai"))) c.getDouble(c.getColumnIndex("ahimsa_pattu_thogai")) else 0.0,
-        otherTaxesJson = if (isFactory && c.getColumnIndex("piravari_vugal") >= 0) (c.getString(c.getColumnIndex("piravari_vugal")) ?: "[]") else "[]",
-        customPreferencesJson = c.getString(c.getColumnIndexOrThrow("sontha_viruppangal")) ?: "{}",
-        termsAndConditions = c.getString(c.getColumnIndexOrThrow("nibandhanaigal")),
-        notes = c.getString(c.getColumnIndexOrThrow("ullkurippu")),
-        bankDetailsJson = if (isFactory && c.getColumnIndex("vangi_tharavugal") >= 0) (c.getString(c.getColumnIndex("vangi_tharavugal")) ?: "{}") else "{}",
-        createdAt = c.getLong(c.getColumnIndexOrThrow("created_at")),
-        updatedAt = c.getLong(c.getColumnIndexOrThrow("updated_at")),
-        isDeleted = c.getInt(c.getColumnIndexOrThrow("is_deleted")) == 1,
-        deletedAt = if (c.isNull(c.getColumnIndexOrThrow("deleted_at"))) null else c.getLong(c.getColumnIndexOrThrow("deleted_at"))
+        id = getLongCol(c, "id"),
+        companyId = getLongOrNull(c, "company_id", "niruvanam_id"),
+        invoiceNumber = getStringCol(c, "invoice_number", "patrucheettu_en"),
+        finYear = getIntCol(c, "fin_year"),
+        vanakkam = getIntCol(c, "vanakkam", default = 1),
+        invoiceType = getStringCol(c, "invoice_type", "pattiyal_vagai", default = "tax-invoice"),
+        customerId = getLongOrNull(c, "customer_id", "vaangunar_id"),
+        customerName = LanguageJsonConverter.parse(getStringCol(c, "customer_name", "vaangunar_peyar")),
+        customerAddress = LanguageJsonConverter.parse(getStringCol(c, "customer_address", "vaangunar_munvari")),
+        invoiceDate = getLongCol(c, "invoice_date", "pattiyal_naal"),
+        itemsJson = getStringCol(c, "items_json", "tharavugal", default = "[]"),
+        totalAmount = getDoubleCol(c, "total_amount", "motha_thogai"),
+        discount = getDoubleCol(c, "discount", "thallupadi"),
+        globalDiscountValue = getDoubleCol(c, "global_discount_value", "podhu_thallupadi_mathippu"),
+        globalDiscountType = getStringCol(c, "global_discount_type", "podhu_thallupadi_vagai", default = "%"),
+        globalDiscountAmount = getDoubleCol(c, "global_discount_amount", "podhu_thallupadi_thogai"),
+        taxAmount = getDoubleCol(c, "tax_amount", "vari_thogai"),
+        taxDataJson = getStringCol(c, "tax_data_json", "vari_tharavugal", default = "{}"),
+        totalWeight = if (isFactory) getDoubleCol(c, "total_weight", "motha_edai") else 0.0,
+        wastageGrams = if (isFactory) getDoubleCol(c, "wastage_grams", "setharam_grams") else 0.0,
+        postalCharges = if (isFactory) getDoubleCol(c, "postal_charges", "thabaal_thogai") else 0.0,
+        ahimsaSilkAmount = if (isFactory) getDoubleCol(c, "ahimsa_silk_amount", "ahimsa_pattu_thogai") else 0.0,
+        otherTaxesJson = if (isFactory) getStringCol(c, "other_taxes_json", "piravari_vugal", default = "[]") else "[]",
+        customPreferencesJson = getStringCol(c, "custom_preferences_json", "sontha_viruppangal", default = "{}"),
+        termsAndConditions = getStringCol(c, "terms_and_conditions", "nibandhanaigal"),
+        notes = getStringCol(c, "notes", "ullkurippu"),
+        bankDetailsJson = if (isFactory) getStringCol(c, "bank_details_json", "vangi_tharavugal", default = "{}") else "{}",
+        createdAt = getLongCol(c, "created_at"),
+        updatedAt = getLongCol(c, "updated_at"),
+        isDeleted = getIntCol(c, "is_deleted") == 1,
+        deletedAt = getLongOrNull(c, "deleted_at")
     )
 
     private fun cursorToReceipt(c: Cursor): ReceiptModel = ReceiptModel(
-        id = c.getLong(c.getColumnIndexOrThrow("id")),
-        companyId = if (c.isNull(c.getColumnIndexOrThrow("niruvanam_id"))) null else c.getLong(c.getColumnIndexOrThrow("niruvanam_id")),
-        receiptNumber = c.getString(c.getColumnIndexOrThrow("patru_en")),
-        finYear = c.getString(c.getColumnIndexOrThrow("fin_year")),
-        vanakkam = c.getInt(c.getColumnIndexOrThrow("vanakkam")),
-        customerId = if (c.isNull(c.getColumnIndexOrThrow("vaangunar_id"))) null else c.getLong(c.getColumnIndexOrThrow("vaangunar_id")),
-        customerName = LanguageJsonConverter.parse(c.getString(c.getColumnIndexOrThrow("vaangunar_peyar"))),
-        customerAddress = LanguageJsonConverter.parse(c.getString(c.getColumnIndexOrThrow("vaangunar_munvari"))),
-        receiptDate = c.getLong(c.getColumnIndexOrThrow("patru_naal")),
-        amount = c.getDouble(c.getColumnIndexOrThrow("thogai")),
-        paymentMode = c.getString(c.getColumnIndexOrThrow("seluthum_murai")),
-        bankName = if (c.isNull(c.getColumnIndexOrThrow("vangi_peyar"))) null else c.getString(c.getColumnIndexOrThrow("vangi_peyar")),
-        transactionNumber = if (c.isNull(c.getColumnIndexOrThrow("parivarthanai_en"))) null else c.getString(c.getColumnIndexOrThrow("parivarthanai_en")),
-        notes = c.getString(c.getColumnIndexOrThrow("ullkurippu")),
-        createdAt = c.getLong(c.getColumnIndexOrThrow("created_at")),
-        updatedAt = c.getLong(c.getColumnIndexOrThrow("updated_at")),
-        isDeleted = c.getInt(c.getColumnIndexOrThrow("is_deleted")) == 1,
-        deletedAt = if (c.isNull(c.getColumnIndexOrThrow("deleted_at"))) null else c.getLong(c.getColumnIndexOrThrow("deleted_at"))
+        id = getLongCol(c, "id"),
+        companyId = getLongOrNull(c, "company_id", "niruvanam_id"),
+        receiptNumber = getStringCol(c, "receipt_number", "patru_en"),
+        finYear = getStringCol(c, "fin_year"),
+        vanakkam = getIntCol(c, "vanakkam", default = 1),
+        customerId = getLongOrNull(c, "customer_id", "vaangunar_id"),
+        customerName = LanguageJsonConverter.parse(getStringCol(c, "customer_name", "vaangunar_peyar")),
+        customerAddress = LanguageJsonConverter.parse(getStringCol(c, "customer_address", "vaangunar_munvari")),
+        receiptDate = getLongCol(c, "receipt_date", "patru_naal"),
+        amount = getDoubleCol(c, "amount", "thogai"),
+        paymentMode = getStringCol(c, "payment_mode", "seluthum_murai", default = "cash"),
+        bankName = getStringOrNull(c, "bank_name", "vangi_peyar"),
+        transactionNumber = getStringOrNull(c, "transaction_number", "parivarthanai_en"),
+        notes = getStringCol(c, "notes", "ullkurippu"),
+        createdAt = getLongCol(c, "created_at"),
+        updatedAt = getLongCol(c, "updated_at"),
+        isDeleted = getIntCol(c, "is_deleted") == 1,
+        deletedAt = getLongOrNull(c, "deleted_at")
     )
 
     private fun cursorToProfile(c: Cursor): BusinessProfile = BusinessProfile(
-        id = c.getLong(c.getColumnIndexOrThrow("id")),
-        primaryLanguage = c.getString(c.getColumnIndexOrThrow("mudhan_mozhi")),
-        secondaryLanguage = c.getString(c.getColumnIndexOrThrow("thunai_mozhi")),
-        isBilingual = c.getInt(c.getColumnIndexOrThrow("iru_mozhi")) == 1,
-        splitGst = c.getInt(c.getColumnIndexOrThrow("gst_pirippugal")) == 1,
-        businessName = LanguageJsonConverter.parse(c.getString(c.getColumnIndexOrThrow("niruvanathin_peyar"))),
-        shortName = c.getString(c.getColumnIndexOrThrow("kurum_peyar")),
-        phone1 = c.getString(c.getColumnIndexOrThrow("tholaipaesi1")),
-        phone2 = c.getString(c.getColumnIndexOrThrow("tholaipaesi2")),
-        email = c.getString(c.getColumnIndexOrThrow("minnanjal")),
-        gstin = c.getString(c.getColumnIndexOrThrow("gstin")),
-        address = LanguageJsonConverter.parse(c.getString(c.getColumnIndexOrThrow("mugavari"))),
-        city = LanguageJsonConverter.parse(c.getString(c.getColumnIndexOrThrow("oor"))),
-        district = LanguageJsonConverter.parse(c.getString(c.getColumnIndexOrThrow("maavattam"))),
-        state = LanguageJsonConverter.parse(c.getString(c.getColumnIndexOrThrow("maanilam"))),
-        country = LanguageJsonConverter.parse(c.getString(c.getColumnIndexOrThrow("naadu"))),
-        pinCode = c.getString(c.getColumnIndexOrThrow("anjal_kuriyeedu")),
-        bankName = LanguageJsonConverter.parse(c.getString(c.getColumnIndexOrThrow("vangi_peyar"))),
-        branch = LanguageJsonConverter.parse(c.getString(c.getColumnIndexOrThrow("kilai"))),
-        accountNumber = c.getString(c.getColumnIndexOrThrow("vangi_kanakku")),
-        ifsc = c.getString(c.getColumnIndexOrThrow("ifsc")),
-        logo = c.getString(c.getColumnIndexOrThrow("oavuru")),
-        wideLogo = c.getString(c.getColumnIndexOrThrow("agala_oavuru")),
-        headerLayout = c.getString(c.getColumnIndexOrThrow("thalaippu_vadivu")),
-        signature = c.getString(c.getColumnIndexOrThrow("kaiyoppam")),
-        signatoryName = c.getString(c.getColumnIndexOrThrow("oppam_peyar")),
-        signatoryFirstName = c.getString(c.getColumnIndexOrThrow("oppam_mudhal_peyar")),
-        signatoryLastName = c.getString(c.getColumnIndexOrThrow("oppam_irudhi_peyar")),
-        tagline = LanguageJsonConverter.parse(c.getString(c.getColumnIndexOrThrow("adaimozhi"))),
-        upiId = c.getString(c.getColumnIndexOrThrow("upi_id")),
-        themeColor = c.getString(c.getColumnIndexOrThrow("thoatra_niram"))
+        id = getLongCol(c, "id"),
+        primaryLanguage = getStringCol(c, "primary_language", "mudhan_mozhi", default = "ta"),
+        secondaryLanguage = getStringCol(c, "secondary_language", "thunai_mozhi", default = "en"),
+        isBilingual = getIntCol(c, "is_bilingual", "iru_mozhi", default = 1) == 1,
+        splitGst = getIntCol(c, "split_gst", "gst_pirippugal") == 1,
+        businessName = LanguageJsonConverter.parse(getStringCol(c, "business_name", "niruvanathin_peyar")),
+        shortName = getStringCol(c, "short_name", "kurum_peyar"),
+        phone1 = getStringCol(c, "phone1", "tholaipaesi1"),
+        phone2 = getStringCol(c, "phone2", "tholaipaesi2"),
+        email = getStringCol(c, "email", "minnanjal"),
+        gstin = getStringCol(c, "gstin"),
+        address = LanguageJsonConverter.parse(getStringCol(c, "address", "mugavari")),
+        city = LanguageJsonConverter.parse(getStringCol(c, "city", "oor")),
+        district = LanguageJsonConverter.parse(getStringCol(c, "district", "maavattam")),
+        state = LanguageJsonConverter.parse(getStringCol(c, "state", "maanilam")),
+        country = LanguageJsonConverter.parse(getStringCol(c, "country", "naadu", default = "{\"en\":\"India\",\"ta\":\"இந்தியா\"}")),
+        pinCode = getStringCol(c, "pin_code", "anjal_kuriyeedu"),
+        bankName = LanguageJsonConverter.parse(getStringCol(c, "bank_name", "vangi_peyar")),
+        branch = LanguageJsonConverter.parse(getStringCol(c, "branch", "kilai")),
+        accountNumber = getStringCol(c, "account_number", "vangi_kanakku"),
+        ifsc = getStringCol(c, "ifsc"),
+        logo = getStringCol(c, "logo", "oavuru"),
+        wideLogo = getStringCol(c, "wide_logo", "agala_oavuru"),
+        headerLayout = getStringCol(c, "header_layout", "thalaippu_vadivu", default = "small"),
+        signature = getStringCol(c, "signature", "kaiyoppam"),
+        signatoryName = getStringCol(c, "signatory_name", "oppam_peyar"),
+        signatoryFirstName = getStringCol(c, "signatory_first_name", "oppam_mudhal_peyar"),
+        signatoryLastName = getStringCol(c, "signatory_last_name", "oppam_irudhi_peyar"),
+        tagline = LanguageJsonConverter.parse(getStringCol(c, "tagline", "adaimozhi")),
+        upiId = getStringCol(c, "upi_id"),
+        themeColor = getStringCol(c, "theme_color", "thoatra_niram")
     )
 }
 

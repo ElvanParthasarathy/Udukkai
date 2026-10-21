@@ -159,24 +159,24 @@ object FactoryMockDataSeeder {
         for (item in mockCooliePorulgal) {
             val peyarTa = item["peyar_ta"] ?: ""
             val peyarEn = item["peyar_en"] ?: ""
-            helper.saveItem(
+            helper.saveProduct(
                 ProductModel(
                     name = mapOf("ta" to peyarTa, "en" to peyarEn)
                 )
             )
         }
-        val factoryItems = helper.loadAllItems()
+        val factoryItems = helper.loadAllProducts()
 
         // 3. Customers
         for (m in mockCoolieVaangunargal) {
-            helper.saveMerchant(
+            helper.saveCustomer(
                 CustomerModel(
                     name = mapOf("ta" to (m["peyar_ta"] ?: ""), "en" to (m["peyar_en"] ?: "")),
                     city = mapOf("ta" to (m["oor_ta"] ?: ""), "en" to (m["oor_en"] ?: ""))
                 )
             )
         }
-        val factoryCustomers = helper.loadAllMerchants()
+        val factoryCustomers = helper.loadAllCustomers()
 
         // 4. Invoices
         for (data in mockCooliePattiyalgal) {

@@ -178,7 +178,7 @@ object TextilesMockDataSeeder {
             val alagu = item["alagu"] as? String ?: "Nos"
             val vagai = item["alavuVagai"] as? String ?: "quantity"
 
-            helper.saveItem(
+            helper.saveProduct(
                 ProductModel(
                     name = mapOf("ta" to peyarTa, "en" to peyarEn),
                     hsnCode = hsn,
@@ -189,11 +189,11 @@ object TextilesMockDataSeeder {
                 )
             )
         }
-        val textilesItems = helper.loadAllItems()
+        val textilesItems = helper.loadAllProducts()
 
         // 3. Customers
         for (m in mockSilkVaangunargal) {
-            helper.saveMerchant(
+            helper.saveCustomer(
                 CustomerModel(
                     name = mapOf("ta" to (m["peyar_ta"] ?: ""), "en" to (m["peyar_en"] ?: "")),
                     address = mapOf("ta" to (m["mugavari_ta"] ?: ""), "en" to (m["mugavari_en"] ?: "")),
@@ -206,7 +206,7 @@ object TextilesMockDataSeeder {
                 )
             )
         }
-        val textilesCustomers = helper.loadAllMerchants()
+        val textilesCustomers = helper.loadAllCustomers()
 
         // 4. Invoices
         for (data in mockSilkPattiyalgal) {

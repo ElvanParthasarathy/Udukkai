@@ -16,7 +16,7 @@ import com.elvan.udukkai.localization.tr
 import com.elvan.udukkai.theme.Dimens
 import com.elvan.udukkai.theme.rememberShellColors
 import com.elvan.udukkai.ui.components.shell.LocalElvanTopSpacerHeight
-import com.elvan.udukkai.ui.components.shell.MugappuStatsSkeleton
+import com.elvan.udukkai.ui.components.shell.HomeStatsSkeleton
 import com.elvan.udukkai.ui.components.shell.UruvakkuCardSkeleton
 import com.elvan.udukkai.ui.navigation.MaterialSymbols
 import com.elvan.udukkai.ui.screens.home.components.*
@@ -86,7 +86,7 @@ fun FactoryDashboardScreen(
             if (showSkeleton) {
                 // Shimmer state when pull-down-to-refresh is active
                 item(key = "stats_shimmer") {
-                    MugappuStatsSkeleton()
+                    HomeStatsSkeleton()
                 }
 
                 item(key = "recent_shimmer_header") {
@@ -162,7 +162,7 @@ fun FactoryDashboardScreen(
                         ) {
                             FactoryInvoiceCard(
                                 index = index + 1,
-                                pattiyal = item,
+                                invoice = item,
                                 colors = colors,
                                 onClick = { onInvoiceClick(item) }
                             )

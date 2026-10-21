@@ -121,10 +121,4 @@ interface UdukkaiBackupService {
     fun shareBackup(slot: BackupSlot = BackupSlot.LATEST): Boolean
 }
 
-@Deprecated("Use UdukkaiBackupService instead", ReplaceWith("UdukkaiBackupService"))
-typealias NirilBackupService = UdukkaiBackupService
-
 expect fun getUdukkaiBackupService(): UdukkaiBackupService
-
-@Deprecated("Use getUdukkaiBackupService instead", ReplaceWith("getUdukkaiBackupService()"))
-fun getNirilBackupService(): UdukkaiBackupService = getUdukkaiBackupService()

@@ -42,14 +42,14 @@ fun TextilesTotalsField(
             // Subtotal
             TotalsRow(
                 label = K.subtotal.tr(),
-                amount = totals.adippadaiMothangal
+                amount = totals.subtotal
             )
 
             // Discount (if any)
-            if (totals.thallupadiMothangal > 0) {
+            if (totals.totalDiscount > 0) {
                 TotalsRow(
                     label = K.discount.tr(),
-                    amount = -totals.thallupadiMothangal,
+                    amount = -totals.totalDiscount,
                     textColor = Color(0xFFE53935)
                 )
             }
@@ -79,10 +79,10 @@ fun TextilesTotalsField(
             }
 
             // Round-off
-            if (totals.suttruOff != 0.0) {
+            if (totals.roundOff != 0.0) {
                 TotalsRow(
                     label = K.roundOff.tr(),
-                    amount = totals.suttruOff
+                    amount = totals.roundOff
                 )
             }
 
@@ -108,7 +108,7 @@ fun TextilesTotalsField(
                     )
                 )
                 Text(
-                    text = CurrencyUtils.formatInr(totals.mothaMothangal),
+                    text = CurrencyUtils.formatInr(totals.grandTotal),
                     style = TextStyle(
                         fontFamily = ff,
                         fontSize = 22.sp,
@@ -154,10 +154,3 @@ private fun TotalsRow(
         )
     }
 }
-
-@Deprecated("Use TextilesTotalsField", ReplaceWith("TextilesTotalsField(totals, modifier)"))
-@Composable
-fun PattuMothangalKooru(
-    totals: TextilesTotals,
-    modifier: Modifier = Modifier
-) = TextilesTotalsField(totals, modifier)

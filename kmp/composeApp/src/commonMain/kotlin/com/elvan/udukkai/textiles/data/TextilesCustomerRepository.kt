@@ -1,4 +1,4 @@
-﻿package com.elvan.udukkai.textiles.data
+package com.elvan.udukkai.textiles.data
 
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -13,24 +13,25 @@ import com.elvan.udukkai.data.model.CustomerModel
  * Distinct customer fields: Name, GSTIN, Phone, Email, PIN, State, District, City, Address.
  */
 object TextilesCustomerRepository {
-    val customers: List<com.elvan.udukkai.data.model.CustomerModel> get() = merchants
-    val deletedCustomers: List<com.elvan.udukkai.data.model.CustomerModel> get() = deletedMerchants
-
-
-    var merchants by mutableStateOf<List<CustomerModel>>(emptyList())
+    var customers by mutableStateOf<List<CustomerModel>>(emptyList())
         private set
 
-    var deletedMerchants by mutableStateOf<List<CustomerModel>>(emptyList())
+    var deletedCustomers by mutableStateOf<List<CustomerModel>>(emptyList())
         private set
 
     var searchQuery by mutableStateOf("")
 
-    val filteredMerchants: List<CustomerModel>
+    val filteredCustomers: List<CustomerModel>
         get() {
-            return merchants.filter { m ->
-                SearchHelper.matchesCustomer(m, searchQuery)
+            return customers.filter { c ->
+                SearchHelper.matchesCustomer(c, searchQuery)
             }
         }
+
+    // Backward-compatible delegates
+    val merchants: List<CustomerModel> get() = customers
+    val deletedMerchants: List<CustomerModel> get() = deletedCustomers
+    val filteredMerchants: List<CustomerModel> get() = filteredCustomers
 
     init {
         loadAll()
@@ -39,29 +40,29 @@ object TextilesCustomerRepository {
 
     fun loadAll() {
         try {
-            merchants = getTextilesDatabaseHelper().loadAllMerchants()
+            customers = getTextilesDatabaseHelper().loadAllCustomers()
         } catch (_: Exception) {
-            merchants = emptyList()
+            customers = emptyList()
         }
     }
 
     fun purgeExpired(days: Int = 30): Int {
-        val count = getTextilesDatabaseHelper().purgeExpiredMerchants(days)
+        val count = getTextilesDatabaseHelper().purgeExpiredCustomers(days)
         if (count > 0) loadDeleted()
         return count
     }
 
     fun loadDeleted() {
         try {
-            deletedMerchants = getTextilesDatabaseHelper().loadDeletedMerchants()
+            deletedCustomers = getTextilesDatabaseHelper().loadDeletedCustomers()
         } catch (_: Exception) {
-            deletedMerchants = emptyList()
+            deletedCustomers = emptyList()
         }
     }
 
-    fun save(merchant: CustomerModel): Long {
+    fun save(customer: CustomerModel): Long {
         val helper = getTextilesDatabaseHelper()
-        val id = helper.saveMerchant(merchant)
+        val id = helper.saveCustomer(customer)
         if (id > 0) {
             loadAll()
             AutoBackupManager.onDataChanged()
@@ -70,7 +71,7 @@ object TextilesCustomerRepository {
     }
 
     fun delete(id: Long): Boolean {
-        val success = getTextilesDatabaseHelper().deleteMerchant(id)
+        val success = getTextilesDatabaseHelper().deleteCustomer(id)
         if (success) {
             loadAll()
             loadDeleted()
@@ -80,7 +81,7 @@ object TextilesCustomerRepository {
     }
 
     fun restore(id: Long): Boolean {
-        val success = getTextilesDatabaseHelper().restoreMerchant(id)
+        val success = getTextilesDatabaseHelper().restoreCustomer(id)
         if (success) {
             loadAll()
             loadDeleted()
@@ -90,7 +91,7 @@ object TextilesCustomerRepository {
     }
 
     fun permanentDelete(id: Long): Boolean {
-        val success = getTextilesDatabaseHelper().permanentDeleteMerchant(id)
+        val success = getTextilesDatabaseHelper().permanentDeleteCustomer(id)
         if (success) {
             loadDeleted()
             AutoBackupManager.onDataChanged()
@@ -98,5 +99,5 @@ object TextilesCustomerRepository {
         return success
     }
 
-    fun getById(id: Long): CustomerModel? = merchants.find { it.id == id }
+    fun getById(id: Long): CustomerModel? = customers.find { it.id == id }
 }

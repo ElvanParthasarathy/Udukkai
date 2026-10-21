@@ -27,7 +27,7 @@ import com.elvan.udukkai.theme.LocalShellColors
 @Composable
 fun TextilesDashboardCard(
     index: Int,
-    pattiyal: InvoiceModel,
+    invoice: InvoiceModel,
     colors: ShellColors,
     modifier: Modifier = Modifier,
     onClick: () -> Unit = {}
@@ -35,23 +35,23 @@ fun TextilesDashboardCard(
     val ff = LocalAppFontFamily.current
 
     val profiles = TextilesProfileRepository.allProfiles
-    val profile = (if (pattiyal.companyId != null) profiles.find { it.id == pattiyal.companyId } else null)
+    val profile = (if (invoice.companyId != null) profiles.find { it.id == invoice.companyId } else null)
         ?: TextilesProfileRepository.profile
     val isBilingual = profile.isBilingual
     val primaryLang = profile.primaryLanguage.ifEmpty { "ta" }
     val secondaryLang = profile.secondaryLanguage.ifEmpty { "en" }
 
-    val primary = pattiyal.customerName[primaryLang]
-        ?: pattiyal.customerName["ta"]
-        ?: pattiyal.customerName["en"]
-        ?: pattiyal.customerName.values.firstOrNull()
+    val primary = invoice.customerName[primaryLang]
+        ?: invoice.customerName["ta"]
+        ?: invoice.customerName["en"]
+        ?: invoice.customerName.values.firstOrNull()
         ?: "-"
 
-    val secondary = if (isBilingual) pattiyal.customerName[secondaryLang].orEmpty() else ""
+    val secondary = if (isBilingual) invoice.customerName[secondaryLang].orEmpty() else ""
     val showSecondary = isBilingual && secondary.isNotBlank() && secondary != primary
 
-    val amountStr = CurrencyUtils.formatInr(pattiyal.totalAmount)
-    val dateStr = DateUtils.formatEpochMillis(pattiyal.invoiceDate)
+    val amountStr = CurrencyUtils.formatInr(invoice.totalAmount)
+    val dateStr = DateUtils.formatEpochMillis(invoice.invoiceDate)
 
     ElvanCommonCard(
         onClick = onClick,
@@ -120,7 +120,7 @@ fun TextilesDashboardCard(
                 Spacer(modifier = Modifier.height(8.dp))
 
                 Text(
-                    text = "${pattiyal.invoiceNumber}  •  $dateStr",
+                    text = "${invoice.invoiceNumber}  •  $dateStr",
                     style = TextStyle(
                         fontFamily = ff,
                         fontSize = 13.5.sp,

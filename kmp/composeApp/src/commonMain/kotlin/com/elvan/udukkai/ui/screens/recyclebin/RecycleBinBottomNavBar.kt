@@ -38,7 +38,7 @@ import kotlinx.coroutines.launch
 import kotlin.math.floor
 import kotlin.math.roundToInt
 
-typealias MeetpagamTab = RecycleBinTab
+
 
 enum class RecycleBinTab(
     val icon: ImageVector,
@@ -78,12 +78,12 @@ enum class RecycleBinTab(
  */
 @Composable
 fun RecycleBinBottomNavBar(
-    selectedTab: MeetpagamTab,
-    onTabSelected: (MeetpagamTab) -> Unit,
+    selectedTab: RecycleBinTab,
+    onTabSelected: (RecycleBinTab) -> Unit,
     hideContent: Boolean = false,
     modifier: Modifier = Modifier
 ) {
-    val tabs = MeetpagamTab.entries
+    val tabs = RecycleBinTab.entries
     val coroutineScope = rememberCoroutineScope()
     val colors = rememberShellColors()
     val isDark = colors.isDark

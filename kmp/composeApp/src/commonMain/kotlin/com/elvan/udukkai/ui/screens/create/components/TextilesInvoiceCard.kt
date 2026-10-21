@@ -34,7 +34,7 @@ import com.elvan.udukkai.theme.LocalShellColors
 @Composable
 fun TextilesInvoiceCard(
     index: Int,
-    pattiyal: InvoiceModel,
+    invoice: InvoiceModel,
     colors: ShellColors,
     modifier: Modifier = Modifier,
     isSelectionMode: Boolean = false,
@@ -46,29 +46,29 @@ fun TextilesInvoiceCard(
     val isDark = colors.isDark
 
     val profiles = com.elvan.udukkai.textiles.data.TextilesProfileRepository.profiles
-    val profile = (if (pattiyal.companyId != null) profiles.find { it.id == pattiyal.companyId } else null)
+    val profile = (if (invoice.companyId != null) profiles.find { it.id == invoice.companyId } else null)
         ?: com.elvan.udukkai.textiles.data.TextilesProfileRepository.profile
     val isBilingual = profile.isBilingual
     val primaryLang = profile.primaryLanguage.ifEmpty { "ta" }
     val secondaryLang = profile.secondaryLanguage.ifEmpty { "en" }
 
-    val primary = pattiyal.customerName[primaryLang]
-        ?: pattiyal.customerName["ta"]
-        ?: pattiyal.customerName["en"]
-        ?: pattiyal.customerName.values.firstOrNull()
+    val primary = invoice.customerName[primaryLang]
+        ?: invoice.customerName["ta"]
+        ?: invoice.customerName["en"]
+        ?: invoice.customerName.values.firstOrNull()
         ?: "-"
 
-    val secondary = if (isBilingual) pattiyal.customerName[secondaryLang].orEmpty() else ""
+    val secondary = if (isBilingual) invoice.customerName[secondaryLang].orEmpty() else ""
     val showSecondary = isBilingual && secondary.isNotBlank() && secondary != primary
 
-    val primaryOor = pattiyal.customerAddress[primaryLang]
-        ?: pattiyal.customerAddress["ta"]
-        ?: pattiyal.customerAddress["en"]
-        ?: pattiyal.customerAddress.values.firstOrNull()
+    val primaryOor = invoice.customerAddress[primaryLang]
+        ?: invoice.customerAddress["ta"]
+        ?: invoice.customerAddress["en"]
+        ?: invoice.customerAddress.values.firstOrNull()
         ?: ""
 
-    val amountStr = CurrencyUtils.formatInr(pattiyal.totalAmount)
-    val dateStr = DateUtils.formatEpochMillis(pattiyal.invoiceDate)
+    val amountStr = CurrencyUtils.formatInr(invoice.totalAmount)
+    val dateStr = DateUtils.formatEpochMillis(invoice.invoiceDate)
 
     ElvanCommonCard(
         onClick = onClick,
@@ -144,7 +144,7 @@ fun TextilesInvoiceCard(
 
                 // Row 2: Invoice #  •  Date
                 Text(
-                    text = "${pattiyal.invoiceNumber}  •  $dateStr",
+                    text = "${invoice.invoiceNumber}  •  $dateStr",
                     style = TextStyle(
                         fontFamily = ff,
                         fontSize = 13.5.sp,
@@ -190,16 +190,3 @@ fun TextilesInvoiceCard(
         }
     }
 }
-
-@Deprecated("Use TextilesInvoiceCard", ReplaceWith("TextilesInvoiceCard(index, pattiyal, colors, modifier, isSelectionMode, isSelected, onClick, onLongClick)"))
-@Composable
-fun SilkInvoiceCard(
-    index: Int,
-    pattiyal: InvoiceModel,
-    colors: ShellColors,
-    modifier: Modifier = Modifier,
-    isSelectionMode: Boolean = false,
-    isSelected: Boolean = false,
-    onClick: () -> Unit = {},
-    onLongClick: (() -> Unit)? = null
-) = TextilesInvoiceCard(index, pattiyal, colors, modifier, isSelectionMode, isSelected, onClick, onLongClick)

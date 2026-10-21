@@ -791,7 +791,7 @@ class AndroidUdukkaiBackupService : UdukkaiBackupService {
 }
 
 @Deprecated("Use AndroidUdukkaiBackupService", ReplaceWith("AndroidUdukkaiBackupService"))
-typealias AndroidNirilBackupService = AndroidUdukkaiBackupService
+
 
 private val androidBackupInstance by lazy { AndroidUdukkaiBackupService() }
 

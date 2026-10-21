@@ -132,7 +132,7 @@ object ProductFirebasePayloadConverter {
      * - Number (single ID)
      * Returns emptyList() if null, missing, empty, or unparseable.
      */
-    fun parseNiruvanamIds(raw: Any?): List<Long> {
+    fun parseCompanyIds(raw: Any?): List<Long> {
         if (raw == null) return emptyList()
         return when (raw) {
             is List<*> -> {
@@ -162,6 +162,9 @@ object ProductFirebasePayloadConverter {
             else -> emptyList()
         }
     }
+
+    @Deprecated("Use parseCompanyIds", ReplaceWith("parseCompanyIds(raw)"))
+    fun parseNiruvanamIds(raw: Any?): List<Long> = parseCompanyIds(raw)
 
     /**
      * Parses companyPrices from a raw object.
@@ -242,7 +245,7 @@ object ProductFirebasePayloadConverter {
             else -> null
         }
 
-        val niruvanamIds = parseNiruvanamIds(map["niruvanamIds"])
+        val companyIds = parseCompanyIds(map["companyIds"] ?: map["niruvanamIds"])
         val companyPrices = parseCompanyPrices(map["companyPrices"])
 
         return ProductModel(
@@ -253,7 +256,7 @@ object ProductFirebasePayloadConverter {
             taxRate = taxRate,
             quantityType = quantityType,
             unit = unit,
-            companyIds = niruvanamIds,
+            companyIds = companyIds,
             companyPrices = companyPrices,
             createdAt = createdAt,
             updatedAt = updatedAt,
@@ -263,4 +266,4 @@ object ProductFirebasePayloadConverter {
     }
 }
 
-typealias PorulFirebasePayloadConverter = ProductFirebasePayloadConverter
+

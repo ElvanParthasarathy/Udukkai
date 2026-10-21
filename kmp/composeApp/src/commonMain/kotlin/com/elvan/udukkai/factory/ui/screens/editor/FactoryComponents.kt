@@ -77,7 +77,7 @@ fun FactoryItemCard(
     onAddNewItem: (() -> Unit)? = null,
     onAddNewCharge: (() -> Unit)? = null,
     modifier: Modifier = Modifier,
-    niruvanamId: Long? = null
+    companyId: Long? = null
 ) {
     val colors = rememberShellColors()
     val isDark = colors.isDark
@@ -85,8 +85,8 @@ fun FactoryItemCard(
 
     var isPickerOpen by remember { mutableStateOf(false) }
     val allProducts = FactoryProductRepository.products
-    val availableProducts = remember(allProducts, niruvanamId) {
-        allProducts.filter { it.isAvailableForCompany(niruvanamId) }
+    val availableProducts = remember(allProducts, companyId) {
+        allProducts.filter { it.isAvailableForCompany(companyId) }
     }
 
     Column(
@@ -432,8 +432,8 @@ fun FactoryItemCard(
                     p.name[secondaryLang] ?: ""
                 } else ""
 
-                val priceForCompany = if (niruvanamId != null && p.companyPrices.containsKey(niruvanamId)) {
-                    p.companyPrices[niruvanamId] ?: p.price
+                val priceForCompany = if (companyId != null && p.companyPrices.containsKey(companyId)) {
+                    p.companyPrices[companyId] ?: p.price
                 } else {
                     p.price
                 }
@@ -457,8 +457,8 @@ fun FactoryItemCard(
             },
             subtitleBuilder = { p ->
                 val sec = if (isBilingual && p.name.isNotEmpty()) p.name[secondaryLang].orEmpty() else ""
-                val priceForComp = if (niruvanamId != null && p.companyPrices.containsKey(niruvanamId)) {
-                    p.companyPrices[niruvanamId] ?: p.price
+                val priceForComp = if (companyId != null && p.companyPrices.containsKey(companyId)) {
+                    p.companyPrices[companyId] ?: p.price
                 } else {
                     p.price
                 }
@@ -671,7 +671,7 @@ fun FactoryTotalsSection(
             // Subtotal
             FactoryTotalsRow(
                 label = K.subtotal.tr(),
-                value = CurrencyUtils.formatInr(totals.adippadaiMothangal),
+                value = CurrencyUtils.formatInr(totals.subtotal),
                 labelWeight = FontWeight.SemiBold,
                 valueWeight = FontWeight.Bold
             )
@@ -740,7 +740,7 @@ fun FactoryTotalsSection(
                 )
 
                 Text(
-                    text = CurrencyUtils.formatInr(totals.perumMothangal),
+                    text = CurrencyUtils.formatInr(totals.grandTotal),
                     style = TextStyle(
                         fontFamily = ff,
                         fontSize = 22.sp,
@@ -789,56 +789,3 @@ private fun FactoryTotalsRow(
         )
     }
 }
-
-// ── Backward-compatible Aliases ──
-@Deprecated("Use FactoryItemCard", ReplaceWith("FactoryItemCard(item, index, itemCount, onItemUpdated, onItemDeleted, onItemCleared, onDirty, onRequestAddNewProduct, onAddNewItem, onAddNewCharge, modifier, niruvanamId)"))
-@Composable
-fun KooliUrupadiAttai(
-    item: FactoryItem,
-    index: Int,
-    itemCount: Int,
-    onItemUpdated: (FactoryItem) -> Unit,
-    onItemDeleted: () -> Unit,
-    onItemCleared: () -> Unit,
-    onDirty: () -> Unit,
-    onRequestAddNewProduct: () -> Unit,
-    onAddNewItem: (() -> Unit)? = null,
-    onAddNewCharge: (() -> Unit)? = null,
-    modifier: Modifier = Modifier,
-    niruvanamId: Long? = null
-) = FactoryItemCard(item, index, itemCount, onItemUpdated, onItemDeleted, onItemCleared, onDirty, onRequestAddNewProduct, onAddNewItem, onAddNewCharge, modifier, niruvanamId)
-
-@Deprecated("Use FactoryAdditionalChargeCard", ReplaceWith("FactoryAdditionalChargeCard(charge, index, onUpdated, onDeleted, onDirty, modifier)"))
-@Composable
-fun KooliPiraVarivuAttai(
-    charge: FactoryAdditionalCharge,
-    index: Int,
-    onUpdated: (FactoryAdditionalCharge) -> Unit,
-    onDeleted: () -> Unit,
-    onDirty: () -> Unit,
-    modifier: Modifier = Modifier
-) = FactoryAdditionalChargeCard(charge, index, onUpdated, onDeleted, onDirty, modifier)
-
-@Deprecated("Use FactoryExtraChargesSection", ReplaceWith("FactoryExtraChargesSection(setharamGrams, ahimsaPattuThogai, thabaalThogai, onSetharamChanged, onAhimsaChanged, onThabaalChanged, onDirty, modifier)"))
-@Composable
-fun KooliMelthogaiKooru(
-    setharamGrams: Double,
-    ahimsaPattuThogai: Double,
-    thabaalThogai: Double,
-    onSetharamChanged: (Double) -> Unit,
-    onAhimsaChanged: (Double) -> Unit,
-    onThabaalChanged: (Double) -> Unit,
-    onDirty: () -> Unit,
-    modifier: Modifier = Modifier
-) = FactoryExtraChargesSection(setharamGrams, ahimsaPattuThogai, thabaalThogai, onSetharamChanged, onAhimsaChanged, onThabaalChanged, onDirty, modifier)
-
-@Deprecated("Use FactoryTotalsSection", ReplaceWith("FactoryTotalsSection(totals, setharamGrams, ahimsaPattuThogai, thabaalThogai, piraVarivugal, modifier)"))
-@Composable
-fun KooliMothangalKooru(
-    totals: FactoryTotals,
-    setharamGrams: Double,
-    ahimsaPattuThogai: Double,
-    thabaalThogai: Double,
-    piraVarivugal: List<FactoryAdditionalCharge>,
-    modifier: Modifier = Modifier
-) = FactoryTotalsSection(totals, setharamGrams, ahimsaPattuThogai, thabaalThogai, piraVarivugal, modifier)

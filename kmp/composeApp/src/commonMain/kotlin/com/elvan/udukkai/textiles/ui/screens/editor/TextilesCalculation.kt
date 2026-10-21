@@ -53,29 +53,29 @@ data class TextilesItem(
     val rowTotal: Double get() = taxableAmount + rowTax
 }
 
-typealias PattuUrupadi = TextilesItem
+
 
 /**
  * Computed totals result for Textiles mode invoices.
  */
 data class TextilesTotals(
-    val adippadaiMothangal: Double = 0.0,
-    val thallupadiMothangal: Double = 0.0,
+    val subtotal: Double = 0.0,
+    val totalDiscount: Double = 0.0,
     val cgst: Double = 0.0,
     val sgst: Double = 0.0,
     val igst: Double = 0.0,
-    val variMothangal: Double = 0.0,
-    val suttruOff: Double = 0.0,
-    val mothaMothangal: Double = 0.0
+    val totalTax: Double = 0.0,
+    val roundOff: Double = 0.0,
+    val grandTotal: Double = 0.0
 ) {
-    val subtotal: Double get() = adippadaiMothangal
-    val totalDiscount: Double get() = thallupadiMothangal
-    val totalTax: Double get() = variMothangal
-    val roundOff: Double get() = suttruOff
-    val grandTotal: Double get() = mothaMothangal
+    val adippadaiMothangal: Double get() = subtotal
+    val thallupadiMothangal: Double get() = totalDiscount
+    val variMothangal: Double get() = totalTax
+    val suttruOff: Double get() = roundOff
+    val mothaMothangal: Double get() = grandTotal
 }
 
-typealias PattuMothangal = TextilesTotals
+
 
 /**
  * Optional invoicing preferences for Textiles mode.
@@ -87,7 +87,7 @@ data class TextilesPreferences(
     val placeOfSupplyTa: String = "தமிழ்நாடு"
 )
 
-typealias PattuViruppangal = TextilesPreferences
+
 
 /**
  * Textiles invoice calculation engine.
@@ -175,14 +175,14 @@ object TextilesCalculation {
         val suttruOff = roundedTotal - exactTotal
 
         return TextilesTotals(
-            adippadaiMothangal = rawSubtotal,
-            thallupadiMothangal = totalDiscount,
+            subtotal = rawSubtotal,
+            totalDiscount = totalDiscount,
             cgst = cgst,
             sgst = sgst,
             igst = igst,
-            variMothangal = taxTotal,
-            suttruOff = suttruOff,
-            mothaMothangal = roundedTotal
+            totalTax = taxTotal,
+            roundOff = suttruOff,
+            grandTotal = roundedTotal
         )
     }
 
@@ -296,8 +296,6 @@ object TextilesCalculation {
     }
 
     // ── Backward-compatible Aliases ──
-    fun pattuListToJson(items: List<TextilesItem>): String = itemsToJson(items)
-    fun pattuListFromJson(json: String?): List<TextilesItem> = itemsFromJson(json)
     fun variToJson(totals: TextilesTotals): String = taxToJson(totals)
     fun viruppangalToJson(preferences: TextilesPreferences): String = preferencesToJson(preferences)
     fun viruppangalFromJson(json: String?): TextilesPreferences = preferencesFromJson(json)
@@ -348,5 +346,3 @@ object TextilesCalculation {
         return result
     }
 }
-
-val PattuKanakku = TextilesCalculation

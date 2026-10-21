@@ -69,7 +69,7 @@ fun NalvaravuWelcomeScreen(
                     )
                 }
                 WelcomePhase.BUSINESS_NAME -> {
-                    VanakkamThirai(
+                    GreetingScreen(
                         billingLanguage = billingLang,
                         onSetupComplete = onSetupComplete,
                         onBack = if (AuthManager.missingProfiles.size != 1) {

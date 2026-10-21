@@ -135,11 +135,11 @@ fun TextilesHomeScreen() {
     val scope = rememberCoroutineScope()
     val colors = rememberShellColors()
 
-    val porulDeletedMsg = K.productDeleted.tr()
-    val vaangunarDeletedMsg = K.customerDeleted.tr()
-    val pattiyalgalLabel = K.invoices.tr()
-    val patrucheettugalLabel = K.receipts.tr()
-    val azhikkiradhuLabel = K.erasing.tr()
+    val productDeletedMsg = K.productDeleted.tr()
+    val customerDeletedMsg = K.customerDeleted.tr()
+    val invoicesLabel = K.invoices.tr()
+    val receiptsLabel = K.receipts.tr()
+    val erasingLabel = K.erasing.tr()
 
 
     // Keep Android Back handling enabled for in-app navigation, but let the single
@@ -804,19 +804,19 @@ fun TextilesHomeScreen() {
                     when (selectedTab) {
                         NavTab.Products -> {
                             selectedItemIds.forEach { TextilesProductRepository.delete(it) }
-                            ElvanSnackbar.show(porulDeletedMsg)
+                            ElvanSnackbar.show(productDeletedMsg)
                         }
                         NavTab.Customers -> {
                             selectedItemIds.forEach { TextilesCustomerRepository.delete(it) }
-                            ElvanSnackbar.show(vaangunarDeletedMsg)
+                            ElvanSnackbar.show(customerDeletedMsg)
                         }
                         NavTab.Create -> {
                             if (uruvakkuSegment == 0) {
                                 selectedItemIds.forEach { TextilesInvoiceRepository.delete(it) }
-                                ElvanSnackbar.show("${selectedItemIds.size} $pattiyalgalLabel $azhikkiradhuLabel")
+                                ElvanSnackbar.show("${selectedItemIds.size} $invoicesLabel $erasingLabel")
                             } else {
                                 selectedItemIds.forEach { TextilesReceiptRepository.delete(it) }
-                                ElvanSnackbar.show("${selectedItemIds.size} $patrucheettugalLabel $azhikkiradhuLabel")
+                                ElvanSnackbar.show("${selectedItemIds.size} $receiptsLabel $erasingLabel")
                             }
                         }
                         else -> {}

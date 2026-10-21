@@ -459,7 +459,7 @@ fun ElvanIrumozhiPulan(
  * Opens `ElvanSelectionBottomSheet` on tap.
  */
 @Composable
-fun <T> ElvanThiruthiKeezhvirivu(
+fun <T> ElvanEditorDropdown(
     label: String? = null,
     hideLabel: Boolean = false,
     value: T?,
@@ -581,7 +581,7 @@ fun <T> ElvanThiruthiKeezhvirivu(
  * Matches Flutter's `ElvanThiruthiKeezhvirivu` and opens `ElvanSelectionBottomSheet`.
  */
 @Composable
-fun ElvanThiruthiKeezhvirivu(
+fun ElvanEditorDropdown(
     label: String? = null,
     selectedText: String,
     items: List<Pair<String, String>>, // value to display label
@@ -589,7 +589,7 @@ fun ElvanThiruthiKeezhvirivu(
     modifier: Modifier = Modifier,
     backgroundColor: Color? = null
 ) {
-    ElvanThiruthiKeezhvirivu(
+    ElvanEditorDropdown(
         label = label,
         value = items.firstOrNull { it.first == selectedText || it.second == selectedText },
         items = items,

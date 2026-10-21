@@ -1,4 +1,4 @@
-﻿package com.elvan.udukkai.data.model
+package com.elvan.udukkai.data.model
 
 import com.elvan.udukkai.factory.data.FactoryInvoiceRepository
 import com.elvan.udukkai.localization.BillingLanguage
@@ -60,7 +60,7 @@ class CompanyWorkspaceAndProductTest {
     }
 
     @Test
-    fun testPorulJsonConverterLongList() {
+    fun testProductJsonConverterLongList() {
         assertEquals(emptyList(), ProductJsonConverter.parseLongList(null))
         assertEquals(emptyList(), ProductJsonConverter.parseLongList(""))
         assertEquals(emptyList(), ProductJsonConverter.parseLongList("[]"))
@@ -72,7 +72,7 @@ class CompanyWorkspaceAndProductTest {
     }
 
     @Test
-    fun testPorulJsonConverterCompanyPrices() {
+    fun testProductJsonConverterCompanyPrices() {
         assertEquals(emptyMap(), ProductJsonConverter.parseCompanyPrices(null))
         assertEquals(emptyMap(), ProductJsonConverter.parseCompanyPrices(""))
         assertEquals(emptyMap(), ProductJsonConverter.parseCompanyPrices("{}"))
@@ -95,7 +95,7 @@ class CompanyWorkspaceAndProductTest {
     }
 
     @Test
-    fun testPorulFirebasePayloadGeneration() {
+    fun testProductFirebasePayloadGeneration() {
         val product = ProductModel(
             id = 42,
             name = mapOf("ta" to "பட்டு", "en" to "Kanchipuram Pattu"),
@@ -103,7 +103,7 @@ class CompanyWorkspaceAndProductTest {
             companyIds = listOf(101L, 102L),
             companyPrices = mapOf(101L to 4200.0, 102L to 4600.0)
         )
-        val payload = PorulFirebasePayloadConverter.toFirebasePayload(product)
+        val payload = ProductFirebasePayloadConverter.toFirebasePayload(product)
 
         assertEquals(42L, payload["id"])
         assertEquals(4500.0, payload["vilai"])
@@ -118,54 +118,54 @@ class CompanyWorkspaceAndProductTest {
     }
 
     @Test
-    fun testPorulFirebasePayloadParsingNiruvanamIds() {
+    fun testProductFirebasePayloadParsingCompanyIds() {
         // From List of Longs
-        assertEquals(listOf(101L, 102L), PorulFirebasePayloadConverter.parseNiruvanamIds(listOf(101L, 102L)))
+        assertEquals(listOf(101L, 102L), ProductFirebasePayloadConverter.parseCompanyIds(listOf(101L, 102L)))
         // From List of Ints/Numbers
-        assertEquals(listOf(101L, 102L), PorulFirebasePayloadConverter.parseNiruvanamIds(listOf(101, 102)))
+        assertEquals(listOf(101L, 102L), ProductFirebasePayloadConverter.parseCompanyIds(listOf(101, 102)))
         // From List of Strings
-        assertEquals(listOf(101L, 102L), PorulFirebasePayloadConverter.parseNiruvanamIds(listOf("101", "102")))
+        assertEquals(listOf(101L, 102L), ProductFirebasePayloadConverter.parseCompanyIds(listOf("101", "102")))
         // From Map (e.g. Firebase array saved as object / sparse keys)
-        assertEquals(listOf(101L, 102L), PorulFirebasePayloadConverter.parseNiruvanamIds(mapOf("0" to 101, "1" to 102)))
+        assertEquals(listOf(101L, 102L), ProductFirebasePayloadConverter.parseCompanyIds(mapOf("0" to 101, "1" to 102)))
         // From JSON string
-        assertEquals(listOf(101L, 102L), PorulFirebasePayloadConverter.parseNiruvanamIds("[101, 102]"))
+        assertEquals(listOf(101L, 102L), ProductFirebasePayloadConverter.parseCompanyIds("[101, 102]"))
         // Null / empty / blank
-        assertEquals(emptyList(), PorulFirebasePayloadConverter.parseNiruvanamIds(null))
-        assertEquals(emptyList(), PorulFirebasePayloadConverter.parseNiruvanamIds(""))
-        assertEquals(emptyList(), PorulFirebasePayloadConverter.parseNiruvanamIds("[]"))
+        assertEquals(emptyList(), ProductFirebasePayloadConverter.parseCompanyIds(null))
+        assertEquals(emptyList(), ProductFirebasePayloadConverter.parseCompanyIds(""))
+        assertEquals(emptyList(), ProductFirebasePayloadConverter.parseCompanyIds("[]"))
     }
 
     @Test
-    fun testPorulFirebasePayloadParsingCompanyPrices() {
+    fun testProductFirebasePayloadParsingCompanyPrices() {
         // From Map with String keys and Double values
         val map1 = mapOf("101" to 4200.0, "102" to 4600.0)
-        val parsed1 = PorulFirebasePayloadConverter.parseCompanyPrices(map1)
+        val parsed1 = ProductFirebasePayloadConverter.parseCompanyPrices(map1)
         assertEquals(2, parsed1.size)
         assertEquals(4200.0, parsed1[101L])
         assertEquals(4600.0, parsed1[102L])
 
         // From Map with Long/Int keys and Int/Long values (Firebase numbers)
         val map2 = mapOf(101L to 4200, 102 to 4600L)
-        val parsed2 = PorulFirebasePayloadConverter.parseCompanyPrices(map2)
+        val parsed2 = ProductFirebasePayloadConverter.parseCompanyPrices(map2)
         assertEquals(2, parsed2.size)
         assertEquals(4200.0, parsed2[101L])
         assertEquals(4600.0, parsed2[102L])
 
         // From JSON string
         val json = """{"101": 4200.0, "102": 4600.5}"""
-        val parsed3 = PorulFirebasePayloadConverter.parseCompanyPrices(json)
+        val parsed3 = ProductFirebasePayloadConverter.parseCompanyPrices(json)
         assertEquals(2, parsed3.size)
         assertEquals(4200.0, parsed3[101L])
         assertEquals(4600.5, parsed3[102L])
 
         // Null / empty / blank
-        assertEquals(emptyMap(), PorulFirebasePayloadConverter.parseCompanyPrices(null))
-        assertEquals(emptyMap(), PorulFirebasePayloadConverter.parseCompanyPrices(""))
-        assertEquals(emptyMap(), PorulFirebasePayloadConverter.parseCompanyPrices("{}"))
+        assertEquals(emptyMap(), ProductFirebasePayloadConverter.parseCompanyPrices(null))
+        assertEquals(emptyMap(), ProductFirebasePayloadConverter.parseCompanyPrices(""))
+        assertEquals(emptyMap(), ProductFirebasePayloadConverter.parseCompanyPrices("{}"))
     }
 
     @Test
-    fun testPorulFirebaseLegacyPayloadFromRawMap() {
+    fun testProductFirebaseLegacyPayloadFromRawMap() {
         // Payload from older app version without company features
         val legacyPayload: Map<String, Any?> = mapOf(
             "id" to 10L,
@@ -175,7 +175,7 @@ class CompanyWorkspaceAndProductTest {
             "alagu" to "Meter",
             "hsnCode" to "5208"
         )
-        val item = PorulFirebasePayloadConverter.fromRawMap(legacyPayload)
+        val item = ProductFirebasePayloadConverter.fromRawMap(legacyPayload)
         assertNotNull(item)
         assertEquals(10L, item.id)
         assertEquals("Traditional Dhotis", item.name["en"])
@@ -189,7 +189,7 @@ class CompanyWorkspaceAndProductTest {
     }
 
     @Test
-    fun testPorulFirebaseRoundtrip() {
+    fun testProductFirebaseRoundtrip() {
         val original = ProductModel(
             id = 55,
             name = mapOf("ta" to "சட்டை", "en" to "Silk Shirt"),
@@ -200,8 +200,8 @@ class CompanyWorkspaceAndProductTest {
             companyIds = listOf(201L, 202L),
             companyPrices = mapOf(201L to 2100.0, 202L to 2300.0)
         )
-        val payload = PorulFirebasePayloadConverter.toFirebasePayload(original)
-        val reconstructed = PorulFirebasePayloadConverter.fromRawMap(payload)
+        val payload = ProductFirebasePayloadConverter.toFirebasePayload(original)
+        val reconstructed = ProductFirebasePayloadConverter.fromRawMap(payload)
 
         assertNotNull(reconstructed)
         assertEquals(original.id, reconstructed.id)
@@ -259,7 +259,7 @@ class CompanyWorkspaceAndProductTest {
         assertEquals(1350.0, editedProduct.getEffectivePrice(101L))
 
         // Verify Firebase payload preserves both
-        val payload = PorulFirebasePayloadConverter.toFirebasePayload(editedProduct)
+        val payload = ProductFirebasePayloadConverter.toFirebasePayload(editedProduct)
         assertEquals(listOf(101L), payload["niruvanamIds"])
         @Suppress("UNCHECKED_CAST")
         val prices = payload["companyPrices"] as Map<String, Double>

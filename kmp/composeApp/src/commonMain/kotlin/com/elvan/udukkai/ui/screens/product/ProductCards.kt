@@ -46,7 +46,7 @@ private fun getDynamicField(
 @Composable
 fun FactoryProductCard(
     index: Int,
-    porul: ProductModel,
+    product: ProductModel,
     onClick: () -> Unit,
     colors: ShellColors,
     isSelectionMode: Boolean = false,
@@ -59,9 +59,9 @@ fun FactoryProductCard(
     val primaryLang = profile.primaryLanguage.ifEmpty { "ta" }
     val secondaryLang = profile.secondaryLanguage.ifEmpty { "en" }
 
-    val primary = getDynamicField(porul.name, isPrimary = true, isBilingual = isBilingual, primaryLang, secondaryLang)
-        .ifEmpty { porul.name.values.firstOrNull() ?: "-" }
-    val secondary = getDynamicField(porul.name, isPrimary = false, isBilingual = isBilingual, primaryLang, secondaryLang)
+    val primary = getDynamicField(product.name, isPrimary = true, isBilingual = isBilingual, primaryLang, secondaryLang)
+        .ifEmpty { product.name.values.firstOrNull() ?: "-" }
+    val secondary = getDynamicField(product.name, isPrimary = false, isBilingual = isBilingual, primaryLang, secondaryLang)
 
     ElvanCommonCard(
         onClick = onClick,
@@ -143,7 +143,7 @@ fun FactoryProductCard(
 @Composable
 fun TextilesProductCard(
     index: Int,
-    porul: ProductModel,
+    product: ProductModel,
     onClick: () -> Unit,
     colors: ShellColors,
     isSelectionMode: Boolean = false,
@@ -156,9 +156,9 @@ fun TextilesProductCard(
     val primaryLang = profile.primaryLanguage.ifEmpty { "ta" }
     val secondaryLang = profile.secondaryLanguage.ifEmpty { "en" }
 
-    val primary = getDynamicField(porul.name, isPrimary = true, isBilingual = isBilingual, primaryLang, secondaryLang)
-        .ifEmpty { porul.name.values.firstOrNull() ?: "-" }
-    val secondary = getDynamicField(porul.name, isPrimary = false, isBilingual = isBilingual, primaryLang, secondaryLang)
+    val primary = getDynamicField(product.name, isPrimary = true, isBilingual = isBilingual, primaryLang, secondaryLang)
+        .ifEmpty { product.name.values.firstOrNull() ?: "-" }
+    val secondary = getDynamicField(product.name, isPrimary = false, isBilingual = isBilingual, primaryLang, secondaryLang)
 
     ElvanCommonCard(
         onClick = onClick,
@@ -243,9 +243,9 @@ fun TextilesProductCard(
                     Column(
                         modifier = Modifier.weight(1f, fill = false)
                     ) {
-                        val hsnText = if (porul.hsnCode.isNotBlank()) "HSN: ${porul.hsnCode}" else ""
-                        val gstRate = if (porul.taxRate % 1.0 == 0.0) porul.taxRate.toLong().toString() else porul.taxRate.toString()
-                        val taxText = if (porul.taxRate > 0.0) "Tax: $gstRate%" else ""
+                        val hsnText = if (product.hsnCode.isNotBlank()) "HSN: ${product.hsnCode}" else ""
+                        val gstRate = if (product.taxRate % 1.0 == 0.0) product.taxRate.toLong().toString() else product.taxRate.toString()
+                        val taxText = if (product.taxRate > 0.0) "Tax: $gstRate%" else ""
                         val hsnTaxLine = if (hsnText.isNotBlank() && taxText.isNotBlank()) "$hsnText • $taxText" else "$hsnText$taxText"
 
                         if (hsnTaxLine.isNotBlank()) {
@@ -261,7 +261,7 @@ fun TextilesProductCard(
                             )
                         }
 
-                        val measureLabel = if (porul.quantityType == "weight") "எடை • Weight" else "அளவு • Quantity"
+                        val measureLabel = if (product.quantityType == "weight") "எடை • Weight" else "அளவு • Quantity"
                         Text(
                             text = measureLabel,
                             style = TextStyle(
@@ -278,8 +278,8 @@ fun TextilesProductCard(
 
                     Spacer(modifier = Modifier.width(8.dp))
 
-                    val priceText = if (porul.price > 0.0) {
-                        val formatted = if (porul.price % 1.0 == 0.0) porul.price.toLong().toString() else porul.price.toString()
+                    val priceText = if (product.price > 0.0) {
+                        val formatted = if (product.price % 1.0 == 0.0) product.price.toLong().toString() else product.price.toString()
                         "₹$formatted"
                     } else {
                         "-"

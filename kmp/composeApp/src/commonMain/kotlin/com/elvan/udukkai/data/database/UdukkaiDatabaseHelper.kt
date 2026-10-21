@@ -9,27 +9,43 @@ import com.elvan.udukkai.data.settings.BusinessProfile
 
 /**
  * Clean, decoupled database interface for Udukkai applications.
- * Completely free of any runtime mode parameterization.
+ * Standardized English interface with full backward-compatibility defaults.
  * Each standalone app (Factory and Textiles) has its own dedicated instance.
  */
 interface UdukkaiDatabaseHelper {
-    // ── Merchants / Customers ────────────────────────────────────────────────
-    fun loadAllMerchants(): List<CustomerModel>
-    fun saveMerchant(merchant: CustomerModel): Long
-    fun deleteMerchant(id: Long): Boolean
-    fun loadDeletedMerchants(): List<CustomerModel>
-    fun restoreMerchant(id: Long): Boolean
-    fun permanentDeleteMerchant(id: Long): Boolean
-    fun purgeExpiredMerchants(days: Int = 30): Int
+    // ── Customers ────────────────────────────────────────────────────────────
+    fun loadAllCustomers(): List<CustomerModel>
+    fun saveCustomer(customer: CustomerModel): Long
+    fun deleteCustomer(id: Long): Boolean
+    fun loadDeletedCustomers(): List<CustomerModel>
+    fun restoreCustomer(id: Long): Boolean
+    fun permanentDeleteCustomer(id: Long): Boolean
+    fun purgeExpiredCustomers(days: Int = 30): Int
 
-    // ── Products / Items ─────────────────────────────────────────────────────
-    fun loadAllItems(): List<ProductModel>
-    fun saveItem(item: ProductModel): Long
-    fun deleteItem(id: Long): Boolean
-    fun loadDeletedItems(): List<ProductModel>
-    fun restoreItem(id: Long): Boolean
-    fun permanentDeleteItem(id: Long): Boolean
-    fun purgeExpiredItems(days: Int = 30): Int
+    fun loadAllMerchants(): List<CustomerModel> = loadAllCustomers()
+    fun saveMerchant(merchant: CustomerModel): Long = saveCustomer(merchant)
+    fun deleteMerchant(id: Long): Boolean = deleteCustomer(id)
+    fun loadDeletedMerchants(): List<CustomerModel> = loadDeletedCustomers()
+    fun restoreMerchant(id: Long): Boolean = restoreCustomer(id)
+    fun permanentDeleteMerchant(id: Long): Boolean = permanentDeleteCustomer(id)
+    fun purgeExpiredMerchants(days: Int = 30): Int = purgeExpiredCustomers(days)
+
+    // ── Products ─────────────────────────────────────────────────────────────
+    fun loadAllProducts(): List<ProductModel>
+    fun saveProduct(product: ProductModel): Long
+    fun deleteProduct(id: Long): Boolean
+    fun loadDeletedProducts(): List<ProductModel>
+    fun restoreProduct(id: Long): Boolean
+    fun permanentDeleteProduct(id: Long): Boolean
+    fun purgeExpiredProducts(days: Int = 30): Int
+
+    fun loadAllItems(): List<ProductModel> = loadAllProducts()
+    fun saveItem(item: ProductModel): Long = saveProduct(item)
+    fun deleteItem(id: Long): Boolean = deleteProduct(id)
+    fun loadDeletedItems(): List<ProductModel> = loadDeletedProducts()
+    fun restoreItem(id: Long): Boolean = restoreProduct(id)
+    fun permanentDeleteItem(id: Long): Boolean = permanentDeleteProduct(id)
+    fun purgeExpiredItems(days: Int = 30): Int = purgeExpiredProducts(days)
 
     // ── Invoices ─────────────────────────────────────────────────────────────
     fun loadAllInvoices(): List<InvoiceModel>
@@ -50,7 +66,8 @@ interface UdukkaiDatabaseHelper {
     fun purgeExpiredReceipts(days: Int = 30): Int
 
     // ── Receipt ↔ Invoice Junction Links ─────────────────────────────────────
-    fun getLinksForPatru(patruId: Long): List<ReceiptInvoiceLinkModel>
+    fun getLinksForReceipt(receiptId: Long): List<ReceiptInvoiceLinkModel>
+    fun getLinksForPatru(patruId: Long): List<ReceiptInvoiceLinkModel> = getLinksForReceipt(patruId)
     fun saveReceiptWithLinks(receipt: ReceiptModel, links: List<ReceiptInvoiceLinkModel>): Long
     fun getPaidAmountForInvoice(invoiceId: Long): Double
     fun getPaidAmountsForInvoices(invoiceIds: List<Long>): Map<Long, Double>

@@ -1,4 +1,4 @@
-﻿package com.elvan.udukkai.factory.data
+package com.elvan.udukkai.factory.data
 
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -71,9 +71,9 @@ object FactoryInvoiceRepository {
         loadDeleted()
     }
 
-    fun getNextVanakkam(niruvanamId: Long?): Int {
-        val matching = if (niruvanamId != null) {
-            invoices.filter { it.companyId == niruvanamId }
+    fun getNextVanakkam(companyId: Long?): Int {
+        val matching = if (companyId != null) {
+            invoices.filter { it.companyId == companyId }
         } else {
             invoices.filter { it.companyId == null }
         }
@@ -89,8 +89,8 @@ object FactoryInvoiceRepository {
         return "$prefix-$padded"
     }
 
-    fun getNextInvoiceNumber(niruvanamId: Long?, prefix: String): String {
-        val vanakkam = getNextVanakkam(niruvanamId)
+    fun getNextInvoiceNumber(companyId: Long?, prefix: String): String {
+        val vanakkam = getNextVanakkam(companyId)
         return formatInvoiceNumber(prefix, vanakkam)
     }
 

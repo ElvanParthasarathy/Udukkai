@@ -15,7 +15,7 @@ import androidx.compose.ui.Modifier
  * Animated list container for editor line items.
  */
 @Composable
-fun ElvanAsaiPattiyal(
+fun ElvanAnimatedList(
     modifier: Modifier = Modifier,
     content: @Composable () -> Unit
 ) {
@@ -33,7 +33,7 @@ fun ElvanAsaiPattiyal(
  * Calls [onDeleted] precisely when the collapse animation completes so there is zero abrupt popping.
  */
 @Composable
-fun ElvanAsaiCard(
+fun ElvanAnimatedCard(
     key: Any,
     isInitial: Boolean = false,
     onDeleted: () -> Unit,

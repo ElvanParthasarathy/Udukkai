@@ -28,7 +28,7 @@ import com.elvan.udukkai.ui.screens.editor.ElvanEditorLabel
  */
 @Composable
 fun TextilesInvoiceTypeField(
-    pattiyalVagai: String,
+    invoiceType: String,
     onChanged: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -43,7 +43,7 @@ fun TextilesInvoiceTypeField(
         "proforma" to K.proforma.tr()
     )
 
-    val currentLabel = displayMap[pattiyalVagai] ?: K.taxInvoice.tr()
+    val currentLabel = displayMap[invoiceType] ?: K.taxInvoice.tr()
     val containerBg = colors.iconBg
 
     Box(
@@ -92,7 +92,7 @@ fun TextilesInvoiceTypeField(
         ElvanSelectionBottomSheet(
             title = K.invoiceType.tr(),
             items = types,
-            currentValue = pattiyalVagai,
+            currentValue = invoiceType,
             showSearch = false,
             onDismissRequest = { isSheetOpen = false },
             onSelected = { selected ->
@@ -106,10 +106,10 @@ fun TextilesInvoiceTypeField(
     }
 }
 
-@Deprecated("Use TextilesInvoiceTypeField", ReplaceWith("TextilesInvoiceTypeField(pattiyalVagai, onChanged, modifier)"))
+@Deprecated("Use TextilesInvoiceTypeField", ReplaceWith("TextilesInvoiceTypeField(invoiceType, onChanged, modifier)"))
 @Composable
-fun PattuPattiyalVagaiKooru(
-    pattiyalVagai: String,
+fun PattuinvoiceTypeKooru(
+    invoiceType: String,
     onChanged: (String) -> Unit,
     modifier: Modifier = Modifier
-) = TextilesInvoiceTypeField(pattiyalVagai, onChanged, modifier)
+) = TextilesInvoiceTypeField(invoiceType, onChanged, modifier)

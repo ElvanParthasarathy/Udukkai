@@ -319,7 +319,7 @@ fun TextilesCreateScreen(
                             ) {
                                 TextilesInvoiceCard(
                                     index = index,
-                                    pattiyal = invoice,
+                                    invoice = invoice,
                                     colors = colors,
                                     isSelectionMode = isSelectionMode,
                                     isSelected = isSelected,

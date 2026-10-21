@@ -33,7 +33,7 @@ import com.elvan.udukkai.ui.components.ElvanCardLeadingIcon
 import com.elvan.udukkai.ui.components.ElvanCardSelector
 import com.elvan.udukkai.ui.components.ElvanCommonCard
 import com.elvan.udukkai.ui.components.shell.LocalElvanTopSpacerHeight
-import com.elvan.udukkai.ui.components.shell.PorulCardSkeleton
+import com.elvan.udukkai.ui.components.shell.ProductCardSkeleton
 import com.elvan.udukkai.ui.navigation.MaterialSymbols
 import kotlinx.coroutines.delay
 
@@ -92,7 +92,7 @@ fun TextilesProductScreen(
 
             if (isSearchLoading || isRefreshing) {
                 items(10) {
-                    PorulCardSkeleton()
+                    ProductCardSkeleton()
                 }
             } else if (items.isEmpty()) {
                 item(key = "empty_products") {
@@ -148,7 +148,7 @@ fun TextilesProductScreen(
 
                     TextilesProductCard(
                         index = index,
-                        porul = item,
+                        product = item,
                         onClick = onCardClick,
                         colors = colors,
                         isSelectionMode = isSelectionMode,

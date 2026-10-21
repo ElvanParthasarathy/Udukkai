@@ -22,12 +22,12 @@ class DesktopUdukkaiDatabaseHelper(
     val isFactory: Boolean
 ) : UdukkaiDatabaseHelper {
 
-    private val vaangunarTable = "${tablePrefix}vaangunar_table"
-    private val porulTable = "${tablePrefix}porul_table"
-    private val pattiyalTable = "${tablePrefix}pattiyal_table"
-    private val patrugalTable = "${tablePrefix}patrugal_table"
-    private val junctionTable = "${tablePrefix}patru_pattiyal_table"
-    private val profileTable = "${tablePrefix}niruvana_tharavugal_table"
+    private val customersTable = "${tablePrefix}customers"
+    private val productsTable = "${tablePrefix}products"
+    private val invoicesTable = "${tablePrefix}invoices"
+    private val receiptsTable = "${tablePrefix}receipts"
+    private val linksTable = "${tablePrefix}receipt_invoice_links"
+    private val profilesTable = "${tablePrefix}business_profiles"
 
     private fun resolveActiveDatabase(): File {
         val target = DesktopDbPaths.getDbFile(dbName)
@@ -75,39 +75,158 @@ class DesktopUdukkaiDatabaseHelper(
         } catch (_: Exception) {}
     }
 
-    private fun ensureTables(conn: Connection) {
-        if (isFactory) {
-            renameTableIfExists(conn, "kooli_vaangunar_table", vaangunarTable)
-            renameTableIfExists(conn, "kooli_porul_table", porulTable)
-            renameTableIfExists(conn, "kooli_pattiyal_table", pattiyalTable)
-            renameTableIfExists(conn, "kooli_patrugal_table", patrugalTable)
-            renameTableIfExists(conn, "kooli_patru_pattiyal_table", junctionTable)
-            renameTableIfExists(conn, "kooli_niruvana_tharavugal_table", profileTable)
-        } else {
-            renameTableIfExists(conn, "pattu_vaangunar_table", vaangunarTable)
-            renameTableIfExists(conn, "pattu_porul_table", porulTable)
-            renameTableIfExists(conn, "pattu_pattiyal_table", pattiyalTable)
-            renameTableIfExists(conn, "pattu_patrugal_table", patrugalTable)
-            renameTableIfExists(conn, "pattu_patru_pattiyal_table", junctionTable)
-            renameTableIfExists(conn, "pattu_niruvana_tharavugal_table", profileTable)
+    private fun renameColumnIfExists(conn: Connection, tableName: String, oldCol: String, newCol: String) {
+        try {
+            val existingCols = mutableSetOf<String>()
+            conn.createStatement().use { stmt ->
+                stmt.executeQuery("PRAGMA table_info(\"$tableName\")").use { rs ->
+                    while (rs.next()) {
+                        existingCols.add(rs.getString("name").lowercase())
+                    }
+                }
+            }
+            if (existingCols.contains(oldCol.lowercase()) && !existingCols.contains(newCol.lowercase())) {
+                println("Renaming legacy column $tableName.$oldCol -> $newCol")
+                conn.createStatement().use { stmt ->
+                    stmt.execute("ALTER TABLE \"$tableName\" RENAME COLUMN \"$oldCol\" TO \"$newCol\"")
+                }
+            }
+        } catch (e: Exception) {
+            println("Column rename $tableName.$oldCol -> $newCol error: ${e.message}")
         }
+    }
+
+    private fun ensureTables(conn: Connection) {
+        val legacyPrefix = if (isFactory) "kooli_" else "pattu_"
+
+        // 1. Rename any legacy / Tanglish tables to standardized English tables
+        renameTableIfExists(conn, "${legacyPrefix}vaangunar_table", customersTable)
+        renameTableIfExists(conn, "${tablePrefix}vaangunar_table", customersTable)
+
+        renameTableIfExists(conn, "${legacyPrefix}porul_table", productsTable)
+        renameTableIfExists(conn, "${tablePrefix}porul_table", productsTable)
+
+        renameTableIfExists(conn, "${legacyPrefix}pattiyal_table", invoicesTable)
+        renameTableIfExists(conn, "${tablePrefix}pattiyal_table", invoicesTable)
+
+        renameTableIfExists(conn, "${legacyPrefix}patrugal_table", receiptsTable)
+        renameTableIfExists(conn, "${tablePrefix}patrugal_table", receiptsTable)
+
+        renameTableIfExists(conn, "${legacyPrefix}patru_pattiyal_table", linksTable)
+        renameTableIfExists(conn, "${tablePrefix}patru_pattiyal_table", linksTable)
+
+        renameTableIfExists(conn, "${legacyPrefix}niruvana_tharavugal_table", profilesTable)
+        renameTableIfExists(conn, "${tablePrefix}niruvana_tharavugal_table", profilesTable)
+
+        // 2. Rename legacy columns in customersTable
+        renameColumnIfExists(conn, customersTable, "peyar", "name")
+        renameColumnIfExists(conn, customersTable, "mugavari", "address")
+        renameColumnIfExists(conn, customersTable, "oor", "city")
+        renameColumnIfExists(conn, customersTable, "maavattam", "district")
+        renameColumnIfExists(conn, customersTable, "maanilam", "state")
+        renameColumnIfExists(conn, customersTable, "naadu", "country")
+        renameColumnIfExists(conn, customersTable, "velinaad_mugavari", "international_address")
+        renameColumnIfExists(conn, customersTable, "anjal_kuriyeedu", "pin_code")
+        renameColumnIfExists(conn, customersTable, "minnanjal", "email")
+        renameColumnIfExists(conn, customersTable, "tholaipaesi", "phone")
+
+        // 3. Rename legacy columns in productsTable
+        renameColumnIfExists(conn, productsTable, "porul_peyar", "name")
+        renameColumnIfExists(conn, productsTable, "vilai", "price")
+        renameColumnIfExists(conn, productsTable, "vari_veetham", "tax_rate")
+        renameColumnIfExists(conn, productsTable, "alavu_vagai", "quantity_type")
+        renameColumnIfExists(conn, productsTable, "alagu", "unit")
+        renameColumnIfExists(conn, productsTable, "niruvanam_ids", "company_ids")
+
+        // 4. Rename legacy columns in invoicesTable
+        renameColumnIfExists(conn, invoicesTable, "niruvanam_id", "company_id")
+        renameColumnIfExists(conn, invoicesTable, "patrucheettu_en", "invoice_number")
+        renameColumnIfExists(conn, invoicesTable, "pattiyal_vagai", "invoice_type")
+        renameColumnIfExists(conn, invoicesTable, "vaangunar_id", "customer_id")
+        renameColumnIfExists(conn, invoicesTable, "vaangunar_peyar", "customer_name")
+        renameColumnIfExists(conn, invoicesTable, "vaangunar_munvari", "customer_address")
+        renameColumnIfExists(conn, invoicesTable, "pattiyal_naal", "invoice_date")
+        renameColumnIfExists(conn, invoicesTable, "tharavugal", "items_json")
+        renameColumnIfExists(conn, invoicesTable, "motha_thogai", "total_amount")
+        renameColumnIfExists(conn, invoicesTable, "thallupadi", "discount")
+        renameColumnIfExists(conn, invoicesTable, "podhu_thallupadi_mathippu", "global_discount_value")
+        renameColumnIfExists(conn, invoicesTable, "podhu_thallupadi_vagai", "global_discount_type")
+        renameColumnIfExists(conn, invoicesTable, "podhu_thallupadi_thogai", "global_discount_amount")
+        renameColumnIfExists(conn, invoicesTable, "vari_thogai", "tax_amount")
+        renameColumnIfExists(conn, invoicesTable, "vari_tharavugal", "tax_data_json")
+        renameColumnIfExists(conn, invoicesTable, "motha_edai", "total_weight")
+        renameColumnIfExists(conn, invoicesTable, "setharam_grams", "wastage_grams")
+        renameColumnIfExists(conn, invoicesTable, "thabaal_thogai", "postal_charges")
+        renameColumnIfExists(conn, invoicesTable, "ahimsa_pattu_thogai", "ahimsa_silk_amount")
+        renameColumnIfExists(conn, invoicesTable, "piravari_vugal", "other_taxes_json")
+        renameColumnIfExists(conn, invoicesTable, "sontha_viruppangal", "custom_preferences_json")
+        renameColumnIfExists(conn, invoicesTable, "nibandhanaigal", "terms_and_conditions")
+        renameColumnIfExists(conn, invoicesTable, "ullkurippu", "notes")
+        renameColumnIfExists(conn, invoicesTable, "vangi_tharavugal", "bank_details_json")
+
+        // 5. Rename legacy columns in receiptsTable
+        renameColumnIfExists(conn, receiptsTable, "niruvanam_id", "company_id")
+        renameColumnIfExists(conn, receiptsTable, "patru_en", "receipt_number")
+        renameColumnIfExists(conn, receiptsTable, "vaangunar_id", "customer_id")
+        renameColumnIfExists(conn, receiptsTable, "vaangunar_peyar", "customer_name")
+        renameColumnIfExists(conn, receiptsTable, "vaangunar_munvari", "customer_address")
+        renameColumnIfExists(conn, receiptsTable, "patru_naal", "receipt_date")
+        renameColumnIfExists(conn, receiptsTable, "thogai", "amount")
+        renameColumnIfExists(conn, receiptsTable, "seluthum_murai", "payment_mode")
+        renameColumnIfExists(conn, receiptsTable, "vangi_peyar", "bank_name")
+        renameColumnIfExists(conn, receiptsTable, "parivarthanai_en", "transaction_number")
+        renameColumnIfExists(conn, receiptsTable, "ullkurippu", "notes")
+
+        // 6. Rename legacy columns in linksTable
+        renameColumnIfExists(conn, linksTable, "patru_id", "receipt_id")
+        renameColumnIfExists(conn, linksTable, "pattiyal_id", "invoice_id")
+        renameColumnIfExists(conn, linksTable, "inaippu_thogai", "applied_amount")
+
+        // 7. Rename legacy columns in profilesTable
+        renameColumnIfExists(conn, profilesTable, "mudhan_mozhi", "primary_language")
+        renameColumnIfExists(conn, profilesTable, "thunai_mozhi", "secondary_language")
+        renameColumnIfExists(conn, profilesTable, "iru_mozhi", "is_bilingual")
+        renameColumnIfExists(conn, profilesTable, "gst_pirippugal", "split_gst")
+        renameColumnIfExists(conn, profilesTable, "niruvanathin_peyar", "business_name")
+        renameColumnIfExists(conn, profilesTable, "kurum_peyar", "short_name")
+        renameColumnIfExists(conn, profilesTable, "tholaipaesi1", "phone1")
+        renameColumnIfExists(conn, profilesTable, "tholaipaesi2", "phone2")
+        renameColumnIfExists(conn, profilesTable, "minnanjal", "email")
+        renameColumnIfExists(conn, profilesTable, "mugavari", "address")
+        renameColumnIfExists(conn, profilesTable, "oor", "city")
+        renameColumnIfExists(conn, profilesTable, "maavattam", "district")
+        renameColumnIfExists(conn, profilesTable, "maanilam", "state")
+        renameColumnIfExists(conn, profilesTable, "naadu", "country")
+        renameColumnIfExists(conn, profilesTable, "anjal_kuriyeedu", "pin_code")
+        renameColumnIfExists(conn, profilesTable, "vangi_peyar", "bank_name")
+        renameColumnIfExists(conn, profilesTable, "kilai", "branch")
+        renameColumnIfExists(conn, profilesTable, "vangi_kanakku", "account_number")
+        renameColumnIfExists(conn, profilesTable, "oavuru", "logo")
+        renameColumnIfExists(conn, profilesTable, "agala_oavuru", "wide_logo")
+        renameColumnIfExists(conn, profilesTable, "thalaippu_vadivu", "header_layout")
+        renameColumnIfExists(conn, profilesTable, "kaiyoppam", "signature")
+        renameColumnIfExists(conn, profilesTable, "oppam_peyar", "signatory_name")
+        renameColumnIfExists(conn, profilesTable, "oppam_mudhal_peyar", "signatory_first_name")
+        renameColumnIfExists(conn, profilesTable, "oppam_irudhi_peyar", "signatory_last_name")
+        renameColumnIfExists(conn, profilesTable, "adaimozhi", "tagline")
+        renameColumnIfExists(conn, profilesTable, "thoatra_niram", "theme_color")
 
         conn.createStatement().use { stmt ->
             // 1. Customers Table
             stmt.execute("""
-                CREATE TABLE IF NOT EXISTS "$vaangunarTable" (
+                CREATE TABLE IF NOT EXISTS "$customersTable" (
                     "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-                    "peyar" TEXT NOT NULL DEFAULT '{}',
-                    "mugavari" TEXT NOT NULL DEFAULT '{}',
-                    "oor" TEXT NOT NULL DEFAULT '{}',
-                    "maavattam" TEXT NOT NULL DEFAULT '{}',
-                    "maanilam" TEXT NOT NULL DEFAULT '{}',
-                    "naadu" TEXT NOT NULL DEFAULT '{"en": "India", "ta": "இந்தியா"}',
-                    "velinaad_mugavari" TEXT NOT NULL DEFAULT '{}',
-                    "anjal_kuriyeedu" TEXT NOT NULL DEFAULT '',
+                    "name" TEXT NOT NULL DEFAULT '{}',
+                    "address" TEXT NOT NULL DEFAULT '{}',
+                    "city" TEXT NOT NULL DEFAULT '{}',
+                    "district" TEXT NOT NULL DEFAULT '{}',
+                    "state" TEXT NOT NULL DEFAULT '{}',
+                    "country" TEXT NOT NULL DEFAULT '{"en": "India", "ta": "இந்தியா"}',
+                    "international_address" TEXT NOT NULL DEFAULT '{}',
+                    "pin_code" TEXT NOT NULL DEFAULT '',
                     "gstin" TEXT NOT NULL DEFAULT '',
-                    "minnanjal" TEXT NOT NULL DEFAULT '',
-                    "tholaipaesi" TEXT NOT NULL DEFAULT '',
+                    "email" TEXT NOT NULL DEFAULT '',
+                    "phone" TEXT NOT NULL DEFAULT '',
                     "created_at" INTEGER NOT NULL DEFAULT (CAST(strftime('%s', CURRENT_TIMESTAMP) AS INTEGER)),
                     "updated_at" INTEGER NOT NULL DEFAULT (CAST(strftime('%s', CURRENT_TIMESTAMP) AS INTEGER)),
                     "is_deleted" INTEGER NOT NULL DEFAULT 0 CHECK ("is_deleted" IN (0, 1)),
@@ -117,15 +236,15 @@ class DesktopUdukkaiDatabaseHelper(
 
             // 2. Products Table
             stmt.execute("""
-                CREATE TABLE IF NOT EXISTS "$porulTable" (
+                CREATE TABLE IF NOT EXISTS "$productsTable" (
                     "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-                    "porul_peyar" TEXT NOT NULL DEFAULT '{}',
+                    "name" TEXT NOT NULL DEFAULT '{}',
                     "hsn_code" TEXT NOT NULL DEFAULT '',
-                    "vilai" REAL NOT NULL DEFAULT 0.0,
-                    "vari_veetham" REAL NOT NULL DEFAULT 0.0,
-                    "alavu_vagai" TEXT NOT NULL DEFAULT 'quantity',
-                    "alagu" TEXT NOT NULL DEFAULT 'Nos',
-                    "niruvanam_ids" TEXT NOT NULL DEFAULT '[]',
+                    "price" REAL NOT NULL DEFAULT 0.0,
+                    "tax_rate" REAL NOT NULL DEFAULT 0.0,
+                    "quantity_type" TEXT NOT NULL DEFAULT 'quantity',
+                    "unit" TEXT NOT NULL DEFAULT 'Nos',
+                    "company_ids" TEXT NOT NULL DEFAULT '[]',
                     "company_prices" TEXT NOT NULL DEFAULT '{}',
                     "created_at" INTEGER NOT NULL DEFAULT (CAST(strftime('%s', CURRENT_TIMESTAMP) AS INTEGER)),
                     "updated_at" INTEGER NOT NULL DEFAULT (CAST(strftime('%s', CURRENT_TIMESTAMP) AS INTEGER)),
@@ -135,36 +254,36 @@ class DesktopUdukkaiDatabaseHelper(
             """.trimIndent())
 
             // 3. Invoices Table
-            val createPattiyalSql = if (isFactory) {
+            val createInvoiceSql = if (isFactory) {
                 """
-                CREATE TABLE IF NOT EXISTS "$pattiyalTable" (
+                CREATE TABLE IF NOT EXISTS "$invoicesTable" (
                     "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-                    "niruvanam_id" INTEGER NULL,
-                    "patrucheettu_en" TEXT NOT NULL,
+                    "company_id" INTEGER NULL,
+                    "invoice_number" TEXT NOT NULL,
                     "fin_year" INTEGER NOT NULL,
                     "vanakkam" INTEGER NOT NULL DEFAULT 1,
-                    "pattiyal_vagai" TEXT NOT NULL DEFAULT 'tax-invoice',
-                    "vaangunar_id" INTEGER NULL,
-                    "vaangunar_peyar" TEXT NOT NULL DEFAULT '{}',
-                    "vaangunar_munvari" TEXT NOT NULL DEFAULT '{}',
-                    "pattiyal_naal" INTEGER NOT NULL DEFAULT (CAST(strftime('%s', CURRENT_TIMESTAMP) AS INTEGER)),
-                    "tharavugal" TEXT NOT NULL DEFAULT '[]',
-                    "motha_thogai" REAL NOT NULL DEFAULT 0.0,
-                    "thallupadi" REAL NOT NULL DEFAULT 0.0,
-                    "podhu_thallupadi_mathippu" REAL NOT NULL DEFAULT 0.0,
-                    "podhu_thallupadi_vagai" TEXT NOT NULL DEFAULT '%',
-                    "podhu_thallupadi_thogai" REAL NOT NULL DEFAULT 0.0,
-                    "vari_thogai" REAL NOT NULL DEFAULT 0.0,
-                    "vari_tharavugal" TEXT NOT NULL DEFAULT '{}',
-                    "motha_edai" REAL NOT NULL DEFAULT 0.0,
-                    "setharam_grams" REAL NOT NULL DEFAULT 0.0,
-                    "thabaal_thogai" REAL NOT NULL DEFAULT 0.0,
-                    "ahimsa_pattu_thogai" REAL NOT NULL DEFAULT 0.0,
-                    "piravari_vugal" TEXT NOT NULL DEFAULT '[]',
-                    "sontha_viruppangal" TEXT NOT NULL DEFAULT '{}',
-                    "nibandhanaigal" TEXT NOT NULL DEFAULT '',
-                    "ullkurippu" TEXT NOT NULL DEFAULT '',
-                    "vangi_tharavugal" TEXT NOT NULL DEFAULT '{}',
+                    "invoice_type" TEXT NOT NULL DEFAULT 'tax-invoice',
+                    "customer_id" INTEGER NULL,
+                    "customer_name" TEXT NOT NULL DEFAULT '{}',
+                    "customer_address" TEXT NOT NULL DEFAULT '{}',
+                    "invoice_date" INTEGER NOT NULL DEFAULT (CAST(strftime('%s', CURRENT_TIMESTAMP) AS INTEGER)),
+                    "items_json" TEXT NOT NULL DEFAULT '[]',
+                    "total_amount" REAL NOT NULL DEFAULT 0.0,
+                    "discount" REAL NOT NULL DEFAULT 0.0,
+                    "global_discount_value" REAL NOT NULL DEFAULT 0.0,
+                    "global_discount_type" TEXT NOT NULL DEFAULT '%',
+                    "global_discount_amount" REAL NOT NULL DEFAULT 0.0,
+                    "tax_amount" REAL NOT NULL DEFAULT 0.0,
+                    "tax_data_json" TEXT NOT NULL DEFAULT '{}',
+                    "total_weight" REAL NOT NULL DEFAULT 0.0,
+                    "wastage_grams" REAL NOT NULL DEFAULT 0.0,
+                    "postal_charges" REAL NOT NULL DEFAULT 0.0,
+                    "ahimsa_silk_amount" REAL NOT NULL DEFAULT 0.0,
+                    "other_taxes_json" TEXT NOT NULL DEFAULT '[]',
+                    "custom_preferences_json" TEXT NOT NULL DEFAULT '{}',
+                    "terms_and_conditions" TEXT NOT NULL DEFAULT '',
+                    "notes" TEXT NOT NULL DEFAULT '',
+                    "bank_details_json" TEXT NOT NULL DEFAULT '{}',
                     "created_at" INTEGER NOT NULL DEFAULT (CAST(strftime('%s', CURRENT_TIMESTAMP) AS INTEGER)),
                     "updated_at" INTEGER NOT NULL DEFAULT (CAST(strftime('%s', CURRENT_TIMESTAMP) AS INTEGER)),
                     "is_deleted" INTEGER NOT NULL DEFAULT 0 CHECK ("is_deleted" IN (0, 1)),
@@ -173,28 +292,28 @@ class DesktopUdukkaiDatabaseHelper(
                 """.trimIndent()
             } else {
                 """
-                CREATE TABLE IF NOT EXISTS "$pattiyalTable" (
+                CREATE TABLE IF NOT EXISTS "$invoicesTable" (
                     "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-                    "niruvanam_id" INTEGER NULL,
-                    "patrucheettu_en" TEXT NOT NULL,
+                    "company_id" INTEGER NULL,
+                    "invoice_number" TEXT NOT NULL,
                     "fin_year" INTEGER NOT NULL,
                     "vanakkam" INTEGER NOT NULL DEFAULT 1,
-                    "pattiyal_vagai" TEXT NOT NULL DEFAULT 'tax-invoice',
-                    "vaangunar_id" INTEGER NULL,
-                    "vaangunar_peyar" TEXT NOT NULL DEFAULT '{}',
-                    "vaangunar_munvari" TEXT NOT NULL DEFAULT '{}',
-                    "pattiyal_naal" INTEGER NOT NULL DEFAULT (CAST(strftime('%s', CURRENT_TIMESTAMP) AS INTEGER)),
-                    "tharavugal" TEXT NOT NULL DEFAULT '[]',
-                    "motha_thogai" REAL NOT NULL DEFAULT 0.0,
-                    "thallupadi" REAL NOT NULL DEFAULT 0.0,
-                    "podhu_thallupadi_mathippu" REAL NOT NULL DEFAULT 0.0,
-                    "podhu_thallupadi_vagai" TEXT NOT NULL DEFAULT '%',
-                    "podhu_thallupadi_thogai" REAL NOT NULL DEFAULT 0.0,
-                    "vari_thogai" REAL NOT NULL DEFAULT 0.0,
-                    "vari_tharavugal" TEXT NOT NULL DEFAULT '{}',
-                    "sontha_viruppangal" TEXT NOT NULL DEFAULT '{}',
-                    "nibandhanaigal" TEXT NOT NULL DEFAULT '',
-                    "ullkurippu" TEXT NOT NULL DEFAULT '',
+                    "invoice_type" TEXT NOT NULL DEFAULT 'tax-invoice',
+                    "customer_id" INTEGER NULL,
+                    "customer_name" TEXT NOT NULL DEFAULT '{}',
+                    "customer_address" TEXT NOT NULL DEFAULT '{}',
+                    "invoice_date" INTEGER NOT NULL DEFAULT (CAST(strftime('%s', CURRENT_TIMESTAMP) AS INTEGER)),
+                    "items_json" TEXT NOT NULL DEFAULT '[]',
+                    "total_amount" REAL NOT NULL DEFAULT 0.0,
+                    "discount" REAL NOT NULL DEFAULT 0.0,
+                    "global_discount_value" REAL NOT NULL DEFAULT 0.0,
+                    "global_discount_type" TEXT NOT NULL DEFAULT '%',
+                    "global_discount_amount" REAL NOT NULL DEFAULT 0.0,
+                    "tax_amount" REAL NOT NULL DEFAULT 0.0,
+                    "tax_data_json" TEXT NOT NULL DEFAULT '{}',
+                    "custom_preferences_json" TEXT NOT NULL DEFAULT '{}',
+                    "terms_and_conditions" TEXT NOT NULL DEFAULT '',
+                    "notes" TEXT NOT NULL DEFAULT '',
                     "created_at" INTEGER NOT NULL DEFAULT (CAST(strftime('%s', CURRENT_TIMESTAMP) AS INTEGER)),
                     "updated_at" INTEGER NOT NULL DEFAULT (CAST(strftime('%s', CURRENT_TIMESTAMP) AS INTEGER)),
                     "is_deleted" INTEGER NOT NULL DEFAULT 0 CHECK ("is_deleted" IN (0, 1)),
@@ -202,25 +321,25 @@ class DesktopUdukkaiDatabaseHelper(
                 )
                 """.trimIndent()
             }
-            stmt.execute(createPattiyalSql)
+            stmt.execute(createInvoiceSql)
 
             // 4. Receipts Table
             stmt.execute("""
-                CREATE TABLE IF NOT EXISTS "$patrugalTable" (
+                CREATE TABLE IF NOT EXISTS "$receiptsTable" (
                     "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-                    "niruvanam_id" INTEGER NULL,
-                    "patru_en" TEXT NOT NULL,
+                    "company_id" INTEGER NULL,
+                    "receipt_number" TEXT NOT NULL,
                     "fin_year" TEXT NOT NULL DEFAULT '',
                     "vanakkam" INTEGER NOT NULL DEFAULT 1,
-                    "vaangunar_id" INTEGER NULL,
-                    "vaangunar_peyar" TEXT NOT NULL DEFAULT '{}',
-                    "vaangunar_munvari" TEXT NOT NULL DEFAULT '{}',
-                    "patru_naal" INTEGER NOT NULL DEFAULT (CAST(strftime('%s', CURRENT_TIMESTAMP) AS INTEGER)),
-                    "thogai" REAL NOT NULL DEFAULT 0.0,
-                    "seluthum_murai" TEXT NOT NULL DEFAULT 'cash',
-                    "vangi_peyar" TEXT NULL,
-                    "parivarthanai_en" TEXT NULL,
-                    "ullkurippu" TEXT NOT NULL DEFAULT '',
+                    "customer_id" INTEGER NULL,
+                    "customer_name" TEXT NOT NULL DEFAULT '{}',
+                    "customer_address" TEXT NOT NULL DEFAULT '{}',
+                    "receipt_date" INTEGER NOT NULL DEFAULT (CAST(strftime('%s', CURRENT_TIMESTAMP) AS INTEGER)),
+                    "amount" REAL NOT NULL DEFAULT 0.0,
+                    "payment_mode" TEXT NOT NULL DEFAULT 'cash',
+                    "bank_name" TEXT NULL,
+                    "transaction_number" TEXT NULL,
+                    "notes" TEXT NOT NULL DEFAULT '',
                     "created_at" INTEGER NOT NULL DEFAULT (CAST(strftime('%s', CURRENT_TIMESTAMP) AS INTEGER)),
                     "updated_at" INTEGER NOT NULL DEFAULT (CAST(strftime('%s', CURRENT_TIMESTAMP) AS INTEGER)),
                     "is_deleted" INTEGER NOT NULL DEFAULT 0 CHECK ("is_deleted" IN (0, 1)),
@@ -230,49 +349,49 @@ class DesktopUdukkaiDatabaseHelper(
 
             // 5. Junction Table
             stmt.execute("""
-                CREATE TABLE IF NOT EXISTS "$junctionTable" (
+                CREATE TABLE IF NOT EXISTS "$linksTable" (
                     "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-                    "patru_id" INTEGER NOT NULL,
-                    "pattiyal_id" INTEGER NOT NULL,
-                    "inaippu_thogai" REAL NOT NULL DEFAULT 0.0,
+                    "receipt_id" INTEGER NOT NULL,
+                    "invoice_id" INTEGER NOT NULL,
+                    "applied_amount" REAL NOT NULL DEFAULT 0.0,
                     "created_at" INTEGER NOT NULL DEFAULT (CAST(strftime('%s', CURRENT_TIMESTAMP) AS INTEGER))
                 )
             """.trimIndent())
 
             // 6. Profiles Table
             stmt.execute("""
-                CREATE TABLE IF NOT EXISTS "$profileTable" (
+                CREATE TABLE IF NOT EXISTS "$profilesTable" (
                     "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-                    "mudhan_mozhi" TEXT NOT NULL DEFAULT 'ta',
-                    "thunai_mozhi" TEXT NOT NULL DEFAULT 'en',
-                    "iru_mozhi" INTEGER NOT NULL DEFAULT 1 CHECK ("iru_mozhi" IN (0, 1)),
-                    "gst_pirippugal" INTEGER NOT NULL DEFAULT 0 CHECK ("gst_pirippugal" IN (0, 1)),
-                    "niruvanathin_peyar" TEXT NOT NULL DEFAULT '{}',
-                    "kurum_peyar" TEXT NOT NULL DEFAULT '',
-                    "tholaipaesi1" TEXT NOT NULL DEFAULT '',
-                    "tholaipaesi2" TEXT NOT NULL DEFAULT '',
-                    "minnanjal" TEXT NOT NULL DEFAULT '',
+                    "primary_language" TEXT NOT NULL DEFAULT 'ta',
+                    "secondary_language" TEXT NOT NULL DEFAULT 'en',
+                    "is_bilingual" INTEGER NOT NULL DEFAULT 1 CHECK ("is_bilingual" IN (0, 1)),
+                    "split_gst" INTEGER NOT NULL DEFAULT 0 CHECK ("split_gst" IN (0, 1)),
+                    "business_name" TEXT NOT NULL DEFAULT '{}',
+                    "short_name" TEXT NOT NULL DEFAULT '',
+                    "phone1" TEXT NOT NULL DEFAULT '',
+                    "phone2" TEXT NOT NULL DEFAULT '',
+                    "email" TEXT NOT NULL DEFAULT '',
                     "gstin" TEXT NOT NULL DEFAULT '',
-                    "mugavari" TEXT NOT NULL DEFAULT '{}',
-                    "oor" TEXT NOT NULL DEFAULT '{}',
-                    "maavattam" TEXT NOT NULL DEFAULT '{}',
-                    "maanilam" TEXT NOT NULL DEFAULT '{}',
-                    "naadu" TEXT NOT NULL DEFAULT '{"en": "India", "ta": "இந்தியா"}',
-                    "anjal_kuriyeedu" TEXT NOT NULL DEFAULT '',
-                    "vangi_peyar" TEXT NOT NULL DEFAULT '{}',
-                    "kilai" TEXT NOT NULL DEFAULT '{}',
-                    "vangi_kanakku" TEXT NOT NULL DEFAULT '',
+                    "address" TEXT NOT NULL DEFAULT '{}',
+                    "city" TEXT NOT NULL DEFAULT '{}',
+                    "district" TEXT NOT NULL DEFAULT '{}',
+                    "state" TEXT NOT NULL DEFAULT '{}',
+                    "country" TEXT NOT NULL DEFAULT '{"en": "India", "ta": "இந்தியா"}',
+                    "pin_code" TEXT NOT NULL DEFAULT '',
+                    "bank_name" TEXT NOT NULL DEFAULT '{}',
+                    "branch" TEXT NOT NULL DEFAULT '{}',
+                    "account_number" TEXT NOT NULL DEFAULT '',
                     "ifsc" TEXT NOT NULL DEFAULT '',
-                    "oavuru" TEXT NOT NULL DEFAULT '',
-                    "agala_oavuru" TEXT NOT NULL DEFAULT '',
-                    "thalaippu_vadivu" TEXT NOT NULL DEFAULT 'small',
-                    "kaiyoppam" TEXT NOT NULL DEFAULT '',
-                    "oppam_peyar" TEXT NOT NULL DEFAULT '',
-                    "oppam_mudhal_peyar" TEXT NOT NULL DEFAULT '',
-                    "oppam_irudhi_peyar" TEXT NOT NULL DEFAULT '',
-                    "adaimozhi" TEXT NOT NULL DEFAULT '{}',
+                    "logo" TEXT NOT NULL DEFAULT '',
+                    "wide_logo" TEXT NOT NULL DEFAULT '',
+                    "header_layout" TEXT NOT NULL DEFAULT 'small',
+                    "signature" TEXT NOT NULL DEFAULT '',
+                    "signatory_name" TEXT NOT NULL DEFAULT '',
+                    "signatory_first_name" TEXT NOT NULL DEFAULT '',
+                    "signatory_last_name" TEXT NOT NULL DEFAULT '',
+                    "tagline" TEXT NOT NULL DEFAULT '{}',
                     "upi_id" TEXT NOT NULL DEFAULT '',
-                    "thoatra_niram" TEXT NOT NULL DEFAULT '',
+                    "theme_color" TEXT NOT NULL DEFAULT '',
                     "created_at" INTEGER NOT NULL DEFAULT (CAST(strftime('%s', CURRENT_TIMESTAMP) AS INTEGER)),
                     "updated_at" INTEGER NOT NULL DEFAULT (CAST(strftime('%s', CURRENT_TIMESTAMP) AS INTEGER)),
                     "is_deleted" INTEGER NOT NULL DEFAULT 0 CHECK ("is_deleted" IN (0, 1)),
@@ -282,7 +401,7 @@ class DesktopUdukkaiDatabaseHelper(
         }
     }
 
-    private inline fun <T> useConn(block: (Connection) -> T): T {
+    private inline fun <T> useConn(crossinline block: (Connection) -> T): T {
         val conn = getConnection()
         return try {
             ensureTables(conn)
@@ -292,178 +411,254 @@ class DesktopUdukkaiDatabaseHelper(
         }
     }
 
-    // ── Merchants / Customers ────────────────────────────────────────────────
-    override fun loadAllMerchants(): List<CustomerModel> = useConn { conn ->
+    // ── Safe ResultSet Parsing Helpers ───────────────────────────────────────
+    private fun getColIdx(rs: ResultSet, vararg names: String): Int {
+        val meta = rs.metaData
+        val count = meta.columnCount
+        for (name in names) {
+            for (i in 1..count) {
+                if (meta.getColumnLabel(i).equals(name, ignoreCase = true) ||
+                    meta.getColumnName(i).equals(name, ignoreCase = true)) {
+                    return i
+                }
+            }
+        }
+        return -1
+    }
+
+    private fun getStringCol(rs: ResultSet, vararg names: String, default: String = ""): String {
+        val idx = getColIdx(rs, *names)
+        if (idx < 1) return default
+        return rs.getString(idx) ?: default
+    }
+
+    private fun getDoubleCol(rs: ResultSet, vararg names: String, default: Double = 0.0): Double {
+        val idx = getColIdx(rs, *names)
+        if (idx < 1) return default
+        return rs.getDouble(idx)
+    }
+
+    private fun getLongCol(rs: ResultSet, vararg names: String, default: Long = 0L): Long {
+        val idx = getColIdx(rs, *names)
+        if (idx < 1) return default
+        return rs.getLong(idx)
+    }
+
+    private fun getLongOrNull(rs: ResultSet, vararg names: String): Long? {
+        val idx = getColIdx(rs, *names)
+        if (idx < 1) return null
+        val v = rs.getLong(idx)
+        return if (rs.wasNull()) null else v
+    }
+
+    private fun getStringOrNull(rs: ResultSet, vararg names: String): String? {
+        val idx = getColIdx(rs, *names)
+        if (idx < 1) return null
+        return rs.getString(idx)
+    }
+
+    private fun getIntCol(rs: ResultSet, vararg names: String, default: Int = 0): Int {
+        val idx = getColIdx(rs, *names)
+        if (idx < 1) return default
+        return rs.getInt(idx)
+    }
+
+    // ── Customers ────────────────────────────────────────────────────────────
+    override fun loadAllCustomers(): List<CustomerModel> = useConn { conn ->
         val list = mutableListOf<CustomerModel>()
         conn.createStatement().use { stmt ->
-            stmt.executeQuery("SELECT * FROM \"$vaangunarTable\" WHERE is_deleted = 0 ORDER BY id DESC").use { rs ->
+            stmt.executeQuery("SELECT * FROM \"$customersTable\" WHERE is_deleted = 0 ORDER BY id DESC").use { rs ->
                 while (rs.next()) list.add(rsToMerchant(rs))
             }
         }
         list
     }
 
-    override fun saveMerchant(merchant: CustomerModel): Long = useConn { conn ->
-        val isUpdate = merchant.id != null && merchant.id > 0
+    override fun saveCustomer(customer: CustomerModel): Long = useConn { conn ->
+        val isUpdate = customer.id != null && customer.id > 0
         val sql = if (isUpdate) {
-            "UPDATE \"$vaangunarTable\" SET peyar=?, mugavari=?, oor=?, maavattam=?, maanilam=?, naadu=?, velinaad_mugavari=?, anjal_kuriyeedu=?, gstin=?, minnanjal=?, tholaipaesi=?, updated_at=?, is_deleted=0 WHERE id=?"
+            "UPDATE \"$customersTable\" SET name=?, address=?, city=?, district=?, state=?, country=?, international_address=?, pin_code=?, gstin=?, email=?, phone=?, updated_at=?, is_deleted=0 WHERE id=?"
         } else {
-            "INSERT INTO \"$vaangunarTable\" (peyar, mugavari, oor, maavattam, maanilam, naadu, velinaad_mugavari, anjal_kuriyeedu, gstin, minnanjal, tholaipaesi, created_at, updated_at, is_deleted) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0)"
+            "INSERT INTO \"$customersTable\" (name, address, city, district, state, country, international_address, pin_code, gstin, email, phone, created_at, updated_at, is_deleted) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0)"
         }
         conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS).use { stmt ->
-            stmt.setString(1, LanguageJsonConverter.stringify(merchant.name))
-            stmt.setString(2, LanguageJsonConverter.stringify(merchant.address))
-            stmt.setString(3, LanguageJsonConverter.stringify(merchant.city))
-            stmt.setString(4, LanguageJsonConverter.stringify(merchant.district))
-            stmt.setString(5, LanguageJsonConverter.stringify(merchant.state))
-            stmt.setString(6, LanguageJsonConverter.stringify(merchant.country))
-            stmt.setString(7, LanguageJsonConverter.stringify(merchant.internationalAddress))
-            stmt.setString(8, merchant.pinCode)
-            stmt.setString(9, merchant.gstin)
-            stmt.setString(10, merchant.email)
-            stmt.setString(11, merchant.phone)
+            stmt.setString(1, LanguageJsonConverter.stringify(customer.name))
+            stmt.setString(2, LanguageJsonConverter.stringify(customer.address))
+            stmt.setString(3, LanguageJsonConverter.stringify(customer.city))
+            stmt.setString(4, LanguageJsonConverter.stringify(customer.district))
+            stmt.setString(5, LanguageJsonConverter.stringify(customer.state))
+            stmt.setString(6, LanguageJsonConverter.stringify(customer.country))
+            stmt.setString(7, LanguageJsonConverter.stringify(customer.internationalAddress))
+            stmt.setString(8, customer.pinCode)
+            stmt.setString(9, customer.gstin)
+            stmt.setString(10, customer.email)
+            stmt.setString(11, customer.phone)
+
             val now = System.currentTimeMillis() / 1000
             if (isUpdate) {
                 stmt.setLong(12, now)
-                stmt.setLong(13, merchant.id!!)
+                stmt.setLong(13, customer.id!!)
                 stmt.executeUpdate()
-                merchant.id!!
+                customer.id!!
             } else {
                 stmt.setLong(12, now)
                 stmt.setLong(13, now)
                 stmt.executeUpdate()
-                stmt.generatedKeys.use { rs -> if (rs.next()) rs.getLong(1) else -1L }
+                stmt.generatedKeys.use { gk ->
+                    if (gk.next()) gk.getLong(1) else -1L
+                }
             }
         }
     }
 
-    override fun deleteMerchant(id: Long): Boolean = useConn { conn ->
-        conn.prepareStatement("UPDATE \"$vaangunarTable\" SET is_deleted = 1, deleted_at = ? WHERE id = ?").use { stmt ->
+    override fun deleteCustomer(id: Long): Boolean = useConn { conn ->
+        conn.prepareStatement("UPDATE \"$customersTable\" SET is_deleted = 1, deleted_at = ? WHERE id = ?").use { stmt ->
             stmt.setLong(1, System.currentTimeMillis() / 1000)
             stmt.setLong(2, id)
             stmt.executeUpdate() > 0
         }
     }
 
-    override fun loadDeletedMerchants(): List<CustomerModel> = useConn { conn ->
+    override fun loadDeletedCustomers(): List<CustomerModel> = useConn { conn ->
         val list = mutableListOf<CustomerModel>()
         conn.createStatement().use { stmt ->
-            stmt.executeQuery("SELECT * FROM \"$vaangunarTable\" WHERE is_deleted = 1 ORDER BY deleted_at DESC").use { rs ->
+            stmt.executeQuery("SELECT * FROM \"$customersTable\" WHERE is_deleted = 1 ORDER BY deleted_at DESC").use { rs ->
                 while (rs.next()) list.add(rsToMerchant(rs))
             }
         }
         list
     }
 
-    override fun restoreMerchant(id: Long): Boolean = useConn { conn ->
-        conn.prepareStatement("UPDATE \"$vaangunarTable\" SET is_deleted = 0, deleted_at = NULL WHERE id = ?").use { stmt ->
+    override fun restoreCustomer(id: Long): Boolean = useConn { conn ->
+        conn.prepareStatement("UPDATE \"$customersTable\" SET is_deleted = 0, deleted_at = NULL WHERE id = ?").use { stmt ->
             stmt.setLong(1, id)
             stmt.executeUpdate() > 0
         }
     }
 
-    override fun permanentDeleteMerchant(id: Long): Boolean = useConn { conn ->
-        conn.prepareStatement("DELETE FROM \"$vaangunarTable\" WHERE id = ?").use { stmt ->
+    override fun permanentDeleteCustomer(id: Long): Boolean = useConn { conn ->
+        conn.prepareStatement("DELETE FROM \"$customersTable\" WHERE id = ?").use { stmt ->
             stmt.setLong(1, id)
             stmt.executeUpdate() > 0
         }
     }
 
-    override fun purgeExpiredMerchants(days: Int): Int = useConn { conn ->
+    override fun purgeExpiredCustomers(days: Int): Int = useConn { conn ->
         val threshold = (System.currentTimeMillis() / 1000) - (days * 86400L)
-        conn.prepareStatement("DELETE FROM \"$vaangunarTable\" WHERE is_deleted = 1 AND deleted_at < ?").use { stmt ->
+        conn.prepareStatement("DELETE FROM \"$customersTable\" WHERE is_deleted = 1 AND deleted_at < ?").use { stmt ->
             stmt.setLong(1, threshold)
             stmt.executeUpdate()
         }
     }
 
-    // ── Products / Items ─────────────────────────────────────────────────────
-    override fun loadAllItems(): List<ProductModel> = useConn { conn ->
+    // Backward-compatible delegates
+    override fun loadAllMerchants(): List<CustomerModel> = loadAllCustomers()
+    override fun saveMerchant(merchant: CustomerModel): Long = saveCustomer(merchant)
+    override fun deleteMerchant(id: Long): Boolean = deleteCustomer(id)
+    override fun loadDeletedMerchants(): List<CustomerModel> = loadDeletedCustomers()
+    override fun restoreMerchant(id: Long): Boolean = restoreCustomer(id)
+    override fun permanentDeleteMerchant(id: Long): Boolean = permanentDeleteCustomer(id)
+    override fun purgeExpiredMerchants(days: Int): Int = purgeExpiredCustomers(days)
+
+    // ── Products ─────────────────────────────────────────────────────────────
+    override fun loadAllProducts(): List<ProductModel> = useConn { conn ->
         val list = mutableListOf<ProductModel>()
         conn.createStatement().use { stmt ->
-            stmt.executeQuery("SELECT * FROM \"$porulTable\" WHERE is_deleted = 0 ORDER BY id DESC").use { rs ->
+            stmt.executeQuery("SELECT * FROM \"$productsTable\" WHERE is_deleted = 0 ORDER BY id DESC").use { rs ->
                 while (rs.next()) list.add(rsToItem(rs))
             }
         }
         list
     }
 
-    override fun saveItem(item: ProductModel): Long = useConn { conn ->
-        val isUpdate = item.id != null && item.id > 0
+    override fun saveProduct(product: ProductModel): Long = useConn { conn ->
+        val isUpdate = product.id != null && product.id > 0
         val sql = if (isUpdate) {
-            "UPDATE \"$porulTable\" SET porul_peyar=?, hsn_code=?, vilai=?, vari_veetham=?, alavu_vagai=?, alagu=?, niruvanam_ids=?, company_prices=?, updated_at=?, is_deleted=0 WHERE id=?"
+            "UPDATE \"$productsTable\" SET name=?, hsn_code=?, price=?, tax_rate=?, quantity_type=?, unit=?, company_ids=?, company_prices=?, updated_at=?, is_deleted=0 WHERE id=?"
         } else {
-            "INSERT INTO \"$porulTable\" (porul_peyar, hsn_code, vilai, vari_veetham, alavu_vagai, alagu, niruvanam_ids, company_prices, created_at, updated_at, is_deleted) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0)"
+            "INSERT INTO \"$productsTable\" (name, hsn_code, price, tax_rate, quantity_type, unit, company_ids, company_prices, created_at, updated_at, is_deleted) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0)"
         }
         conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS).use { stmt ->
-            stmt.setString(1, LanguageJsonConverter.stringify(item.name))
-            stmt.setString(2, item.hsnCode)
-            stmt.setDouble(3, item.price)
-            stmt.setDouble(4, item.taxRate)
-            stmt.setString(5, item.quantityType)
-            stmt.setString(6, item.unit)
-            stmt.setString(7, item.companyIds.toString())
-            stmt.setString(8, item.companyPrices.toString())
+            stmt.setString(1, LanguageJsonConverter.stringify(product.name))
+            stmt.setString(2, product.hsnCode)
+            stmt.setDouble(3, product.price)
+            stmt.setDouble(4, product.taxRate)
+            stmt.setString(5, product.quantityType)
+            stmt.setString(6, product.unit)
+            stmt.setString(7, product.companyIds.toString())
+            stmt.setString(8, product.companyPrices.toString())
+
             val now = System.currentTimeMillis() / 1000
             if (isUpdate) {
                 stmt.setLong(9, now)
-                stmt.setLong(10, item.id!!)
+                stmt.setLong(10, product.id!!)
                 stmt.executeUpdate()
-                item.id!!
+                product.id!!
             } else {
                 stmt.setLong(9, now)
                 stmt.setLong(10, now)
                 stmt.executeUpdate()
-                stmt.generatedKeys.use { rs -> if (rs.next()) rs.getLong(1) else -1L }
+                stmt.generatedKeys.use { gk ->
+                    if (gk.next()) gk.getLong(1) else -1L
+                }
             }
         }
     }
 
-    override fun deleteItem(id: Long): Boolean = useConn { conn ->
-        conn.prepareStatement("UPDATE \"$porulTable\" SET is_deleted = 1, deleted_at = ? WHERE id = ?").use { stmt ->
+    override fun deleteProduct(id: Long): Boolean = useConn { conn ->
+        conn.prepareStatement("UPDATE \"$productsTable\" SET is_deleted = 1, deleted_at = ? WHERE id = ?").use { stmt ->
             stmt.setLong(1, System.currentTimeMillis() / 1000)
             stmt.setLong(2, id)
             stmt.executeUpdate() > 0
         }
     }
 
-    override fun loadDeletedItems(): List<ProductModel> = useConn { conn ->
+    override fun loadDeletedProducts(): List<ProductModel> = useConn { conn ->
         val list = mutableListOf<ProductModel>()
         conn.createStatement().use { stmt ->
-            stmt.executeQuery("SELECT * FROM \"$porulTable\" WHERE is_deleted = 1 ORDER BY deleted_at DESC").use { rs ->
+            stmt.executeQuery("SELECT * FROM \"$productsTable\" WHERE is_deleted = 1 ORDER BY deleted_at DESC").use { rs ->
                 while (rs.next()) list.add(rsToItem(rs))
             }
         }
         list
     }
 
-    override fun restoreItem(id: Long): Boolean = useConn { conn ->
-        conn.prepareStatement("UPDATE \"$porulTable\" SET is_deleted = 0, deleted_at = NULL WHERE id = ?").use { stmt ->
+    override fun restoreProduct(id: Long): Boolean = useConn { conn ->
+        conn.prepareStatement("UPDATE \"$productsTable\" SET is_deleted = 0, deleted_at = NULL WHERE id = ?").use { stmt ->
             stmt.setLong(1, id)
             stmt.executeUpdate() > 0
         }
     }
 
-    override fun permanentDeleteItem(id: Long): Boolean = useConn { conn ->
-        conn.prepareStatement("DELETE FROM \"$porulTable\" WHERE id = ?").use { stmt ->
+    override fun permanentDeleteProduct(id: Long): Boolean = useConn { conn ->
+        conn.prepareStatement("DELETE FROM \"$productsTable\" WHERE id = ?").use { stmt ->
             stmt.setLong(1, id)
             stmt.executeUpdate() > 0
         }
     }
 
-    override fun purgeExpiredItems(days: Int): Int = useConn { conn ->
+    override fun purgeExpiredProducts(days: Int): Int = useConn { conn ->
         val threshold = (System.currentTimeMillis() / 1000) - (days * 86400L)
-        conn.prepareStatement("DELETE FROM \"$porulTable\" WHERE is_deleted = 1 AND deleted_at < ?").use { stmt ->
+        conn.prepareStatement("DELETE FROM \"$productsTable\" WHERE is_deleted = 1 AND deleted_at < ?").use { stmt ->
             stmt.setLong(1, threshold)
             stmt.executeUpdate()
         }
     }
+
+    // Backward-compatible delegates
+    override fun loadAllItems(): List<ProductModel> = loadAllProducts()
+    override fun saveItem(item: ProductModel): Long = saveProduct(item)
+    override fun deleteItem(id: Long): Boolean = deleteProduct(id)
+    override fun loadDeletedItems(): List<ProductModel> = loadDeletedProducts()
+    override fun restoreItem(id: Long): Boolean = restoreProduct(id)
+    override fun permanentDeleteItem(id: Long): Boolean = permanentDeleteProduct(id)
+    override fun purgeExpiredItems(days: Int): Int = purgeExpiredProducts(days)
 
     // ── Invoices ─────────────────────────────────────────────────────────────
     override fun loadAllInvoices(): List<InvoiceModel> = useConn { conn ->
         val list = mutableListOf<InvoiceModel>()
         conn.createStatement().use { stmt ->
-            stmt.executeQuery("SELECT * FROM \"$pattiyalTable\" WHERE is_deleted = 0 ORDER BY pattiyal_naal DESC, id DESC").use { rs ->
+            stmt.executeQuery("SELECT * FROM \"$invoicesTable\" WHERE is_deleted = 0 ORDER BY invoice_date DESC, id DESC").use { rs ->
                 while (rs.next()) list.add(rsToInvoice(rs))
             }
         }
@@ -474,15 +669,15 @@ class DesktopUdukkaiDatabaseHelper(
         val isUpdate = invoice.id != null && invoice.id > 0
         val sql = if (isFactory) {
             if (isUpdate) {
-                "UPDATE \"$pattiyalTable\" SET niruvanam_id=?, patrucheettu_en=?, fin_year=?, vanakkam=?, pattiyal_vagai=?, vaangunar_id=?, vaangunar_peyar=?, vaangunar_munvari=?, pattiyal_naal=?, tharavugal=?, motha_thogai=?, thallupadi=?, podhu_thallupadi_mathippu=?, podhu_thallupadi_vagai=?, podhu_thallupadi_thogai=?, vari_thogai=?, vari_tharavugal=?, motha_edai=?, setharam_grams=?, thabaal_thogai=?, ahimsa_pattu_thogai=?, piravari_vugal=?, sontha_viruppangal=?, nibandhanaigal=?, ullkurippu=?, vangi_tharavugal=?, updated_at=?, is_deleted=0 WHERE id=?"
+                "UPDATE \"$invoicesTable\" SET company_id=?, invoice_number=?, fin_year=?, vanakkam=?, invoice_type=?, customer_id=?, customer_name=?, customer_address=?, invoice_date=?, items_json=?, total_amount=?, discount=?, global_discount_value=?, global_discount_type=?, global_discount_amount=?, tax_amount=?, tax_data_json=?, total_weight=?, wastage_grams=?, postal_charges=?, ahimsa_silk_amount=?, other_taxes_json=?, custom_preferences_json=?, terms_and_conditions=?, notes=?, bank_details_json=?, updated_at=?, is_deleted=0 WHERE id=?"
             } else {
-                "INSERT INTO \"$pattiyalTable\" (niruvanam_id, patrucheettu_en, fin_year, vanakkam, pattiyal_vagai, vaangunar_id, vaangunar_peyar, vaangunar_munvari, pattiyal_naal, tharavugal, motha_thogai, thallupadi, podhu_thallupadi_mathippu, podhu_thallupadi_vagai, podhu_thallupadi_thogai, vari_thogai, vari_tharavugal, motha_edai, setharam_grams, thabaal_thogai, ahimsa_pattu_thogai, piravari_vugal, sontha_viruppangal, nibandhanaigal, ullkurippu, vangi_tharavugal, created_at, updated_at, is_deleted) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0)"
+                "INSERT INTO \"$invoicesTable\" (company_id, invoice_number, fin_year, vanakkam, invoice_type, customer_id, customer_name, customer_address, invoice_date, items_json, total_amount, discount, global_discount_value, global_discount_type, global_discount_amount, tax_amount, tax_data_json, total_weight, wastage_grams, postal_charges, ahimsa_silk_amount, other_taxes_json, custom_preferences_json, terms_and_conditions, notes, bank_details_json, created_at, updated_at, is_deleted) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0)"
             }
         } else {
             if (isUpdate) {
-                "UPDATE \"$pattiyalTable\" SET niruvanam_id=?, patrucheettu_en=?, fin_year=?, vanakkam=?, pattiyal_vagai=?, vaangunar_id=?, vaangunar_peyar=?, vaangunar_munvari=?, pattiyal_naal=?, tharavugal=?, motha_thogai=?, thallupadi=?, podhu_thallupadi_mathippu=?, podhu_thallupadi_vagai=?, podhu_thallupadi_thogai=?, vari_thogai=?, vari_tharavugal=?, sontha_viruppangal=?, nibandhanaigal=?, ullkurippu=?, updated_at=?, is_deleted=0 WHERE id=?"
+                "UPDATE \"$invoicesTable\" SET company_id=?, invoice_number=?, fin_year=?, vanakkam=?, invoice_type=?, customer_id=?, customer_name=?, customer_address=?, invoice_date=?, items_json=?, total_amount=?, discount=?, global_discount_value=?, global_discount_type=?, global_discount_amount=?, tax_amount=?, tax_data_json=?, custom_preferences_json=?, terms_and_conditions=?, notes=?, updated_at=?, is_deleted=0 WHERE id=?"
             } else {
-                "INSERT INTO \"$pattiyalTable\" (niruvanam_id, patrucheettu_en, fin_year, vanakkam, pattiyal_vagai, vaangunar_id, vaangunar_peyar, vaangunar_munvari, pattiyal_naal, tharavugal, motha_thogai, thallupadi, podhu_thallupadi_mathippu, podhu_thallupadi_vagai, podhu_thallupadi_thogai, vari_thogai, vari_tharavugal, sontha_viruppangal, nibandhanaigal, ullkurippu, created_at, updated_at, is_deleted) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0)"
+                "INSERT INTO \"$invoicesTable\" (company_id, invoice_number, fin_year, vanakkam, invoice_type, customer_id, customer_name, customer_address, invoice_date, items_json, total_amount, discount, global_discount_value, global_discount_type, global_discount_amount, tax_amount, tax_data_json, custom_preferences_json, terms_and_conditions, notes, created_at, updated_at, is_deleted) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0)"
             }
         }
 
@@ -525,7 +720,9 @@ class DesktopUdukkaiDatabaseHelper(
                     stmt.setLong(27, now)
                     stmt.setLong(28, now)
                     stmt.executeUpdate()
-                    stmt.generatedKeys.use { rs -> if (rs.next()) rs.getLong(1) else -1L }
+                    stmt.generatedKeys.use { gk ->
+                        if (gk.next()) gk.getLong(1) else -1L
+                    }
                 }
             } else {
                 stmt.setString(18, invoice.customPreferencesJson)
@@ -540,14 +737,16 @@ class DesktopUdukkaiDatabaseHelper(
                     stmt.setLong(21, now)
                     stmt.setLong(22, now)
                     stmt.executeUpdate()
-                    stmt.generatedKeys.use { rs -> if (rs.next()) rs.getLong(1) else -1L }
+                    stmt.generatedKeys.use { gk ->
+                        if (gk.next()) gk.getLong(1) else -1L
+                    }
                 }
             }
         }
     }
 
     override fun deleteInvoice(id: Long): Boolean = useConn { conn ->
-        conn.prepareStatement("UPDATE \"$pattiyalTable\" SET is_deleted = 1, deleted_at = ? WHERE id = ?").use { stmt ->
+        conn.prepareStatement("UPDATE \"$invoicesTable\" SET is_deleted = 1, deleted_at = ? WHERE id = ?").use { stmt ->
             stmt.setLong(1, System.currentTimeMillis() / 1000)
             stmt.setLong(2, id)
             stmt.executeUpdate() > 0
@@ -557,7 +756,7 @@ class DesktopUdukkaiDatabaseHelper(
     override fun loadDeletedInvoices(): List<InvoiceModel> = useConn { conn ->
         val list = mutableListOf<InvoiceModel>()
         conn.createStatement().use { stmt ->
-            stmt.executeQuery("SELECT * FROM \"$pattiyalTable\" WHERE is_deleted = 1 ORDER BY deleted_at DESC").use { rs ->
+            stmt.executeQuery("SELECT * FROM \"$invoicesTable\" WHERE is_deleted = 1 ORDER BY deleted_at DESC").use { rs ->
                 while (rs.next()) list.add(rsToInvoice(rs))
             }
         }
@@ -565,14 +764,14 @@ class DesktopUdukkaiDatabaseHelper(
     }
 
     override fun restoreInvoice(id: Long): Boolean = useConn { conn ->
-        conn.prepareStatement("UPDATE \"$pattiyalTable\" SET is_deleted = 0, deleted_at = NULL WHERE id = ?").use { stmt ->
+        conn.prepareStatement("UPDATE \"$invoicesTable\" SET is_deleted = 0, deleted_at = NULL WHERE id = ?").use { stmt ->
             stmt.setLong(1, id)
             stmt.executeUpdate() > 0
         }
     }
 
     override fun permanentDeleteInvoice(id: Long): Boolean = useConn { conn ->
-        conn.prepareStatement("DELETE FROM \"$pattiyalTable\" WHERE id = ?").use { stmt ->
+        conn.prepareStatement("DELETE FROM \"$invoicesTable\" WHERE id = ?").use { stmt ->
             stmt.setLong(1, id)
             stmt.executeUpdate() > 0
         }
@@ -580,7 +779,7 @@ class DesktopUdukkaiDatabaseHelper(
 
     override fun purgeExpiredInvoices(days: Int): Int = useConn { conn ->
         val threshold = (System.currentTimeMillis() / 1000) - (days * 86400L)
-        conn.prepareStatement("DELETE FROM \"$pattiyalTable\" WHERE is_deleted = 1 AND deleted_at < ?").use { stmt ->
+        conn.prepareStatement("DELETE FROM \"$invoicesTable\" WHERE is_deleted = 1 AND deleted_at < ?").use { stmt ->
             stmt.setLong(1, threshold)
             stmt.executeUpdate()
         }
@@ -590,7 +789,7 @@ class DesktopUdukkaiDatabaseHelper(
     override fun loadAllReceipts(): List<ReceiptModel> = useConn { conn ->
         val list = mutableListOf<ReceiptModel>()
         conn.createStatement().use { stmt ->
-            stmt.executeQuery("SELECT * FROM \"$patrugalTable\" WHERE is_deleted = 0 ORDER BY patru_naal DESC, id DESC").use { rs ->
+            stmt.executeQuery("SELECT * FROM \"$receiptsTable\" WHERE is_deleted = 0 ORDER BY receipt_date DESC, id DESC").use { rs ->
                 while (rs.next()) list.add(rsToReceipt(rs))
             }
         }
@@ -600,10 +799,11 @@ class DesktopUdukkaiDatabaseHelper(
     override fun saveReceipt(receipt: ReceiptModel): Long = useConn { conn ->
         val isUpdate = receipt.id != null && receipt.id > 0
         val sql = if (isUpdate) {
-            "UPDATE \"$patrugalTable\" SET niruvanam_id=?, patru_en=?, fin_year=?, vanakkam=?, vaangunar_id=?, vaangunar_peyar=?, vaangunar_munvari=?, patru_naal=?, thogai=?, seluthum_murai=?, vangi_peyar=?, parivarthanai_en=?, ullkurippu=?, updated_at=?, is_deleted=0 WHERE id=?"
+            "UPDATE \"$receiptsTable\" SET company_id=?, receipt_number=?, fin_year=?, vanakkam=?, customer_id=?, customer_name=?, customer_address=?, receipt_date=?, amount=?, payment_mode=?, bank_name=?, transaction_number=?, notes=?, updated_at=?, is_deleted=0 WHERE id=?"
         } else {
-            "INSERT INTO \"$patrugalTable\" (niruvanam_id, patru_en, fin_year, vanakkam, vaangunar_id, vaangunar_peyar, vaangunar_munvari, patru_naal, thogai, seluthum_murai, vangi_peyar, parivarthanai_en, ullkurippu, created_at, updated_at, is_deleted) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0)"
+            "INSERT INTO \"$receiptsTable\" (company_id, receipt_number, fin_year, vanakkam, customer_id, customer_name, customer_address, receipt_date, amount, payment_mode, bank_name, transaction_number, notes, created_at, updated_at, is_deleted) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0)"
         }
+
         conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS).use { stmt ->
             if (receipt.companyId != null) stmt.setLong(1, receipt.companyId) else stmt.setNull(1, Types.INTEGER)
             stmt.setString(2, receipt.receiptNumber)
@@ -618,6 +818,7 @@ class DesktopUdukkaiDatabaseHelper(
             if (receipt.bankName != null) stmt.setString(11, receipt.bankName) else stmt.setNull(11, Types.VARCHAR)
             if (receipt.transactionNumber != null) stmt.setString(12, receipt.transactionNumber) else stmt.setNull(12, Types.VARCHAR)
             stmt.setString(13, receipt.notes)
+
             val now = System.currentTimeMillis() / 1000
             if (isUpdate) {
                 stmt.setLong(14, now)
@@ -628,13 +829,15 @@ class DesktopUdukkaiDatabaseHelper(
                 stmt.setLong(14, now)
                 stmt.setLong(15, now)
                 stmt.executeUpdate()
-                stmt.generatedKeys.use { rs -> if (rs.next()) rs.getLong(1) else -1L }
+                stmt.generatedKeys.use { gk ->
+                    if (gk.next()) gk.getLong(1) else -1L
+                }
             }
         }
     }
 
     override fun deleteReceipt(id: Long): Boolean = useConn { conn ->
-        conn.prepareStatement("UPDATE \"$patrugalTable\" SET is_deleted = 1, deleted_at = ? WHERE id = ?").use { stmt ->
+        conn.prepareStatement("UPDATE \"$receiptsTable\" SET is_deleted = 1, deleted_at = ? WHERE id = ?").use { stmt ->
             stmt.setLong(1, System.currentTimeMillis() / 1000)
             stmt.setLong(2, id)
             stmt.executeUpdate() > 0
@@ -644,7 +847,7 @@ class DesktopUdukkaiDatabaseHelper(
     override fun loadDeletedReceipts(): List<ReceiptModel> = useConn { conn ->
         val list = mutableListOf<ReceiptModel>()
         conn.createStatement().use { stmt ->
-            stmt.executeQuery("SELECT * FROM \"$patrugalTable\" WHERE is_deleted = 1 ORDER BY deleted_at DESC").use { rs ->
+            stmt.executeQuery("SELECT * FROM \"$receiptsTable\" WHERE is_deleted = 1 ORDER BY deleted_at DESC").use { rs ->
                 while (rs.next()) list.add(rsToReceipt(rs))
             }
         }
@@ -652,14 +855,14 @@ class DesktopUdukkaiDatabaseHelper(
     }
 
     override fun restoreReceipt(id: Long): Boolean = useConn { conn ->
-        conn.prepareStatement("UPDATE \"$patrugalTable\" SET is_deleted = 0, deleted_at = NULL WHERE id = ?").use { stmt ->
+        conn.prepareStatement("UPDATE \"$receiptsTable\" SET is_deleted = 0, deleted_at = NULL WHERE id = ?").use { stmt ->
             stmt.setLong(1, id)
             stmt.executeUpdate() > 0
         }
     }
 
     override fun permanentDeleteReceipt(id: Long): Boolean = useConn { conn ->
-        conn.prepareStatement("DELETE FROM \"$patrugalTable\" WHERE id = ?").use { stmt ->
+        conn.prepareStatement("DELETE FROM \"$receiptsTable\" WHERE id = ?").use { stmt ->
             stmt.setLong(1, id)
             stmt.executeUpdate() > 0
         }
@@ -667,24 +870,24 @@ class DesktopUdukkaiDatabaseHelper(
 
     override fun purgeExpiredReceipts(days: Int): Int = useConn { conn ->
         val threshold = (System.currentTimeMillis() / 1000) - (days * 86400L)
-        conn.prepareStatement("DELETE FROM \"$patrugalTable\" WHERE is_deleted = 1 AND deleted_at < ?").use { stmt ->
+        conn.prepareStatement("DELETE FROM \"$receiptsTable\" WHERE is_deleted = 1 AND deleted_at < ?").use { stmt ->
             stmt.setLong(1, threshold)
             stmt.executeUpdate()
         }
     }
 
     // ── Junction Links ───────────────────────────────────────────────────────
-    override fun getLinksForPatru(patruId: Long): List<ReceiptInvoiceLinkModel> = useConn { conn ->
+    override fun getLinksForReceipt(receiptId: Long): List<ReceiptInvoiceLinkModel> = useConn { conn ->
         val list = mutableListOf<ReceiptInvoiceLinkModel>()
-        conn.prepareStatement("SELECT * FROM \"$junctionTable\" WHERE patru_id = ?").use { stmt ->
-            stmt.setLong(1, patruId)
+        conn.prepareStatement("SELECT * FROM \"$linksTable\" WHERE receipt_id = ?").use { stmt ->
+            stmt.setLong(1, receiptId)
             stmt.executeQuery().use { rs ->
                 while (rs.next()) {
                     list.add(ReceiptInvoiceLinkModel(
-                        id = rs.getLong("id"),
-                        receiptId = rs.getLong("patru_id"),
-                        invoiceId = rs.getLong("pattiyal_id"),
-                        appliedAmount = rs.getDouble("inaippu_thogai")
+                        id = getLongCol(rs, "id"),
+                        receiptId = getLongCol(rs, "receipt_id", "patru_id"),
+                        invoiceId = getLongCol(rs, "invoice_id", "pattiyal_id"),
+                        appliedAmount = getDoubleCol(rs, "applied_amount", "inaippu_thogai")
                     ))
                 }
             }
@@ -692,17 +895,20 @@ class DesktopUdukkaiDatabaseHelper(
         list
     }
 
+    override fun getLinksForPatru(patruId: Long): List<ReceiptInvoiceLinkModel> = getLinksForReceipt(patruId)
+
     override fun saveReceiptWithLinks(receipt: ReceiptModel, links: List<ReceiptInvoiceLinkModel>): Long = useConn { conn ->
+        val autoCommit = conn.autoCommit
         conn.autoCommit = false
         try {
             val rId = saveReceipt(receipt)
             if (rId > 0) {
-                conn.prepareStatement("DELETE FROM \"$junctionTable\" WHERE patru_id = ?").use { delStmt ->
+                conn.prepareStatement("DELETE FROM \"$linksTable\" WHERE receipt_id = ?").use { delStmt ->
                     delStmt.setLong(1, rId)
                     delStmt.executeUpdate()
                 }
-                conn.prepareStatement("INSERT INTO \"$junctionTable\" (patru_id, pattiyal_id, inaippu_thogai, created_at) VALUES (?, ?, ?, ?)").use { insStmt ->
-                    val now = System.currentTimeMillis() / 1000
+                val now = System.currentTimeMillis() / 1000
+                conn.prepareStatement("INSERT INTO \"$linksTable\" (receipt_id, invoice_id, applied_amount, created_at) VALUES (?, ?, ?, ?)").use { insStmt ->
                     for (link in links) {
                         insStmt.setLong(1, rId)
                         insStmt.setLong(2, link.invoiceId)
@@ -719,13 +925,13 @@ class DesktopUdukkaiDatabaseHelper(
             conn.rollback()
             throw e
         } finally {
-            conn.autoCommit = true
+            conn.autoCommit = autoCommit
         }
     }
 
     override fun getPaidAmountForInvoice(invoiceId: Long): Double = useConn { conn ->
         var sum = 0.0
-        conn.prepareStatement("SELECT SUM(inaippu_thogai) FROM \"$junctionTable\" WHERE pattiyal_id = ?").use { stmt ->
+        conn.prepareStatement("SELECT SUM(applied_amount) FROM \"$linksTable\" WHERE invoice_id = ?").use { stmt ->
             stmt.setLong(1, invoiceId)
             stmt.executeQuery().use { rs ->
                 if (rs.next()) sum = rs.getDouble(1)
@@ -738,8 +944,11 @@ class DesktopUdukkaiDatabaseHelper(
         val result = mutableMapOf<Long, Double>()
         if (invoiceIds.isEmpty()) return@useConn result
         val placeholders = invoiceIds.joinToString(",") { "?" }
-        conn.prepareStatement("SELECT pattiyal_id, SUM(inaippu_thogai) FROM \"$junctionTable\" WHERE pattiyal_id IN ($placeholders) GROUP BY pattiyal_id").use { stmt ->
-            invoiceIds.forEachIndexed { idx, id -> stmt.setLong(idx + 1, id) }
+        val sql = "SELECT invoice_id, SUM(applied_amount) FROM \"$linksTable\" WHERE invoice_id IN ($placeholders) GROUP BY invoice_id"
+        conn.prepareStatement(sql).use { stmt ->
+            invoiceIds.forEachIndexed { i, id ->
+                stmt.setLong(i + 1, id)
+            }
             stmt.executeQuery().use { rs ->
                 while (rs.next()) {
                     result[rs.getLong(1)] = rs.getDouble(2)
@@ -753,9 +962,9 @@ class DesktopUdukkaiDatabaseHelper(
     override fun loadProfile(profileId: Long?): BusinessProfile? = useConn { conn ->
         var p: BusinessProfile? = null
         val sql = if (profileId != null) {
-            "SELECT * FROM \"$profileTable\" WHERE id = ? AND is_deleted = 0 LIMIT 1"
+            "SELECT * FROM \"$profilesTable\" WHERE id = ? AND is_deleted = 0 LIMIT 1"
         } else {
-            "SELECT * FROM \"$profileTable\" WHERE is_deleted = 0 ORDER BY id ASC LIMIT 1"
+            "SELECT * FROM \"$profilesTable\" WHERE is_deleted = 0 ORDER BY id ASC LIMIT 1"
         }
         conn.prepareStatement(sql).use { stmt ->
             if (profileId != null) stmt.setLong(1, profileId)
@@ -769,7 +978,7 @@ class DesktopUdukkaiDatabaseHelper(
     override fun loadAllProfiles(): List<BusinessProfile> = useConn { conn ->
         val list = mutableListOf<BusinessProfile>()
         conn.createStatement().use { stmt ->
-            stmt.executeQuery("SELECT * FROM \"$profileTable\" WHERE is_deleted = 0 ORDER BY id ASC").use { rs ->
+            stmt.executeQuery("SELECT * FROM \"$profilesTable\" WHERE is_deleted = 0 ORDER BY id ASC").use { rs ->
                 while (rs.next()) list.add(rsToProfile(rs))
             }
         }
@@ -777,17 +986,48 @@ class DesktopUdukkaiDatabaseHelper(
     }
 
     override fun saveProfile(profile: BusinessProfile): Boolean = useConn { conn ->
-        val exists = if (profile.id != null) {
-            conn.prepareStatement("SELECT id FROM \"$profileTable\" WHERE id = ?").use { stmt ->
-                stmt.setLong(1, profile.id!!)
+        val pId = profile.id
+        val exists = if (pId != null) {
+            conn.prepareStatement("SELECT id FROM \"$profilesTable\" WHERE id = ?").use { stmt ->
+                stmt.setLong(1, pId)
                 stmt.executeQuery().use { rs -> rs.next() }
             }
         } else false
 
         val sql = if (exists) {
-            "UPDATE \"$profileTable\" SET mudhan_mozhi=?, thunai_mozhi=?, iru_mozhi=?, gst_pirippugal=?, niruvanathin_peyar=?, kurum_peyar=?, tholaipaesi1=?, tholaipaesi2=?, minnanjal=?, gstin=?, mugavari=?, oor=?, maavattam=?, maanilam=?, naadu=?, anjal_kuriyeedu=?, vangi_peyar=?, kilai=?, vangi_kanakku=?, ifsc=?, oavuru=?, agala_oavuru=?, thalaippu_vadivu=?, kaiyoppam=?, oppam_peyar=?, oppam_mudhal_peyar=?, oppam_irudhi_peyar=?, adaimozhi=?, upi_id=?, thoatra_niram=?, updated_at=?, is_deleted=0 WHERE id=?"
+            """
+            UPDATE "$profilesTable" SET 
+                primary_language=?, secondary_language=?, is_bilingual=?, split_gst=?, business_name=?, 
+                short_name=?, phone1=?, phone2=?, email=?, gstin=?, 
+                address=?, city=?, district=?, state=?, country=?, 
+                pin_code=?, bank_name=?, branch=?, account_number=?, ifsc=?, 
+                logo=?, wide_logo=?, header_layout=?, signature=?, 
+                signatory_name=?, signatory_first_name=?, signatory_last_name=?, 
+                tagline=?, upi_id=?, theme_color=?, updated_at=?, is_deleted=0 
+            WHERE id=?
+            """.trimIndent()
         } else {
-            "INSERT INTO \"$profileTable\" (mudhan_mozhi, thunai_mozhi, iru_mozhi, gst_pirippugal, niruvanathin_peyar, kurum_peyar, tholaipaesi1, tholaipaesi2, minnanjal, gstin, mugavari, oor, maavattam, maanilam, naadu, anjal_kuriyeedu, vangi_peyar, kilai, vangi_kanakku, ifsc, oavuru, agala_oavuru, thalaippu_vadivu, kaiyoppam, oppam_peyar, oppam_mudhal_peyar, oppam_irudhi_peyar, adaimozhi, upi_id, thoatra_niram, created_at, updated_at, is_deleted) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0)"
+            """
+            INSERT INTO "$profilesTable" (
+                primary_language, secondary_language, is_bilingual, split_gst, business_name, 
+                short_name, phone1, phone2, email, gstin, 
+                address, city, district, state, country, 
+                pin_code, bank_name, branch, account_number, ifsc, 
+                logo, wide_logo, header_layout, signature, 
+                signatory_name, signatory_first_name, signatory_last_name, 
+                tagline, upi_id, theme_color, created_at, updated_at, is_deleted
+                ${if (pId != null) ", id" else ""}
+            ) VALUES (
+                ?, ?, ?, ?, ?, 
+                ?, ?, ?, ?, ?, 
+                ?, ?, ?, ?, ?, 
+                ?, ?, ?, ?, ?, 
+                ?, ?, ?, ?, 
+                ?, ?, ?, 
+                ?, ?, ?, ?, ?, 0
+                ${if (pId != null) ", ?" else ""}
+            )
+            """.trimIndent()
         }
 
         conn.prepareStatement(sql).use { stmt ->
@@ -821,20 +1061,24 @@ class DesktopUdukkaiDatabaseHelper(
             stmt.setString(28, LanguageJsonConverter.stringify(profile.tagline))
             stmt.setString(29, profile.upiId)
             stmt.setString(30, profile.themeColor)
+
             val now = System.currentTimeMillis() / 1000
             if (exists) {
                 stmt.setLong(31, now)
-                stmt.setLong(32, profile.id!!)
+                stmt.setLong(32, pId!!)
             } else {
                 stmt.setLong(31, now)
                 stmt.setLong(32, now)
+                if (pId != null) {
+                    stmt.setLong(33, pId)
+                }
             }
             stmt.executeUpdate() > 0
         }
     }
 
     override fun deleteProfile(profileId: Long): Boolean = useConn { conn ->
-        conn.prepareStatement("UPDATE \"$profileTable\" SET is_deleted = 1, deleted_at = ? WHERE id = ?").use { stmt ->
+        conn.prepareStatement("UPDATE \"$profilesTable\" SET is_deleted = 1, deleted_at = ? WHERE id = ?").use { stmt ->
             stmt.setLong(1, System.currentTimeMillis() / 1000)
             stmt.setLong(2, profileId)
             stmt.executeUpdate() > 0
@@ -843,156 +1087,155 @@ class DesktopUdukkaiDatabaseHelper(
 
     override fun clearProfiles(): Boolean = useConn { conn ->
         conn.createStatement().use { stmt ->
-            stmt.execute("DELETE FROM \"$profileTable\"")
+            stmt.execute("DELETE FROM \"$profilesTable\"")
             true
         }
     }
 
     override fun clearAllData(): Boolean = useConn { conn ->
         conn.createStatement().use { stmt ->
-            stmt.execute("DELETE FROM \"$junctionTable\"")
-            stmt.execute("DELETE FROM \"$patrugalTable\"")
-            stmt.execute("DELETE FROM \"$pattiyalTable\"")
-            stmt.execute("DELETE FROM \"$porulTable\"")
-            stmt.execute("DELETE FROM \"$vaangunarTable\"")
-            stmt.execute("DELETE FROM \"$profileTable\"")
+            stmt.execute("DELETE FROM \"$linksTable\"")
+            stmt.execute("DELETE FROM \"$receiptsTable\"")
+            stmt.execute("DELETE FROM \"$invoicesTable\"")
+            stmt.execute("DELETE FROM \"$productsTable\"")
+            stmt.execute("DELETE FROM \"$customersTable\"")
+            stmt.execute("DELETE FROM \"$profilesTable\"")
             true
         }
     }
 
-    // ── ResultSet Helpers ────────────────────────────────────────────────────
+    // ── Helper ResultSet Parsers ─────────────────────────────────────────────
     private fun rsToMerchant(rs: ResultSet): CustomerModel = CustomerModel(
-        id = rs.getLong("id"),
-        name = LanguageJsonConverter.parse(rs.getString("peyar")),
-        address = LanguageJsonConverter.parse(rs.getString("mugavari")),
-        city = LanguageJsonConverter.parse(rs.getString("oor")),
-        district = LanguageJsonConverter.parse(rs.getString("maavattam")),
-        state = LanguageJsonConverter.parse(rs.getString("maanilam")),
-        country = LanguageJsonConverter.parse(rs.getString("naadu")),
-        internationalAddress = LanguageJsonConverter.parse(rs.getString("velinaad_mugavari")),
-        pinCode = rs.getString("anjal_kuriyeedu") ?: "",
-        gstin = rs.getString("gstin") ?: "",
-        email = rs.getString("minnanjal") ?: "",
-        phone = rs.getString("tholaipaesi") ?: "",
-        createdAt = rs.getLong("created_at"),
-        updatedAt = rs.getLong("updated_at"),
-        isDeleted = rs.getInt("is_deleted") == 1,
-        deletedAt = if (rs.getObject("deleted_at") == null) null else rs.getLong("deleted_at")
+        id = getLongCol(rs, "id"),
+        name = LanguageJsonConverter.parse(getStringCol(rs, "name", "peyar")),
+        address = LanguageJsonConverter.parse(getStringCol(rs, "address", "mugavari")),
+        city = LanguageJsonConverter.parse(getStringCol(rs, "city", "oor")),
+        district = LanguageJsonConverter.parse(getStringCol(rs, "district", "maavattam")),
+        state = LanguageJsonConverter.parse(getStringCol(rs, "state", "maanilam")),
+        country = LanguageJsonConverter.parse(getStringCol(rs, "country", "naadu", default = "{\"en\":\"India\",\"ta\":\"இந்தியா\"}")),
+        internationalAddress = LanguageJsonConverter.parse(getStringCol(rs, "international_address", "velinaad_mugavari")),
+        pinCode = getStringCol(rs, "pin_code", "anjal_kuriyeedu"),
+        gstin = getStringCol(rs, "gstin"),
+        email = getStringCol(rs, "email", "minnanjal"),
+        phone = getStringCol(rs, "phone", "tholaipaesi"),
+        createdAt = getLongCol(rs, "created_at"),
+        updatedAt = getLongCol(rs, "updated_at"),
+        isDeleted = getIntCol(rs, "is_deleted") == 1,
+        deletedAt = getLongOrNull(rs, "deleted_at")
     )
 
     private fun rsToItem(rs: ResultSet): ProductModel = ProductModel(
-        id = rs.getLong("id"),
-        name = LanguageJsonConverter.parse(rs.getString("porul_peyar")),
-        hsnCode = rs.getString("hsn_code") ?: "",
-        price = rs.getDouble("vilai"),
-        taxRate = rs.getDouble("vari_veetham"),
-        quantityType = rs.getString("alavu_vagai") ?: "quantity",
-        unit = rs.getString("alagu") ?: "Nos",
-        companyIds = ProductJsonConverter.parseLongList(rs.getString("niruvanam_ids")),
-        companyPrices = ProductJsonConverter.parseCompanyPrices(rs.getString("company_prices")),
-        createdAt = rs.getLong("created_at"),
-        updatedAt = rs.getLong("updated_at"),
-        isDeleted = rs.getInt("is_deleted") == 1,
-        deletedAt = if (rs.getObject("deleted_at") == null) null else rs.getLong("deleted_at")
+        id = getLongCol(rs, "id"),
+        name = LanguageJsonConverter.parse(getStringCol(rs, "name", "porul_peyar")),
+        hsnCode = getStringCol(rs, "hsn_code"),
+        price = getDoubleCol(rs, "price", "vilai"),
+        taxRate = getDoubleCol(rs, "tax_rate", "vari_veetham"),
+        quantityType = getStringCol(rs, "quantity_type", "alavu_vagai", default = "quantity"),
+        unit = getStringCol(rs, "unit", "alagu", default = "Nos"),
+        companyIds = ProductJsonConverter.parseLongList(getStringCol(rs, "company_ids", "niruvanam_ids", default = "[]")),
+        companyPrices = ProductJsonConverter.parseCompanyPrices(getStringCol(rs, "company_prices", default = "{}")),
+        createdAt = getLongCol(rs, "created_at"),
+        updatedAt = getLongCol(rs, "updated_at"),
+        isDeleted = getIntCol(rs, "is_deleted") == 1,
+        deletedAt = getLongOrNull(rs, "deleted_at")
     )
 
     private fun rsToInvoice(rs: ResultSet): InvoiceModel {
-        fun hasColumn(name: String): Boolean = try { rs.findColumn(name); true } catch (_: Exception) { false }
-        val mothaEdai = if (isFactory && hasColumn("motha_edai")) rs.getDouble("motha_edai") else 0.0
-        val setharamGrams = if (isFactory && hasColumn("setharam_grams")) rs.getDouble("setharam_grams") else 0.0
-        val thabaalThogai = if (isFactory && hasColumn("thabaal_thogai")) rs.getDouble("thabaal_thogai") else 0.0
-        val ahimsaPattuThogai = if (isFactory && hasColumn("ahimsa_pattu_thogai")) rs.getDouble("ahimsa_pattu_thogai") else 0.0
-        val piravariVugal = if (isFactory && hasColumn("piravari_vugal")) (rs.getString("piravari_vugal") ?: "[]") else "[]"
-        val vangiTharavugal = if (isFactory && hasColumn("vangi_tharavugal")) (rs.getString("vangi_tharavugal") ?: "{}") else "{}"
+        val mothaEdai = if (isFactory) getDoubleCol(rs, "total_weight", "motha_edai") else 0.0
+        val setharamGrams = if (isFactory) getDoubleCol(rs, "wastage_grams", "setharam_grams") else 0.0
+        val thabaalThogai = if (isFactory) getDoubleCol(rs, "postal_charges", "thabaal_thogai") else 0.0
+        val ahimsaPattuThogai = if (isFactory) getDoubleCol(rs, "ahimsa_silk_amount", "ahimsa_pattu_thogai") else 0.0
+        val piravariVugal = if (isFactory) getStringCol(rs, "other_taxes_json", "piravari_vugal", default = "[]") else "[]"
+        val vangiTharavugal = if (isFactory) getStringCol(rs, "bank_details_json", "vangi_tharavugal", default = "{}") else "{}"
 
         return InvoiceModel(
-            id = rs.getLong("id"),
-            companyId = if (rs.getObject("niruvanam_id") == null) null else rs.getLong("niruvanam_id"),
-            invoiceNumber = rs.getString("patrucheettu_en") ?: "",
-            finYear = rs.getInt("fin_year"),
-            vanakkam = rs.getInt("vanakkam"),
-            invoiceType = rs.getString("pattiyal_vagai") ?: "tax-invoice",
-            customerId = if (rs.getObject("vaangunar_id") == null) null else rs.getLong("vaangunar_id"),
-            customerName = LanguageJsonConverter.parse(rs.getString("vaangunar_peyar")),
-            customerAddress = LanguageJsonConverter.parse(rs.getString("vaangunar_munvari")),
-            invoiceDate = rs.getLong("pattiyal_naal"),
-            itemsJson = rs.getString("tharavugal") ?: "[]",
-            totalAmount = rs.getDouble("motha_thogai"),
-            discount = rs.getDouble("thallupadi"),
-            globalDiscountValue = rs.getDouble("podhu_thallupadi_mathippu"),
-            globalDiscountType = rs.getString("podhu_thallupadi_vagai") ?: "%",
-            globalDiscountAmount = rs.getDouble("podhu_thallupadi_thogai"),
-            taxAmount = rs.getDouble("vari_thogai"),
-            taxDataJson = rs.getString("vari_tharavugal") ?: "{}",
+            id = getLongCol(rs, "id"),
+            companyId = getLongOrNull(rs, "company_id", "niruvanam_id"),
+            invoiceNumber = getStringCol(rs, "invoice_number", "patrucheettu_en"),
+            finYear = getIntCol(rs, "fin_year"),
+            vanakkam = getIntCol(rs, "vanakkam", default = 1),
+            invoiceType = getStringCol(rs, "invoice_type", "pattiyal_vagai", default = "tax-invoice"),
+            customerId = getLongOrNull(rs, "customer_id", "vaangunar_id"),
+            customerName = LanguageJsonConverter.parse(getStringCol(rs, "customer_name", "vaangunar_peyar")),
+            customerAddress = LanguageJsonConverter.parse(getStringCol(rs, "customer_address", "vaangunar_munvari")),
+            invoiceDate = getLongCol(rs, "invoice_date", "pattiyal_naal"),
+            itemsJson = getStringCol(rs, "items_json", "tharavugal", default = "[]"),
+            totalAmount = getDoubleCol(rs, "total_amount", "motha_thogai"),
+            discount = getDoubleCol(rs, "discount", "thallupadi"),
+            globalDiscountValue = getDoubleCol(rs, "global_discount_value", "podhu_thallupadi_mathippu"),
+            globalDiscountType = getStringCol(rs, "global_discount_type", "podhu_thallupadi_vagai", default = "%"),
+            globalDiscountAmount = getDoubleCol(rs, "global_discount_amount", "podhu_thallupadi_thogai"),
+            taxAmount = getDoubleCol(rs, "tax_amount", "vari_thogai"),
+            taxDataJson = getStringCol(rs, "tax_data_json", "vari_tharavugal", default = "{}"),
             totalWeight = mothaEdai,
             wastageGrams = setharamGrams,
             postalCharges = thabaalThogai,
             ahimsaSilkAmount = ahimsaPattuThogai,
             otherTaxesJson = piravariVugal,
-            customPreferencesJson = rs.getString("sontha_viruppangal") ?: "{}",
-            termsAndConditions = rs.getString("nibandhanaigal") ?: "",
-            notes = rs.getString("ullkurippu") ?: "",
+            customPreferencesJson = getStringCol(rs, "custom_preferences_json", "sontha_viruppangal", default = "{}"),
+            termsAndConditions = getStringCol(rs, "terms_and_conditions", "nibandhanaigal"),
+            notes = getStringCol(rs, "notes", "ullkurippu"),
             bankDetailsJson = vangiTharavugal,
-            createdAt = rs.getLong("created_at"),
-            updatedAt = rs.getLong("updated_at"),
-            isDeleted = rs.getInt("is_deleted") == 1,
-            deletedAt = if (rs.getObject("deleted_at") == null) null else rs.getLong("deleted_at")
+            createdAt = getLongCol(rs, "created_at"),
+            updatedAt = getLongCol(rs, "updated_at"),
+            isDeleted = getIntCol(rs, "is_deleted") == 1,
+            deletedAt = getLongOrNull(rs, "deleted_at")
         )
     }
 
     private fun rsToReceipt(rs: ResultSet): ReceiptModel = ReceiptModel(
-        id = rs.getLong("id"),
-        companyId = if (rs.getObject("niruvanam_id") == null) null else rs.getLong("niruvanam_id"),
-        receiptNumber = rs.getString("patru_en") ?: "",
-        finYear = rs.getString("fin_year") ?: "",
-        vanakkam = rs.getInt("vanakkam"),
-        customerId = if (rs.getObject("vaangunar_id") == null) null else rs.getLong("vaangunar_id"),
-        customerName = LanguageJsonConverter.parse(rs.getString("vaangunar_peyar")),
-        customerAddress = LanguageJsonConverter.parse(rs.getString("vaangunar_munvari")),
-        receiptDate = rs.getLong("patru_naal"),
-        amount = rs.getDouble("thogai"),
-        paymentMode = rs.getString("seluthum_murai") ?: "cash",
-        bankName = rs.getString("vangi_peyar"),
-        transactionNumber = rs.getString("parivarthanai_en"),
-        notes = rs.getString("ullkurippu") ?: "",
-        createdAt = rs.getLong("created_at"),
-        updatedAt = rs.getLong("updated_at"),
-        isDeleted = rs.getInt("is_deleted") == 1,
-        deletedAt = if (rs.getObject("deleted_at") == null) null else rs.getLong("deleted_at")
+        id = getLongCol(rs, "id"),
+        companyId = getLongOrNull(rs, "company_id", "niruvanam_id"),
+        receiptNumber = getStringCol(rs, "receipt_number", "patru_en"),
+        finYear = getStringCol(rs, "fin_year"),
+        vanakkam = getIntCol(rs, "vanakkam", default = 1),
+        customerId = getLongOrNull(rs, "customer_id", "vaangunar_id"),
+        customerName = LanguageJsonConverter.parse(getStringCol(rs, "customer_name", "vaangunar_peyar")),
+        customerAddress = LanguageJsonConverter.parse(getStringCol(rs, "customer_address", "vaangunar_munvari")),
+        receiptDate = getLongCol(rs, "receipt_date", "patru_naal"),
+        amount = getDoubleCol(rs, "amount", "thogai"),
+        paymentMode = getStringCol(rs, "payment_mode", "seluthum_murai", default = "cash"),
+        bankName = getStringOrNull(rs, "bank_name", "vangi_peyar"),
+        transactionNumber = getStringOrNull(rs, "transaction_number", "parivarthanai_en"),
+        notes = getStringCol(rs, "notes", "ullkurippu"),
+        createdAt = getLongCol(rs, "created_at"),
+        updatedAt = getLongCol(rs, "updated_at"),
+        isDeleted = getIntCol(rs, "is_deleted") == 1,
+        deletedAt = getLongOrNull(rs, "deleted_at")
     )
 
     private fun rsToProfile(rs: ResultSet): BusinessProfile = BusinessProfile(
-        id = rs.getLong("id"),
-        primaryLanguage = rs.getString("mudhan_mozhi") ?: "ta",
-        secondaryLanguage = rs.getString("thunai_mozhi") ?: "en",
-        isBilingual = rs.getInt("iru_mozhi") == 1,
-        splitGst = rs.getInt("gst_pirippugal") == 1,
-        businessName = LanguageJsonConverter.parse(rs.getString("niruvanathin_peyar")),
-        shortName = rs.getString("kurum_peyar") ?: "",
-        phone1 = rs.getString("tholaipaesi1") ?: "",
-        phone2 = rs.getString("tholaipaesi2") ?: "",
-        email = rs.getString("minnanjal") ?: "",
-        gstin = rs.getString("gstin") ?: "",
-        address = LanguageJsonConverter.parse(rs.getString("mugavari")),
-        city = LanguageJsonConverter.parse(rs.getString("oor")),
-        district = LanguageJsonConverter.parse(rs.getString("maavattam")),
-        state = LanguageJsonConverter.parse(rs.getString("maanilam")),
-        country = LanguageJsonConverter.parse(rs.getString("naadu")),
-        pinCode = rs.getString("anjal_kuriyeedu") ?: "",
-        bankName = LanguageJsonConverter.parse(rs.getString("vangi_peyar")),
-        branch = LanguageJsonConverter.parse(rs.getString("kilai")),
-        accountNumber = rs.getString("vangi_kanakku") ?: "",
-        ifsc = rs.getString("ifsc") ?: "",
-        logo = rs.getString("oavuru") ?: "",
-        wideLogo = rs.getString("agala_oavuru") ?: "",
-        headerLayout = rs.getString("thalaippu_vadivu") ?: "small",
-        signature = rs.getString("kaiyoppam") ?: "",
-        signatoryName = rs.getString("oppam_peyar") ?: "",
-        signatoryFirstName = rs.getString("oppam_mudhal_peyar") ?: "",
-        signatoryLastName = rs.getString("oppam_irudhi_peyar") ?: "",
-        tagline = LanguageJsonConverter.parse(rs.getString("adaimozhi")),
-        upiId = rs.getString("upi_id") ?: "",
-        themeColor = rs.getString("thoatraNiram") ?: ""
+        id = getLongCol(rs, "id"),
+        primaryLanguage = getStringCol(rs, "primary_language", "mudhan_mozhi", default = "ta"),
+        secondaryLanguage = getStringCol(rs, "secondary_language", "thunai_mozhi", default = "en"),
+        isBilingual = getIntCol(rs, "is_bilingual", "iru_mozhi", default = 1) == 1,
+        splitGst = getIntCol(rs, "split_gst", "gst_pirippugal") == 1,
+        businessName = LanguageJsonConverter.parse(getStringCol(rs, "business_name", "niruvanathin_peyar")),
+        shortName = getStringCol(rs, "short_name", "kurum_peyar"),
+        phone1 = getStringCol(rs, "phone1", "tholaipaesi1"),
+        phone2 = getStringCol(rs, "phone2", "tholaipaesi2"),
+        email = getStringCol(rs, "email", "minnanjal"),
+        gstin = getStringCol(rs, "gstin"),
+        address = LanguageJsonConverter.parse(getStringCol(rs, "address", "mugavari")),
+        city = LanguageJsonConverter.parse(getStringCol(rs, "city", "oor")),
+        district = LanguageJsonConverter.parse(getStringCol(rs, "district", "maavattam")),
+        state = LanguageJsonConverter.parse(getStringCol(rs, "state", "maanilam")),
+        country = LanguageJsonConverter.parse(getStringCol(rs, "country", "naadu", default = "{\"en\":\"India\",\"ta\":\"இந்தியா\"}")),
+        pinCode = getStringCol(rs, "pin_code", "anjal_kuriyeedu"),
+        bankName = LanguageJsonConverter.parse(getStringCol(rs, "bank_name", "vangi_peyar")),
+        branch = LanguageJsonConverter.parse(getStringCol(rs, "branch", "kilai")),
+        accountNumber = getStringCol(rs, "account_number", "vangi_kanakku"),
+        ifsc = getStringCol(rs, "ifsc"),
+        logo = getStringCol(rs, "logo", "oavuru"),
+        wideLogo = getStringCol(rs, "wide_logo", "agala_oavuru"),
+        headerLayout = getStringCol(rs, "header_layout", "thalaippu_vadivu", default = "small"),
+        signature = getStringCol(rs, "signature", "kaiyoppam"),
+        signatoryName = getStringCol(rs, "signatory_name", "oppam_peyar"),
+        signatoryFirstName = getStringCol(rs, "signatory_first_name", "oppam_mudhal_peyar"),
+        signatoryLastName = getStringCol(rs, "signatory_last_name", "oppam_irudhi_peyar"),
+        tagline = LanguageJsonConverter.parse(getStringCol(rs, "tagline", "adaimozhi")),
+        upiId = getStringCol(rs, "upi_id"),
+        themeColor = getStringCol(rs, "theme_color", "thoatra_niram", "thoatraNiram")
     )
 }
 

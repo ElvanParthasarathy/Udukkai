@@ -21,7 +21,7 @@ import kotlinx.coroutines.launch
  * Coolie Business Name (if Coolie profile missing).
  */
 @Composable
-fun VanakkamThirai(
+fun GreetingScreen(
     billingLanguage: String = "ta",
     onSetupComplete: () -> Unit,
     onBack: (() -> Unit)? = null

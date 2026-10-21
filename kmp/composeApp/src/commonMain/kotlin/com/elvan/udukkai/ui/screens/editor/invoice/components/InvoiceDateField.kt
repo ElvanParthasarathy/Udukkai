@@ -25,7 +25,7 @@ import com.elvan.udukkai.ui.screens.editor.ElvanEditorLabel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun PattiyalNaalKooru(
+fun InvoiceDateField(
     selectedDate: Long,
     onDateChanged: (Long) -> Unit,
     modifier: Modifier = Modifier,

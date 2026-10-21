@@ -159,9 +159,9 @@ object TextilesReceiptRepository {
         return (invoice.totalAmount - paid).coerceAtLeast(0.0)
     }
 
-    fun getNextVanakkam(niruvanamId: Long?): Int {
+    fun getNextVanakkam(companyId: Long?): Int {
         val matching = receipts.filter {
-            if (niruvanamId != null) it.companyId == niruvanamId else true
+            if (companyId != null) it.companyId == companyId else true
         }
         if (matching.isEmpty()) return 1
         val maxVanakkam = matching.maxOfOrNull { it.vanakkam } ?: 0
@@ -182,13 +182,13 @@ object TextilesReceiptRepository {
 
     fun isReceiptNumberDuplicate(
         patruEn: String,
-        niruvanamId: Long?,
+        companyId: Long?,
         excludeId: Long? = null
     ): Boolean {
         val target = patruEn.trim().uppercase()
         return receipts.any { r ->
             (excludeId == null || r.id != excludeId) &&
-            (niruvanamId == null || r.companyId == niruvanamId) &&
+            (companyId == null || r.companyId == companyId) &&
             r.receiptNumber.trim().uppercase() == target
         }
     }

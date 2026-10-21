@@ -32,7 +32,7 @@ data class FactoryItem(
     val varisaiThogai: Int get() = rowTotal
 }
 
-typealias KooliUrupadi = FactoryItem
+
 
 /**
  * Additional charge line item for Factory mode invoices (e.g. Loading, Transport).
@@ -46,22 +46,22 @@ data class FactoryAdditionalCharge(
     val amount: Double get() = thogai
 }
 
-typealias PiraVarivu = FactoryAdditionalCharge
+
 
 /**
  * Computed totals result for Factory mode invoices.
  */
 data class FactoryTotals(
-    val adippadaiMothangal: Double = 0.0,
-    val mothaEdai: Double = 0.0,
-    val perumMothangal: Double = 0.0
+    val subtotal: Double = 0.0,
+    val totalWeight: Double = 0.0,
+    val grandTotal: Double = 0.0
 ) {
-    val subtotal: Double get() = adippadaiMothangal
-    val totalWeight: Double get() = mothaEdai
-    val grandTotal: Double get() = perumMothangal
+    val adippadaiMothangal: Double get() = subtotal
+    val mothaEdai: Double get() = totalWeight
+    val perumMothangal: Double get() = grandTotal
 }
 
-typealias KooliMothangal = FactoryTotals
+
 
 /**
  * Factory invoice calculation engine matching Flutter's `KooliKanakku` 1:1.
@@ -98,9 +98,9 @@ object FactoryCalculation {
         val roundedTotalKg = round(totalKg * 1000.0) / 1000.0
 
         return FactoryTotals(
-            adippadaiMothangal = subtotal,
-            mothaEdai = roundedTotalKg,
-            perumMothangal = grandTotal
+            subtotal = subtotal,
+            totalWeight = roundedTotalKg,
+            grandTotal = grandTotal
         )
     }
 
@@ -199,12 +199,6 @@ object FactoryCalculation {
         }
     }
 
-    // ── Backward-compatible Aliases ──
-    fun kooliListToJson(items: List<FactoryItem>): String = itemsToJson(items)
-    fun kooliListFromJson(json: String?): List<FactoryItem> = itemsFromJson(json)
-    fun piraVarivuListToJson(charges: List<FactoryAdditionalCharge>): String = chargesToJson(charges)
-    fun piraVarivuListFromJson(json: String?): List<FactoryAdditionalCharge> = chargesFromJson(json)
-
     private fun splitJsonObjects(jsonArray: String): List<String> {
         val result = mutableListOf<String>()
         var depth = 0
@@ -251,5 +245,3 @@ object FactoryCalculation {
         return result
     }
 }
-
-val KooliKanakku = FactoryCalculation

@@ -192,7 +192,7 @@ fun FactoryProductEditorScreen(
                                 "quantity" to K.measureQuantity.tr(),
                                 "weight" to K.measureWeight.tr()
                             )
-                            ElvanThiruthiKeezhvirivu<Pair<String, String>>(
+                            ElvanEditorDropdown<Pair<String, String>>(
                                 label = K.unitOfMeasurement.tr(),
                                 value = measureUnits.firstOrNull { it.first == alavuVagai } ?: measureUnits.first(),
                                 items = measureUnits,

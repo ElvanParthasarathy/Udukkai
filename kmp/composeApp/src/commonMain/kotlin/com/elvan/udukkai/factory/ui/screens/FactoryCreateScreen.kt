@@ -319,7 +319,7 @@ fun FactoryCreateScreen(
                             ) {
                                 FactoryInvoiceCard(
                                     index = index,
-                                    pattiyal = invoice,
+                                    invoice = invoice,
                                     colors = colors,
                                     isSelectionMode = isSelectionMode,
                                     isSelected = isSelected,

@@ -47,7 +47,7 @@ fun TextilesItemCard(
     onDirty: () -> Unit,
     onRequestAddNewProduct: () -> Unit,
     modifier: Modifier = Modifier,
-    niruvanamId: Long? = null
+    companyId: Long? = null
 ) {
     val colors = rememberShellColors()
     val isDark = colors.isDark
@@ -55,8 +55,8 @@ fun TextilesItemCard(
 
     var isPickerOpen by remember { mutableStateOf(false) }
     val allProducts = TextilesProductRepository.products
-    val availableProducts = remember(allProducts, niruvanamId) {
-        allProducts.filter { it.isAvailableForCompany(niruvanamId) }
+    val availableProducts = remember(allProducts, companyId) {
+        allProducts.filter { it.isAvailableForCompany(companyId) }
     }
 
     Column(
@@ -308,7 +308,7 @@ fun TextilesItemCard(
                 val config = PrintLanguageManager.getTextilesConfig()
                 val primaryName = selected.name[config.primaryLanguage.code] ?: selected.name.values.firstOrNull().orEmpty()
                 val secondaryName = if (config.isBilingual) selected.name[config.secondaryLanguage.code].orEmpty() else ""
-                val effectivePrice = selected.getEffectivePrice(niruvanamId)
+                val effectivePrice = selected.getEffectivePrice(companyId)
                 val priceToUse = if (effectivePrice > 0.0) effectivePrice else selected.price
                 onItemUpdated(
                     item.copy(
@@ -332,7 +332,7 @@ fun TextilesItemCard(
             subtitleBuilder = { p ->
                 val config = PrintLanguageManager.getTextilesConfig()
                 val subName = if (config.isBilingual) p.name[config.secondaryLanguage.code].orEmpty() else ""
-                val price = p.getEffectivePrice(niruvanamId)
+                val price = p.getEffectivePrice(companyId)
                 val priceStr = if (price > 0) CurrencyUtils.formatInr(price) else ""
                 listOf(subName, priceStr).filter { it.isNotEmpty() }.joinToString("  •  ")
             },
@@ -348,18 +348,3 @@ fun TextilesItemCard(
         )
     }
 }
-
-@Deprecated("Use TextilesItemCard", ReplaceWith("TextilesItemCard(item, index, itemCount, onItemUpdated, onItemDeleted, onItemCleared, onDirty, onRequestAddNewProduct, modifier, niruvanamId)"))
-@Composable
-fun PattuUrupadiAttai(
-    item: TextilesItem,
-    index: Int,
-    itemCount: Int,
-    onItemUpdated: (TextilesItem) -> Unit,
-    onItemDeleted: () -> Unit,
-    onItemCleared: () -> Unit,
-    onDirty: () -> Unit,
-    onRequestAddNewProduct: () -> Unit,
-    modifier: Modifier = Modifier,
-    niruvanamId: Long? = null
-) = TextilesItemCard(item, index, itemCount, onItemUpdated, onItemDeleted, onItemCleared, onDirty, onRequestAddNewProduct, modifier, niruvanamId)

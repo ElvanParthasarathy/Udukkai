@@ -121,8 +121,8 @@ fun FactoryInvoiceEditorScreen(
             activeProfile
         }
     }
-    val selectedNiruvanamId = if (isEditing) (invoice?.companyId ?: selectedProfile.id) else (selectedProfile.id ?: profiles.firstOrNull()?.id)
-    val isProfileConfigured = profiles.isNotEmpty() && selectedNiruvanamId != null
+    val selectedCompanyId = if (isEditing) (invoice?.companyId ?: selectedProfile.id) else (selectedProfile.id ?: profiles.firstOrNull()?.id)
+    val isProfileConfigured = profiles.isNotEmpty() && selectedCompanyId != null
 
     fun computePrefix(p: BusinessProfile?): String {
         return if (p != null && p.shortName.isNotEmpty()) p.shortName else "CB"
@@ -132,8 +132,8 @@ fun FactoryInvoiceEditorScreen(
     var invoiceNumber by remember {
         mutableStateOf(
             invoice?.invoiceNumber?.ifEmpty {
-                FactoryInvoiceRepository.getNextInvoiceNumber(selectedNiruvanamId, initialPrefix)
-            } ?: FactoryInvoiceRepository.getNextInvoiceNumber(selectedNiruvanamId, initialPrefix)
+                FactoryInvoiceRepository.getNextInvoiceNumber(selectedCompanyId, initialPrefix)
+            } ?: FactoryInvoiceRepository.getNextInvoiceNumber(selectedCompanyId, initialPrefix)
         )
     }
     var isInvoiceNumberOverridden by remember { mutableStateOf(isEditing) }
@@ -141,9 +141,9 @@ fun FactoryInvoiceEditorScreen(
     var showAddCustomerEditor by remember { mutableStateOf(false) }
 
     // Customer
-    var selectedVaangunarId by remember { mutableStateOf(invoice?.customerId) }
-    var selectedVaangunarPeyarMap by remember { mutableStateOf(invoice?.customerName ?: emptyMap()) }
-    var selectedVaangunarMunvariMap by remember { mutableStateOf(invoice?.customerAddress ?: emptyMap()) }
+    var selectedCustomerId by remember { mutableStateOf(invoice?.customerId) }
+    var selectedCustomerNameMap by remember { mutableStateOf(invoice?.customerName ?: emptyMap()) }
+    var selectedCustomerAddressMap by remember { mutableStateOf(invoice?.customerAddress ?: emptyMap()) }
 
     // Date
     var invoiceDate by remember { mutableStateOf(invoice?.invoiceDate ?: System.currentTimeMillis()) }
@@ -190,14 +190,14 @@ fun FactoryInvoiceEditorScreen(
     }
 
     LaunchedEffect(FactoryCustomerRepository.merchants) {
-        if (selectedVaangunarId == null && selectedVaangunarPeyarMap.isNotEmpty() && FactoryCustomerRepository.merchants.isNotEmpty()) {
+        if (selectedCustomerId == null && selectedCustomerNameMap.isNotEmpty() && FactoryCustomerRepository.merchants.isNotEmpty()) {
             val matched = FactoryCustomerRepository.merchants.firstOrNull { m ->
-                m.name.values.any { v -> selectedVaangunarPeyarMap.values.contains(v) }
+                m.name.values.any { v -> selectedCustomerNameMap.values.contains(v) }
             }
             if (matched != null) {
-                selectedVaangunarId = matched.id
-                selectedVaangunarPeyarMap = matched.name
-                selectedVaangunarMunvariMap = matched.address
+                selectedCustomerId = matched.id
+                selectedCustomerNameMap = matched.name
+                selectedCustomerAddressMap = matched.address
             }
         }
     }
@@ -210,7 +210,7 @@ fun FactoryInvoiceEditorScreen(
     var setharamGrams by remember { mutableStateOf(invoice?.wastageGrams ?: 0.0) }
     var thabaalThogai by remember { mutableStateOf(invoice?.postalCharges ?: 0.0) }
     var ahimsaPattuThogai by remember { mutableStateOf(invoice?.ahimsaSilkAmount ?: 0.0) }
-    var piraVarivugal by remember {
+    var additionalCharges by remember {
         mutableStateOf(
             if (invoice != null) {
                 FactoryCalculation.chargesFromJson(invoice.otherTaxesJson)
@@ -219,9 +219,9 @@ fun FactoryInvoiceEditorScreen(
             }
         )
     }
-    val initialChargeIds = remember { piraVarivugal.map { it.id }.toSet() }
+    val initialChargeIds = remember { additionalCharges.map { it.id }.toSet() }
     var deletingChargeIds by remember { mutableStateOf(setOf<String>()) }
-    val activeCharges = remember(piraVarivugal, deletingChargeIds) { piraVarivugal.filter { it.id !in deletingChargeIds } }
+    val activeCharges = remember(additionalCharges, deletingChargeIds) { additionalCharges.filter { it.id !in deletingChargeIds } }
 
     // Real-time calculated totals
     val totals = remember(activeItems, setharamGrams, thabaalThogai, ahimsaPattuThogai, activeCharges) {
@@ -251,12 +251,12 @@ fun FactoryInvoiceEditorScreen(
         val draftJson = StringBuilder("{")
             .append("\"invoiceNumber\":\"$invoiceNumber\",")
             .append("\"invoiceDate\":$invoiceDate,")
-            .append("\"customerId\":${selectedVaangunarId ?: "null"},")
+            .append("\"customerId\":${selectedCustomerId ?: "null"},")
             .append("\"items\":${FactoryCalculation.itemsToJson(items)},")
             .append("\"setharam\":$setharamGrams,")
             .append("\"courier\":$thabaalThogai,")
             .append("\"ahimsa\":$ahimsaPattuThogai,")
-            .append("\"other\":${FactoryCalculation.chargesToJson(piraVarivugal)}")
+            .append("\"other\":${FactoryCalculation.chargesToJson(additionalCharges)}")
             .append("}")
             .toString()
         prefs.setString(draftKey, draftJson)
@@ -276,11 +276,11 @@ fun FactoryInvoiceEditorScreen(
             if (!num.isNullOrEmpty()) invoiceNumber = num
             if (date != null && date > 0) invoiceDate = date
             if (cId != null) {
-                selectedVaangunarId = cId
+                selectedCustomerId = cId
                 val c = FactoryCustomerRepository.getById(cId)
                 if (c != null) {
-                    selectedVaangunarPeyarMap = c.name
-                    selectedVaangunarMunvariMap = c.address
+                    selectedCustomerNameMap = c.name
+                    selectedCustomerAddressMap = c.address
                 }
             }
             if (!itemsJson.isNullOrEmpty()) {
@@ -292,7 +292,7 @@ fun FactoryInvoiceEditorScreen(
             if (ahimsa != null) ahimsaPattuThogai = ahimsa
             if (!otherJson.isNullOrEmpty()) {
                 val parsedCharges = FactoryCalculation.chargesFromJson(otherJson)
-                if (parsedCharges.isNotEmpty()) piraVarivugal = parsedCharges
+                if (parsedCharges.isNotEmpty()) additionalCharges = parsedCharges
             }
             hasUnsavedChanges = true
         } catch (_: Exception) {}
@@ -339,7 +339,7 @@ fun FactoryInvoiceEditorScreen(
         errorMessage = null
         if (!isProfileConfigured) {
             errorMessage = niruvanamRequiredMsg
-        } else if (selectedVaangunarId == null && selectedVaangunarPeyarMap.isEmpty()) {
+        } else if (selectedCustomerId == null && selectedCustomerNameMap.isEmpty()) {
             errorMessage = vaangunarRequiredMsg
         } else if (invoiceNumber.isBlank()) {
             errorMessage = receiptNumberRequiredMsg
@@ -349,24 +349,24 @@ fun FactoryInvoiceEditorScreen(
                 errorMessage = porulRequiredMsg
             } else {
                 isSaving = true
-                val vanakkam = FactoryInvoiceRepository.getNextVanakkam(selectedNiruvanamId)
+                val vanakkam = FactoryInvoiceRepository.getNextVanakkam(selectedCompanyId)
                 val newInvoice = InvoiceModel(
                     id = invoice?.id ?: 0L,
-                    companyId = selectedNiruvanamId,
+                    companyId = selectedCompanyId,
                     invoiceNumber = invoiceNumber,
                     vanakkam = if (invoice != null && invoice.vanakkam > 0) invoice.vanakkam else vanakkam,
                     invoiceType = "",
-                    customerId = selectedVaangunarId,
-                    customerName = selectedVaangunarPeyarMap,
-                    customerAddress = selectedVaangunarMunvariMap,
+                    customerId = selectedCustomerId,
+                    customerName = selectedCustomerNameMap,
+                    customerAddress = selectedCustomerAddressMap,
                     invoiceDate = invoiceDate,
                     itemsJson = FactoryCalculation.itemsToJson(validItems),
-                    totalAmount = totals.perumMothangal,
+                    totalAmount = totals.grandTotal,
                     totalWeight = totals.totalWeight,
                     wastageGrams = setharamGrams,
                     postalCharges = thabaalThogai,
                     ahimsaSilkAmount = ahimsaPattuThogai,
-                    otherTaxesJson = FactoryCalculation.chargesToJson(piraVarivugal),
+                    otherTaxesJson = FactoryCalculation.chargesToJson(additionalCharges),
                     updatedAt = System.currentTimeMillis()
                 )
                 FactoryInvoiceRepository.save(newInvoice)
@@ -449,17 +449,17 @@ fun FactoryInvoiceEditorScreen(
                 item(key = "customer_section") {
                     ElvanEditorSection(index = 0, title = K.billedTo.tr()) {
                         FactoryCustomerField(
-                            selectedVaangunarId = selectedVaangunarId,
+                            selectedCustomerId = selectedCustomerId,
                             onCustomerSelected = { customer ->
-                                selectedVaangunarId = customer.id
-                                selectedVaangunarPeyarMap = customer.name
-                                selectedVaangunarMunvariMap = customer.address
+                                selectedCustomerId = customer.id
+                                selectedCustomerNameMap = customer.name
+                                selectedCustomerAddressMap = customer.address
                                 hasUnsavedChanges = true
                             },
                             onCustomerCleared = {
-                                selectedVaangunarId = null
-                                selectedVaangunarPeyarMap = emptyMap()
-                                selectedVaangunarMunvariMap = emptyMap()
+                                selectedCustomerId = null
+                                selectedCustomerNameMap = emptyMap()
+                                selectedCustomerAddressMap = emptyMap()
                                 hasUnsavedChanges = true
                             },
                             onRequestAddNewCustomer = { showAddCustomerEditor = true }
@@ -487,7 +487,7 @@ fun FactoryInvoiceEditorScreen(
                                 onDirty = { hasUnsavedChanges = true }
                             )
 
-                            PattiyalNaalKooru(
+                            InvoiceDateField(
                                 label = K.date.tr(),
                                 selectedDate = invoiceDate,
                                 onDateChanged = { newDate ->
@@ -507,10 +507,10 @@ fun FactoryInvoiceEditorScreen(
                             verticalArrangement = Arrangement.spacedBy(10.dp)
                         ) {
                             // ── Product Line Items ──
-                            ElvanAsaiPattiyal {
+                            ElvanAnimatedList {
                                 items.forEachIndexed { idx, itm ->
                                     key(itm.id) {
-                                        ElvanAsaiCard(
+                                        ElvanAnimatedCard(
                                             key = itm.id,
                                             isInitial = itm.id in initialItemIds,
                                             onDeleted = {
@@ -523,7 +523,7 @@ fun FactoryInvoiceEditorScreen(
                                                 item = itm,
                                                 index = idx,
                                                 itemCount = activeItems.size,
-                                                niruvanamId = selectedNiruvanamId,
+                                                companyId = selectedCompanyId,
                                                 onItemUpdated = { updated ->
                                                     items = items.map { if (it.id == itm.id) updated else it }
                                                     hasUnsavedChanges = true
@@ -604,7 +604,7 @@ fun FactoryInvoiceEditorScreen(
                                             interactionSource = remember { MutableInteractionSource() },
                                             indication = ripple(color = colors.accent),
                                             onClick = {
-                                                piraVarivugal = piraVarivugal + FactoryAdditionalCharge()
+                                                additionalCharges = additionalCharges + FactoryAdditionalCharge()
                                                 hasUnsavedChanges = true
                                             }
                                         ),
@@ -634,17 +634,17 @@ fun FactoryInvoiceEditorScreen(
                             }
 
                             // ── Other Charges Animated Cards ──
-                            if (piraVarivugal.isNotEmpty()) {
+                            if (additionalCharges.isNotEmpty()) {
                                 Spacer(modifier = Modifier.height(6.dp))
-                                ElvanAsaiPattiyal {
-                                    piraVarivugal.forEachIndexed { cIdx, charge ->
+                                ElvanAnimatedList {
+                                    additionalCharges.forEachIndexed { cIdx, charge ->
                                         key(charge.id) {
-                                            ElvanAsaiCard(
+                                            ElvanAnimatedCard(
                                                 key = charge.id,
                                                 isInitial = charge.id in initialChargeIds,
                                                 onDeleted = {
                                                     deletingChargeIds = deletingChargeIds - charge.id
-                                                    piraVarivugal = piraVarivugal.filter { it.id != charge.id }
+                                                    additionalCharges = additionalCharges.filter { it.id != charge.id }
                                                     hasUnsavedChanges = true
                                                 }
                                             ) { requestDelete ->
@@ -652,7 +652,7 @@ fun FactoryInvoiceEditorScreen(
                                                     charge = charge,
                                                     index = cIdx,
                                                     onUpdated = { updated ->
-                                                        piraVarivugal = piraVarivugal.map { if (it.id == charge.id) updated else it }
+                                                        additionalCharges = additionalCharges.map { if (it.id == charge.id) updated else it }
                                                         hasUnsavedChanges = true
                                                     },
                                                     onDeleted = {
