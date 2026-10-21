@@ -280,8 +280,7 @@ fun BottomNavBar(
                 ) {
                     tabs.forEachIndexed { index, tab ->
                         val isActive = index == activeVisualIndex
-                        val iconColor = if (isActive) colors.accent else colors.iconInactive
-                        val textColor = if (isActive) colors.textPrimary else colors.textSecondary
+                        val color = if (isActive) colors.textPrimary else colors.textSecondary
 
                         // Uniform Apple pattern matching Flutter 1:1: large icons, small labels
                         val iconSize = 22.dp
@@ -296,13 +295,13 @@ fun BottomNavBar(
                             Icon(
                                 imageVector = if (isActive) tab.activeIcon else tab.icon,
                                 contentDescription = tab.getLocalizedLabel(),
-                                tint = iconColor,
+                                tint = color,
                                 modifier = Modifier.size(iconSize)
                             )
                             Spacer(modifier = Modifier.height(1.5.dp))
                             Text(
                                 text = tab.getLocalizedLabel(),
-                                color = textColor,
+                                color = color,
                                 fontSize = 9.5.sp,
                                 fontWeight = if (isActive) FontWeight.SemiBold else FontWeight.Normal,
                                 fontFamily = LocalAppFontFamily.current,
@@ -356,7 +355,7 @@ fun BottomNavBar(
                 Icon(
                     imageVector = MaterialSymbols.Rounded.Add,
                     contentDescription = K.add.tr(),
-                    tint = colors.accent,
+                    tint = colors.textPrimary,
                     modifier = Modifier.size(24.dp)
                 )
             }
