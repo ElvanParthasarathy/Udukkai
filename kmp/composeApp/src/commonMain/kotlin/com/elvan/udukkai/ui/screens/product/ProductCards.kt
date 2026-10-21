@@ -23,6 +23,8 @@ import com.elvan.udukkai.ui.components.ElvanCardLeadingIcon
 import com.elvan.udukkai.ui.components.ElvanCardSelector
 import com.elvan.udukkai.ui.components.ElvanCommonCard
 import com.elvan.udukkai.ui.navigation.MaterialSymbols
+import com.elvan.udukkai.localization.K
+import com.elvan.udukkai.localization.tr
 
 private fun getDynamicField(
     map: Map<String, String>,
@@ -261,14 +263,14 @@ fun TextilesProductCard(
                             )
                         }
 
-                        val measureLabel = if (product.quantityType == "weight") "எடை • Weight" else "அளவு • Quantity"
+                        val measureLabel = if (product.quantityType == "weight") K.weight.tr() else K.quantity.tr()
                         Text(
                             text = measureLabel,
                             style = TextStyle(
                                 fontFamily = ff,
-                                fontSize = 12.8.sp,
-                                fontWeight = FontWeight.Medium,
-                                color = colors.accent
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Normal,
+                                color = colors.textSecondary
                             ),
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,

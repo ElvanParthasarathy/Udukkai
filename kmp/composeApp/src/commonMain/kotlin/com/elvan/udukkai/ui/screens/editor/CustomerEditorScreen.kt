@@ -84,7 +84,7 @@ fun CustomerEditorScreen(
     var addressMap by remember { mutableStateOf(merchant?.address ?: emptyMap()) }
     var pinCode by remember { mutableStateOf(merchant?.pinCode ?: "") }
 
-    var showGstField by remember { mutableStateOf(showGst || merchant?.gstin?.isNotBlank() == true) }
+    var showGstField by remember { mutableStateOf(merchant?.gstin?.isNotBlank() == true) }
 
     val companyOptions = rememberCompanyOptions(
         profiles = allProfiles,

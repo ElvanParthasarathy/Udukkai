@@ -73,8 +73,8 @@ fun TextilesProductScreen(
             ),
             PillShifterItem(
                 label = weightTabLabel,
-                icon = MaterialSymbols.Rounded.Scale,
-                activeIcon = MaterialSymbols.Rounded.ScaleFill
+                icon = MaterialSymbols.Rounded.Balance,
+                activeIcon = MaterialSymbols.Rounded.BalanceFill
             )
         )
     }
@@ -127,7 +127,7 @@ fun TextilesProductScreen(
 
             item(key = "product_measure_type_pill_shifter") {
                 Box(
-                    contentAlignment = Alignment.CenterStart,
+                    contentAlignment = Alignment.Center,
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(bottom = 6.dp)

@@ -471,6 +471,8 @@ object MaterialSymbols {
         val NumbersFill: ImageVector get() = LibSymbols.RoundedFilled.Numbers
         val Scale: ImageVector get() = LibSymbols.Rounded.Scale
         val ScaleFill: ImageVector get() = LibSymbols.RoundedFilled.Scale
+        val Balance: ImageVector get() = LibSymbols.Rounded.Balance
+        val BalanceFill: ImageVector get() = LibSymbols.RoundedFilled.Balance
     }
 
     /**
