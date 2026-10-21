@@ -1,5 +1,7 @@
 package com.elvan.udukkai.ui.screens.editor
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -321,19 +323,49 @@ fun CustomerEditorScreen(
                                         placeholder = "33AAAAA0000A1Z5"
                                     )
                                 } else {
-                                    Text(
-                                        text = "+ GSTIN",
-                                        style = TextStyle(
-                                            fontFamily = ff,
-                                            fontSize = 13.sp,
-                                            fontWeight = FontWeight.Medium,
-                                            color = colors.textSecondary
-                                        ),
+                                    // Optional GSTIN action, styled as a proper editor pill.
+                                    val gstActionShape = RoundedCornerShape(100.dp)
+                                    Row(
                                         modifier = Modifier
-                                            .clip(RoundedCornerShape(8.dp))
+                                            .fillMaxWidth()
+                                            .height(48.dp)
+                                            .clip(gstActionShape)
+                                            .background(colors.iconBg)
+                                            .border(1.dp, colors.pillBorder, gstActionShape)
                                             .clickable { showGstField = true }
-                                            .padding(horizontal = 4.dp, vertical = 2.dp)
-                                    )
+                                            .padding(horizontal = 16.dp),
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                                    ) {
+                                        Box(
+                                            modifier = Modifier
+                                                .size(30.dp)
+                                                .clip(RoundedCornerShape(50))
+                                                .background(colors.accentContainer),
+                                            contentAlignment = Alignment.Center
+                                        ) {
+                                            Text(
+                                                text = "+",
+                                                style = TextStyle(
+                                                    fontFamily = ff,
+                                                    fontSize = 20.sp,
+                                                    fontWeight = FontWeight.Medium,
+                                                    color = colors.accent
+                                                )
+                                            )
+                                        }
+
+                                        Text(
+                                            text = "${K.add.tr()} ${K.gstin.tr()}",
+                                            modifier = Modifier.weight(1f),
+                                            style = TextStyle(
+                                                fontFamily = ff,
+                                                fontSize = 14.sp,
+                                                fontWeight = FontWeight.SemiBold,
+                                                color = colors.textPrimary
+                                            )
+                                        )
+                                    }
                                 }
                             }
                         }
