@@ -24,9 +24,14 @@ object FactoryCustomerRepository {
     val filteredCustomers: List<CustomerModel>
         get() {
             val activeId = FactoryProfileRepository.profile.id
+            val legacyOwnerId = FactoryProfileRepository.profiles.firstOrNull()?.id
             return customers.filter { c ->
-                (activeId == null || c.isAvailableForCompany(activeId)) &&
-                    SearchHelper.matchesCustomer(c, searchQuery)
+                val belongsToActiveCompany = if (c.companyIds.isEmpty()) {
+                    activeId == null || activeId == legacyOwnerId
+                } else {
+                    activeId != null && c.companyIds.contains(activeId)
+                }
+                belongsToActiveCompany && SearchHelper.matchesCustomer(c, searchQuery)
             }
         }
 
