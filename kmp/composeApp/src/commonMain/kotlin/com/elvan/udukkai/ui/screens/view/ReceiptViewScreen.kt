@@ -68,6 +68,7 @@ fun ReceiptViewScreen(
         title = "${K.receipt.tr()} #${receipt.receiptNumber}",
         onBack = onBack,
         scrollState = scrollState,
+        isDocument = true,
         onEdit = onEdit,
         onPrint = onPrint
     ) {

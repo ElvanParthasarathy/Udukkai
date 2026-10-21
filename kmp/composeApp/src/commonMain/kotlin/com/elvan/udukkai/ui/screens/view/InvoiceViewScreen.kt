@@ -97,6 +97,7 @@ fun InvoiceViewScreen(
         title = "$docTypeTitle #${invoice.invoiceNumber}",
         onBack = onBack,
         scrollState = scrollState,
+        isDocument = true,
         onEdit = onEdit,
         onPrint = onPrint,
         onCopy = onCopy

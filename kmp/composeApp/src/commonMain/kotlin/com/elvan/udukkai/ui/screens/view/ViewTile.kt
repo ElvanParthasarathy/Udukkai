@@ -26,7 +26,9 @@ import com.elvan.udukkai.ui.screens.preview.PreviewScreen
 
 /**
  * Floating action bar for View (Paarvai) screens.
- * Displays Edit ("மாற்றியமை"), Preview ("முன்னோட்டம்"), Print ("அச்சிடு"), and Share ("பகிர்") in a unified floating pill.
+ * Displays Edit ("மாற்றியமை"), Preview ("முன்னோட்டம்"), Print ("அச்சிடு"), and Share ("பகிர்") in a unified floating pill
+ * for document views (Invoice / Receipt).
+ * For all other entity views (Customer / Product), displays only Edit ("மாற்று") and Copy ("நகலெடு").
  * Powered by the shared ElvanFloatingActionBar component.
  */
 @Composable
@@ -35,13 +37,15 @@ fun ElvanViewActionBar(
     onPreview: (() -> Unit)? = null,
     onPrint: (() -> Unit)? = null,
     onShare: (() -> Unit)? = null,
-    onCopy: (() -> Unit)? = null, // Deprecated / Ignored per requirement
+    onCopy: (() -> Unit)? = null,
+    isDocument: Boolean = false,
     modifier: Modifier = Modifier
 ) {
     val editLabel = K.editToolbarBtn.tr()
     val previewLabel = K.previewToolbarBtn.tr()
     val printLabel = K.printBtn.tr()
     val shareLabel = K.shareBtn.tr()
+    val copyLabel = K.copyBtn.tr()
     val underConstructionMsg = K.previewUnderConstruction.tr()
 
     val actions = mutableListOf<ElvanFloatingAction>()
@@ -54,27 +58,41 @@ fun ElvanViewActionBar(
             )
         )
     }
-    actions.add(
-        ElvanFloatingAction(
-            label = previewLabel,
-            icon = MaterialSymbols.Rounded.Visibility,
-            onClick = onPreview ?: { ElvanSnackbar.show(underConstructionMsg) }
+
+    if (isDocument) {
+        actions.add(
+            ElvanFloatingAction(
+                label = previewLabel,
+                icon = MaterialSymbols.Rounded.Visibility,
+                onClick = onPreview ?: { ElvanSnackbar.show(underConstructionMsg) }
+            )
         )
-    )
-    actions.add(
-        ElvanFloatingAction(
-            label = printLabel,
-            icon = MaterialSymbols.Rounded.Print,
-            onClick = onPrint ?: { ElvanSnackbar.show(underConstructionMsg) }
+        actions.add(
+            ElvanFloatingAction(
+                label = printLabel,
+                icon = MaterialSymbols.Rounded.Print,
+                onClick = onPrint ?: { ElvanSnackbar.show(underConstructionMsg) }
+            )
         )
-    )
-    actions.add(
-        ElvanFloatingAction(
-            label = shareLabel,
-            icon = MaterialSymbols.Rounded.Share,
-            onClick = onShare ?: { ElvanSnackbar.show(underConstructionMsg) }
+        actions.add(
+            ElvanFloatingAction(
+                label = shareLabel,
+                icon = MaterialSymbols.Rounded.Share,
+                onClick = onShare ?: { ElvanSnackbar.show(underConstructionMsg) }
+            )
         )
-    )
+    } else {
+        // For non-document entities (Customer, Product, etc.): Only Edit and Copy!
+        if (onCopy != null) {
+            actions.add(
+                ElvanFloatingAction(
+                    label = copyLabel,
+                    icon = MaterialSymbols.Rounded.ContentCopy,
+                    onClick = onCopy
+                )
+            )
+        }
+    }
 
     ElvanFloatingActionBar(
         actions = actions,
@@ -86,7 +104,9 @@ fun ElvanViewActionBar(
  * Universal View Shell (Paarvai) for Compose Multiplatform.
  * Replicates Flutter's `elvan_paarvai_oadu.dart`.
  * Wraps read-only detail views with One UI collapsible shell, smooth bottom fade mask,
- * and unified bottom floating action pill: Edit, Preview, Print, and Share.
+ * and unified bottom floating action pill:
+ * - Documents (Invoice / Receipt): Edit, Preview, Print, and Share.
+ * - Entities (Customer / Product): Edit and Copy.
  */
 @Composable
 fun ViewTile(
@@ -94,9 +114,10 @@ fun ViewTile(
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
     scrollState: LazyListState = rememberLazyListState(),
+    isDocument: Boolean = false,
     onEdit: (() -> Unit)? = null,
     onPrint: (() -> Unit)? = null,
-    onCopy: (() -> Unit)? = null, // Deprecated / Ignored
+    onCopy: (() -> Unit)? = null,
     onShare: (() -> Unit)? = null,
     onPreview: (() -> Unit)? = null,
     content: @Composable () -> Unit
@@ -116,7 +137,9 @@ fun ViewTile(
                 onEdit = onEdit,
                 onPreview = onPreview ?: { showPreview = true },
                 onPrint = onPrint,
-                onShare = onShare
+                onShare = onShare,
+                onCopy = onCopy,
+                isDocument = isDocument
             )
         },
         content = {
