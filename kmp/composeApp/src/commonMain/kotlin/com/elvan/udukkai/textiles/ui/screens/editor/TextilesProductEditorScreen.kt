@@ -293,7 +293,7 @@ fun TextilesProductEditorScreen(
                                                     fontFamily = ff,
                                                     fontSize = 13.sp,
                                                     fontWeight = FontWeight.SemiBold,
-                                                    color = if (selected) colors.textOnAccent else colors.textSecondary
+                                                    color = if (selected) (if (colors.isDark) Color.Black else Color.White) else colors.textSecondary
                                                 ),
                                                 maxLines = 1
                                             )
