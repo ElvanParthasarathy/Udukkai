@@ -129,7 +129,7 @@ fun FactoryAddressSettingsScreen(
                     val updated = profile.copy()
                     updated.setBilingual("maanilam", profile.primaryLanguage, p)
                     updated.setBilingual("maanilam", profile.secondaryLanguage, s)
-                    FactoryProfileRepository.updateProfile(updated)
+                    persistProfile(updated)
                     editingSection = null
                     ElvanSnackbar.show(saveSuccessMsg)
                 }
@@ -164,7 +164,7 @@ fun FactoryAddressSettingsScreen(
                     val updated = profile.copy()
                     updated.setBilingual("maavattam", profile.primaryLanguage, p)
                     updated.setBilingual("maavattam", profile.secondaryLanguage, s)
-                    FactoryProfileRepository.updateProfile(updated)
+                    persistProfile(updated)
                     editingSection = null
                     ElvanSnackbar.show(saveSuccessMsg)
                 }
@@ -176,7 +176,7 @@ fun FactoryAddressSettingsScreen(
         val updated = profile.copy()
         updated.setBilingual(fieldName, profile.primaryLanguage, tempPrimary)
         updated.setBilingual(fieldName, profile.secondaryLanguage, tempSecondary)
-        FactoryProfileRepository.updateProfile(updated)
+        persistProfile(updated)
         editingSection = null
         ElvanSnackbar.show(saveSuccessMsg)
     }
@@ -184,7 +184,7 @@ fun FactoryAddressSettingsScreen(
     fun saveSingle(action: (String) -> Unit) {
         val updated = profile.copy()
         action(tempPrimary)
-        FactoryProfileRepository.updateProfile(updated)
+        persistProfile(updated)
         editingSection = null
         ElvanSnackbar.show(saveSuccessMsg)
     }
