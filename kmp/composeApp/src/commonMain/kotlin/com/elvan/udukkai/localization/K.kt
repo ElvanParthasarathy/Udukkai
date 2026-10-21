@@ -174,6 +174,7 @@ object K {
     const val password = "password"
     const val enterPassword = "enterPassword"
     const val welcomeToUdukkai = "welcomeToUdukkai"
+    const val gladYouAreHere = "gladYouAreHere"
     const val companyProfile = "companyProfile"
     const val selectCompanyProfile = "selectCompanyProfile"
     const val maxFiveProfiles = "maxFiveProfiles"

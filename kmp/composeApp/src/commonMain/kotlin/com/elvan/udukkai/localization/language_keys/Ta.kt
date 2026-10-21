@@ -175,6 +175,7 @@ val ta: Map<String, String> = mapOf(
     K.password to "கடவுச்சொல்",
     K.enterPassword to "கடவுச்சொல்லை உள்ளிடவும்",
     K.welcomeToUdukkai to "உடுக்கைக்கு நல்வரவு",
+    K.gladYouAreHere to "நீங்கள் இணைந்ததில் மகிழ்ச்சி 😊",
     K.companyProfile to "நிறுவனத் தன்னுரு",
     K.selectCompanyProfile to "நிறுவனத்தைத் தேர்ந்தெடு",
     K.maxFiveProfiles to "பெருமளவு 5 தன்னுருக்கள் மட்டுமே",

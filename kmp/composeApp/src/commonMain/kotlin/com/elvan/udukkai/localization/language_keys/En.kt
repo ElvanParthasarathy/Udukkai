@@ -174,6 +174,7 @@ val en: Map<String, String> = mapOf(
     K.password to "Password",
     K.enterPassword to "Please enter your password",
     K.welcomeToUdukkai to "Welcome to Udukkai",
+    K.gladYouAreHere to "Glad you're here 😊",
     K.companyProfile to "Company Profile",
     K.selectCompanyProfile to "Select a company profile",
     K.maxFiveProfiles to "Maximum 5 profiles allowed",

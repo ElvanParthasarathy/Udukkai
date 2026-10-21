@@ -10,6 +10,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -29,6 +30,8 @@ import com.elvan.udukkai.ui.components.shell.ElvanCompanySelectionBottomSheet
 import com.elvan.udukkai.ui.components.shell.ElvanSectionContainer
 import com.elvan.udukkai.ui.components.shell.resolveCompanyItemLabel
 import com.elvan.udukkai.ui.navigation.MaterialSymbols
+import com.elvan.udukkai.ui.screens.home.HomeAnimations
+import kotlinx.coroutines.delay
 
 @Composable
 fun GreetingPill(
@@ -37,6 +40,7 @@ fun GreetingPill(
     allProfiles: List<BusinessProfile>,
     defaultTitle: String,
     modifier: Modifier = Modifier,
+    showWelcomeMessage: Boolean? = null,
     onProfileChanging: ((Long) -> Unit)? = null,
     onManageProfiles: (() -> Unit)? = null
 ) {
@@ -55,97 +59,189 @@ fun GreetingPill(
 
     var showCompanySheet by remember { mutableStateOf(false) }
 
+    // Welcome transition state: defaults to showing for DurationMs (3 seconds) like Neram
+    var internalShowWelcome by rememberSaveable { mutableStateOf(true) }
+    val isWelcomeVisible = showWelcomeMessage ?: internalShowWelcome
+
+    LaunchedEffect(Unit) {
+        if (internalShowWelcome) {
+            delay(HomeAnimations.WelcomeTransition.DurationMs)
+            internalShowWelcome = false
+        }
+    }
+
     ElvanSectionContainer(modifier = modifier) {
         Surface(
             modifier = Modifier
                 .fillMaxWidth()
-                .clip(RoundedCornerShape(999.dp))
-                .clickable(
-                    interactionSource = remember { MutableInteractionSource() },
-                    indication = ShellDefaults.ripple(colors, bounded = true),
-                    onClick = { showCompanySheet = true }
-                ),
+                .clip(RoundedCornerShape(999.dp)),
             shape = RoundedCornerShape(999.dp),
             color = colors.surface,
             shadowElevation = 0.dp
         ) {
-            Row(
+            Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(84.dp)
-                    .padding(start = 11.dp, end = 16.dp),
-                verticalAlignment = Alignment.CenterVertically
+                    .height(84.dp),
+                contentAlignment = Alignment.CenterStart
             ) {
-                Box(
-                    modifier = Modifier
-                        .size(62.dp)
-                        .clip(CircleShape)
-                        .background(colors.iconBg),
-                    contentAlignment = Alignment.Center
+                // 1. Welcome Greeting (Visually identical to Neram: 👋 + Welcome + Glad you're here)
+                androidx.compose.animation.AnimatedVisibility(
+                    visible = isWelcomeVisible,
+                    enter = HomeAnimations.WelcomeTransition.EnterTransition,
+                    exit = HomeAnimations.WelcomeTransition.ExitTransition
                 ) {
-                    Text(
-                        text = fullLegalBusinessName.take(1).uppercase(),
-                        style = TextStyle(
-                            fontFamily = ff,
-                            fontSize = 24.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = colors.textPrimary
-                        )
-                    )
+                    Row(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .clip(RoundedCornerShape(999.dp))
+                            .clickable(
+                                interactionSource = remember { MutableInteractionSource() },
+                                indication = ShellDefaults.ripple(colors, bounded = true),
+                                onClick = { internalShowWelcome = false }
+                            )
+                            .padding(start = 11.dp, end = 16.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Surface(
+                            shape = CircleShape,
+                            color = colors.iconBg,
+                            modifier = Modifier.size(62.dp)
+                        ) {
+                            Box(contentAlignment = Alignment.Center) {
+                                Text(
+                                    text = "👋",
+                                    style = TextStyle(fontSize = 26.sp)
+                                )
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.width(16.dp))
+
+                        Column(
+                            modifier = Modifier.weight(1f),
+                            horizontalAlignment = Alignment.Start
+                        ) {
+                            Text(
+                                text = K.welcomeToUdukkai.tr().preventBrokenLigatures(),
+                                style = TextStyle(
+                                    fontFamily = ff,
+                                    fontSize = 18.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    lineHeight = 22.sp
+                                ),
+                                color = colors.textPrimary,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+
+                            Spacer(modifier = Modifier.height(3.dp))
+
+                            Text(
+                                text = K.gladYouAreHere.tr().preventBrokenLigatures(),
+                                style = TextStyle(
+                                    fontFamily = ff,
+                                    fontSize = 14.sp,
+                                    fontWeight = FontWeight.Medium
+                                ),
+                                color = colors.textPrimary.copy(alpha = 0.5f),
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                        }
+                    }
                 }
 
-                Spacer(modifier = Modifier.width(16.dp))
-
-                Column(
-                    modifier = Modifier.weight(1f),
-                    horizontalAlignment = Alignment.Start
+                // 2. Profile Content (Visible after 3s or when dismissed: Initial + வணக்கம் ✨ + Business Name)
+                androidx.compose.animation.AnimatedVisibility(
+                    visible = !isWelcomeVisible,
+                    enter = HomeAnimations.WelcomeTransition.EnterTransition,
+                    exit = HomeAnimations.WelcomeTransition.ExitTransition
                 ) {
                     Row(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .clip(RoundedCornerShape(999.dp))
+                            .clickable(
+                                interactionSource = remember { MutableInteractionSource() },
+                                indication = ShellDefaults.ripple(colors, bounded = true),
+                                onClick = { showCompanySheet = true }
+                            )
+                            .padding(start = 11.dp, end = 16.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text(
-                            text = K.vanakkam.tr().preventBrokenLigatures(),
-                            style = TextStyle(
-                                fontFamily = ff,
-                                fontSize = 18.sp,
-                                fontWeight = FontWeight.SemiBold,
-                                lineHeight = 22.sp
-                            ),
-                            color = colors.textPrimary
-                        )
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Icon(
-                            imageVector = MaterialSymbols.Rounded.AutoAwesome,
-                            contentDescription = null,
-                            tint = colors.textPrimary,
-                            modifier = Modifier.size(18.dp)
-                        )
-                    }
+                        Surface(
+                            shape = CircleShape,
+                            color = colors.iconBg,
+                            modifier = Modifier.size(62.dp)
+                        ) {
+                            Box(contentAlignment = Alignment.Center) {
+                                Text(
+                                    text = fullLegalBusinessName.take(1).uppercase(),
+                                    style = TextStyle(
+                                        fontFamily = ff,
+                                        fontSize = 24.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = colors.textPrimary
+                                    )
+                                )
+                            }
+                        }
 
-                    Spacer(modifier = Modifier.height(3.dp))
+                        Spacer(modifier = Modifier.width(16.dp))
 
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            text = fullLegalBusinessName.preventBrokenLigatures(),
-                            style = TextStyle(
-                                fontFamily = ff,
-                                fontSize = 14.sp,
-                                fontWeight = FontWeight.Medium
-                            ),
-                            color = colors.textPrimary.copy(alpha = 0.5f),
-                            maxLines = 2,
-                            overflow = TextOverflow.Ellipsis,
-                            modifier = Modifier.weight(1f, fill = false)
-                        )
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Icon(
-                            imageVector = MaterialSymbols.Rounded.KeyboardArrowDown,
-                            contentDescription = "Switch Company",
-                            tint = colors.textPrimary.copy(alpha = 0.5f),
-                            modifier = Modifier.size(16.dp)
-                        )
+                        Column(
+                            modifier = Modifier.weight(1f),
+                            horizontalAlignment = Alignment.Start
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = K.vanakkam.tr().preventBrokenLigatures(),
+                                    style = TextStyle(
+                                        fontFamily = ff,
+                                        fontSize = 18.sp,
+                                        fontWeight = FontWeight.SemiBold,
+                                        lineHeight = 22.sp
+                                    ),
+                                    color = colors.textPrimary
+                                )
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Icon(
+                                    imageVector = MaterialSymbols.Rounded.AutoAwesome,
+                                    contentDescription = null,
+                                    tint = colors.textPrimary,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                            }
+
+                            Spacer(modifier = Modifier.height(3.dp))
+
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = fullLegalBusinessName.preventBrokenLigatures(),
+                                    style = TextStyle(
+                                        fontFamily = ff,
+                                        fontSize = 14.sp,
+                                        fontWeight = FontWeight.Medium
+                                    ),
+                                    color = colors.textPrimary.copy(alpha = 0.5f),
+                                    maxLines = 2,
+                                    overflow = TextOverflow.Ellipsis,
+                                    modifier = Modifier.weight(1f, fill = false)
+                                )
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Icon(
+                                    imageVector = MaterialSymbols.Rounded.KeyboardArrowDown,
+                                    contentDescription = "Switch Company",
+                                    tint = colors.textPrimary.copy(alpha = 0.5f),
+                                    modifier = Modifier.size(16.dp)
+                                )
+                            }
+                        }
                     }
                 }
             }
