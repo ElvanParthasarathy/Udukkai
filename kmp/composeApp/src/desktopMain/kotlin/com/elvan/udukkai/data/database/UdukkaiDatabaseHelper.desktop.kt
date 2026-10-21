@@ -800,7 +800,7 @@ class DesktopUdukkaiDatabaseHelper(
         list
     }
 
-    override fun saveReceipt(receipt: ReceiptModel): Long = useConn { conn ->
+    private fun saveReceiptInternal(conn: Connection, receipt: ReceiptModel): Long {
         val isUpdate = receipt.id != null && receipt.id > 0
         val sql = if (isUpdate) {
             "UPDATE \"$receiptsTable\" SET company_id=?, receipt_number=?, fin_year=?, vanakkam=?, customer_id=?, customer_name=?, customer_address=?, receipt_date=?, amount=?, payment_mode=?, bank_name=?, transaction_number=?, notes=?, updated_at=?, is_deleted=0 WHERE id=?"
@@ -808,7 +808,7 @@ class DesktopUdukkaiDatabaseHelper(
             "INSERT INTO \"$receiptsTable\" (company_id, receipt_number, fin_year, vanakkam, customer_id, customer_name, customer_address, receipt_date, amount, payment_mode, bank_name, transaction_number, notes, created_at, updated_at, is_deleted) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0)"
         }
 
-        conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS).use { stmt ->
+        return conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS).use { stmt ->
             if (receipt.companyId != null) stmt.setLong(1, receipt.companyId) else stmt.setNull(1, Types.INTEGER)
             stmt.setString(2, receipt.receiptNumber)
             stmt.setString(3, receipt.finYear)
@@ -838,6 +838,10 @@ class DesktopUdukkaiDatabaseHelper(
                 }
             }
         }
+    }
+
+    override fun saveReceipt(receipt: ReceiptModel): Long = useConn { conn ->
+        saveReceiptInternal(conn, receipt)
     }
 
     override fun deleteReceipt(id: Long): Boolean = useConn { conn ->
@@ -904,7 +908,7 @@ class DesktopUdukkaiDatabaseHelper(
         val autoCommit = conn.autoCommit
         conn.autoCommit = false
         try {
-            val rId = saveReceipt(receipt)
+            val rId = saveReceiptInternal(conn, receipt)
             if (rId > 0) {
                 conn.prepareStatement("DELETE FROM \"$linksTable\" WHERE receipt_id = ?").use { delStmt ->
                     delStmt.setLong(1, rId)

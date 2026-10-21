@@ -12,6 +12,8 @@ import com.elvan.udukkai.data.model.ProductModel
 import com.elvan.udukkai.data.settings.BusinessProfile
 import com.elvan.udukkai.localization.Language
 import com.elvan.udukkai.localization.LanguageManager
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import com.elvan.udukkai.textiles.data.*
 import com.elvan.udukkai.textiles.ui.screens.editor.TextilesCalculation
 import com.elvan.udukkai.textiles.ui.screens.editor.TextilesItem
@@ -153,17 +155,16 @@ object TextilesMockDataSeeder {
         return links
     }
 
-    suspend fun seedAllData() {
+    suspend fun seedAllData() = withContext(Dispatchers.IO) {
         val helper = getTextilesDatabaseHelper()
 
         // 0. Erase existing
-        TextilesProfileRepository.clearProfiles()
         helper.clearAllData()
 
         // 1. Seed Profiles
         for (map in mockTextilesProfiles) {
             val p = profileFromMap(map)
-            TextilesProfileRepository.createProfile(p)
+            helper.saveProfile(p)
         }
         val textilesProfiles = helper.loadAllProfiles()
         val profileMap = textilesProfiles.associateBy { it.shortName }
@@ -295,43 +296,52 @@ object TextilesMockDataSeeder {
             )
         }
 
-        // Reload all reactive repositories
-        TextilesProfileRepository.refreshFromDatabase()
-        TextilesCustomerRepository.loadAll()
-        TextilesProductRepository.loadAll()
-        TextilesInvoiceRepository.loadAll()
-        TextilesReceiptRepository.loadAll()
+        // Reload all reactive repositories on Main thread
+        withContext(Dispatchers.Main) {
+            TextilesProfileRepository.refreshFromDatabase()
+            textilesProfiles.firstOrNull()?.id?.let {
+                TextilesProfileRepository.setActiveProfile(it)
+            }
+            TextilesCustomerRepository.loadAll()
+            TextilesProductRepository.loadAll()
+            TextilesInvoiceRepository.loadAll()
+            TextilesReceiptRepository.loadAll()
+        }
         AutoBackupManager.onDataChanged()
     }
 
-    suspend fun eraseAllData() {
+    suspend fun eraseAllData() = withContext(Dispatchers.IO) {
         val helper = getTextilesDatabaseHelper()
-        TextilesProfileRepository.clearProfiles()
         helper.clearAllData()
 
-        TextilesProfileRepository.refreshFromDatabase()
-        TextilesCustomerRepository.loadAll()
-        TextilesProductRepository.loadAll()
-        TextilesInvoiceRepository.loadAll()
-        TextilesReceiptRepository.loadAll()
+        withContext(Dispatchers.Main) {
+            TextilesProfileRepository.refreshFromDatabase()
+            TextilesCustomerRepository.loadAll()
+            TextilesProductRepository.loadAll()
+            TextilesInvoiceRepository.loadAll()
+            TextilesReceiptRepository.loadAll()
+        }
         AutoBackupManager.onDataChanged()
     }
 
-    suspend fun toggleExtraProfile(): String {
-        val profiles = TextilesProfileRepository.allProfiles
-        val existing = profiles.find { it.shortName == "EPS" }
+    suspend fun toggleExtraProfile(): String = withContext(Dispatchers.IO) {
+        val helper = getTextilesDatabaseHelper()
+        val all = helper.loadAllProfiles()
+        val existing = all.find { it.shortName == "EPS" }
         val msg = if (existing != null && existing.id != null) {
-            TextilesProfileRepository.deleteProfile(existing.id!!)
+            helper.deleteProfile(existing.id!!)
             "Textiles EPS Removed ✗"
         } else {
             if (mockTextilesProfiles.size > 1) {
-                TextilesProfileRepository.createProfile(profileFromMap(mockTextilesProfiles[1]))
+                helper.saveProfile(profileFromMap(mockTextilesProfiles[1]))
             }
             "Textiles EPS Added ✓"
         }
-        TextilesProfileRepository.refreshFromDatabase()
+        withContext(Dispatchers.Main) {
+            TextilesProfileRepository.refreshFromDatabase()
+        }
         AutoBackupManager.onDataChanged()
-        return msg
+        msg
     }
 
     fun toggleLanguage(): String {

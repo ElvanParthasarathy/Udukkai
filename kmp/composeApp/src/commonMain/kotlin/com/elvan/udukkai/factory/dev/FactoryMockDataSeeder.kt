@@ -15,6 +15,8 @@ import com.elvan.udukkai.factory.ui.screens.editor.FactoryCalculation
 import com.elvan.udukkai.factory.ui.screens.editor.FactoryItem
 import com.elvan.udukkai.localization.Language
 import com.elvan.udukkai.localization.LanguageManager
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 /**
  * Factory mock data seeder & testing utilities.
@@ -140,17 +142,16 @@ object FactoryMockDataSeeder {
         return links
     }
 
-    suspend fun seedAllData() {
+    suspend fun seedAllData() = withContext(Dispatchers.IO) {
         val helper = getFactoryDatabaseHelper()
 
         // 0. Erase existing
-        FactoryProfileRepository.clearProfiles()
         helper.clearAllData()
 
         // 1. Seed Profiles
         for (map in mockFactoryProfiles) {
             val p = profileFromMap(map)
-            FactoryProfileRepository.createProfile(p)
+            helper.saveProfile(p)
         }
         val factoryProfiles = helper.loadAllProfiles()
         val profileMap = factoryProfiles.associateBy { it.shortName }
@@ -270,43 +271,52 @@ object FactoryMockDataSeeder {
             )
         }
 
-        // Reload all reactive repositories
-        FactoryProfileRepository.refreshFromDatabase()
-        FactoryCustomerRepository.loadAll()
-        FactoryProductRepository.loadAll()
-        FactoryInvoiceRepository.loadAll()
-        FactoryReceiptRepository.loadAll()
+        // Reload all reactive repositories on Main thread
+        withContext(Dispatchers.Main) {
+            FactoryProfileRepository.refreshFromDatabase()
+            factoryProfiles.firstOrNull()?.id?.let {
+                FactoryProfileRepository.setActiveProfile(it)
+            }
+            FactoryCustomerRepository.loadAll()
+            FactoryProductRepository.loadAll()
+            FactoryInvoiceRepository.loadAll()
+            FactoryReceiptRepository.loadAll()
+        }
         AutoBackupManager.onDataChanged()
     }
 
-    suspend fun eraseAllData() {
+    suspend fun eraseAllData() = withContext(Dispatchers.IO) {
         val helper = getFactoryDatabaseHelper()
-        FactoryProfileRepository.clearProfiles()
         helper.clearAllData()
 
-        FactoryProfileRepository.refreshFromDatabase()
-        FactoryCustomerRepository.loadAll()
-        FactoryProductRepository.loadAll()
-        FactoryInvoiceRepository.loadAll()
-        FactoryReceiptRepository.loadAll()
+        withContext(Dispatchers.Main) {
+            FactoryProfileRepository.refreshFromDatabase()
+            FactoryCustomerRepository.loadAll()
+            FactoryProductRepository.loadAll()
+            FactoryInvoiceRepository.loadAll()
+            FactoryReceiptRepository.loadAll()
+        }
         AutoBackupManager.onDataChanged()
     }
 
-    suspend fun toggleExtraProfile(): String {
-        val profiles = FactoryProfileRepository.allProfiles
-        val existing = profiles.find { it.shortName == "PVS" }
+    suspend fun toggleExtraProfile(): String = withContext(Dispatchers.IO) {
+        val helper = getFactoryDatabaseHelper()
+        val all = helper.loadAllProfiles()
+        val existing = all.find { it.shortName == "PVS" }
         val msg = if (existing != null && existing.id != null) {
-            FactoryProfileRepository.deleteProfile(existing.id!!)
+            helper.deleteProfile(existing.id!!)
             "Factory PVS Removed ✗"
         } else {
             if (mockFactoryProfiles.size > 1) {
-                FactoryProfileRepository.createProfile(profileFromMap(mockFactoryProfiles[1]))
+                helper.saveProfile(profileFromMap(mockFactoryProfiles[1]))
             }
             "Factory PVS Added ✓"
         }
-        FactoryProfileRepository.refreshFromDatabase()
+        withContext(Dispatchers.Main) {
+            FactoryProfileRepository.refreshFromDatabase()
+        }
         AutoBackupManager.onDataChanged()
-        return msg
+        msg
     }
 
     fun toggleLanguage(): String {

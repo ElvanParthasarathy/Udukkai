@@ -708,7 +708,7 @@ class AndroidUdukkaiDatabaseHelper(
         list
     } ?: emptyList()
 
-    override fun saveReceipt(receipt: ReceiptModel): Long = useDb { db ->
+    private fun saveReceiptInternal(db: SQLiteDatabase, receipt: ReceiptModel): Long {
         val cv = ContentValues().apply {
             put("company_id", receipt.companyId)
             put("receipt_number", receipt.receiptNumber)
@@ -726,13 +726,17 @@ class AndroidUdukkaiDatabaseHelper(
             put("updated_at", System.currentTimeMillis() / 1000)
             put("is_deleted", 0)
         }
-        if (receipt.id != null && receipt.id > 0) {
+        return if (receipt.id != null && receipt.id > 0) {
             db.update("\"$receiptsTable\"", cv, "id = ?", arrayOf(receipt.id.toString()))
             receipt.id
         } else {
             cv.put("created_at", System.currentTimeMillis() / 1000)
             db.insert("\"$receiptsTable\"", null, cv)
         }
+    }
+
+    override fun saveReceipt(receipt: ReceiptModel): Long = useDb { db ->
+        saveReceiptInternal(db, receipt)
     } ?: -1L
 
     override fun deleteReceipt(id: Long): Boolean = useDb { db ->
@@ -788,7 +792,7 @@ class AndroidUdukkaiDatabaseHelper(
     override fun saveReceiptWithLinks(receipt: ReceiptModel, links: List<ReceiptInvoiceLinkModel>): Long = useDb { db ->
         db.beginTransaction()
         try {
-            val rId = saveReceipt(receipt)
+            val rId = saveReceiptInternal(db, receipt)
             if (rId > 0) {
                 db.delete("\"$linksTable\"", "receipt_id = ?", arrayOf(rId.toString()))
                 for (link in links) {
