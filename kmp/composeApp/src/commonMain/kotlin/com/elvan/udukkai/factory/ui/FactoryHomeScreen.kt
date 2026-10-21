@@ -261,6 +261,7 @@ fun FactoryHomeScreen() {
                     CustomerViewScreen(
                         merchant = subpage.customer,
                         profile = FactoryProfileRepository.profile,
+                        allProfiles = FactoryProfileRepository.profiles,
                         onBack = popSubpage,
                         onEdit = {
                             navigateToSubpage(ActiveSubpage.MerchantEditor(subpage.customer))
@@ -275,6 +276,7 @@ fun FactoryHomeScreen() {
                         item = subpage.product,
                         profile = FactoryProfileRepository.profile,
                         allProfiles = FactoryProfileRepository.profiles,
+                        isCoolie = true,
                         onBack = popSubpage,
                         onEdit = {
                             navigateToSubpage(ActiveSubpage.ItemEditor(subpage.product))

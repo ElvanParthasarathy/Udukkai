@@ -261,6 +261,7 @@ fun TextilesHomeScreen() {
                     CustomerViewScreen(
                         merchant = subpage.customer,
                         profile = TextilesProfileRepository.profile,
+                        allProfiles = TextilesProfileRepository.profiles,
                         onBack = popSubpage,
                         onEdit = {
                             navigateToSubpage(ActiveSubpage.MerchantEditor(subpage.customer))

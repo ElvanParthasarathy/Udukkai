@@ -227,6 +227,7 @@ class DesktopUdukkaiDatabaseHelper(
                     "gstin" TEXT NOT NULL DEFAULT '',
                     "email" TEXT NOT NULL DEFAULT '',
                     "phone" TEXT NOT NULL DEFAULT '',
+                    "company_ids" TEXT NOT NULL DEFAULT '[]',
                     "created_at" INTEGER NOT NULL DEFAULT (CAST(strftime('%s', CURRENT_TIMESTAMP) AS INTEGER)),
                     "updated_at" INTEGER NOT NULL DEFAULT (CAST(strftime('%s', CURRENT_TIMESTAMP) AS INTEGER)),
                     "is_deleted" INTEGER NOT NULL DEFAULT 0 CHECK ("is_deleted" IN (0, 1)),
@@ -358,6 +359,8 @@ class DesktopUdukkaiDatabaseHelper(
                 )
             """.trimIndent())
 
+            try { stmt.execute("ALTER TABLE \"$customersTable\" ADD COLUMN \"company_ids\" TEXT NOT NULL DEFAULT '[]'") } catch (_: Exception) {}
+
             // 6. Profiles Table
             stmt.execute("""
                 CREATE TABLE IF NOT EXISTS "$profilesTable" (
@@ -477,9 +480,9 @@ class DesktopUdukkaiDatabaseHelper(
     override fun saveCustomer(customer: CustomerModel): Long = useConn { conn ->
         val isUpdate = customer.id != null && customer.id > 0
         val sql = if (isUpdate) {
-            "UPDATE \"$customersTable\" SET name=?, address=?, city=?, district=?, state=?, country=?, international_address=?, pin_code=?, gstin=?, email=?, phone=?, updated_at=?, is_deleted=0 WHERE id=?"
+            "UPDATE \"$customersTable\" SET name=?, address=?, city=?, district=?, state=?, country=?, international_address=?, pin_code=?, gstin=?, email=?, phone=?, company_ids=?, updated_at=?, is_deleted=0 WHERE id=?"
         } else {
-            "INSERT INTO \"$customersTable\" (name, address, city, district, state, country, international_address, pin_code, gstin, email, phone, created_at, updated_at, is_deleted) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0)"
+            "INSERT INTO \"$customersTable\" (name, address, city, district, state, country, international_address, pin_code, gstin, email, phone, company_ids, created_at, updated_at, is_deleted) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0)"
         }
         conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS).use { stmt ->
             stmt.setString(1, LanguageJsonConverter.stringify(customer.name))
@@ -493,16 +496,17 @@ class DesktopUdukkaiDatabaseHelper(
             stmt.setString(9, customer.gstin)
             stmt.setString(10, customer.email)
             stmt.setString(11, customer.phone)
+            stmt.setString(12, customer.companyIds.toString())
 
             val now = System.currentTimeMillis() / 1000
             if (isUpdate) {
-                stmt.setLong(12, now)
-                stmt.setLong(13, customer.id!!)
+                stmt.setLong(13, now)
+                stmt.setLong(14, customer.id!!)
                 stmt.executeUpdate()
                 customer.id!!
             } else {
-                stmt.setLong(12, now)
                 stmt.setLong(13, now)
+                stmt.setLong(14, now)
                 stmt.executeUpdate()
                 stmt.generatedKeys.use { gk ->
                     if (gk.next()) gk.getLong(1) else -1L
@@ -1117,6 +1121,7 @@ class DesktopUdukkaiDatabaseHelper(
         gstin = getStringCol(rs, "gstin"),
         email = getStringCol(rs, "email", "minnanjal"),
         phone = getStringCol(rs, "phone", "tholaipaesi"),
+        companyIds = ProductJsonConverter.parseLongList(getStringCol(rs, "company_ids", "niruvanam_ids", default = "[]")),
         createdAt = getLongCol(rs, "created_at"),
         updatedAt = getLongCol(rs, "updated_at"),
         isDeleted = getIntCol(rs, "is_deleted") == 1,

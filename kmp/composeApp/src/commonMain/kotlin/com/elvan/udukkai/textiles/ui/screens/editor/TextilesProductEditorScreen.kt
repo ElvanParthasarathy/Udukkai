@@ -44,6 +44,8 @@ fun TextilesProductEditorScreen(
     val isEditing = item != null && item.id > 0L
 
     val profile = TextilesProfileRepository.profile
+    val allProfiles = TextilesProfileRepository.profiles
+    val activeCompanyId = profile.id
     val isBilingual = profile.isBilingual
     val primaryLang = profile.primaryLanguage.ifEmpty { "ta" }
     val secondaryLang = profile.secondaryLanguage.ifEmpty { "en" }
@@ -66,18 +68,43 @@ fun TextilesProductEditorScreen(
     }
     var quantityType by remember { mutableStateOf(item?.quantityType?.ifEmpty { "quantity" } ?: "quantity") }
 
+    val allCompaniesLabel = "${K.all.tr()} ${K.companies.tr()}"
+    val companyOptions = remember(allProfiles, primaryLang) {
+        listOf(CompanyOption(id = null, name = allCompaniesLabel)) +
+            allProfiles.map { p ->
+                val name = p.shortName.ifEmpty { p.businessName[primaryLang] ?: p.businessName.values.firstOrNull() ?: "Company #${p.id}" }
+                CompanyOption(id = p.id, name = name)
+            }
+    }
+
+    var selectedCompanyOption by remember(item, companyOptions) {
+        mutableStateOf(
+            if (item != null && item.companyIds.isNotEmpty()) {
+                companyOptions.firstOrNull { it.id == item.companyIds.first() } ?: companyOptions.first()
+            } else if (item == null && activeCompanyId != null && allProfiles.size > 1) {
+                companyOptions.firstOrNull { it.id == activeCompanyId } ?: companyOptions.first()
+            } else {
+                companyOptions.first()
+            }
+        )
+    }
+
     var validationError by remember { mutableStateOf<String?>(null) }
     var showDiscardDialog by remember { mutableStateOf(false) }
     var isExiting by remember { mutableStateOf(false) }
 
-    val hasChanges = remember(productNameMap, hsnCode, price, variVeetham, quantityType) {
+    val initialCompanyId = item?.companyIds?.firstOrNull()
+    val currentCompanyId = selectedCompanyOption.id
+    val companyChanged = initialCompanyId != currentCompanyId
+
+    val hasChanges = remember(productNameMap, hsnCode, price, variVeetham, quantityType, companyChanged) {
         if (item == null) {
-            productNameMap.values.any { it.isNotBlank() } || hsnCode.isNotBlank() || price.isNotBlank()
+            productNameMap.values.any { it.isNotBlank() } || hsnCode.isNotBlank() || price.isNotBlank() || companyChanged
         } else {
             productNameMap != item.name || hsnCode != item.hsnCode ||
                 (price.toDoubleOrNull() ?: 0.0) != item.price ||
                 (variVeetham.toDoubleOrNull() ?: 0.0) != item.taxRate ||
-                quantityType != item.quantityType
+                quantityType != item.quantityType || companyChanged
         }
     }
 
@@ -111,6 +138,8 @@ fun TextilesProductEditorScreen(
         val priceVal = price.toDoubleOrNull() ?: 0.0
         val taxVal = variVeetham.toDoubleOrNull() ?: 0.0
 
+        val companyIds = if (selectedCompanyOption.id != null) listOf(selectedCompanyOption.id!!) else emptyList()
+
         val itemToSave = ProductModel(
             id = item?.id ?: 0L,
             name = productNameMap.filterValues { it.isNotBlank() },
@@ -118,6 +147,7 @@ fun TextilesProductEditorScreen(
             price = priceVal,
             taxRate = taxVal,
             quantityType = quantityType,
+            companyIds = companyIds,
             createdAt = item?.createdAt ?: System.currentTimeMillis(),
             updatedAt = System.currentTimeMillis()
         )
@@ -175,7 +205,7 @@ fun TextilesProductEditorScreen(
                             verticalArrangement = Arrangement.spacedBy(16.dp)
                         ) {
                             ElvanIrumozhiPulan(
-                                label = K.productName.tr(),
+                                label = "${K.productName.tr()} *",
                                 value = productNameMap,
                                 onChanged = {
                                     productNameMap = it
@@ -196,6 +226,16 @@ fun TextilesProductEditorScreen(
                                         color = MaterialTheme.colorScheme.error
                                     ),
                                     modifier = Modifier.padding(start = 4.dp)
+                                )
+                            }
+
+                            if (allProfiles.size > 1) {
+                                ElvanEditorDropdown<CompanyOption>(
+                                    label = K.companies.tr(),
+                                    value = selectedCompanyOption,
+                                    items = companyOptions,
+                                    onSelected = { selectedCompanyOption = it },
+                                    itemLabelBuilder = { it.name }
                                 )
                             }
 

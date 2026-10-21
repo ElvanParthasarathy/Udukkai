@@ -21,6 +21,7 @@ import androidx.compose.ui.unit.sp
 import com.elvan.udukkai.core.data.*
 import com.elvan.udukkai.core.platform.AppBackHandler
 import com.elvan.udukkai.data.model.CustomerModel
+import com.elvan.udukkai.data.settings.BusinessProfile
 import com.elvan.udukkai.localization.K
 import com.elvan.udukkai.localization.LanguageManager
 import com.elvan.udukkai.localization.tr
@@ -46,6 +47,8 @@ fun CustomerEditorScreen(
     primaryLang: String = "ta",
     secondaryLang: String = "en",
     accentColor: Color? = null,
+    allProfiles: List<BusinessProfile> = emptyList(),
+    activeCompanyId: Long? = null,
     onSave: (CustomerModel) -> Long,
     onBack: () -> Unit
 ) {
@@ -67,6 +70,27 @@ fun CustomerEditorScreen(
     var pinCode by remember { mutableStateOf(merchant?.pinCode ?: "") }
 
     var showGstField by remember { mutableStateOf(showGst || merchant?.gstin?.isNotBlank() == true) }
+
+    val allCompaniesLabel = "${K.all.tr()} ${K.companies.tr()}"
+    val companyOptions = remember(allProfiles, primaryLang) {
+        listOf(CompanyOption(id = null, name = allCompaniesLabel)) +
+            allProfiles.map { p ->
+                val name = p.shortName.ifEmpty { p.businessName[primaryLang] ?: p.businessName.values.firstOrNull() ?: "Company #${p.id}" }
+                CompanyOption(id = p.id, name = name)
+            }
+    }
+
+    var selectedCompanyOption by remember(merchant, companyOptions) {
+        mutableStateOf(
+            if (merchant != null && merchant.companyIds.isNotEmpty()) {
+                companyOptions.firstOrNull { it.id == merchant.companyIds.first() } ?: companyOptions.first()
+            } else if (merchant == null && activeCompanyId != null && allProfiles.size > 1) {
+                companyOptions.firstOrNull { it.id == activeCompanyId } ?: companyOptions.first()
+            } else {
+                companyOptions.first()
+            }
+        )
+    }
 
     val initialPresetCountry = remember(merchant) {
         val c = merchant?.country
@@ -118,9 +142,13 @@ fun CustomerEditorScreen(
         }
     }
 
+    val initialCompanyId = merchant?.companyIds?.firstOrNull()
+    val currentCompanyId = selectedCompanyOption.id
+    val companyChanged = initialCompanyId != currentCompanyId
+
     val hasChanges = remember(
         nameMap, gstin, phone, email, countryMap, stateMap, districtMap,
-        cityMap, addressMap, pinCode, isCustomCountry, isCustomState, isCustomDistrict
+        cityMap, addressMap, pinCode, isCustomCountry, isCustomState, isCustomDistrict, companyChanged
     ) {
         if (merchant == null) {
             nameMap.values.any { it.isNotBlank() } || gstin.isNotBlank() || phone.isNotBlank() ||
@@ -130,12 +158,12 @@ fun CustomerEditorScreen(
                 districtMap.values.any { it.isNotBlank() } ||
                 cityMap.values.any { it.isNotBlank() } ||
                 addressMap.values.any { it.isNotBlank() } ||
-                pinCode.isNotBlank()
+                pinCode.isNotBlank() || companyChanged
         } else {
             nameMap != merchant.name || gstin != merchant.gstin || phone != merchant.phone ||
                 email != merchant.email || countryMap != merchant.country || stateMap != merchant.state ||
                 districtMap != merchant.district || cityMap != merchant.city || addressMap != merchant.address ||
-                pinCode != merchant.pinCode
+                pinCode != merchant.pinCode || companyChanged
         }
     }
 
@@ -166,6 +194,8 @@ fun CustomerEditorScreen(
             return
         }
 
+        val companyIds = if (selectedCompanyOption.id != null) listOf(selectedCompanyOption.id!!) else emptyList()
+
         val merchantToSave = CustomerModel(
             id = merchant?.id ?: 0L,
             name = nameMap.filterValues { it.isNotBlank() },
@@ -178,6 +208,7 @@ fun CustomerEditorScreen(
             state = stateMap.filterValues { it.isNotBlank() },
             country = countryMap.filterValues { it.isNotBlank() },
             pinCode = pinCode.trim(),
+            companyIds = companyIds,
             createdAt = merchant?.createdAt ?: System.currentTimeMillis(),
             updatedAt = System.currentTimeMillis()
         )
@@ -235,7 +266,7 @@ fun CustomerEditorScreen(
                                 verticalArrangement = Arrangement.spacedBy(16.dp)
                             ) {
                                 ElvanIrumozhiPulan(
-                                    label = K.customerName.tr(),
+                                    label = "${K.customerName.tr()} *",
                                     value = nameMap,
                                     onChanged = {
                                         nameMap = it
@@ -256,6 +287,16 @@ fun CustomerEditorScreen(
                                             color = MaterialTheme.colorScheme.error
                                         ),
                                         modifier = Modifier.padding(start = 4.dp)
+                                    )
+                                }
+
+                                if (allProfiles.size > 1) {
+                                    ElvanEditorDropdown<CompanyOption>(
+                                        label = K.companies.tr(),
+                                        value = selectedCompanyOption,
+                                        items = companyOptions,
+                                        onSelected = { selectedCompanyOption = it },
+                                        itemLabelBuilder = { it.name }
                                     )
                                 }
 

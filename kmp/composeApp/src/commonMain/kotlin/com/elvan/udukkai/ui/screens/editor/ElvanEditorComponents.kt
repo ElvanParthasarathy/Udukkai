@@ -49,6 +49,8 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.elvan.udukkai.theme.LocalShellColors
 
+data class CompanyOption(val id: Long?, val name: String)
+
 val LocalEditorAccentColor = compositionLocalOf<Color?> { null }
 
 /**

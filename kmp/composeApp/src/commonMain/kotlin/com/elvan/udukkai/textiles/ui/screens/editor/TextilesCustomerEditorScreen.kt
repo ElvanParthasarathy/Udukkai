@@ -22,6 +22,8 @@ fun TextilesCustomerEditorScreen(
         isBilingual = profile.isBilingual,
         primaryLang = profile.primaryLanguage.ifEmpty { "ta" },
         secondaryLang = profile.secondaryLanguage.ifEmpty { "en" },
+        allProfiles = TextilesProfileRepository.profiles,
+        activeCompanyId = profile.id,
         onSave = { TextilesCustomerRepository.save(it) },
         onBack = onBack
     )

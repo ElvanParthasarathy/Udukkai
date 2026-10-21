@@ -39,6 +39,7 @@ import com.elvan.udukkai.ui.navigation.MaterialSymbols
 fun CustomerViewScreen(
     merchant: CustomerModel,
     profile: BusinessProfile,
+    allProfiles: List<BusinessProfile> = emptyList(),
     onBack: () -> Unit,
     onEdit: () -> Unit,
     onCopy: (() -> Unit)? = null
@@ -254,6 +255,23 @@ fun CustomerViewScreen(
                             ff = ff
                         )
                     }
+
+                    // Company Availability
+                    val availabilityText = if (merchant.companyIds.isEmpty()) {
+                        "${K.all.tr()} ${K.companies.tr()}"
+                    } else {
+                        merchant.companyIds.mapNotNull { cId ->
+                            val p = allProfiles.find { it.id == cId }
+                            p?.shortName?.ifEmpty { p.businessName.values.firstOrNull() }
+                        }.joinToString(", ").ifEmpty { "${K.select.tr()} ${K.companies.tr()}" }
+                    }
+                    DetailCard(
+                        title = K.companies.tr(),
+                        value = availabilityText,
+                        icon = MaterialSymbols.Rounded.Apartment,
+                        colors = colors,
+                        ff = ff
+                    )
                 }
             }
         }

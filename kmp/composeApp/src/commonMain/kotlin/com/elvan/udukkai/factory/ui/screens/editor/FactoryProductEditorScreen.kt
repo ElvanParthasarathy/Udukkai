@@ -6,13 +6,10 @@ import com.elvan.udukkai.ui.screens.editor.ElvanEditorBottomBar
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.elvan.udukkai.core.platform.AppBackHandler
@@ -29,7 +26,7 @@ import com.elvan.udukkai.ui.screens.editor.*
 
 /**
  * Dedicated Product / Labor Process Editor for Udukkai Factory (ஆலை).
- * Distinct Factory labor schema: Process Name, Labor Rate, Unit of measurement.
+ * Distinct Factory labor schema: Process Name ONLY (Coolie job-work name).
  * Reactively follows FactoryProfileRepository.profile.isBilingual for bilingual toggling.
  */
 @Composable
@@ -42,31 +39,48 @@ fun FactoryProductEditorScreen(
     val isEditing = item != null && item.id > 0L
 
     val profile = FactoryProfileRepository.profile
+    val allProfiles = FactoryProfileRepository.profiles
+    val activeCompanyId = profile.id
     val isBilingual = profile.isBilingual
     val primaryLang = profile.primaryLanguage.ifEmpty { "ta" }
     val secondaryLang = profile.secondaryLanguage.ifEmpty { "en" }
 
     var productNameMap by remember { mutableStateOf(item?.name ?: emptyMap()) }
-    var price by remember {
+
+    val allCompaniesLabel = "${K.all.tr()} ${K.companies.tr()}"
+    val companyOptions = remember(allProfiles, primaryLang) {
+        listOf(CompanyOption(id = null, name = allCompaniesLabel)) +
+            allProfiles.map { p ->
+                val name = p.shortName.ifEmpty { p.businessName[primaryLang] ?: p.businessName.values.firstOrNull() ?: "Company #${p.id}" }
+                CompanyOption(id = p.id, name = name)
+            }
+    }
+
+    var selectedCompanyOption by remember(item, companyOptions) {
         mutableStateOf(
-            if (item != null && item.price > 0) {
-                if (item.price % 1.0 == 0.0) item.price.toLong().toString() else item.price.toString()
-            } else ""
+            if (item != null && item.companyIds.isNotEmpty()) {
+                companyOptions.firstOrNull { it.id == item.companyIds.first() } ?: companyOptions.first()
+            } else if (item == null && activeCompanyId != null && allProfiles.size > 1) {
+                companyOptions.firstOrNull { it.id == activeCompanyId } ?: companyOptions.first()
+            } else {
+                companyOptions.first()
+            }
         )
     }
-    var quantityType by remember { mutableStateOf(item?.quantityType?.ifEmpty { "quantity" } ?: "quantity") }
 
     var validationError by remember { mutableStateOf<String?>(null) }
     var showDiscardDialog by remember { mutableStateOf(false) }
     var isExiting by remember { mutableStateOf(false) }
 
-    val hasChanges = remember(productNameMap, price, quantityType) {
+    val initialCompanyId = item?.companyIds?.firstOrNull()
+    val currentCompanyId = selectedCompanyOption.id
+    val companyChanged = initialCompanyId != currentCompanyId
+
+    val hasChanges = remember(productNameMap, companyChanged) {
         if (item == null) {
-            productNameMap.values.any { it.isNotBlank() } || price.isNotBlank()
+            productNameMap.values.any { it.isNotBlank() } || companyChanged
         } else {
-            productNameMap != item.name ||
-                (price.toDoubleOrNull() ?: 0.0) != item.price ||
-                quantityType != item.quantityType
+            productNameMap != item.name || companyChanged
         }
     }
 
@@ -97,15 +111,17 @@ fun FactoryProductEditorScreen(
             return
         }
 
-        val priceVal = price.toDoubleOrNull() ?: 0.0
+        val companyIds = if (selectedCompanyOption.id != null) listOf(selectedCompanyOption.id!!) else emptyList()
 
         val itemToSave = ProductModel(
             id = item?.id ?: 0L,
             name = productNameMap.filterValues { it.isNotBlank() },
             hsnCode = "",
-            price = priceVal,
+            price = 0.0,
             taxRate = 0.0,
-            quantityType = quantityType,
+            quantityType = "",
+            unit = "",
+            companyIds = companyIds,
             createdAt = item?.createdAt ?: System.currentTimeMillis(),
             updatedAt = System.currentTimeMillis()
         )
@@ -148,71 +164,60 @@ fun FactoryProductEditorScreen(
                     ),
                     verticalArrangement = Arrangement.spacedBy(24.dp)
                 ) {
-                item(key = "top_spacer") {
-                    Spacer(modifier = Modifier.height(LocalElvanTopSpacerHeight.current))
-                }
+                    item(key = "top_spacer") {
+                        Spacer(modifier = Modifier.height(LocalElvanTopSpacerHeight.current))
+                    }
 
-                // Section 1: Process Details (தொழில் / பணி விவரம்)
-                item(key = "process_details") {
-                    ElvanEditorSection(
-                        index = 0,
-                        title = K.productDetails.tr()
-                    ) {
-                        Column(
-                            modifier = Modifier.fillMaxWidth(),
-                            verticalArrangement = Arrangement.spacedBy(16.dp)
+                    // Section 1: Process Details (தொழில் / பணி விவரம்)
+                    item(key = "process_details") {
+                        ElvanEditorSection(
+                            index = 0,
+                            title = K.productDetails.tr()
                         ) {
-                            ElvanIrumozhiPulan(
-                                label = K.productName.tr(),
-                                value = productNameMap,
-                                onChanged = {
-                                    productNameMap = it
-                                    validationError = null
-                                },
-                                isBilingual = isBilingual,
-                                primaryLang = primaryLang,
-                                secondaryLang = secondaryLang,
-                                placeholder = K.productName.tr()
-                            )
-
-                            if (validationError != null) {
-                                Text(
-                                    text = validationError!!,
-                                    style = TextStyle(
-                                        fontFamily = ff,
-                                        fontSize = 12.sp,
-                                        color = MaterialTheme.colorScheme.error
-                                    ),
-                                    modifier = Modifier.padding(start = 4.dp)
+                            Column(
+                                modifier = Modifier.fillMaxWidth(),
+                                verticalArrangement = Arrangement.spacedBy(16.dp)
+                            ) {
+                                ElvanIrumozhiPulan(
+                                    label = "${K.productName.tr()} *",
+                                    value = productNameMap,
+                                    onChanged = {
+                                        productNameMap = it
+                                        validationError = null
+                                    },
+                                    isBilingual = isBilingual,
+                                    primaryLang = primaryLang,
+                                    secondaryLang = secondaryLang,
+                                    placeholder = K.productName.tr()
                                 )
+
+                                if (validationError != null) {
+                                    Text(
+                                        text = validationError!!,
+                                        style = TextStyle(
+                                            fontFamily = ff,
+                                            fontSize = 12.sp,
+                                            color = MaterialTheme.colorScheme.error
+                                        ),
+                                        modifier = Modifier.padding(start = 4.dp)
+                                    )
+                                }
+
+                                if (allProfiles.size > 1) {
+                                    ElvanEditorDropdown<CompanyOption>(
+                                        label = K.companies.tr(),
+                                        value = selectedCompanyOption,
+                                        items = companyOptions,
+                                        onSelected = { selectedCompanyOption = it },
+                                        itemLabelBuilder = { it.name }
+                                    )
+                                }
                             }
-
-                            // Measurement unit selector
-                            val measureUnits = listOf(
-                                "quantity" to K.measureQuantity.tr(),
-                                "weight" to K.measureWeight.tr()
-                            )
-                            ElvanEditorDropdown<Pair<String, String>>(
-                                label = K.unitOfMeasurement.tr(),
-                                value = measureUnits.firstOrNull { it.first == quantityType } ?: measureUnits.first(),
-                                items = measureUnits,
-                                onSelected = { quantityType = it.first },
-                                itemLabelBuilder = { it.second }
-                            )
-
-                            ElvanEditorTextField(
-                                value = price,
-                                onValueChange = { price = it },
-                                label = K.ratePerUnit.tr(),
-                                placeholder = "0.00",
-                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
-                            )
                         }
                     }
                 }
             }
         }
-    }
     }
 
     if (showDiscardDialog && !isExiting) {

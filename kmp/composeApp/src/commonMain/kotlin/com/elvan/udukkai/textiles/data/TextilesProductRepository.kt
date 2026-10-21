@@ -23,8 +23,10 @@ object TextilesProductRepository {
 
     val filteredProducts: List<ProductModel>
         get() {
+            val activeId = TextilesProfileRepository.profile.id
             return products.filter { product ->
-                SearchHelper.matchesProduct(product, searchQuery)
+                (activeId == null || product.isAvailableForCompany(activeId)) &&
+                    SearchHelper.matchesProduct(product, searchQuery)
             }
         }
 

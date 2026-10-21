@@ -41,6 +41,7 @@ fun ProductViewScreen(
     item: ProductModel,
     profile: BusinessProfile,
     allProfiles: List<BusinessProfile>,
+    isCoolie: Boolean = false,
     onBack: () -> Unit,
     onEdit: () -> Unit,
     onCopy: (() -> Unit)? = null
@@ -171,40 +172,42 @@ fun ProductViewScreen(
                     modifier = Modifier.fillMaxWidth(),
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    DetailCard(
-                        title = K.sellingRate.tr(),
-                        value = CurrencyUtils.formatInr(item.price),
-                        icon = MaterialSymbols.Rounded.CurrencyRupee,
-                        colors = colors,
-                        ff = ff
-                    )
-
-                    DetailCard(
-                        title = K.gstRate.tr(),
-                        value = "${item.taxRate}%",
-                        icon = MaterialSymbols.Rounded.Percent,
-                        colors = colors,
-                        ff = ff
-                    )
-
-                    if (item.quantityType.isNotBlank()) {
+                    if (!isCoolie) {
                         DetailCard(
-                            title = K.measureType.tr(),
-                            value = item.quantityType,
-                            icon = MaterialSymbols.Rounded.Straighten,
+                            title = K.sellingRate.tr(),
+                            value = CurrencyUtils.formatInr(item.price),
+                            icon = MaterialSymbols.Rounded.CurrencyRupee,
                             colors = colors,
                             ff = ff
                         )
-                    }
 
-                    if (item.unit.isNotBlank()) {
                         DetailCard(
-                            title = K.unit.tr(),
-                            value = item.unit,
-                            icon = MaterialSymbols.Rounded.Inventory2,
+                            title = K.gstRate.tr(),
+                            value = "${item.taxRate}%",
+                            icon = MaterialSymbols.Rounded.Percent,
                             colors = colors,
                             ff = ff
                         )
+
+                        if (item.quantityType.isNotBlank()) {
+                            DetailCard(
+                                title = K.measureType.tr(),
+                                value = item.quantityType,
+                                icon = MaterialSymbols.Rounded.Straighten,
+                                colors = colors,
+                                ff = ff
+                            )
+                        }
+
+                        if (item.unit.isNotBlank()) {
+                            DetailCard(
+                                title = K.unit.tr(),
+                                value = item.unit,
+                                icon = MaterialSymbols.Rounded.Inventory2,
+                                colors = colors,
+                                ff = ff
+                            )
+                        }
                     }
 
                     // Company Availability
@@ -225,7 +228,7 @@ fun ProductViewScreen(
                     )
 
                     // Company Price Overrides
-                    if (item.companyPrices.isNotEmpty()) {
+                    if (!isCoolie && item.companyPrices.isNotEmpty()) {
                         item.companyPrices.forEach { (cId, overridePrice) ->
                             val p = allProfiles.find { it.id == cId }
                             val cName = p?.shortName?.ifEmpty { p.businessName.values.firstOrNull() } ?: "Company #$cId"

@@ -227,6 +227,7 @@ class AndroidUdukkaiDatabaseHelper(
                 "gstin" TEXT NOT NULL DEFAULT '',
                 "email" TEXT NOT NULL DEFAULT '',
                 "phone" TEXT NOT NULL DEFAULT '',
+                "company_ids" TEXT NOT NULL DEFAULT '[]',
                 "created_at" INTEGER NOT NULL DEFAULT (CAST(strftime('%s', CURRENT_TIMESTAMP) AS INTEGER)),
                 "updated_at" INTEGER NOT NULL DEFAULT (CAST(strftime('%s', CURRENT_TIMESTAMP) AS INTEGER)),
                 "is_deleted" INTEGER NOT NULL DEFAULT 0 CHECK ("is_deleted" IN (0, 1)),
@@ -360,6 +361,8 @@ class AndroidUdukkaiDatabaseHelper(
             )
         """.trimIndent())
 
+        try { db.execSQL("ALTER TABLE \"$customersTable\" ADD COLUMN \"company_ids\" TEXT NOT NULL DEFAULT '[]'") } catch (_: Exception) {}
+
         // 6. Profiles Table
         db.execSQL("""
             CREATE TABLE IF NOT EXISTS "$profilesTable" (
@@ -484,6 +487,7 @@ class AndroidUdukkaiDatabaseHelper(
             put("gstin", customer.gstin)
             put("email", customer.email)
             put("phone", customer.phone)
+            put("company_ids", customer.companyIds.toString())
             put("updated_at", System.currentTimeMillis() / 1000)
             put("is_deleted", 0)
         }
@@ -935,6 +939,7 @@ class AndroidUdukkaiDatabaseHelper(
         gstin = getStringCol(c, "gstin"),
         email = getStringCol(c, "email", "minnanjal"),
         phone = getStringCol(c, "phone", "tholaipaesi"),
+        companyIds = ProductJsonConverter.parseLongList(getStringCol(c, "company_ids", "niruvanam_ids", default = "[]")),
         createdAt = getLongCol(c, "created_at"),
         updatedAt = getLongCol(c, "updated_at"),
         isDeleted = getIntCol(c, "is_deleted") == 1,
