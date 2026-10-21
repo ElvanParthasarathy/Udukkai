@@ -5,6 +5,10 @@ import com.elvan.udukkai.ui.screens.editor.ElvanEditorBottomBar
 
 
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -12,6 +16,8 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -246,17 +252,55 @@ fun TextilesProductEditorScreen(
                                 placeholder = "5208"
                             )
 
-                            val measureUnits = listOf(
-                                "quantity" to K.measureQuantity.tr(),
-                                "weight" to K.measureWeight.tr()
-                            )
-                            ElvanEditorDropdown<Pair<String, String>>(
-                                label = K.unitOfMeasurement.tr(),
-                                value = measureUnits.firstOrNull { it.first == quantityType } ?: measureUnits.first(),
-                                items = measureUnits,
-                                onSelected = { quantityType = it.first },
-                                itemLabelBuilder = { it.second }
-                            )
+                            // Match the React Make/Create product editor's capsule measurement selector.
+                            Column(
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                ElvanEditorLabel(label = K.unitOfMeasurement.tr())
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .height(40.dp)
+                                        .clip(RoundedCornerShape(50.dp))
+                                        .background(colors.iconBg)
+                                        .padding(4.dp),
+                                    horizontalArrangement = Arrangement.spacedBy(2.dp)
+                                ) {
+                                    listOf(
+                                        "quantity" to K.measureQuantity.tr(),
+                                        "weight" to K.measureWeight.tr()
+                                    ).forEach { (value, label) ->
+                                        val selected = quantityType == value
+                                        Box(
+                                            modifier = Modifier
+                                                .weight(1f)
+                                                .fillMaxHeight()
+                                                .clip(RoundedCornerShape(50.dp))
+                                                .background(
+                                                    if (selected) colors.accent else Color.Transparent
+                                                )
+                                                .clickable(
+                                                    interactionSource = remember { MutableInteractionSource() },
+                                                    indication = null
+                                                ) {
+                                                    quantityType = value
+                                                },
+                                            contentAlignment = Alignment.Center
+                                        ) {
+                                            Text(
+                                                text = label,
+                                                style = TextStyle(
+                                                    fontFamily = ff,
+                                                    fontSize = 13.sp,
+                                                    fontWeight = FontWeight.SemiBold,
+                                                    color = if (selected) colors.textOnAccent else colors.textSecondary
+                                                ),
+                                                maxLines = 1
+                                            )
+                                        }
+                                    }
+                                }
+                            }
 
                             ElvanEditorTextField(
                                 value = price,
