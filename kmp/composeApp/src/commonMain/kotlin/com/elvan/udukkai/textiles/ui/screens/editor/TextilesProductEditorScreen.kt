@@ -74,24 +74,20 @@ fun TextilesProductEditorScreen(
     }
     var quantityType by remember { mutableStateOf(item?.quantityType?.ifEmpty { "quantity" } ?: "quantity") }
 
-    val allCompaniesLabel = "${K.all.tr()} ${K.companies.tr()}"
     val companyOptions = remember(allProfiles, primaryLang) {
-        listOf(CompanyOption(id = null, name = allCompaniesLabel)) +
-            allProfiles.map { p ->
-                val name = p.shortName.ifEmpty { p.businessName[primaryLang] ?: p.businessName.values.firstOrNull() ?: "Company #${p.id}" }
-                CompanyOption(id = p.id, name = name)
-            }
+        allProfiles.map { p ->
+            val name = p.shortName.ifEmpty { p.businessName[primaryLang] ?: p.businessName.values.firstOrNull() ?: "Company #" + p.id }
+            CompanyOption(id = p.id, name = name)
+        }
     }
 
-    var selectedCompanyOption by remember(item, companyOptions) {
+    var selectedCompanyOption by remember(item, companyOptions, activeCompanyId) {
         mutableStateOf(
-            if (item != null && item.companyIds.isNotEmpty()) {
-                companyOptions.firstOrNull { it.id == item.companyIds.first() } ?: companyOptions.first()
-            } else if (item == null && activeCompanyId != null && allProfiles.size > 1) {
-                companyOptions.firstOrNull { it.id == activeCompanyId } ?: companyOptions.first()
-            } else {
-                companyOptions.first()
-            }
+            companyOptions.firstOrNull { option ->
+                option.id == (item?.companyIds?.firstOrNull { it == activeCompanyId }
+                    ?: item?.companyIds?.firstOrNull()
+                    ?: activeCompanyId)
+            } ?: CompanyOption(id = activeCompanyId, name = K.activeCompany.tr())
         )
     }
 
@@ -144,7 +140,7 @@ fun TextilesProductEditorScreen(
         val priceVal = price.toDoubleOrNull() ?: 0.0
         val taxVal = variVeetham.toDoubleOrNull() ?: 0.0
 
-        val companyIds = if (selectedCompanyOption.id != null) listOf(selectedCompanyOption.id!!) else emptyList()
+        val companyIds = selectedCompanyOption.id?.let { listOf(it) } ?: emptyList()
 
         val itemToSave = ProductModel(
             id = item?.id ?: 0L,
