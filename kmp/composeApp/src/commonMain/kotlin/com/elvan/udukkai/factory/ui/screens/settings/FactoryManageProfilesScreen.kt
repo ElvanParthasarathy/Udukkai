@@ -198,7 +198,7 @@ fun FactoryNewProfileBottomSheet(
                         "en" to newNameSecondary.trim()
                     ),
                     shortName = newNamePrimary.trim().take(15),
-                    country = mutableMapOf("en" to "India", "ta" to "இந்தியா"),
+                    country = mutableMapOf(),
                     headerLayout = "small",
                     themeColor = "#388e3c"
                 )
