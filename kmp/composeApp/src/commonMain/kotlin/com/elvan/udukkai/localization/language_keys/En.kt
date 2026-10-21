@@ -99,6 +99,7 @@ val en: Map<String, String> = mapOf(
     K.company to "Company",
     K.companyDetail to "Company Detail",
     K.companies to "Companies",
+    K.allCompanies to "All Companies",
     K.companyLogo to "Company Logo",
     K.companyName to "Company Name",
     K.selectCompany to "Select Company",

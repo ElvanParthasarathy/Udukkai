@@ -100,6 +100,7 @@ val ta: Map<String, String> = mapOf(
     K.company to "நிறுவனம்",
     K.companyDetail to "நிறுவனத் தரவு",
     K.companies to "நிறுவனங்கள்",
+    K.allCompanies to "எல்லா நிறுவனங்கள்",
     K.companyLogo to "நிறுவனத்தின் ஓவுரு",
     K.companyName to "நிறுவனத்தின் பெயர்",
     K.selectCompany to "நிறுவனத்தைத் தேர்ந்தெடு",

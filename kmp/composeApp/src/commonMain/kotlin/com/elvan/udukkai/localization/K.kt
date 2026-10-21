@@ -99,6 +99,7 @@ object K {
     const val company = "company"
     const val companyDetail = "companyDetail"
     const val companies = "companies"
+    const val allCompanies = "allCompanies"
     const val companyLogo = "companyLogo"
     const val companyName = "companyName"
     const val selectCompany = "selectCompany"

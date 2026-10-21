@@ -48,8 +48,54 @@ import com.elvan.udukkai.ui.screens.preview.PreviewScreen
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.elvan.udukkai.theme.LocalShellColors
+import com.elvan.udukkai.data.settings.BusinessProfile
+import com.elvan.udukkai.ui.components.shell.resolveCompanyItemLabel
+import com.elvan.udukkai.ui.components.shell.resolveCompanySubtitle
 
-data class CompanyOption(val id: Long?, val name: String)
+data class CompanyOption(
+    val id: Long?,
+    val name: String,
+    val subtitle: String? = null
+)
+
+@Composable
+fun rememberCompanyOptions(
+    profiles: List<BusinessProfile>,
+    isBilingual: Boolean,
+    primaryLang: String,
+    secondaryLang: String
+): List<CompanyOption> {
+    val allCompaniesTitle = if (primaryLang == "ta") "எல்லா நிறுவனங்கள்" else "All Companies"
+    val allCompaniesSub = if (isBilingual) {
+        if (primaryLang == "ta") "All Companies" else "எல்லா நிறுவனங்கள்"
+    } else null
+
+    return remember(profiles, isBilingual, primaryLang, secondaryLang) {
+        val allOption = CompanyOption(
+            id = null,
+            name = allCompaniesTitle,
+            subtitle = allCompaniesSub
+        )
+        val list = profiles.map { p ->
+            val pName = resolveCompanyItemLabel(p, primaryBillingLang = primaryLang)
+                .ifEmpty { p.businessName.values.firstOrNull() ?: p.shortName.ifEmpty { "Company #${p.id}" } }
+            val sName = if (isBilingual) {
+                resolveCompanySubtitle(
+                    profile = p,
+                    isBilingual = true,
+                    primaryBillingLang = primaryLang,
+                    secondaryBillingLang = secondaryLang
+                )?.takeIf { it.isNotBlank() && it != pName }
+            } else null
+            CompanyOption(
+                id = p.id,
+                name = pName,
+                subtitle = sName
+            )
+        }
+        listOf(allOption) + list
+    }
+}
 
 val LocalEditorAccentColor = compositionLocalOf<Color?> { null }
 
@@ -483,7 +529,10 @@ fun <T> ElvanEditorDropdown(
 
     var isSheetOpen by remember { mutableStateOf(false) }
     val containerBg = backgroundColor ?: colors.iconBg
-    val displayText = if (value != null) itemLabelBuilder(value) else ""
+    val displayText = if (value != null) {
+        val sub = subtitleBuilder?.invoke(value)
+        if (!sub.isNullOrBlank()) "${itemLabelBuilder(value)} ($sub)" else itemLabelBuilder(value)
+    } else ""
 
     Column(modifier = modifier.fillMaxWidth()) {
         if (!label.isNullOrBlank() && !hideLabel) {

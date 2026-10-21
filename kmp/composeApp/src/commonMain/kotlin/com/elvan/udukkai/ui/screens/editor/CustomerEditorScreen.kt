@@ -20,6 +20,17 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.shrinkVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.core.tween
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import com.elvan.udukkai.ui.navigation.MaterialSymbols
+import com.elvan.udukkai.ui.screens.editor.ElvanEditorButton
+import com.elvan.udukkai.ui.screens.editor.rememberCompanyOptions
 import com.elvan.udukkai.core.data.*
 import com.elvan.udukkai.core.platform.AppBackHandler
 import com.elvan.udukkai.data.model.CustomerModel
@@ -73,22 +84,27 @@ fun CustomerEditorScreen(
 
     var showGstField by remember { mutableStateOf(showGst || merchant?.gstin?.isNotBlank() == true) }
 
-    // Customer records are owned by one business; do not offer a shared "All Companies" owner.
-    val companyOptions = remember(allProfiles, primaryLang) {
-        allProfiles.map { p ->
-            val name = p.shortName.ifEmpty { p.businessName[primaryLang] ?: p.businessName.values.firstOrNull() ?: "Company #" + p.id }
-            CompanyOption(id = p.id, name = name)
-        }
-    }
+    val companyOptions = rememberCompanyOptions(
+        profiles = allProfiles,
+        isBilingual = isBilingual,
+        primaryLang = primaryLang,
+        secondaryLang = secondaryLang
+    )
 
-    val activeCompanyLabel = K.activeCompany.tr()
-    var selectedCompanyOption by remember(merchant, companyOptions, activeCompanyId, activeCompanyLabel) {
+    var selectedCompanyOption by remember(merchant, companyOptions, activeCompanyId) {
         mutableStateOf(
-            companyOptions.firstOrNull { option ->
-                option.id == (merchant?.companyIds?.firstOrNull { it == activeCompanyId }
-                    ?: merchant?.companyIds?.firstOrNull()
-                    ?: activeCompanyId)
-            } ?: CompanyOption(id = activeCompanyId, name = activeCompanyLabel)
+            if (merchant != null && merchant.companyIds.isNotEmpty()) {
+                val matchId = merchant.companyIds.first()
+                companyOptions.firstOrNull { it.id == matchId }
+                    ?: companyOptions.firstOrNull { it.id == null }
+                    ?: companyOptions.first()
+            } else if (merchant == null && activeCompanyId != null) {
+                companyOptions.firstOrNull { it.id == activeCompanyId }
+                    ?: companyOptions.firstOrNull { it.id == null }
+                    ?: companyOptions.first()
+            } else {
+                companyOptions.firstOrNull { it.id == null } ?: companyOptions.first()
+            }
         )
     }
 
@@ -290,13 +306,14 @@ fun CustomerEditorScreen(
                                     )
                                 }
 
-                                if (allProfiles.size > 1) {
+                                if (allProfiles.isNotEmpty()) {
                                     ElvanEditorDropdown<CompanyOption>(
-                                        label = K.companies.tr(),
+                                        label = K.company.tr(),
                                         value = selectedCompanyOption,
                                         items = companyOptions,
                                         onSelected = { selectedCompanyOption = it },
-                                        itemLabelBuilder = { it.name }
+                                        itemLabelBuilder = { it.name },
+                                        subtitleBuilder = { it.subtitle }
                                     )
                                 }
 
@@ -316,57 +333,65 @@ fun CustomerEditorScreen(
                                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email)
                                 )
 
-                                if (showGstField) {
-                                    ElvanEditorTextField(
-                                        value = gstin,
-                                        onValueChange = { gstin = it.uppercase() },
-                                        label = "GSTIN",
-                                        placeholder = "33AAAAA0000A1Z5"
-                                    )
-                                } else {
-                                    // Optional GSTIN action, styled as a proper editor pill.
-                                    val gstActionShape = RoundedCornerShape(100.dp)
-                                    Row(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .height(48.dp)
-                                            .clip(gstActionShape)
-                                            .background(colors.iconBg)
-                                            .border(1.dp, colors.pillBorder, gstActionShape)
-                                            .clickable { showGstField = true }
-                                            .padding(horizontal = 16.dp),
-                                        verticalAlignment = Alignment.CenterVertically,
-                                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                                AnimatedVisibility(
+                                    visible = !showGstField,
+                                    enter = fadeIn(tween(200)) + expandVertically(tween(250)),
+                                    exit = fadeOut(tween(150)) + shrinkVertically(tween(200))
+                                ) {
+                                    ElvanEditorButton(
+                                        onClick = { showGstField = true },
+                                        modifier = Modifier.fillMaxWidth()
                                     ) {
-                                        Box(
-                                            modifier = Modifier
-                                                .size(30.dp)
-                                                .clip(RoundedCornerShape(50))
-                                                .background(colors.accentContainer),
-                                            contentAlignment = Alignment.Center
+                                        Row(
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            horizontalArrangement = Arrangement.spacedBy(8.dp)
                                         ) {
+                                            Icon(
+                                                imageVector = MaterialSymbols.Rounded.Add,
+                                                contentDescription = null,
+                                                tint = colors.accent,
+                                                modifier = Modifier.size(18.dp)
+                                            )
                                             Text(
-                                                text = "+",
+                                                text = "${K.add.tr()} GSTIN",
                                                 style = TextStyle(
                                                     fontFamily = ff,
-                                                    fontSize = 20.sp,
+                                                    fontSize = 14.sp,
                                                     fontWeight = FontWeight.Medium,
                                                     color = colors.accent
                                                 )
                                             )
                                         }
-
-                                        Text(
-                                            text = "${K.add.tr()} ${K.gstin.tr()}",
-                                            modifier = Modifier.weight(1f),
-                                            style = TextStyle(
-                                                fontFamily = ff,
-                                                fontSize = 14.sp,
-                                                fontWeight = FontWeight.SemiBold,
-                                                color = colors.textPrimary
-                                            )
-                                        )
                                     }
+                                }
+
+                                AnimatedVisibility(
+                                    visible = showGstField,
+                                    enter = fadeIn(tween(250)) + expandVertically(tween(300)),
+                                    exit = fadeOut(tween(150)) + shrinkVertically(tween(200))
+                                ) {
+                                    ElvanEditorTextField(
+                                        value = gstin,
+                                        onValueChange = { gstin = it.uppercase() },
+                                        label = "GSTIN",
+                                        placeholder = "33AAAAA0000A1Z5",
+                                        suffixIcon = {
+                                            IconButton(
+                                                onClick = {
+                                                    gstin = ""
+                                                    showGstField = false
+                                                },
+                                                modifier = Modifier.size(28.dp)
+                                            ) {
+                                                Icon(
+                                                    imageVector = MaterialSymbols.Rounded.Close,
+                                                    contentDescription = "Remove GSTIN",
+                                                    tint = colors.textSecondary,
+                                                    modifier = Modifier.size(16.dp)
+                                                )
+                                            }
+                                        }
+                                    )
                                 }
                             }
                         }

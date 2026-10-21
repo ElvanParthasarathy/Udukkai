@@ -47,21 +47,27 @@ fun FactoryProductEditorScreen(
 
     var productNameMap by remember { mutableStateOf(item?.name ?: emptyMap()) }
 
-    val companyOptions = remember(allProfiles, primaryLang) {
-        allProfiles.map { p ->
-            val name = p.shortName.ifEmpty { p.businessName[primaryLang] ?: p.businessName.values.firstOrNull() ?: "Company #" + p.id }
-            CompanyOption(id = p.id, name = name)
-        }
-    }
+    val companyOptions = rememberCompanyOptions(
+        profiles = allProfiles,
+        isBilingual = isBilingual,
+        primaryLang = primaryLang,
+        secondaryLang = secondaryLang
+    )
 
-    val activeCompanyLabel = K.activeCompany.tr()
-    var selectedCompanyOption by remember(item, companyOptions, activeCompanyId, activeCompanyLabel) {
+    var selectedCompanyOption by remember(item, companyOptions, activeCompanyId) {
         mutableStateOf(
-            companyOptions.firstOrNull { option ->
-                option.id == (item?.companyIds?.firstOrNull { it == activeCompanyId }
-                    ?: item?.companyIds?.firstOrNull()
-                    ?: activeCompanyId)
-            } ?: CompanyOption(id = activeCompanyId, name = activeCompanyLabel)
+            if (item != null && item.companyIds.isNotEmpty()) {
+                val matchId = item.companyIds.first()
+                companyOptions.firstOrNull { it.id == matchId }
+                    ?: companyOptions.firstOrNull { it.id == null }
+                    ?: companyOptions.first()
+            } else if (item == null && activeCompanyId != null) {
+                companyOptions.firstOrNull { it.id == activeCompanyId }
+                    ?: companyOptions.firstOrNull { it.id == null }
+                    ?: companyOptions.first()
+            } else {
+                companyOptions.firstOrNull { it.id == null } ?: companyOptions.first()
+            }
         )
     }
 
@@ -200,13 +206,14 @@ fun FactoryProductEditorScreen(
                                     )
                                 }
 
-                                if (allProfiles.size > 1) {
+                                if (allProfiles.isNotEmpty()) {
                                     ElvanEditorDropdown<CompanyOption>(
-                                        label = K.companies.tr(),
+                                        label = K.company.tr(),
                                         value = selectedCompanyOption,
                                         items = companyOptions,
                                         onSelected = { selectedCompanyOption = it },
-                                        itemLabelBuilder = { it.name }
+                                        itemLabelBuilder = { it.name },
+                                        subtitleBuilder = { it.subtitle }
                                     )
                                 }
                             }
