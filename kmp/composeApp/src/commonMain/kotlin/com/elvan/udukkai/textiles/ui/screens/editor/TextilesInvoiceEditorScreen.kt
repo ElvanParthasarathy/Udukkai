@@ -49,7 +49,7 @@ import com.elvan.udukkai.ui.components.shell.*
 import com.elvan.udukkai.ui.navigation.MaterialSymbols
 import androidx.compose.ui.zIndex
 import com.elvan.udukkai.ui.screens.editor.ElvanEditorSection
-import com.elvan.udukkai.ui.screens.editor.ElvanThiruthiThalaippu
+import com.elvan.udukkai.ui.screens.editor.ElvanEditorLabel
 import com.elvan.udukkai.ui.screens.editor.LocalEditorAccentColor
 import com.elvan.udukkai.ui.screens.editor.invoice.components.*
 
@@ -122,7 +122,7 @@ fun TextilesInvoiceEditorScreen(
     val isProfileConfigured = profiles.isNotEmpty() && selectedNiruvanamId != null
 
     fun computePrefix(p: BusinessProfile?): String {
-        return if (p != null && p.kurumPeyar.isNotEmpty()) p.kurumPeyar else "INV"
+        return if (p != null && p.shortName.isNotEmpty()) p.shortName else "INV"
     }
 
     val initialPrefix = computePrefix(selectedProfile)
@@ -144,7 +144,7 @@ fun TextilesInvoiceEditorScreen(
     var customerState by remember { mutableStateOf("") }
 
     val initialViruppangal = remember(invoice) {
-        TextilesCalculation.preferencesFromJson(invoice?.sonthaViruppangal)
+        TextilesCalculation.preferencesFromJson(invoice?.customPreferencesJson)
     }
 
     // Metadata
@@ -475,8 +475,8 @@ fun TextilesInvoiceEditorScreen(
                             modifier = Modifier.fillMaxWidth(),
                             verticalArrangement = Arrangement.spacedBy(24.dp)
                         ) {
-                            val profilePrefix = if (selectedProfile.kurumPeyar.isNotEmpty()) {
-                                "${selectedProfile.kurumPeyar}-"
+                            val profilePrefix = if (selectedProfile.shortName.isNotEmpty()) {
+                                "${selectedProfile.shortName}-"
                             } else {
                                 "INV-"
                             }

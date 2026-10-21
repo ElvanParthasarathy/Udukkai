@@ -9,7 +9,7 @@ import com.elvan.udukkai.data.model.CustomerModel
 import com.elvan.udukkai.data.model.InvoiceModel
 import com.elvan.udukkai.data.model.ReceiptInvoiceLinkModel
 import com.elvan.udukkai.data.model.ReceiptModel
-import com.elvan.udukkai.data.model.PorulJsonConverter
+import com.elvan.udukkai.data.model.ProductJsonConverter
 import com.elvan.udukkai.data.model.ProductModel
 import com.elvan.udukkai.data.settings.LanguageJsonConverter
 import com.elvan.udukkai.data.settings.BusinessProfile
@@ -316,7 +316,7 @@ class AndroidUdukkaiDatabaseHelper(
             put("maavattam", LanguageJsonConverter.stringify(merchant.district))
             put("maanilam", LanguageJsonConverter.stringify(merchant.state))
             put("naadu", LanguageJsonConverter.stringify(merchant.country))
-            put("velinaad_mugavari", LanguageJsonConverter.stringify(merchant.velinaadMugavari))
+            put("velinaad_mugavari", LanguageJsonConverter.stringify(merchant.internationalAddress))
             put("anjal_kuriyeedu", merchant.pinCode)
             put("gstin", merchant.gstin)
             put("minnanjal", merchant.email)
@@ -459,15 +459,15 @@ class AndroidUdukkaiDatabaseHelper(
             put("vari_thogai", invoice.taxAmount)
             put("vari_tharavugal", invoice.taxDataJson.toString())
             if (isFactory) {
-                put("motha_edai", invoice.mothaEdai)
+                put("motha_edai", invoice.totalWeight)
                 put("setharam_grams", invoice.wastageGrams)
-                put("thabaal_thogai", invoice.thabaalThogai)
+                put("thabaal_thogai", invoice.postalCharges)
                 put("ahimsa_pattu_thogai", invoice.ahimsaSilkAmount)
-                put("piravari_vugal", invoice.piravariVugal.toString())
+                put("piravari_vugal", invoice.otherTaxesJson.toString())
                 put("vangi_tharavugal", invoice.bankDetailsJson.toString())
             }
-            put("sontha_viruppangal", invoice.sonthaViruppangal)
-            put("nibandhanaigal", invoice.nibandhanaigal)
+            put("sontha_viruppangal", invoice.customPreferencesJson)
+            put("nibandhanaigal", invoice.termsAndConditions)
             put("ullkurippu", invoice.notes)
             put("updated_at", System.currentTimeMillis() / 1000)
             put("is_deleted", 0)
@@ -534,7 +534,7 @@ class AndroidUdukkaiDatabaseHelper(
             put("vaangunar_munvari", LanguageJsonConverter.stringify(receipt.customerAddress))
             put("patru_naal", receipt.receiptDate)
             put("thogai", receipt.amount)
-            put("seluthum_murai", receipt.seluthumMurai)
+            put("seluthum_murai", receipt.paymentMode)
             put("vangi_peyar", receipt.bankName)
             put("parivarthanai_en", receipt.transactionNumber)
             put("ullkurippu", receipt.notes)
@@ -674,11 +674,11 @@ class AndroidUdukkaiDatabaseHelper(
     override fun saveProfile(profile: BusinessProfile): Boolean = useDb { db ->
         val cv = ContentValues().apply {
             put("mudhan_mozhi", profile.primaryLanguage)
-            put("thunai_mozhi", profile.thunaiMozhi)
+            put("thunai_mozhi", profile.secondaryLanguage)
             put("iru_mozhi", if (profile.isBilingual) 1 else 0)
-            put("gst_pirippugal", if (profile.gstPirippugal) 1 else 0)
+            put("gst_pirippugal", if (profile.splitGst) 1 else 0)
             put("niruvanathin_peyar", LanguageJsonConverter.stringify(profile.businessName))
-            put("kurum_peyar", profile.kurumPeyar)
+            put("kurum_peyar", profile.shortName)
             put("tholaipaesi1", profile.phone1)
             put("tholaipaesi2", profile.phone2)
             put("minnanjal", profile.email)
@@ -691,16 +691,16 @@ class AndroidUdukkaiDatabaseHelper(
             put("anjal_kuriyeedu", profile.pinCode)
             put("vangi_peyar", LanguageJsonConverter.stringify(profile.bankName))
             put("kilai", LanguageJsonConverter.stringify(profile.branch))
-            put("vangi_kanakku", profile.vangiKanakku)
+            put("vangi_kanakku", profile.accountNumber)
             put("ifsc", profile.ifsc)
             put("oavuru", profile.logo)
             put("agala_oavuru", profile.wideLogo)
             put("thalaippu_vadivu", profile.headerLayout)
             put("kaiyoppam", profile.signature)
-            put("oppam_peyar", profile.oppamPeyar)
-            put("oppam_mudhal_peyar", profile.oppamMudhalPeyar)
-            put("oppam_irudhi_peyar", profile.oppamIrudhiPeyar)
-            put("adaimozhi", LanguageJsonConverter.stringify(profile.adaimozhi))
+            put("oppam_peyar", profile.signatoryName)
+            put("oppam_mudhal_peyar", profile.signatoryFirstName)
+            put("oppam_irudhi_peyar", profile.signatoryLastName)
+            put("adaimozhi", LanguageJsonConverter.stringify(profile.tagline))
             put("upi_id", profile.upiId)
             put("thoatra_niram", profile.themeColor)
             put("updated_at", System.currentTimeMillis() / 1000)
@@ -772,8 +772,8 @@ class AndroidUdukkaiDatabaseHelper(
         taxRate = c.getDouble(c.getColumnIndexOrThrow("vari_veetham")),
         quantityType = c.getString(c.getColumnIndexOrThrow("alavu_vagai")),
         unit = c.getString(c.getColumnIndexOrThrow("alagu")),
-        companyIds = PorulJsonConverter.parseLongList(c.getString(c.getColumnIndexOrThrow("niruvanam_ids"))),
-        companyPrices = PorulJsonConverter.parseCompanyPrices(c.getString(c.getColumnIndexOrThrow("company_prices"))),
+        companyIds = ProductJsonConverter.parseLongList(c.getString(c.getColumnIndexOrThrow("niruvanam_ids"))),
+        companyPrices = ProductJsonConverter.parseCompanyPrices(c.getString(c.getColumnIndexOrThrow("company_prices"))),
         createdAt = c.getLong(c.getColumnIndexOrThrow("created_at")),
         updatedAt = c.getLong(c.getColumnIndexOrThrow("updated_at")),
         isDeleted = c.getInt(c.getColumnIndexOrThrow("is_deleted")) == 1,

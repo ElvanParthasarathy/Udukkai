@@ -9,12 +9,5 @@ data class ReceiptInvoiceLinkModel(
     val receiptId: Long = 0L,
     val invoiceId: Long = 0L,
     val appliedAmount: Double = 0.0
-) {
-    // Backward-compatible accessors
-    val patruId: Long get() = receiptId
-    val pattiyalId: Long get() = invoiceId
-    val poruthiyaThogai: Double get() = appliedAmount
-}
-
-typealias PatruPattiyalInaippuTharavuru = ReceiptInvoiceLinkModel
+)
 typealias ReceiptInvoiceLink = ReceiptInvoiceLinkModel

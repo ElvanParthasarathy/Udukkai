@@ -22,8 +22,8 @@ import com.elvan.udukkai.theme.LocalAppFontFamily
 import com.elvan.udukkai.theme.preventBrokenLigatures
 import com.elvan.udukkai.theme.rememberShellColors
 import com.elvan.udukkai.ui.navigation.MaterialSymbols
-import com.elvan.udukkai.ui.screens.editor.ElvanThiruthiThalaippu
-import com.elvan.udukkai.ui.screens.editor.ElvanThiruthiUlleedu
+import com.elvan.udukkai.ui.screens.editor.ElvanEditorLabel
+import com.elvan.udukkai.ui.screens.editor.ElvanEditorTextField
 
 @Composable
 fun ElvanAavanaEnnKooru(
@@ -53,10 +53,10 @@ fun ElvanAavanaEnnKooru(
     val containerBg = colors.iconBg
 
     Column(modifier = modifier.fillMaxWidth()) {
-        ElvanThiruthiThalaippu(label = label)
+        ElvanEditorLabel(label = label)
 
         if (isEditing) {
-            ElvanThiruthiUlleedu(
+            ElvanEditorTextField(
                 value = editedNumberPart,
                 onValueChange = {
                     editedNumberPart = it

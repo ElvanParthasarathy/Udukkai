@@ -46,7 +46,7 @@ fun TextilesProductEditorScreen(
     val profile = TextilesProfileRepository.profile
     val isBilingual = profile.isBilingual
     val primaryLang = profile.primaryLanguage.ifEmpty { "ta" }
-    val secondaryLang = profile.thunaiMozhi.ifEmpty { "en" }
+    val secondaryLang = profile.secondaryLanguage.ifEmpty { "en" }
 
     var porulPeyarMap by remember { mutableStateOf(item?.name ?: emptyMap()) }
     var hsnCode by remember { mutableStateOf(item?.hsnCode ?: "") }
@@ -199,7 +199,7 @@ fun TextilesProductEditorScreen(
                                 )
                             }
 
-                            ElvanThiruthiUlleedu(
+                            ElvanEditorTextField(
                                 value = hsnCode,
                                 onValueChange = { hsnCode = it },
                                 label = "HSN / SAC",
@@ -218,7 +218,7 @@ fun TextilesProductEditorScreen(
                                 itemLabelBuilder = { it.second }
                             )
 
-                            ElvanThiruthiUlleedu(
+                            ElvanEditorTextField(
                                 value = vilai,
                                 onValueChange = { vilai = it },
                                 label = K.ratePerUnit.tr(),
@@ -226,7 +226,7 @@ fun TextilesProductEditorScreen(
                                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
                             )
 
-                            ElvanThiruthiUlleedu(
+                            ElvanEditorTextField(
                                 value = variVeetham,
                                 onValueChange = { variVeetham = it },
                                 label = "${K.taxRate.tr()} (%)",

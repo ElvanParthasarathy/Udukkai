@@ -121,12 +121,12 @@ fun ElvanEditorSection(
 
 /**
  * Boxed Card Container for Elvan Editors.
- * Matches Flutter's `ElvanThiruthiAttai`:
+ * Matches Flutter's `ElvanEditorCard`:
  * Default `borderRadius = 24.dp`, no shadow, no border.
  * Light mode: `Color.White`, Dark mode: `Color.White.copy(alpha = 0.03f)`.
  */
 @Composable
-fun ElvanThiruthiAttai(
+fun ElvanEditorCard(
     modifier: Modifier = Modifier,
     borderRadius: Dp = 24.dp,
     padding: PaddingValues = PaddingValues(16.dp),
@@ -170,10 +170,10 @@ fun ElvanThiruthiAttai(
 
 /**
  * Small label displayed directly above editor text fields.
- * Matches Flutter's `ElvanThiruthiThalaippu`.
+ * Matches Flutter's `ElvanEditorLabel`.
  */
 @Composable
-fun ElvanThiruthiThalaippu(
+fun ElvanEditorLabel(
     label: String,
     modifier: Modifier = Modifier
 ) {
@@ -194,14 +194,14 @@ fun ElvanThiruthiThalaippu(
 
 /**
  * Pill-shaped input designed specifically for Elvan Editors (Thiruthi).
- * Matches Flutter's `ElvanThiruthiUlleedu` and `ElvanSettingsTextField`:
+ * Matches Flutter's `ElvanEditorTextField` and `ElvanSettingsTextField`:
  * - Height: 48dp (for single-line, min 48dp for multiline)
  * - Corner radius: 100dp (pill) or 16dp (multiline)
  * - Padding: horizontal 20dp, vertical 12dp (multiline)
  * - Background: colors.iconBg (dynamic light/dark fill)
  */
 @Composable
-fun ElvanThiruthiUlleedu(
+fun ElvanEditorTextField(
     value: String,
     onValueChange: (String) -> Unit,
     modifier: Modifier = Modifier,
@@ -246,7 +246,7 @@ fun ElvanThiruthiUlleedu(
             .bringIntoViewRequester(bringIntoViewRequester)
     ) {
         if (!label.isNullOrBlank()) {
-            ElvanThiruthiThalaippu(label = label)
+            ElvanEditorLabel(label = label)
         }
 
         Box(
@@ -380,7 +380,7 @@ fun ElvanThiruthiUlleedu(
  * Matches Flutter's `ElvanIrumozhiPulan`:
  * Checks `profile.isBilingual` from settings:
  * - If false: Renders 1 single input for primary language (`profile.primaryLanguage`).
- * - If true: Renders 2 inputs: Primary language and Secondary language (`profile.thunaiMozhi`).
+ * - If true: Renders 2 inputs: Primary language and Secondary language (`profile.secondaryLanguage`).
  */
 @Composable
 fun ElvanIrumozhiPulan(
@@ -410,7 +410,7 @@ fun ElvanIrumozhiPulan(
     ) {
         // Primary Field
         key(primaryLang) {
-            ElvanThiruthiUlleedu(
+            ElvanEditorTextField(
                 value = primaryValue,
                 onValueChange = { newText ->
                     val updated = value.toMutableMap()
@@ -433,7 +433,7 @@ fun ElvanIrumozhiPulan(
             exit = shrinkVertically() + fadeOut()
         ) {
             key(secondaryLang) {
-                ElvanThiruthiUlleedu(
+                ElvanEditorTextField(
                     value = secondaryValue,
                     onValueChange = { newText ->
                         val updated = value.toMutableMap()
@@ -485,7 +485,7 @@ fun <T> ElvanThiruthiKeezhvirivu(
 
     Column(modifier = modifier.fillMaxWidth()) {
         if (!label.isNullOrBlank() && !hideLabel) {
-            ElvanThiruthiThalaippu(label = label)
+            ElvanEditorLabel(label = label)
         }
 
         Box(
@@ -601,11 +601,11 @@ fun ElvanThiruthiKeezhvirivu(
 }
 
 /**
- * Pill button component for Elvan Editors matching Flutter's `ElvanThiruthiPothan`.
+ * Pill button component for Elvan Editors matching Flutter's `ElvanEditorButton`.
  * Ensures pixel-perfect consistency (48dp height, 20dp padding, 100dp pill shape).
  */
 @Composable
-fun ElvanThiruthiPothan(
+fun ElvanEditorButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     height: Dp = 48.dp,

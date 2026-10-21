@@ -40,4 +40,3 @@ object LanguageJsonConverter {
     }
 }
 
-typealias MozhiJsonConverter = LanguageJsonConverter

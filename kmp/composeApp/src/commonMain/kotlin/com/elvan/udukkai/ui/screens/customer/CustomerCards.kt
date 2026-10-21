@@ -57,7 +57,7 @@ fun FactoryCustomerCard(
     val profile = FactoryProfileRepository.profile
     val isBilingual = profile.isBilingual
     val primaryLang = profile.primaryLanguage.ifEmpty { "ta" }
-    val secondaryLang = profile.thunaiMozhi.ifEmpty { "en" }
+    val secondaryLang = profile.secondaryLanguage.ifEmpty { "en" }
 
     val primaryName = getDynamicField(merchant.name, isPrimary = true, isBilingual = isBilingual, primaryLang, secondaryLang)
         .ifEmpty { merchant.name.values.firstOrNull() ?: "-" }
@@ -186,7 +186,7 @@ fun TextilesCustomerCard(
     val profile = TextilesProfileRepository.profile
     val isBilingual = profile.isBilingual
     val primaryLang = profile.primaryLanguage.ifEmpty { "ta" }
-    val secondaryLang = profile.thunaiMozhi.ifEmpty { "en" }
+    val secondaryLang = profile.secondaryLanguage.ifEmpty { "en" }
 
     val primaryName = getDynamicField(merchant.name, isPrimary = true, isBilingual = isBilingual, primaryLang, secondaryLang)
         .ifEmpty { merchant.name.values.firstOrNull() ?: "-" }

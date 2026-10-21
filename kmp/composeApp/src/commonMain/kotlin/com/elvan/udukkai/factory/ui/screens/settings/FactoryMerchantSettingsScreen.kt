@@ -239,9 +239,9 @@ fun FactoryMerchantSettingsScreen(
                     displayContent = {
                         ElvanSettingsDisplayRow(
                             title = K.shortCompanyName.tr(),
-                            primaryValue = profile.kurumPeyar,
+                            primaryValue = profile.shortName,
                             onEdit = {
-                                tempPrimary = profile.kurumPeyar
+                                tempPrimary = profile.shortName
                                 editingSection = "kurumPeyar"
                             },
                             colors = colors
@@ -253,7 +253,7 @@ fun FactoryMerchantSettingsScreen(
                             onCancel = { editingSection = null },
                             onSave = {
                                 saveField {
-                                    profile.kurumPeyar = tempPrimary
+                                    profile.shortName = tempPrimary
                                 }
                             },
                             colors = colors

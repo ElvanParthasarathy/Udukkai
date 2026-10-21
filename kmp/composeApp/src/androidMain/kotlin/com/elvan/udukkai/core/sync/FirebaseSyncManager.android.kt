@@ -10,7 +10,7 @@ import com.elvan.udukkai.data.model.InvoiceModel
 import com.elvan.udukkai.data.model.ReceiptInvoiceLinkModel
 import com.elvan.udukkai.data.model.ReceiptModel
 import com.elvan.udukkai.data.model.ProductModel
-import com.elvan.udukkai.data.model.PorulFirebasePayloadConverter
+import com.elvan.udukkai.data.model.ProductFirebasePayloadConverter
 import com.elvan.udukkai.data.settings.LanguageJsonConverter
 import com.google.firebase.FirebaseApp
 import com.google.firebase.database.DataSnapshot
@@ -373,7 +373,7 @@ class AndroidFirebaseSyncManager : FirebaseSyncManager {
             "maavattam" to LanguageJsonConverter.stringify(merchant.district),
             "maanilam" to LanguageJsonConverter.stringify(merchant.state),
             "naadu" to LanguageJsonConverter.stringify(merchant.country),
-            "velinaadMugavari" to LanguageJsonConverter.stringify(merchant.velinaadMugavari),
+            "velinaadMugavari" to LanguageJsonConverter.stringify(merchant.internationalAddress),
             "anjalKuriyeedu" to merchant.pinCode,
             "gstin" to merchant.gstin,
             "minnanjal" to merchant.email,
@@ -398,7 +398,7 @@ class AndroidFirebaseSyncManager : FirebaseSyncManager {
         val prefix = getPrefix(scope)
         val ref = db.getReference("udukkai").child(prefix).child("products").child("${item.id}")
 
-        val data = PorulFirebasePayloadConverter.toFirebasePayload(item)
+        val data = ProductFirebasePayloadConverter.toFirebasePayload(item)
 
         ref.setValue(data).addOnSuccessListener {
             _lastSyncTime.value = System.currentTimeMillis()
@@ -433,13 +433,13 @@ class AndroidFirebaseSyncManager : FirebaseSyncManager {
             "podhuThallupadiThogai" to invoice.globalDiscountAmount,
             "variThogai" to invoice.taxAmount,
             "variTharavugal" to invoice.taxDataJson,
-            "mothaEdai" to invoice.mothaEdai,
+            "mothaEdai" to invoice.totalWeight,
             "setharamGrams" to invoice.wastageGrams,
-            "thabaalThogai" to invoice.thabaalThogai,
+            "thabaalThogai" to invoice.postalCharges,
             "ahimsaPattuThogai" to invoice.ahimsaSilkAmount,
-            "piravariVugal" to invoice.piravariVugal,
-            "sonthaViruppangal" to invoice.sonthaViruppangal,
-            "nibandhanaigal" to invoice.nibandhanaigal,
+            "piravariVugal" to invoice.otherTaxesJson,
+            "sonthaViruppangal" to invoice.customPreferencesJson,
+            "nibandhanaigal" to invoice.termsAndConditions,
             "ullkurippu" to invoice.notes,
             "vangiTharavugal" to invoice.bankDetailsJson,
             "createdAt" to invoice.createdAt,
@@ -473,7 +473,7 @@ class AndroidFirebaseSyncManager : FirebaseSyncManager {
             "vaangunarMunvari" to LanguageJsonConverter.stringify(receipt.customerAddress),
             "patruNaal" to receipt.receiptDate,
             "thogai" to receipt.amount,
-            "seluthumMurai" to receipt.seluthumMurai,
+            "seluthumMurai" to receipt.paymentMode,
             "vangiPeyar" to receipt.bankName,
             "parivarthanaiEn" to receipt.transactionNumber,
             "ullkurippu" to receipt.notes,
@@ -553,7 +553,7 @@ class AndroidFirebaseSyncManager : FirebaseSyncManager {
 
             val niruvanamIds = if (s.hasChild("niruvanamIds")) {
                 val rawVal = s.child("niruvanamIds").value
-                val parsed = PorulFirebasePayloadConverter.parseNiruvanamIds(rawVal)
+                val parsed = ProductFirebasePayloadConverter.parseNiruvanamIds(rawVal)
                 if (parsed.isNotEmpty()) {
                     parsed
                 } else {
@@ -567,7 +567,7 @@ class AndroidFirebaseSyncManager : FirebaseSyncManager {
 
             val companyPrices = if (s.hasChild("companyPrices")) {
                 val rawVal = s.child("companyPrices").value
-                val parsed = PorulFirebasePayloadConverter.parseCompanyPrices(rawVal)
+                val parsed = ProductFirebasePayloadConverter.parseCompanyPrices(rawVal)
                 if (parsed.isNotEmpty()) {
                     parsed
                 } else {

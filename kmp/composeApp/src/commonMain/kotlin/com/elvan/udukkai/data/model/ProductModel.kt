@@ -17,13 +17,6 @@ data class ProductModel(
     val isDeleted: Boolean = false,
     val deletedAt: Long? = null
 ) {
-    // Backward-compatible accessors for legacy Tanglish property names
-    val porulPeyar: Map<String, String> get() = name
-    val vilai: Double get() = price
-    val variVeetham: Double get() = taxRate
-    val alavuVagai: String get() = quantityType
-    val alagu: String get() = unit
-    val niruvanamIds: List<Long> get() = companyIds
 
     /**
      * Determines whether this product is available for the given company.
@@ -50,10 +43,9 @@ data class ProductModel(
     }
 }
 
-typealias PorulTharavuru = ProductModel
 typealias Product = ProductModel
 
-object PorulJsonConverter {
+object ProductJsonConverter {
     fun parseLongList(json: String?): List<Long> {
         if (json.isNullOrBlank() || json.trim() == "[]" || json.trim() == "null") return emptyList()
         val trimmed = json.trim()
@@ -93,7 +85,7 @@ object PorulJsonConverter {
     }
 }
 
-object PorulFirebasePayloadConverter {
+object ProductFirebasePayloadConverter {
     /**
      * Converts a ProductModel to a HashMap suitable for Firebase Realtime Database.
      * Serializes niruvanamIds as a List of Longs and companyPrices as a Map<String, Double>
@@ -162,7 +154,7 @@ object PorulFirebasePayloadConverter {
                 }
             }
             is String -> {
-                PorulJsonConverter.parseLongList(raw)
+                ProductJsonConverter.parseLongList(raw)
             }
             is Number -> {
                 listOf(raw.toLong())
@@ -201,7 +193,7 @@ object PorulFirebasePayloadConverter {
                 result
             }
             is String -> {
-                PorulJsonConverter.parseCompanyPrices(raw)
+                ProductJsonConverter.parseCompanyPrices(raw)
             }
             else -> emptyMap()
         }
@@ -270,3 +262,5 @@ object PorulFirebasePayloadConverter {
         )
     }
 }
+
+typealias PorulFirebasePayloadConverter = ProductFirebasePayloadConverter

@@ -36,9 +36,9 @@ import com.elvan.udukkai.theme.preventBrokenLigatures
 import com.elvan.udukkai.theme.rememberShellColors
 import com.elvan.udukkai.ui.components.shell.ElvanSelectionBottomSheet
 import com.elvan.udukkai.ui.navigation.MaterialSymbols
-import com.elvan.udukkai.ui.screens.editor.ElvanThiruthiAttai
-import com.elvan.udukkai.ui.screens.editor.ElvanThiruthiThalaippu
-import com.elvan.udukkai.ui.screens.editor.ElvanThiruthiUlleedu
+import com.elvan.udukkai.ui.screens.editor.ElvanEditorCard
+import com.elvan.udukkai.ui.screens.editor.ElvanEditorLabel
+import com.elvan.udukkai.ui.screens.editor.ElvanEditorTextField
 import kotlin.math.floor
 import kotlin.math.round
 
@@ -132,7 +132,7 @@ fun FactoryItemCard(
         }
 
         // ── Item Card ──
-        ElvanThiruthiAttai(
+        ElvanEditorCard(
             padding = PaddingValues(16.dp),
             borderRadius = 24.dp
         ) {
@@ -159,7 +159,7 @@ fun FactoryItemCard(
 
                 val productSearchPill = @Composable {
                     Column(modifier = Modifier.fillMaxWidth()) {
-                        ElvanThiruthiThalaippu(label = K.product.tr())
+                        ElvanEditorLabel(label = K.product.tr())
                         Box(
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -236,7 +236,7 @@ fun FactoryItemCard(
                 }
 
                 val weightInput = @Composable {
-                    ElvanThiruthiUlleedu(
+                    ElvanEditorTextField(
                         label = "${K.weight.tr()} (Kg)",
                         value = if (item.edai == 0.0) "" else cleanNum(item.edai, isWeight = true),
                         onValueChange = {
@@ -250,7 +250,7 @@ fun FactoryItemCard(
                 }
 
                 val rateInput = @Composable {
-                    ElvanThiruthiUlleedu(
+                    ElvanEditorTextField(
                         label = "${K.sellingRate.tr()} (₹)",
                         value = if (item.price == 0.0) "" else cleanNum(item.price),
                         onValueChange = {
@@ -266,7 +266,7 @@ fun FactoryItemCard(
 
                 val totalOutput = @Composable {
                     Column(modifier = Modifier.fillMaxWidth()) {
-                        ElvanThiruthiThalaippu(label = "${K.total.tr()} (₹)")
+                        ElvanEditorLabel(label = "${K.total.tr()} (₹)")
                         Box(
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -534,7 +534,7 @@ fun FactoryAdditionalChargeCard(
             }
         }
 
-        ElvanThiruthiAttai(
+        ElvanEditorCard(
             padding = PaddingValues(16.dp),
             borderRadius = 24.dp
         ) {
@@ -544,7 +544,7 @@ fun FactoryAdditionalChargeCard(
                 verticalAlignment = Alignment.Top
             ) {
                 Box(modifier = Modifier.weight(2f)) {
-                    ElvanThiruthiUlleedu(
+                    ElvanEditorTextField(
                         label = K.chargeName.tr(),
                         value = charge.name,
                         onValueChange = {
@@ -556,7 +556,7 @@ fun FactoryAdditionalChargeCard(
                 }
 
                 Box(modifier = Modifier.weight(1f)) {
-                    ElvanThiruthiUlleedu(
+                    ElvanEditorTextField(
                         label = "${K.total.tr()} (₹)",
                         value = if (charge.amount == 0.0) "" else cleanNum(charge.amount),
                         onValueChange = {
@@ -592,7 +592,7 @@ fun FactoryExtraChargesSection(
         modifier = modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        ElvanThiruthiUlleedu(
+        ElvanEditorTextField(
             label = K.wastage.tr(),
             value = if (setharamGrams == 0.0) "" else cleanNum(setharamGrams),
             onValueChange = {
@@ -609,7 +609,7 @@ fun FactoryExtraChargesSection(
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             Box(modifier = Modifier.weight(1f)) {
-                ElvanThiruthiUlleedu(
+                ElvanEditorTextField(
                     label = K.ahimsaSilkAmount.tr(),
                     value = if (ahimsaPattuThogai == 0.0) "" else cleanNum(ahimsaPattuThogai),
                     onValueChange = {
@@ -624,7 +624,7 @@ fun FactoryExtraChargesSection(
             }
 
             Box(modifier = Modifier.weight(1f)) {
-                ElvanThiruthiUlleedu(
+                ElvanEditorTextField(
                     label = K.courierCharge.tr(),
                     value = if (thabaalThogai == 0.0) "" else cleanNum(thabaalThogai),
                     onValueChange = {
@@ -657,7 +657,7 @@ fun FactoryTotalsSection(
     val isDark = colors.isDark
     val ff = LocalAppFontFamily.current
 
-    ElvanThiruthiAttai(
+    ElvanEditorCard(
         padding = PaddingValues(20.dp),
         borderRadius = 24.dp,
         modifier = modifier.fillMaxWidth()
@@ -705,7 +705,7 @@ fun FactoryTotalsSection(
             // Total Weight
             FactoryTotalsRow(
                 label = K.totalWeight.tr(),
-                value = "${cleanNum(totals.mothaEdai, isWeight = true)} Kg",
+                value = "${cleanNum(totals.totalWeight, isWeight = true)} Kg",
                 labelWeight = FontWeight.SemiBold,
                 valueWeight = FontWeight.Bold
             )

@@ -27,8 +27,8 @@ import com.elvan.udukkai.theme.preventBrokenLigatures
 import com.elvan.udukkai.theme.rememberShellColors
 import com.elvan.udukkai.ui.components.shell.ElvanSelectionBottomSheet
 import com.elvan.udukkai.ui.navigation.MaterialSymbols
-import com.elvan.udukkai.ui.screens.editor.ElvanThiruthiAttai
-import com.elvan.udukkai.ui.screens.editor.ElvanThiruthiThalaippu
+import com.elvan.udukkai.ui.screens.editor.ElvanEditorCard
+import com.elvan.udukkai.ui.screens.editor.ElvanEditorLabel
 
 /**
  * Dedicated Customer section for Factory (ஆலை) Invoice Editor:
@@ -60,7 +60,7 @@ fun FactoryCustomerField(
     }
 
     Column(modifier = modifier.fillMaxWidth()) {
-        ElvanThiruthiThalaippu(label = K.clientNameSearch.tr())
+        ElvanEditorLabel(label = K.clientNameSearch.tr())
 
         val containerBg = colors.iconBg
         val customerName = selectedVaangunar?.name?.get(primaryLang)
@@ -126,7 +126,7 @@ fun FactoryCustomerField(
         // ── Saved Details Card ──
         if (selectedVaangunar != null) {
             Spacer(modifier = Modifier.height(24.dp))
-            ElvanThiruthiAttai(
+            ElvanEditorCard(
                 padding = PaddingValues(16.dp),
                 borderRadius = 24.dp
             ) {

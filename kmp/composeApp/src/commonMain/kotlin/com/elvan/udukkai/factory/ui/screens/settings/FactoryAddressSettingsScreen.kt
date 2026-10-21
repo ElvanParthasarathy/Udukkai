@@ -44,7 +44,7 @@ fun FactoryAddressSettingsScreen(
     val stateTitle = K.state.tr()
     val districtTitle = K.district.tr()
     val primaryLangLabel = if (profile.primaryLanguage.lowercase().startsWith("ta")) K.taCode.tr() else K.enCode.tr()
-    val secondaryLangLabel = if (profile.thunaiMozhi.lowercase().startsWith("ta")) K.taCode.tr() else K.enCode.tr()
+    val secondaryLangLabel = if (profile.secondaryLanguage.lowercase().startsWith("ta")) K.taCode.tr() else K.enCode.tr()
     val saveSuccessMsg = K.profileSaved.tr()
 
     val bottomSheet = LocalElvanBottomSheetController.current
@@ -81,7 +81,7 @@ fun FactoryAddressSettingsScreen(
                     val s = if (profile.primaryLanguage == "ta") stateItem.en else stateItem.ta
                     val updated = profile.copy()
                     updated.setBilingual("maanilam", profile.primaryLanguage, p)
-                    updated.setBilingual("maanilam", profile.thunaiMozhi, s)
+                    updated.setBilingual("maanilam", profile.secondaryLanguage, s)
                     FactoryProfileRepository.updateProfile(updated)
                     editingSection = null
                     ElvanSnackbar.show(saveSuccessMsg)
@@ -116,7 +116,7 @@ fun FactoryAddressSettingsScreen(
                     val s = if (profile.primaryLanguage == "ta") districtItem.en else districtItem.ta
                     val updated = profile.copy()
                     updated.setBilingual("maavattam", profile.primaryLanguage, p)
-                    updated.setBilingual("maavattam", profile.thunaiMozhi, s)
+                    updated.setBilingual("maavattam", profile.secondaryLanguage, s)
                     FactoryProfileRepository.updateProfile(updated)
                     editingSection = null
                     ElvanSnackbar.show(saveSuccessMsg)
@@ -128,7 +128,7 @@ fun FactoryAddressSettingsScreen(
     fun saveBilingual(fieldName: String) {
         val updated = profile.copy()
         updated.setBilingual(fieldName, profile.primaryLanguage, tempPrimary)
-        updated.setBilingual(fieldName, profile.thunaiMozhi, tempSecondary)
+        updated.setBilingual(fieldName, profile.secondaryLanguage, tempSecondary)
         FactoryProfileRepository.updateProfile(updated)
         editingSection = null
         ElvanSnackbar.show(saveSuccessMsg)

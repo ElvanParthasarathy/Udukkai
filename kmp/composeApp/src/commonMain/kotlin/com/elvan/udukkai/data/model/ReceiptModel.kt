@@ -24,19 +24,5 @@ data class ReceiptModel(
     val isDeleted: Boolean = false,
     val deletedAt: Long? = null
 ) {
-    // Backward-compatible accessors for legacy Tanglish property names
-    val niruvanamId: Long? get() = companyId
-    val patruEn: String get() = receiptNumber
-    val vaangunarId: Long? get() = customerId
-    val vaangunarPeyar: Map<String, String> get() = customerName
-    val vaangunarMunvari: Map<String, String> get() = customerAddress
-    val patruNaal: Long get() = receiptDate
-    val thogai: Double get() = amount
-    val seluthumMurai: String get() = paymentMode
-    val vangiPeyar: String? get() = bankName
-    val parivarthanaiEn: String? get() = transactionNumber
-    val ullkurippu: String get() = notes
 }
-
-typealias PatrugalTharavuru = ReceiptModel
 typealias Receipt = ReceiptModel

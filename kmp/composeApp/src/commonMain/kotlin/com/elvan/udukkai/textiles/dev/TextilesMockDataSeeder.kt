@@ -166,7 +166,7 @@ object TextilesMockDataSeeder {
             TextilesProfileRepository.createProfile(p)
         }
         val textilesProfiles = helper.loadAllProfiles()
-        val profileMap = textilesProfiles.associateBy { it.kurumPeyar }
+        val profileMap = textilesProfiles.associateBy { it.shortName }
 
         // 2. Products
         for (item in mockSilkPorulgal) {
@@ -319,7 +319,7 @@ object TextilesMockDataSeeder {
 
     suspend fun toggleExtraProfile(): String {
         val profiles = TextilesProfileRepository.allProfiles
-        val existing = profiles.find { it.kurumPeyar == "EPS" }
+        val existing = profiles.find { it.shortName == "EPS" }
         val msg = if (existing != null && existing.id != null) {
             TextilesProfileRepository.deleteProfile(existing.id!!)
             "Textiles EPS Removed ✗"
@@ -355,11 +355,11 @@ object TextilesMockDataSeeder {
         val allProfiles = TextilesProfileRepository.allProfiles
         val activeProfile = TextilesProfileRepository.profile
         val currentPrimary = activeProfile.primaryLanguage.ifEmpty { "ta" }
-        val currentSecondary = activeProfile.thunaiMozhi.ifEmpty { "en" }
+        val currentSecondary = activeProfile.secondaryLanguage.ifEmpty { "en" }
 
         allProfiles.forEach { p ->
             val pPrimary = p.primaryLanguage.ifEmpty { "ta" }
-            val pSecondary = p.thunaiMozhi.ifEmpty { "en" }
+            val pSecondary = p.secondaryLanguage.ifEmpty { "en" }
             val updated = p.copy(
                 primaryLanguage = if (pPrimary == currentPrimary) currentSecondary else currentPrimary,
                 secondaryLanguage = if (pSecondary == currentSecondary) currentPrimary else currentSecondary

@@ -53,7 +53,7 @@ fun FactoryInvoiceCreationSettingsScreen(
 
     var isEditingLanguages by remember { mutableStateOf(false) }
     var tempPrimaryLang by remember { mutableStateOf(profile.primaryLanguage) }
-    var tempSecondaryLang by remember { mutableStateOf(profile.thunaiMozhi) }
+    var tempSecondaryLang by remember { mutableStateOf(profile.secondaryLanguage) }
 
     val bottomSheet = LocalElvanBottomSheetController.current
     val pdfThemeTitle = K.pdfTheme.tr()
@@ -123,7 +123,7 @@ fun FactoryInvoiceCreationSettingsScreen(
                                                     indication = ShellDefaults.ripple(colors, bounded = true),
                                                     onClick = {
                                                         tempPrimaryLang = profile.primaryLanguage
-                                                        tempSecondaryLang = profile.thunaiMozhi
+                                                        tempSecondaryLang = profile.secondaryLanguage
                                                         isEditingLanguages = true
                                                     }
                                                 )
@@ -145,7 +145,7 @@ fun FactoryInvoiceCreationSettingsScreen(
                                     ElvanSettingsDivider(colors = colors)
                                     ElvanSimpleSettingsRow(
                                         title = K.secondaryLanguage.tr(),
-                                        description = getLanguageName(profile.thunaiMozhi),
+                                        description = getLanguageName(profile.secondaryLanguage),
                                         colors = colors
                                     )
                                 }
@@ -157,7 +157,7 @@ fun FactoryInvoiceCreationSettingsScreen(
                                 onSave = {
                                     val updated = profile.copy()
                                     updated.primaryLanguage = tempPrimaryLang
-                                    updated.thunaiMozhi = tempSecondaryLang
+                                    updated.secondaryLanguage = tempSecondaryLang
                                     FactoryProfileRepository.updateProfile(updated)
                                     isEditingLanguages = false
                                     ElvanSnackbar.show(saveSuccessMsg)

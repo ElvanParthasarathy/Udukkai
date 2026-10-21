@@ -146,10 +146,10 @@ fun FactoryIdentityScreen(
                                 } else null,
                                 onEdit = {
                                     tempImagePath = signaturePath
-                                    tempSignatoryFirstName = profile.oppamMudhalPeyar
-                                    tempSignatoryLastName = profile.oppamIrudhiPeyar
-                                    if (tempSignatoryFirstName.isEmpty() && tempSignatoryLastName.isEmpty() && profile.oppamPeyar.isNotEmpty()) {
-                                        val parts = profile.oppamPeyar.trim().split(" ", limit = 2)
+                                    tempSignatoryFirstName = profile.signatoryFirstName
+                                    tempSignatoryLastName = profile.signatoryLastName
+                                    if (tempSignatoryFirstName.isEmpty() && tempSignatoryLastName.isEmpty() && profile.signatoryName.isNotEmpty()) {
+                                        val parts = profile.signatoryName.trim().split(" ", limit = 2)
                                         tempSignatoryFirstName = parts.firstOrNull() ?: ""
                                         tempSignatoryLastName = if (parts.size > 1) parts[1] else ""
                                     }
@@ -165,9 +165,9 @@ fun FactoryIdentityScreen(
                                 onSave = {
                                     val updated = profile.copy()
                                     updated.signature = tempImagePath ?: ""
-                                    updated.oppamMudhalPeyar = tempSignatoryFirstName.trim()
-                                    updated.oppamIrudhiPeyar = tempSignatoryLastName.trim()
-                                    updated.oppamPeyar = updated.fullSignatoryName
+                                    updated.signatoryFirstName = tempSignatoryFirstName.trim()
+                                    updated.signatoryLastName = tempSignatoryLastName.trim()
+                                    updated.signatoryName = updated.fullSignatoryName
                                     FactoryProfileRepository.updateProfile(updated)
                                     editingSection = null
                                     ElvanSnackbar.show(saveSuccessMsg)

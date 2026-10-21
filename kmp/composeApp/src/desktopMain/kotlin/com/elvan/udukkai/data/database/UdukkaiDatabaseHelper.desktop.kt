@@ -5,7 +5,7 @@ import com.elvan.udukkai.data.model.CustomerModel
 import com.elvan.udukkai.data.model.InvoiceModel
 import com.elvan.udukkai.data.model.ReceiptInvoiceLinkModel
 import com.elvan.udukkai.data.model.ReceiptModel
-import com.elvan.udukkai.data.model.PorulJsonConverter
+import com.elvan.udukkai.data.model.ProductJsonConverter
 import com.elvan.udukkai.data.model.ProductModel
 import com.elvan.udukkai.data.settings.LanguageJsonConverter
 import com.elvan.udukkai.data.settings.BusinessProfile
@@ -317,7 +317,7 @@ class DesktopUdukkaiDatabaseHelper(
             stmt.setString(4, LanguageJsonConverter.stringify(merchant.district))
             stmt.setString(5, LanguageJsonConverter.stringify(merchant.state))
             stmt.setString(6, LanguageJsonConverter.stringify(merchant.country))
-            stmt.setString(7, LanguageJsonConverter.stringify(merchant.velinaadMugavari))
+            stmt.setString(7, LanguageJsonConverter.stringify(merchant.internationalAddress))
             stmt.setString(8, merchant.pinCode)
             stmt.setString(9, merchant.gstin)
             stmt.setString(10, merchant.email)
@@ -507,13 +507,13 @@ class DesktopUdukkaiDatabaseHelper(
 
             val now = System.currentTimeMillis() / 1000
             if (isFactory) {
-                stmt.setDouble(18, invoice.mothaEdai)
+                stmt.setDouble(18, invoice.totalWeight)
                 stmt.setDouble(19, invoice.wastageGrams)
-                stmt.setDouble(20, invoice.thabaalThogai)
+                stmt.setDouble(20, invoice.postalCharges)
                 stmt.setDouble(21, invoice.ahimsaSilkAmount)
-                stmt.setString(22, invoice.piravariVugal.toString())
-                stmt.setString(23, invoice.sonthaViruppangal)
-                stmt.setString(24, invoice.nibandhanaigal)
+                stmt.setString(22, invoice.otherTaxesJson.toString())
+                stmt.setString(23, invoice.customPreferencesJson)
+                stmt.setString(24, invoice.termsAndConditions)
                 stmt.setString(25, invoice.notes)
                 stmt.setString(26, invoice.bankDetailsJson.toString())
                 if (isUpdate) {
@@ -528,8 +528,8 @@ class DesktopUdukkaiDatabaseHelper(
                     stmt.generatedKeys.use { rs -> if (rs.next()) rs.getLong(1) else -1L }
                 }
             } else {
-                stmt.setString(18, invoice.sonthaViruppangal)
-                stmt.setString(19, invoice.nibandhanaigal)
+                stmt.setString(18, invoice.customPreferencesJson)
+                stmt.setString(19, invoice.termsAndConditions)
                 stmt.setString(20, invoice.notes)
                 if (isUpdate) {
                     stmt.setLong(21, now)
@@ -614,7 +614,7 @@ class DesktopUdukkaiDatabaseHelper(
             stmt.setString(7, LanguageJsonConverter.stringify(receipt.customerAddress))
             stmt.setLong(8, receipt.receiptDate)
             stmt.setDouble(9, receipt.amount)
-            stmt.setString(10, receipt.seluthumMurai)
+            stmt.setString(10, receipt.paymentMode)
             if (receipt.bankName != null) stmt.setString(11, receipt.bankName) else stmt.setNull(11, Types.VARCHAR)
             if (receipt.transactionNumber != null) stmt.setString(12, receipt.transactionNumber) else stmt.setNull(12, Types.VARCHAR)
             stmt.setString(13, receipt.notes)
@@ -792,11 +792,11 @@ class DesktopUdukkaiDatabaseHelper(
 
         conn.prepareStatement(sql).use { stmt ->
             stmt.setString(1, profile.primaryLanguage)
-            stmt.setString(2, profile.thunaiMozhi)
+            stmt.setString(2, profile.secondaryLanguage)
             stmt.setInt(3, if (profile.isBilingual) 1 else 0)
-            stmt.setInt(4, if (profile.gstPirippugal) 1 else 0)
+            stmt.setInt(4, if (profile.splitGst) 1 else 0)
             stmt.setString(5, LanguageJsonConverter.stringify(profile.businessName))
-            stmt.setString(6, profile.kurumPeyar)
+            stmt.setString(6, profile.shortName)
             stmt.setString(7, profile.phone1)
             stmt.setString(8, profile.phone2)
             stmt.setString(9, profile.email)
@@ -809,16 +809,16 @@ class DesktopUdukkaiDatabaseHelper(
             stmt.setString(16, profile.pinCode)
             stmt.setString(17, LanguageJsonConverter.stringify(profile.bankName))
             stmt.setString(18, LanguageJsonConverter.stringify(profile.branch))
-            stmt.setString(19, profile.vangiKanakku)
+            stmt.setString(19, profile.accountNumber)
             stmt.setString(20, profile.ifsc)
             stmt.setString(21, profile.logo)
             stmt.setString(22, profile.wideLogo)
             stmt.setString(23, profile.headerLayout)
             stmt.setString(24, profile.signature)
-            stmt.setString(25, profile.oppamPeyar)
-            stmt.setString(26, profile.oppamMudhalPeyar)
-            stmt.setString(27, profile.oppamIrudhiPeyar)
-            stmt.setString(28, LanguageJsonConverter.stringify(profile.adaimozhi))
+            stmt.setString(25, profile.signatoryName)
+            stmt.setString(26, profile.signatoryFirstName)
+            stmt.setString(27, profile.signatoryLastName)
+            stmt.setString(28, LanguageJsonConverter.stringify(profile.tagline))
             stmt.setString(29, profile.upiId)
             stmt.setString(30, profile.themeColor)
             val now = System.currentTimeMillis() / 1000
@@ -888,8 +888,8 @@ class DesktopUdukkaiDatabaseHelper(
         taxRate = rs.getDouble("vari_veetham"),
         quantityType = rs.getString("alavu_vagai") ?: "quantity",
         unit = rs.getString("alagu") ?: "Nos",
-        companyIds = PorulJsonConverter.parseLongList(rs.getString("niruvanam_ids")),
-        companyPrices = PorulJsonConverter.parseCompanyPrices(rs.getString("company_prices")),
+        companyIds = ProductJsonConverter.parseLongList(rs.getString("niruvanam_ids")),
+        companyPrices = ProductJsonConverter.parseCompanyPrices(rs.getString("company_prices")),
         createdAt = rs.getLong("created_at"),
         updatedAt = rs.getLong("updated_at"),
         isDeleted = rs.getInt("is_deleted") == 1,

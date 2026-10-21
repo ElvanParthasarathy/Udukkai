@@ -46,8 +46,8 @@ fun GreetingPill(
         val primary = resolveCompanyItemLabel(profile).trim()
         if (primary.isNotEmpty()) {
             primary
-        } else if (profile.kurumPeyar.isNotBlank()) {
-            profile.kurumPeyar.trim()
+        } else if (profile.shortName.isNotBlank()) {
+            profile.shortName.trim()
         } else {
             defaultTitle
         }

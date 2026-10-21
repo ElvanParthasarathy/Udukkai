@@ -19,7 +19,7 @@ import com.elvan.udukkai.localization.K
 import com.elvan.udukkai.localization.tr
 import com.elvan.udukkai.theme.LocalAppFontFamily
 import com.elvan.udukkai.theme.rememberShellColors
-import com.elvan.udukkai.ui.screens.editor.ElvanThiruthiUlleedu
+import com.elvan.udukkai.ui.screens.editor.ElvanEditorTextField
 
 /**
  * Global discount input row with % / ₹ toggle pill button for Textiles mode.
@@ -38,7 +38,7 @@ fun TextilesDiscountField(
     Box(
         modifier = modifier.fillMaxWidth()
     ) {
-        ElvanThiruthiUlleedu(
+        ElvanEditorTextField(
             label = K.globalDiscount.tr(),
             value = discountValue,
             onValueChange = onValueChanged,

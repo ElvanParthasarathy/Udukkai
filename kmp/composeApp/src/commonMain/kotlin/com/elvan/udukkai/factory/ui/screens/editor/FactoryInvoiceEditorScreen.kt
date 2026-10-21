@@ -47,7 +47,7 @@ import com.elvan.udukkai.theme.rememberShellColors
 import com.elvan.udukkai.ui.components.shell.*
 import com.elvan.udukkai.ui.navigation.MaterialSymbols
 import com.elvan.udukkai.ui.screens.editor.ElvanEditorSection
-import com.elvan.udukkai.ui.screens.editor.ElvanThiruthiThalaippu
+import com.elvan.udukkai.ui.screens.editor.ElvanEditorLabel
 import com.elvan.udukkai.ui.screens.editor.LocalEditorAccentColor
 import androidx.compose.ui.zIndex
 import com.elvan.udukkai.ui.screens.editor.invoice.components.*
@@ -125,7 +125,7 @@ fun FactoryInvoiceEditorScreen(
     val isProfileConfigured = profiles.isNotEmpty() && selectedNiruvanamId != null
 
     fun computePrefix(p: BusinessProfile?): String {
-        return if (p != null && p.kurumPeyar.isNotEmpty()) p.kurumPeyar else "CB"
+        return if (p != null && p.shortName.isNotEmpty()) p.shortName else "CB"
     }
 
     val initialPrefix = computePrefix(selectedProfile)
@@ -208,12 +208,12 @@ fun FactoryInvoiceEditorScreen(
 
     // Additional Charges
     var setharamGrams by remember { mutableStateOf(invoice?.wastageGrams ?: 0.0) }
-    var thabaalThogai by remember { mutableStateOf(invoice?.thabaalThogai ?: 0.0) }
+    var thabaalThogai by remember { mutableStateOf(invoice?.postalCharges ?: 0.0) }
     var ahimsaPattuThogai by remember { mutableStateOf(invoice?.ahimsaSilkAmount ?: 0.0) }
     var piraVarivugal by remember {
         mutableStateOf(
             if (invoice != null) {
-                FactoryCalculation.chargesFromJson(invoice.piravariVugal)
+                FactoryCalculation.chargesFromJson(invoice.otherTaxesJson)
             } else {
                 emptyList()
             }
@@ -362,7 +362,7 @@ fun FactoryInvoiceEditorScreen(
                     invoiceDate = invoiceDate,
                     itemsJson = FactoryCalculation.itemsToJson(validItems),
                     totalAmount = totals.perumMothangal,
-                    totalWeight = totals.mothaEdai,
+                    totalWeight = totals.totalWeight,
                     wastageGrams = setharamGrams,
                     postalCharges = thabaalThogai,
                     ahimsaSilkAmount = ahimsaPattuThogai,

@@ -49,7 +49,7 @@ fun CustomerViewScreen(
 
     val isBilingual = profile.isBilingual
     val primaryLang = profile.primaryLanguage.ifEmpty { "ta" }
-    val secondaryLang = profile.thunaiMozhi.ifEmpty { "en" }
+    val secondaryLang = profile.secondaryLanguage.ifEmpty { "en" }
             
     val p1 = merchant.name[primaryLang] ?: merchant.name["ta"] ?: ""
     val p2 = merchant.name[secondaryLang] ?: merchant.name["en"] ?: ""

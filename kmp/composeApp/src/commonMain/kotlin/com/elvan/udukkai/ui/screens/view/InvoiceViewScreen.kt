@@ -53,7 +53,7 @@ fun InvoiceViewScreen(
         ?: profile
     val isBilingual = activeProfile.isBilingual
     val primaryLang = activeProfile.primaryLanguage.ifEmpty { "ta" }
-    val secondaryLang = activeProfile.thunaiMozhi.ifEmpty { "en" }
+    val secondaryLang = activeProfile.secondaryLanguage.ifEmpty { "en" }
 
     val customerName = invoice.customerName[primaryLang]
         ?: invoice.customerName[secondaryLang]
@@ -181,7 +181,7 @@ fun InvoiceViewScreen(
             }
 
             // Factory Specific Additional Charges Card
-            if ((invoice.wastageGrams > 0 || invoice.thabaalThogai > 0 || invoice.ahimsaSilkAmount > 0)) {
+            if ((invoice.wastageGrams > 0 || invoice.postalCharges > 0 || invoice.ahimsaSilkAmount > 0)) {
                 item(key = "factory_charges_card") {
                     Box(
                         modifier = Modifier
@@ -214,7 +214,7 @@ fun InvoiceViewScreen(
                                     )
                                 }
                             }
-                            if (invoice.thabaalThogai > 0) {
+                            if (invoice.postalCharges > 0) {
                                 Row(
                                     modifier = Modifier.fillMaxWidth(),
                                     horizontalArrangement = Arrangement.SpaceBetween
@@ -224,7 +224,7 @@ fun InvoiceViewScreen(
                                         style = TextStyle(fontFamily = ff, fontSize = 14.sp, color = colors.textSecondary)
                                     )
                                     Text(
-                                        text = CurrencyUtils.formatInr(invoice.thabaalThogai),
+                                        text = CurrencyUtils.formatInr(invoice.postalCharges),
                                         style = TextStyle(fontFamily = ff, fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = colors.textPrimary)
                                     )
                                 }

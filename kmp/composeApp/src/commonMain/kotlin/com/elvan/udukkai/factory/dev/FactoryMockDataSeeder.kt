@@ -153,7 +153,7 @@ object FactoryMockDataSeeder {
             FactoryProfileRepository.createProfile(p)
         }
         val factoryProfiles = helper.loadAllProfiles()
-        val profileMap = factoryProfiles.associateBy { it.kurumPeyar }
+        val profileMap = factoryProfiles.associateBy { it.shortName }
 
         // 2. Products
         for (item in mockCooliePorulgal) {
@@ -294,7 +294,7 @@ object FactoryMockDataSeeder {
 
     suspend fun toggleExtraProfile(): String {
         val profiles = FactoryProfileRepository.allProfiles
-        val existing = profiles.find { it.kurumPeyar == "PVS" }
+        val existing = profiles.find { it.shortName == "PVS" }
         val msg = if (existing != null && existing.id != null) {
             FactoryProfileRepository.deleteProfile(existing.id!!)
             "Factory PVS Removed ✗"
@@ -330,11 +330,11 @@ object FactoryMockDataSeeder {
         val allProfiles = FactoryProfileRepository.allProfiles
         val activeProfile = FactoryProfileRepository.profile
         val currentPrimary = activeProfile.primaryLanguage.ifEmpty { "ta" }
-        val currentSecondary = activeProfile.thunaiMozhi.ifEmpty { "en" }
+        val currentSecondary = activeProfile.secondaryLanguage.ifEmpty { "en" }
 
         allProfiles.forEach { p ->
             val pPrimary = p.primaryLanguage.ifEmpty { "ta" }
-            val pSecondary = p.thunaiMozhi.ifEmpty { "en" }
+            val pSecondary = p.secondaryLanguage.ifEmpty { "en" }
             val updated = p.copy(
                 primaryLanguage = if (pPrimary == currentPrimary) currentSecondary else currentPrimary,
                 secondaryLanguage = if (pSecondary == currentSecondary) currentPrimary else currentSecondary

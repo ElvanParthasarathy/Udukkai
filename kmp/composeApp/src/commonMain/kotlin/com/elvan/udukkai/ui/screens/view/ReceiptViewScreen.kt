@@ -53,7 +53,7 @@ fun ReceiptViewScreen(
         ?: profile
     val isBilingual = activeProfile.isBilingual
     val primaryLang = activeProfile.primaryLanguage.ifEmpty { "ta" }
-    val secondaryLang = activeProfile.thunaiMozhi.ifEmpty { "en" }
+    val secondaryLang = activeProfile.secondaryLanguage.ifEmpty { "en" }
 
     val customerName = receipt.customerName[primaryLang]
         ?: receipt.customerName[secondaryLang]
@@ -142,7 +142,7 @@ fun ReceiptViewScreen(
                                     color = colors.textPrimary
                                 )
                             )
-                            if (receipt.seluthumMurai.isNotBlank()) {
+                            if (receipt.paymentMode.isNotBlank()) {
                                 Spacer(modifier = Modifier.height(6.dp))
                                 Box(
                                     modifier = Modifier
@@ -151,7 +151,7 @@ fun ReceiptViewScreen(
                                         .padding(horizontal = 8.dp, vertical = 4.dp)
                                 ) {
                                     Text(
-                                        text = receipt.seluthumMurai.preventBrokenLigatures(),
+                                        text = receipt.paymentMode.preventBrokenLigatures(),
                                         style = TextStyle(
                                             fontFamily = ff,
                                             fontSize = 12.sp,

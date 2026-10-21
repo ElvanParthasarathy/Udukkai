@@ -26,7 +26,7 @@ import com.elvan.udukkai.theme.preventBrokenLigatures
 import com.elvan.udukkai.theme.rememberShellColors
 import com.elvan.udukkai.ui.components.shell.ElvanSelectionBottomSheet
 import com.elvan.udukkai.ui.navigation.MaterialSymbols
-import com.elvan.udukkai.ui.screens.editor.ElvanThiruthiThalaippu
+import com.elvan.udukkai.ui.screens.editor.ElvanEditorLabel
 
 /**
  * Place of Supply (வழங்கல் இடம்) selection widget with bottom sheet for Textiles mode.
@@ -54,7 +54,7 @@ fun TextilesPlaceOfSupplyField(
     val containerBg = colors.iconBg
 
     Column(modifier = modifier.fillMaxWidth()) {
-        ElvanThiruthiThalaippu(label = K.placeOfSupply.tr())
+        ElvanEditorLabel(label = K.placeOfSupply.tr())
 
         Box(
             modifier = Modifier

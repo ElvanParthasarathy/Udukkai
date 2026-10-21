@@ -49,7 +49,7 @@ fun DesktopSideBar(
     val ff = LocalAppFontFamily.current
 
     val businessName = remember(activeProfile, appTitle) {
-        val resolved = activeProfile?.let { resolveCompanyItemLabel(it).trim().ifBlank { it.kurumPeyar.trim() } }
+        val resolved = activeProfile?.let { resolveCompanyItemLabel(it).trim().ifBlank { it.shortName.trim() } }
         if (!resolved.isNullOrBlank()) resolved else appTitle
     }
 

@@ -82,7 +82,7 @@ internal fun resolveCompanyItemLabel(
 
     val anyLegal = profile.businessName.values.firstOrNull { it.isNotBlank() }?.trim()
     if (anyLegal != null) return anyLegal
-    if (profile.kurumPeyar.isNotBlank()) return profile.kurumPeyar.trim()
+    if (profile.shortName.isNotBlank()) return profile.shortName.trim()
     return ""
 }
 
@@ -96,7 +96,7 @@ internal fun resolveCompanySubtitle(
     profile: BusinessProfile,
     isBilingual: Boolean = profile.isBilingual,
     primaryBillingLang: String = profile.primaryLanguage.ifEmpty { "ta" },
-    secondaryBillingLang: String = profile.thunaiMozhi.ifEmpty { "en" }
+    secondaryBillingLang: String = profile.secondaryLanguage.ifEmpty { "en" }
 ): String? {
     if (!isBilingual) return null
 

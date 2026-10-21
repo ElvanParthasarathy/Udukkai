@@ -21,7 +21,7 @@ import com.elvan.udukkai.theme.LocalAppFontFamily
 import com.elvan.udukkai.theme.preventBrokenLigatures
 import com.elvan.udukkai.theme.rememberShellColors
 import com.elvan.udukkai.ui.navigation.MaterialSymbols
-import com.elvan.udukkai.ui.screens.editor.ElvanThiruthiThalaippu
+import com.elvan.udukkai.ui.screens.editor.ElvanEditorLabel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -40,7 +40,7 @@ fun PattiyalNaalKooru(
 
     Column(modifier = modifier.fillMaxWidth()) {
         if (!label.isNullOrBlank()) {
-            ElvanThiruthiThalaippu(label = label)
+            ElvanEditorLabel(label = label)
         }
 
         Box(

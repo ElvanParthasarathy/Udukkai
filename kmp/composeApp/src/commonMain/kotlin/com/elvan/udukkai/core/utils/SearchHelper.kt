@@ -157,5 +157,4 @@ object SearchHelper {
     }
 }
 
-typealias ThedalUdhavi = SearchHelper
 typealias SearchUtils = SearchHelper

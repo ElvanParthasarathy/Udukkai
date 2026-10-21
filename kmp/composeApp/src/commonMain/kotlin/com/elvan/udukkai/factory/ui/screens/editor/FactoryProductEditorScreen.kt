@@ -44,7 +44,7 @@ fun FactoryProductEditorScreen(
     val profile = FactoryProfileRepository.profile
     val isBilingual = profile.isBilingual
     val primaryLang = profile.primaryLanguage.ifEmpty { "ta" }
-    val secondaryLang = profile.thunaiMozhi.ifEmpty { "en" }
+    val secondaryLang = profile.secondaryLanguage.ifEmpty { "en" }
 
     var porulPeyarMap by remember { mutableStateOf(item?.name ?: emptyMap()) }
     var vilai by remember {
@@ -200,7 +200,7 @@ fun FactoryProductEditorScreen(
                                 itemLabelBuilder = { it.second }
                             )
 
-                            ElvanThiruthiUlleedu(
+                            ElvanEditorTextField(
                                 value = vilai,
                                 onValueChange = { vilai = it },
                                 label = K.ratePerUnit.tr(),

@@ -43,7 +43,7 @@ fun ReceiptCard(
         ?: com.elvan.udukkai.data.settings.BusinessProfile()
     val isBilingual = resolvedProfile.isBilingual
     val primaryLang = resolvedProfile.primaryLanguage.ifEmpty { "ta" }
-    val secondaryLang = resolvedProfile.thunaiMozhi.ifEmpty { "en" }
+    val secondaryLang = resolvedProfile.secondaryLanguage.ifEmpty { "en" }
 
     val primary = receipt.customerName[primaryLang]
         ?: receipt.customerName["ta"]
@@ -57,13 +57,13 @@ fun ReceiptCard(
     val dateStr = DateUtils.formatEpochMillis(receipt.receiptDate)
     val amountStr = CurrencyUtils.formatInr(receipt.amount)
 
-    val (taLabel, enLabel) = when (receipt.seluthumMurai.lowercase()) {
+    val (taLabel, enLabel) = when (receipt.paymentMode.lowercase()) {
         "cash" -> "ரொக்கம்" to "Cash"
         "upi" -> "UPI" to "UPI"
         "bank_transfer" -> "வங்கி" to "Bank"
         "cheque" -> "காசோலை" to "Cheque"
         "card" -> "அட்டை" to "Card"
-        else -> receipt.seluthumMurai to ""
+        else -> receipt.paymentMode to ""
     }
 
     val paymentModeText = if (!isBilingual || enLabel.isEmpty() || taLabel.equals(enLabel, ignoreCase = true)) {

@@ -61,28 +61,28 @@ class CompanyWorkspaceAndProductTest {
 
     @Test
     fun testPorulJsonConverterLongList() {
-        assertEquals(emptyList(), PorulJsonConverter.parseLongList(null))
-        assertEquals(emptyList(), PorulJsonConverter.parseLongList(""))
-        assertEquals(emptyList(), PorulJsonConverter.parseLongList("[]"))
-        assertEquals(listOf(101L, 102L, 103L), PorulJsonConverter.parseLongList("[101, 102, 103]"))
+        assertEquals(emptyList(), ProductJsonConverter.parseLongList(null))
+        assertEquals(emptyList(), ProductJsonConverter.parseLongList(""))
+        assertEquals(emptyList(), ProductJsonConverter.parseLongList("[]"))
+        assertEquals(listOf(101L, 102L, 103L), ProductJsonConverter.parseLongList("[101, 102, 103]"))
 
-        assertEquals("[]", PorulJsonConverter.stringifyLongList(emptyList()))
-        assertEquals("[]", PorulJsonConverter.stringifyLongList(null))
-        assertEquals("[101,102]", PorulJsonConverter.stringifyLongList(listOf(101L, 102L)))
+        assertEquals("[]", ProductJsonConverter.stringifyLongList(emptyList()))
+        assertEquals("[]", ProductJsonConverter.stringifyLongList(null))
+        assertEquals("[101,102]", ProductJsonConverter.stringifyLongList(listOf(101L, 102L)))
     }
 
     @Test
     fun testPorulJsonConverterCompanyPrices() {
-        assertEquals(emptyMap(), PorulJsonConverter.parseCompanyPrices(null))
-        assertEquals(emptyMap(), PorulJsonConverter.parseCompanyPrices(""))
-        assertEquals(emptyMap(), PorulJsonConverter.parseCompanyPrices("{}"))
+        assertEquals(emptyMap(), ProductJsonConverter.parseCompanyPrices(null))
+        assertEquals(emptyMap(), ProductJsonConverter.parseCompanyPrices(""))
+        assertEquals(emptyMap(), ProductJsonConverter.parseCompanyPrices("{}"))
 
-        val parsed = PorulJsonConverter.parseCompanyPrices("""{"101": 1250.0, "102": 1400.5}""")
+        val parsed = ProductJsonConverter.parseCompanyPrices("""{"101": 1250.0, "102": 1400.5}""")
         assertEquals(2, parsed.size)
         assertEquals(1250.0, parsed[101L])
         assertEquals(1400.5, parsed[102L])
 
-        val stringified = PorulJsonConverter.stringifyCompanyPrices(mapOf(101L to 1250.0))
+        val stringified = ProductJsonConverter.stringifyCompanyPrices(mapOf(101L to 1250.0))
         assertEquals("""{"101":1250.0}""", stringified)
     }
 

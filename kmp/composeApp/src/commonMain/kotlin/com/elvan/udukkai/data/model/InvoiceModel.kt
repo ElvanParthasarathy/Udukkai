@@ -37,32 +37,5 @@ data class InvoiceModel(
     val isDeleted: Boolean = false,
     val deletedAt: Long? = null
 ) {
-    // Backward-compatible accessors for legacy Tanglish property names
-    val niruvanamId: Long? get() = companyId
-    val patrucheettuEn: String get() = invoiceNumber
-    val pattiyalVagai: String get() = invoiceType
-    val vaangunarId: Long? get() = customerId
-    val vaangunarPeyar: Map<String, String> get() = customerName
-    val vaangunarMunvari: Map<String, String> get() = customerAddress
-    val pattiyalNaal: Long get() = invoiceDate
-    val tharavugal: String get() = itemsJson
-    val mothaThogai: Double get() = totalAmount
-    val thallupadi: Double get() = discount
-    val podhuThallupadiMathippu: Double get() = globalDiscountValue
-    val podhuThallupadiVagai: String get() = globalDiscountType
-    val podhuThallupadiThogai: Double get() = globalDiscountAmount
-    val variThogai: Double get() = taxAmount
-    val variTharavugal: String get() = taxDataJson
-    val mothaEdai: Double get() = totalWeight
-    val setharamGrams: Double get() = wastageGrams
-    val thabaalThogai: Double get() = postalCharges
-    val ahimsaPattuThogai: Double get() = ahimsaSilkAmount
-    val piravariVugal: String get() = otherTaxesJson
-    val sonthaViruppangal: String get() = customPreferencesJson
-    val nibandhanaigal: String get() = termsAndConditions
-    val ullkurippu: String get() = notes
-    val vangiTharavugal: String get() = bankDetailsJson
 }
-
-typealias PattiyalTharavuru = InvoiceModel
 typealias Invoice = InvoiceModel

@@ -1,8 +1,8 @@
 package com.elvan.udukkai.data.model
 
 /**
- * Domain model for a Customer / Merchant (வாங்குநர்).
- * Standardized English property names with backward-compatible Tanglish accessors.
+ * Domain model for a Customer / Merchant.
+ * Standardized pure English model.
  */
 data class CustomerModel(
     val id: Long = 0,
@@ -21,19 +21,6 @@ data class CustomerModel(
     val updatedAt: Long = System.currentTimeMillis(),
     val isDeleted: Boolean = false,
     val deletedAt: Long? = null
-) {
-    // Backward-compatible accessors for legacy Tanglish property names
-    val peyar: Map<String, String> get() = name
-    val mugavari: Map<String, String> get() = address
-    val oor: Map<String, String> get() = city
-    val maavattam: Map<String, String> get() = district
-    val maanilam: Map<String, String> get() = state
-    val naadu: Map<String, String> get() = country
-    val velinaadMugavari: Map<String, String> get() = internationalAddress
-    val anjalKuriyeedu: String get() = pinCode
-    val minnanjal: String get() = email
-    val tholaipaesi: String get() = phone
-}
+)
 
-typealias VaangunarTharavuru = CustomerModel
 typealias Customer = CustomerModel

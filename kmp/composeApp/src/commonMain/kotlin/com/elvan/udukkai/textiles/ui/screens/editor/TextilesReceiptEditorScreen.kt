@@ -39,8 +39,8 @@ import com.elvan.udukkai.ui.navigation.MaterialSymbols
 import com.elvan.udukkai.ui.screens.editor.ElvanEditorSection
 import com.elvan.udukkai.ui.screens.editor.LocalEditorAccentColor
 import com.elvan.udukkai.ui.screens.editor.ElvanThiruthiKeezhvirivu
-import com.elvan.udukkai.ui.screens.editor.ElvanThiruthiThalaippu
-import com.elvan.udukkai.ui.screens.editor.ElvanThiruthiUlleedu
+import com.elvan.udukkai.ui.screens.editor.ElvanEditorLabel
+import com.elvan.udukkai.ui.screens.editor.ElvanEditorTextField
 import com.elvan.udukkai.ui.screens.editor.receipt.components.ReceiptInvoiceSelectionSheet
 import com.elvan.udukkai.ui.screens.editor.invoice.components.ElvanAavanaEnnKooru
 import com.elvan.udukkai.ui.screens.editor.invoice.components.PattiyalNaalKooru
@@ -161,7 +161,7 @@ fun TextilesReceiptEditorScreen(
         )
     }
     var seluthiVagai by remember {
-        mutableStateOf(SeluthiVagai.fromStored(receipt?.seluthumMurai))
+        mutableStateOf(SeluthiVagai.fromStored(receipt?.paymentMode))
     }
     var suttruEn by remember { mutableStateOf(receipt?.transactionNumber.orEmpty()) }
     var ullkurippu by remember { mutableStateOf(receipt?.notes.orEmpty()) }
@@ -184,7 +184,7 @@ fun TextilesReceiptEditorScreen(
     // Helper: auto-calculate receipt number
     fun generatePatruEn(profile: BusinessProfile?) {
         if (isEditing) return
-        val bizShort = profile?.kurumPeyar?.trim()?.ifEmpty { null }
+        val bizShort = profile?.shortName?.trim()?.ifEmpty { null }
             ?: profile?.businessName?.get("en")?.split(" ")?.mapNotNull { it.firstOrNull()?.uppercaseChar() }?.joinToString("")?.take(4)?.ifEmpty { null }
             ?: "BIZ"
 
@@ -388,7 +388,7 @@ fun TextilesReceiptEditorScreen(
                             modifier = Modifier.fillMaxWidth(),
                             verticalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
-                            ElvanThiruthiThalaippu(label = K.invoice.tr())
+                            ElvanEditorLabel(label = K.invoice.tr())
 
                             // Select Invoices 48dp pill button
                             Box(
@@ -492,7 +492,7 @@ fun TextilesReceiptEditorScreen(
                         ) {
                             // 1. Receipt Date
                             Column(modifier = Modifier.fillMaxWidth()) {
-                                ElvanThiruthiThalaippu(label = K.receiptDate.tr())
+                                ElvanEditorLabel(label = K.receiptDate.tr())
                                 PattiyalNaalKooru(
                                     selectedDate = patruNaal,
                                     onDateChanged = {
@@ -504,7 +504,7 @@ fun TextilesReceiptEditorScreen(
 
                             // 2. Customer Pill (Locked with lock icon when loaded from invoice)
                             Column(modifier = Modifier.fillMaxWidth()) {
-                                ElvanThiruthiThalaippu(label = K.customer.tr())
+                                ElvanEditorLabel(label = K.customer.tr())
                                 val customerName = selectedVaangunarPeyarMap["ta"]
                                     ?: selectedVaangunarPeyarMap.values.firstOrNull().orEmpty()
 
@@ -569,8 +569,8 @@ fun TextilesReceiptEditorScreen(
                                 }
                             }
 
-                            val bizPrefix = if (selectedProfile.kurumPeyar.isNotEmpty()) {
-                                "RCP/${selectedProfile.kurumPeyar}/"
+                            val bizPrefix = if (selectedProfile.shortName.isNotEmpty()) {
+                                "RCP/${selectedProfile.shortName}/"
                             } else {
                                 "RCP/BIZ/"
                             }
@@ -596,7 +596,7 @@ fun TextilesReceiptEditorScreen(
                             verticalArrangement = Arrangement.spacedBy(24.dp)
                         ) {
                             // 1. Amount
-                            ElvanThiruthiUlleedu(
+                            ElvanEditorTextField(
                                 value = thogai,
                                 onValueChange = {
                                     thogai = it
@@ -609,7 +609,7 @@ fun TextilesReceiptEditorScreen(
 
                             // 2. Payment Mode Selector Pill
                             Column(modifier = Modifier.fillMaxWidth()) {
-                                ElvanThiruthiThalaippu(label = K.paymentModeRequired.tr())
+                                ElvanEditorLabel(label = K.paymentModeRequired.tr())
                                 Box(
                                     modifier = Modifier
                                         .fillMaxWidth()
@@ -666,7 +666,7 @@ fun TextilesReceiptEditorScreen(
 
                             // 3. Reference Number (shown when payment mode requires it)
                             if (seluthiVagai.needsReference) {
-                                ElvanThiruthiUlleedu(
+                                ElvanEditorTextField(
                                     value = suttruEn,
                                     onValueChange = {
                                         suttruEn = it
@@ -677,7 +677,7 @@ fun TextilesReceiptEditorScreen(
                             }
 
                             // 4. Internal Notes
-                            ElvanThiruthiUlleedu(
+                            ElvanEditorTextField(
                                 value = ullkurippu,
                                 onValueChange = {
                                     ullkurippu = it

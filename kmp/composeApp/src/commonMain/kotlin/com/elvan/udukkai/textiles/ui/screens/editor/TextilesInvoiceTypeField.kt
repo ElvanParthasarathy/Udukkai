@@ -21,7 +21,7 @@ import com.elvan.udukkai.theme.preventBrokenLigatures
 import com.elvan.udukkai.theme.rememberShellColors
 import com.elvan.udukkai.ui.components.shell.ElvanSelectionBottomSheet
 import com.elvan.udukkai.ui.navigation.MaterialSymbols
-import com.elvan.udukkai.ui.screens.editor.ElvanThiruthiThalaippu
+import com.elvan.udukkai.ui.screens.editor.ElvanEditorLabel
 
 /**
  * Invoice Type selector (Tax Invoice / Proforma) with bottom sheet for Textiles mode.
@@ -50,7 +50,7 @@ fun TextilesInvoiceTypeField(
         modifier = modifier.fillMaxWidth()
     ) {
         Column(modifier = Modifier.fillMaxWidth()) {
-            ElvanThiruthiThalaippu(label = K.invoiceType.tr())
+            ElvanEditorLabel(label = K.invoiceType.tr())
 
             Box(
                 modifier = Modifier

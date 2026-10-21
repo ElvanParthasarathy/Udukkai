@@ -36,7 +36,7 @@ fun BankSettingsScreen(
     var tempSecondary by remember { mutableStateOf("") }
 
     val primaryLangLabel = if (profile.primaryLanguage.lowercase().startsWith("ta")) K.taCode.tr() else K.enCode.tr()
-    val secondaryLangLabel = if (profile.thunaiMozhi.lowercase().startsWith("ta")) K.taCode.tr() else K.enCode.tr()
+    val secondaryLangLabel = if (profile.secondaryLanguage.lowercase().startsWith("ta")) K.taCode.tr() else K.enCode.tr()
     val saveSuccessMsg = K.profileSaved.tr()
 
     fun beginEdit(section: String, primary: String, secondary: String = "") {
@@ -48,7 +48,7 @@ fun BankSettingsScreen(
     fun saveBilingual(fieldName: String) {
         val updated = profile.copy()
         updated.setBilingual(fieldName, profile.primaryLanguage, tempPrimary)
-        updated.setBilingual(fieldName, profile.thunaiMozhi, tempSecondary)
+        updated.setBilingual(fieldName, profile.secondaryLanguage, tempSecondary)
         onUpdateProfile(updated)
         editingSection = null
         ElvanSnackbar.show(saveSuccessMsg)
@@ -163,7 +163,7 @@ fun BankSettingsScreen(
                 ElvanSettingsDivider(colors = colors)
 
                 // 3. Account Number (Kanakku En)
-                val accountNo = profile.vangiKanakku
+                val accountNo = profile.accountNumber
                 ElvanSettingsAnimatedExpand(
                     isEditing = editingSection == "vangiKanakku",
                     displayContent = {
@@ -178,7 +178,7 @@ fun BankSettingsScreen(
                         ElvanSettingsEditContainer(
                             title = K.accountNumber.tr(),
                             onCancel = { editingSection = null },
-                            onSave = { saveSingle { profile.vangiKanakku = it } },
+                            onSave = { saveSingle { profile.accountNumber = it } },
                             colors = colors
                         ) {
                             ElvanSettingsTextField(

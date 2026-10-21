@@ -49,40 +49,6 @@ data class BusinessProfile(
     var upiId: String = "",
     var themeColor: String = "#388e3c"
 ) {
-    // Backward-compatible accessors for legacy Tanglish property names
-    var mudhanMozhi: String get() = primaryLanguage; set(v) { primaryLanguage = v }
-    var thunaiMozhi: String get() = secondaryLanguage; set(v) { secondaryLanguage = v }
-    var iruMozhi: Boolean get() = isBilingual; set(v) { isBilingual = v }
-    var gstPirippugal: Boolean get() = splitGst; set(v) { splitGst = v }
-
-    var niruvanathinPeyar: MutableMap<String, String> get() = businessName; set(v) { businessName = v }
-    var kurumPeyar: String get() = shortName; set(v) { shortName = v }
-    var tholaipaesi1: String get() = phone1; set(v) { phone1 = v }
-    var tholaipaesi2: String get() = phone2; set(v) { phone2 = v }
-    var minnanjal: String get() = email; set(v) { email = v }
-
-    var mugavari: MutableMap<String, String> get() = address; set(v) { address = v }
-    var oor: MutableMap<String, String> get() = city; set(v) { city = v }
-    var maavattam: MutableMap<String, String> get() = district; set(v) { district = v }
-    var maanilam: MutableMap<String, String> get() = state; set(v) { state = v }
-    var naadu: MutableMap<String, String> get() = country; set(v) { country = v }
-    var anjalKuriyeedu: String get() = pinCode; set(v) { pinCode = v }
-
-    var vangiPeyar: MutableMap<String, String> get() = bankName; set(v) { bankName = v }
-    var kilai: MutableMap<String, String> get() = branch; set(v) { branch = v }
-    var vangiKanakku: String get() = accountNumber; set(v) { accountNumber = v }
-
-    var oavuru: String get() = logo; set(v) { logo = v }
-    var agalaOavuru: String get() = wideLogo; set(v) { wideLogo = v }
-    var thalaippuVadivu: String get() = headerLayout; set(v) { headerLayout = v }
-    var kaiyoppam: String get() = signature; set(v) { signature = v }
-    var oppamPeyar: String get() = signatoryName; set(v) { signatoryName = v }
-    var oppamMudhalPeyar: String get() = signatoryFirstName; set(v) { signatoryFirstName = v }
-    var oppamIrudhiPeyar: String get() = signatoryLastName; set(v) { signatoryLastName = v }
-
-    var adaimozhi: MutableMap<String, String> get() = tagline; set(v) { tagline = v }
-    var thoatraNiram: String get() = themeColor; set(v) { themeColor = v }
-
     val fullSignatoryName: String
         get() {
             val combined = listOf(signatoryFirstName.trim(), signatoryLastName.trim())
@@ -161,5 +127,4 @@ data class BusinessProfile(
     }
 }
 
-typealias NiruvanaTharavugal = BusinessProfile
 typealias CompanyProfile = BusinessProfile

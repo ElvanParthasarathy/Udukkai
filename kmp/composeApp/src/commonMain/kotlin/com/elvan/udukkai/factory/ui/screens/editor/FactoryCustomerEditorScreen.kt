@@ -25,7 +25,7 @@ import com.elvan.udukkai.theme.rememberShellColors
 import com.elvan.udukkai.ui.components.shell.*
 import com.elvan.udukkai.ui.screens.editor.ElvanEditorSection
 import com.elvan.udukkai.ui.screens.editor.ElvanIrumozhiPulan
-import com.elvan.udukkai.ui.screens.editor.ElvanThiruthiUlleedu
+import com.elvan.udukkai.ui.screens.editor.ElvanEditorTextField
 import com.elvan.udukkai.ui.screens.editor.LocalEditorAccentColor
 
 /**
@@ -45,7 +45,7 @@ fun FactoryCustomerEditorScreen(
     val profile = FactoryProfileRepository.profile
     val isBilingual = profile.isBilingual
     val primaryLang = profile.primaryLanguage.ifEmpty { "ta" }
-    val secondaryLang = profile.thunaiMozhi.ifEmpty { "en" }
+    val secondaryLang = profile.secondaryLanguage.ifEmpty { "en" }
 
     var peyarMap by remember { mutableStateOf(merchant?.name ?: emptyMap()) }
     var tholaipaesi by remember { mutableStateOf(merchant?.phone ?: "") }
@@ -180,7 +180,7 @@ fun FactoryCustomerEditorScreen(
                                 )
                             }
 
-                            ElvanThiruthiUlleedu(
+                            ElvanEditorTextField(
                                 value = tholaipaesi,
                                 onValueChange = { tholaipaesi = it },
                                 label = K.phone.tr(),

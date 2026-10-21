@@ -39,7 +39,7 @@ fun TextilesDashboardCard(
         ?: TextilesProfileRepository.profile
     val isBilingual = profile.isBilingual
     val primaryLang = profile.primaryLanguage.ifEmpty { "ta" }
-    val secondaryLang = profile.thunaiMozhi.ifEmpty { "en" }
+    val secondaryLang = profile.secondaryLanguage.ifEmpty { "en" }
 
     val primary = pattiyal.customerName[primaryLang]
         ?: pattiyal.customerName["ta"]

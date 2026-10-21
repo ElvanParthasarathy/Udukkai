@@ -51,7 +51,7 @@ fun ProductViewScreen(
 
     val isBilingual = profile.isBilingual
     val primaryLang = profile.primaryLanguage.ifEmpty { "ta" }
-    val secondaryLang = profile.thunaiMozhi.ifEmpty { "en" }
+    val secondaryLang = profile.secondaryLanguage.ifEmpty { "en" }
             
     val p1 = item.name[primaryLang] ?: item.name["ta"] ?: ""
     val p2 = item.name[secondaryLang] ?: item.name["en"] ?: ""
@@ -213,7 +213,7 @@ fun ProductViewScreen(
                     } else {
                         item.companyIds.mapNotNull { cId ->
                             val p = allProfiles.find { it.id == cId }
-                            p?.kurumPeyar?.ifEmpty { p.businessName.values.firstOrNull() }
+                            p?.shortName?.ifEmpty { p.businessName.values.firstOrNull() }
                         }.joinToString(", ").ifEmpty { "${K.select.tr()} ${K.companies.tr()}" }
                     }
                     DetailCard(
@@ -228,7 +228,7 @@ fun ProductViewScreen(
                     if (item.companyPrices.isNotEmpty()) {
                         item.companyPrices.forEach { (cId, overridePrice) ->
                             val p = allProfiles.find { it.id == cId }
-                            val cName = p?.kurumPeyar?.ifEmpty { p.businessName.values.firstOrNull() } ?: "Company #$cId"
+                            val cName = p?.shortName?.ifEmpty { p.businessName.values.firstOrNull() } ?: "Company #$cId"
                             DetailCard(
                                 title = "$cName ${K.sellingRate.tr()}",
                                 value = CurrencyUtils.formatInr(overridePrice),

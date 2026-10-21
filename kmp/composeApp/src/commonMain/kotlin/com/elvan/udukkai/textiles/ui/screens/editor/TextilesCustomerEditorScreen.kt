@@ -49,7 +49,7 @@ fun TextilesCustomerEditorScreen(
     val profile = TextilesProfileRepository.profile
     val isBilingual = profile.isBilingual
     val primaryLang = profile.primaryLanguage.ifEmpty { "ta" }
-    val secondaryLang = profile.thunaiMozhi.ifEmpty { "en" }
+    val secondaryLang = profile.secondaryLanguage.ifEmpty { "en" }
 
     var peyarMap by remember { mutableStateOf(merchant?.name ?: emptyMap()) }
     var gstin by remember { mutableStateOf(merchant?.gstin ?: "") }
@@ -210,21 +210,21 @@ fun TextilesCustomerEditorScreen(
                                 )
                             }
 
-                            ElvanThiruthiUlleedu(
+                            ElvanEditorTextField(
                                 value = gstin,
                                 onValueChange = { gstin = it.uppercase() },
                                 label = K.gstin.tr(),
                                 placeholder = "33ABCDE1234F1Z5"
                             )
 
-                            ElvanThiruthiUlleedu(
+                            ElvanEditorTextField(
                                 value = tholaipaesi,
                                 onValueChange = { tholaipaesi = it },
                                 label = K.phone.tr(),
                                 placeholder = "+91 98765 43210"
                             )
 
-                            ElvanThiruthiUlleedu(
+                            ElvanEditorTextField(
                                 value = minnanjal,
                                 onValueChange = { minnanjal = it },
                                 label = K.email.tr(),
@@ -318,7 +318,7 @@ fun TextilesCustomerEditorScreen(
                                 placeholder = K.address.tr()
                             )
 
-                            ElvanThiruthiUlleedu(
+                            ElvanEditorTextField(
                                 value = anjalKuriyeedu,
                                 onValueChange = { anjalKuriyeedu = it },
                                 label = K.pincode.tr(),

@@ -17,7 +17,7 @@ import com.elvan.udukkai.localization.tr
 import com.elvan.udukkai.theme.LocalAppFontFamily
 import com.elvan.udukkai.theme.preventBrokenLigatures
 import com.elvan.udukkai.theme.rememberShellColors
-import com.elvan.udukkai.ui.screens.editor.ElvanThiruthiAttai
+import com.elvan.udukkai.ui.screens.editor.ElvanEditorCard
 
 /**
  * Displays Textiles invoice totals — subtotal, discount, CGST/SGST/IGST breakdown, round-off, and grand total.
@@ -30,7 +30,7 @@ fun TextilesTotalsField(
     val colors = rememberShellColors()
     val ff = LocalAppFontFamily.current
 
-    ElvanThiruthiAttai(
+    ElvanEditorCard(
         padding = PaddingValues(24.dp),
         borderRadius = 24.dp,
         modifier = modifier

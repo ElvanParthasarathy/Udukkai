@@ -29,9 +29,9 @@ import com.elvan.udukkai.theme.preventBrokenLigatures
 import com.elvan.udukkai.theme.rememberShellColors
 import com.elvan.udukkai.ui.components.shell.ElvanSelectionBottomSheet
 import com.elvan.udukkai.ui.navigation.MaterialSymbols
-import com.elvan.udukkai.ui.screens.editor.ElvanThiruthiAttai
-import com.elvan.udukkai.ui.screens.editor.ElvanThiruthiThalaippu
-import com.elvan.udukkai.ui.screens.editor.ElvanThiruthiUlleedu
+import com.elvan.udukkai.ui.screens.editor.ElvanEditorCard
+import com.elvan.udukkai.ui.screens.editor.ElvanEditorLabel
+import com.elvan.udukkai.ui.screens.editor.ElvanEditorTextField
 
 /**
  * Single line item card for the Textiles (சவுளி) Invoice Editor.
@@ -102,13 +102,13 @@ fun TextilesItemCard(
         }
 
         // ── Item Card ──
-        ElvanThiruthiAttai(
+        ElvanEditorCard(
             padding = PaddingValues(16.dp),
             borderRadius = 24.dp
         ) {
             // ── Product Picker Pill ──
             Column(modifier = Modifier.fillMaxWidth()) {
-                ElvanThiruthiThalaippu(label = K.product.tr())
+                ElvanEditorLabel(label = K.product.tr())
 
                 val config = PrintLanguageManager.getTextilesConfig()
                 val primaryName = if (item.mozhiMap.isNotEmpty()) {
@@ -212,7 +212,7 @@ fun TextilesItemCard(
                 horizontalArrangement = Arrangement.spacedBy(10.dp)
             ) {
                 Box(modifier = Modifier.weight(1f)) {
-                    ElvanThiruthiUlleedu(
+                    ElvanEditorTextField(
                         label = if (isWeightItem) K.weight.tr() else K.quantity.tr(),
                         value = if (item.alavu == 0.0) "" else if (item.alavu % 1.0 == 0.0) item.alavu.toInt().toString() else item.alavu.toString(),
                         onValueChange = { str ->
@@ -226,7 +226,7 @@ fun TextilesItemCard(
                 }
 
                 Box(modifier = Modifier.weight(1f)) {
-                    ElvanThiruthiUlleedu(
+                    ElvanEditorTextField(
                         label = K.sellingRate.tr(),
                         value = if (item.price == 0.0) "" else if (item.price % 1.0 == 0.0) item.price.toInt().toString() else item.price.toString(),
                         onValueChange = { str ->
@@ -248,7 +248,7 @@ fun TextilesItemCard(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Box(modifier = Modifier.weight(1f)) {
-                    ElvanThiruthiUlleedu(
+                    ElvanEditorTextField(
                         label = K.discount.tr(),
                         value = if (item.discount == 0.0) "" else if (item.discount % 1.0 == 0.0) item.discount.toInt().toString() else item.discount.toString(),
                         onValueChange = { str ->
@@ -285,7 +285,7 @@ fun TextilesItemCard(
                 }
 
                 Box(modifier = Modifier.weight(1f)) {
-                    ElvanThiruthiUlleedu(
+                    ElvanEditorTextField(
                         label = K.total.tr(),
                         value = CurrencyUtils.formatInr(item.rowTotal),
                         onValueChange = {},
