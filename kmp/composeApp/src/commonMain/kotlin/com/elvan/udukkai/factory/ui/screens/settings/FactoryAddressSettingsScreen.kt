@@ -176,6 +176,10 @@ fun FactoryAddressSettingsScreen(
         val updated = profile.copy()
         updated.setBilingual(fieldName, profile.primaryLanguage, tempPrimary)
         updated.setBilingual(fieldName, profile.secondaryLanguage, tempSecondary)
+        if (fieldName == "naadu" || fieldName == "country") {
+            updated.state.clear()
+            updated.district.clear()
+        }
         persistProfile(updated)
         editingSection = null
         ElvanSnackbar.show(saveSuccessMsg)
