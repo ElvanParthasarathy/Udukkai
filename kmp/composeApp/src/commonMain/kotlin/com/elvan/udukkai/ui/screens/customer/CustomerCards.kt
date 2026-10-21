@@ -57,6 +57,16 @@ private fun getMainLanguageField(
     return map.values.firstOrNull { it.isNotBlank() }?.trim() ?: ""
 }
 
+private fun getBilingualSecondaryName(
+    map: Map<String, String>,
+    primaryLang: String,
+    secondaryLang: String
+): String {
+    val exactVal = map[secondaryLang]?.trim()
+    if (!exactVal.isNullOrEmpty()) return exactVal
+    return map.entries.firstOrNull { it.key != primaryLang && it.value.isNotBlank() }?.value?.trim().orEmpty()
+}
+
 @Composable
 fun FactoryCustomerCard(
     index: Int,
@@ -75,6 +85,9 @@ fun FactoryCustomerCard(
 
     val primaryName = getMainLanguageField(merchant.name, primaryLang, secondaryLang)
         .ifEmpty { "-" }
+    val secondaryName = if (profile.isBilingual) {
+        getBilingualSecondaryName(merchant.name, primaryLang, secondaryLang)
+    } else ""
     val primaryCity = getMainLanguageField(merchant.city, primaryLang, secondaryLang)
 
     ElvanCommonCard(
@@ -109,26 +122,43 @@ fun FactoryCustomerCard(
             ) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically
+                    verticalAlignment = Alignment.Top
                 ) {
-                    Text(
-                        text = primaryName.preventBrokenLigatures(),
-                        style = TextStyle(
-                            fontFamily = ff,
-                            fontSize = 16.5.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = colors.textPrimary
-                        ),
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
+                    Column(
                         modifier = Modifier.weight(1f)
-                    )
+                    ) {
+                        Text(
+                            text = primaryName.preventBrokenLigatures(),
+                            style = TextStyle(
+                                fontFamily = ff,
+                                fontSize = 16.5.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = colors.textPrimary
+                            ),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+
+                        if (secondaryName.isNotBlank() && secondaryName != primaryName) {
+                            Spacer(modifier = Modifier.height(2.dp))
+                            Text(
+                                text = secondaryName.preventBrokenLigatures(),
+                                style = TextStyle(
+                                    fontFamily = ff,
+                                    fontSize = 13.5.sp,
+                                    color = colors.textSecondary
+                                ),
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                        }
+                    }
 
                     Icon(
                         imageVector = MaterialSymbols.Rounded.ChevronRight,
                         contentDescription = null,
                         tint = LocalShellColors.current.border,
-                        modifier = Modifier.size(18.dp)
+                        modifier = Modifier.size(18.dp).padding(top = 2.dp)
                     )
                 }
 
@@ -185,6 +215,9 @@ fun TextilesCustomerCard(
 
     val primaryName = getMainLanguageField(merchant.name, primaryLang, secondaryLang)
         .ifEmpty { "-" }
+    val secondaryName = if (profile.isBilingual) {
+        getBilingualSecondaryName(merchant.name, primaryLang, secondaryLang)
+    } else ""
     val primaryCity = getMainLanguageField(merchant.city, primaryLang, secondaryLang)
     val gstin = merchant.gstin.trim()
 
@@ -220,26 +253,43 @@ fun TextilesCustomerCard(
             ) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically
+                    verticalAlignment = Alignment.Top
                 ) {
-                    Text(
-                        text = primaryName.preventBrokenLigatures(),
-                        style = TextStyle(
-                            fontFamily = ff,
-                            fontSize = 16.5.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = colors.textPrimary
-                        ),
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
+                    Column(
                         modifier = Modifier.weight(1f)
-                    )
+                    ) {
+                        Text(
+                            text = primaryName.preventBrokenLigatures(),
+                            style = TextStyle(
+                                fontFamily = ff,
+                                fontSize = 16.5.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = colors.textPrimary
+                            ),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+
+                        if (secondaryName.isNotBlank() && secondaryName != primaryName) {
+                            Spacer(modifier = Modifier.height(2.dp))
+                            Text(
+                                text = secondaryName.preventBrokenLigatures(),
+                                style = TextStyle(
+                                    fontFamily = ff,
+                                    fontSize = 13.5.sp,
+                                    color = colors.textSecondary
+                                ),
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                        }
+                    }
 
                     Icon(
                         imageVector = MaterialSymbols.Rounded.ChevronRight,
                         contentDescription = null,
                         tint = LocalShellColors.current.border,
-                        modifier = Modifier.size(18.dp)
+                        modifier = Modifier.size(18.dp).padding(top = 2.dp)
                     )
                 }
 
