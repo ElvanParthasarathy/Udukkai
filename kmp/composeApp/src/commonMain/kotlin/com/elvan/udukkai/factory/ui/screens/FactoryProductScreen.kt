@@ -15,7 +15,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.elvan.udukkai.data.model.PorulTharavuru
+import com.elvan.udukkai.data.model.ProductModel
 import com.elvan.udukkai.ui.screens.product.FactoryProductCard
 import com.elvan.udukkai.factory.data.FactoryProductRepository
 import com.elvan.udukkai.factory.data.FactoryProfileRepository
@@ -37,7 +37,7 @@ import kotlinx.coroutines.delay
 
 @Composable
 fun FactoryProductScreen(
-    onItemClick: (PorulTharavuru) -> Unit,
+    onItemClick: (ProductModel) -> Unit,
     modifier: Modifier = Modifier,
     scrollState: LazyListState = rememberLazyListState(),
     colors: ShellColors = rememberShellColors(),

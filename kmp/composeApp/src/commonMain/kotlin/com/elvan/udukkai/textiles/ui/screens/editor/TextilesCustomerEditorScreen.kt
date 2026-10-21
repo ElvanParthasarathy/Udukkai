@@ -20,7 +20,6 @@ import androidx.compose.ui.unit.sp
 import com.elvan.udukkai.core.data.*
 import com.elvan.udukkai.core.platform.AppBackHandler
 import com.elvan.udukkai.data.model.CustomerModel
-import com.elvan.udukkai.data.model.VaangunarTharavuru
 import com.elvan.udukkai.data.settings.*
 import com.elvan.udukkai.textiles.data.TextilesCustomerRepository
 import com.elvan.udukkai.textiles.data.TextilesProfileRepository
@@ -36,11 +35,11 @@ import com.elvan.udukkai.ui.screens.editor.*
 /**
  * Dedicated Customer Editor for Udukkai Textiles (சவுளி).
  * Distinct Textiles customer schema: Name, GSTIN, Country, State, District, PIN, Phone, Email, Address.
- * Reactively follows TextilesProfileRepository.profile.iruMozhi for bilingual toggling.
+ * Reactively follows TextilesProfileRepository.profile.isBilingual for bilingual toggling.
  */
 @Composable
 fun TextilesCustomerEditorScreen(
-    merchant: VaangunarTharavuru? = null,
+    merchant: CustomerModel? = null,
     onBack: () -> Unit
 ) {
     val colors = rememberShellColors()
@@ -48,21 +47,21 @@ fun TextilesCustomerEditorScreen(
     val isEditing = merchant != null && merchant.id > 0L
 
     val profile = TextilesProfileRepository.profile
-    val isBilingual = profile.iruMozhi
-    val primaryLang = profile.mudhanMozhi.ifEmpty { "ta" }
+    val isBilingual = profile.isBilingual
+    val primaryLang = profile.primaryLanguage.ifEmpty { "ta" }
     val secondaryLang = profile.thunaiMozhi.ifEmpty { "en" }
 
-    var peyarMap by remember { mutableStateOf(merchant?.peyar ?: emptyMap()) }
+    var peyarMap by remember { mutableStateOf(merchant?.name ?: emptyMap()) }
     var gstin by remember { mutableStateOf(merchant?.gstin ?: "") }
-    var tholaipaesi by remember { mutableStateOf(merchant?.tholaipaesi ?: "") }
-    var minnanjal by remember { mutableStateOf(merchant?.minnanjal ?: "") }
+    var tholaipaesi by remember { mutableStateOf(merchant?.phone ?: "") }
+    var minnanjal by remember { mutableStateOf(merchant?.email ?: "") }
 
-    var naaduMap by remember { mutableStateOf(merchant?.naadu ?: mapOf("en" to "India", "ta" to "இந்தியா")) }
-    var maanilamMap by remember { mutableStateOf(merchant?.maanilam ?: mapOf("en" to "Tamil Nadu", "ta" to "தமிழ்நாடு")) }
-    var maavattamMap by remember { mutableStateOf(merchant?.maavattam ?: emptyMap()) }
-    var oorMap by remember { mutableStateOf(merchant?.oor ?: emptyMap()) }
-    var mugavariMap by remember { mutableStateOf(merchant?.mugavari ?: emptyMap()) }
-    var anjalKuriyeedu by remember { mutableStateOf(merchant?.anjalKuriyeedu ?: "") }
+    var naaduMap by remember { mutableStateOf(merchant?.country ?: mapOf("en" to "India", "ta" to "இந்தியா")) }
+    var maanilamMap by remember { mutableStateOf(merchant?.state ?: mapOf("en" to "Tamil Nadu", "ta" to "தமிழ்நாடு")) }
+    var maavattamMap by remember { mutableStateOf(merchant?.district ?: emptyMap()) }
+    var oorMap by remember { mutableStateOf(merchant?.city ?: emptyMap()) }
+    var mugavariMap by remember { mutableStateOf(merchant?.address ?: emptyMap()) }
+    var anjalKuriyeedu by remember { mutableStateOf(merchant?.pinCode ?: "") }
 
     var nameValidationError by remember { mutableStateOf<String?>(null) }
     var showDiscardDialog by remember { mutableStateOf(false) }
@@ -86,8 +85,8 @@ fun TextilesCustomerEditorScreen(
         if (merchant == null) {
             peyarMap.values.any { it.isNotBlank() } || gstin.isNotBlank() || tholaipaesi.isNotBlank()
         } else {
-            peyarMap != merchant.peyar || gstin != merchant.gstin || tholaipaesi != merchant.tholaipaesi ||
-                minnanjal != merchant.minnanjal || oorMap != merchant.oor || mugavariMap != merchant.mugavari
+            peyarMap != merchant.name || gstin != merchant.gstin || tholaipaesi != merchant.phone ||
+                minnanjal != merchant.email || oorMap != merchant.city || mugavariMap != merchant.address
         }
     }
 

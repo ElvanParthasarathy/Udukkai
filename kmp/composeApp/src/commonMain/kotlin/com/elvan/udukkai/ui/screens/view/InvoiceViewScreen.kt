@@ -19,8 +19,8 @@ import androidx.compose.ui.unit.sp
 import com.elvan.udukkai.core.platform.AppBackHandler
 import com.elvan.udukkai.core.utils.CurrencyUtils
 import com.elvan.udukkai.core.utils.DateUtils
-import com.elvan.udukkai.data.model.PattiyalTharavuru
-import com.elvan.udukkai.data.settings.NiruvanaTharavugal
+import com.elvan.udukkai.data.model.InvoiceModel
+import com.elvan.udukkai.data.settings.BusinessProfile
 import com.elvan.udukkai.localization.PrintLanguageManager
 import com.elvan.udukkai.localization.K
 import com.elvan.udukkai.localization.tr
@@ -37,9 +37,9 @@ import com.elvan.udukkai.theme.LocalShellColors
  */
 @Composable
 fun InvoiceViewScreen(
-    invoice: PattiyalTharavuru,
-    profile: NiruvanaTharavugal,
-    allProfiles: List<NiruvanaTharavugal>,
+    invoice: InvoiceModel,
+    profile: BusinessProfile,
+    allProfiles: List<BusinessProfile>,
     onBack: () -> Unit,
     onEdit: () -> Unit,
     onPrint: (() -> Unit)? = null,
@@ -49,27 +49,27 @@ fun InvoiceViewScreen(
     val isDark = colors.isDark
     val ff = LocalAppFontFamily.current
 
-    val activeProfile = (if (invoice.niruvanamId != null) allProfiles.find { it.id == invoice.niruvanamId } else null)
+    val activeProfile = (if (invoice.companyId != null) allProfiles.find { it.id == invoice.companyId } else null)
         ?: profile
-    val isBilingual = activeProfile.iruMozhi
-    val primaryLang = activeProfile.mudhanMozhi.ifEmpty { "ta" }
+    val isBilingual = activeProfile.isBilingual
+    val primaryLang = activeProfile.primaryLanguage.ifEmpty { "ta" }
     val secondaryLang = activeProfile.thunaiMozhi.ifEmpty { "en" }
 
-    val customerName = invoice.vaangunarPeyar[primaryLang]
-        ?: invoice.vaangunarPeyar[secondaryLang]
-        ?: invoice.vaangunarPeyar.values.firstOrNull().orEmpty().ifEmpty { "-" }
+    val customerName = invoice.customerName[primaryLang]
+        ?: invoice.customerName[secondaryLang]
+        ?: invoice.customerName.values.firstOrNull().orEmpty().ifEmpty { "-" }
 
-    val secondaryCustomerName = if (isBilingual) (invoice.vaangunarPeyar[secondaryLang] ?: "") else ""
+    val secondaryCustomerName = if (isBilingual) (invoice.customerName[secondaryLang] ?: "") else ""
 
-    val customerTown = invoice.vaangunarMunvari[primaryLang]
-        ?: invoice.vaangunarMunvari[secondaryLang]
-        ?: invoice.vaangunarMunvari.values.firstOrNull().orEmpty()
+    val customerTown = invoice.customerAddress[primaryLang]
+        ?: invoice.customerAddress[secondaryLang]
+        ?: invoice.customerAddress.values.firstOrNull().orEmpty()
 
 
     val scrollState = rememberLazyListState()
 
     ViewTile(
-        title = "${K.invoice.tr()} #${invoice.patrucheettuEn}",
+        title = "${K.invoice.tr()} #${invoice.invoiceNumber}",
         onBack = onBack,
         scrollState = scrollState,
         onEdit = onEdit,
@@ -150,7 +150,7 @@ fun InvoiceViewScreen(
 
                         Column(horizontalAlignment = Alignment.End) {
                             Text(
-                                text = DateUtils.formatEpochMillis(invoice.pattiyalNaal),
+                                text = DateUtils.formatEpochMillis(invoice.invoiceDate),
                                 style = TextStyle(
                                     fontFamily = ff,
                                     fontSize = 15.sp,
@@ -166,7 +166,7 @@ fun InvoiceViewScreen(
                                     .padding(horizontal = 8.dp, vertical = 4.dp)
                             ) {
                                 Text(
-                                    text = if (invoice.tharavugal.any { (it as? Map<*, *>)?.containsKey("vari_veetham") == true }) K.udukkaiTextiles.tr() else K.udukkaiFactory.tr(),
+                                    text = if (invoice.itemsJson.any { (it as? Map<*, *>)?.containsKey("vari_veetham") == true }) K.udukkaiTextiles.tr() else K.udukkaiFactory.tr(),
                                     style = TextStyle(
                                         fontFamily = ff,
                                         fontSize = 12.sp,
@@ -181,7 +181,7 @@ fun InvoiceViewScreen(
             }
 
             // Factory Specific Additional Charges Card
-            if ((invoice.setharamGrams > 0 || invoice.thabaalThogai > 0 || invoice.ahimsaPattuThogai > 0)) {
+            if ((invoice.wastageGrams > 0 || invoice.thabaalThogai > 0 || invoice.ahimsaSilkAmount > 0)) {
                 item(key = "factory_charges_card") {
                     Box(
                         modifier = Modifier
@@ -199,7 +199,7 @@ fun InvoiceViewScreen(
                             modifier = Modifier.fillMaxWidth(),
                             verticalArrangement = Arrangement.spacedBy(10.dp)
                         ) {
-                            if (invoice.setharamGrams > 0) {
+                            if (invoice.wastageGrams > 0) {
                                 Row(
                                     modifier = Modifier.fillMaxWidth(),
                                     horizontalArrangement = Arrangement.SpaceBetween
@@ -209,7 +209,7 @@ fun InvoiceViewScreen(
                                         style = TextStyle(fontFamily = ff, fontSize = 14.sp, color = colors.textSecondary)
                                     )
                                     Text(
-                                        text = "${invoice.setharamGrams} g",
+                                        text = "${invoice.wastageGrams} g",
                                         style = TextStyle(fontFamily = ff, fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = colors.textPrimary)
                                     )
                                 }
@@ -229,7 +229,7 @@ fun InvoiceViewScreen(
                                     )
                                 }
                             }
-                            if (invoice.ahimsaPattuThogai > 0) {
+                            if (invoice.ahimsaSilkAmount > 0) {
                                 Row(
                                     modifier = Modifier.fillMaxWidth(),
                                     horizontalArrangement = Arrangement.SpaceBetween
@@ -239,7 +239,7 @@ fun InvoiceViewScreen(
                                         style = TextStyle(fontFamily = ff, fontSize = 14.sp, color = colors.textSecondary)
                                     )
                                     Text(
-                                        text = CurrencyUtils.formatInr(invoice.ahimsaPattuThogai),
+                                        text = CurrencyUtils.formatInr(invoice.ahimsaSilkAmount),
                                         style = TextStyle(fontFamily = ff, fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = colors.textPrimary)
                                     )
                                 }
@@ -276,7 +276,7 @@ fun InvoiceViewScreen(
                         )
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(
-                            text = CurrencyUtils.formatInr(invoice.mothaThogai),
+                            text = CurrencyUtils.formatInr(invoice.totalAmount),
                             style = TextStyle(
                                 fontFamily = ff,
                                 fontSize = 34.sp,
@@ -289,7 +289,7 @@ fun InvoiceViewScreen(
             }
 
             // Internal Notes / Comments
-            if (invoice.ullkurippu.isNotBlank()) {
+            if (invoice.notes.isNotBlank()) {
                 item(key = "notes_card") {
                     Column(modifier = Modifier.fillMaxWidth()) {
                         Text(
@@ -315,7 +315,7 @@ fun InvoiceViewScreen(
                                 .padding(16.dp)
                         ) {
                             Text(
-                                text = invoice.ullkurippu.preventBrokenLigatures(),
+                                text = invoice.notes.preventBrokenLigatures(),
                                 style = TextStyle(
                                     fontFamily = ff,
                                     fontSize = 14.sp,

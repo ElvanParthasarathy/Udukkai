@@ -47,7 +47,7 @@ fun TextilesIdentityScreen(
     var editingSection by remember { mutableStateOf<String?>(null) }
     var tempImagePath by remember { mutableStateOf<String?>(null) }
     var tempWideImagePath by remember { mutableStateOf<String?>(null) }
-    var tempHeaderStyle by remember { mutableStateOf(profile.thalaippuVadivu.ifEmpty { "small" }) }
+    var tempHeaderStyle by remember { mutableStateOf(profile.headerLayout.ifEmpty { "small" }) }
     var tempSignatoryFirstName by remember { mutableStateOf("") }
     var tempSignatoryLastName by remember { mutableStateOf("") }
     var activePickerField by remember { mutableStateOf<String?>(null) }
@@ -61,10 +61,10 @@ fun TextilesIdentityScreen(
         activePickerField = null
     }
 
-    val logoPath = profile.oavuru.ifEmpty { null }
-    val wideLogoPath = profile.agalaOavuru.ifEmpty { null }
-    val headerStyle = profile.thalaippuVadivu.ifEmpty { "small" }
-    val signaturePath = profile.kaiyoppam.ifEmpty { null }
+    val logoPath = profile.logo.ifEmpty { null }
+    val wideLogoPath = profile.wideLogo.ifEmpty { null }
+    val headerStyle = profile.headerLayout.ifEmpty { "small" }
+    val signaturePath = profile.signature.ifEmpty { null }
     val signatoryName = profile.fullSignatoryName
 
     val smallLabel = K.smallLogoCompanyName.tr()
@@ -118,7 +118,7 @@ fun TextilesIdentityScreen(
                                 onCancel = { editingSection = null },
                                 onSave = {
                                     val updated = profile.copy()
-                                    updated.oavuru = tempImagePath ?: ""
+                                    updated.logo = tempImagePath ?: ""
                                     TextilesProfileRepository.updateProfile(updated)
                                     editingSection = null
                                     ElvanSnackbar.show(saveSuccessMsg)
@@ -168,7 +168,7 @@ fun TextilesIdentityScreen(
                                 onCancel = { editingSection = null },
                                 onSave = {
                                     val updated = profile.copy()
-                                    updated.agalaOavuru = tempWideImagePath ?: ""
+                                    updated.wideLogo = tempWideImagePath ?: ""
                                     TextilesProfileRepository.updateProfile(updated)
                                     editingSection = null
                                     ElvanSnackbar.show(saveSuccessMsg)
@@ -209,7 +209,7 @@ fun TextilesIdentityScreen(
                                 onCancel = { editingSection = null },
                                 onSave = {
                                     val updated = profile.copy()
-                                    updated.thalaippuVadivu = tempHeaderStyle
+                                    updated.headerLayout = tempHeaderStyle
                                     TextilesProfileRepository.updateProfile(updated)
                                     editingSection = null
                                     ElvanSnackbar.show(saveSuccessMsg)
@@ -301,7 +301,7 @@ fun TextilesIdentityScreen(
                                 onCancel = { editingSection = null },
                                 onSave = {
                                     val updated = profile.copy()
-                                    updated.kaiyoppam = tempImagePath ?: ""
+                                    updated.signature = tempImagePath ?: ""
                                     updated.oppamMudhalPeyar = tempSignatoryFirstName.trim()
                                     updated.oppamIrudhiPeyar = tempSignatoryLastName.trim()
                                     updated.oppamPeyar = updated.fullSignatoryName

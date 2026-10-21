@@ -114,7 +114,7 @@ fun TextilesItemCard(
                 val primaryName = if (item.mozhiMap.isNotEmpty()) {
                     item.mozhiMap[config.primaryLanguage.code] ?: item.mozhiMap.values.firstOrNull().orEmpty()
                 } else {
-                    item.porulPeyar
+                    item.name
                 }
                 val secondaryName = if (config.isBilingual) {
                     if (item.mozhiMap.isNotEmpty()) {
@@ -205,7 +205,7 @@ fun TextilesItemCard(
             }
 
             // ── Quantity & Rate Row ──
-            val isWeightItem = item.alagu.equals("kg", ignoreCase = true)
+            val isWeightItem = item.unit.equals("kg", ignoreCase = true)
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -228,7 +228,7 @@ fun TextilesItemCard(
                 Box(modifier = Modifier.weight(1f)) {
                     ElvanThiruthiUlleedu(
                         label = K.sellingRate.tr(),
-                        value = if (item.vilai == 0.0) "" else if (item.vilai % 1.0 == 0.0) item.vilai.toInt().toString() else item.vilai.toString(),
+                        value = if (item.price == 0.0) "" else if (item.price % 1.0 == 0.0) item.price.toInt().toString() else item.price.toString(),
                         onValueChange = { str ->
                             val rate = str.toDoubleOrNull() ?: 0.0
                             onItemUpdated(item.copy(vilai = rate))
@@ -250,7 +250,7 @@ fun TextilesItemCard(
                 Box(modifier = Modifier.weight(1f)) {
                     ElvanThiruthiUlleedu(
                         label = K.discount.tr(),
-                        value = if (item.thallupadi == 0.0) "" else if (item.thallupadi % 1.0 == 0.0) item.thallupadi.toInt().toString() else item.thallupadi.toString(),
+                        value = if (item.discount == 0.0) "" else if (item.discount % 1.0 == 0.0) item.discount.toInt().toString() else item.discount.toString(),
                         onValueChange = { str ->
                             val disc = str.toDoubleOrNull() ?: 0.0
                             onItemUpdated(item.copy(thallupadi = disc))
@@ -306,20 +306,20 @@ fun TextilesItemCard(
             onDismissRequest = { isPickerOpen = false },
             onSelected = { selected ->
                 val config = PrintLanguageManager.getTextilesConfig()
-                val primaryName = selected.porulPeyar[config.primaryLanguage.code] ?: selected.porulPeyar.values.firstOrNull().orEmpty()
-                val secondaryName = if (config.isBilingual) selected.porulPeyar[config.secondaryLanguage.code].orEmpty() else ""
+                val primaryName = selected.name[config.primaryLanguage.code] ?: selected.name.values.firstOrNull().orEmpty()
+                val secondaryName = if (config.isBilingual) selected.name[config.secondaryLanguage.code].orEmpty() else ""
                 val effectivePrice = selected.getEffectivePrice(niruvanamId)
-                val priceToUse = if (effectivePrice > 0.0) effectivePrice else selected.vilai
+                val priceToUse = if (effectivePrice > 0.0) effectivePrice else selected.price
                 onItemUpdated(
                     item.copy(
                         porulId = selected.id.toString(),
                         porulPeyar = primaryName,
                         porulPeyarEn = secondaryName,
-                        mozhiMap = selected.porulPeyar,
+                        mozhiMap = selected.name,
                         hsnKuriyeedu = selected.hsnCode,
                         vilai = priceToUse,
-                        variVizhukkaadu = if (selected.variVeetham > 0) selected.variVeetham else 5.0,
-                        alagu = selected.alagu
+                        variVizhukkaadu = if (selected.taxRate > 0) selected.taxRate else 5.0,
+                        alagu = selected.unit
                     )
                 )
                 onDirty()
@@ -327,18 +327,18 @@ fun TextilesItemCard(
             },
             itemLabelBuilder = { p ->
                 val config = PrintLanguageManager.getTextilesConfig()
-                p.porulPeyar[config.primaryLanguage.code] ?: p.porulPeyar.values.firstOrNull().orEmpty()
+                p.name[config.primaryLanguage.code] ?: p.name.values.firstOrNull().orEmpty()
             },
             subtitleBuilder = { p ->
                 val config = PrintLanguageManager.getTextilesConfig()
-                val subName = if (config.isBilingual) p.porulPeyar[config.secondaryLanguage.code].orEmpty() else ""
+                val subName = if (config.isBilingual) p.name[config.secondaryLanguage.code].orEmpty() else ""
                 val price = p.getEffectivePrice(niruvanamId)
                 val priceStr = if (price > 0) CurrencyUtils.formatInr(price) else ""
                 listOf(subName, priceStr).filter { it.isNotEmpty() }.joinToString("  •  ")
             },
             searchFilter = { p, query ->
                 val q = query.lowercase()
-                p.porulPeyar.values.any { it.lowercase().contains(q) } || p.hsnCode.lowercase().contains(q)
+                p.name.values.any { it.lowercase().contains(q) } || p.hsnCode.lowercase().contains(q)
             },
             onRequestAddNew = {
                 isPickerOpen = false

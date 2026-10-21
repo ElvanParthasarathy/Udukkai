@@ -42,9 +42,9 @@ fun FactoryMerchantSettingsScreen(
     onNavigateToManageProfiles: () -> Unit = {},
     scrollState: LazyListState = rememberLazyListState(),
     colors: ShellColors = rememberShellColors(),
-    customProfile: com.elvan.udukkai.data.settings.NiruvanaTharavugal? = null,
-    customProfiles: List<com.elvan.udukkai.data.settings.NiruvanaTharavugal>? = null,
-    onUpdateProfile: ((com.elvan.udukkai.data.settings.NiruvanaTharavugal) -> Unit)? = null,
+    customProfile: com.elvan.udukkai.data.settings.BusinessProfile? = null,
+    customProfiles: List<com.elvan.udukkai.data.settings.BusinessProfile>? = null,
+    onUpdateProfile: ((com.elvan.udukkai.data.settings.BusinessProfile) -> Unit)? = null,
     onSelectProfile: ((Long) -> Unit)? = null,
     isTextiles: Boolean = false
 ) {
@@ -60,7 +60,7 @@ fun FactoryMerchantSettingsScreen(
     var showExtraPhone by remember { mutableStateOf(false) }
 
     val isPattu = false
-    val isBilingual = profile.iruMozhi
+    val isBilingual = profile.isBilingual
     val saveSuccessMsg = K.profileSaved.tr()
     val defaultProfileName = K.activeCompany.tr()
     val selectCompanyTitle = K.selectCompany.tr()
@@ -139,7 +139,7 @@ fun FactoryMerchantSettingsScreen(
                                         items = allProfilesList,
                                         currentValue = profile,
                                         itemLabelBuilder = { it.getPrimary("niruvanathinPeyar").ifEmpty { defaultProfileName } },
-                                        subtitleBuilder = { if (it.iruMozhi) it.getSecondary("niruvanathinPeyar").takeIf { s -> s.isNotBlank() } else null },
+                                        subtitleBuilder = { if (it.isBilingual) it.getSecondary("niruvanathinPeyar").takeIf { s -> s.isNotBlank() } else null },
                                         onSelected = { selected ->
                                             if (selected.id != null) {
                                                 FactoryProfileRepository.setActiveProfile(selected.id!!)
@@ -325,12 +325,12 @@ fun FactoryMerchantSettingsScreen(
                     displayContent = {
                         ElvanSettingsDisplayRow(
                             title = K.phoneNumbers.tr(),
-                            primaryValue = profile.tholaipaesi1,
-                            secondaryValue = profile.tholaipaesi2.ifEmpty { null },
+                            primaryValue = profile.phone1,
+                            secondaryValue = profile.phone2.ifEmpty { null },
                             onEdit = {
-                                tempPrimary = profile.tholaipaesi1
-                                tempSecondary = profile.tholaipaesi2
-                                showExtraPhone = profile.tholaipaesi2.isNotEmpty()
+                                tempPrimary = profile.phone1
+                                tempSecondary = profile.phone2
+                                showExtraPhone = profile.phone2.isNotEmpty()
                                 editingSection = "tholaipesigal"
                             },
                             colors = colors
@@ -363,8 +363,8 @@ fun FactoryMerchantSettingsScreen(
                             },
                             onSave = {
                                 saveField {
-                                    profile.tholaipaesi1 = tempPrimary
-                                    profile.tholaipaesi2 = if (showExtraPhone) tempSecondary else ""
+                                    profile.phone1 = tempPrimary
+                                    profile.phone2 = if (showExtraPhone) tempSecondary else ""
                                 }
                             },
                             colors = colors
@@ -416,9 +416,9 @@ fun FactoryMerchantSettingsScreen(
                     displayContent = {
                         ElvanSettingsDisplayRow(
                             title = K.email.tr(),
-                            primaryValue = profile.minnanjal,
+                            primaryValue = profile.email,
                             onEdit = {
-                                tempPrimary = profile.minnanjal
+                                tempPrimary = profile.email
                                 editingSection = "minnanjal"
                             },
                             colors = colors
@@ -430,7 +430,7 @@ fun FactoryMerchantSettingsScreen(
                             onCancel = { editingSection = null },
                             onSave = {
                                 saveField {
-                                    profile.minnanjal = tempPrimary
+                                    profile.email = tempPrimary
                                 }
                             },
                             colors = colors

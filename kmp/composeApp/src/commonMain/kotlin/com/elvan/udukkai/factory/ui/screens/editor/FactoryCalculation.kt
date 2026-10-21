@@ -1,6 +1,6 @@
 package com.elvan.udukkai.factory.ui.screens.editor
 
-import com.elvan.udukkai.data.settings.MozhiJsonConverter
+import com.elvan.udukkai.data.settings.LanguageJsonConverter
 import kotlin.math.floor
 import kotlin.math.round
 
@@ -24,6 +24,8 @@ data class FactoryItem(
     val vilai: Double = 0.0,
     val mozhiMap: Map<String, String> = emptyMap()
 ) {
+    val name: String get() = porulPeyar
+    val price: Double get() = vilai
     val weight: Double get() = edai
     val rate: Double get() = vilai
     val rowTotal: Int get() = floor(edai * vilai).toInt()
@@ -80,7 +82,7 @@ object FactoryCalculation {
         var totalKg = 0.0
 
         for (item in items) {
-            val rowTotal = floor(item.edai * item.vilai)
+            val rowTotal = floor(item.edai * item.price)
             subtotal += rowTotal
             totalKg += item.edai
         }
@@ -89,7 +91,7 @@ object FactoryCalculation {
 
         var piraTotal = 0.0
         for (charge in charges) {
-            piraTotal += charge.thogai
+            piraTotal += charge.amount
         }
 
         val grandTotal = subtotal + thabaalThogai + ahimsaPattuThogai + piraTotal
@@ -117,11 +119,11 @@ object FactoryCalculation {
             if (idx > 0) sb.append(",")
             sb.append("{")
             sb.append("\"porulId\":").append(if (item.porulId != null) "\"${escapeJson(item.porulId)}\"" else "null").append(",")
-            sb.append("\"porulPeyar\":\"${escapeJson(item.porulPeyar)}\",")
+            sb.append("\"porulPeyar\":\"${escapeJson(item.name)}\",")
             sb.append("\"porulPeyarEn\":\"${escapeJson(item.porulPeyarEn)}\",")
             sb.append("\"edai\":${item.edai},")
-            sb.append("\"vilai\":${item.vilai},")
-            sb.append("\"mozhiMap\":${MozhiJsonConverter.stringify(item.mozhiMap)}")
+            sb.append("\"vilai\":${item.price},")
+            sb.append("\"mozhiMap\":${LanguageJsonConverter.stringify(item.mozhiMap)}")
             sb.append("}")
         }
         sb.append("]")
@@ -144,7 +146,7 @@ object FactoryCalculation {
                 val vilai = Regex(""""vilai"\s*:\s*([0-9.]+)""").find(body)?.groupValues?.get(1)?.toDoubleOrNull() ?: 0.0
 
                 val mozhiMapMatch = Regex(""""mozhiMap"\s*:\s*(\{[^}]*\})""").find(body)?.groupValues?.get(1)
-                val mozhiMap = MozhiJsonConverter.parse(mozhiMapMatch)
+                val mozhiMap = LanguageJsonConverter.parse(mozhiMapMatch)
 
                 FactoryItem(
                     porulId = porulId,
@@ -167,8 +169,8 @@ object FactoryCalculation {
             if (idx > 0) sb.append(",")
             sb.append("{")
             sb.append("\"id\":\"${escapeJson(charge.id)}\",")
-            sb.append("\"peyar\":\"${escapeJson(charge.peyar)}\",")
-            sb.append("\"thogai\":${charge.thogai}")
+            sb.append("\"peyar\":\"${escapeJson(charge.name)}\",")
+            sb.append("\"thogai\":${charge.amount}")
             sb.append("}")
         }
         sb.append("]")

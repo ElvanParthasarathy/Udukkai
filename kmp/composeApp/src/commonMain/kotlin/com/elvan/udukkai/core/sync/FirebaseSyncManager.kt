@@ -1,11 +1,11 @@
 package com.elvan.udukkai.core.sync
 
 import androidx.compose.runtime.State
-import com.elvan.udukkai.data.model.PattiyalTharavuru
-import com.elvan.udukkai.data.model.PatruPattiyalInaippuTharavuru
-import com.elvan.udukkai.data.model.PatrugalTharavuru
-import com.elvan.udukkai.data.model.PorulTharavuru
-import com.elvan.udukkai.data.model.VaangunarTharavuru
+import com.elvan.udukkai.data.model.InvoiceModel
+import com.elvan.udukkai.data.model.ReceiptInvoiceLinkModel
+import com.elvan.udukkai.data.model.ReceiptModel
+import com.elvan.udukkai.data.model.ProductModel
+import com.elvan.udukkai.data.model.CustomerModel
 
 enum class SyncStatus {
     IDLE,
@@ -28,11 +28,11 @@ interface FirebaseSyncManager {
     fun triggerManualSync()
     fun dismissGuardAlert()
 
-    fun pushMerchant(merchant: VaangunarTharavuru, scope: String = "factory")
-    fun pushItem(item: PorulTharavuru, scope: String = "factory")
-    fun pushInvoice(invoice: PattiyalTharavuru, scope: String = "factory")
-    fun pushReceipt(receipt: PatrugalTharavuru, scope: String = "factory")
-    fun pushReceiptLinks(receiptId: Long, links: List<PatruPattiyalInaippuTharavuru>, scope: String = "factory")
+    fun pushMerchant(merchant: CustomerModel, scope: String = "factory")
+    fun pushItem(item: ProductModel, scope: String = "factory")
+    fun pushInvoice(invoice: InvoiceModel, scope: String = "factory")
+    fun pushReceipt(receipt: ReceiptModel, scope: String = "factory")
+    fun pushReceiptLinks(receiptId: Long, links: List<ReceiptInvoiceLinkModel>, scope: String = "factory")
 }
 
 expect fun getFirebaseSyncManager(): FirebaseSyncManager

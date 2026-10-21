@@ -21,8 +21,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.elvan.udukkai.core.platform.AppBackHandler
 import com.elvan.udukkai.core.utils.CurrencyUtils
-import com.elvan.udukkai.data.model.PorulTharavuru
-import com.elvan.udukkai.data.settings.NiruvanaTharavugal
+import com.elvan.udukkai.data.model.ProductModel
+import com.elvan.udukkai.data.settings.BusinessProfile
 import com.elvan.udukkai.localization.K
 import com.elvan.udukkai.localization.tr
 import com.elvan.udukkai.theme.Dimens
@@ -38,9 +38,9 @@ import com.elvan.udukkai.ui.navigation.MaterialSymbols
  */
 @Composable
 fun ProductViewScreen(
-    item: PorulTharavuru,
-    profile: NiruvanaTharavugal,
-    allProfiles: List<NiruvanaTharavugal>,
+    item: ProductModel,
+    profile: BusinessProfile,
+    allProfiles: List<BusinessProfile>,
     onBack: () -> Unit,
     onEdit: () -> Unit,
     onCopy: (() -> Unit)? = null
@@ -49,12 +49,12 @@ fun ProductViewScreen(
     val isDark = colors.isDark
     val ff = LocalAppFontFamily.current
 
-    val isBilingual = profile.iruMozhi
-    val primaryLang = profile.mudhanMozhi.ifEmpty { "ta" }
+    val isBilingual = profile.isBilingual
+    val primaryLang = profile.primaryLanguage.ifEmpty { "ta" }
     val secondaryLang = profile.thunaiMozhi.ifEmpty { "en" }
             
-    val p1 = item.porulPeyar[primaryLang] ?: item.porulPeyar["ta"] ?: ""
-    val p2 = item.porulPeyar[secondaryLang] ?: item.porulPeyar["en"] ?: ""
+    val p1 = item.name[primaryLang] ?: item.name["ta"] ?: ""
+    val p2 = item.name[secondaryLang] ?: item.name["en"] ?: ""
     val primaryName = p1.ifEmpty { p2.ifEmpty { "-" } }
     val secondaryName = if (isBilingual && p1.isNotEmpty() && p2.isNotEmpty() && p1 != p2) p2 else ""
 
@@ -173,7 +173,7 @@ fun ProductViewScreen(
                 ) {
                     DetailCard(
                         title = K.sellingRate.tr(),
-                        value = CurrencyUtils.formatInr(item.vilai),
+                        value = CurrencyUtils.formatInr(item.price),
                         icon = MaterialSymbols.Rounded.CurrencyRupee,
                         colors = colors,
                         ff = ff
@@ -181,26 +181,26 @@ fun ProductViewScreen(
 
                     DetailCard(
                         title = K.gstRate.tr(),
-                        value = "${item.variVeetham}%",
+                        value = "${item.taxRate}%",
                         icon = MaterialSymbols.Rounded.Percent,
                         colors = colors,
                         ff = ff
                     )
 
-                    if (item.alavuVagai.isNotBlank()) {
+                    if (item.quantityType.isNotBlank()) {
                         DetailCard(
                             title = K.measureType.tr(),
-                            value = item.alavuVagai,
+                            value = item.quantityType,
                             icon = MaterialSymbols.Rounded.Straighten,
                             colors = colors,
                             ff = ff
                         )
                     }
 
-                    if (item.alagu.isNotBlank()) {
+                    if (item.unit.isNotBlank()) {
                         DetailCard(
                             title = K.unit.tr(),
-                            value = item.alagu,
+                            value = item.unit,
                             icon = MaterialSymbols.Rounded.Inventory2,
                             colors = colors,
                             ff = ff
@@ -208,12 +208,12 @@ fun ProductViewScreen(
                     }
 
                     // Company Availability
-                    val availabilityText = if (item.niruvanamIds.isEmpty()) {
+                    val availabilityText = if (item.companyIds.isEmpty()) {
                         "${K.all.tr()} ${K.companies.tr()}"
                     } else {
-                        item.niruvanamIds.mapNotNull { cId ->
+                        item.companyIds.mapNotNull { cId ->
                             val p = allProfiles.find { it.id == cId }
-                            p?.kurumPeyar?.ifEmpty { p.niruvanathinPeyar.values.firstOrNull() }
+                            p?.kurumPeyar?.ifEmpty { p.businessName.values.firstOrNull() }
                         }.joinToString(", ").ifEmpty { "${K.select.tr()} ${K.companies.tr()}" }
                     }
                     DetailCard(
@@ -228,7 +228,7 @@ fun ProductViewScreen(
                     if (item.companyPrices.isNotEmpty()) {
                         item.companyPrices.forEach { (cId, overridePrice) ->
                             val p = allProfiles.find { it.id == cId }
-                            val cName = p?.kurumPeyar?.ifEmpty { p.niruvanathinPeyar.values.firstOrNull() } ?: "Company #$cId"
+                            val cName = p?.kurumPeyar?.ifEmpty { p.businessName.values.firstOrNull() } ?: "Company #$cId"
                             DetailCard(
                                 title = "$cName ${K.sellingRate.tr()}",
                                 value = CurrencyUtils.formatInr(overridePrice),

@@ -18,7 +18,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.elvan.udukkai.data.model.VaangunarTharavuru
+import com.elvan.udukkai.data.model.CustomerModel
 import com.elvan.udukkai.textiles.data.TextilesCustomerRepository
 import com.elvan.udukkai.localization.K
 import com.elvan.udukkai.localization.PrintLanguageManager
@@ -40,7 +40,7 @@ import com.elvan.udukkai.ui.screens.editor.ElvanThiruthiThalaippu
 @Composable
 fun TextilesCustomerField(
     selectedVaangunarId: Long?,
-    onCustomerSelected: (VaangunarTharavuru) -> Unit,
+    onCustomerSelected: (CustomerModel) -> Unit,
     onCustomerCleared: () -> Unit,
     onRequestAddNewCustomer: () -> Unit,
     modifier: Modifier = Modifier
@@ -64,9 +64,9 @@ fun TextilesCustomerField(
         ElvanThiruthiThalaippu(label = K.clientNameSearch.tr())
 
         val containerBg = colors.iconBg
-        val customerName = selectedVaangunar?.peyar?.get(primaryLang)
-            ?: selectedVaangunar?.peyar?.get(secondaryLang)
-            ?: selectedVaangunar?.peyar?.values?.firstOrNull()
+        val customerName = selectedVaangunar?.name?.get(primaryLang)
+            ?: selectedVaangunar?.name?.get(secondaryLang)
+            ?: selectedVaangunar?.name?.values?.firstOrNull()
             ?: ""
 
         // ── Customer Selector Pill ──
@@ -147,7 +147,7 @@ fun TextilesCustomerField(
                     )
 
                     // Secondary language name if bilingual
-                    val secName = if (isBilingual) selectedVaangunar.peyar[secondaryLang].orEmpty() else ""
+                    val secName = if (isBilingual) selectedVaangunar.name[secondaryLang].orEmpty() else ""
                     if (secName.isNotEmpty()) {
                         Text(
                             text = secName.preventBrokenLigatures(),
@@ -161,13 +161,13 @@ fun TextilesCustomerField(
                     }
 
                     // Address & Oor — bilingual
-                    val primMugavari = selectedVaangunar.mugavari[primaryLang]
-                        ?: selectedVaangunar.mugavari.values.firstOrNull().orEmpty()
-                    val primOor = selectedVaangunar.oor[primaryLang]
-                        ?: selectedVaangunar.oor.values.firstOrNull().orEmpty()
-                    val primMaanilam = selectedVaangunar.maanilam[primaryLang]
-                        ?: selectedVaangunar.maanilam.values.firstOrNull().orEmpty()
-                    val primAddressCombined = listOf(primMugavari, primOor, primMaanilam, selectedVaangunar.anjalKuriyeedu)
+                    val primMugavari = selectedVaangunar.address[primaryLang]
+                        ?: selectedVaangunar.address.values.firstOrNull().orEmpty()
+                    val primOor = selectedVaangunar.city[primaryLang]
+                        ?: selectedVaangunar.city.values.firstOrNull().orEmpty()
+                    val primMaanilam = selectedVaangunar.state[primaryLang]
+                        ?: selectedVaangunar.state.values.firstOrNull().orEmpty()
+                    val primAddressCombined = listOf(primMugavari, primOor, primMaanilam, selectedVaangunar.pinCode)
                         .filter { it.isNotBlank() }
                         .joinToString(", ")
 
@@ -185,14 +185,14 @@ fun TextilesCustomerField(
 
                     // Secondary language address
                     if (isBilingual) {
-                        val secMugavari = selectedVaangunar.mugavari[secondaryLang].orEmpty()
-                        val secOor = selectedVaangunar.oor[secondaryLang].orEmpty()
-                        val secMaanilam = selectedVaangunar.maanilam[secondaryLang].orEmpty()
+                        val secMugavari = selectedVaangunar.address[secondaryLang].orEmpty()
+                        val secOor = selectedVaangunar.city[secondaryLang].orEmpty()
+                        val secMaanilam = selectedVaangunar.state[secondaryLang].orEmpty()
                         val secAddressCombined = listOf(secMugavari, secOor, secMaanilam)
                             .filter { it.isNotBlank() }
                             .joinToString(", ")
 
-                        if (secAddressCombined.isNotBlank() && secAddressCombined != primAddressCombined.replace(", ${selectedVaangunar.anjalKuriyeedu}", "")) {
+                        if (secAddressCombined.isNotBlank() && secAddressCombined != primAddressCombined.replace(", ${selectedVaangunar.pinCode}", "")) {
                             Text(
                                 text = secAddressCombined.preventBrokenLigatures(),
                                 style = TextStyle(
@@ -235,17 +235,17 @@ fun TextilesCustomerField(
                 isBottomSheetOpen = false
             },
             itemLabelBuilder = { c ->
-                c.peyar[primaryLang] ?: c.peyar.values.firstOrNull().orEmpty()
+                c.name[primaryLang] ?: c.name.values.firstOrNull().orEmpty()
             },
             subtitleBuilder = { c ->
-                val sec = if (isBilingual) c.peyar[secondaryLang].orEmpty() else ""
-                val oor = c.oor[primaryLang] ?: c.oor.values.firstOrNull().orEmpty()
+                val sec = if (isBilingual) c.name[secondaryLang].orEmpty() else ""
+                val oor = c.city[primaryLang] ?: c.city.values.firstOrNull().orEmpty()
                 listOf(sec, oor).filter { it.isNotEmpty() }.joinToString(" - ")
             },
             searchFilter = { c, query ->
                 val q = query.lowercase()
-                c.peyar.values.any { it.lowercase().contains(q) } ||
-                c.oor.values.any { it.lowercase().contains(q) } ||
+                c.name.values.any { it.lowercase().contains(q) } ||
+                c.city.values.any { it.lowercase().contains(q) } ||
                 c.gstin.lowercase().contains(q)
             },
             onRequestAddNew = {
@@ -264,7 +264,7 @@ fun TextilesCustomerField(
 @Composable
 fun PattuVaangunargalKooru(
     selectedVaangunarId: Long?,
-    onCustomerSelected: (VaangunarTharavuru) -> Unit,
+    onCustomerSelected: (CustomerModel) -> Unit,
     onCustomerCleared: () -> Unit,
     onRequestAddNewCustomer: () -> Unit,
     modifier: Modifier = Modifier

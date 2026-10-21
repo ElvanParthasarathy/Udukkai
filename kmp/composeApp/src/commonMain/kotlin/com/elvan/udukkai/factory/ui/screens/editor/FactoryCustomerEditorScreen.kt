@@ -15,7 +15,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.elvan.udukkai.core.platform.AppBackHandler
 import com.elvan.udukkai.data.model.CustomerModel
-import com.elvan.udukkai.data.model.VaangunarTharavuru
 import com.elvan.udukkai.factory.data.FactoryCustomerRepository
 import com.elvan.udukkai.factory.data.FactoryProfileRepository
 import com.elvan.udukkai.localization.K
@@ -32,11 +31,11 @@ import com.elvan.udukkai.ui.screens.editor.LocalEditorAccentColor
 /**
  * Dedicated Customer Editor for Udukkai Factory (ஆலை).
  * Distinct Factory customer schema: Name, City, Address, Phone.
- * Reactively follows FactoryProfileRepository.profile.iruMozhi for bilingual toggling.
+ * Reactively follows FactoryProfileRepository.profile.isBilingual for bilingual toggling.
  */
 @Composable
 fun FactoryCustomerEditorScreen(
-    merchant: VaangunarTharavuru? = null,
+    merchant: CustomerModel? = null,
     onBack: () -> Unit
 ) {
     val colors = rememberShellColors()
@@ -44,14 +43,14 @@ fun FactoryCustomerEditorScreen(
     val isEditing = merchant != null && merchant.id > 0L
 
     val profile = FactoryProfileRepository.profile
-    val isBilingual = profile.iruMozhi
-    val primaryLang = profile.mudhanMozhi.ifEmpty { "ta" }
+    val isBilingual = profile.isBilingual
+    val primaryLang = profile.primaryLanguage.ifEmpty { "ta" }
     val secondaryLang = profile.thunaiMozhi.ifEmpty { "en" }
 
-    var peyarMap by remember { mutableStateOf(merchant?.peyar ?: emptyMap()) }
-    var tholaipaesi by remember { mutableStateOf(merchant?.tholaipaesi ?: "") }
-    var oorMap by remember { mutableStateOf(merchant?.oor ?: emptyMap()) }
-    var mugavariMap by remember { mutableStateOf(merchant?.mugavari ?: emptyMap()) }
+    var peyarMap by remember { mutableStateOf(merchant?.name ?: emptyMap()) }
+    var tholaipaesi by remember { mutableStateOf(merchant?.phone ?: "") }
+    var oorMap by remember { mutableStateOf(merchant?.city ?: emptyMap()) }
+    var mugavariMap by remember { mutableStateOf(merchant?.address ?: emptyMap()) }
 
     var nameValidationError by remember { mutableStateOf<String?>(null) }
     var showDiscardDialog by remember { mutableStateOf(false) }
@@ -62,8 +61,8 @@ fun FactoryCustomerEditorScreen(
             peyarMap.values.any { it.isNotBlank() } || tholaipaesi.isNotBlank() ||
                 oorMap.values.any { it.isNotBlank() } || mugavariMap.values.any { it.isNotBlank() }
         } else {
-            peyarMap != merchant.peyar || tholaipaesi != merchant.tholaipaesi ||
-                oorMap != merchant.oor || mugavariMap != merchant.mugavari
+            peyarMap != merchant.name || tholaipaesi != merchant.phone ||
+                oorMap != merchant.city || mugavariMap != merchant.address
         }
     }
 

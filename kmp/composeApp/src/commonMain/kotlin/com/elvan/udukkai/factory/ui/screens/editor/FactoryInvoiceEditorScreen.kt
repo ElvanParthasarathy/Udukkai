@@ -31,12 +31,11 @@ import androidx.compose.ui.unit.sp
 import com.elvan.udukkai.core.platform.AppBackHandler
 import com.elvan.udukkai.core.platform.getPreferencesHelper
 import com.elvan.udukkai.data.model.InvoiceModel
-import com.elvan.udukkai.data.model.PattiyalTharavuru
 import com.elvan.udukkai.factory.data.FactoryInvoiceRepository
 import com.elvan.udukkai.factory.data.FactoryProductRepository
 import com.elvan.udukkai.factory.data.FactoryCustomerRepository
-import com.elvan.udukkai.data.settings.MozhiJsonConverter
-import com.elvan.udukkai.data.settings.NiruvanaTharavugal
+import com.elvan.udukkai.data.settings.LanguageJsonConverter
+import com.elvan.udukkai.data.settings.BusinessProfile
 import com.elvan.udukkai.factory.data.FactoryProfileRepository
 import com.elvan.udukkai.localization.PrintLanguageManager
 import com.elvan.udukkai.localization.K
@@ -96,7 +95,7 @@ private fun FormLockWrapper(
  */
 @Composable
 fun FactoryInvoiceEditorScreen(
-    invoice: PattiyalTharavuru? = null,
+    invoice: InvoiceModel? = null,
     onBack: () -> Unit,
     onRequestAddNewCustomer: () -> Unit = {},
     onRequestAddNewProduct: () -> Unit = {}
@@ -113,26 +112,26 @@ fun FactoryInvoiceEditorScreen(
         FactoryInvoiceRepository.loadAll()
     }
 
-    val profiles: List<NiruvanaTharavugal> = FactoryProfileRepository.profiles
+    val profiles: List<BusinessProfile> = FactoryProfileRepository.profiles
     val activeProfile = FactoryProfileRepository.profile
-    val selectedProfile = remember(profiles, activeProfile, invoice?.niruvanamId) {
+    val selectedProfile = remember(profiles, activeProfile, invoice?.companyId) {
         if (isEditing) {
-            profiles.firstOrNull { it.id == invoice?.niruvanamId } ?: activeProfile
+            profiles.firstOrNull { it.id == invoice?.companyId } ?: activeProfile
         } else {
             activeProfile
         }
     }
-    val selectedNiruvanamId = if (isEditing) (invoice?.niruvanamId ?: selectedProfile.id) else (selectedProfile.id ?: profiles.firstOrNull()?.id)
+    val selectedNiruvanamId = if (isEditing) (invoice?.companyId ?: selectedProfile.id) else (selectedProfile.id ?: profiles.firstOrNull()?.id)
     val isProfileConfigured = profiles.isNotEmpty() && selectedNiruvanamId != null
 
-    fun computePrefix(p: NiruvanaTharavugal?): String {
+    fun computePrefix(p: BusinessProfile?): String {
         return if (p != null && p.kurumPeyar.isNotEmpty()) p.kurumPeyar else "CB"
     }
 
     val initialPrefix = computePrefix(selectedProfile)
     var invoiceNumber by remember {
         mutableStateOf(
-            invoice?.patrucheettuEn?.ifEmpty {
+            invoice?.invoiceNumber?.ifEmpty {
                 FactoryInvoiceRepository.getNextInvoiceNumber(selectedNiruvanamId, initialPrefix)
             } ?: FactoryInvoiceRepository.getNextInvoiceNumber(selectedNiruvanamId, initialPrefix)
         )
@@ -142,18 +141,18 @@ fun FactoryInvoiceEditorScreen(
     var showAddCustomerEditor by remember { mutableStateOf(false) }
 
     // Customer
-    var selectedVaangunarId by remember { mutableStateOf(invoice?.vaangunarId) }
-    var selectedVaangunarPeyarMap by remember { mutableStateOf(invoice?.vaangunarPeyar ?: emptyMap()) }
-    var selectedVaangunarMunvariMap by remember { mutableStateOf(invoice?.vaangunarMunvari ?: emptyMap()) }
+    var selectedVaangunarId by remember { mutableStateOf(invoice?.customerId) }
+    var selectedVaangunarPeyarMap by remember { mutableStateOf(invoice?.customerName ?: emptyMap()) }
+    var selectedVaangunarMunvariMap by remember { mutableStateOf(invoice?.customerAddress ?: emptyMap()) }
 
     // Date
-    var invoiceDate by remember { mutableStateOf(invoice?.pattiyalNaal ?: System.currentTimeMillis()) }
+    var invoiceDate by remember { mutableStateOf(invoice?.invoiceDate ?: System.currentTimeMillis()) }
 
     // Line Items
     var items by remember {
         mutableStateOf(
             if (invoice != null) {
-                FactoryCalculation.itemsFromJson(invoice.tharavugal).ifEmpty { listOf(FactoryItem()) }
+                FactoryCalculation.itemsFromJson(invoice.itemsJson).ifEmpty { listOf(FactoryItem()) }
             } else {
                 listOf(FactoryItem())
             }
@@ -168,17 +167,17 @@ fun FactoryInvoiceEditorScreen(
             items = items.map { item ->
                 if (item.mozhiMap.isEmpty()) {
                     val matched = FactoryProductRepository.items.firstOrNull { it.id.toString() == item.porulId }
-                        ?: FactoryProductRepository.items.firstOrNull { it.porulPeyar.values.any { v -> v.equals(item.porulPeyar, ignoreCase = true) || v.equals(item.porulPeyarEn, ignoreCase = true) } }
-                    if (matched != null && matched.porulPeyar.isNotEmpty()) {
+                        ?: FactoryProductRepository.items.firstOrNull { it.name.values.any { v -> v.equals(item.name, ignoreCase = true) || v.equals(item.porulPeyarEn, ignoreCase = true) } }
+                    if (matched != null && matched.name.isNotEmpty()) {
                         item.copy(
                             porulId = matched.id.toString(),
-                            porulPeyar = matched.porulPeyar["ta"] ?: item.porulPeyar,
-                            porulPeyarEn = matched.porulPeyar["en"] ?: item.porulPeyarEn,
-                            mozhiMap = matched.porulPeyar
+                            porulPeyar = matched.name["ta"] ?: item.name,
+                            porulPeyarEn = matched.name["en"] ?: item.porulPeyarEn,
+                            mozhiMap = matched.name
                         )
-                    } else if (item.porulPeyar.isNotEmpty() || item.porulPeyarEn.isNotEmpty()) {
+                    } else if (item.name.isNotEmpty() || item.porulPeyarEn.isNotEmpty()) {
                         item.copy(
-                            mozhiMap = mapOf("ta" to item.porulPeyar, "en" to item.porulPeyarEn).filterValues { it.isNotEmpty() }
+                            mozhiMap = mapOf("ta" to item.name, "en" to item.porulPeyarEn).filterValues { it.isNotEmpty() }
                         )
                     } else {
                         item
@@ -193,12 +192,12 @@ fun FactoryInvoiceEditorScreen(
     LaunchedEffect(FactoryCustomerRepository.merchants) {
         if (selectedVaangunarId == null && selectedVaangunarPeyarMap.isNotEmpty() && FactoryCustomerRepository.merchants.isNotEmpty()) {
             val matched = FactoryCustomerRepository.merchants.firstOrNull { m ->
-                m.peyar.values.any { v -> selectedVaangunarPeyarMap.values.contains(v) }
+                m.name.values.any { v -> selectedVaangunarPeyarMap.values.contains(v) }
             }
             if (matched != null) {
                 selectedVaangunarId = matched.id
-                selectedVaangunarPeyarMap = matched.peyar
-                selectedVaangunarMunvariMap = matched.mugavari
+                selectedVaangunarPeyarMap = matched.name
+                selectedVaangunarMunvariMap = matched.address
             }
         }
     }
@@ -208,9 +207,9 @@ fun FactoryInvoiceEditorScreen(
     val activeItems = remember(items, deletingItemIds) { items.filter { it.id !in deletingItemIds } }
 
     // Additional Charges
-    var setharamGrams by remember { mutableStateOf(invoice?.setharamGrams ?: 0.0) }
+    var setharamGrams by remember { mutableStateOf(invoice?.wastageGrams ?: 0.0) }
     var thabaalThogai by remember { mutableStateOf(invoice?.thabaalThogai ?: 0.0) }
-    var ahimsaPattuThogai by remember { mutableStateOf(invoice?.ahimsaPattuThogai ?: 0.0) }
+    var ahimsaPattuThogai by remember { mutableStateOf(invoice?.ahimsaSilkAmount ?: 0.0) }
     var piraVarivugal by remember {
         mutableStateOf(
             if (invoice != null) {
@@ -280,8 +279,8 @@ fun FactoryInvoiceEditorScreen(
                 selectedVaangunarId = cId
                 val c = FactoryCustomerRepository.getById(cId)
                 if (c != null) {
-                    selectedVaangunarPeyarMap = c.peyar
-                    selectedVaangunarMunvariMap = c.mugavari
+                    selectedVaangunarPeyarMap = c.name
+                    selectedVaangunarMunvariMap = c.address
                 }
             }
             if (!itemsJson.isNullOrEmpty()) {
@@ -345,13 +344,13 @@ fun FactoryInvoiceEditorScreen(
         } else if (invoiceNumber.isBlank()) {
             errorMessage = receiptNumberRequiredMsg
         } else {
-            val validItems = activeItems.filter { it.edai > 0 && it.vilai > 0 }
+            val validItems = activeItems.filter { it.edai > 0 && it.price > 0 }
             if (validItems.isEmpty()) {
                 errorMessage = porulRequiredMsg
             } else {
                 isSaving = true
                 val vanakkam = FactoryInvoiceRepository.getNextVanakkam(selectedNiruvanamId)
-                val newInvoice = PattiyalTharavuru(
+                val newInvoice = InvoiceModel(
                     id = invoice?.id ?: 0L,
                     companyId = selectedNiruvanamId,
                     invoiceNumber = invoiceNumber,
@@ -453,8 +452,8 @@ fun FactoryInvoiceEditorScreen(
                             selectedVaangunarId = selectedVaangunarId,
                             onCustomerSelected = { customer ->
                                 selectedVaangunarId = customer.id
-                                selectedVaangunarPeyarMap = customer.peyar
-                                selectedVaangunarMunvariMap = customer.mugavari
+                                selectedVaangunarPeyarMap = customer.name
+                                selectedVaangunarMunvariMap = customer.address
                                 hasUnsavedChanges = true
                             },
                             onCustomerCleared = {
@@ -815,7 +814,7 @@ fun FactoryInvoiceEditorScreen(
 @Deprecated("Use FactoryInvoiceEditorScreen", ReplaceWith("FactoryInvoiceEditorScreen(invoice, onBack, onRequestAddNewCustomer, onRequestAddNewProduct)"))
 @Composable
 fun CoolieInvoiceEditorScreen(
-    invoice: PattiyalTharavuru? = null,
+    invoice: InvoiceModel? = null,
     onBack: () -> Unit,
     onRequestAddNewCustomer: () -> Unit = {},
     onRequestAddNewProduct: () -> Unit = {}

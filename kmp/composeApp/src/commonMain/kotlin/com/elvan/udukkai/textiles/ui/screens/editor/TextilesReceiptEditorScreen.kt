@@ -21,13 +21,11 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.elvan.udukkai.core.platform.AppBackHandler
-import com.elvan.udukkai.data.model.PattiyalTharavuru
-import com.elvan.udukkai.data.model.PatruPattiyalInaippuTharavuru
-import com.elvan.udukkai.data.model.PatrugalTharavuru
+import com.elvan.udukkai.data.model.InvoiceModel
 import com.elvan.udukkai.data.model.ReceiptInvoiceLinkModel
 import com.elvan.udukkai.data.model.ReceiptModel
 import com.elvan.udukkai.data.model.SeluthiVagai
-import com.elvan.udukkai.data.settings.NiruvanaTharavugal
+import com.elvan.udukkai.data.settings.BusinessProfile
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.text.input.KeyboardType
 import com.elvan.udukkai.localization.K
@@ -95,7 +93,7 @@ private fun FormLockWrapper(
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun TextilesReceiptEditorScreen(
-    receipt: PatrugalTharavuru? = null,
+    receipt: ReceiptModel? = null,
     onBack: () -> Unit
 ) {
     val colors = rememberShellColors()
@@ -103,16 +101,16 @@ fun TextilesReceiptEditorScreen(
     val ff = LocalAppFontFamily.current
     val isEditing = receipt != null && receipt.id > 0L
 
-    val profiles: List<NiruvanaTharavugal> = com.elvan.udukkai.textiles.data.TextilesProfileRepository.profiles
+    val profiles: List<BusinessProfile> = com.elvan.udukkai.textiles.data.TextilesProfileRepository.profiles
     val activeProfile = com.elvan.udukkai.textiles.data.TextilesProfileRepository.profile
-    val selectedProfile = remember(profiles, activeProfile, receipt?.niruvanamId) {
+    val selectedProfile = remember(profiles, activeProfile, receipt?.companyId) {
         if (isEditing) {
-            profiles.firstOrNull { it.id == receipt?.niruvanamId } ?: activeProfile
+            profiles.firstOrNull { it.id == receipt?.companyId } ?: activeProfile
         } else {
             activeProfile
         }
     }
-    val selectedNiruvanamId = if (isEditing) (receipt?.niruvanamId ?: selectedProfile.id) else (selectedProfile.id ?: profiles.firstOrNull()?.id)
+    val selectedNiruvanamId = if (isEditing) (receipt?.companyId ?: selectedProfile.id) else (selectedProfile.id ?: profiles.firstOrNull()?.id)
     val isProfileConfigured = profiles.isNotEmpty() && selectedNiruvanamId != null
 
     // Refresh dependencies on launch
@@ -123,7 +121,7 @@ fun TextilesReceiptEditorScreen(
 
     // Linked Invoices
     val allInvoices = com.elvan.udukkai.textiles.data.TextilesInvoiceRepository.invoices
-    val selectedInvoices = remember { mutableStateListOf<PattiyalTharavuru>() }
+    val selectedInvoices = remember { mutableStateListOf<InvoiceModel>() }
     var isInvoicePickerOpen by remember { mutableStateOf(false) }
 
     // Initial load of linked invoices when editing
@@ -133,7 +131,7 @@ fun TextilesReceiptEditorScreen(
             isInitialized = true
             val links = com.elvan.udukkai.textiles.data.TextilesReceiptRepository.getLinksForPatru(receipt.id)
             val matching = links.mapNotNull { link ->
-                allInvoices.firstOrNull { it.id == link.pattiyalId }
+                allInvoices.firstOrNull { it.id == link.invoiceId }
             }
             selectedInvoices.clear()
             selectedInvoices.addAll(matching)
@@ -141,32 +139,32 @@ fun TextilesReceiptEditorScreen(
     }
 
     // Customer
-    var selectedVaangunarId by remember { mutableStateOf(receipt?.vaangunarId) }
+    var selectedVaangunarId by remember { mutableStateOf(receipt?.customerId) }
     var selectedVaangunarPeyarMap by remember {
-        mutableStateOf(receipt?.vaangunarPeyar ?: emptyMap())
+        mutableStateOf(receipt?.customerName ?: emptyMap())
     }
     var selectedVaangunarMunvariMap by remember {
-        mutableStateOf(receipt?.vaangunarMunvari ?: emptyMap())
+        mutableStateOf(receipt?.customerAddress ?: emptyMap())
     }
 
     // Receipt Data
-    var patruNaal by remember { mutableStateOf(receipt?.patruNaal ?: System.currentTimeMillis()) }
+    var patruNaal by remember { mutableStateOf(receipt?.receiptDate ?: System.currentTimeMillis()) }
     var vanakkam by remember { mutableStateOf(receipt?.vanakkam ?: 1) }
-    var patruEn by remember { mutableStateOf(receipt?.patruEn.orEmpty()) }
+    var patruEn by remember { mutableStateOf(receipt?.receiptNumber.orEmpty()) }
 
     // Payment Details
     var thogai by remember {
         mutableStateOf(
-            if (receipt != null && receipt.thogai > 0) {
-                if (receipt.thogai % 1.0 == 0.0) receipt.thogai.toLong().toString() else receipt.thogai.toString()
+            if (receipt != null && receipt.amount > 0) {
+                if (receipt.amount % 1.0 == 0.0) receipt.amount.toLong().toString() else receipt.amount.toString()
             } else ""
         )
     }
     var seluthiVagai by remember {
         mutableStateOf(SeluthiVagai.fromStored(receipt?.seluthumMurai))
     }
-    var suttruEn by remember { mutableStateOf(receipt?.parivarthanaiEn.orEmpty()) }
-    var ullkurippu by remember { mutableStateOf(receipt?.ullkurippu.orEmpty()) }
+    var suttruEn by remember { mutableStateOf(receipt?.transactionNumber.orEmpty()) }
+    var ullkurippu by remember { mutableStateOf(receipt?.notes.orEmpty()) }
 
     var hasUnsavedChanges by remember { mutableStateOf(false) }
     var showUnsavedDialog by remember { mutableStateOf(false) }
@@ -184,15 +182,15 @@ fun TextilesReceiptEditorScreen(
     val selectCompanyProfileMsg = K.selectCompanyProfile.tr()
 
     // Helper: auto-calculate receipt number
-    fun generatePatruEn(profile: NiruvanaTharavugal?) {
+    fun generatePatruEn(profile: BusinessProfile?) {
         if (isEditing) return
         val bizShort = profile?.kurumPeyar?.trim()?.ifEmpty { null }
-            ?: profile?.niruvanathinPeyar?.get("en")?.split(" ")?.mapNotNull { it.firstOrNull()?.uppercaseChar() }?.joinToString("")?.take(4)?.ifEmpty { null }
+            ?: profile?.businessName?.get("en")?.split(" ")?.mapNotNull { it.firstOrNull()?.uppercaseChar() }?.joinToString("")?.take(4)?.ifEmpty { null }
             ?: "BIZ"
 
         val nextSeq = com.elvan.udukkai.textiles.data.TextilesReceiptRepository.getNextVanakkam(profile?.id)
         vanakkam = nextSeq
-        patruEn = com.elvan.udukkai.textiles.data.TextilesReceiptRepository.formatPatruEn(bizShort, nextSeq)
+        patruEn = com.elvan.udukkai.textiles.data.TextilesReceiptRepository.formatReceiptNumber(bizShort, nextSeq)
     }
 
     // Auto-generate receipt number on profile selection if new
@@ -203,20 +201,20 @@ fun TextilesReceiptEditorScreen(
     }
 
     // Auto-fill customer and amount when invoices change
-    fun onInvoicesUpdated(newList: List<PattiyalTharavuru>) {
+    fun onInvoicesUpdated(newList: List<InvoiceModel>) {
         selectedInvoices.clear()
         selectedInvoices.addAll(newList)
         hasUnsavedChanges = true
 
         if (newList.isNotEmpty()) {
-            val total = newList.sumOf { it.mothaThogai }
+            val total = newList.sumOf { it.totalAmount }
             thogai = if (total % 1.0 == 0.0) total.toLong().toString() else ((total * 100).toLong() / 100.0).toString()
 
             val first = newList.first()
             if (selectedVaangunarId == null || selectedVaangunarPeyarMap.isEmpty()) {
-                selectedVaangunarId = first.vaangunarId
-                selectedVaangunarPeyarMap = first.vaangunarPeyar
-                selectedVaangunarMunvariMap = first.vaangunarMunvari
+                selectedVaangunarId = first.customerId
+                selectedVaangunarPeyarMap = first.customerName
+                selectedVaangunarMunvariMap = first.customerAddress
             }
         } else {
             thogai = ""
@@ -251,21 +249,21 @@ fun TextilesReceiptEditorScreen(
         }
 
         // Duplicate check
-        val isDuplicate = com.elvan.udukkai.textiles.data.TextilesReceiptRepository.isPatruEnDuplicate(patruEn, selectedNiruvanamId, receipt?.id)
+        val isDuplicate = com.elvan.udukkai.textiles.data.TextilesReceiptRepository.isReceiptNumberDuplicate(patruEn, selectedNiruvanamId, receipt?.id)
         if (isDuplicate) {
             ElvanSnackbar.show("$patruEn - $duplicateMsg")
             return
         }
 
         // FIFO allocation across selected invoices
-        val links = mutableListOf<PatruPattiyalInaippuTharavuru>()
+        val links = mutableListOf<ReceiptInvoiceLinkModel>()
         var remaining = amount
         for (inv in selectedInvoices) {
             if (remaining <= 0.0) break
-            val apply = remaining.coerceAtMost(inv.mothaThogai)
+            val apply = remaining.coerceAtMost(inv.totalAmount)
             if (apply > 0.0) {
                 links.add(
-                    PatruPattiyalInaippuTharavuru(
+                    ReceiptInvoiceLinkModel(
                         receiptId = receipt?.id ?: 0L,
                         invoiceId = inv.id,
                         appliedAmount = apply
@@ -286,7 +284,7 @@ fun TextilesReceiptEditorScreen(
         try {
             val now = System.currentTimeMillis()
             val defaultFinYear = DateUtils.formatEpochMillis(now).split("/").last()
-            val entryToSave = PatrugalTharavuru(
+            val entryToSave = ReceiptModel(
                 id = receipt?.id ?: 0L,
                 companyId = selectedNiruvanamId,
                 receiptNumber = patruEn.trim(),
@@ -298,7 +296,7 @@ fun TextilesReceiptEditorScreen(
                 receiptDate = patruNaal,
                 amount = amount,
                 paymentMode = seluthiVagai.storedValue,
-                bankName = receipt?.vangiPeyar,
+                bankName = receipt?.bankName,
                 transactionNumber = if (seluthiVagai.needsReference) suttruEn.trim() else null,
                 notes = ullkurippu.trim(),
                 createdAt = receipt?.createdAt ?: now,
@@ -448,7 +446,7 @@ fun TextilesReceiptEditorScreen(
                                                 horizontalArrangement = Arrangement.spacedBy(4.dp)
                                             ) {
                                                 Text(
-                                                    text = inv.patrucheettuEn,
+                                                    text = inv.invoiceNumber,
                                                     style = TextStyle(
                                                         fontFamily = ff,
                                                         fontSize = 13.sp,
@@ -701,7 +699,7 @@ fun TextilesReceiptEditorScreen(
     // Modal: Invoice Picker Bottom Sheet (Multi-select)
     if (isInvoicePickerOpen) {
         val selectableInvoices = if (selectedNiruvanamId != null) {
-            allInvoices.filter { it.niruvanamId == selectedNiruvanamId }
+            allInvoices.filter { it.companyId == selectedNiruvanamId }
         } else {
             allInvoices
         }

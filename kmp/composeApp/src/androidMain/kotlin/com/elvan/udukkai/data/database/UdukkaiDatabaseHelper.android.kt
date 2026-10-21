@@ -7,17 +7,12 @@ import android.util.Log
 import com.elvan.udukkai.core.platform.AppContext
 import com.elvan.udukkai.data.model.CustomerModel
 import com.elvan.udukkai.data.model.InvoiceModel
-import com.elvan.udukkai.data.model.PattiyalTharavuru
-import com.elvan.udukkai.data.model.PatruPattiyalInaippuTharavuru
-import com.elvan.udukkai.data.model.PatrugalTharavuru
 import com.elvan.udukkai.data.model.ReceiptInvoiceLinkModel
 import com.elvan.udukkai.data.model.ReceiptModel
 import com.elvan.udukkai.data.model.PorulJsonConverter
-import com.elvan.udukkai.data.model.PorulTharavuru
-import com.elvan.udukkai.data.model.VaangunarTharavuru
-import com.elvan.udukkai.data.settings.MozhiJsonConverter
+import com.elvan.udukkai.data.model.ProductModel
+import com.elvan.udukkai.data.settings.LanguageJsonConverter
 import com.elvan.udukkai.data.settings.BusinessProfile
-import com.elvan.udukkai.data.settings.NiruvanaTharavugal
 import java.io.File
 
 class AndroidUdukkaiDatabaseHelper(
@@ -305,27 +300,27 @@ class AndroidUdukkaiDatabaseHelper(
     }
 
     // ── Merchants / Customers ────────────────────────────────────────────────
-    override fun loadAllMerchants(): List<VaangunarTharavuru> = useDb { db ->
-        val list = mutableListOf<VaangunarTharavuru>()
+    override fun loadAllMerchants(): List<CustomerModel> = useDb { db ->
+        val list = mutableListOf<CustomerModel>()
         db.rawQuery("SELECT * FROM \"$vaangunarTable\" WHERE is_deleted = 0 ORDER BY id DESC", null).use { c ->
             while (c.moveToNext()) list.add(cursorToMerchant(c))
         }
         list
     } ?: emptyList()
 
-    override fun saveMerchant(merchant: VaangunarTharavuru): Long = useDb { db ->
+    override fun saveMerchant(merchant: CustomerModel): Long = useDb { db ->
         val cv = ContentValues().apply {
-            put("peyar", MozhiJsonConverter.stringify(merchant.peyar))
-            put("mugavari", MozhiJsonConverter.stringify(merchant.mugavari))
-            put("oor", MozhiJsonConverter.stringify(merchant.oor))
-            put("maavattam", MozhiJsonConverter.stringify(merchant.maavattam))
-            put("maanilam", MozhiJsonConverter.stringify(merchant.maanilam))
-            put("naadu", MozhiJsonConverter.stringify(merchant.naadu))
-            put("velinaad_mugavari", MozhiJsonConverter.stringify(merchant.velinaadMugavari))
-            put("anjal_kuriyeedu", merchant.anjalKuriyeedu)
+            put("peyar", LanguageJsonConverter.stringify(merchant.name))
+            put("mugavari", LanguageJsonConverter.stringify(merchant.address))
+            put("oor", LanguageJsonConverter.stringify(merchant.city))
+            put("maavattam", LanguageJsonConverter.stringify(merchant.district))
+            put("maanilam", LanguageJsonConverter.stringify(merchant.state))
+            put("naadu", LanguageJsonConverter.stringify(merchant.country))
+            put("velinaad_mugavari", LanguageJsonConverter.stringify(merchant.velinaadMugavari))
+            put("anjal_kuriyeedu", merchant.pinCode)
             put("gstin", merchant.gstin)
-            put("minnanjal", merchant.minnanjal)
-            put("tholaipaesi", merchant.tholaipaesi)
+            put("minnanjal", merchant.email)
+            put("tholaipaesi", merchant.phone)
             put("updated_at", System.currentTimeMillis() / 1000)
             put("is_deleted", 0)
         }
@@ -346,8 +341,8 @@ class AndroidUdukkaiDatabaseHelper(
         db.update("\"$vaangunarTable\"", cv, "id = ?", arrayOf(id.toString())) > 0
     } ?: false
 
-    override fun loadDeletedMerchants(): List<VaangunarTharavuru> = useDb { db ->
-        val list = mutableListOf<VaangunarTharavuru>()
+    override fun loadDeletedMerchants(): List<CustomerModel> = useDb { db ->
+        val list = mutableListOf<CustomerModel>()
         db.rawQuery("SELECT * FROM \"$vaangunarTable\" WHERE is_deleted = 1 ORDER BY deleted_at DESC", null).use { c ->
             while (c.moveToNext()) list.add(cursorToMerchant(c))
         }
@@ -372,23 +367,23 @@ class AndroidUdukkaiDatabaseHelper(
     } ?: 0
 
     // ── Products / Items ─────────────────────────────────────────────────────
-    override fun loadAllItems(): List<PorulTharavuru> = useDb { db ->
-        val list = mutableListOf<PorulTharavuru>()
+    override fun loadAllItems(): List<ProductModel> = useDb { db ->
+        val list = mutableListOf<ProductModel>()
         db.rawQuery("SELECT * FROM \"$porulTable\" WHERE is_deleted = 0 ORDER BY id DESC", null).use { c ->
             while (c.moveToNext()) list.add(cursorToItem(c))
         }
         list
     } ?: emptyList()
 
-    override fun saveItem(item: PorulTharavuru): Long = useDb { db ->
+    override fun saveItem(item: ProductModel): Long = useDb { db ->
         val cv = ContentValues().apply {
-            put("porul_peyar", MozhiJsonConverter.stringify(item.porulPeyar))
+            put("porul_peyar", LanguageJsonConverter.stringify(item.name))
             put("hsn_code", item.hsnCode)
-            put("vilai", item.vilai)
-            put("vari_veetham", item.variVeetham)
-            put("alavu_vagai", item.alavuVagai)
-            put("alagu", item.alagu)
-            put("niruvanam_ids", item.niruvanamIds.toString())
+            put("vilai", item.price)
+            put("vari_veetham", item.taxRate)
+            put("alavu_vagai", item.quantityType)
+            put("alagu", item.unit)
+            put("niruvanam_ids", item.companyIds.toString())
             put("company_prices", item.companyPrices.toString())
             put("updated_at", System.currentTimeMillis() / 1000)
             put("is_deleted", 0)
@@ -410,8 +405,8 @@ class AndroidUdukkaiDatabaseHelper(
         db.update("\"$porulTable\"", cv, "id = ?", arrayOf(id.toString())) > 0
     } ?: false
 
-    override fun loadDeletedItems(): List<PorulTharavuru> = useDb { db ->
-        val list = mutableListOf<PorulTharavuru>()
+    override fun loadDeletedItems(): List<ProductModel> = useDb { db ->
+        val list = mutableListOf<ProductModel>()
         db.rawQuery("SELECT * FROM \"$porulTable\" WHERE is_deleted = 1 ORDER BY deleted_at DESC", null).use { c ->
             while (c.moveToNext()) list.add(cursorToItem(c))
         }
@@ -436,44 +431,44 @@ class AndroidUdukkaiDatabaseHelper(
     } ?: 0
 
     // ── Invoices ─────────────────────────────────────────────────────────────
-    override fun loadAllInvoices(): List<PattiyalTharavuru> = useDb { db ->
-        val list = mutableListOf<PattiyalTharavuru>()
+    override fun loadAllInvoices(): List<InvoiceModel> = useDb { db ->
+        val list = mutableListOf<InvoiceModel>()
         db.rawQuery("SELECT * FROM \"$pattiyalTable\" WHERE is_deleted = 0 ORDER BY pattiyal_naal DESC, id DESC", null).use { c ->
             while (c.moveToNext()) list.add(cursorToInvoice(c))
         }
         list
     } ?: emptyList()
 
-    override fun saveInvoice(invoice: PattiyalTharavuru): Long = useDb { db ->
+    override fun saveInvoice(invoice: InvoiceModel): Long = useDb { db ->
         val cv = ContentValues().apply {
-            put("niruvanam_id", invoice.niruvanamId)
-            put("patrucheettu_en", invoice.patrucheettuEn)
+            put("niruvanam_id", invoice.companyId)
+            put("patrucheettu_en", invoice.invoiceNumber)
             put("fin_year", invoice.finYear)
             put("vanakkam", invoice.vanakkam)
-            put("pattiyal_vagai", invoice.pattiyalVagai)
-            put("vaangunar_id", invoice.vaangunarId)
-            put("vaangunar_peyar", MozhiJsonConverter.stringify(invoice.vaangunarPeyar))
-            put("vaangunar_munvari", MozhiJsonConverter.stringify(invoice.vaangunarMunvari))
-            put("pattiyal_naal", invoice.pattiyalNaal)
-            put("tharavugal", invoice.tharavugal.toString())
-            put("motha_thogai", invoice.mothaThogai)
-            put("thallupadi", invoice.thallupadi)
-            put("podhu_thallupadi_mathippu", invoice.podhuThallupadiMathippu)
-            put("podhu_thallupadi_vagai", invoice.podhuThallupadiVagai)
-            put("podhu_thallupadi_thogai", invoice.podhuThallupadiThogai)
-            put("vari_thogai", invoice.variThogai)
-            put("vari_tharavugal", invoice.variTharavugal.toString())
+            put("pattiyal_vagai", invoice.invoiceType)
+            put("vaangunar_id", invoice.customerId)
+            put("vaangunar_peyar", LanguageJsonConverter.stringify(invoice.customerName))
+            put("vaangunar_munvari", LanguageJsonConverter.stringify(invoice.customerAddress))
+            put("pattiyal_naal", invoice.invoiceDate)
+            put("tharavugal", invoice.itemsJson.toString())
+            put("motha_thogai", invoice.totalAmount)
+            put("thallupadi", invoice.discount)
+            put("podhu_thallupadi_mathippu", invoice.globalDiscountValue)
+            put("podhu_thallupadi_vagai", invoice.globalDiscountType)
+            put("podhu_thallupadi_thogai", invoice.globalDiscountAmount)
+            put("vari_thogai", invoice.taxAmount)
+            put("vari_tharavugal", invoice.taxDataJson.toString())
             if (isFactory) {
                 put("motha_edai", invoice.mothaEdai)
-                put("setharam_grams", invoice.setharamGrams)
+                put("setharam_grams", invoice.wastageGrams)
                 put("thabaal_thogai", invoice.thabaalThogai)
-                put("ahimsa_pattu_thogai", invoice.ahimsaPattuThogai)
+                put("ahimsa_pattu_thogai", invoice.ahimsaSilkAmount)
                 put("piravari_vugal", invoice.piravariVugal.toString())
-                put("vangi_tharavugal", invoice.vangiTharavugal.toString())
+                put("vangi_tharavugal", invoice.bankDetailsJson.toString())
             }
             put("sontha_viruppangal", invoice.sonthaViruppangal)
             put("nibandhanaigal", invoice.nibandhanaigal)
-            put("ullkurippu", invoice.ullkurippu)
+            put("ullkurippu", invoice.notes)
             put("updated_at", System.currentTimeMillis() / 1000)
             put("is_deleted", 0)
         }
@@ -494,8 +489,8 @@ class AndroidUdukkaiDatabaseHelper(
         db.update("\"$pattiyalTable\"", cv, "id = ?", arrayOf(id.toString())) > 0
     } ?: false
 
-    override fun loadDeletedInvoices(): List<PattiyalTharavuru> = useDb { db ->
-        val list = mutableListOf<PattiyalTharavuru>()
+    override fun loadDeletedInvoices(): List<InvoiceModel> = useDb { db ->
+        val list = mutableListOf<InvoiceModel>()
         db.rawQuery("SELECT * FROM \"$pattiyalTable\" WHERE is_deleted = 1 ORDER BY deleted_at DESC", null).use { c ->
             while (c.moveToNext()) list.add(cursorToInvoice(c))
         }
@@ -520,29 +515,29 @@ class AndroidUdukkaiDatabaseHelper(
     } ?: 0
 
     // ── Receipts ─────────────────────────────────────────────────────────────
-    override fun loadAllReceipts(): List<PatrugalTharavuru> = useDb { db ->
-        val list = mutableListOf<PatrugalTharavuru>()
+    override fun loadAllReceipts(): List<ReceiptModel> = useDb { db ->
+        val list = mutableListOf<ReceiptModel>()
         db.rawQuery("SELECT * FROM \"$patrugalTable\" WHERE is_deleted = 0 ORDER BY patru_naal DESC, id DESC", null).use { c ->
             while (c.moveToNext()) list.add(cursorToReceipt(c))
         }
         list
     } ?: emptyList()
 
-    override fun saveReceipt(receipt: PatrugalTharavuru): Long = useDb { db ->
+    override fun saveReceipt(receipt: ReceiptModel): Long = useDb { db ->
         val cv = ContentValues().apply {
-            put("niruvanam_id", receipt.niruvanamId)
-            put("patru_en", receipt.patruEn)
+            put("niruvanam_id", receipt.companyId)
+            put("patru_en", receipt.receiptNumber)
             put("fin_year", receipt.finYear)
             put("vanakkam", receipt.vanakkam)
-            put("vaangunar_id", receipt.vaangunarId)
-            put("vaangunar_peyar", MozhiJsonConverter.stringify(receipt.vaangunarPeyar))
-            put("vaangunar_munvari", MozhiJsonConverter.stringify(receipt.vaangunarMunvari))
-            put("patru_naal", receipt.patruNaal)
-            put("thogai", receipt.thogai)
+            put("vaangunar_id", receipt.customerId)
+            put("vaangunar_peyar", LanguageJsonConverter.stringify(receipt.customerName))
+            put("vaangunar_munvari", LanguageJsonConverter.stringify(receipt.customerAddress))
+            put("patru_naal", receipt.receiptDate)
+            put("thogai", receipt.amount)
             put("seluthum_murai", receipt.seluthumMurai)
-            put("vangi_peyar", receipt.vangiPeyar)
-            put("parivarthanai_en", receipt.parivarthanaiEn)
-            put("ullkurippu", receipt.ullkurippu)
+            put("vangi_peyar", receipt.bankName)
+            put("parivarthanai_en", receipt.transactionNumber)
+            put("ullkurippu", receipt.notes)
             put("updated_at", System.currentTimeMillis() / 1000)
             put("is_deleted", 0)
         }
@@ -563,8 +558,8 @@ class AndroidUdukkaiDatabaseHelper(
         db.update("\"$patrugalTable\"", cv, "id = ?", arrayOf(id.toString())) > 0
     } ?: false
 
-    override fun loadDeletedReceipts(): List<PatrugalTharavuru> = useDb { db ->
-        val list = mutableListOf<PatrugalTharavuru>()
+    override fun loadDeletedReceipts(): List<ReceiptModel> = useDb { db ->
+        val list = mutableListOf<ReceiptModel>()
         db.rawQuery("SELECT * FROM \"$patrugalTable\" WHERE is_deleted = 1 ORDER BY deleted_at DESC", null).use { c ->
             while (c.moveToNext()) list.add(cursorToReceipt(c))
         }
@@ -589,8 +584,8 @@ class AndroidUdukkaiDatabaseHelper(
     } ?: 0
 
     // ── Junction Links ───────────────────────────────────────────────────────
-    override fun getLinksForPatru(patruId: Long): List<PatruPattiyalInaippuTharavuru> = useDb { db ->
-        val list = mutableListOf<PatruPattiyalInaippuTharavuru>()
+    override fun getLinksForPatru(patruId: Long): List<ReceiptInvoiceLinkModel> = useDb { db ->
+        val list = mutableListOf<ReceiptInvoiceLinkModel>()
         db.rawQuery("SELECT * FROM \"$junctionTable\" WHERE patru_id = ?", arrayOf(patruId.toString())).use { c ->
             val idIdx = c.getColumnIndexOrThrow("id")
             val pIdIdx = c.getColumnIndexOrThrow("patru_id")
@@ -598,7 +593,7 @@ class AndroidUdukkaiDatabaseHelper(
             val amountIdx = c.getColumnIndexOrThrow("inaippu_thogai")
             val dateIdx = c.getColumnIndexOrThrow("created_at")
             while (c.moveToNext()) {
-                list.add(PatruPattiyalInaippuTharavuru(
+                list.add(ReceiptInvoiceLinkModel(
                     id = c.getLong(idIdx),
                     receiptId = c.getLong(pIdIdx),
                     invoiceId = c.getLong(invIdIdx),
@@ -609,7 +604,7 @@ class AndroidUdukkaiDatabaseHelper(
         list
     } ?: emptyList()
 
-    override fun saveReceiptWithLinks(receipt: PatrugalTharavuru, links: List<PatruPattiyalInaippuTharavuru>): Long = useDb { db ->
+    override fun saveReceiptWithLinks(receipt: ReceiptModel, links: List<ReceiptInvoiceLinkModel>): Long = useDb { db ->
         db.beginTransaction()
         try {
             val rId = saveReceipt(receipt)
@@ -618,8 +613,8 @@ class AndroidUdukkaiDatabaseHelper(
                 for (link in links) {
                     val cv = ContentValues().apply {
                         put("patru_id", rId)
-                        put("pattiyal_id", link.pattiyalId)
-                        put("inaippu_thogai", link.poruthiyaThogai)
+                        put("pattiyal_id", link.invoiceId)
+                        put("inaippu_thogai", link.appliedAmount)
                         put("created_at", System.currentTimeMillis() / 1000)
                     }
                     db.insert("\"$junctionTable\"", null, cv)
@@ -654,8 +649,8 @@ class AndroidUdukkaiDatabaseHelper(
     } ?: emptyMap()
 
     // ── Business Profiles ────────────────────────────────────────────────────
-    override fun loadProfile(profileId: Long?): NiruvanaTharavugal? = useDb { db ->
-        var p: NiruvanaTharavugal? = null
+    override fun loadProfile(profileId: Long?): BusinessProfile? = useDb { db ->
+        var p: BusinessProfile? = null
         val sql = if (profileId != null) {
             "SELECT * FROM \"$profileTable\" WHERE id = ? AND is_deleted = 0 LIMIT 1"
         } else {
@@ -668,46 +663,46 @@ class AndroidUdukkaiDatabaseHelper(
         p
     }
 
-    override fun loadAllProfiles(): List<NiruvanaTharavugal> = useDb { db ->
-        val list = mutableListOf<NiruvanaTharavugal>()
+    override fun loadAllProfiles(): List<BusinessProfile> = useDb { db ->
+        val list = mutableListOf<BusinessProfile>()
         db.rawQuery("SELECT * FROM \"$profileTable\" WHERE is_deleted = 0 ORDER BY id ASC", null).use { c ->
             while (c.moveToNext()) list.add(cursorToProfile(c))
         }
         list
     } ?: emptyList()
 
-    override fun saveProfile(profile: NiruvanaTharavugal): Boolean = useDb { db ->
+    override fun saveProfile(profile: BusinessProfile): Boolean = useDb { db ->
         val cv = ContentValues().apply {
-            put("mudhan_mozhi", profile.mudhanMozhi)
+            put("mudhan_mozhi", profile.primaryLanguage)
             put("thunai_mozhi", profile.thunaiMozhi)
-            put("iru_mozhi", if (profile.iruMozhi) 1 else 0)
+            put("iru_mozhi", if (profile.isBilingual) 1 else 0)
             put("gst_pirippugal", if (profile.gstPirippugal) 1 else 0)
-            put("niruvanathin_peyar", MozhiJsonConverter.stringify(profile.niruvanathinPeyar))
+            put("niruvanathin_peyar", LanguageJsonConverter.stringify(profile.businessName))
             put("kurum_peyar", profile.kurumPeyar)
-            put("tholaipaesi1", profile.tholaipaesi1)
-            put("tholaipaesi2", profile.tholaipaesi2)
-            put("minnanjal", profile.minnanjal)
+            put("tholaipaesi1", profile.phone1)
+            put("tholaipaesi2", profile.phone2)
+            put("minnanjal", profile.email)
             put("gstin", profile.gstin)
-            put("mugavari", MozhiJsonConverter.stringify(profile.mugavari))
-            put("oor", MozhiJsonConverter.stringify(profile.oor))
-            put("maavattam", MozhiJsonConverter.stringify(profile.maavattam))
-            put("maanilam", MozhiJsonConverter.stringify(profile.maanilam))
-            put("naadu", MozhiJsonConverter.stringify(profile.naadu))
-            put("anjal_kuriyeedu", profile.anjalKuriyeedu)
-            put("vangi_peyar", MozhiJsonConverter.stringify(profile.vangiPeyar))
-            put("kilai", MozhiJsonConverter.stringify(profile.kilai))
+            put("mugavari", LanguageJsonConverter.stringify(profile.address))
+            put("oor", LanguageJsonConverter.stringify(profile.city))
+            put("maavattam", LanguageJsonConverter.stringify(profile.district))
+            put("maanilam", LanguageJsonConverter.stringify(profile.state))
+            put("naadu", LanguageJsonConverter.stringify(profile.country))
+            put("anjal_kuriyeedu", profile.pinCode)
+            put("vangi_peyar", LanguageJsonConverter.stringify(profile.bankName))
+            put("kilai", LanguageJsonConverter.stringify(profile.branch))
             put("vangi_kanakku", profile.vangiKanakku)
             put("ifsc", profile.ifsc)
-            put("oavuru", profile.oavuru)
-            put("agala_oavuru", profile.agalaOavuru)
-            put("thalaippu_vadivu", profile.thalaippuVadivu)
-            put("kaiyoppam", profile.kaiyoppam)
+            put("oavuru", profile.logo)
+            put("agala_oavuru", profile.wideLogo)
+            put("thalaippu_vadivu", profile.headerLayout)
+            put("kaiyoppam", profile.signature)
             put("oppam_peyar", profile.oppamPeyar)
             put("oppam_mudhal_peyar", profile.oppamMudhalPeyar)
             put("oppam_irudhi_peyar", profile.oppamIrudhiPeyar)
-            put("adaimozhi", MozhiJsonConverter.stringify(profile.adaimozhi))
+            put("adaimozhi", LanguageJsonConverter.stringify(profile.adaimozhi))
             put("upi_id", profile.upiId)
-            put("thoatra_niram", profile.thoatraNiram)
+            put("thoatra_niram", profile.themeColor)
             put("updated_at", System.currentTimeMillis() / 1000)
             put("is_deleted", 0)
         }
@@ -750,15 +745,15 @@ class AndroidUdukkaiDatabaseHelper(
     } ?: false
 
     // ── Helper Cursor Parsers ────────────────────────────────────────────────
-    private fun cursorToMerchant(c: Cursor): VaangunarTharavuru = VaangunarTharavuru(
+    private fun cursorToMerchant(c: Cursor): CustomerModel = CustomerModel(
         id = c.getLong(c.getColumnIndexOrThrow("id")),
-        name = MozhiJsonConverter.parse(c.getString(c.getColumnIndexOrThrow("peyar"))),
-        address = MozhiJsonConverter.parse(c.getString(c.getColumnIndexOrThrow("mugavari"))),
-        city = MozhiJsonConverter.parse(c.getString(c.getColumnIndexOrThrow("oor"))),
-        district = MozhiJsonConverter.parse(c.getString(c.getColumnIndexOrThrow("maavattam"))),
-        state = MozhiJsonConverter.parse(c.getString(c.getColumnIndexOrThrow("maanilam"))),
-        country = MozhiJsonConverter.parse(c.getString(c.getColumnIndexOrThrow("naadu"))),
-        internationalAddress = MozhiJsonConverter.parse(c.getString(c.getColumnIndexOrThrow("velinaad_mugavari"))),
+        name = LanguageJsonConverter.parse(c.getString(c.getColumnIndexOrThrow("peyar"))),
+        address = LanguageJsonConverter.parse(c.getString(c.getColumnIndexOrThrow("mugavari"))),
+        city = LanguageJsonConverter.parse(c.getString(c.getColumnIndexOrThrow("oor"))),
+        district = LanguageJsonConverter.parse(c.getString(c.getColumnIndexOrThrow("maavattam"))),
+        state = LanguageJsonConverter.parse(c.getString(c.getColumnIndexOrThrow("maanilam"))),
+        country = LanguageJsonConverter.parse(c.getString(c.getColumnIndexOrThrow("naadu"))),
+        internationalAddress = LanguageJsonConverter.parse(c.getString(c.getColumnIndexOrThrow("velinaad_mugavari"))),
         pinCode = c.getString(c.getColumnIndexOrThrow("anjal_kuriyeedu")),
         gstin = c.getString(c.getColumnIndexOrThrow("gstin")),
         email = c.getString(c.getColumnIndexOrThrow("minnanjal")),
@@ -769,9 +764,9 @@ class AndroidUdukkaiDatabaseHelper(
         deletedAt = if (c.isNull(c.getColumnIndexOrThrow("deleted_at"))) null else c.getLong(c.getColumnIndexOrThrow("deleted_at"))
     )
 
-    private fun cursorToItem(c: Cursor): PorulTharavuru = PorulTharavuru(
+    private fun cursorToItem(c: Cursor): ProductModel = ProductModel(
         id = c.getLong(c.getColumnIndexOrThrow("id")),
-        name = MozhiJsonConverter.parse(c.getString(c.getColumnIndexOrThrow("porul_peyar"))),
+        name = LanguageJsonConverter.parse(c.getString(c.getColumnIndexOrThrow("porul_peyar"))),
         hsnCode = c.getString(c.getColumnIndexOrThrow("hsn_code")),
         price = c.getDouble(c.getColumnIndexOrThrow("vilai")),
         taxRate = c.getDouble(c.getColumnIndexOrThrow("vari_veetham")),
@@ -785,7 +780,7 @@ class AndroidUdukkaiDatabaseHelper(
         deletedAt = if (c.isNull(c.getColumnIndexOrThrow("deleted_at"))) null else c.getLong(c.getColumnIndexOrThrow("deleted_at"))
     )
 
-    private fun cursorToInvoice(c: Cursor): PattiyalTharavuru = PattiyalTharavuru(
+    private fun cursorToInvoice(c: Cursor): InvoiceModel = InvoiceModel(
         id = c.getLong(c.getColumnIndexOrThrow("id")),
         companyId = if (c.isNull(c.getColumnIndexOrThrow("niruvanam_id"))) null else c.getLong(c.getColumnIndexOrThrow("niruvanam_id")),
         invoiceNumber = c.getString(c.getColumnIndexOrThrow("patrucheettu_en")),
@@ -793,8 +788,8 @@ class AndroidUdukkaiDatabaseHelper(
         vanakkam = c.getInt(c.getColumnIndexOrThrow("vanakkam")),
         invoiceType = c.getString(c.getColumnIndexOrThrow("pattiyal_vagai")),
         customerId = if (c.isNull(c.getColumnIndexOrThrow("vaangunar_id"))) null else c.getLong(c.getColumnIndexOrThrow("vaangunar_id")),
-        customerName = MozhiJsonConverter.parse(c.getString(c.getColumnIndexOrThrow("vaangunar_peyar"))),
-        customerAddress = MozhiJsonConverter.parse(c.getString(c.getColumnIndexOrThrow("vaangunar_munvari"))),
+        customerName = LanguageJsonConverter.parse(c.getString(c.getColumnIndexOrThrow("vaangunar_peyar"))),
+        customerAddress = LanguageJsonConverter.parse(c.getString(c.getColumnIndexOrThrow("vaangunar_munvari"))),
         invoiceDate = c.getLong(c.getColumnIndexOrThrow("pattiyal_naal")),
         itemsJson = c.getString(c.getColumnIndexOrThrow("tharavugal")) ?: "[]",
         totalAmount = c.getDouble(c.getColumnIndexOrThrow("motha_thogai")),
@@ -819,15 +814,15 @@ class AndroidUdukkaiDatabaseHelper(
         deletedAt = if (c.isNull(c.getColumnIndexOrThrow("deleted_at"))) null else c.getLong(c.getColumnIndexOrThrow("deleted_at"))
     )
 
-    private fun cursorToReceipt(c: Cursor): PatrugalTharavuru = PatrugalTharavuru(
+    private fun cursorToReceipt(c: Cursor): ReceiptModel = ReceiptModel(
         id = c.getLong(c.getColumnIndexOrThrow("id")),
         companyId = if (c.isNull(c.getColumnIndexOrThrow("niruvanam_id"))) null else c.getLong(c.getColumnIndexOrThrow("niruvanam_id")),
         receiptNumber = c.getString(c.getColumnIndexOrThrow("patru_en")),
         finYear = c.getString(c.getColumnIndexOrThrow("fin_year")),
         vanakkam = c.getInt(c.getColumnIndexOrThrow("vanakkam")),
         customerId = if (c.isNull(c.getColumnIndexOrThrow("vaangunar_id"))) null else c.getLong(c.getColumnIndexOrThrow("vaangunar_id")),
-        customerName = MozhiJsonConverter.parse(c.getString(c.getColumnIndexOrThrow("vaangunar_peyar"))),
-        customerAddress = MozhiJsonConverter.parse(c.getString(c.getColumnIndexOrThrow("vaangunar_munvari"))),
+        customerName = LanguageJsonConverter.parse(c.getString(c.getColumnIndexOrThrow("vaangunar_peyar"))),
+        customerAddress = LanguageJsonConverter.parse(c.getString(c.getColumnIndexOrThrow("vaangunar_munvari"))),
         receiptDate = c.getLong(c.getColumnIndexOrThrow("patru_naal")),
         amount = c.getDouble(c.getColumnIndexOrThrow("thogai")),
         paymentMode = c.getString(c.getColumnIndexOrThrow("seluthum_murai")),
@@ -840,26 +835,26 @@ class AndroidUdukkaiDatabaseHelper(
         deletedAt = if (c.isNull(c.getColumnIndexOrThrow("deleted_at"))) null else c.getLong(c.getColumnIndexOrThrow("deleted_at"))
     )
 
-    private fun cursorToProfile(c: Cursor): NiruvanaTharavugal = NiruvanaTharavugal(
+    private fun cursorToProfile(c: Cursor): BusinessProfile = BusinessProfile(
         id = c.getLong(c.getColumnIndexOrThrow("id")),
         primaryLanguage = c.getString(c.getColumnIndexOrThrow("mudhan_mozhi")),
         secondaryLanguage = c.getString(c.getColumnIndexOrThrow("thunai_mozhi")),
         isBilingual = c.getInt(c.getColumnIndexOrThrow("iru_mozhi")) == 1,
         splitGst = c.getInt(c.getColumnIndexOrThrow("gst_pirippugal")) == 1,
-        businessName = MozhiJsonConverter.parse(c.getString(c.getColumnIndexOrThrow("niruvanathin_peyar"))),
+        businessName = LanguageJsonConverter.parse(c.getString(c.getColumnIndexOrThrow("niruvanathin_peyar"))),
         shortName = c.getString(c.getColumnIndexOrThrow("kurum_peyar")),
         phone1 = c.getString(c.getColumnIndexOrThrow("tholaipaesi1")),
         phone2 = c.getString(c.getColumnIndexOrThrow("tholaipaesi2")),
         email = c.getString(c.getColumnIndexOrThrow("minnanjal")),
         gstin = c.getString(c.getColumnIndexOrThrow("gstin")),
-        address = MozhiJsonConverter.parse(c.getString(c.getColumnIndexOrThrow("mugavari"))),
-        city = MozhiJsonConverter.parse(c.getString(c.getColumnIndexOrThrow("oor"))),
-        district = MozhiJsonConverter.parse(c.getString(c.getColumnIndexOrThrow("maavattam"))),
-        state = MozhiJsonConverter.parse(c.getString(c.getColumnIndexOrThrow("maanilam"))),
-        country = MozhiJsonConverter.parse(c.getString(c.getColumnIndexOrThrow("naadu"))),
+        address = LanguageJsonConverter.parse(c.getString(c.getColumnIndexOrThrow("mugavari"))),
+        city = LanguageJsonConverter.parse(c.getString(c.getColumnIndexOrThrow("oor"))),
+        district = LanguageJsonConverter.parse(c.getString(c.getColumnIndexOrThrow("maavattam"))),
+        state = LanguageJsonConverter.parse(c.getString(c.getColumnIndexOrThrow("maanilam"))),
+        country = LanguageJsonConverter.parse(c.getString(c.getColumnIndexOrThrow("naadu"))),
         pinCode = c.getString(c.getColumnIndexOrThrow("anjal_kuriyeedu")),
-        bankName = MozhiJsonConverter.parse(c.getString(c.getColumnIndexOrThrow("vangi_peyar"))),
-        branch = MozhiJsonConverter.parse(c.getString(c.getColumnIndexOrThrow("kilai"))),
+        bankName = LanguageJsonConverter.parse(c.getString(c.getColumnIndexOrThrow("vangi_peyar"))),
+        branch = LanguageJsonConverter.parse(c.getString(c.getColumnIndexOrThrow("kilai"))),
         accountNumber = c.getString(c.getColumnIndexOrThrow("vangi_kanakku")),
         ifsc = c.getString(c.getColumnIndexOrThrow("ifsc")),
         logo = c.getString(c.getColumnIndexOrThrow("oavuru")),
@@ -869,7 +864,7 @@ class AndroidUdukkaiDatabaseHelper(
         signatoryName = c.getString(c.getColumnIndexOrThrow("oppam_peyar")),
         signatoryFirstName = c.getString(c.getColumnIndexOrThrow("oppam_mudhal_peyar")),
         signatoryLastName = c.getString(c.getColumnIndexOrThrow("oppam_irudhi_peyar")),
-        tagline = MozhiJsonConverter.parse(c.getString(c.getColumnIndexOrThrow("adaimozhi"))),
+        tagline = LanguageJsonConverter.parse(c.getString(c.getColumnIndexOrThrow("adaimozhi"))),
         upiId = c.getString(c.getColumnIndexOrThrow("upi_id")),
         themeColor = c.getString(c.getColumnIndexOrThrow("thoatra_niram"))
     )

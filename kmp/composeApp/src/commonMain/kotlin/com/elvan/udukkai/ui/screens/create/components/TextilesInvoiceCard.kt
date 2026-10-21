@@ -18,7 +18,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.elvan.udukkai.core.utils.CurrencyUtils
 import com.elvan.udukkai.core.utils.DateUtils
-import com.elvan.udukkai.data.model.PattiyalTharavuru
+import com.elvan.udukkai.data.model.InvoiceModel
 import com.elvan.udukkai.theme.LocalAppFontFamily
 import com.elvan.udukkai.theme.ShellColors
 import com.elvan.udukkai.theme.preventBrokenLigatures
@@ -34,7 +34,7 @@ import com.elvan.udukkai.theme.LocalShellColors
 @Composable
 fun TextilesInvoiceCard(
     index: Int,
-    pattiyal: PattiyalTharavuru,
+    pattiyal: InvoiceModel,
     colors: ShellColors,
     modifier: Modifier = Modifier,
     isSelectionMode: Boolean = false,
@@ -46,29 +46,29 @@ fun TextilesInvoiceCard(
     val isDark = colors.isDark
 
     val profiles = com.elvan.udukkai.textiles.data.TextilesProfileRepository.profiles
-    val profile = (if (pattiyal.niruvanamId != null) profiles.find { it.id == pattiyal.niruvanamId } else null)
+    val profile = (if (pattiyal.companyId != null) profiles.find { it.id == pattiyal.companyId } else null)
         ?: com.elvan.udukkai.textiles.data.TextilesProfileRepository.profile
-    val isBilingual = profile.iruMozhi
-    val primaryLang = profile.mudhanMozhi.ifEmpty { "ta" }
+    val isBilingual = profile.isBilingual
+    val primaryLang = profile.primaryLanguage.ifEmpty { "ta" }
     val secondaryLang = profile.thunaiMozhi.ifEmpty { "en" }
 
-    val primary = pattiyal.vaangunarPeyar[primaryLang]
-        ?: pattiyal.vaangunarPeyar["ta"]
-        ?: pattiyal.vaangunarPeyar["en"]
-        ?: pattiyal.vaangunarPeyar.values.firstOrNull()
+    val primary = pattiyal.customerName[primaryLang]
+        ?: pattiyal.customerName["ta"]
+        ?: pattiyal.customerName["en"]
+        ?: pattiyal.customerName.values.firstOrNull()
         ?: "-"
 
-    val secondary = if (isBilingual) pattiyal.vaangunarPeyar[secondaryLang].orEmpty() else ""
+    val secondary = if (isBilingual) pattiyal.customerName[secondaryLang].orEmpty() else ""
     val showSecondary = isBilingual && secondary.isNotBlank() && secondary != primary
 
-    val primaryOor = pattiyal.vaangunarMunvari[primaryLang]
-        ?: pattiyal.vaangunarMunvari["ta"]
-        ?: pattiyal.vaangunarMunvari["en"]
-        ?: pattiyal.vaangunarMunvari.values.firstOrNull()
+    val primaryOor = pattiyal.customerAddress[primaryLang]
+        ?: pattiyal.customerAddress["ta"]
+        ?: pattiyal.customerAddress["en"]
+        ?: pattiyal.customerAddress.values.firstOrNull()
         ?: ""
 
-    val amountStr = CurrencyUtils.formatInr(pattiyal.mothaThogai)
-    val dateStr = DateUtils.formatEpochMillis(pattiyal.pattiyalNaal)
+    val amountStr = CurrencyUtils.formatInr(pattiyal.totalAmount)
+    val dateStr = DateUtils.formatEpochMillis(pattiyal.invoiceDate)
 
     ElvanCommonCard(
         onClick = onClick,
@@ -144,7 +144,7 @@ fun TextilesInvoiceCard(
 
                 // Row 2: Invoice #  •  Date
                 Text(
-                    text = "${pattiyal.patrucheettuEn}  •  $dateStr",
+                    text = "${pattiyal.invoiceNumber}  •  $dateStr",
                     style = TextStyle(
                         fontFamily = ff,
                         fontSize = 13.5.sp,
@@ -195,7 +195,7 @@ fun TextilesInvoiceCard(
 @Composable
 fun SilkInvoiceCard(
     index: Int,
-    pattiyal: PattiyalTharavuru,
+    pattiyal: InvoiceModel,
     colors: ShellColors,
     modifier: Modifier = Modifier,
     isSelectionMode: Boolean = false,

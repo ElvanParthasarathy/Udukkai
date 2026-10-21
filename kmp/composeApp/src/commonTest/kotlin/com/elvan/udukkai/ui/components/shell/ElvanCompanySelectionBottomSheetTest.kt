@@ -1,6 +1,6 @@
 package com.elvan.udukkai.ui.components.shell
 
-import com.elvan.udukkai.data.settings.NiruvanaTharavugal
+import com.elvan.udukkai.data.settings.BusinessProfile
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
@@ -17,8 +17,8 @@ class ElvanCompanySelectionBottomSheetTest {
         kurumPeyar: String = "முருகன் நெசவு",
         addressTa: String = "45, நெசவாளர் தெரு, சின்னாளபட்டி",
         addressEn: String = "45, Weaver Street, Chinnalapatti"
-    ): NiruvanaTharavugal {
-        return NiruvanaTharavugal(
+    ): BusinessProfile {
+        return BusinessProfile(
             id = id,
             primaryLanguage = primaryLang,
             secondaryLanguage = secondaryLang,
@@ -115,12 +115,12 @@ class ElvanCompanySelectionBottomSheetTest {
                 val label = resolveCompanyItemLabel(p)
                 val subtitle = resolveCompanySubtitle(p)
 
-                if (p.iruMozhi) {
-                    assertEquals(p.niruvanathinPeyar["en"], subtitle)
+                if (p.isBilingual) {
+                    assertEquals(p.businessName["en"], subtitle)
                 } else {
                     assertNull(subtitle)
                 }
-                assertEquals(p.niruvanathinPeyar["ta"], label)
+                assertEquals(p.businessName["ta"], label)
             }
         }
     }

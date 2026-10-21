@@ -19,7 +19,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.elvan.udukkai.core.utils.DateUtils
-import com.elvan.udukkai.data.model.PattiyalTharavuru
+import com.elvan.udukkai.data.model.InvoiceModel
 import com.elvan.udukkai.localization.K
 import com.elvan.udukkai.localization.tr
 import com.elvan.udukkai.theme.LocalAppFontFamily
@@ -44,13 +44,13 @@ import com.elvan.udukkai.ui.navigation.MaterialSymbols
  */
 @Composable
 fun ReceiptInvoiceSelectionSheet(
-    invoices: List<PattiyalTharavuru>,
+    invoices: List<InvoiceModel>,
     initialSelectedIds: Set<Long>,
-    onConfirmed: (List<PattiyalTharavuru>) -> Unit,
+    onConfirmed: (List<InvoiceModel>) -> Unit,
     onDismissRequest: () -> Unit,
     modifier: Modifier = Modifier,
     colors: ShellColors = rememberShellColors(),
-    merchants: List<com.elvan.udukkai.data.model.VaangunarTharavuru> = emptyList()
+    merchants: List<com.elvan.udukkai.data.model.CustomerModel> = emptyList()
 ) {
     val allMerchants = merchants
     val ff = LocalAppFontFamily.current
@@ -66,15 +66,15 @@ fun ReceiptInvoiceSelectionSheet(
     val availableInvoices = remember(firstSelected, invoices) {
         if (firstSelected != null) {
             invoices.filter {
-                it.niruvanamId == firstSelected.niruvanamId &&
-                it.vaangunarId == firstSelected.vaangunarId
+                it.companyId == firstSelected.companyId &&
+                it.customerId == firstSelected.customerId
             }
         } else {
             invoices
         }
     }
 
-    ElvanSelectionBottomSheet<PattiyalTharavuru>(
+    ElvanSelectionBottomSheet<InvoiceModel>(
         title = K.forWhichInvoice.tr(),
         items = availableInvoices,
         selectedValues = initialSelected,
@@ -88,28 +88,28 @@ fun ReceiptInvoiceSelectionSheet(
         },
         searchFilter = { inv, q ->
             val query = q.trim().lowercase()
-            val enMatch = inv.patrucheettuEn.lowercase().contains(query)
-            val peyarTa = inv.vaangunarPeyar["ta"]?.lowercase().orEmpty()
-            val peyarEn = inv.vaangunarPeyar["en"]?.lowercase().orEmpty()
+            val enMatch = inv.invoiceNumber.lowercase().contains(query)
+            val peyarTa = inv.customerName["ta"]?.lowercase().orEmpty()
+            val peyarEn = inv.customerName["en"]?.lowercase().orEmpty()
             enMatch || peyarTa.contains(query) || peyarEn.contains(query)
         },
-        itemLabelBuilder = { it.patrucheettuEn },
+        itemLabelBuilder = { it.invoiceNumber },
         itemRowContent = { inv, isSelected, onToggle ->
-            val customer = allMerchants.firstOrNull { it.id == inv.vaangunarId }
-            val oorText = customer?.oor?.get("ta")
-                ?: customer?.oor?.get("en")
+            val customer = allMerchants.firstOrNull { it.id == inv.customerId }
+            val oorText = customer?.city?.get("ta")
+                ?: customer?.city?.get("en")
                 ?: ""
 
-            val dateStr = DateUtils.formatDate(inv.pattiyalNaal)
+            val dateStr = DateUtils.formatDate(inv.invoiceDate)
 
-            val customerName = inv.vaangunarPeyar["ta"]
-                ?: inv.vaangunarPeyar["en"]
+            val customerName = inv.customerName["ta"]
+                ?: inv.customerName["en"]
                 ?: ""
 
-            val formattedAmount = "₹ " + if (inv.mothaThogai % 1.0 == 0.0) {
-                inv.mothaThogai.toLong().toString()
+            val formattedAmount = "₹ " + if (inv.totalAmount % 1.0 == 0.0) {
+                inv.totalAmount.toLong().toString()
             } else {
-                val rounded = (inv.mothaThogai * 100).toLong() / 100.0
+                val rounded = (inv.totalAmount * 100).toLong() / 100.0
                 rounded.toString()
             }
 
@@ -155,7 +155,7 @@ fun ReceiptInvoiceSelectionSheet(
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         Text(
-                            text = inv.patrucheettuEn,
+                            text = inv.invoiceNumber,
                             style = TextStyle(
                                 fontFamily = ff,
                                 fontSize = 14.sp,

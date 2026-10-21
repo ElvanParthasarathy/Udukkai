@@ -253,11 +253,11 @@ fun TextilesStorageBackupScreen(
                         fallback.getSecondary("niruvanathinPeyar")
                     }.ifBlank { appBadge }
 
-                    val town = fallback.oor.values.firstOrNull { it.isNotBlank() }
+                    val town = fallback.city.values.firstOrNull { it.isNotBlank() }
                     val subtitleText = if (!town.isNullOrBlank()) "$appBadge • $town" else appBadge
 
-                    val invCount = TextilesInvoiceRepository.invoices.count { (fallback.id == null || it.niruvanamId == fallback.id) && !it.isDeleted }
-                    val recCount = TextilesReceiptRepository.receipts.count { (fallback.id == null || it.niruvanamId == fallback.id) && !it.isDeleted }
+                    val invCount = TextilesInvoiceRepository.invoices.count { (fallback.id == null || it.companyId == fallback.id) && !it.isDeleted }
+                    val recCount = TextilesReceiptRepository.receipts.count { (fallback.id == null || it.companyId == fallback.id) && !it.isDeleted }
                     val cusCount = TextilesCustomerRepository.customers.count { !it.isDeleted }
                     val proCount = TextilesProductRepository.products.count { (fallback.id == null || it.isAvailableForCompany(fallback.id)) && !it.isDeleted }
 
@@ -281,11 +281,11 @@ fun TextilesStorageBackupScreen(
                             "$companyLabel ${index + 1}"
                         }
 
-                        val town = p.oor.values.firstOrNull { it.isNotBlank() }
+                        val town = p.city.values.firstOrNull { it.isNotBlank() }
                         val sub = if (!town.isNullOrBlank()) "$appBadge • $town" else appBadge
 
-                        val invC = TextilesInvoiceRepository.invoices.count { (p.id == null || it.niruvanamId == p.id) && !it.isDeleted }
-                        val recC = TextilesReceiptRepository.receipts.count { (p.id == null || it.niruvanamId == p.id) && !it.isDeleted }
+                        val invC = TextilesInvoiceRepository.invoices.count { (p.id == null || it.companyId == p.id) && !it.isDeleted }
+                        val recC = TextilesReceiptRepository.receipts.count { (p.id == null || it.companyId == p.id) && !it.isDeleted }
                         val cusC = TextilesCustomerRepository.customers.count { !it.isDeleted }
                         val proC = TextilesProductRepository.products.count { (p.id == null || it.isAvailableForCompany(p.id)) && !it.isDeleted }
 

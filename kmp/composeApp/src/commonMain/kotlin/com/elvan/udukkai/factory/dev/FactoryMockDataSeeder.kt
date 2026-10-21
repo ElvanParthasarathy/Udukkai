@@ -5,13 +5,11 @@ import com.elvan.udukkai.core.utils.DateUtils
 import com.elvan.udukkai.data.database.getFactoryDatabaseHelper
 import com.elvan.udukkai.data.mock.*
 import com.elvan.udukkai.data.model.CustomerModel
-import com.elvan.udukkai.data.model.PattiyalTharavuru
-import com.elvan.udukkai.data.model.PatruPattiyalInaippuTharavuru
-import com.elvan.udukkai.data.model.PatrugalTharavuru
-import com.elvan.udukkai.data.model.PorulTharavuru
+import com.elvan.udukkai.data.model.InvoiceModel
+import com.elvan.udukkai.data.model.ReceiptInvoiceLinkModel
+import com.elvan.udukkai.data.model.ReceiptModel
 import com.elvan.udukkai.data.model.ProductModel
-import com.elvan.udukkai.data.model.VaangunarTharavuru
-import com.elvan.udukkai.data.settings.NiruvanaTharavugal
+import com.elvan.udukkai.data.settings.BusinessProfile
 import com.elvan.udukkai.factory.data.*
 import com.elvan.udukkai.factory.ui.screens.editor.FactoryCalculation
 import com.elvan.udukkai.factory.ui.screens.editor.FactoryItem
@@ -50,8 +48,8 @@ object FactoryMockDataSeeder {
         return System.currentTimeMillis()
     }
 
-    fun profileFromMap(d: Map<String, Any>): NiruvanaTharavugal {
-        return NiruvanaTharavugal(
+    fun profileFromMap(d: Map<String, Any>): BusinessProfile {
+        return BusinessProfile(
             primaryLanguage = d["mudhanMozhi"] as? String ?: "ta",
             secondaryLanguage = d["thunaiMozhi"] as? String ?: "en",
             isBilingual = d["iruMozhi"] as? Boolean ?: true,
@@ -109,14 +107,14 @@ object FactoryMockDataSeeder {
         )
     }
 
-    private fun parseCoolieItems(rawJson: String, items: List<PorulTharavuru>): List<FactoryItem> {
+    private fun parseCoolieItems(rawJson: String, items: List<ProductModel>): List<FactoryItem> {
         val parsed = FactoryCalculation.itemsFromJson(rawJson)
         return parsed.map { item ->
-            val matched = items.find { it.porulPeyar["ta"] == item.porulPeyar }
+            val matched = items.find { it.name["ta"] == item.name }
             item.copy(
                 porulId = matched?.id?.toString(),
-                porulPeyarEn = matched?.porulPeyar?.get("en") ?: item.porulPeyarEn,
-                mozhiMap = matched?.porulPeyar ?: emptyMap()
+                porulPeyarEn = matched?.name?.get("en") ?: item.porulPeyarEn,
+                mozhiMap = matched?.name ?: emptyMap()
             )
         }
     }
@@ -126,8 +124,8 @@ object FactoryMockDataSeeder {
         amount: Double,
         invEnToId: Map<String, Long>,
         invEnToTotal: Map<String, Double>
-    ): List<PatruPattiyalInaippuTharavuru> {
-        val links = mutableListOf<PatruPattiyalInaippuTharavuru>()
+    ): List<ReceiptInvoiceLinkModel> {
+        val links = mutableListOf<ReceiptInvoiceLinkModel>()
         val invList = againstInvoice.split(",").map { it.trim() }.filter { it.isNotEmpty() }
         var remaining = amount
         for (invEn in invList) {
@@ -135,7 +133,7 @@ object FactoryMockDataSeeder {
             val balance = invEnToTotal[invEn] ?: 0.0
             val apply = remaining.coerceIn(0.0, balance)
             if (apply > 0.0) {
-                links.add(PatruPattiyalInaippuTharavuru(invoiceId = id, appliedAmount = apply))
+                links.add(ReceiptInvoiceLinkModel(invoiceId = id, appliedAmount = apply))
                 remaining -= apply
             }
         }
@@ -192,12 +190,12 @@ object FactoryMockDataSeeder {
             val custName = data["customer_name"] as? String ?: ""
             val custOor = data["customer_oor"] as? String ?: ""
             val matchedCust = factoryCustomers.find {
-                it.peyar["ta"] == custName && (custOor.isEmpty() || it.oor["ta"] == custOor)
-            } ?: factoryCustomers.find { it.peyar["ta"] == custName }
+                it.name["ta"] == custName && (custOor.isEmpty() || it.city["ta"] == custOor)
+            } ?: factoryCustomers.find { it.name["ta"] == custName }
 
             val custId = matchedCust?.id
-            val custPeyar = matchedCust?.peyar ?: mapOf("ta" to custName, "en" to (data["customer_name_en"] as? String ?: custName))
-            val custMunvari = matchedCust?.oor ?: mapOf("ta" to custOor, "en" to custOor)
+            val custPeyar = matchedCust?.name ?: mapOf("ta" to custName, "en" to (data["customer_name_en"] as? String ?: custName))
+            val custMunvari = matchedCust?.city ?: mapOf("ta" to custOor, "en" to custOor)
 
             val rawItems = data["items"] as? String ?: "[]"
             val parsedItems = parseCoolieItems(rawItems, factoryItems)
@@ -210,7 +208,7 @@ object FactoryMockDataSeeder {
             val ahimsa = (data["ahimsaPattuThogai"] as? Number)?.toDouble() ?: 0.0
 
             helper.saveInvoice(
-                PattiyalTharavuru(
+                InvoiceModel(
                     companyId = profileId,
                     invoiceNumber = billNo,
                     finYear = 2026,
@@ -232,8 +230,8 @@ object FactoryMockDataSeeder {
             )
         }
         val factoryInvoices = helper.loadAllInvoices()
-        val invEnToId = factoryInvoices.associate { it.patrucheettuEn to it.id }
-        val invEnToTotal = factoryInvoices.associate { it.patrucheettuEn to it.mothaThogai }
+        val invEnToId = factoryInvoices.associate { it.invoiceNumber to it.id }
+        val invEnToTotal = factoryInvoices.associate { it.invoiceNumber to it.totalAmount }
 
         // 5. Receipts with Links
         for (r in mockCooliePatrugal) {
@@ -246,7 +244,7 @@ object FactoryMockDataSeeder {
             val profileId = profileMap[prefix]?.id
 
             val clientName = r["clientName"] as? String ?: ""
-            val matchedCust = factoryCustomers.find { it.peyar["ta"] == clientName }
+            val matchedCust = factoryCustomers.find { it.name["ta"] == clientName }
             val amount = (r["amount"] as? Number)?.toDouble() ?: 0.0
             val pMode = (r["paymentMode"] as? String) ?: "cash"
 
@@ -254,7 +252,7 @@ object FactoryMockDataSeeder {
             val links = buildReceiptLinks(against, amount, invEnToId, invEnToTotal)
 
             helper.saveReceiptWithLinks(
-                PatrugalTharavuru(
+                ReceiptModel(
                     companyId = profileId,
                     receiptNumber = patruEn,
                     vanakkam = vanakkamNum,
@@ -325,17 +323,17 @@ object FactoryMockDataSeeder {
         val profile = FactoryProfileRepository.profile
         val updated = profile.copy(isBilingual = !profile.isBilingual)
         FactoryProfileRepository.updateProfile(updated)
-        return if (updated.iruMozhi) "Bilingual Mode: ON ✓" else "Bilingual Mode: OFF ✗"
+        return if (updated.isBilingual) "Bilingual Mode: ON ✓" else "Bilingual Mode: OFF ✗"
     }
 
     suspend fun swapDataLanguages(): String {
         val allProfiles = FactoryProfileRepository.allProfiles
         val activeProfile = FactoryProfileRepository.profile
-        val currentPrimary = activeProfile.mudhanMozhi.ifEmpty { "ta" }
+        val currentPrimary = activeProfile.primaryLanguage.ifEmpty { "ta" }
         val currentSecondary = activeProfile.thunaiMozhi.ifEmpty { "en" }
 
         allProfiles.forEach { p ->
-            val pPrimary = p.mudhanMozhi.ifEmpty { "ta" }
+            val pPrimary = p.primaryLanguage.ifEmpty { "ta" }
             val pSecondary = p.thunaiMozhi.ifEmpty { "en" }
             val updated = p.copy(
                 primaryLanguage = if (pPrimary == currentPrimary) currentSecondary else currentPrimary,

@@ -26,7 +26,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.elvan.udukkai.core.utils.CurrencyUtils
-import com.elvan.udukkai.data.model.PorulTharavuru
+import com.elvan.udukkai.data.model.ProductModel
 import com.elvan.udukkai.factory.data.FactoryProductRepository
 import com.elvan.udukkai.localization.K
 import com.elvan.udukkai.localization.PrintLanguageManager
@@ -146,15 +146,15 @@ fun FactoryItemCard(
                 val primaryName = if (item.mozhiMap.isNotEmpty()) {
                     item.mozhiMap[primaryLang] ?: item.mozhiMap.values.firstOrNull().orEmpty()
                 } else {
-                    if (primaryLang == "ta") item.porulPeyar.ifEmpty { item.porulPeyarEn }
-                    else item.porulPeyarEn.ifEmpty { item.porulPeyar }
+                    if (primaryLang == "ta") item.name.ifEmpty { item.porulPeyarEn }
+                    else item.porulPeyarEn.ifEmpty { item.name }
                 }
                 val secondaryName = if (item.mozhiMap.isNotEmpty()) {
                     item.mozhiMap[secondaryLang] ?: ""
                 } else {
-                    if (secondaryLang == "en") item.porulPeyarEn else item.porulPeyar
+                    if (secondaryLang == "en") item.porulPeyarEn else item.name
                 }
-                val displayName = primaryName.ifEmpty { item.porulPeyar.ifEmpty { item.porulPeyarEn } }
+                val displayName = primaryName.ifEmpty { item.name.ifEmpty { item.porulPeyarEn } }
                 val containerBg = colors.iconBg
 
                 val productSearchPill = @Composable {
@@ -252,7 +252,7 @@ fun FactoryItemCard(
                 val rateInput = @Composable {
                     ElvanThiruthiUlleedu(
                         label = "${K.sellingRate.tr()} (₹)",
-                        value = if (item.vilai == 0.0) "" else cleanNum(item.vilai),
+                        value = if (item.price == 0.0) "" else cleanNum(item.price),
                         onValueChange = {
                             val parsed = it.toDoubleOrNull() ?: 0.0
                             onItemUpdated(item.copy(vilai = parsed))
@@ -424,18 +424,18 @@ fun FactoryItemCard(
             currentValue = availableProducts.firstOrNull { it.id.toString() == item.porulId },
             showSearch = true,
             onDismissRequest = { isPickerOpen = false },
-            onSelected = { p: PorulTharavuru ->
-                val primary = if (p.porulPeyar.isNotEmpty()) {
-                    p.porulPeyar[primaryLang] ?: p.porulPeyar.values.firstOrNull().orEmpty()
+            onSelected = { p: ProductModel ->
+                val primary = if (p.name.isNotEmpty()) {
+                    p.name[primaryLang] ?: p.name.values.firstOrNull().orEmpty()
                 } else ""
-                val secondary = if (p.porulPeyar.isNotEmpty()) {
-                    p.porulPeyar[secondaryLang] ?: ""
+                val secondary = if (p.name.isNotEmpty()) {
+                    p.name[secondaryLang] ?: ""
                 } else ""
 
                 val priceForCompany = if (niruvanamId != null && p.companyPrices.containsKey(niruvanamId)) {
-                    p.companyPrices[niruvanamId] ?: p.vilai
+                    p.companyPrices[niruvanamId] ?: p.price
                 } else {
-                    p.vilai
+                    p.price
                 }
 
                 onItemUpdated(
@@ -443,31 +443,31 @@ fun FactoryItemCard(
                         porulId = p.id.toString(),
                         porulPeyar = primary,
                         porulPeyarEn = secondary,
-                        vilai = if (priceForCompany > 0) priceForCompany else item.vilai,
-                        mozhiMap = p.porulPeyar
+                        vilai = if (priceForCompany > 0) priceForCompany else item.price,
+                        mozhiMap = p.name
                     )
                 )
                 onDirty()
                 isPickerOpen = false
             },
             itemLabelBuilder = { p ->
-                if (p.porulPeyar.isNotEmpty()) {
-                    p.porulPeyar[primaryLang] ?: p.porulPeyar.values.firstOrNull().orEmpty()
+                if (p.name.isNotEmpty()) {
+                    p.name[primaryLang] ?: p.name.values.firstOrNull().orEmpty()
                 } else ""
             },
             subtitleBuilder = { p ->
-                val sec = if (isBilingual && p.porulPeyar.isNotEmpty()) p.porulPeyar[secondaryLang].orEmpty() else ""
+                val sec = if (isBilingual && p.name.isNotEmpty()) p.name[secondaryLang].orEmpty() else ""
                 val priceForComp = if (niruvanamId != null && p.companyPrices.containsKey(niruvanamId)) {
-                    p.companyPrices[niruvanamId] ?: p.vilai
+                    p.companyPrices[niruvanamId] ?: p.price
                 } else {
-                    p.vilai
+                    p.price
                 }
                 val priceStr = if (priceForComp > 0) CurrencyUtils.formatInr(priceForComp) else ""
                 listOf(sec, priceStr).filter { it.isNotEmpty() }.joinToString(" • ")
             },
             searchFilter = { p, query ->
                 val q = query.lowercase()
-                p.porulPeyar.values.any { it.lowercase().contains(q) }
+                p.name.values.any { it.lowercase().contains(q) }
             },
             onRequestAddNew = {
                 isPickerOpen = false
@@ -546,7 +546,7 @@ fun FactoryAdditionalChargeCard(
                 Box(modifier = Modifier.weight(2f)) {
                     ElvanThiruthiUlleedu(
                         label = K.chargeName.tr(),
-                        value = charge.peyar,
+                        value = charge.name,
                         onValueChange = {
                             onUpdated(charge.copy(peyar = it))
                             onDirty()
@@ -558,7 +558,7 @@ fun FactoryAdditionalChargeCard(
                 Box(modifier = Modifier.weight(1f)) {
                     ElvanThiruthiUlleedu(
                         label = "${K.total.tr()} (₹)",
-                        value = if (charge.thogai == 0.0) "" else cleanNum(charge.thogai),
+                        value = if (charge.amount == 0.0) "" else cleanNum(charge.amount),
                         onValueChange = {
                             val parsed = it.toDoubleOrNull() ?: 0.0
                             onUpdated(charge.copy(thogai = parsed))
@@ -694,10 +694,10 @@ fun FactoryTotalsSection(
 
             // Other charges
             for (charge in charges) {
-                if (charge.thogai > 0) {
+                if (charge.amount > 0) {
                     FactoryTotalsRow(
-                        label = charge.peyar.ifEmpty { K.other.tr() },
-                        value = CurrencyUtils.formatInr(charge.thogai)
+                        label = charge.name.ifEmpty { K.other.tr() },
+                        value = CurrencyUtils.formatInr(charge.amount)
                     )
                 }
             }

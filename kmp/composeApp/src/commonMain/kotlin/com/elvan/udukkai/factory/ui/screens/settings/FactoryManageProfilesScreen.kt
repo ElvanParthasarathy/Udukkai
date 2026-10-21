@@ -18,7 +18,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.elvan.udukkai.data.settings.NiruvanaTharavugal
+import com.elvan.udukkai.data.settings.BusinessProfile
 import com.elvan.udukkai.factory.data.FactoryProfileRepository
 import com.elvan.udukkai.localization.K
 import com.elvan.udukkai.localization.tr
@@ -45,7 +45,7 @@ fun FactoryManageProfilesScreen(
     val activeProfile = FactoryProfileRepository.profile
 
     var showNewProfileSheet by remember { mutableStateOf(false) }
-    var profileToDelete by remember { mutableStateOf<NiruvanaTharavugal?>(null) }
+    var profileToDelete by remember { mutableStateOf<BusinessProfile?>(null) }
 
     val deleteSuccessMsg = K.profileDeleted.tr()
 
@@ -88,7 +88,7 @@ fun FactoryManageProfilesScreen(
                                 val isActive = profileItem.id == activeProfile.id
                                 val primaryName = profileItem.getPrimary("niruvanathinPeyar")
                                     .ifEmpty { K.activeCompany.tr() }
-                                val isBilingual = profileItem.iruMozhi
+                                val isBilingual = profileItem.isBilingual
 
                                 ElvanSettingsDisplayRow(
                                     title = if (isActive) K.activeCompany.tr() else "",
@@ -188,7 +188,7 @@ fun FactoryNewProfileBottomSheet(
                     return@ElvanActionSheet
                 }
 
-                val newProfile = NiruvanaTharavugal(
+                val newProfile = BusinessProfile(
                     primaryLanguage = "ta",
                     secondaryLanguage = "en",
                     isBilingual = true,

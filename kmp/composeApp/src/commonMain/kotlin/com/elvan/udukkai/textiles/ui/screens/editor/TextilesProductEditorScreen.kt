@@ -18,7 +18,6 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.elvan.udukkai.core.platform.AppBackHandler
-import com.elvan.udukkai.data.model.PorulTharavuru
 import com.elvan.udukkai.data.model.ProductModel
 import com.elvan.udukkai.textiles.data.TextilesProductRepository
 import com.elvan.udukkai.textiles.data.TextilesProfileRepository
@@ -33,11 +32,11 @@ import com.elvan.udukkai.ui.screens.editor.*
 /**
  * Dedicated Product / Finished Goods Editor for Udukkai Textiles (சவுளி).
  * Distinct Textiles product schema: Product Name, HSN Code, Tax Rate (GST %), Measure Type, Unit Price.
- * Reactively follows TextilesProfileRepository.profile.iruMozhi for bilingual toggling.
+ * Reactively follows TextilesProfileRepository.profile.isBilingual for bilingual toggling.
  */
 @Composable
 fun TextilesProductEditorScreen(
-    item: PorulTharavuru? = null,
+    item: ProductModel? = null,
     onBack: () -> Unit
 ) {
     val colors = rememberShellColors()
@@ -45,27 +44,27 @@ fun TextilesProductEditorScreen(
     val isEditing = item != null && item.id > 0L
 
     val profile = TextilesProfileRepository.profile
-    val isBilingual = profile.iruMozhi
-    val primaryLang = profile.mudhanMozhi.ifEmpty { "ta" }
+    val isBilingual = profile.isBilingual
+    val primaryLang = profile.primaryLanguage.ifEmpty { "ta" }
     val secondaryLang = profile.thunaiMozhi.ifEmpty { "en" }
 
-    var porulPeyarMap by remember { mutableStateOf(item?.porulPeyar ?: emptyMap()) }
+    var porulPeyarMap by remember { mutableStateOf(item?.name ?: emptyMap()) }
     var hsnCode by remember { mutableStateOf(item?.hsnCode ?: "") }
     var vilai by remember {
         mutableStateOf(
-            if (item != null && item.vilai > 0) {
-                if (item.vilai % 1.0 == 0.0) item.vilai.toLong().toString() else item.vilai.toString()
+            if (item != null && item.price > 0) {
+                if (item.price % 1.0 == 0.0) item.price.toLong().toString() else item.price.toString()
             } else ""
         )
     }
     var variVeetham by remember {
         mutableStateOf(
             if (item != null) {
-                if (item.variVeetham % 1.0 == 0.0) item.variVeetham.toLong().toString() else item.variVeetham.toString()
+                if (item.taxRate % 1.0 == 0.0) item.taxRate.toLong().toString() else item.taxRate.toString()
             } else "5"
         )
     }
-    var alavuVagai by remember { mutableStateOf(item?.alavuVagai?.ifEmpty { "quantity" } ?: "quantity") }
+    var alavuVagai by remember { mutableStateOf(item?.quantityType?.ifEmpty { "quantity" } ?: "quantity") }
 
     var validationError by remember { mutableStateOf<String?>(null) }
     var showDiscardDialog by remember { mutableStateOf(false) }
@@ -75,10 +74,10 @@ fun TextilesProductEditorScreen(
         if (item == null) {
             porulPeyarMap.values.any { it.isNotBlank() } || hsnCode.isNotBlank() || vilai.isNotBlank()
         } else {
-            porulPeyarMap != item.porulPeyar || hsnCode != item.hsnCode ||
-                (vilai.toDoubleOrNull() ?: 0.0) != item.vilai ||
-                (variVeetham.toDoubleOrNull() ?: 0.0) != item.variVeetham ||
-                alavuVagai != item.alavuVagai
+            porulPeyarMap != item.name || hsnCode != item.hsnCode ||
+                (vilai.toDoubleOrNull() ?: 0.0) != item.price ||
+                (variVeetham.toDoubleOrNull() ?: 0.0) != item.taxRate ||
+                alavuVagai != item.quantityType
         }
     }
 

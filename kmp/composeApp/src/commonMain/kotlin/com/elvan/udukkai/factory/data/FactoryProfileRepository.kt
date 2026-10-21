@@ -6,18 +6,18 @@ import androidx.compose.runtime.setValue
 import com.elvan.udukkai.core.backup.AutoBackupManager
 import com.elvan.udukkai.core.platform.getPreferencesHelper
 import com.elvan.udukkai.data.database.getFactoryDatabaseHelper
-import com.elvan.udukkai.data.settings.NiruvanaTharavugal
+import com.elvan.udukkai.data.settings.BusinessProfile
 
 /**
  * Reactive profile repository dedicated exclusively to Udukkai Factory (ஆலை).
  * Reads and writes directly to `udukkai_factory.db` without any mode parameterization.
  */
 object FactoryProfileRepository {
-    val profiles: List<NiruvanaTharavugal> get() = allProfiles
-    fun saveProfile(newProfile: NiruvanaTharavugal): Boolean = createProfile(newProfile)
+    val profiles: List<BusinessProfile> get() = allProfiles
+    fun saveProfile(newProfile: BusinessProfile): Boolean = createProfile(newProfile)
 
 
-    private val defaultProfile = NiruvanaTharavugal(
+    private val defaultProfile = BusinessProfile(
         id = 1L,
         primaryLanguage = "ta",
         secondaryLanguage = "en",
@@ -68,7 +68,7 @@ object FactoryProfileRepository {
     var profile by mutableStateOf(defaultProfile)
         private set
 
-    var allProfiles by mutableStateOf<List<NiruvanaTharavugal>>(listOf(defaultProfile))
+    var allProfiles by mutableStateOf<List<BusinessProfile>>(listOf(defaultProfile))
         private set
 
     init {
@@ -117,7 +117,7 @@ object FactoryProfileRepository {
         persistActiveId(id)
     }
 
-    fun createProfile(newProfile: NiruvanaTharavugal): Boolean {
+    fun createProfile(newProfile: BusinessProfile): Boolean {
         if (allProfiles.size >= MAX_PROFILES) return false
         val helper = getFactoryDatabaseHelper()
         val success = helper.saveProfile(newProfile)
@@ -133,7 +133,7 @@ object FactoryProfileRepository {
         return success
     }
 
-    fun updateProfile(updated: NiruvanaTharavugal) {
+    fun updateProfile(updated: BusinessProfile) {
         val copy = updated.copy()
         profile = copy
         allProfiles = allProfiles.map { if (it.id == copy.id) copy else it }

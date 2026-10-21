@@ -103,7 +103,7 @@ fun <T> ElvanSelectionBottomSheet(
             items.filter { searchFilter(it, searchQuery) }
         } else {
             items.filter { item ->
-                com.elvan.udukkai.core.utils.ThedalUdhavi.matchesRecord(
+                com.elvan.udukkai.core.utils.SearchHelper.matchesRecord(
                     itemLabelBuilder(item),
                     subtitleBuilder?.invoke(item),
                     query = searchQuery

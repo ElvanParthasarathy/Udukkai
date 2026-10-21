@@ -17,7 +17,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.elvan.udukkai.core.utils.CurrencyUtils
-import com.elvan.udukkai.data.model.PorulTharavuru
+import com.elvan.udukkai.data.model.ProductModel
 import com.elvan.udukkai.ui.screens.product.TextilesProductCard
 import com.elvan.udukkai.textiles.data.TextilesProductRepository
 import com.elvan.udukkai.textiles.data.TextilesProfileRepository
@@ -39,7 +39,7 @@ import kotlinx.coroutines.delay
 
 @Composable
 fun TextilesProductScreen(
-    onItemClick: (PorulTharavuru) -> Unit,
+    onItemClick: (ProductModel) -> Unit,
     modifier: Modifier = Modifier,
     scrollState: LazyListState = rememberLazyListState(),
     colors: ShellColors = rememberShellColors(),

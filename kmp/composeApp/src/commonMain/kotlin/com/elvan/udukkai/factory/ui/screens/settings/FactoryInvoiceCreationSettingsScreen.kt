@@ -1,6 +1,6 @@
 ﻿package com.elvan.udukkai.factory.ui.screens.settings
 
-import com.elvan.udukkai.data.settings.NiruvanaTharavugal
+import com.elvan.udukkai.data.settings.BusinessProfile
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -43,8 +43,8 @@ import com.elvan.udukkai.ui.navigation.MaterialSymbols
 fun FactoryInvoiceCreationSettingsScreen(
     scrollState: LazyListState = rememberLazyListState(),
     colors: ShellColors = rememberShellColors(),
-    customProfile: NiruvanaTharavugal? = null,
-    onUpdateProfile: ((NiruvanaTharavugal) -> Unit)? = null,
+    customProfile: BusinessProfile? = null,
+    onUpdateProfile: ((BusinessProfile) -> Unit)? = null,
     isTextiles: Boolean? = null
 ) {
     val isPattu = isTextiles ?: false
@@ -52,7 +52,7 @@ fun FactoryInvoiceCreationSettingsScreen(
     val ff = LocalAppFontFamily.current
 
     var isEditingLanguages by remember { mutableStateOf(false) }
-    var tempPrimaryLang by remember { mutableStateOf(profile.mudhanMozhi) }
+    var tempPrimaryLang by remember { mutableStateOf(profile.primaryLanguage) }
     var tempSecondaryLang by remember { mutableStateOf(profile.thunaiMozhi) }
 
     val bottomSheet = LocalElvanBottomSheetController.current
@@ -110,7 +110,7 @@ fun FactoryInvoiceCreationSettingsScreen(
                             Column {
                                 ElvanSimpleSettingsRow(
                                     title = K.primaryLanguage.tr(),
-                                    description = getLanguageName(profile.mudhanMozhi),
+                                    description = getLanguageName(profile.primaryLanguage),
                                     trailing = {
                                         Surface(
                                             shape = CircleShape,
@@ -122,7 +122,7 @@ fun FactoryInvoiceCreationSettingsScreen(
                                                     interactionSource = remember { MutableInteractionSource() },
                                                     indication = ShellDefaults.ripple(colors, bounded = true),
                                                     onClick = {
-                                                        tempPrimaryLang = profile.mudhanMozhi
+                                                        tempPrimaryLang = profile.primaryLanguage
                                                         tempSecondaryLang = profile.thunaiMozhi
                                                         isEditingLanguages = true
                                                     }
@@ -141,7 +141,7 @@ fun FactoryInvoiceCreationSettingsScreen(
                                     colors = colors
                                 )
 
-                                if (profile.iruMozhi) {
+                                if (profile.isBilingual) {
                                     ElvanSettingsDivider(colors = colors)
                                     ElvanSimpleSettingsRow(
                                         title = K.secondaryLanguage.tr(),
@@ -156,7 +156,7 @@ fun FactoryInvoiceCreationSettingsScreen(
                                 onCancel = { isEditingLanguages = false },
                                 onSave = {
                                     val updated = profile.copy()
-                                    updated.mudhanMozhi = tempPrimaryLang
+                                    updated.primaryLanguage = tempPrimaryLang
                                     updated.thunaiMozhi = tempSecondaryLang
                                     FactoryProfileRepository.updateProfile(updated)
                                     isEditingLanguages = false
@@ -179,7 +179,7 @@ fun FactoryInvoiceCreationSettingsScreen(
                                     colors = colors
                                 )
 
-                                if (profile.iruMozhi) {
+                                if (profile.isBilingual) {
                                     Spacer(modifier = Modifier.height(16.dp))
                                     // Secondary Language Dropdown
                                     ElvanSettingsDropdown(
@@ -210,7 +210,7 @@ fun FactoryInvoiceCreationSettingsScreen(
                         title = K.bilingualMode.tr(),
                         trailing = {
                             ElvanSettingsSwitch(
-                                checked = profile.iruMozhi,
+                                checked = profile.isBilingual,
                                 onCheckedChange = { isChecked ->
                                     val updated = profile.copy(isBilingual = isChecked)
                                     FactoryProfileRepository.updateProfile(updated)
@@ -228,7 +228,7 @@ fun FactoryInvoiceCreationSettingsScreen(
 
             // ── Section 3: PDF Theme ──
             item(key = "theme_section") {
-                val currentThemeColorHex = profile.thoatraNiram.ifEmpty { "#388e3c" }
+                val currentThemeColorHex = profile.themeColor.ifEmpty { "#388e3c" }
                 val currentColor = parseColor(currentThemeColorHex)
 
                 ElvanSettingsSection(colors = colors) {
@@ -259,7 +259,7 @@ fun FactoryInvoiceCreationSettingsScreen(
                             bottomSheet.showSelection(
                                 title = pdfThemeTitle,
                                 items = listOf("#388e3c", "#6a1b9a"),
-                                currentValue = profile.thoatraNiram.ifEmpty { "#388e3c" },
+                                currentValue = profile.themeColor.ifEmpty { "#388e3c" },
                                 itemLabelBuilder = { getThemeName(it) },
                                 leadingBuilder = { colorHex ->
                                     Box(
@@ -271,7 +271,7 @@ fun FactoryInvoiceCreationSettingsScreen(
                                 },
                                 onSelected = { selectedColor ->
                                     val updated = profile.copy()
-                                    updated.thoatraNiram = selectedColor
+                                    updated.themeColor = selectedColor
                                     FactoryProfileRepository.updateProfile(updated)
                                     ElvanSnackbar.show(saveSuccessMsg)
                                 }

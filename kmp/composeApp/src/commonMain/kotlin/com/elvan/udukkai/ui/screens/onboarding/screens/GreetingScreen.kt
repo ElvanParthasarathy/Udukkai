@@ -7,7 +7,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.elvan.udukkai.core.auth.AuthManager
 import com.elvan.udukkai.core.backup.getUdukkaiBackupService
-import com.elvan.udukkai.data.settings.NiruvanaTharavugal
+import com.elvan.udukkai.data.settings.BusinessProfile
 import com.elvan.udukkai.factory.data.FactoryProfileRepository
 import com.elvan.udukkai.textiles.data.TextilesProfileRepository
 import com.elvan.udukkai.localization.K
@@ -93,7 +93,7 @@ fun VanakkamThirai(
                 coroutineScope.launch {
                     try {
                         if (needsSilk) {
-                            val silkProfile = NiruvanaTharavugal(
+                            val silkProfile = BusinessProfile(
                                 primaryLanguage = billingLanguage,
                                 businessName = mutableMapOf(billingLanguage to gstBusinessName.trim()),
                                 shortName = gstBusinessName.trim()
@@ -102,7 +102,7 @@ fun VanakkamThirai(
                         }
 
                         if (needsCoolie) {
-                            val coolieProfile = NiruvanaTharavugal(
+                            val coolieProfile = BusinessProfile(
                                 primaryLanguage = billingLanguage,
                                 businessName = mutableMapOf(billingLanguage to coolieBusinessName.trim()),
                                 shortName = coolieBusinessName.trim()

@@ -17,10 +17,10 @@ import androidx.compose.ui.unit.dp
 import com.elvan.udukkai.core.platform.AppPredictiveBackHandler
 import com.elvan.udukkai.core.platform.PlatformType
 import com.elvan.udukkai.core.platform.currentPlatform
-import com.elvan.udukkai.data.model.PatrugalTharavuru
-import com.elvan.udukkai.data.model.PattiyalTharavuru
-import com.elvan.udukkai.data.model.PorulTharavuru
-import com.elvan.udukkai.data.model.VaangunarTharavuru
+import com.elvan.udukkai.data.model.ReceiptModel
+import com.elvan.udukkai.data.model.InvoiceModel
+import com.elvan.udukkai.data.model.ProductModel
+import com.elvan.udukkai.data.model.CustomerModel
 import com.elvan.udukkai.textiles.data.TextilesCustomerRepository
 import com.elvan.udukkai.textiles.data.TextilesInvoiceRepository
 import com.elvan.udukkai.textiles.data.TextilesProductRepository
@@ -92,7 +92,7 @@ fun TextilesHomeScreen() {
         selectedItemIds = setOf(id)
     }
 
-    val copyInvoiceAndEdit: (PattiyalTharavuru) -> Unit = { invoice ->
+    val copyInvoiceAndEdit: (InvoiceModel) -> Unit = { invoice ->
         val copied = invoice.copy(
             id = 0L,
             invoiceNumber = "",
@@ -107,7 +107,7 @@ fun TextilesHomeScreen() {
 
     val copySuffix = " (${K.copyNoun.tr()})"
 
-    val copyProductAndEdit: (PorulTharavuru) -> Unit = { item ->
+    val copyProductAndEdit: (ProductModel) -> Unit = { item ->
         val copied = item.copy(
             id = 0L,
             name = item.name.mapValues { "${it.value}$copySuffix" },
@@ -119,7 +119,7 @@ fun TextilesHomeScreen() {
         navigateToSubpage(ActiveSubpage.ItemEditor(copied))
     }
 
-    val copyCustomerAndEdit: (VaangunarTharavuru) -> Unit = { merchant ->
+    val copyCustomerAndEdit: (CustomerModel) -> Unit = { merchant ->
         val copied = merchant.copy(
             id = 0L,
             name = merchant.name.mapValues { "${it.value}$copySuffix" },

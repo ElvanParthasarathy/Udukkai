@@ -1,6 +1,6 @@
 package com.elvan.udukkai.data.settings
 
-object MozhiJsonConverter {
+object LanguageJsonConverter {
     fun parse(json: String?): MutableMap<String, String> {
         val result = mutableMapOf<String, String>()
         if (json.isNullOrBlank() || json.trim() == "{}" || json.trim() == "null") return result
@@ -39,3 +39,5 @@ object MozhiJsonConverter {
         return "{$entries}"
     }
 }
+
+typealias MozhiJsonConverter = LanguageJsonConverter

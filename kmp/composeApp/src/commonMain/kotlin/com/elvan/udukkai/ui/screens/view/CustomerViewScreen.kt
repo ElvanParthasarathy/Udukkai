@@ -20,8 +20,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.elvan.udukkai.core.platform.AppBackHandler
-import com.elvan.udukkai.data.model.VaangunarTharavuru
-import com.elvan.udukkai.data.settings.NiruvanaTharavugal
+import com.elvan.udukkai.data.model.CustomerModel
+import com.elvan.udukkai.data.settings.BusinessProfile
 import com.elvan.udukkai.localization.K
 import com.elvan.udukkai.localization.tr
 import com.elvan.udukkai.theme.Dimens
@@ -37,8 +37,8 @@ import com.elvan.udukkai.ui.navigation.MaterialSymbols
  */
 @Composable
 fun CustomerViewScreen(
-    merchant: VaangunarTharavuru,
-    profile: NiruvanaTharavugal,
+    merchant: CustomerModel,
+    profile: BusinessProfile,
     onBack: () -> Unit,
     onEdit: () -> Unit,
     onCopy: (() -> Unit)? = null
@@ -47,17 +47,17 @@ fun CustomerViewScreen(
     val isDark = colors.isDark
     val ff = LocalAppFontFamily.current
 
-    val isBilingual = profile.iruMozhi
-    val primaryLang = profile.mudhanMozhi.ifEmpty { "ta" }
+    val isBilingual = profile.isBilingual
+    val primaryLang = profile.primaryLanguage.ifEmpty { "ta" }
     val secondaryLang = profile.thunaiMozhi.ifEmpty { "en" }
             
-    val p1 = merchant.peyar[primaryLang] ?: merchant.peyar["ta"] ?: ""
-    val p2 = merchant.peyar[secondaryLang] ?: merchant.peyar["en"] ?: ""
+    val p1 = merchant.name[primaryLang] ?: merchant.name["ta"] ?: ""
+    val p2 = merchant.name[secondaryLang] ?: merchant.name["en"] ?: ""
     val primaryName = p1.ifEmpty { p2.ifEmpty { "-" } }
     val secondaryName = if (isBilingual && p1.isNotEmpty() && p2.isNotEmpty() && p1 != p2) p2 else ""
 
-    val oorVal = merchant.oor[primaryLang] ?: merchant.oor[secondaryLang] ?: merchant.oor.values.firstOrNull().orEmpty()
-    val mugavariVal = merchant.mugavari[primaryLang] ?: merchant.mugavari[secondaryLang] ?: merchant.mugavari.values.firstOrNull().orEmpty()
+    val oorVal = merchant.city[primaryLang] ?: merchant.city[secondaryLang] ?: merchant.city.values.firstOrNull().orEmpty()
+    val mugavariVal = merchant.address[primaryLang] ?: merchant.address[secondaryLang] ?: merchant.address.values.firstOrNull().orEmpty()
 
     val scrollState = rememberLazyListState()
 
@@ -146,7 +146,7 @@ fun CustomerViewScreen(
                             }
                         }
 
-                        if (merchant.anjalKuriyeedu.isNotBlank()) {
+                        if (merchant.pinCode.isNotBlank()) {
                             Box(
                                 modifier = Modifier
                                     .clip(RoundedCornerShape(8.dp))
@@ -154,7 +154,7 @@ fun CustomerViewScreen(
                                     .padding(horizontal = 10.dp, vertical = 6.dp)
                             ) {
                                 Text(
-                                    text = merchant.anjalKuriyeedu,
+                                    text = merchant.pinCode,
                                     style = TextStyle(
                                         fontFamily = ff,
                                         fontSize = 13.sp,
@@ -191,10 +191,10 @@ fun CustomerViewScreen(
                         ff = ff
                     )
 
-                    if (merchant.tholaipaesi.isNotBlank()) {
+                    if (merchant.phone.isNotBlank()) {
                         DetailCard(
                             title = K.telephone.tr(),
-                            value = merchant.tholaipaesi,
+                            value = merchant.phone,
                             icon = MaterialSymbols.Rounded.Call,
                             colors = colors,
                             ff = ff
@@ -211,10 +211,10 @@ fun CustomerViewScreen(
                         )
                     }
 
-                    if (!merchant.minnanjal.isNullOrBlank()) {
+                    if (!merchant.email.isNullOrBlank()) {
                         DetailCard(
                             title = K.email.tr(),
-                            value = merchant.minnanjal,
+                            value = merchant.email,
                             icon = MaterialSymbols.Rounded.Email,
                             colors = colors,
                             ff = ff

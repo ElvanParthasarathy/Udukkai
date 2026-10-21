@@ -45,8 +45,8 @@ object PrintLanguageManager {
 
     fun getFactoryConfig(): BillingLanguageConfig {
         val profile = FactoryProfileRepository.profile
-        val isBilingual = profile.iruMozhi
-        val primary = BillingLanguage.fromCode(profile.mudhanMozhi.ifEmpty { "ta" })
+        val isBilingual = profile.isBilingual
+        val primary = BillingLanguage.fromCode(profile.primaryLanguage.ifEmpty { "ta" })
         val secondary = BillingLanguage.fromCode(profile.thunaiMozhi.ifEmpty { "en" })
         return BillingLanguageConfig(
             primaryLanguage = primary,
@@ -57,8 +57,8 @@ object PrintLanguageManager {
 
     fun getTextilesConfig(): BillingLanguageConfig {
         val profile = TextilesProfileRepository.profile
-        val isBilingual = profile.iruMozhi
-        val primary = BillingLanguage.fromCode(profile.mudhanMozhi.ifEmpty { "ta" })
+        val isBilingual = profile.isBilingual
+        val primary = BillingLanguage.fromCode(profile.primaryLanguage.ifEmpty { "ta" })
         val secondary = BillingLanguage.fromCode(profile.thunaiMozhi.ifEmpty { "en" })
         return BillingLanguageConfig(
             primaryLanguage = primary,

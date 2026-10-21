@@ -544,8 +544,8 @@ class DesktopUdukkaiBackupService : UdukkaiBackupService {
     override fun getLiveStats(): DatabaseLiveStats {
         val activeId = com.elvan.udukkai.factory.data.FactoryProfileRepository.profile.id
 
-        val invCount = com.elvan.udukkai.factory.data.FactoryInvoiceRepository.invoices.count { (activeId == null || it.niruvanamId == activeId) && !it.isDeleted }
-        val recCount = com.elvan.udukkai.factory.data.FactoryReceiptRepository.receipts.count { (activeId == null || it.niruvanamId == activeId) && !it.isDeleted }
+        val invCount = com.elvan.udukkai.factory.data.FactoryInvoiceRepository.invoices.count { (activeId == null || it.companyId == activeId) && !it.isDeleted }
+        val recCount = com.elvan.udukkai.factory.data.FactoryReceiptRepository.receipts.count { (activeId == null || it.companyId == activeId) && !it.isDeleted }
         val cusCount = com.elvan.udukkai.factory.data.FactoryCustomerRepository.customers.count { !it.isDeleted }
         val proCount = com.elvan.udukkai.factory.data.FactoryProductRepository.products.count { (activeId == null || it.isAvailableForCompany(activeId)) && !it.isDeleted }
 

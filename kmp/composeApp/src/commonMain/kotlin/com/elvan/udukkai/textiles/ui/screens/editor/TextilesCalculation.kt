@@ -1,6 +1,6 @@
 package com.elvan.udukkai.textiles.ui.screens.editor
 
-import com.elvan.udukkai.data.settings.MozhiJsonConverter
+import com.elvan.udukkai.data.settings.LanguageJsonConverter
 import kotlin.math.round
 
 private var nextTextilesId = 0L
@@ -27,6 +27,8 @@ data class TextilesItem(
     val thallupadiVagai: String = "%",
     val mozhiMap: Map<String, String> = emptyMap()
 ) {
+    val name: String get() = porulPeyar
+    val price: Double get() = vilai
     val hsnCode: String get() = hsnKuriyeedu
     val quantity: Double get() = alavu
     val unit: String get() = alagu
@@ -104,8 +106,8 @@ object TextilesCalculation {
         var itemDiscounts = 0.0
 
         for (item in items) {
-            val amount = item.alavu * item.vilai
-            val rawDiscount = item.thallupadi
+            val amount = item.alavu * item.price
+            val rawDiscount = item.discount
             val discountAmount = if (item.thallupadiVagai == "%") {
                 amount * (rawDiscount / 100.0)
             } else {
@@ -128,8 +130,8 @@ object TextilesCalculation {
         var taxTotal = 0.0
 
         for (item in items) {
-            val amount = item.alavu * item.vilai
-            val rawDiscount = item.thallupadi
+            val amount = item.alavu * item.price
+            val rawDiscount = item.discount
             val itemDiscount = if (item.thallupadiVagai == "%") {
                 amount * (rawDiscount / 100.0)
             } else {
@@ -199,17 +201,17 @@ object TextilesCalculation {
             if (idx > 0) sb.append(",")
             sb.append("{")
             sb.append("\"porulId\":").append(if (item.porulId != null) "\"${escapeJson(item.porulId)}\"" else "null").append(",")
-            sb.append("\"porulPeyar\":\"${escapeJson(item.porulPeyar)}\",")
+            sb.append("\"porulPeyar\":\"${escapeJson(item.name)}\",")
             sb.append("\"porulPeyarEn\":\"${escapeJson(item.porulPeyarEn)}\",")
             sb.append("\"hsnKuriyeedu\":\"${escapeJson(item.hsnKuriyeedu)}\",")
             sb.append("\"alavu\":${item.alavu},")
-            sb.append("\"alagu\":\"${escapeJson(item.alagu)}\",")
-            sb.append("\"vilai\":${item.vilai},")
+            sb.append("\"alagu\":\"${escapeJson(item.unit)}\",")
+            sb.append("\"vilai\":${item.price},")
             sb.append("\"variVizhukkaadu\":${item.variVizhukkaadu},")
-            sb.append("\"thallupadi\":${item.thallupadi},")
+            sb.append("\"thallupadi\":${item.discount},")
             sb.append("\"thallupadiVagai\":\"${escapeJson(item.thallupadiVagai)}\",")
             sb.append("\"thallupadiThogai\":${item.thallupadiThogai},")
-            sb.append("\"mozhiMap\":${MozhiJsonConverter.stringify(item.mozhiMap)}")
+            sb.append("\"mozhiMap\":${LanguageJsonConverter.stringify(item.mozhiMap)}")
             sb.append("}")
         }
         sb.append("]")
@@ -240,7 +242,7 @@ object TextilesCalculation {
                     ?.replace("\\\"", "\"")?.replace("\\\\", "\\") ?: "%"
 
                 val mozhiMapMatch = Regex(""""mozhiMap"\s*:\s*(\{[^}]*\})""").find(body)?.groupValues?.get(1)
-                val mozhiMap = MozhiJsonConverter.parse(mozhiMapMatch)
+                val mozhiMap = LanguageJsonConverter.parse(mozhiMapMatch)
 
                 TextilesItem(
                     porulId = porulId,

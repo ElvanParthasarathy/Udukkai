@@ -33,12 +33,11 @@ import androidx.compose.ui.unit.sp
 import com.elvan.udukkai.core.platform.AppBackHandler
 import com.elvan.udukkai.core.platform.getPreferencesHelper
 import com.elvan.udukkai.data.model.InvoiceModel
-import com.elvan.udukkai.data.model.PattiyalTharavuru
 import com.elvan.udukkai.textiles.data.TextilesInvoiceRepository
 import com.elvan.udukkai.textiles.data.TextilesProductRepository
 import com.elvan.udukkai.textiles.data.TextilesCustomerRepository
-import com.elvan.udukkai.data.settings.MozhiJsonConverter
-import com.elvan.udukkai.data.settings.NiruvanaTharavugal
+import com.elvan.udukkai.data.settings.LanguageJsonConverter
+import com.elvan.udukkai.data.settings.BusinessProfile
 import com.elvan.udukkai.textiles.data.TextilesProfileRepository
 import com.elvan.udukkai.localization.K
 import com.elvan.udukkai.localization.tr
@@ -93,7 +92,7 @@ private fun FormLockWrapper(
  */
 @Composable
 fun TextilesInvoiceEditorScreen(
-    invoice: PattiyalTharavuru? = null,
+    invoice: InvoiceModel? = null,
     onBack: () -> Unit,
     onRequestAddNewCustomer: () -> Unit = {},
     onRequestAddNewProduct: () -> Unit = {}
@@ -110,26 +109,26 @@ fun TextilesInvoiceEditorScreen(
         TextilesInvoiceRepository.loadAll()
     }
 
-    val profiles: List<NiruvanaTharavugal> = TextilesProfileRepository.profiles
+    val profiles: List<BusinessProfile> = TextilesProfileRepository.profiles
     val activeProfile = TextilesProfileRepository.profile
-    val selectedProfile = remember(profiles, activeProfile, invoice?.niruvanamId) {
+    val selectedProfile = remember(profiles, activeProfile, invoice?.companyId) {
         if (isEditing) {
-            profiles.firstOrNull { it.id == invoice?.niruvanamId } ?: activeProfile
+            profiles.firstOrNull { it.id == invoice?.companyId } ?: activeProfile
         } else {
             activeProfile
         }
     }
-    val selectedNiruvanamId = if (isEditing) (invoice?.niruvanamId ?: selectedProfile.id) else (selectedProfile.id ?: profiles.firstOrNull()?.id)
+    val selectedNiruvanamId = if (isEditing) (invoice?.companyId ?: selectedProfile.id) else (selectedProfile.id ?: profiles.firstOrNull()?.id)
     val isProfileConfigured = profiles.isNotEmpty() && selectedNiruvanamId != null
 
-    fun computePrefix(p: NiruvanaTharavugal?): String {
+    fun computePrefix(p: BusinessProfile?): String {
         return if (p != null && p.kurumPeyar.isNotEmpty()) p.kurumPeyar else "INV"
     }
 
     val initialPrefix = computePrefix(selectedProfile)
     var invoiceNumber by remember {
         mutableStateOf(
-            invoice?.patrucheettuEn?.ifEmpty {
+            invoice?.invoiceNumber?.ifEmpty {
                 TextilesInvoiceRepository.getNextInvoiceNumber(selectedNiruvanamId, initialPrefix)
             } ?: TextilesInvoiceRepository.getNextInvoiceNumber(selectedNiruvanamId, initialPrefix)
         )
@@ -139,9 +138,9 @@ fun TextilesInvoiceEditorScreen(
     var showAddCustomerEditor by remember { mutableStateOf(false) }
 
     // Customer
-    var selectedVaangunarId by remember { mutableStateOf(invoice?.vaangunarId) }
-    var selectedVaangunarPeyarMap by remember { mutableStateOf(invoice?.vaangunarPeyar ?: emptyMap()) }
-    var selectedVaangunarMunvariMap by remember { mutableStateOf(invoice?.vaangunarMunvari ?: emptyMap()) }
+    var selectedVaangunarId by remember { mutableStateOf(invoice?.customerId) }
+    var selectedVaangunarPeyarMap by remember { mutableStateOf(invoice?.customerName ?: emptyMap()) }
+    var selectedVaangunarMunvariMap by remember { mutableStateOf(invoice?.customerAddress ?: emptyMap()) }
     var customerState by remember { mutableStateOf("") }
 
     val initialViruppangal = remember(invoice) {
@@ -149,8 +148,8 @@ fun TextilesInvoiceEditorScreen(
     }
 
     // Metadata
-    var pattiyalVagai by remember { mutableStateOf(invoice?.pattiyalVagai?.ifEmpty { "tax-invoice" } ?: "tax-invoice") }
-    var invoiceDate by remember { mutableStateOf(invoice?.pattiyalNaal ?: System.currentTimeMillis()) }
+    var pattiyalVagai by remember { mutableStateOf(invoice?.invoiceType?.ifEmpty { "tax-invoice" } ?: "tax-invoice") }
+    var invoiceDate by remember { mutableStateOf(invoice?.invoiceDate ?: System.currentTimeMillis()) }
     var placeOfSupplyEn by remember {
         mutableStateOf(
             if (invoice != null && initialViruppangal.placeOfSupply.isNotEmpty()) initialViruppangal.placeOfSupply else "Tamil Nadu"
@@ -166,7 +165,7 @@ fun TextilesInvoiceEditorScreen(
     var items by remember {
         mutableStateOf(
             if (invoice != null) {
-                TextilesCalculation.itemsFromJson(invoice.tharavugal).ifEmpty { listOf(TextilesItem()) }
+                TextilesCalculation.itemsFromJson(invoice.itemsJson).ifEmpty { listOf(TextilesItem()) }
             } else {
                 listOf(TextilesItem())
             }
@@ -179,8 +178,8 @@ fun TextilesInvoiceEditorScreen(
     // Global discount
     var globalDiscountValue by remember {
         mutableStateOf(
-            if (invoice != null && invoice.podhuThallupadiMathippu > 0) {
-                invoice.podhuThallupadiMathippu.toString()
+            if (invoice != null && invoice.globalDiscountValue > 0) {
+                invoice.globalDiscountValue.toString()
             } else if (invoice != null && initialViruppangal.globalDiscountValue > 0) {
                 initialViruppangal.globalDiscountValue.toString()
             } else ""
@@ -188,7 +187,7 @@ fun TextilesInvoiceEditorScreen(
     }
     var globalDiscountType by remember {
         mutableStateOf(
-            invoice?.podhuThallupadiVagai?.ifEmpty { initialViruppangal.globalDiscountType } ?: initialViruppangal.globalDiscountType
+            invoice?.globalDiscountType?.ifEmpty { initialViruppangal.globalDiscountType } ?: initialViruppangal.globalDiscountType
         )
     }
 
@@ -220,8 +219,8 @@ fun TextilesInvoiceEditorScreen(
         val sb = StringBuilder("{")
         sb.append("\"selectedNiruvanamId\":").append(selectedNiruvanamId ?: "null").append(",")
         sb.append("\"selectedVaangunarId\":").append(selectedVaangunarId ?: "null").append(",")
-        sb.append("\"vaangunarPeyar\":").append(MozhiJsonConverter.stringify(selectedVaangunarPeyarMap)).append(",")
-        sb.append("\"vaangunarMunvari\":").append(MozhiJsonConverter.stringify(selectedVaangunarMunvariMap)).append(",")
+        sb.append("\"vaangunarPeyar\":").append(LanguageJsonConverter.stringify(selectedVaangunarPeyarMap)).append(",")
+        sb.append("\"vaangunarMunvari\":").append(LanguageJsonConverter.stringify(selectedVaangunarMunvariMap)).append(",")
         sb.append("\"pattiyalVagai\":\"").append(pattiyalVagai).append("\",")
         sb.append("\"invoiceDate\":").append(invoiceDate).append(",")
         sb.append("\"placeOfSupplyEn\":\"").append(placeOfSupplyEn).append("\",")
@@ -240,10 +239,10 @@ fun TextilesInvoiceEditorScreen(
             if (vaangunarId != null) selectedVaangunarId = vaangunarId
 
             val peyarMatch = Regex(""""vaangunarPeyar"\s*:\s*(\{[^}]*\})""").find(json)?.groupValues?.get(1)
-            if (peyarMatch != null) selectedVaangunarPeyarMap = MozhiJsonConverter.parse(peyarMatch)
+            if (peyarMatch != null) selectedVaangunarPeyarMap = LanguageJsonConverter.parse(peyarMatch)
 
             val munvariMatch = Regex(""""vaangunarMunvari"\s*:\s*(\{[^}]*\})""").find(json)?.groupValues?.get(1)
-            if (munvariMatch != null) selectedVaangunarMunvariMap = MozhiJsonConverter.parse(munvariMatch)
+            if (munvariMatch != null) selectedVaangunarMunvariMap = LanguageJsonConverter.parse(munvariMatch)
 
             val vagai = Regex(""""pattiyalVagai"\s*:\s*"([^"]*)"""").find(json)?.groupValues?.get(1)
             if (!vagai.isNullOrEmpty()) pattiyalVagai = vagai
@@ -287,16 +286,16 @@ fun TextilesInvoiceEditorScreen(
     }
 
     // Automatic calculation engine
-    val totals = remember(activeItems, globalDiscountValue, globalDiscountType, selectedProfile.maanilam, customerState) {
+    val totals = remember(activeItems, globalDiscountValue, globalDiscountType, selectedProfile.state, customerState) {
         val discountVal = globalDiscountValue.toDoubleOrNull() ?: 0.0
-        val bState = selectedProfile.maanilam["en"] ?: selectedProfile.maanilam.values.firstOrNull().orEmpty()
+        val bState = selectedProfile.state["en"] ?: selectedProfile.state.values.firstOrNull().orEmpty()
         TextilesCalculation.calculate(
             items = activeItems,
             globalDiscountValue = discountVal,
             globalDiscountType = globalDiscountType,
             businessState = bState,
             customerState = placeOfSupplyEn,
-            country = selectedProfile.naadu["en"] ?: "India"
+            country = selectedProfile.country["en"] ?: "India"
         )
     }
 
@@ -328,13 +327,13 @@ fun TextilesInvoiceEditorScreen(
         } else if (invoiceNumber.isBlank()) {
             errorMessage = receiptNumberRequiredMsg
         } else {
-            val validItems = activeItems.filter { it.alavu > 0 && it.vilai > 0 }
+            val validItems = activeItems.filter { it.alavu > 0 && it.price > 0 }
             if (validItems.isEmpty()) {
                 errorMessage = porulRequiredMsg
             } else {
                 isSaving = true
                 val nextVanakkam = TextilesInvoiceRepository.getNextVanakkam(selectedNiruvanamId)
-                val newInvoice = PattiyalTharavuru(
+                val newInvoice = InvoiceModel(
                     id = invoice?.id ?: 0L,
                     companyId = selectedNiruvanamId,
                     invoiceNumber = invoiceNumber,
@@ -445,10 +444,10 @@ fun TextilesInvoiceEditorScreen(
                             selectedVaangunarId = selectedVaangunarId,
                             onCustomerSelected = { customer ->
                                 selectedVaangunarId = customer.id
-                                selectedVaangunarPeyarMap = customer.peyar
-                                selectedVaangunarMunvariMap = customer.oor
-                                val sEn = customer.maanilam["en"].orEmpty()
-                                val sTa = customer.maanilam["ta"] ?: customer.maanilam.values.firstOrNull().orEmpty()
+                                selectedVaangunarPeyarMap = customer.name
+                                selectedVaangunarMunvariMap = customer.city
+                                val sEn = customer.state["en"].orEmpty()
+                                val sTa = customer.state["ta"] ?: customer.state.values.firstOrNull().orEmpty()
                                 customerState = sEn
                                 if (sEn.isNotEmpty()) {
                                     placeOfSupplyEn = sEn
@@ -753,7 +752,7 @@ fun TextilesInvoiceEditorScreen(
 @Deprecated("Use TextilesInvoiceEditorScreen", ReplaceWith("TextilesInvoiceEditorScreen(invoice, onBack, onRequestAddNewCustomer, onRequestAddNewProduct)"))
 @Composable
 fun SilkInvoiceEditorScreen(
-    invoice: PattiyalTharavuru? = null,
+    invoice: InvoiceModel? = null,
     onBack: () -> Unit,
     onRequestAddNewCustomer: () -> Unit = {},
     onRequestAddNewProduct: () -> Unit = {}

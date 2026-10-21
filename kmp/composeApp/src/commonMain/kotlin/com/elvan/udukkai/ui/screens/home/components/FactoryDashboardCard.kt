@@ -13,7 +13,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.elvan.udukkai.core.utils.CurrencyUtils
 import com.elvan.udukkai.core.utils.DateUtils
-import com.elvan.udukkai.data.model.PattiyalTharavuru
+import com.elvan.udukkai.data.model.InvoiceModel
 import com.elvan.udukkai.factory.data.FactoryProfileRepository
 import com.elvan.udukkai.theme.Dimens
 import com.elvan.udukkai.theme.LocalAppFontFamily
@@ -27,7 +27,7 @@ import com.elvan.udukkai.theme.LocalShellColors
 @Composable
 fun FactoryDashboardCard(
     index: Int,
-    pattiyal: PattiyalTharavuru,
+    pattiyal: InvoiceModel,
     colors: ShellColors,
     modifier: Modifier = Modifier,
     onClick: () -> Unit = {}
@@ -35,29 +35,29 @@ fun FactoryDashboardCard(
     val ff = LocalAppFontFamily.current
 
     val profiles = FactoryProfileRepository.allProfiles
-    val profile = (if (pattiyal.niruvanamId != null) profiles.find { it.id == pattiyal.niruvanamId } else null)
+    val profile = (if (pattiyal.companyId != null) profiles.find { it.id == pattiyal.companyId } else null)
         ?: FactoryProfileRepository.profile
-    val isBilingual = profile.iruMozhi
-    val primaryLang = profile.mudhanMozhi.ifEmpty { "ta" }
+    val isBilingual = profile.isBilingual
+    val primaryLang = profile.primaryLanguage.ifEmpty { "ta" }
     val secondaryLang = profile.thunaiMozhi.ifEmpty { "en" }
 
-    val primary = pattiyal.vaangunarPeyar[primaryLang]
-        ?: pattiyal.vaangunarPeyar["ta"]
-        ?: pattiyal.vaangunarPeyar["en"]
-        ?: pattiyal.vaangunarPeyar.values.firstOrNull()
+    val primary = pattiyal.customerName[primaryLang]
+        ?: pattiyal.customerName["ta"]
+        ?: pattiyal.customerName["en"]
+        ?: pattiyal.customerName.values.firstOrNull()
         ?: "-"
 
-    val secondary = if (isBilingual) pattiyal.vaangunarPeyar[secondaryLang].orEmpty() else ""
+    val secondary = if (isBilingual) pattiyal.customerName[secondaryLang].orEmpty() else ""
     val showSecondary = isBilingual && secondary.isNotBlank() && secondary != primary
 
-    val primaryOor = pattiyal.vaangunarMunvari[primaryLang]
-        ?: pattiyal.vaangunarMunvari["ta"]
-        ?: pattiyal.vaangunarMunvari["en"]
-        ?: pattiyal.vaangunarMunvari.values.firstOrNull()
+    val primaryOor = pattiyal.customerAddress[primaryLang]
+        ?: pattiyal.customerAddress["ta"]
+        ?: pattiyal.customerAddress["en"]
+        ?: pattiyal.customerAddress.values.firstOrNull()
         ?: ""
 
-    val amountStr = CurrencyUtils.formatInr(pattiyal.mothaThogai)
-    val dateStr = DateUtils.formatEpochMillis(pattiyal.pattiyalNaal)
+    val amountStr = CurrencyUtils.formatInr(pattiyal.totalAmount)
+    val dateStr = DateUtils.formatEpochMillis(pattiyal.invoiceDate)
 
     ElvanCommonCard(
         onClick = onClick,
@@ -126,7 +126,7 @@ fun FactoryDashboardCard(
                 Spacer(modifier = Modifier.height(8.dp))
 
                 Text(
-                    text = "${pattiyal.patrucheettuEn}  •  $dateStr",
+                    text = "${pattiyal.invoiceNumber}  •  $dateStr",
                     style = TextStyle(
                         fontFamily = ff,
                         fontSize = 13.5.sp,

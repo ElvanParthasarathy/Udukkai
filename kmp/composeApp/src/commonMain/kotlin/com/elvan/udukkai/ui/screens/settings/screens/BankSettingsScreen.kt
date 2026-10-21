@@ -26,16 +26,16 @@ import com.elvan.udukkai.ui.components.shell.*
 fun BankSettingsScreen(
     scrollState: LazyListState = rememberLazyListState(),
     colors: ShellColors = rememberShellColors(),
-    profile: com.elvan.udukkai.data.settings.NiruvanaTharavugal,
-    onUpdateProfile: (com.elvan.udukkai.data.settings.NiruvanaTharavugal) -> Unit
+    profile: com.elvan.udukkai.data.settings.BusinessProfile,
+    onUpdateProfile: (com.elvan.udukkai.data.settings.BusinessProfile) -> Unit
 ) {
-    val isBilingual = profile.iruMozhi
+    val isBilingual = profile.isBilingual
 
     var editingSection by remember { mutableStateOf<String?>(null) }
     var tempPrimary by remember { mutableStateOf("") }
     var tempSecondary by remember { mutableStateOf("") }
 
-    val primaryLangLabel = if (profile.mudhanMozhi.lowercase().startsWith("ta")) K.taCode.tr() else K.enCode.tr()
+    val primaryLangLabel = if (profile.primaryLanguage.lowercase().startsWith("ta")) K.taCode.tr() else K.enCode.tr()
     val secondaryLangLabel = if (profile.thunaiMozhi.lowercase().startsWith("ta")) K.taCode.tr() else K.enCode.tr()
     val saveSuccessMsg = K.profileSaved.tr()
 
@@ -47,7 +47,7 @@ fun BankSettingsScreen(
 
     fun saveBilingual(fieldName: String) {
         val updated = profile.copy()
-        updated.setBilingual(fieldName, profile.mudhanMozhi, tempPrimary)
+        updated.setBilingual(fieldName, profile.primaryLanguage, tempPrimary)
         updated.setBilingual(fieldName, profile.thunaiMozhi, tempSecondary)
         onUpdateProfile(updated)
         editingSection = null

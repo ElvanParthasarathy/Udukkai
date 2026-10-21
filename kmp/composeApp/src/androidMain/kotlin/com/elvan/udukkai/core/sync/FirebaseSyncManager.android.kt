@@ -7,15 +7,11 @@ import com.elvan.udukkai.core.backup.getUdukkaiBackupService
 import com.elvan.udukkai.core.platform.AppContext
 import com.elvan.udukkai.data.model.CustomerModel
 import com.elvan.udukkai.data.model.InvoiceModel
-import com.elvan.udukkai.data.model.PattiyalTharavuru
-import com.elvan.udukkai.data.model.PatruPattiyalInaippuTharavuru
-import com.elvan.udukkai.data.model.PatrugalTharavuru
+import com.elvan.udukkai.data.model.ReceiptInvoiceLinkModel
 import com.elvan.udukkai.data.model.ReceiptModel
 import com.elvan.udukkai.data.model.ProductModel
 import com.elvan.udukkai.data.model.PorulFirebasePayloadConverter
-import com.elvan.udukkai.data.model.PorulTharavuru
-import com.elvan.udukkai.data.model.VaangunarTharavuru
-import com.elvan.udukkai.data.settings.MozhiJsonConverter
+import com.elvan.udukkai.data.settings.LanguageJsonConverter
 import com.google.firebase.FirebaseApp
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
@@ -363,7 +359,7 @@ class AndroidFirebaseSyncManager : FirebaseSyncManager {
 
     // --- Outbound Push Operations (Offline-Persistent) ---
 
-    override fun pushMerchant(merchant: VaangunarTharavuru, scope: String) {
+    override fun pushMerchant(merchant: CustomerModel, scope: String) {
         if (isApplyingRemoteChange) return
         val db = getDatabase() ?: return
         val prefix = getPrefix(scope)
@@ -371,17 +367,17 @@ class AndroidFirebaseSyncManager : FirebaseSyncManager {
 
         val data = hashMapOf<String, Any?>(
             "id" to merchant.id,
-            "peyar" to MozhiJsonConverter.stringify(merchant.peyar),
-            "mugavari" to MozhiJsonConverter.stringify(merchant.mugavari),
-            "oor" to MozhiJsonConverter.stringify(merchant.oor),
-            "maavattam" to MozhiJsonConverter.stringify(merchant.maavattam),
-            "maanilam" to MozhiJsonConverter.stringify(merchant.maanilam),
-            "naadu" to MozhiJsonConverter.stringify(merchant.naadu),
-            "velinaadMugavari" to MozhiJsonConverter.stringify(merchant.velinaadMugavari),
-            "anjalKuriyeedu" to merchant.anjalKuriyeedu,
+            "peyar" to LanguageJsonConverter.stringify(merchant.name),
+            "mugavari" to LanguageJsonConverter.stringify(merchant.address),
+            "oor" to LanguageJsonConverter.stringify(merchant.city),
+            "maavattam" to LanguageJsonConverter.stringify(merchant.district),
+            "maanilam" to LanguageJsonConverter.stringify(merchant.state),
+            "naadu" to LanguageJsonConverter.stringify(merchant.country),
+            "velinaadMugavari" to LanguageJsonConverter.stringify(merchant.velinaadMugavari),
+            "anjalKuriyeedu" to merchant.pinCode,
             "gstin" to merchant.gstin,
-            "minnanjal" to merchant.minnanjal,
-            "tholaipaesi" to merchant.tholaipaesi,
+            "minnanjal" to merchant.email,
+            "tholaipaesi" to merchant.phone,
             "createdAt" to merchant.createdAt,
             "updatedAt" to merchant.updatedAt,
             "isDeleted" to merchant.isDeleted,
@@ -396,7 +392,7 @@ class AndroidFirebaseSyncManager : FirebaseSyncManager {
         }
     }
 
-    override fun pushItem(item: PorulTharavuru, scope: String) {
+    override fun pushItem(item: ProductModel, scope: String) {
         if (isApplyingRemoteChange) return
         val db = getDatabase() ?: return
         val prefix = getPrefix(scope)
@@ -412,7 +408,7 @@ class AndroidFirebaseSyncManager : FirebaseSyncManager {
         }
     }
 
-    override fun pushInvoice(invoice: PattiyalTharavuru, scope: String) {
+    override fun pushInvoice(invoice: InvoiceModel, scope: String) {
         if (isApplyingRemoteChange) return
         val db = getDatabase() ?: return
         val prefix = getPrefix(scope)
@@ -420,32 +416,32 @@ class AndroidFirebaseSyncManager : FirebaseSyncManager {
 
         val data = hashMapOf<String, Any?>(
             "id" to invoice.id,
-            "niruvanamId" to invoice.niruvanamId,
-            "patrucheettuEn" to invoice.patrucheettuEn,
+            "niruvanamId" to invoice.companyId,
+            "patrucheettuEn" to invoice.invoiceNumber,
             "finYear" to invoice.finYear,
             "vanakkam" to invoice.vanakkam,
-            "pattiyalVagai" to invoice.pattiyalVagai,
-            "vaangunarId" to invoice.vaangunarId,
-            "vaangunarPeyar" to MozhiJsonConverter.stringify(invoice.vaangunarPeyar),
-            "vaangunarMunvari" to MozhiJsonConverter.stringify(invoice.vaangunarMunvari),
-            "pattiyalNaal" to invoice.pattiyalNaal,
-            "tharavugal" to invoice.tharavugal,
-            "mothaThogai" to invoice.mothaThogai,
-            "thallupadi" to invoice.thallupadi,
-            "podhuThallupadiMathippu" to invoice.podhuThallupadiMathippu,
-            "podhuThallupadiVagai" to invoice.podhuThallupadiVagai,
-            "podhuThallupadiThogai" to invoice.podhuThallupadiThogai,
-            "variThogai" to invoice.variThogai,
-            "variTharavugal" to invoice.variTharavugal,
+            "pattiyalVagai" to invoice.invoiceType,
+            "vaangunarId" to invoice.customerId,
+            "vaangunarPeyar" to LanguageJsonConverter.stringify(invoice.customerName),
+            "vaangunarMunvari" to LanguageJsonConverter.stringify(invoice.customerAddress),
+            "pattiyalNaal" to invoice.invoiceDate,
+            "tharavugal" to invoice.itemsJson,
+            "mothaThogai" to invoice.totalAmount,
+            "thallupadi" to invoice.discount,
+            "podhuThallupadiMathippu" to invoice.globalDiscountValue,
+            "podhuThallupadiVagai" to invoice.globalDiscountType,
+            "podhuThallupadiThogai" to invoice.globalDiscountAmount,
+            "variThogai" to invoice.taxAmount,
+            "variTharavugal" to invoice.taxDataJson,
             "mothaEdai" to invoice.mothaEdai,
-            "setharamGrams" to invoice.setharamGrams,
+            "setharamGrams" to invoice.wastageGrams,
             "thabaalThogai" to invoice.thabaalThogai,
-            "ahimsaPattuThogai" to invoice.ahimsaPattuThogai,
+            "ahimsaPattuThogai" to invoice.ahimsaSilkAmount,
             "piravariVugal" to invoice.piravariVugal,
             "sonthaViruppangal" to invoice.sonthaViruppangal,
             "nibandhanaigal" to invoice.nibandhanaigal,
-            "ullkurippu" to invoice.ullkurippu,
-            "vangiTharavugal" to invoice.vangiTharavugal,
+            "ullkurippu" to invoice.notes,
+            "vangiTharavugal" to invoice.bankDetailsJson,
             "createdAt" to invoice.createdAt,
             "updatedAt" to invoice.updatedAt,
             "isDeleted" to invoice.isDeleted,
@@ -460,7 +456,7 @@ class AndroidFirebaseSyncManager : FirebaseSyncManager {
         }
     }
 
-    override fun pushReceipt(receipt: PatrugalTharavuru, scope: String) {
+    override fun pushReceipt(receipt: ReceiptModel, scope: String) {
         if (isApplyingRemoteChange) return
         val db = getDatabase() ?: return
         val prefix = getPrefix(scope)
@@ -468,19 +464,19 @@ class AndroidFirebaseSyncManager : FirebaseSyncManager {
 
         val data = hashMapOf<String, Any?>(
             "id" to receipt.id,
-            "niruvanamId" to receipt.niruvanamId,
-            "patruEn" to receipt.patruEn,
+            "niruvanamId" to receipt.companyId,
+            "patruEn" to receipt.receiptNumber,
             "finYear" to receipt.finYear,
             "vanakkam" to receipt.vanakkam,
-            "vaangunarId" to receipt.vaangunarId,
-            "vaangunarPeyar" to MozhiJsonConverter.stringify(receipt.vaangunarPeyar),
-            "vaangunarMunvari" to MozhiJsonConverter.stringify(receipt.vaangunarMunvari),
-            "patruNaal" to receipt.patruNaal,
-            "thogai" to receipt.thogai,
+            "vaangunarId" to receipt.customerId,
+            "vaangunarPeyar" to LanguageJsonConverter.stringify(receipt.customerName),
+            "vaangunarMunvari" to LanguageJsonConverter.stringify(receipt.customerAddress),
+            "patruNaal" to receipt.receiptDate,
+            "thogai" to receipt.amount,
             "seluthumMurai" to receipt.seluthumMurai,
-            "vangiPeyar" to receipt.vangiPeyar,
-            "parivarthanaiEn" to receipt.parivarthanaiEn,
-            "ullkurippu" to receipt.ullkurippu,
+            "vangiPeyar" to receipt.bankName,
+            "parivarthanaiEn" to receipt.transactionNumber,
+            "ullkurippu" to receipt.notes,
             "createdAt" to receipt.createdAt,
             "updatedAt" to receipt.updatedAt,
             "isDeleted" to receipt.isDeleted,
@@ -495,7 +491,7 @@ class AndroidFirebaseSyncManager : FirebaseSyncManager {
         }
     }
 
-    override fun pushReceiptLinks(receiptId: Long, links: List<PatruPattiyalInaippuTharavuru>, scope: String) {
+    override fun pushReceiptLinks(receiptId: Long, links: List<ReceiptInvoiceLinkModel>, scope: String) {
         if (isApplyingRemoteChange) return
         val db = getDatabase() ?: return
         val prefix = getPrefix(scope)
@@ -505,9 +501,9 @@ class AndroidFirebaseSyncManager : FirebaseSyncManager {
         links.forEach { link ->
             linksMap["${link.id}"] = hashMapOf(
                 "id" to link.id,
-                "patruId" to link.patruId,
-                "pattiyalId" to link.pattiyalId,
-                "poruthiyaThogai" to link.poruthiyaThogai
+                "patruId" to link.receiptId,
+                "pattiyalId" to link.invoiceId,
+                "poruthiyaThogai" to link.appliedAmount
             )
         }
         root.setValue(linksMap)
@@ -515,7 +511,7 @@ class AndroidFirebaseSyncManager : FirebaseSyncManager {
 
     // --- Deserialization Helpers ---
 
-    private fun snapshotToMerchant(s: DataSnapshot): VaangunarTharavuru? {
+    private fun snapshotToMerchant(s: DataSnapshot): CustomerModel? {
         return try {
             val id = (s.child("id").value as? Number)?.toLong() ?: s.key?.toLongOrNull() ?: return null
             val peyarStr = s.child("peyar").value as? String ?: "{}"
@@ -528,13 +524,13 @@ class AndroidFirebaseSyncManager : FirebaseSyncManager {
 
             CustomerModel(
                 id = id,
-                name = MozhiJsonConverter.parse(peyarStr),
-                address = MozhiJsonConverter.parse(mugavariStr),
-                city = MozhiJsonConverter.parse(oorStr),
-                district = MozhiJsonConverter.parse(maavattamStr),
-                state = MozhiJsonConverter.parse(maanilamStr),
-                country = MozhiJsonConverter.parse(naaduStr),
-                internationalAddress = MozhiJsonConverter.parse(velinaadStr),
+                name = LanguageJsonConverter.parse(peyarStr),
+                address = LanguageJsonConverter.parse(mugavariStr),
+                city = LanguageJsonConverter.parse(oorStr),
+                district = LanguageJsonConverter.parse(maavattamStr),
+                state = LanguageJsonConverter.parse(maanilamStr),
+                country = LanguageJsonConverter.parse(naaduStr),
+                internationalAddress = LanguageJsonConverter.parse(velinaadStr),
                 pinCode = s.child("anjalKuriyeedu").value as? String ?: "",
                 gstin = s.child("gstin").value as? String ?: "",
                 email = s.child("minnanjal").value as? String ?: "",
@@ -550,7 +546,7 @@ class AndroidFirebaseSyncManager : FirebaseSyncManager {
         }
     }
 
-    private fun snapshotToItem(s: DataSnapshot): PorulTharavuru? {
+    private fun snapshotToItem(s: DataSnapshot): ProductModel? {
         return try {
             val id = (s.child("id").value as? Number)?.toLong() ?: s.key?.toLongOrNull() ?: return null
             val porulPeyarStr = s.child("porulPeyar").value as? String ?: "{}"
@@ -591,7 +587,7 @@ class AndroidFirebaseSyncManager : FirebaseSyncManager {
 
             ProductModel(
                 id = id,
-                name = MozhiJsonConverter.parse(porulPeyarStr),
+                name = LanguageJsonConverter.parse(porulPeyarStr),
                 hsnCode = s.child("hsnCode").value as? String ?: "",
                 price = (s.child("price").value as? Number)?.toDouble() ?: (s.child("vilai").value as? Number)?.toDouble() ?: 0.0,
                 taxRate = (s.child("taxRate").value as? Number)?.toDouble() ?: (s.child("variVeetham").value as? Number)?.toDouble() ?: 0.0,
@@ -610,13 +606,13 @@ class AndroidFirebaseSyncManager : FirebaseSyncManager {
         }
     }
 
-    private fun snapshotToInvoice(s: DataSnapshot): PattiyalTharavuru? {
+    private fun snapshotToInvoice(s: DataSnapshot): InvoiceModel? {
         return try {
             val id = (s.child("id").value as? Number)?.toLong() ?: s.key?.toLongOrNull() ?: return null
             val vaangunarPeyarStr = s.child("vaangunarPeyar").value as? String ?: "{}"
             val vaangunarMunvariStr = s.child("vaangunarMunvari").value as? String ?: "{}"
 
-            PattiyalTharavuru(
+            InvoiceModel(
                 id = id,
                 companyId = (s.child("niruvanamId").value as? Number)?.toLong(),
                 invoiceNumber = s.child("patrucheettuEn").value as? String ?: "",
@@ -624,8 +620,8 @@ class AndroidFirebaseSyncManager : FirebaseSyncManager {
                 vanakkam = (s.child("vanakkam").value as? Number)?.toInt() ?: 1,
                 invoiceType = s.child("pattiyalVagai").value as? String ?: "tax-invoice",
                 customerId = (s.child("vaangunarId").value as? Number)?.toLong(),
-                customerName = MozhiJsonConverter.parse(vaangunarPeyarStr),
-                customerAddress = MozhiJsonConverter.parse(vaangunarMunvariStr),
+                customerName = LanguageJsonConverter.parse(vaangunarPeyarStr),
+                customerAddress = LanguageJsonConverter.parse(vaangunarMunvariStr),
                 invoiceDate = (s.child("pattiyalNaal").value as? Number)?.toLong() ?: (System.currentTimeMillis() / 1000),
                 itemsJson = s.child("tharavugal").value as? String ?: "[]",
                 totalAmount = (s.child("mothaThogai").value as? Number)?.toDouble() ?: 0.0,
@@ -655,21 +651,21 @@ class AndroidFirebaseSyncManager : FirebaseSyncManager {
         }
     }
 
-    private fun snapshotToReceipt(s: DataSnapshot): PatrugalTharavuru? {
+    private fun snapshotToReceipt(s: DataSnapshot): ReceiptModel? {
         return try {
             val id = (s.child("id").value as? Number)?.toLong() ?: s.key?.toLongOrNull() ?: return null
             val vaangunarPeyarStr = s.child("vaangunarPeyar").value as? String ?: "{}"
             val vaangunarMunvariStr = s.child("vaangunarMunvari").value as? String ?: "{}"
 
-            PatrugalTharavuru(
+            ReceiptModel(
                 id = id,
                 companyId = (s.child("niruvanamId").value as? Number)?.toLong(),
                 receiptNumber = s.child("patruEn").value as? String ?: "",
                 finYear = s.child("finYear").value as? String ?: "",
                 vanakkam = (s.child("vanakkam").value as? Number)?.toInt() ?: 1,
                 customerId = (s.child("vaangunarId").value as? Number)?.toLong(),
-                customerName = MozhiJsonConverter.parse(vaangunarPeyarStr),
-                customerAddress = MozhiJsonConverter.parse(vaangunarMunvariStr),
+                customerName = LanguageJsonConverter.parse(vaangunarPeyarStr),
+                customerAddress = LanguageJsonConverter.parse(vaangunarMunvariStr),
                 receiptDate = (s.child("patruNaal").value as? Number)?.toLong() ?: (System.currentTimeMillis() / 1000),
                 amount = (s.child("thogai").value as? Number)?.toDouble() ?: 0.0,
                 paymentMode = s.child("seluthumMurai").value as? String ?: "cash",

@@ -378,8 +378,8 @@ fun ElvanThiruthiUlleedu(
 /**
  * Reusable Bilingual Input Field.
  * Matches Flutter's `ElvanIrumozhiPulan`:
- * Checks `profile.iruMozhi` from settings:
- * - If false: Renders 1 single input for primary language (`profile.mudhanMozhi`).
+ * Checks `profile.isBilingual` from settings:
+ * - If false: Renders 1 single input for primary language (`profile.primaryLanguage`).
  * - If true: Renders 2 inputs: Primary language and Secondary language (`profile.thunaiMozhi`).
  */
 @Composable

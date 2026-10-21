@@ -5,15 +5,15 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.elvan.udukkai.core.backup.AutoBackupManager
 import com.elvan.udukkai.data.database.getFactoryDatabaseHelper
-import com.elvan.udukkai.core.utils.ThedalUdhavi
-import com.elvan.udukkai.data.model.PattiyalTharavuru
+import com.elvan.udukkai.core.utils.SearchHelper
+import com.elvan.udukkai.data.model.InvoiceModel
 
 object FactoryInvoiceRepository {
 
-    var invoices by mutableStateOf<List<PattiyalTharavuru>>(emptyList())
+    var invoices by mutableStateOf<List<InvoiceModel>>(emptyList())
         private set
 
-    var deletedInvoices by mutableStateOf<List<PattiyalTharavuru>>(emptyList())
+    var deletedInvoices by mutableStateOf<List<InvoiceModel>>(emptyList())
         private set
 
     var searchQuery by mutableStateOf("")
@@ -33,26 +33,26 @@ object FactoryInvoiceRepository {
         endDateFilter = null
     }
 
-    val activeCompanyInvoices: List<PattiyalTharavuru>
+    val activeCompanyInvoices: List<InvoiceModel>
         get() {
             val activeId = FactoryProfileRepository.profile.id
             return if (activeId != null) {
-                invoices.filter { it.niruvanamId == activeId }
+                invoices.filter { it.companyId == activeId }
             } else {
                 invoices
             }
         }
 
-    val filteredInvoices: List<PattiyalTharavuru>
+    val filteredInvoices: List<InvoiceModel>
         get() {
             return activeCompanyInvoices.filter { inv ->
-                val matchesQuery = ThedalUdhavi.matchesInvoice(inv, searchQuery)
+                val matchesQuery = SearchHelper.matchesInvoice(inv, searchQuery)
 
                 val matchesDate = when {
                     startDateFilter != null && endDateFilter != null ->
-                        inv.pattiyalNaal in startDateFilter!!..endDateFilter!!
-                    startDateFilter != null -> inv.pattiyalNaal >= startDateFilter!!
-                    endDateFilter != null -> inv.pattiyalNaal <= endDateFilter!!
+                        inv.invoiceDate in startDateFilter!!..endDateFilter!!
+                    startDateFilter != null -> inv.invoiceDate >= startDateFilter!!
+                    endDateFilter != null -> inv.invoiceDate <= endDateFilter!!
                     else -> true
                 }
 
@@ -61,9 +61,9 @@ object FactoryInvoiceRepository {
         }
 
     val overallTotal: Double
-        get() = activeCompanyInvoices.sumOf { it.mothaThogai }
+        get() = activeCompanyInvoices.sumOf { it.totalAmount }
 
-    val recentInvoices: List<PattiyalTharavuru>
+    val recentInvoices: List<InvoiceModel>
         get() = activeCompanyInvoices.take(5)
 
     init {
@@ -73,25 +73,25 @@ object FactoryInvoiceRepository {
 
     fun getNextVanakkam(niruvanamId: Long?): Int {
         val matching = if (niruvanamId != null) {
-            invoices.filter { it.niruvanamId == niruvanamId }
+            invoices.filter { it.companyId == niruvanamId }
         } else {
-            invoices.filter { it.niruvanamId == null }
+            invoices.filter { it.companyId == null }
         }
         val maxVanakkam = matching.maxOfOrNull { it.vanakkam } ?: 0
         val parsedMax = matching.mapNotNull { inv ->
-            inv.patrucheettuEn.substringAfterLast('-', "").toIntOrNull()
+            inv.invoiceNumber.substringAfterLast('-', "").toIntOrNull()
         }.maxOfOrNull { it } ?: 0
         return maxOf(maxVanakkam, parsedMax) + 1
     }
 
-    fun formatPattiyalEn(prefix: String, vanakkam: Int): String {
+    fun formatInvoiceNumber(prefix: String, vanakkam: Int): String {
         val padded = if (vanakkam < 10) vanakkam.toString().padStart(2, '0') else vanakkam.toString()
         return "$prefix-$padded"
     }
 
     fun getNextInvoiceNumber(niruvanamId: Long?, prefix: String): String {
         val vanakkam = getNextVanakkam(niruvanamId)
-        return formatPattiyalEn(prefix, vanakkam)
+        return formatInvoiceNumber(prefix, vanakkam)
     }
 
     fun loadAll() {
@@ -116,7 +116,7 @@ object FactoryInvoiceRepository {
         }
     }
 
-    fun save(invoice: PattiyalTharavuru): Long {
+    fun save(invoice: InvoiceModel): Long {
         val helper = getFactoryDatabaseHelper()
         val id = helper.saveInvoice(invoice)
         if (id > 0) {

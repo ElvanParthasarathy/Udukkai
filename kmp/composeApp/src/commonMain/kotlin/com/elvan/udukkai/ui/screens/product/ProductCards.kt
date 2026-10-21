@@ -11,7 +11,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.elvan.udukkai.data.model.PorulTharavuru
+import com.elvan.udukkai.data.model.ProductModel
 import com.elvan.udukkai.factory.data.FactoryProfileRepository
 import com.elvan.udukkai.textiles.data.TextilesProfileRepository
 import com.elvan.udukkai.theme.Dimens
@@ -46,7 +46,7 @@ private fun getDynamicField(
 @Composable
 fun FactoryProductCard(
     index: Int,
-    porul: PorulTharavuru,
+    porul: ProductModel,
     onClick: () -> Unit,
     colors: ShellColors,
     isSelectionMode: Boolean = false,
@@ -55,13 +55,13 @@ fun FactoryProductCard(
 ) {
     val ff = LocalAppFontFamily.current
     val profile = FactoryProfileRepository.profile
-    val isBilingual = profile.iruMozhi
-    val primaryLang = profile.mudhanMozhi.ifEmpty { "ta" }
+    val isBilingual = profile.isBilingual
+    val primaryLang = profile.primaryLanguage.ifEmpty { "ta" }
     val secondaryLang = profile.thunaiMozhi.ifEmpty { "en" }
 
-    val primary = getDynamicField(porul.porulPeyar, isPrimary = true, isBilingual = isBilingual, primaryLang, secondaryLang)
-        .ifEmpty { porul.porulPeyar.values.firstOrNull() ?: "-" }
-    val secondary = getDynamicField(porul.porulPeyar, isPrimary = false, isBilingual = isBilingual, primaryLang, secondaryLang)
+    val primary = getDynamicField(porul.name, isPrimary = true, isBilingual = isBilingual, primaryLang, secondaryLang)
+        .ifEmpty { porul.name.values.firstOrNull() ?: "-" }
+    val secondary = getDynamicField(porul.name, isPrimary = false, isBilingual = isBilingual, primaryLang, secondaryLang)
 
     ElvanCommonCard(
         onClick = onClick,
@@ -143,7 +143,7 @@ fun FactoryProductCard(
 @Composable
 fun TextilesProductCard(
     index: Int,
-    porul: PorulTharavuru,
+    porul: ProductModel,
     onClick: () -> Unit,
     colors: ShellColors,
     isSelectionMode: Boolean = false,
@@ -152,13 +152,13 @@ fun TextilesProductCard(
 ) {
     val ff = LocalAppFontFamily.current
     val profile = TextilesProfileRepository.profile
-    val isBilingual = profile.iruMozhi
-    val primaryLang = profile.mudhanMozhi.ifEmpty { "ta" }
+    val isBilingual = profile.isBilingual
+    val primaryLang = profile.primaryLanguage.ifEmpty { "ta" }
     val secondaryLang = profile.thunaiMozhi.ifEmpty { "en" }
 
-    val primary = getDynamicField(porul.porulPeyar, isPrimary = true, isBilingual = isBilingual, primaryLang, secondaryLang)
-        .ifEmpty { porul.porulPeyar.values.firstOrNull() ?: "-" }
-    val secondary = getDynamicField(porul.porulPeyar, isPrimary = false, isBilingual = isBilingual, primaryLang, secondaryLang)
+    val primary = getDynamicField(porul.name, isPrimary = true, isBilingual = isBilingual, primaryLang, secondaryLang)
+        .ifEmpty { porul.name.values.firstOrNull() ?: "-" }
+    val secondary = getDynamicField(porul.name, isPrimary = false, isBilingual = isBilingual, primaryLang, secondaryLang)
 
     ElvanCommonCard(
         onClick = onClick,
@@ -244,8 +244,8 @@ fun TextilesProductCard(
                         modifier = Modifier.weight(1f, fill = false)
                     ) {
                         val hsnText = if (porul.hsnCode.isNotBlank()) "HSN: ${porul.hsnCode}" else ""
-                        val gstRate = if (porul.variVeetham % 1.0 == 0.0) porul.variVeetham.toLong().toString() else porul.variVeetham.toString()
-                        val taxText = if (porul.variVeetham > 0.0) "Tax: $gstRate%" else ""
+                        val gstRate = if (porul.taxRate % 1.0 == 0.0) porul.taxRate.toLong().toString() else porul.taxRate.toString()
+                        val taxText = if (porul.taxRate > 0.0) "Tax: $gstRate%" else ""
                         val hsnTaxLine = if (hsnText.isNotBlank() && taxText.isNotBlank()) "$hsnText • $taxText" else "$hsnText$taxText"
 
                         if (hsnTaxLine.isNotBlank()) {
@@ -261,7 +261,7 @@ fun TextilesProductCard(
                             )
                         }
 
-                        val measureLabel = if (porul.alavuVagai == "weight") "எடை • Weight" else "அளவு • Quantity"
+                        val measureLabel = if (porul.quantityType == "weight") "எடை • Weight" else "அளவு • Quantity"
                         Text(
                             text = measureLabel,
                             style = TextStyle(
@@ -278,8 +278,8 @@ fun TextilesProductCard(
 
                     Spacer(modifier = Modifier.width(8.dp))
 
-                    val priceText = if (porul.vilai > 0.0) {
-                        val formatted = if (porul.vilai % 1.0 == 0.0) porul.vilai.toLong().toString() else porul.vilai.toString()
+                    val priceText = if (porul.price > 0.0) {
+                        val formatted = if (porul.price % 1.0 == 0.0) porul.price.toLong().toString() else porul.price.toString()
                         "₹$formatted"
                     } else {
                         "-"

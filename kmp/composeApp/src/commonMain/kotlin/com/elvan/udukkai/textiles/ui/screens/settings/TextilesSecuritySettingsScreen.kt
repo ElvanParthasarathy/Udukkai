@@ -51,7 +51,7 @@ fun TextilesSecuritySettingsScreen(
     val passwordRequiredMsg = K.passwordRequired.tr()
 
     val currentProfile = TextilesProfileRepository.profile
-    val registeredEmail = currentProfile.minnanjal.trim()
+    val registeredEmail = currentProfile.email.trim()
     val confirmEmailPlaceholder = if (registeredEmail.isNotBlank()) registeredEmail else K.confirmEmail.tr()
 
     LazyColumn(

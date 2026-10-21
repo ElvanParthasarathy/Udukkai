@@ -24,8 +24,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.elvan.udukkai.core.utils.DateGroupUtils
 import com.elvan.udukkai.core.utils.DateUtils
-import com.elvan.udukkai.data.model.PattiyalTharavuru
-import com.elvan.udukkai.data.model.PatrugalTharavuru
+import com.elvan.udukkai.data.model.InvoiceModel
+import com.elvan.udukkai.data.model.ReceiptModel
 import com.elvan.udukkai.textiles.data.TextilesInvoiceRepository
 import com.elvan.udukkai.textiles.data.TextilesProfileRepository
 import com.elvan.udukkai.textiles.data.TextilesReceiptRepository
@@ -54,8 +54,8 @@ fun TextilesCreateScreen(
     selectedItemIds: Set<Long> = emptySet(),
     onToggleSelect: ((Long) -> Unit)? = null,
     onItemLongClick: ((Long) -> Unit)? = null,
-    onInvoiceClick: (PattiyalTharavuru) -> Unit = {},
-    onReceiptClick: (PatrugalTharavuru) -> Unit = {}
+    onInvoiceClick: (InvoiceModel) -> Unit = {},
+    onReceiptClick: (ReceiptModel) -> Unit = {}
 ) {
     val colors = rememberShellColors()
     val isDark = colors.isDark
@@ -102,11 +102,11 @@ fun TextilesCreateScreen(
     val hasMoreReceipts = receipts.size > visibleReceiptCount
 
     val invoiceGroups = remember(displayedInvoices) {
-        DateGroupUtils.groupItemsByDate(displayedInvoices) { it.pattiyalNaal }
+        DateGroupUtils.groupItemsByDate(displayedInvoices) { it.invoiceDate }
     }
 
     val receiptGroups = remember(displayedReceipts) {
-        DateGroupUtils.groupItemsByDate(displayedReceipts) { it.patruNaal }
+        DateGroupUtils.groupItemsByDate(displayedReceipts) { it.receiptDate }
     }
 
     val shifterItems = listOf(

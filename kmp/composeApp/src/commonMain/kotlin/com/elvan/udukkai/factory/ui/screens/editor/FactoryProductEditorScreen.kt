@@ -16,7 +16,6 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.elvan.udukkai.core.platform.AppBackHandler
-import com.elvan.udukkai.data.model.PorulTharavuru
 import com.elvan.udukkai.data.model.ProductModel
 import com.elvan.udukkai.factory.data.FactoryProductRepository
 import com.elvan.udukkai.factory.data.FactoryProfileRepository
@@ -31,11 +30,11 @@ import com.elvan.udukkai.ui.screens.editor.*
 /**
  * Dedicated Product / Labor Process Editor for Udukkai Factory (ஆலை).
  * Distinct Factory labor schema: Process Name, Labor Rate, Unit of measurement.
- * Reactively follows FactoryProfileRepository.profile.iruMozhi for bilingual toggling.
+ * Reactively follows FactoryProfileRepository.profile.isBilingual for bilingual toggling.
  */
 @Composable
 fun FactoryProductEditorScreen(
-    item: PorulTharavuru? = null,
+    item: ProductModel? = null,
     onBack: () -> Unit
 ) {
     val colors = rememberShellColors()
@@ -43,19 +42,19 @@ fun FactoryProductEditorScreen(
     val isEditing = item != null && item.id > 0L
 
     val profile = FactoryProfileRepository.profile
-    val isBilingual = profile.iruMozhi
-    val primaryLang = profile.mudhanMozhi.ifEmpty { "ta" }
+    val isBilingual = profile.isBilingual
+    val primaryLang = profile.primaryLanguage.ifEmpty { "ta" }
     val secondaryLang = profile.thunaiMozhi.ifEmpty { "en" }
 
-    var porulPeyarMap by remember { mutableStateOf(item?.porulPeyar ?: emptyMap()) }
+    var porulPeyarMap by remember { mutableStateOf(item?.name ?: emptyMap()) }
     var vilai by remember {
         mutableStateOf(
-            if (item != null && item.vilai > 0) {
-                if (item.vilai % 1.0 == 0.0) item.vilai.toLong().toString() else item.vilai.toString()
+            if (item != null && item.price > 0) {
+                if (item.price % 1.0 == 0.0) item.price.toLong().toString() else item.price.toString()
             } else ""
         )
     }
-    var alavuVagai by remember { mutableStateOf(item?.alavuVagai?.ifEmpty { "quantity" } ?: "quantity") }
+    var alavuVagai by remember { mutableStateOf(item?.quantityType?.ifEmpty { "quantity" } ?: "quantity") }
 
     var validationError by remember { mutableStateOf<String?>(null) }
     var showDiscardDialog by remember { mutableStateOf(false) }
@@ -65,9 +64,9 @@ fun FactoryProductEditorScreen(
         if (item == null) {
             porulPeyarMap.values.any { it.isNotBlank() } || vilai.isNotBlank()
         } else {
-            porulPeyarMap != item.porulPeyar ||
-                (vilai.toDoubleOrNull() ?: 0.0) != item.vilai ||
-                alavuVagai != item.alavuVagai
+            porulPeyarMap != item.name ||
+                (vilai.toDoubleOrNull() ?: 0.0) != item.price ||
+                alavuVagai != item.quantityType
         }
     }
 

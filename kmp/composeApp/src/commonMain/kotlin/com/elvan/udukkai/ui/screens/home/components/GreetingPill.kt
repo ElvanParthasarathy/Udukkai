@@ -18,7 +18,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.elvan.udukkai.data.settings.NiruvanaTharavugal
+import com.elvan.udukkai.data.settings.BusinessProfile
 import com.elvan.udukkai.localization.K
 import com.elvan.udukkai.localization.tr
 import com.elvan.udukkai.theme.LocalAppFontFamily
@@ -33,8 +33,8 @@ import com.elvan.udukkai.ui.navigation.MaterialSymbols
 @Composable
 fun GreetingPill(
     colors: ShellColors,
-    profile: NiruvanaTharavugal,
-    allProfiles: List<NiruvanaTharavugal>,
+    profile: BusinessProfile,
+    allProfiles: List<BusinessProfile>,
     defaultTitle: String,
     modifier: Modifier = Modifier,
     onProfileChanging: ((Long) -> Unit)? = null,

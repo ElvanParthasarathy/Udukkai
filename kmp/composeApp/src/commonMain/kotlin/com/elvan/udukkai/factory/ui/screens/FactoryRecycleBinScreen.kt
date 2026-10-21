@@ -117,8 +117,8 @@ fun FactoryRecycleBinScreen(
     val allDeletedInvoices = com.elvan.udukkai.factory.data.FactoryInvoiceRepository.deletedInvoices
     val displayedInvoices = remember(allDeletedInvoices, activeId, searchQuery) {
         allDeletedInvoices.filter { invoice ->
-            val matchesQuery = com.elvan.udukkai.core.utils.ThedalUdhavi.matchesInvoice(invoice, searchQuery)
-            val matchesProfile = if (activeId != null) invoice.niruvanamId == activeId else true
+            val matchesQuery = com.elvan.udukkai.core.utils.SearchHelper.matchesInvoice(invoice, searchQuery)
+            val matchesProfile = if (activeId != null) invoice.companyId == activeId else true
             matchesQuery && matchesProfile
         }
     }
@@ -126,8 +126,8 @@ fun FactoryRecycleBinScreen(
     val allDeletedReceipts = com.elvan.udukkai.factory.data.FactoryReceiptRepository.deletedReceipts
     val displayedReceipts = remember(allDeletedReceipts, activeId, searchQuery) {
         allDeletedReceipts.filter { receipt ->
-            val matchesQuery = com.elvan.udukkai.core.utils.ThedalUdhavi.matchesReceipt(receipt, searchQuery)
-            val matchesProfile = if (activeId != null) receipt.niruvanamId == activeId else true
+            val matchesQuery = com.elvan.udukkai.core.utils.SearchHelper.matchesReceipt(receipt, searchQuery)
+            val matchesProfile = if (activeId != null) receipt.companyId == activeId else true
             matchesQuery && matchesProfile
         }
     }
@@ -136,7 +136,7 @@ fun FactoryRecycleBinScreen(
     val displayedProducts = remember(allDeletedProducts, activeId, searchQuery) {
         allDeletedProducts.filter { item ->
             val matchesCompany = if (activeId != null) item.isAvailableForCompany(activeId) else true
-            val matchesQuery = com.elvan.udukkai.core.utils.ThedalUdhavi.matchesProduct(item, searchQuery)
+            val matchesQuery = com.elvan.udukkai.core.utils.SearchHelper.matchesProduct(item, searchQuery)
             matchesCompany && matchesQuery
         }
     }
@@ -144,7 +144,7 @@ fun FactoryRecycleBinScreen(
     val allDeletedCustomers = com.elvan.udukkai.factory.data.FactoryCustomerRepository.deletedCustomers
     val displayedCustomers = remember(allDeletedCustomers, searchQuery) {
         allDeletedCustomers.filter { merchant ->
-            com.elvan.udukkai.core.utils.ThedalUdhavi.matchesCustomer(merchant, searchQuery)
+            com.elvan.udukkai.core.utils.SearchHelper.matchesCustomer(merchant, searchQuery)
         }
     }
 

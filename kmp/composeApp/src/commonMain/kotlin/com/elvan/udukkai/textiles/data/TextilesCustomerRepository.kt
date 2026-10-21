@@ -5,30 +5,30 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.elvan.udukkai.core.backup.AutoBackupManager
 import com.elvan.udukkai.data.database.getTextilesDatabaseHelper
-import com.elvan.udukkai.core.utils.ThedalUdhavi
-import com.elvan.udukkai.data.model.VaangunarTharavuru
+import com.elvan.udukkai.core.utils.SearchHelper
+import com.elvan.udukkai.data.model.CustomerModel
 
 /**
  * Dedicated customer repository for Udukkai Textiles (சவுளி).
  * Distinct customer fields: Name, GSTIN, Phone, Email, PIN, State, District, City, Address.
  */
 object TextilesCustomerRepository {
-    val customers: List<com.elvan.udukkai.data.model.VaangunarTharavuru> get() = merchants
-    val deletedCustomers: List<com.elvan.udukkai.data.model.VaangunarTharavuru> get() = deletedMerchants
+    val customers: List<com.elvan.udukkai.data.model.CustomerModel> get() = merchants
+    val deletedCustomers: List<com.elvan.udukkai.data.model.CustomerModel> get() = deletedMerchants
 
 
-    var merchants by mutableStateOf<List<VaangunarTharavuru>>(emptyList())
+    var merchants by mutableStateOf<List<CustomerModel>>(emptyList())
         private set
 
-    var deletedMerchants by mutableStateOf<List<VaangunarTharavuru>>(emptyList())
+    var deletedMerchants by mutableStateOf<List<CustomerModel>>(emptyList())
         private set
 
     var searchQuery by mutableStateOf("")
 
-    val filteredMerchants: List<VaangunarTharavuru>
+    val filteredMerchants: List<CustomerModel>
         get() {
             return merchants.filter { m ->
-                ThedalUdhavi.matchesCustomer(m, searchQuery)
+                SearchHelper.matchesCustomer(m, searchQuery)
             }
         }
 
@@ -59,7 +59,7 @@ object TextilesCustomerRepository {
         }
     }
 
-    fun save(merchant: VaangunarTharavuru): Long {
+    fun save(merchant: CustomerModel): Long {
         val helper = getTextilesDatabaseHelper()
         val id = helper.saveMerchant(merchant)
         if (id > 0) {
@@ -98,5 +98,5 @@ object TextilesCustomerRepository {
         return success
     }
 
-    fun getById(id: Long): VaangunarTharavuru? = merchants.find { it.id == id }
+    fun getById(id: Long): CustomerModel? = merchants.find { it.id == id }
 }

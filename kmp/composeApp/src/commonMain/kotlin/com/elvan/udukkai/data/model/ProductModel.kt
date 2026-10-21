@@ -1,6 +1,6 @@
 package com.elvan.udukkai.data.model
 
-import com.elvan.udukkai.data.settings.MozhiJsonConverter
+import com.elvan.udukkai.data.settings.LanguageJsonConverter
 
 data class ProductModel(
     val id: Long = 0,
@@ -95,11 +95,11 @@ object PorulJsonConverter {
 
 object PorulFirebasePayloadConverter {
     /**
-     * Converts a PorulTharavuru to a HashMap suitable for Firebase Realtime Database.
+     * Converts a ProductModel to a HashMap suitable for Firebase Realtime Database.
      * Serializes niruvanamIds as a List of Longs and companyPrices as a Map<String, Double>
      * where keys are stable string representations of company IDs.
      */
-    fun toFirebasePayload(item: PorulTharavuru): HashMap<String, Any?> {
+    fun toFirebasePayload(item: ProductModel): HashMap<String, Any?> {
         val pricesMap = hashMapOf<String, Double>()
         item.companyPrices.forEach { (companyId, price) ->
             if (companyId > 0 && price > 0.0) {
@@ -109,9 +109,9 @@ object PorulFirebasePayloadConverter {
 
         return hashMapOf(
             "id" to item.id,
-            "name" to MozhiJsonConverter.stringify(item.name),
-            "productName" to MozhiJsonConverter.stringify(item.name),
-            "porulPeyar" to MozhiJsonConverter.stringify(item.name),
+            "name" to LanguageJsonConverter.stringify(item.name),
+            "productName" to LanguageJsonConverter.stringify(item.name),
+            "porulPeyar" to LanguageJsonConverter.stringify(item.name),
             "hsnCode" to item.hsnCode,
             "price" to item.price,
             "vilai" to item.price,
@@ -208,10 +208,10 @@ object PorulFirebasePayloadConverter {
     }
 
     /**
-     * Reconstructs a PorulTharavuru from a raw Map (e.g. snapshot.value or simulated payload).
+     * Reconstructs a ProductModel from a raw Map (e.g. snapshot.value or simulated payload).
      * Backwards-compatible with legacy records missing niruvanamIds and/or companyPrices.
      */
-    fun fromRawMap(map: Map<String, Any?>, fallbackId: Long = 0L): PorulTharavuru? {
+    fun fromRawMap(map: Map<String, Any?>, fallbackId: Long = 0L): ProductModel? {
         val id = when (val rawId = map["id"]) {
             is Number -> rawId.toLong()
             is String -> rawId.trim().toLongOrNull() ?: fallbackId
@@ -255,7 +255,7 @@ object PorulFirebasePayloadConverter {
 
         return ProductModel(
             id = id,
-            name = MozhiJsonConverter.parse(nameStr),
+            name = LanguageJsonConverter.parse(nameStr),
             hsnCode = hsnCode,
             price = price,
             taxRate = taxRate,

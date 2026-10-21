@@ -1,16 +1,16 @@
 package com.elvan.udukkai.core.utils
 
-import com.elvan.udukkai.data.model.PattiyalTharavuru
-import com.elvan.udukkai.data.model.PatrugalTharavuru
-import com.elvan.udukkai.data.model.PorulTharavuru
-import com.elvan.udukkai.data.model.VaangunarTharavuru
+import com.elvan.udukkai.data.model.CustomerModel
+import com.elvan.udukkai.data.model.InvoiceModel
+import com.elvan.udukkai.data.model.ProductModel
+import com.elvan.udukkai.data.model.ReceiptModel
 
 /**
- * Universal high-power search matching utility (தேடல் உதவி).
+ * Universal high-power search matching utility.
  * Supports fuzzy tokenization, punctuation/delimiter-insensitivity (e.g. "pvs 23" matching "PVS-23"),
  * multi-token cross-field search, and multi-language support (Pure Tamil & English).
  */
-object ThedalUdhavi {
+object SearchHelper {
     private val DELIMS_REGEX = Regex("""[\s\-_—–./\\#@,;:|()\[\]{}+*"'`~^=<>!%&?$]+""")
     private val TOKEN_SPLIT_REGEX = Regex("""[\s,./\-_—–|#@;:()\[\]{}]+""")
 
@@ -100,14 +100,14 @@ object ThedalUdhavi {
      * Matches against invoice number (e.g. "PVS-23", "SJPS-32"), customer names (Ta, En),
      * customer locations/addresses, and items content.
      */
-    fun matchesInvoice(inv: PattiyalTharavuru, query: String): Boolean {
+    fun matchesInvoice(inv: InvoiceModel, query: String): Boolean {
         if (query.isBlank()) return true
-        val targetList = ArrayList<String?>(8 + inv.vaangunarPeyar.size + inv.vaangunarMunvari.size)
-        targetList.add(inv.patrucheettuEn)
-        targetList.addAll(inv.vaangunarPeyar.values)
-        targetList.addAll(inv.vaangunarMunvari.values)
-        if (inv.tharavugal.isNotBlank() && inv.tharavugal != "[]") {
-            targetList.add(inv.tharavugal)
+        val targetList = ArrayList<String?>(8 + inv.customerName.size + inv.customerAddress.size)
+        targetList.add(inv.invoiceNumber)
+        targetList.addAll(inv.customerName.values)
+        targetList.addAll(inv.customerAddress.values)
+        if (inv.itemsJson.isNotBlank() && inv.itemsJson != "[]") {
+            targetList.add(inv.itemsJson)
         }
         return matchesRecord(targetList, query)
     }
@@ -115,46 +115,47 @@ object ThedalUdhavi {
     /**
      * High-power receipt matcher.
      */
-    fun matchesReceipt(receipt: PatrugalTharavuru, query: String): Boolean {
+    fun matchesReceipt(receipt: ReceiptModel, query: String): Boolean {
         if (query.isBlank()) return true
-        val targetList = ArrayList<String?>(6 + receipt.vaangunarPeyar.size + receipt.vaangunarMunvari.size)
-        targetList.add(receipt.patruEn)
-        targetList.addAll(receipt.vaangunarPeyar.values)
-        targetList.addAll(receipt.vaangunarMunvari.values)
-        if (receipt.ullkurippu.isNotBlank()) targetList.add(receipt.ullkurippu)
-        if (!receipt.vangiPeyar.isNullOrBlank()) targetList.add(receipt.vangiPeyar)
-        if (!receipt.parivarthanaiEn.isNullOrBlank()) targetList.add(receipt.parivarthanaiEn)
+        val targetList = ArrayList<String?>(6 + receipt.customerName.size + receipt.customerAddress.size)
+        targetList.add(receipt.receiptNumber)
+        targetList.addAll(receipt.customerName.values)
+        targetList.addAll(receipt.customerAddress.values)
+        if (receipt.notes.isNotBlank()) targetList.add(receipt.notes)
+        if (!receipt.bankName.isNullOrBlank()) targetList.add(receipt.bankName)
+        if (!receipt.transactionNumber.isNullOrBlank()) targetList.add(receipt.transactionNumber)
         return matchesRecord(targetList, query)
     }
 
     /**
      * High-power product matcher.
      */
-    fun matchesProduct(item: PorulTharavuru, query: String): Boolean {
+    fun matchesProduct(item: ProductModel, query: String): Boolean {
         if (query.isBlank()) return true
-        val targetList = ArrayList<String?>(4 + item.porulPeyar.size)
+        val targetList = ArrayList<String?>(4 + item.name.size)
         targetList.add(item.hsnCode)
-        targetList.addAll(item.porulPeyar.values)
+        targetList.addAll(item.name.values)
         return matchesRecord(targetList, query)
     }
 
     /**
      * High-power customer/merchant matcher.
      */
-    fun matchesCustomer(customer: VaangunarTharavuru, query: String): Boolean {
+    fun matchesCustomer(customer: CustomerModel, query: String): Boolean {
         if (query.isBlank()) return true
         val targetList = ArrayList<String?>(16)
-        targetList.addAll(customer.peyar.values)
-        targetList.addAll(customer.oor.values)
-        targetList.addAll(customer.mugavari.values)
-        targetList.addAll(customer.maavattam.values)
-        targetList.addAll(customer.maanilam.values)
+        targetList.addAll(customer.name.values)
+        targetList.addAll(customer.city.values)
+        targetList.addAll(customer.address.values)
+        targetList.addAll(customer.district.values)
+        targetList.addAll(customer.state.values)
         if (customer.gstin.isNotBlank()) targetList.add(customer.gstin)
-        if (customer.tholaipaesi.isNotBlank()) targetList.add(customer.tholaipaesi)
-        if (customer.minnanjal.isNotBlank()) targetList.add(customer.minnanjal)
-        if (customer.anjalKuriyeedu.isNotBlank()) targetList.add(customer.anjalKuriyeedu)
+        if (customer.phone.isNotBlank()) targetList.add(customer.phone)
+        if (customer.email.isNotBlank()) targetList.add(customer.email)
+        if (customer.pinCode.isNotBlank()) targetList.add(customer.pinCode)
         return matchesRecord(targetList, query)
     }
 }
 
-typealias SearchUtils = ThedalUdhavi
+typealias ThedalUdhavi = SearchHelper
+typealias SearchUtils = SearchHelper

@@ -13,7 +13,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.elvan.udukkai.core.utils.CurrencyUtils
 import com.elvan.udukkai.core.utils.DateUtils
-import com.elvan.udukkai.data.model.PatrugalTharavuru
+import com.elvan.udukkai.data.model.ReceiptModel
 import com.elvan.udukkai.theme.LocalAppFontFamily
 import com.elvan.udukkai.theme.ShellColors
 import com.elvan.udukkai.theme.preventBrokenLigatures
@@ -26,36 +26,36 @@ import com.elvan.udukkai.theme.LocalShellColors
 @Composable
 fun ReceiptCard(
     index: Int,
-    receipt: PatrugalTharavuru,
+    receipt: ReceiptModel,
     colors: ShellColors,
     modifier: Modifier = Modifier,
     isSelectionMode: Boolean = false,
     isSelected: Boolean = false,
     onClick: () -> Unit = {},
     onLongClick: (() -> Unit)? = null,
-    profile: com.elvan.udukkai.data.settings.NiruvanaTharavugal? = null,
-    allProfiles: List<com.elvan.udukkai.data.settings.NiruvanaTharavugal> = emptyList()
+    profile: com.elvan.udukkai.data.settings.BusinessProfile? = null,
+    allProfiles: List<com.elvan.udukkai.data.settings.BusinessProfile> = emptyList()
 ) {
     val ff = LocalAppFontFamily.current
 
-    val resolvedProfile = (if (receipt.niruvanamId != null) allProfiles.find { it.id == receipt.niruvanamId } else null)
+    val resolvedProfile = (if (receipt.companyId != null) allProfiles.find { it.id == receipt.companyId } else null)
         ?: profile
-        ?: com.elvan.udukkai.data.settings.NiruvanaTharavugal()
-    val isBilingual = resolvedProfile.iruMozhi
-    val primaryLang = resolvedProfile.mudhanMozhi.ifEmpty { "ta" }
+        ?: com.elvan.udukkai.data.settings.BusinessProfile()
+    val isBilingual = resolvedProfile.isBilingual
+    val primaryLang = resolvedProfile.primaryLanguage.ifEmpty { "ta" }
     val secondaryLang = resolvedProfile.thunaiMozhi.ifEmpty { "en" }
 
-    val primary = receipt.vaangunarPeyar[primaryLang]
-        ?: receipt.vaangunarPeyar["ta"]
-        ?: receipt.vaangunarPeyar["en"]
-        ?: receipt.vaangunarPeyar.values.firstOrNull()
-        ?: receipt.patruEn
+    val primary = receipt.customerName[primaryLang]
+        ?: receipt.customerName["ta"]
+        ?: receipt.customerName["en"]
+        ?: receipt.customerName.values.firstOrNull()
+        ?: receipt.receiptNumber
 
-    val secondary = if (isBilingual) receipt.vaangunarPeyar[secondaryLang].orEmpty() else ""
+    val secondary = if (isBilingual) receipt.customerName[secondaryLang].orEmpty() else ""
     val showSecondary = isBilingual && secondary.isNotBlank() && secondary != primary
 
-    val dateStr = DateUtils.formatEpochMillis(receipt.patruNaal)
-    val amountStr = CurrencyUtils.formatInr(receipt.thogai)
+    val dateStr = DateUtils.formatEpochMillis(receipt.receiptDate)
+    val amountStr = CurrencyUtils.formatInr(receipt.amount)
 
     val (taLabel, enLabel) = when (receipt.seluthumMurai.lowercase()) {
         "cash" -> "ரொக்கம்" to "Cash"
@@ -145,7 +145,7 @@ fun ReceiptCard(
                 Spacer(modifier = Modifier.height(8.dp))
 
                 Text(
-                    text = "${receipt.patruEn}  •  $dateStr",
+                    text = "${receipt.receiptNumber}  •  $dateStr",
                     style = TextStyle(
                         fontFamily = ff,
                         fontSize = 13.5.sp,

@@ -15,7 +15,7 @@ class CompanyWorkspaceAndProductTest {
 
     @Test
     fun testProductSharedByDefault() {
-        val sharedProduct = PorulTharavuru(
+        val sharedProduct = ProductModel(
             id = 1,
             price = 1200.0,
             companyIds = emptyList()
@@ -31,7 +31,7 @@ class CompanyWorkspaceAndProductTest {
 
     @Test
     fun testProductRestrictedToSpecificCompanies() {
-        val restrictedProduct = PorulTharavuru(
+        val restrictedProduct = ProductModel(
             id = 2,
             price = 1500.0,
             companyIds = listOf(101L, 102L)
@@ -44,7 +44,7 @@ class CompanyWorkspaceAndProductTest {
 
     @Test
     fun testCompanySpecificPriceOverrides() {
-        val productWithOverrides = PorulTharavuru(
+        val productWithOverrides = ProductModel(
             id = 3,
             price = 1000.0,
             companyPrices = mapOf(101L to 1250.0, 102L to 1400.0)
@@ -88,15 +88,15 @@ class CompanyWorkspaceAndProductTest {
 
     @Test
     fun testInvoiceNumberingPrefix() {
-        assertEquals("VRM-01", FactoryInvoiceRepository.formatPattiyalEn("VRM", 1))
-        assertEquals("VRM-09", FactoryInvoiceRepository.formatPattiyalEn("VRM", 9))
-        assertEquals("VRM-10", FactoryInvoiceRepository.formatPattiyalEn("VRM", 10))
-        assertEquals("PVS-25", FactoryInvoiceRepository.formatPattiyalEn("PVS", 25))
+        assertEquals("VRM-01", FactoryInvoiceRepository.formatInvoiceNumber("VRM", 1))
+        assertEquals("VRM-09", FactoryInvoiceRepository.formatInvoiceNumber("VRM", 9))
+        assertEquals("VRM-10", FactoryInvoiceRepository.formatInvoiceNumber("VRM", 10))
+        assertEquals("PVS-25", FactoryInvoiceRepository.formatInvoiceNumber("PVS", 25))
     }
 
     @Test
     fun testPorulFirebasePayloadGeneration() {
-        val product = PorulTharavuru(
+        val product = ProductModel(
             id = 42,
             name = mapOf("ta" to "பட்டு", "en" to "Kanchipuram Pattu"),
             price = 4500.0,
@@ -178,11 +178,11 @@ class CompanyWorkspaceAndProductTest {
         val item = PorulFirebasePayloadConverter.fromRawMap(legacyPayload)
         assertNotNull(item)
         assertEquals(10L, item.id)
-        assertEquals("Traditional Dhotis", item.porulPeyar["en"])
-        assertEquals(650.0, item.vilai)
-        assertEquals("Meter", item.alagu)
+        assertEquals("Traditional Dhotis", item.name["en"])
+        assertEquals(650.0, item.price)
+        assertEquals("Meter", item.unit)
         // Default to empty list (available for all companies) and empty map
-        assertEquals(emptyList(), item.niruvanamIds)
+        assertEquals(emptyList(), item.companyIds)
         assertEquals(emptyMap(), item.companyPrices)
         assertTrue(item.isAvailableForCompany(999L))
         assertEquals(650.0, item.getEffectivePrice(999L))
@@ -190,7 +190,7 @@ class CompanyWorkspaceAndProductTest {
 
     @Test
     fun testPorulFirebaseRoundtrip() {
-        val original = PorulTharavuru(
+        val original = ProductModel(
             id = 55,
             name = mapOf("ta" to "சட்டை", "en" to "Silk Shirt"),
             price = 2200.0,
@@ -205,19 +205,19 @@ class CompanyWorkspaceAndProductTest {
 
         assertNotNull(reconstructed)
         assertEquals(original.id, reconstructed.id)
-        assertEquals(original.porulPeyar, reconstructed.porulPeyar)
-        assertEquals(original.vilai, reconstructed.vilai)
-        assertEquals(original.alavuVagai, reconstructed.alavuVagai)
-        assertEquals(original.alagu, reconstructed.alagu)
+        assertEquals(original.name, reconstructed.name)
+        assertEquals(original.price, reconstructed.price)
+        assertEquals(original.quantityType, reconstructed.quantityType)
+        assertEquals(original.unit, reconstructed.unit)
         assertEquals(original.hsnCode, reconstructed.hsnCode)
-        assertEquals(original.niruvanamIds, reconstructed.niruvanamIds)
+        assertEquals(original.companyIds, reconstructed.companyIds)
         assertEquals(original.companyPrices, reconstructed.companyPrices)
     }
 
     @Test
     fun testProductSingleCompanyRestrictionAndOverrides() {
         // Product restricted to exactly one company
-        val singleCompanyProduct = PorulTharavuru(
+        val singleCompanyProduct = ProductModel(
             id = 77,
             price = 3000.0,
             companyIds = listOf(101L),
@@ -237,7 +237,7 @@ class CompanyWorkspaceAndProductTest {
 
     @Test
     fun testProductEditPreservesAvailabilityAndPriceOverrides() {
-        val initialProduct = PorulTharavuru(
+        val initialProduct = ProductModel(
             id = 88,
             name = mapOf("en" to "Cotton Saree"),
             price = 1500.0,
@@ -253,7 +253,7 @@ class CompanyWorkspaceAndProductTest {
         )
 
         // Verify fields are preserved on edit
-        assertEquals(listOf(101L), editedProduct.niruvanamIds)
+        assertEquals(listOf(101L), editedProduct.companyIds)
         assertEquals(mapOf(101L to 1350.0), editedProduct.companyPrices)
         assertTrue(editedProduct.isAvailableForCompany(101L))
         assertEquals(1350.0, editedProduct.getEffectivePrice(101L))
@@ -326,31 +326,31 @@ class CompanyWorkspaceAndProductTest {
         val companyBId = 202L
 
         val deletedInvoices = listOf(
-            PattiyalTharavuru(id = 1, invoiceNumber = "INV-001", companyId = companyAId, isDeleted = true),
-            PattiyalTharavuru(id = 2, invoiceNumber = "INV-002", companyId = companyBId, isDeleted = true),
-            PattiyalTharavuru(id = 3, invoiceNumber = "INV-003", companyId = companyAId, isDeleted = true)
+            InvoiceModel(id = 1, invoiceNumber = "INV-001", companyId = companyAId, isDeleted = true),
+            InvoiceModel(id = 2, invoiceNumber = "INV-002", companyId = companyBId, isDeleted = true),
+            InvoiceModel(id = 3, invoiceNumber = "INV-003", companyId = companyAId, isDeleted = true)
         )
 
         val deletedReceipts = listOf(
-            PatrugalTharavuru(id = 10, receiptNumber = "REC-010", companyId = companyAId, isDeleted = true),
-            PatrugalTharavuru(id = 11, receiptNumber = "REC-011", companyId = companyBId, isDeleted = true)
+            ReceiptModel(id = 10, receiptNumber = "REC-010", companyId = companyAId, isDeleted = true),
+            ReceiptModel(id = 11, receiptNumber = "REC-011", companyId = companyBId, isDeleted = true)
         )
 
         // Workspace Company A filter:
-        val companyAInvoices = deletedInvoices.filter { it.niruvanamId == companyAId }
-        val companyAReceipts = deletedReceipts.filter { it.niruvanamId == companyAId }
+        val companyAInvoices = deletedInvoices.filter { it.companyId == companyAId }
+        val companyAReceipts = deletedReceipts.filter { it.companyId == companyAId }
         assertEquals(2, companyAInvoices.size)
-        assertTrue(companyAInvoices.all { it.niruvanamId == companyAId })
+        assertTrue(companyAInvoices.all { it.companyId == companyAId })
         assertEquals(1, companyAReceipts.size)
-        assertEquals(companyAId, companyAReceipts.first().niruvanamId)
+        assertEquals(companyAId, companyAReceipts.first().companyId)
 
         // Workspace Company B filter:
-        val companyBInvoices = deletedInvoices.filter { it.niruvanamId == companyBId }
-        val companyBReceipts = deletedReceipts.filter { it.niruvanamId == companyBId }
+        val companyBInvoices = deletedInvoices.filter { it.companyId == companyBId }
+        val companyBReceipts = deletedReceipts.filter { it.companyId == companyBId }
         assertEquals(1, companyBInvoices.size)
-        assertEquals("INV-002", companyBInvoices.first().patrucheettuEn)
+        assertEquals("INV-002", companyBInvoices.first().invoiceNumber)
         assertEquals(1, companyBReceipts.size)
-        assertEquals("REC-011", companyBReceipts.first().patruEn)
+        assertEquals("REC-011", companyBReceipts.first().receiptNumber)
     }
 
     @Test
@@ -358,7 +358,7 @@ class CompanyWorkspaceAndProductTest {
         val originalCompanyId = 202L
         val activeWorkspaceCompanyId = 101L
 
-        val deletedInvoice = PattiyalTharavuru(
+        val deletedInvoice = InvoiceModel(
             id = 55,
             invoiceNumber = "INV-055",
             companyId = originalCompanyId,
@@ -372,8 +372,8 @@ class CompanyWorkspaceAndProductTest {
         assertFalse(restoredInvoice.isDeleted)
         assertNull(restoredInvoice.deletedAt)
         // Original company profile remains untouched, not reassigned to active workspace
-        assertEquals(originalCompanyId, restoredInvoice.niruvanamId)
-        assertNotEquals(activeWorkspaceCompanyId, restoredInvoice.niruvanamId)
+        assertEquals(originalCompanyId, restoredInvoice.companyId)
+        assertNotEquals(activeWorkspaceCompanyId, restoredInvoice.companyId)
     }
 
     @Test
@@ -381,8 +381,8 @@ class CompanyWorkspaceAndProductTest {
         val companyAId = 101L
         val companyBId = 202L
 
-        val sharedProduct = PorulTharavuru(id = 1, companyIds = emptyList(), isDeleted = true)
-        val restrictedProductA = PorulTharavuru(id = 2, companyIds = listOf(companyAId), isDeleted = true)
+        val sharedProduct = ProductModel(id = 1, companyIds = emptyList(), isDeleted = true)
+        val restrictedProductA = ProductModel(id = 2, companyIds = listOf(companyAId), isDeleted = true)
 
         val deletedProducts = listOf(sharedProduct, restrictedProductA)
 

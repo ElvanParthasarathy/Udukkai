@@ -1,11 +1,11 @@
 package com.elvan.udukkai.data.database
 
-import com.elvan.udukkai.data.model.PattiyalTharavuru
-import com.elvan.udukkai.data.model.PatruPattiyalInaippuTharavuru
-import com.elvan.udukkai.data.model.PatrugalTharavuru
-import com.elvan.udukkai.data.model.PorulTharavuru
-import com.elvan.udukkai.data.model.VaangunarTharavuru
-import com.elvan.udukkai.data.settings.NiruvanaTharavugal
+import com.elvan.udukkai.data.model.InvoiceModel
+import com.elvan.udukkai.data.model.ReceiptInvoiceLinkModel
+import com.elvan.udukkai.data.model.ReceiptModel
+import com.elvan.udukkai.data.model.ProductModel
+import com.elvan.udukkai.data.model.CustomerModel
+import com.elvan.udukkai.data.settings.BusinessProfile
 
 /**
  * Clean, decoupled database interface for Udukkai applications.
@@ -14,51 +14,51 @@ import com.elvan.udukkai.data.settings.NiruvanaTharavugal
  */
 interface UdukkaiDatabaseHelper {
     // ── Merchants / Customers ────────────────────────────────────────────────
-    fun loadAllMerchants(): List<VaangunarTharavuru>
-    fun saveMerchant(merchant: VaangunarTharavuru): Long
+    fun loadAllMerchants(): List<CustomerModel>
+    fun saveMerchant(merchant: CustomerModel): Long
     fun deleteMerchant(id: Long): Boolean
-    fun loadDeletedMerchants(): List<VaangunarTharavuru>
+    fun loadDeletedMerchants(): List<CustomerModel>
     fun restoreMerchant(id: Long): Boolean
     fun permanentDeleteMerchant(id: Long): Boolean
     fun purgeExpiredMerchants(days: Int = 30): Int
 
     // ── Products / Items ─────────────────────────────────────────────────────
-    fun loadAllItems(): List<PorulTharavuru>
-    fun saveItem(item: PorulTharavuru): Long
+    fun loadAllItems(): List<ProductModel>
+    fun saveItem(item: ProductModel): Long
     fun deleteItem(id: Long): Boolean
-    fun loadDeletedItems(): List<PorulTharavuru>
+    fun loadDeletedItems(): List<ProductModel>
     fun restoreItem(id: Long): Boolean
     fun permanentDeleteItem(id: Long): Boolean
     fun purgeExpiredItems(days: Int = 30): Int
 
     // ── Invoices ─────────────────────────────────────────────────────────────
-    fun loadAllInvoices(): List<PattiyalTharavuru>
-    fun saveInvoice(invoice: PattiyalTharavuru): Long
+    fun loadAllInvoices(): List<InvoiceModel>
+    fun saveInvoice(invoice: InvoiceModel): Long
     fun deleteInvoice(id: Long): Boolean
-    fun loadDeletedInvoices(): List<PattiyalTharavuru>
+    fun loadDeletedInvoices(): List<InvoiceModel>
     fun restoreInvoice(id: Long): Boolean
     fun permanentDeleteInvoice(id: Long): Boolean
     fun purgeExpiredInvoices(days: Int = 30): Int
 
     // ── Receipts ─────────────────────────────────────────────────────────────
-    fun loadAllReceipts(): List<PatrugalTharavuru>
-    fun saveReceipt(receipt: PatrugalTharavuru): Long
+    fun loadAllReceipts(): List<ReceiptModel>
+    fun saveReceipt(receipt: ReceiptModel): Long
     fun deleteReceipt(id: Long): Boolean
-    fun loadDeletedReceipts(): List<PatrugalTharavuru>
+    fun loadDeletedReceipts(): List<ReceiptModel>
     fun restoreReceipt(id: Long): Boolean
     fun permanentDeleteReceipt(id: Long): Boolean
     fun purgeExpiredReceipts(days: Int = 30): Int
 
     // ── Receipt ↔ Invoice Junction Links ─────────────────────────────────────
-    fun getLinksForPatru(patruId: Long): List<PatruPattiyalInaippuTharavuru>
-    fun saveReceiptWithLinks(receipt: PatrugalTharavuru, links: List<PatruPattiyalInaippuTharavuru>): Long
+    fun getLinksForPatru(patruId: Long): List<ReceiptInvoiceLinkModel>
+    fun saveReceiptWithLinks(receipt: ReceiptModel, links: List<ReceiptInvoiceLinkModel>): Long
     fun getPaidAmountForInvoice(invoiceId: Long): Double
     fun getPaidAmountsForInvoices(invoiceIds: List<Long>): Map<Long, Double>
 
     // ── Business Profiles ────────────────────────────────────────────────────
-    fun loadProfile(profileId: Long? = null): NiruvanaTharavugal?
-    fun loadAllProfiles(): List<NiruvanaTharavugal>
-    fun saveProfile(profile: NiruvanaTharavugal): Boolean
+    fun loadProfile(profileId: Long? = null): BusinessProfile?
+    fun loadAllProfiles(): List<BusinessProfile>
+    fun saveProfile(profile: BusinessProfile): Boolean
     fun deleteProfile(profileId: Long): Boolean
     fun clearProfiles(): Boolean
 

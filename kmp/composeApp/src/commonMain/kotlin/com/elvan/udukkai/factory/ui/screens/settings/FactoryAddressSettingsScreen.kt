@@ -29,13 +29,13 @@ import com.elvan.udukkai.ui.components.shell.*
 fun FactoryAddressSettingsScreen(
     scrollState: LazyListState = rememberLazyListState(),
     colors: ShellColors = rememberShellColors(),
-    customProfile: com.elvan.udukkai.data.settings.NiruvanaTharavugal? = null,
-    onUpdateProfile: ((com.elvan.udukkai.data.settings.NiruvanaTharavugal) -> Unit)? = null,
+    customProfile: com.elvan.udukkai.data.settings.BusinessProfile? = null,
+    onUpdateProfile: ((com.elvan.udukkai.data.settings.BusinessProfile) -> Unit)? = null,
     isTextiles: Boolean = false
 ) {
     val isPattu = isTextiles
     val profile = customProfile ?: if (isTextiles) com.elvan.udukkai.textiles.data.TextilesProfileRepository.profile else com.elvan.udukkai.factory.data.FactoryProfileRepository.profile
-    val isBilingual = profile.iruMozhi
+    val isBilingual = profile.isBilingual
 
     var editingSection by remember { mutableStateOf<String?>(null) }
     var tempPrimary by remember { mutableStateOf("") }
@@ -43,7 +43,7 @@ fun FactoryAddressSettingsScreen(
 
     val stateTitle = K.state.tr()
     val districtTitle = K.district.tr()
-    val primaryLangLabel = if (profile.mudhanMozhi.lowercase().startsWith("ta")) K.taCode.tr() else K.enCode.tr()
+    val primaryLangLabel = if (profile.primaryLanguage.lowercase().startsWith("ta")) K.taCode.tr() else K.enCode.tr()
     val secondaryLangLabel = if (profile.thunaiMozhi.lowercase().startsWith("ta")) K.taCode.tr() else K.enCode.tr()
     val saveSuccessMsg = K.profileSaved.tr()
 
@@ -62,8 +62,8 @@ fun FactoryAddressSettingsScreen(
             currentValue = indhiyaMaanilangal.find {
                 it.ta == profile.getPrimary("maanilam") || it.en == profile.getPrimary("maanilam")
             } ?: if (profile.getPrimary("maanilam").isNotBlank()) indhiyaMaanilangal.lastOrNull() else null,
-            itemLabelBuilder = { if (profile.mudhanMozhi == "ta") it.ta else it.en },
-            subtitleBuilder = { if (isBilingual) (if (profile.mudhanMozhi == "ta") it.en else it.ta) else null },
+            itemLabelBuilder = { if (profile.primaryLanguage == "ta") it.ta else it.en },
+            subtitleBuilder = { if (isBilingual) (if (profile.primaryLanguage == "ta") it.en else it.ta) else null },
             showSearch = true,
             searchFilter = { item, query ->
                 item.ta.contains(query, ignoreCase = true) || item.en.contains(query, ignoreCase = true)
@@ -77,10 +77,10 @@ fun FactoryAddressSettingsScreen(
                     val initialS = if (isAlreadyPreset || currS == "Custom" || currS == "தனிப்பயன்") "" else currS
                     beginEdit("maanilam", initialP, initialS)
                 } else {
-                    val p = if (profile.mudhanMozhi == "ta") stateItem.ta else stateItem.en
-                    val s = if (profile.mudhanMozhi == "ta") stateItem.en else stateItem.ta
+                    val p = if (profile.primaryLanguage == "ta") stateItem.ta else stateItem.en
+                    val s = if (profile.primaryLanguage == "ta") stateItem.en else stateItem.ta
                     val updated = profile.copy()
-                    updated.setBilingual("maanilam", profile.mudhanMozhi, p)
+                    updated.setBilingual("maanilam", profile.primaryLanguage, p)
                     updated.setBilingual("maanilam", profile.thunaiMozhi, s)
                     FactoryProfileRepository.updateProfile(updated)
                     editingSection = null
@@ -97,8 +97,8 @@ fun FactoryAddressSettingsScreen(
             currentValue = tamizhnaattuMaavattangal.find {
                 it.ta == profile.getPrimary("maavattam") || it.en == profile.getPrimary("maavattam")
             } ?: if (profile.getPrimary("maavattam").isNotBlank()) tamizhnaattuMaavattangal.lastOrNull() else null,
-            itemLabelBuilder = { if (profile.mudhanMozhi == "ta") it.ta else it.en },
-            subtitleBuilder = { if (isBilingual) (if (profile.mudhanMozhi == "ta") it.en else it.ta) else null },
+            itemLabelBuilder = { if (profile.primaryLanguage == "ta") it.ta else it.en },
+            subtitleBuilder = { if (isBilingual) (if (profile.primaryLanguage == "ta") it.en else it.ta) else null },
             showSearch = true,
             searchFilter = { item, query ->
                 item.ta.contains(query, ignoreCase = true) || item.en.contains(query, ignoreCase = true)
@@ -112,10 +112,10 @@ fun FactoryAddressSettingsScreen(
                     val initialS = if (isAlreadyPreset || currS == "Custom" || currS == "தனிப்பயன்") "" else currS
                     beginEdit("maavattam", initialP, initialS)
                 } else {
-                    val p = if (profile.mudhanMozhi == "ta") districtItem.ta else districtItem.en
-                    val s = if (profile.mudhanMozhi == "ta") districtItem.en else districtItem.ta
+                    val p = if (profile.primaryLanguage == "ta") districtItem.ta else districtItem.en
+                    val s = if (profile.primaryLanguage == "ta") districtItem.en else districtItem.ta
                     val updated = profile.copy()
-                    updated.setBilingual("maavattam", profile.mudhanMozhi, p)
+                    updated.setBilingual("maavattam", profile.primaryLanguage, p)
                     updated.setBilingual("maavattam", profile.thunaiMozhi, s)
                     FactoryProfileRepository.updateProfile(updated)
                     editingSection = null
@@ -127,7 +127,7 @@ fun FactoryAddressSettingsScreen(
 
     fun saveBilingual(fieldName: String) {
         val updated = profile.copy()
-        updated.setBilingual(fieldName, profile.mudhanMozhi, tempPrimary)
+        updated.setBilingual(fieldName, profile.primaryLanguage, tempPrimary)
         updated.setBilingual(fieldName, profile.thunaiMozhi, tempSecondary)
         FactoryProfileRepository.updateProfile(updated)
         editingSection = null
@@ -347,7 +347,7 @@ fun FactoryAddressSettingsScreen(
                     ElvanSettingsDivider(colors = colors)
 
                     // 6. PIN Code (Anjal Kuriyeedu)
-                    val pin = profile.anjalKuriyeedu
+                    val pin = profile.pinCode
                     ElvanSettingsAnimatedExpand(
                         isEditing = editingSection == "anjalKuriyeedu",
                         displayContent = {
@@ -362,7 +362,7 @@ fun FactoryAddressSettingsScreen(
                             ElvanSettingsEditContainer(
                                 title = K.pincode.tr(),
                                 onCancel = { editingSection = null },
-                                onSave = { saveSingle { profile.anjalKuriyeedu = it } },
+                                onSave = { saveSingle { profile.pinCode = it } },
                                 colors = colors
                             ) {
                                 ElvanSettingsTextField(
@@ -502,7 +502,7 @@ fun FactoryAddressSettingsScreen(
                     ElvanSettingsDivider(colors = colors)
 
                     // 4. PIN Code (Anjal Kuriyeedu)
-                    val pin = profile.anjalKuriyeedu
+                    val pin = profile.pinCode
                     ElvanSettingsAnimatedExpand(
                         isEditing = editingSection == "anjalKuriyeedu",
                         displayContent = {
@@ -517,7 +517,7 @@ fun FactoryAddressSettingsScreen(
                             ElvanSettingsEditContainer(
                                 title = K.pincode.tr(),
                                 onCancel = { editingSection = null },
-                                onSave = { saveSingle { profile.anjalKuriyeedu = it } },
+                                onSave = { saveSingle { profile.pinCode = it } },
                                 colors = colors
                             ) {
                                 ElvanSettingsTextField(

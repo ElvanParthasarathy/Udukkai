@@ -57,8 +57,8 @@ fun FactoryIdentityScreen(
         activePickerField = null
     }
 
-    val logoPath = profile.oavuru.ifEmpty { null }
-    val signaturePath = profile.kaiyoppam.ifEmpty { null }
+    val logoPath = profile.logo.ifEmpty { null }
+    val signaturePath = profile.signature.ifEmpty { null }
     val signatoryName = profile.fullSignatoryName
     val saveSuccessMsg = K.profileSaved.tr()
 
@@ -107,7 +107,7 @@ fun FactoryIdentityScreen(
                                 onCancel = { editingSection = null },
                                 onSave = {
                                     val updated = profile.copy()
-                                    updated.oavuru = tempImagePath ?: ""
+                                    updated.logo = tempImagePath ?: ""
                                     FactoryProfileRepository.updateProfile(updated)
                                     editingSection = null
                                     ElvanSnackbar.show(saveSuccessMsg)
@@ -164,7 +164,7 @@ fun FactoryIdentityScreen(
                                 onCancel = { editingSection = null },
                                 onSave = {
                                     val updated = profile.copy()
-                                    updated.kaiyoppam = tempImagePath ?: ""
+                                    updated.signature = tempImagePath ?: ""
                                     updated.oppamMudhalPeyar = tempSignatoryFirstName.trim()
                                     updated.oppamIrudhiPeyar = tempSignatoryLastName.trim()
                                     updated.oppamPeyar = updated.fullSignatoryName

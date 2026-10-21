@@ -17,7 +17,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.elvan.udukkai.data.settings.NiruvanaTharavugal
+import com.elvan.udukkai.data.settings.BusinessProfile
 import com.elvan.udukkai.localization.K
 import com.elvan.udukkai.localization.tr
 import com.elvan.udukkai.theme.LocalAppFontFamily
@@ -41,8 +41,8 @@ fun DesktopSideBar(
     modifier: Modifier = Modifier,
     appTitle: String = "Udukkai",
     subtitle: String = "",
-    activeProfile: NiruvanaTharavugal? = null,
-    allProfiles: List<NiruvanaTharavugal> = emptyList(),
+    activeProfile: BusinessProfile? = null,
+    allProfiles: List<BusinessProfile> = emptyList(),
     onSelectProfile: ((Long) -> Unit)? = null
 ) {
     var isCollapsed by remember { mutableStateOf(false) }

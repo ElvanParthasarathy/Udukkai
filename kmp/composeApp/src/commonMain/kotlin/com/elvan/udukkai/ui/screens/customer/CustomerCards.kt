@@ -11,7 +11,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.elvan.udukkai.data.model.VaangunarTharavuru
+import com.elvan.udukkai.data.model.CustomerModel
 import com.elvan.udukkai.factory.data.FactoryProfileRepository
 import com.elvan.udukkai.textiles.data.TextilesProfileRepository
 import com.elvan.udukkai.theme.Dimens
@@ -46,7 +46,7 @@ private fun getDynamicField(
 @Composable
 fun FactoryCustomerCard(
     index: Int,
-    merchant: VaangunarTharavuru,
+    merchant: CustomerModel,
     onClick: () -> Unit,
     colors: ShellColors,
     isSelectionMode: Boolean = false,
@@ -55,16 +55,16 @@ fun FactoryCustomerCard(
 ) {
     val ff = LocalAppFontFamily.current
     val profile = FactoryProfileRepository.profile
-    val isBilingual = profile.iruMozhi
-    val primaryLang = profile.mudhanMozhi.ifEmpty { "ta" }
+    val isBilingual = profile.isBilingual
+    val primaryLang = profile.primaryLanguage.ifEmpty { "ta" }
     val secondaryLang = profile.thunaiMozhi.ifEmpty { "en" }
 
-    val primaryName = getDynamicField(merchant.peyar, isPrimary = true, isBilingual = isBilingual, primaryLang, secondaryLang)
-        .ifEmpty { merchant.peyar.values.firstOrNull() ?: "-" }
-    val secondaryName = getDynamicField(merchant.peyar, isPrimary = false, isBilingual = isBilingual, primaryLang, secondaryLang)
+    val primaryName = getDynamicField(merchant.name, isPrimary = true, isBilingual = isBilingual, primaryLang, secondaryLang)
+        .ifEmpty { merchant.name.values.firstOrNull() ?: "-" }
+    val secondaryName = getDynamicField(merchant.name, isPrimary = false, isBilingual = isBilingual, primaryLang, secondaryLang)
 
-    val primaryCity = getDynamicField(merchant.oor, isPrimary = true, isBilingual = isBilingual, primaryLang, secondaryLang)
-    val secondaryCity = getDynamicField(merchant.oor, isPrimary = false, isBilingual = isBilingual, primaryLang, secondaryLang)
+    val primaryCity = getDynamicField(merchant.city, isPrimary = true, isBilingual = isBilingual, primaryLang, secondaryLang)
+    val secondaryCity = getDynamicField(merchant.city, isPrimary = false, isBilingual = isBilingual, primaryLang, secondaryLang)
 
     ElvanCommonCard(
         onClick = onClick,
@@ -175,7 +175,7 @@ fun FactoryCustomerCard(
 @Composable
 fun TextilesCustomerCard(
     index: Int,
-    merchant: VaangunarTharavuru,
+    merchant: CustomerModel,
     onClick: () -> Unit,
     colors: ShellColors,
     isSelectionMode: Boolean = false,
@@ -184,16 +184,16 @@ fun TextilesCustomerCard(
 ) {
     val ff = LocalAppFontFamily.current
     val profile = TextilesProfileRepository.profile
-    val isBilingual = profile.iruMozhi
-    val primaryLang = profile.mudhanMozhi.ifEmpty { "ta" }
+    val isBilingual = profile.isBilingual
+    val primaryLang = profile.primaryLanguage.ifEmpty { "ta" }
     val secondaryLang = profile.thunaiMozhi.ifEmpty { "en" }
 
-    val primaryName = getDynamicField(merchant.peyar, isPrimary = true, isBilingual = isBilingual, primaryLang, secondaryLang)
-        .ifEmpty { merchant.peyar.values.firstOrNull() ?: "-" }
-    val secondaryName = getDynamicField(merchant.peyar, isPrimary = false, isBilingual = isBilingual, primaryLang, secondaryLang)
+    val primaryName = getDynamicField(merchant.name, isPrimary = true, isBilingual = isBilingual, primaryLang, secondaryLang)
+        .ifEmpty { merchant.name.values.firstOrNull() ?: "-" }
+    val secondaryName = getDynamicField(merchant.name, isPrimary = false, isBilingual = isBilingual, primaryLang, secondaryLang)
 
-    val primaryCity = getDynamicField(merchant.oor, isPrimary = true, isBilingual = isBilingual, primaryLang, secondaryLang)
-    val secondaryCity = getDynamicField(merchant.oor, isPrimary = false, isBilingual = isBilingual, primaryLang, secondaryLang)
+    val primaryCity = getDynamicField(merchant.city, isPrimary = true, isBilingual = isBilingual, primaryLang, secondaryLang)
+    val secondaryCity = getDynamicField(merchant.city, isPrimary = false, isBilingual = isBilingual, primaryLang, secondaryLang)
 
     val gstin = merchant.gstin.trim()
 

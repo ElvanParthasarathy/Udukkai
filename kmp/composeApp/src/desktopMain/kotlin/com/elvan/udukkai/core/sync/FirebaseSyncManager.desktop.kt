@@ -2,11 +2,11 @@ package com.elvan.udukkai.core.sync
 
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
-import com.elvan.udukkai.data.model.PattiyalTharavuru
-import com.elvan.udukkai.data.model.PatruPattiyalInaippuTharavuru
-import com.elvan.udukkai.data.model.PatrugalTharavuru
-import com.elvan.udukkai.data.model.PorulTharavuru
-import com.elvan.udukkai.data.model.VaangunarTharavuru
+import com.elvan.udukkai.data.model.InvoiceModel
+import com.elvan.udukkai.data.model.ReceiptInvoiceLinkModel
+import com.elvan.udukkai.data.model.ReceiptModel
+import com.elvan.udukkai.data.model.ProductModel
+import com.elvan.udukkai.data.model.CustomerModel
 
 class DesktopFirebaseSyncManager : FirebaseSyncManager {
     private val _syncStatus = mutableStateOf(SyncStatus.IDLE)
@@ -27,11 +27,11 @@ class DesktopFirebaseSyncManager : FirebaseSyncManager {
     override fun triggerManualSync() {}
     override fun dismissGuardAlert() { _guardAlertMessage.value = null }
 
-    override fun pushMerchant(merchant: VaangunarTharavuru, scope: String) {}
-    override fun pushItem(item: PorulTharavuru, scope: String) {}
-    override fun pushInvoice(invoice: PattiyalTharavuru, scope: String) {}
-    override fun pushReceipt(receipt: PatrugalTharavuru, scope: String) {}
-    override fun pushReceiptLinks(receiptId: Long, links: List<PatruPattiyalInaippuTharavuru>, scope: String) {}
+    override fun pushMerchant(merchant: CustomerModel, scope: String) {}
+    override fun pushItem(item: ProductModel, scope: String) {}
+    override fun pushInvoice(invoice: InvoiceModel, scope: String) {}
+    override fun pushReceipt(receipt: ReceiptModel, scope: String) {}
+    override fun pushReceiptLinks(receiptId: Long, links: List<ReceiptInvoiceLinkModel>, scope: String) {}
 }
 
 private val desktopSyncManagerInstance by lazy { DesktopFirebaseSyncManager() }

@@ -726,18 +726,18 @@ class AndroidUdukkaiBackupService : UdukkaiBackupService {
         val isFact = isFactory()
         val invCount = if (isFact) {
             val activeId = com.elvan.udukkai.factory.data.FactoryProfileRepository.profile.id
-            com.elvan.udukkai.factory.data.FactoryInvoiceRepository.invoices.count { (activeId == null || it.niruvanamId == activeId) && !it.isDeleted }
+            com.elvan.udukkai.factory.data.FactoryInvoiceRepository.invoices.count { (activeId == null || it.companyId == activeId) && !it.isDeleted }
         } else {
             val activeId = com.elvan.udukkai.textiles.data.TextilesProfileRepository.profile.id
-            com.elvan.udukkai.textiles.data.TextilesInvoiceRepository.invoices.count { (activeId == null || it.niruvanamId == activeId) && !it.isDeleted }
+            com.elvan.udukkai.textiles.data.TextilesInvoiceRepository.invoices.count { (activeId == null || it.companyId == activeId) && !it.isDeleted }
         }
 
         val recCount = if (isFact) {
             val activeId = com.elvan.udukkai.factory.data.FactoryProfileRepository.profile.id
-            com.elvan.udukkai.factory.data.FactoryReceiptRepository.receipts.count { (activeId == null || it.niruvanamId == activeId) && !it.isDeleted }
+            com.elvan.udukkai.factory.data.FactoryReceiptRepository.receipts.count { (activeId == null || it.companyId == activeId) && !it.isDeleted }
         } else {
             val activeId = com.elvan.udukkai.textiles.data.TextilesProfileRepository.profile.id
-            com.elvan.udukkai.textiles.data.TextilesReceiptRepository.receipts.count { (activeId == null || it.niruvanamId == activeId) && !it.isDeleted }
+            com.elvan.udukkai.textiles.data.TextilesReceiptRepository.receipts.count { (activeId == null || it.companyId == activeId) && !it.isDeleted }
         }
 
         val cusCount = if (isFact) {

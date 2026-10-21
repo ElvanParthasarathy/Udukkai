@@ -3,17 +3,12 @@ package com.elvan.udukkai.data.database
 import com.elvan.udukkai.data.DesktopDbPaths
 import com.elvan.udukkai.data.model.CustomerModel
 import com.elvan.udukkai.data.model.InvoiceModel
-import com.elvan.udukkai.data.model.PattiyalTharavuru
-import com.elvan.udukkai.data.model.PatruPattiyalInaippuTharavuru
-import com.elvan.udukkai.data.model.PatrugalTharavuru
 import com.elvan.udukkai.data.model.ReceiptInvoiceLinkModel
 import com.elvan.udukkai.data.model.ReceiptModel
 import com.elvan.udukkai.data.model.PorulJsonConverter
-import com.elvan.udukkai.data.model.PorulTharavuru
-import com.elvan.udukkai.data.model.VaangunarTharavuru
-import com.elvan.udukkai.data.settings.MozhiJsonConverter
+import com.elvan.udukkai.data.model.ProductModel
+import com.elvan.udukkai.data.settings.LanguageJsonConverter
 import com.elvan.udukkai.data.settings.BusinessProfile
-import com.elvan.udukkai.data.settings.NiruvanaTharavugal
 import java.io.File
 import java.sql.Connection
 import java.sql.DriverManager
@@ -298,8 +293,8 @@ class DesktopUdukkaiDatabaseHelper(
     }
 
     // ── Merchants / Customers ────────────────────────────────────────────────
-    override fun loadAllMerchants(): List<VaangunarTharavuru> = useConn { conn ->
-        val list = mutableListOf<VaangunarTharavuru>()
+    override fun loadAllMerchants(): List<CustomerModel> = useConn { conn ->
+        val list = mutableListOf<CustomerModel>()
         conn.createStatement().use { stmt ->
             stmt.executeQuery("SELECT * FROM \"$vaangunarTable\" WHERE is_deleted = 0 ORDER BY id DESC").use { rs ->
                 while (rs.next()) list.add(rsToMerchant(rs))
@@ -308,7 +303,7 @@ class DesktopUdukkaiDatabaseHelper(
         list
     }
 
-    override fun saveMerchant(merchant: VaangunarTharavuru): Long = useConn { conn ->
+    override fun saveMerchant(merchant: CustomerModel): Long = useConn { conn ->
         val isUpdate = merchant.id != null && merchant.id > 0
         val sql = if (isUpdate) {
             "UPDATE \"$vaangunarTable\" SET peyar=?, mugavari=?, oor=?, maavattam=?, maanilam=?, naadu=?, velinaad_mugavari=?, anjal_kuriyeedu=?, gstin=?, minnanjal=?, tholaipaesi=?, updated_at=?, is_deleted=0 WHERE id=?"
@@ -316,17 +311,17 @@ class DesktopUdukkaiDatabaseHelper(
             "INSERT INTO \"$vaangunarTable\" (peyar, mugavari, oor, maavattam, maanilam, naadu, velinaad_mugavari, anjal_kuriyeedu, gstin, minnanjal, tholaipaesi, created_at, updated_at, is_deleted) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0)"
         }
         conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS).use { stmt ->
-            stmt.setString(1, MozhiJsonConverter.stringify(merchant.peyar))
-            stmt.setString(2, MozhiJsonConverter.stringify(merchant.mugavari))
-            stmt.setString(3, MozhiJsonConverter.stringify(merchant.oor))
-            stmt.setString(4, MozhiJsonConverter.stringify(merchant.maavattam))
-            stmt.setString(5, MozhiJsonConverter.stringify(merchant.maanilam))
-            stmt.setString(6, MozhiJsonConverter.stringify(merchant.naadu))
-            stmt.setString(7, MozhiJsonConverter.stringify(merchant.velinaadMugavari))
-            stmt.setString(8, merchant.anjalKuriyeedu)
+            stmt.setString(1, LanguageJsonConverter.stringify(merchant.name))
+            stmt.setString(2, LanguageJsonConverter.stringify(merchant.address))
+            stmt.setString(3, LanguageJsonConverter.stringify(merchant.city))
+            stmt.setString(4, LanguageJsonConverter.stringify(merchant.district))
+            stmt.setString(5, LanguageJsonConverter.stringify(merchant.state))
+            stmt.setString(6, LanguageJsonConverter.stringify(merchant.country))
+            stmt.setString(7, LanguageJsonConverter.stringify(merchant.velinaadMugavari))
+            stmt.setString(8, merchant.pinCode)
             stmt.setString(9, merchant.gstin)
-            stmt.setString(10, merchant.minnanjal)
-            stmt.setString(11, merchant.tholaipaesi)
+            stmt.setString(10, merchant.email)
+            stmt.setString(11, merchant.phone)
             val now = System.currentTimeMillis() / 1000
             if (isUpdate) {
                 stmt.setLong(12, now)
@@ -350,8 +345,8 @@ class DesktopUdukkaiDatabaseHelper(
         }
     }
 
-    override fun loadDeletedMerchants(): List<VaangunarTharavuru> = useConn { conn ->
-        val list = mutableListOf<VaangunarTharavuru>()
+    override fun loadDeletedMerchants(): List<CustomerModel> = useConn { conn ->
+        val list = mutableListOf<CustomerModel>()
         conn.createStatement().use { stmt ->
             stmt.executeQuery("SELECT * FROM \"$vaangunarTable\" WHERE is_deleted = 1 ORDER BY deleted_at DESC").use { rs ->
                 while (rs.next()) list.add(rsToMerchant(rs))
@@ -383,8 +378,8 @@ class DesktopUdukkaiDatabaseHelper(
     }
 
     // ── Products / Items ─────────────────────────────────────────────────────
-    override fun loadAllItems(): List<PorulTharavuru> = useConn { conn ->
-        val list = mutableListOf<PorulTharavuru>()
+    override fun loadAllItems(): List<ProductModel> = useConn { conn ->
+        val list = mutableListOf<ProductModel>()
         conn.createStatement().use { stmt ->
             stmt.executeQuery("SELECT * FROM \"$porulTable\" WHERE is_deleted = 0 ORDER BY id DESC").use { rs ->
                 while (rs.next()) list.add(rsToItem(rs))
@@ -393,7 +388,7 @@ class DesktopUdukkaiDatabaseHelper(
         list
     }
 
-    override fun saveItem(item: PorulTharavuru): Long = useConn { conn ->
+    override fun saveItem(item: ProductModel): Long = useConn { conn ->
         val isUpdate = item.id != null && item.id > 0
         val sql = if (isUpdate) {
             "UPDATE \"$porulTable\" SET porul_peyar=?, hsn_code=?, vilai=?, vari_veetham=?, alavu_vagai=?, alagu=?, niruvanam_ids=?, company_prices=?, updated_at=?, is_deleted=0 WHERE id=?"
@@ -401,13 +396,13 @@ class DesktopUdukkaiDatabaseHelper(
             "INSERT INTO \"$porulTable\" (porul_peyar, hsn_code, vilai, vari_veetham, alavu_vagai, alagu, niruvanam_ids, company_prices, created_at, updated_at, is_deleted) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0)"
         }
         conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS).use { stmt ->
-            stmt.setString(1, MozhiJsonConverter.stringify(item.porulPeyar))
+            stmt.setString(1, LanguageJsonConverter.stringify(item.name))
             stmt.setString(2, item.hsnCode)
-            stmt.setDouble(3, item.vilai)
-            stmt.setDouble(4, item.variVeetham)
-            stmt.setString(5, item.alavuVagai)
-            stmt.setString(6, item.alagu)
-            stmt.setString(7, item.niruvanamIds.toString())
+            stmt.setDouble(3, item.price)
+            stmt.setDouble(4, item.taxRate)
+            stmt.setString(5, item.quantityType)
+            stmt.setString(6, item.unit)
+            stmt.setString(7, item.companyIds.toString())
             stmt.setString(8, item.companyPrices.toString())
             val now = System.currentTimeMillis() / 1000
             if (isUpdate) {
@@ -432,8 +427,8 @@ class DesktopUdukkaiDatabaseHelper(
         }
     }
 
-    override fun loadDeletedItems(): List<PorulTharavuru> = useConn { conn ->
-        val list = mutableListOf<PorulTharavuru>()
+    override fun loadDeletedItems(): List<ProductModel> = useConn { conn ->
+        val list = mutableListOf<ProductModel>()
         conn.createStatement().use { stmt ->
             stmt.executeQuery("SELECT * FROM \"$porulTable\" WHERE is_deleted = 1 ORDER BY deleted_at DESC").use { rs ->
                 while (rs.next()) list.add(rsToItem(rs))
@@ -465,8 +460,8 @@ class DesktopUdukkaiDatabaseHelper(
     }
 
     // ── Invoices ─────────────────────────────────────────────────────────────
-    override fun loadAllInvoices(): List<PattiyalTharavuru> = useConn { conn ->
-        val list = mutableListOf<PattiyalTharavuru>()
+    override fun loadAllInvoices(): List<InvoiceModel> = useConn { conn ->
+        val list = mutableListOf<InvoiceModel>()
         conn.createStatement().use { stmt ->
             stmt.executeQuery("SELECT * FROM \"$pattiyalTable\" WHERE is_deleted = 0 ORDER BY pattiyal_naal DESC, id DESC").use { rs ->
                 while (rs.next()) list.add(rsToInvoice(rs))
@@ -475,7 +470,7 @@ class DesktopUdukkaiDatabaseHelper(
         list
     }
 
-    override fun saveInvoice(invoice: PattiyalTharavuru): Long = useConn { conn ->
+    override fun saveInvoice(invoice: InvoiceModel): Long = useConn { conn ->
         val isUpdate = invoice.id != null && invoice.id > 0
         val sql = if (isFactory) {
             if (isUpdate) {
@@ -492,35 +487,35 @@ class DesktopUdukkaiDatabaseHelper(
         }
 
         conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS).use { stmt ->
-            if (invoice.niruvanamId != null) stmt.setLong(1, invoice.niruvanamId) else stmt.setNull(1, Types.INTEGER)
-            stmt.setString(2, invoice.patrucheettuEn)
+            if (invoice.companyId != null) stmt.setLong(1, invoice.companyId) else stmt.setNull(1, Types.INTEGER)
+            stmt.setString(2, invoice.invoiceNumber)
             stmt.setInt(3, invoice.finYear)
             stmt.setInt(4, invoice.vanakkam)
-            stmt.setString(5, invoice.pattiyalVagai)
-            if (invoice.vaangunarId != null) stmt.setLong(6, invoice.vaangunarId) else stmt.setNull(6, Types.INTEGER)
-            stmt.setString(7, MozhiJsonConverter.stringify(invoice.vaangunarPeyar))
-            stmt.setString(8, MozhiJsonConverter.stringify(invoice.vaangunarMunvari))
-            stmt.setLong(9, invoice.pattiyalNaal)
-            stmt.setString(10, invoice.tharavugal.toString())
-            stmt.setDouble(11, invoice.mothaThogai)
-            stmt.setDouble(12, invoice.thallupadi)
-            stmt.setDouble(13, invoice.podhuThallupadiMathippu)
-            stmt.setString(14, invoice.podhuThallupadiVagai)
-            stmt.setDouble(15, invoice.podhuThallupadiThogai)
-            stmt.setDouble(16, invoice.variThogai)
-            stmt.setString(17, invoice.variTharavugal.toString())
+            stmt.setString(5, invoice.invoiceType)
+            if (invoice.customerId != null) stmt.setLong(6, invoice.customerId) else stmt.setNull(6, Types.INTEGER)
+            stmt.setString(7, LanguageJsonConverter.stringify(invoice.customerName))
+            stmt.setString(8, LanguageJsonConverter.stringify(invoice.customerAddress))
+            stmt.setLong(9, invoice.invoiceDate)
+            stmt.setString(10, invoice.itemsJson.toString())
+            stmt.setDouble(11, invoice.totalAmount)
+            stmt.setDouble(12, invoice.discount)
+            stmt.setDouble(13, invoice.globalDiscountValue)
+            stmt.setString(14, invoice.globalDiscountType)
+            stmt.setDouble(15, invoice.globalDiscountAmount)
+            stmt.setDouble(16, invoice.taxAmount)
+            stmt.setString(17, invoice.taxDataJson.toString())
 
             val now = System.currentTimeMillis() / 1000
             if (isFactory) {
                 stmt.setDouble(18, invoice.mothaEdai)
-                stmt.setDouble(19, invoice.setharamGrams)
+                stmt.setDouble(19, invoice.wastageGrams)
                 stmt.setDouble(20, invoice.thabaalThogai)
-                stmt.setDouble(21, invoice.ahimsaPattuThogai)
+                stmt.setDouble(21, invoice.ahimsaSilkAmount)
                 stmt.setString(22, invoice.piravariVugal.toString())
                 stmt.setString(23, invoice.sonthaViruppangal)
                 stmt.setString(24, invoice.nibandhanaigal)
-                stmt.setString(25, invoice.ullkurippu)
-                stmt.setString(26, invoice.vangiTharavugal.toString())
+                stmt.setString(25, invoice.notes)
+                stmt.setString(26, invoice.bankDetailsJson.toString())
                 if (isUpdate) {
                     stmt.setLong(27, now)
                     stmt.setLong(28, invoice.id!!)
@@ -535,7 +530,7 @@ class DesktopUdukkaiDatabaseHelper(
             } else {
                 stmt.setString(18, invoice.sonthaViruppangal)
                 stmt.setString(19, invoice.nibandhanaigal)
-                stmt.setString(20, invoice.ullkurippu)
+                stmt.setString(20, invoice.notes)
                 if (isUpdate) {
                     stmt.setLong(21, now)
                     stmt.setLong(22, invoice.id!!)
@@ -559,8 +554,8 @@ class DesktopUdukkaiDatabaseHelper(
         }
     }
 
-    override fun loadDeletedInvoices(): List<PattiyalTharavuru> = useConn { conn ->
-        val list = mutableListOf<PattiyalTharavuru>()
+    override fun loadDeletedInvoices(): List<InvoiceModel> = useConn { conn ->
+        val list = mutableListOf<InvoiceModel>()
         conn.createStatement().use { stmt ->
             stmt.executeQuery("SELECT * FROM \"$pattiyalTable\" WHERE is_deleted = 1 ORDER BY deleted_at DESC").use { rs ->
                 while (rs.next()) list.add(rsToInvoice(rs))
@@ -592,8 +587,8 @@ class DesktopUdukkaiDatabaseHelper(
     }
 
     // ── Receipts ─────────────────────────────────────────────────────────────
-    override fun loadAllReceipts(): List<PatrugalTharavuru> = useConn { conn ->
-        val list = mutableListOf<PatrugalTharavuru>()
+    override fun loadAllReceipts(): List<ReceiptModel> = useConn { conn ->
+        val list = mutableListOf<ReceiptModel>()
         conn.createStatement().use { stmt ->
             stmt.executeQuery("SELECT * FROM \"$patrugalTable\" WHERE is_deleted = 0 ORDER BY patru_naal DESC, id DESC").use { rs ->
                 while (rs.next()) list.add(rsToReceipt(rs))
@@ -602,7 +597,7 @@ class DesktopUdukkaiDatabaseHelper(
         list
     }
 
-    override fun saveReceipt(receipt: PatrugalTharavuru): Long = useConn { conn ->
+    override fun saveReceipt(receipt: ReceiptModel): Long = useConn { conn ->
         val isUpdate = receipt.id != null && receipt.id > 0
         val sql = if (isUpdate) {
             "UPDATE \"$patrugalTable\" SET niruvanam_id=?, patru_en=?, fin_year=?, vanakkam=?, vaangunar_id=?, vaangunar_peyar=?, vaangunar_munvari=?, patru_naal=?, thogai=?, seluthum_murai=?, vangi_peyar=?, parivarthanai_en=?, ullkurippu=?, updated_at=?, is_deleted=0 WHERE id=?"
@@ -610,19 +605,19 @@ class DesktopUdukkaiDatabaseHelper(
             "INSERT INTO \"$patrugalTable\" (niruvanam_id, patru_en, fin_year, vanakkam, vaangunar_id, vaangunar_peyar, vaangunar_munvari, patru_naal, thogai, seluthum_murai, vangi_peyar, parivarthanai_en, ullkurippu, created_at, updated_at, is_deleted) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0)"
         }
         conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS).use { stmt ->
-            if (receipt.niruvanamId != null) stmt.setLong(1, receipt.niruvanamId) else stmt.setNull(1, Types.INTEGER)
-            stmt.setString(2, receipt.patruEn)
+            if (receipt.companyId != null) stmt.setLong(1, receipt.companyId) else stmt.setNull(1, Types.INTEGER)
+            stmt.setString(2, receipt.receiptNumber)
             stmt.setString(3, receipt.finYear)
             stmt.setInt(4, receipt.vanakkam)
-            if (receipt.vaangunarId != null) stmt.setLong(5, receipt.vaangunarId) else stmt.setNull(5, Types.INTEGER)
-            stmt.setString(6, MozhiJsonConverter.stringify(receipt.vaangunarPeyar))
-            stmt.setString(7, MozhiJsonConverter.stringify(receipt.vaangunarMunvari))
-            stmt.setLong(8, receipt.patruNaal)
-            stmt.setDouble(9, receipt.thogai)
+            if (receipt.customerId != null) stmt.setLong(5, receipt.customerId) else stmt.setNull(5, Types.INTEGER)
+            stmt.setString(6, LanguageJsonConverter.stringify(receipt.customerName))
+            stmt.setString(7, LanguageJsonConverter.stringify(receipt.customerAddress))
+            stmt.setLong(8, receipt.receiptDate)
+            stmt.setDouble(9, receipt.amount)
             stmt.setString(10, receipt.seluthumMurai)
-            if (receipt.vangiPeyar != null) stmt.setString(11, receipt.vangiPeyar) else stmt.setNull(11, Types.VARCHAR)
-            if (receipt.parivarthanaiEn != null) stmt.setString(12, receipt.parivarthanaiEn) else stmt.setNull(12, Types.VARCHAR)
-            stmt.setString(13, receipt.ullkurippu)
+            if (receipt.bankName != null) stmt.setString(11, receipt.bankName) else stmt.setNull(11, Types.VARCHAR)
+            if (receipt.transactionNumber != null) stmt.setString(12, receipt.transactionNumber) else stmt.setNull(12, Types.VARCHAR)
+            stmt.setString(13, receipt.notes)
             val now = System.currentTimeMillis() / 1000
             if (isUpdate) {
                 stmt.setLong(14, now)
@@ -646,8 +641,8 @@ class DesktopUdukkaiDatabaseHelper(
         }
     }
 
-    override fun loadDeletedReceipts(): List<PatrugalTharavuru> = useConn { conn ->
-        val list = mutableListOf<PatrugalTharavuru>()
+    override fun loadDeletedReceipts(): List<ReceiptModel> = useConn { conn ->
+        val list = mutableListOf<ReceiptModel>()
         conn.createStatement().use { stmt ->
             stmt.executeQuery("SELECT * FROM \"$patrugalTable\" WHERE is_deleted = 1 ORDER BY deleted_at DESC").use { rs ->
                 while (rs.next()) list.add(rsToReceipt(rs))
@@ -679,13 +674,13 @@ class DesktopUdukkaiDatabaseHelper(
     }
 
     // ── Junction Links ───────────────────────────────────────────────────────
-    override fun getLinksForPatru(patruId: Long): List<PatruPattiyalInaippuTharavuru> = useConn { conn ->
-        val list = mutableListOf<PatruPattiyalInaippuTharavuru>()
+    override fun getLinksForPatru(patruId: Long): List<ReceiptInvoiceLinkModel> = useConn { conn ->
+        val list = mutableListOf<ReceiptInvoiceLinkModel>()
         conn.prepareStatement("SELECT * FROM \"$junctionTable\" WHERE patru_id = ?").use { stmt ->
             stmt.setLong(1, patruId)
             stmt.executeQuery().use { rs ->
                 while (rs.next()) {
-                    list.add(PatruPattiyalInaippuTharavuru(
+                    list.add(ReceiptInvoiceLinkModel(
                         id = rs.getLong("id"),
                         receiptId = rs.getLong("patru_id"),
                         invoiceId = rs.getLong("pattiyal_id"),
@@ -697,7 +692,7 @@ class DesktopUdukkaiDatabaseHelper(
         list
     }
 
-    override fun saveReceiptWithLinks(receipt: PatrugalTharavuru, links: List<PatruPattiyalInaippuTharavuru>): Long = useConn { conn ->
+    override fun saveReceiptWithLinks(receipt: ReceiptModel, links: List<ReceiptInvoiceLinkModel>): Long = useConn { conn ->
         conn.autoCommit = false
         try {
             val rId = saveReceipt(receipt)
@@ -710,8 +705,8 @@ class DesktopUdukkaiDatabaseHelper(
                     val now = System.currentTimeMillis() / 1000
                     for (link in links) {
                         insStmt.setLong(1, rId)
-                        insStmt.setLong(2, link.pattiyalId)
-                        insStmt.setDouble(3, link.poruthiyaThogai)
+                        insStmt.setLong(2, link.invoiceId)
+                        insStmt.setDouble(3, link.appliedAmount)
                         insStmt.setLong(4, now)
                         insStmt.addBatch()
                     }
@@ -755,8 +750,8 @@ class DesktopUdukkaiDatabaseHelper(
     }
 
     // ── Business Profiles ────────────────────────────────────────────────────
-    override fun loadProfile(profileId: Long?): NiruvanaTharavugal? = useConn { conn ->
-        var p: NiruvanaTharavugal? = null
+    override fun loadProfile(profileId: Long?): BusinessProfile? = useConn { conn ->
+        var p: BusinessProfile? = null
         val sql = if (profileId != null) {
             "SELECT * FROM \"$profileTable\" WHERE id = ? AND is_deleted = 0 LIMIT 1"
         } else {
@@ -771,8 +766,8 @@ class DesktopUdukkaiDatabaseHelper(
         p
     }
 
-    override fun loadAllProfiles(): List<NiruvanaTharavugal> = useConn { conn ->
-        val list = mutableListOf<NiruvanaTharavugal>()
+    override fun loadAllProfiles(): List<BusinessProfile> = useConn { conn ->
+        val list = mutableListOf<BusinessProfile>()
         conn.createStatement().use { stmt ->
             stmt.executeQuery("SELECT * FROM \"$profileTable\" WHERE is_deleted = 0 ORDER BY id ASC").use { rs ->
                 while (rs.next()) list.add(rsToProfile(rs))
@@ -781,7 +776,7 @@ class DesktopUdukkaiDatabaseHelper(
         list
     }
 
-    override fun saveProfile(profile: NiruvanaTharavugal): Boolean = useConn { conn ->
+    override fun saveProfile(profile: BusinessProfile): Boolean = useConn { conn ->
         val exists = if (profile.id != null) {
             conn.prepareStatement("SELECT id FROM \"$profileTable\" WHERE id = ?").use { stmt ->
                 stmt.setLong(1, profile.id!!)
@@ -796,36 +791,36 @@ class DesktopUdukkaiDatabaseHelper(
         }
 
         conn.prepareStatement(sql).use { stmt ->
-            stmt.setString(1, profile.mudhanMozhi)
+            stmt.setString(1, profile.primaryLanguage)
             stmt.setString(2, profile.thunaiMozhi)
-            stmt.setInt(3, if (profile.iruMozhi) 1 else 0)
+            stmt.setInt(3, if (profile.isBilingual) 1 else 0)
             stmt.setInt(4, if (profile.gstPirippugal) 1 else 0)
-            stmt.setString(5, MozhiJsonConverter.stringify(profile.niruvanathinPeyar))
+            stmt.setString(5, LanguageJsonConverter.stringify(profile.businessName))
             stmt.setString(6, profile.kurumPeyar)
-            stmt.setString(7, profile.tholaipaesi1)
-            stmt.setString(8, profile.tholaipaesi2)
-            stmt.setString(9, profile.minnanjal)
+            stmt.setString(7, profile.phone1)
+            stmt.setString(8, profile.phone2)
+            stmt.setString(9, profile.email)
             stmt.setString(10, profile.gstin)
-            stmt.setString(11, MozhiJsonConverter.stringify(profile.mugavari))
-            stmt.setString(12, MozhiJsonConverter.stringify(profile.oor))
-            stmt.setString(13, MozhiJsonConverter.stringify(profile.maavattam))
-            stmt.setString(14, MozhiJsonConverter.stringify(profile.maanilam))
-            stmt.setString(15, MozhiJsonConverter.stringify(profile.naadu))
-            stmt.setString(16, profile.anjalKuriyeedu)
-            stmt.setString(17, MozhiJsonConverter.stringify(profile.vangiPeyar))
-            stmt.setString(18, MozhiJsonConverter.stringify(profile.kilai))
+            stmt.setString(11, LanguageJsonConverter.stringify(profile.address))
+            stmt.setString(12, LanguageJsonConverter.stringify(profile.city))
+            stmt.setString(13, LanguageJsonConverter.stringify(profile.district))
+            stmt.setString(14, LanguageJsonConverter.stringify(profile.state))
+            stmt.setString(15, LanguageJsonConverter.stringify(profile.country))
+            stmt.setString(16, profile.pinCode)
+            stmt.setString(17, LanguageJsonConverter.stringify(profile.bankName))
+            stmt.setString(18, LanguageJsonConverter.stringify(profile.branch))
             stmt.setString(19, profile.vangiKanakku)
             stmt.setString(20, profile.ifsc)
-            stmt.setString(21, profile.oavuru)
-            stmt.setString(22, profile.agalaOavuru)
-            stmt.setString(23, profile.thalaippuVadivu)
-            stmt.setString(24, profile.kaiyoppam)
+            stmt.setString(21, profile.logo)
+            stmt.setString(22, profile.wideLogo)
+            stmt.setString(23, profile.headerLayout)
+            stmt.setString(24, profile.signature)
             stmt.setString(25, profile.oppamPeyar)
             stmt.setString(26, profile.oppamMudhalPeyar)
             stmt.setString(27, profile.oppamIrudhiPeyar)
-            stmt.setString(28, MozhiJsonConverter.stringify(profile.adaimozhi))
+            stmt.setString(28, LanguageJsonConverter.stringify(profile.adaimozhi))
             stmt.setString(29, profile.upiId)
-            stmt.setString(30, profile.thoatraNiram)
+            stmt.setString(30, profile.themeColor)
             val now = System.currentTimeMillis() / 1000
             if (exists) {
                 stmt.setLong(31, now)
@@ -866,15 +861,15 @@ class DesktopUdukkaiDatabaseHelper(
     }
 
     // ── ResultSet Helpers ────────────────────────────────────────────────────
-    private fun rsToMerchant(rs: ResultSet): VaangunarTharavuru = VaangunarTharavuru(
+    private fun rsToMerchant(rs: ResultSet): CustomerModel = CustomerModel(
         id = rs.getLong("id"),
-        name = MozhiJsonConverter.parse(rs.getString("peyar")),
-        address = MozhiJsonConverter.parse(rs.getString("mugavari")),
-        city = MozhiJsonConverter.parse(rs.getString("oor")),
-        district = MozhiJsonConverter.parse(rs.getString("maavattam")),
-        state = MozhiJsonConverter.parse(rs.getString("maanilam")),
-        country = MozhiJsonConverter.parse(rs.getString("naadu")),
-        internationalAddress = MozhiJsonConverter.parse(rs.getString("velinaad_mugavari")),
+        name = LanguageJsonConverter.parse(rs.getString("peyar")),
+        address = LanguageJsonConverter.parse(rs.getString("mugavari")),
+        city = LanguageJsonConverter.parse(rs.getString("oor")),
+        district = LanguageJsonConverter.parse(rs.getString("maavattam")),
+        state = LanguageJsonConverter.parse(rs.getString("maanilam")),
+        country = LanguageJsonConverter.parse(rs.getString("naadu")),
+        internationalAddress = LanguageJsonConverter.parse(rs.getString("velinaad_mugavari")),
         pinCode = rs.getString("anjal_kuriyeedu") ?: "",
         gstin = rs.getString("gstin") ?: "",
         email = rs.getString("minnanjal") ?: "",
@@ -885,9 +880,9 @@ class DesktopUdukkaiDatabaseHelper(
         deletedAt = if (rs.getObject("deleted_at") == null) null else rs.getLong("deleted_at")
     )
 
-    private fun rsToItem(rs: ResultSet): PorulTharavuru = PorulTharavuru(
+    private fun rsToItem(rs: ResultSet): ProductModel = ProductModel(
         id = rs.getLong("id"),
-        name = MozhiJsonConverter.parse(rs.getString("porul_peyar")),
+        name = LanguageJsonConverter.parse(rs.getString("porul_peyar")),
         hsnCode = rs.getString("hsn_code") ?: "",
         price = rs.getDouble("vilai"),
         taxRate = rs.getDouble("vari_veetham"),
@@ -901,7 +896,7 @@ class DesktopUdukkaiDatabaseHelper(
         deletedAt = if (rs.getObject("deleted_at") == null) null else rs.getLong("deleted_at")
     )
 
-    private fun rsToInvoice(rs: ResultSet): PattiyalTharavuru {
+    private fun rsToInvoice(rs: ResultSet): InvoiceModel {
         fun hasColumn(name: String): Boolean = try { rs.findColumn(name); true } catch (_: Exception) { false }
         val mothaEdai = if (isFactory && hasColumn("motha_edai")) rs.getDouble("motha_edai") else 0.0
         val setharamGrams = if (isFactory && hasColumn("setharam_grams")) rs.getDouble("setharam_grams") else 0.0
@@ -910,7 +905,7 @@ class DesktopUdukkaiDatabaseHelper(
         val piravariVugal = if (isFactory && hasColumn("piravari_vugal")) (rs.getString("piravari_vugal") ?: "[]") else "[]"
         val vangiTharavugal = if (isFactory && hasColumn("vangi_tharavugal")) (rs.getString("vangi_tharavugal") ?: "{}") else "{}"
 
-        return PattiyalTharavuru(
+        return InvoiceModel(
             id = rs.getLong("id"),
             companyId = if (rs.getObject("niruvanam_id") == null) null else rs.getLong("niruvanam_id"),
             invoiceNumber = rs.getString("patrucheettu_en") ?: "",
@@ -918,8 +913,8 @@ class DesktopUdukkaiDatabaseHelper(
             vanakkam = rs.getInt("vanakkam"),
             invoiceType = rs.getString("pattiyal_vagai") ?: "tax-invoice",
             customerId = if (rs.getObject("vaangunar_id") == null) null else rs.getLong("vaangunar_id"),
-            customerName = MozhiJsonConverter.parse(rs.getString("vaangunar_peyar")),
-            customerAddress = MozhiJsonConverter.parse(rs.getString("vaangunar_munvari")),
+            customerName = LanguageJsonConverter.parse(rs.getString("vaangunar_peyar")),
+            customerAddress = LanguageJsonConverter.parse(rs.getString("vaangunar_munvari")),
             invoiceDate = rs.getLong("pattiyal_naal"),
             itemsJson = rs.getString("tharavugal") ?: "[]",
             totalAmount = rs.getDouble("motha_thogai"),
@@ -945,15 +940,15 @@ class DesktopUdukkaiDatabaseHelper(
         )
     }
 
-    private fun rsToReceipt(rs: ResultSet): PatrugalTharavuru = PatrugalTharavuru(
+    private fun rsToReceipt(rs: ResultSet): ReceiptModel = ReceiptModel(
         id = rs.getLong("id"),
         companyId = if (rs.getObject("niruvanam_id") == null) null else rs.getLong("niruvanam_id"),
         receiptNumber = rs.getString("patru_en") ?: "",
         finYear = rs.getString("fin_year") ?: "",
         vanakkam = rs.getInt("vanakkam"),
         customerId = if (rs.getObject("vaangunar_id") == null) null else rs.getLong("vaangunar_id"),
-        customerName = MozhiJsonConverter.parse(rs.getString("vaangunar_peyar")),
-        customerAddress = MozhiJsonConverter.parse(rs.getString("vaangunar_munvari")),
+        customerName = LanguageJsonConverter.parse(rs.getString("vaangunar_peyar")),
+        customerAddress = LanguageJsonConverter.parse(rs.getString("vaangunar_munvari")),
         receiptDate = rs.getLong("patru_naal"),
         amount = rs.getDouble("thogai"),
         paymentMode = rs.getString("seluthum_murai") ?: "cash",
@@ -966,26 +961,26 @@ class DesktopUdukkaiDatabaseHelper(
         deletedAt = if (rs.getObject("deleted_at") == null) null else rs.getLong("deleted_at")
     )
 
-    private fun rsToProfile(rs: ResultSet): NiruvanaTharavugal = NiruvanaTharavugal(
+    private fun rsToProfile(rs: ResultSet): BusinessProfile = BusinessProfile(
         id = rs.getLong("id"),
         primaryLanguage = rs.getString("mudhan_mozhi") ?: "ta",
         secondaryLanguage = rs.getString("thunai_mozhi") ?: "en",
         isBilingual = rs.getInt("iru_mozhi") == 1,
         splitGst = rs.getInt("gst_pirippugal") == 1,
-        businessName = MozhiJsonConverter.parse(rs.getString("niruvanathin_peyar")),
+        businessName = LanguageJsonConverter.parse(rs.getString("niruvanathin_peyar")),
         shortName = rs.getString("kurum_peyar") ?: "",
         phone1 = rs.getString("tholaipaesi1") ?: "",
         phone2 = rs.getString("tholaipaesi2") ?: "",
         email = rs.getString("minnanjal") ?: "",
         gstin = rs.getString("gstin") ?: "",
-        address = MozhiJsonConverter.parse(rs.getString("mugavari")),
-        city = MozhiJsonConverter.parse(rs.getString("oor")),
-        district = MozhiJsonConverter.parse(rs.getString("maavattam")),
-        state = MozhiJsonConverter.parse(rs.getString("maanilam")),
-        country = MozhiJsonConverter.parse(rs.getString("naadu")),
+        address = LanguageJsonConverter.parse(rs.getString("mugavari")),
+        city = LanguageJsonConverter.parse(rs.getString("oor")),
+        district = LanguageJsonConverter.parse(rs.getString("maavattam")),
+        state = LanguageJsonConverter.parse(rs.getString("maanilam")),
+        country = LanguageJsonConverter.parse(rs.getString("naadu")),
         pinCode = rs.getString("anjal_kuriyeedu") ?: "",
-        bankName = MozhiJsonConverter.parse(rs.getString("vangi_peyar")),
-        branch = MozhiJsonConverter.parse(rs.getString("kilai")),
+        bankName = LanguageJsonConverter.parse(rs.getString("vangi_peyar")),
+        branch = LanguageJsonConverter.parse(rs.getString("kilai")),
         accountNumber = rs.getString("vangi_kanakku") ?: "",
         ifsc = rs.getString("ifsc") ?: "",
         logo = rs.getString("oavuru") ?: "",
@@ -995,7 +990,7 @@ class DesktopUdukkaiDatabaseHelper(
         signatoryName = rs.getString("oppam_peyar") ?: "",
         signatoryFirstName = rs.getString("oppam_mudhal_peyar") ?: "",
         signatoryLastName = rs.getString("oppam_irudhi_peyar") ?: "",
-        tagline = MozhiJsonConverter.parse(rs.getString("adaimozhi")),
+        tagline = LanguageJsonConverter.parse(rs.getString("adaimozhi")),
         upiId = rs.getString("upi_id") ?: "",
         themeColor = rs.getString("thoatraNiram") ?: ""
     )

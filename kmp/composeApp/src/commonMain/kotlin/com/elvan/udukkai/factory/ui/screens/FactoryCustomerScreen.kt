@@ -16,7 +16,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.elvan.udukkai.data.model.VaangunarTharavuru
+import com.elvan.udukkai.data.model.CustomerModel
 import com.elvan.udukkai.ui.screens.customer.FactoryCustomerCard
 import com.elvan.udukkai.factory.data.FactoryCustomerRepository
 import com.elvan.udukkai.factory.data.FactoryProfileRepository
@@ -38,7 +38,7 @@ import kotlinx.coroutines.delay
 
 @Composable
 fun FactoryCustomerScreen(
-    onCustomerClick: (VaangunarTharavuru) -> Unit,
+    onCustomerClick: (CustomerModel) -> Unit,
     modifier: Modifier = Modifier,
     scrollState: LazyListState = rememberLazyListState(),
     colors: ShellColors = rememberShellColors(),

@@ -8,7 +8,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.elvan.udukkai.core.utils.CurrencyUtils
-import com.elvan.udukkai.data.model.PattiyalTharavuru
+import com.elvan.udukkai.data.model.InvoiceModel
 import com.elvan.udukkai.factory.data.FactoryInvoiceRepository
 import com.elvan.udukkai.factory.data.FactoryProfileRepository
 import com.elvan.udukkai.localization.K
@@ -35,7 +35,7 @@ fun FactoryDashboardScreen(
     modifier: Modifier = Modifier,
     onSeeAllReceipts: (() -> Unit)? = null,
     isRefreshing: Boolean = false,
-    onInvoiceClick: (PattiyalTharavuru) -> Unit = {},
+    onInvoiceClick: (InvoiceModel) -> Unit = {},
     onManageProfiles: (() -> Unit)? = null
 ) {
     val colors = rememberShellColors()

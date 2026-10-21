@@ -5,20 +5,20 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.elvan.udukkai.core.backup.AutoBackupManager
 import com.elvan.udukkai.data.database.getFactoryDatabaseHelper
-import com.elvan.udukkai.data.model.PatruPattiyalInaippuTharavuru
-import com.elvan.udukkai.core.utils.ThedalUdhavi
-import com.elvan.udukkai.data.model.PatrugalTharavuru
-import com.elvan.udukkai.data.model.PattiyalTharavuru
+import com.elvan.udukkai.data.model.ReceiptInvoiceLinkModel
+import com.elvan.udukkai.core.utils.SearchHelper
+import com.elvan.udukkai.data.model.ReceiptModel
+import com.elvan.udukkai.data.model.InvoiceModel
 
 /**
  * Dedicated receipt repository for Udukkai Factory (ஆலை).
  */
 object FactoryReceiptRepository {
 
-    var receipts by mutableStateOf<List<PatrugalTharavuru>>(emptyList())
+    var receipts by mutableStateOf<List<ReceiptModel>>(emptyList())
         private set
 
-    var deletedReceipts by mutableStateOf<List<PatrugalTharavuru>>(emptyList())
+    var deletedReceipts by mutableStateOf<List<ReceiptModel>>(emptyList())
         private set
 
     var searchQuery by mutableStateOf("")
@@ -37,31 +37,31 @@ object FactoryReceiptRepository {
         endDateFilter = null
     }
 
-    val activeCompanyReceipts: List<PatrugalTharavuru>
+    val activeCompanyReceipts: List<ReceiptModel>
         get() {
             val activeId = FactoryProfileRepository.profile.id
             return if (activeId != null) {
-                receipts.filter { it.niruvanamId == activeId }
+                receipts.filter { it.companyId == activeId }
             } else {
                 receipts
             }
         }
 
-    val filteredReceipts: List<PatrugalTharavuru>
+    val filteredReceipts: List<ReceiptModel>
         get() {
             return activeCompanyReceipts.filter { r ->
-                val matchesQuery = ThedalUdhavi.matchesReceipt(r, searchQuery)
+                val matchesQuery = SearchHelper.matchesReceipt(r, searchQuery)
                 val matchesDate = when {
-                    startDateFilter != null && endDateFilter != null -> r.patruNaal in startDateFilter!!..endDateFilter!!
-                    startDateFilter != null -> r.patruNaal >= startDateFilter!!
-                    endDateFilter != null -> r.patruNaal <= endDateFilter!!
+                    startDateFilter != null && endDateFilter != null -> r.receiptDate in startDateFilter!!..endDateFilter!!
+                    startDateFilter != null -> r.receiptDate >= startDateFilter!!
+                    endDateFilter != null -> r.receiptDate <= endDateFilter!!
                     else -> true
                 }
                 matchesQuery && matchesDate
             }
         }
 
-    val recentReceipts: List<PatrugalTharavuru>
+    val recentReceipts: List<ReceiptModel>
         get() = activeCompanyReceipts.take(5)
 
     init {
@@ -93,7 +93,7 @@ object FactoryReceiptRepository {
         return count
     }
 
-    fun save(receipt: PatrugalTharavuru): Long {
+    fun save(receipt: ReceiptModel): Long {
         val helper = getFactoryDatabaseHelper()
         val id = helper.saveReceipt(receipt)
         if (id > 0) {
@@ -103,7 +103,7 @@ object FactoryReceiptRepository {
         return id
     }
 
-    fun saveWithLinks(receipt: PatrugalTharavuru, links: List<PatruPattiyalInaippuTharavuru>): Long {
+    fun saveWithLinks(receipt: ReceiptModel, links: List<ReceiptInvoiceLinkModel>): Long {
         val helper = getFactoryDatabaseHelper()
         val id = helper.saveReceiptWithLinks(receipt, links)
         if (id > 0) {
@@ -142,10 +142,10 @@ object FactoryReceiptRepository {
         return success
     }
 
-    fun getLinks(patruId: Long): List<PatruPattiyalInaippuTharavuru> =
+    fun getLinks(patruId: Long): List<ReceiptInvoiceLinkModel> =
         getFactoryDatabaseHelper().getLinksForPatru(patruId)
 
-    fun getLinksForPatru(patruId: Long): List<PatruPattiyalInaippuTharavuru> =
+    fun getLinksForPatru(patruId: Long): List<ReceiptInvoiceLinkModel> =
         getLinks(patruId)
 
     fun getPaidAmount(invoiceId: Long): Double =
@@ -154,33 +154,33 @@ object FactoryReceiptRepository {
     fun getPaidAmounts(invoiceIds: List<Long>): Map<Long, Double> =
         getFactoryDatabaseHelper().getPaidAmountsForInvoices(invoiceIds)
 
-    fun getPendingBalance(invoice: PattiyalTharavuru): Double {
+    fun getPendingBalance(invoice: InvoiceModel): Double {
         val paid = getPaidAmount(invoice.id)
-        return (invoice.mothaThogai - paid).coerceAtLeast(0.0)
+        return (invoice.totalAmount - paid).coerceAtLeast(0.0)
     }
 
     fun getNextVanakkam(niruvanamId: Long?): Int {
         val matching = receipts.filter {
-            if (niruvanamId != null) it.niruvanamId == niruvanamId else true
+            if (niruvanamId != null) it.companyId == niruvanamId else true
         }
         if (matching.isEmpty()) return 1
         val maxVanakkam = matching.maxOfOrNull { it.vanakkam } ?: 0
         val maxParsed = matching.mapNotNull { r ->
-            val numStr = r.patruEn.substringAfterLast('/', "").ifEmpty {
-                r.patruEn.substringAfterLast('-', "")
+            val numStr = r.receiptNumber.substringAfterLast('/', "").ifEmpty {
+                r.receiptNumber.substringAfterLast('-', "")
             }
             numStr.toIntOrNull()
         }.maxOfOrNull { it } ?: 0
         return maxOf(maxVanakkam, maxParsed) + 1
     }
 
-    fun formatPatruEn(bizShort: String, vanakkam: Int): String {
+    fun formatReceiptNumber(bizShort: String, vanakkam: Int): String {
         val short = bizShort.trim().ifEmpty { "BIZ" }
         val padded = if (vanakkam < 10) "0$vanakkam" else vanakkam.toString()
         return "RCP/$short/$padded"
     }
 
-    fun isPatruEnDuplicate(
+    fun isReceiptNumberDuplicate(
         patruEn: String,
         niruvanamId: Long?,
         excludeId: Long? = null
@@ -188,27 +188,27 @@ object FactoryReceiptRepository {
         val target = patruEn.trim().uppercase()
         return receipts.any { r ->
             (excludeId == null || r.id != excludeId) &&
-            (niruvanamId == null || r.niruvanamId == niruvanamId) &&
-            r.patruEn.trim().uppercase() == target
+            (niruvanamId == null || r.companyId == niruvanamId) &&
+            r.receiptNumber.trim().uppercase() == target
         }
     }
 
     fun validateLinks(
-        links: List<PatruPattiyalInaippuTharavuru>,
+        links: List<ReceiptInvoiceLinkModel>,
         excludePatruId: Long? = null
     ): String? {
         for (link in links) {
-            if (link.poruthiyaThogai <= 0) continue
-            val invoice = FactoryInvoiceRepository.invoices.firstOrNull { it.id == link.pattiyalId } ?: continue
-            val totalPaid = getPaidAmount(link.pattiyalId)
+            if (link.appliedAmount <= 0) continue
+            val invoice = FactoryInvoiceRepository.invoices.firstOrNull { it.id == link.invoiceId } ?: continue
+            val totalPaid = getPaidAmount(link.invoiceId)
             var currentReceiptAllocation = 0.0
             if (excludePatruId != null && excludePatruId > 0) {
                 val existingLinks = getLinksForPatru(excludePatruId)
-                currentReceiptAllocation = existingLinks.find { it.pattiyalId == link.pattiyalId }?.poruthiyaThogai ?: 0.0
+                currentReceiptAllocation = existingLinks.find { it.invoiceId == link.invoiceId }?.appliedAmount ?: 0.0
             }
-            val remaining = (invoice.mothaThogai - (totalPaid - currentReceiptAllocation)).coerceAtLeast(0.0)
-            if (link.poruthiyaThogai > remaining + 0.01) {
-                return "${invoice.patrucheettuEn} - Allocated amount exceeds remaining balance."
+            val remaining = (invoice.totalAmount - (totalPaid - currentReceiptAllocation)).coerceAtLeast(0.0)
+            if (link.appliedAmount > remaining + 0.01) {
+                return "${invoice.invoiceNumber} - Allocated amount exceeds remaining balance."
             }
         }
         return null

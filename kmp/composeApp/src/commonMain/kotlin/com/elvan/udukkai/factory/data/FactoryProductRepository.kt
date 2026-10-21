@@ -5,29 +5,29 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.elvan.udukkai.core.backup.AutoBackupManager
 import com.elvan.udukkai.data.database.getFactoryDatabaseHelper
-import com.elvan.udukkai.core.utils.ThedalUdhavi
-import com.elvan.udukkai.data.model.PorulTharavuru
+import com.elvan.udukkai.core.utils.SearchHelper
+import com.elvan.udukkai.data.model.ProductModel
 
 /**
  * Dedicated product/labor repository for Udukkai Factory (ஆலை).
  */
 object FactoryProductRepository {
-    val products: List<com.elvan.udukkai.data.model.PorulTharavuru> get() = items
-    val deletedProducts: List<com.elvan.udukkai.data.model.PorulTharavuru> get() = deletedItems
+    val products: List<com.elvan.udukkai.data.model.ProductModel> get() = items
+    val deletedProducts: List<com.elvan.udukkai.data.model.ProductModel> get() = deletedItems
 
 
-    var items by mutableStateOf<List<PorulTharavuru>>(emptyList())
+    var items by mutableStateOf<List<ProductModel>>(emptyList())
         private set
 
-    var deletedItems by mutableStateOf<List<PorulTharavuru>>(emptyList())
+    var deletedItems by mutableStateOf<List<ProductModel>>(emptyList())
         private set
 
     var searchQuery by mutableStateOf("")
 
-    val filteredItems: List<PorulTharavuru>
+    val filteredItems: List<ProductModel>
         get() {
             return items.filter { item ->
-                ThedalUdhavi.matchesProduct(item, searchQuery)
+                SearchHelper.matchesProduct(item, searchQuery)
             }
         }
 
@@ -58,7 +58,7 @@ object FactoryProductRepository {
         }
     }
 
-    fun save(item: PorulTharavuru): Long {
+    fun save(item: ProductModel): Long {
         val helper = getFactoryDatabaseHelper()
         val id = helper.saveItem(item)
         if (id > 0) {
@@ -97,5 +97,5 @@ object FactoryProductRepository {
         return success
     }
 
-    fun getById(id: Long): PorulTharavuru? = items.find { it.id == id }
+    fun getById(id: Long): ProductModel? = items.find { it.id == id }
 }

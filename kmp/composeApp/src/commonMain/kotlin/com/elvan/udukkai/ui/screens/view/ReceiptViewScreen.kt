@@ -19,8 +19,8 @@ import androidx.compose.ui.unit.sp
 import com.elvan.udukkai.core.platform.AppBackHandler
 import com.elvan.udukkai.core.utils.CurrencyUtils
 import com.elvan.udukkai.core.utils.DateUtils
-import com.elvan.udukkai.data.model.PatrugalTharavuru
-import com.elvan.udukkai.data.settings.NiruvanaTharavugal
+import com.elvan.udukkai.data.model.ReceiptModel
+import com.elvan.udukkai.data.settings.BusinessProfile
 import com.elvan.udukkai.localization.PrintLanguageManager
 import com.elvan.udukkai.localization.K
 import com.elvan.udukkai.localization.tr
@@ -38,9 +38,9 @@ import com.elvan.udukkai.theme.LocalShellColors
  */
 @Composable
 fun ReceiptViewScreen(
-    receipt: PatrugalTharavuru,
-    profile: NiruvanaTharavugal,
-    allProfiles: List<NiruvanaTharavugal>,
+    receipt: ReceiptModel,
+    profile: BusinessProfile,
+    allProfiles: List<BusinessProfile>,
     onBack: () -> Unit,
     onEdit: () -> Unit,
     onPrint: (() -> Unit)? = null
@@ -49,23 +49,23 @@ fun ReceiptViewScreen(
     val isDark = colors.isDark
     val ff = LocalAppFontFamily.current
 
-    val activeProfile = (if (receipt.niruvanamId != null) allProfiles.find { it.id == receipt.niruvanamId } else null)
+    val activeProfile = (if (receipt.companyId != null) allProfiles.find { it.id == receipt.companyId } else null)
         ?: profile
-    val isBilingual = activeProfile.iruMozhi
-    val primaryLang = activeProfile.mudhanMozhi.ifEmpty { "ta" }
+    val isBilingual = activeProfile.isBilingual
+    val primaryLang = activeProfile.primaryLanguage.ifEmpty { "ta" }
     val secondaryLang = activeProfile.thunaiMozhi.ifEmpty { "en" }
 
-    val customerName = receipt.vaangunarPeyar[primaryLang]
-        ?: receipt.vaangunarPeyar[secondaryLang]
-        ?: receipt.vaangunarPeyar.values.firstOrNull().orEmpty().ifEmpty { "-" }
+    val customerName = receipt.customerName[primaryLang]
+        ?: receipt.customerName[secondaryLang]
+        ?: receipt.customerName.values.firstOrNull().orEmpty().ifEmpty { "-" }
 
-    val secondaryCustomerName = if (isBilingual) (receipt.vaangunarPeyar[secondaryLang] ?: "") else ""
+    val secondaryCustomerName = if (isBilingual) (receipt.customerName[secondaryLang] ?: "") else ""
 
 
     val scrollState = rememberLazyListState()
 
     ViewTile(
-        title = "${K.receipt.tr()} #${receipt.patruEn}",
+        title = "${K.receipt.tr()} #${receipt.receiptNumber}",
         onBack = onBack,
         scrollState = scrollState,
         onEdit = onEdit,
@@ -134,7 +134,7 @@ fun ReceiptViewScreen(
 
                         Column(horizontalAlignment = Alignment.End) {
                             Text(
-                                text = DateUtils.formatEpochMillis(receipt.patruNaal),
+                                text = DateUtils.formatEpochMillis(receipt.receiptDate),
                                 style = TextStyle(
                                     fontFamily = ff,
                                     fontSize = 15.sp,
@@ -193,7 +193,7 @@ fun ReceiptViewScreen(
                         )
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(
-                            text = CurrencyUtils.formatInr(receipt.thogai),
+                            text = CurrencyUtils.formatInr(receipt.amount),
                             style = TextStyle(
                                 fontFamily = ff,
                                 fontSize = 34.sp,
@@ -206,7 +206,7 @@ fun ReceiptViewScreen(
             }
 
             // Payment Transaction / Reference Details
-            if (!receipt.parivarthanaiEn.isNullOrBlank() || !receipt.vangiPeyar.isNullOrBlank()) {
+            if (!receipt.transactionNumber.isNullOrBlank() || !receipt.bankName.isNullOrBlank()) {
                 item(key = "reference_details") {
                     Box(
                         modifier = Modifier
@@ -260,7 +260,7 @@ fun ReceiptViewScreen(
             }
 
             // Notes / Comments
-            if (receipt.ullkurippu.isNotBlank()) {
+            if (receipt.notes.isNotBlank()) {
                 item(key = "notes_card") {
                     Column(modifier = Modifier.fillMaxWidth()) {
                         Text(
@@ -286,7 +286,7 @@ fun ReceiptViewScreen(
                                 .padding(16.dp)
                         ) {
                             Text(
-                                text = receipt.ullkurippu.preventBrokenLigatures(),
+                                text = receipt.notes.preventBrokenLigatures(),
                                 style = TextStyle(
                                     fontFamily = ff,
                                     fontSize = 14.sp,
