@@ -719,30 +719,7 @@ fun FactoryInvoiceEditorScreen(
                     }
                 }
 
-                // ── Section 4: Bill Options (பட்டியல் விருப்பங்கள்) ──
-                item(key = "bill_options_section") {
-                    InvoiceBillOptionsSection(
-                        options = displayOptions,
-                        onOptionsChanged = {
-                            displayOptions = it
-                            hasUnsavedChanges = true
-                        },
-                        showTaxInclusiveOption = false
-                    )
-                }
 
-                // ── Section 5: Bank Account (வங்கிக் கணக்கு) ──
-                item(key = "bank_account_section") {
-                    InvoiceBankAccountPicker(
-                        accounts = selectedProfile.getPaymentAccounts(),
-                        selectedAccountId = selectedAccountId,
-                        onAccountSelected = { acc ->
-                            selectedAccountId = acc.id
-                            displayOptions = displayOptions.copy(selectedAccountId = acc.id)
-                            hasUnsavedChanges = true
-                        }
-                    )
-                }
             }
         }
     }
