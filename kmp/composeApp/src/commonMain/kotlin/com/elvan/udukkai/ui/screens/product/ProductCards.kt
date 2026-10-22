@@ -138,19 +138,7 @@ fun FactoryProductCard(
                             overflow = TextOverflow.Ellipsis
                         )
 
-                        if (isBilingual && secondary.isNotBlank() && secondary != primary) {
-                            Spacer(modifier = Modifier.height(2.dp))
-                            Text(
-                                text = secondary.preventBrokenLigatures(),
-                                style = TextStyle(
-                                    fontFamily = ff,
-                                    fontSize = 13.5.sp,
-                                    color = LocalShellColors.current.textSecondary
-                                ),
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis
-                            )
-                        }
+
 
                         val companyTag = resolveProductCompanyTag(product, profiles, primaryLang)
                         if (companyTag.isNotBlank()) {
@@ -250,19 +238,7 @@ fun TextilesProductCard(
                             overflow = TextOverflow.Ellipsis
                         )
 
-                        if (isBilingual && secondary.isNotBlank() && secondary != primary) {
-                            Spacer(modifier = Modifier.height(2.dp))
-                            Text(
-                                text = secondary.preventBrokenLigatures(),
-                                style = TextStyle(
-                                    fontFamily = ff,
-                                    fontSize = 13.5.sp,
-                                    color = LocalShellColors.current.textSecondary
-                                ),
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis
-                            )
-                        }
+
 
 
                     }
