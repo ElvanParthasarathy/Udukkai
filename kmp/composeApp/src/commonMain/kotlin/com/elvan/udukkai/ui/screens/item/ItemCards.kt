@@ -1,4 +1,4 @@
-package com.elvan.udukkai.ui.screens.product
+package com.elvan.udukkai.ui.screens.item
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.background
@@ -16,7 +16,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.elvan.udukkai.data.model.ProductModel
+import com.elvan.udukkai.data.model.ItemModel
 import com.elvan.udukkai.factory.data.FactoryProfileRepository
 import com.elvan.udukkai.textiles.data.TextilesProfileRepository
 import com.elvan.udukkai.theme.Dimens
@@ -32,15 +32,15 @@ import com.elvan.udukkai.localization.K
 import com.elvan.udukkai.localization.tr
 
 @Composable
-private fun resolveProductCompanyTag(
-    product: ProductModel,
+private fun resolveItemCompanyTag(
+    item: ItemModel,
     profiles: List<BusinessProfile>,
     primaryLang: String
 ): String {
-    if (product.companyIds.isEmpty()) {
+    if (item.companyIds.isEmpty()) {
         return K.allCompanies.tr()
     }
-    return product.companyIds.mapNotNull { cId ->
+    return item.companyIds.mapNotNull { cId ->
         val p = profiles.find { it.id == cId }
         p?.shortName?.trim()?.takeIf { it.isNotEmpty() }
             ?: p?.businessName?.get(primaryLang)?.trim()?.takeIf { it.isNotEmpty() }
@@ -69,9 +69,9 @@ private fun getDynamicField(
 }
 
 @Composable
-fun FactoryProductCard(
+fun FactoryItemCard(
     index: Int,
-    product: ProductModel,
+    item: ItemModel,
     onClick: () -> Unit,
     colors: ShellColors,
     isSelectionMode: Boolean = false,
@@ -85,9 +85,8 @@ fun FactoryProductCard(
     val primaryLang = profile.primaryLanguage.ifEmpty { "ta" }
     val secondaryLang = profile.secondaryLanguage.ifEmpty { "en" }
 
-    val primary = getDynamicField(product.name, isPrimary = true, isBilingual = isBilingual, primaryLang, secondaryLang)
-        .ifEmpty { product.name.values.firstOrNull() ?: "-" }
-    val secondary = getDynamicField(product.name, isPrimary = false, isBilingual = isBilingual, primaryLang, secondaryLang)
+    val primary = getDynamicField(item.name, isPrimary = true, isBilingual = isBilingual, primaryLang, secondaryLang)
+        .ifEmpty { item.name.values.firstOrNull() ?: "-" }
 
     ElvanCommonCard(
         onClick = onClick,
@@ -110,7 +109,7 @@ fun FactoryProductCard(
 
             ElvanCardLeadingIcon(
                 icon = MaterialSymbols.Rounded.Inventory2,
-                tint = colors.productColor
+                tint = colors.itemColor
             )
 
             Spacer(modifier = Modifier.width(12.dp))
@@ -138,9 +137,7 @@ fun FactoryProductCard(
                             overflow = TextOverflow.Ellipsis
                         )
 
-
-
-                        val companyTag = resolveProductCompanyTag(product, profiles, primaryLang)
+                        val companyTag = resolveItemCompanyTag(item, profiles, primaryLang)
                         if (companyTag.isNotBlank()) {
                             Spacer(modifier = Modifier.height(4.dp))
                             Text(
@@ -169,9 +166,9 @@ fun FactoryProductCard(
 }
 
 @Composable
-fun TextilesProductCard(
+fun TextilesItemCard(
     index: Int,
-    product: ProductModel,
+    item: ItemModel,
     onClick: () -> Unit,
     colors: ShellColors,
     isSelectionMode: Boolean = false,
@@ -185,9 +182,8 @@ fun TextilesProductCard(
     val primaryLang = profile.primaryLanguage.ifEmpty { "ta" }
     val secondaryLang = profile.secondaryLanguage.ifEmpty { "en" }
 
-    val primary = getDynamicField(product.name, isPrimary = true, isBilingual = isBilingual, primaryLang, secondaryLang)
-        .ifEmpty { product.name.values.firstOrNull() ?: "-" }
-    val secondary = getDynamicField(product.name, isPrimary = false, isBilingual = isBilingual, primaryLang, secondaryLang)
+    val primary = getDynamicField(item.name, isPrimary = true, isBilingual = isBilingual, primaryLang, secondaryLang)
+        .ifEmpty { item.name.values.firstOrNull() ?: "-" }
 
     ElvanCommonCard(
         onClick = onClick,
@@ -210,7 +206,7 @@ fun TextilesProductCard(
 
             ElvanCardLeadingIcon(
                 icon = MaterialSymbols.Rounded.Inventory2,
-                tint = colors.productColor
+                tint = colors.itemColor
             )
 
             Spacer(modifier = Modifier.width(12.dp))
@@ -237,10 +233,6 @@ fun TextilesProductCard(
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis
                         )
-
-
-
-
                     }
 
                     Icon(
@@ -261,9 +253,9 @@ fun TextilesProductCard(
                     Column(
                         modifier = Modifier.weight(1f, fill = false)
                     ) {
-                        val hsnText = if (product.hsnCode.isNotBlank()) "HSN: ${product.hsnCode}" else ""
-                        val gstRate = if (product.taxRate % 1.0 == 0.0) product.taxRate.toLong().toString() else product.taxRate.toString()
-                        val taxText = if (product.taxRate > 0.0) "Tax: $gstRate%" else ""
+                        val hsnText = if (item.hsnCode.isNotBlank()) "HSN: ${item.hsnCode}" else ""
+                        val gstRate = if (item.taxRate % 1.0 == 0.0) item.taxRate.toLong().toString() else item.taxRate.toString()
+                        val taxText = if (item.taxRate > 0.0) "Tax: $gstRate%" else ""
                         val hsnTaxLine = if (hsnText.isNotBlank() && taxText.isNotBlank()) "$hsnText • $taxText" else "$hsnText$taxText"
 
                         if (hsnTaxLine.isNotBlank()) {
@@ -279,7 +271,7 @@ fun TextilesProductCard(
                             )
                         }
 
-                        val measureLabel = if (product.quantityType == "weight") K.weight.tr() else K.quantity.tr()
+                        val measureLabel = if (item.quantityType == "weight") K.weight.tr() else K.quantity.tr()
                         Text(
                             text = measureLabel.preventBrokenLigatures(),
                             style = TextStyle(
@@ -292,7 +284,7 @@ fun TextilesProductCard(
                             modifier = Modifier.padding(top = 2.dp)
                         )
 
-                        val companyTag = resolveProductCompanyTag(product, profiles, primaryLang)
+                        val companyTag = resolveItemCompanyTag(item, profiles, primaryLang)
                         if (companyTag.isNotBlank()) {
                             Text(
                                 text = companyTag.preventBrokenLigatures(),
@@ -310,8 +302,8 @@ fun TextilesProductCard(
 
                     Spacer(modifier = Modifier.width(8.dp))
 
-                    val priceText = if (product.price > 0.0) {
-                        val formatted = if (product.price % 1.0 == 0.0) product.price.toLong().toString() else product.price.toString()
+                    val priceText = if (item.price > 0.0) {
+                        val formatted = if (item.price % 1.0 == 0.0) item.price.toLong().toString() else item.price.toString()
                         "₹$formatted"
                     } else {
                         "-"

@@ -34,7 +34,7 @@ import com.elvan.udukkai.data.model.InvoiceModel
 import com.elvan.udukkai.data.model.InvoiceDisplayOptions
 import com.elvan.udukkai.ui.screens.editor.invoice.components.*
 import com.elvan.udukkai.factory.data.FactoryInvoiceRepository
-import com.elvan.udukkai.factory.data.FactoryProductRepository
+import com.elvan.udukkai.factory.data.FactoryItemRepository
 import com.elvan.udukkai.factory.data.FactoryCustomerRepository
 import com.elvan.udukkai.data.settings.LanguageJsonConverter
 import com.elvan.udukkai.data.settings.BusinessProfile
@@ -100,7 +100,7 @@ fun FactoryInvoiceEditorScreen(
     invoice: InvoiceModel? = null,
     onBack: () -> Unit,
     onRequestAddNewCustomer: () -> Unit = {},
-    onRequestAddNewProduct: () -> Unit = {}
+    onRequestAddNewItem: () -> Unit = {}
 ) {
     val colors = rememberShellColors()
     val isDark = colors.isDark
@@ -109,7 +109,7 @@ fun FactoryInvoiceEditorScreen(
 
     LaunchedEffect(Unit) {
         FactoryProfileRepository.refreshFromDatabase()
-        FactoryProductRepository.loadAll()
+        FactoryItemRepository.loadAll()
         FactoryCustomerRepository.loadAll()
         FactoryInvoiceRepository.loadAll()
     }
@@ -142,7 +142,7 @@ fun FactoryInvoiceEditorScreen(
         )
     }
     var isInvoiceNumberOverridden by remember { mutableStateOf(isEditing) }
-    var showAddProductEditor by remember { mutableStateOf(false) }
+    var showAddItemEditor by remember { mutableStateOf(false) }
     var showAddCustomerEditor by remember { mutableStateOf(false) }
 
     // Customer
@@ -174,12 +174,12 @@ fun FactoryInvoiceEditorScreen(
         )
     }
 
-    LaunchedEffect(FactoryProductRepository.items) {
-        if (FactoryProductRepository.items.isNotEmpty()) {
+    LaunchedEffect(FactoryItemRepository.items) {
+        if (FactoryItemRepository.items.isNotEmpty()) {
             items = items.map { item ->
                 if (item.languageMap.isEmpty()) {
-                    val matched = FactoryProductRepository.items.firstOrNull { it.id.toString() == item.productId }
-                        ?: FactoryProductRepository.items.firstOrNull { it.name.values.any { v -> v.equals(item.productName, ignoreCase = true) || v.equals(item.productNameEn, ignoreCase = true) } }
+                    val matched = FactoryItemRepository.items.firstOrNull { it.id.toString() == item.productId }
+                        ?: FactoryItemRepository.items.firstOrNull { it.name.values.any { v -> v.equals(item.productName, ignoreCase = true) || v.equals(item.productNameEn, ignoreCase = true) } }
                     if (matched != null && matched.name.isNotEmpty()) {
                         item.copy(
                             productId = matched.id.toString(),
@@ -343,7 +343,7 @@ fun FactoryInvoiceEditorScreen(
 
     val companyRequiredMsg = K.selectCompanyProfile.tr()
     val customerRequiredMsg = K.selectCustomer.tr()
-    val productRequiredMsg = K.addAtLeastOneProduct.tr()
+    val productRequiredMsg = K.addAtLeastOneItem.tr()
     val receiptNumberRequiredMsg = K.receiptNumber.tr()
     val saveBtnLabel = K.saveBtn.tr()
 
@@ -556,7 +556,7 @@ fun FactoryInvoiceEditorScreen(
                                                     hasUnsavedChanges = true
                                                 },
                                                 onDirty = { hasUnsavedChanges = true },
-                                                onRequestAddNewProduct = { showAddProductEditor = true },
+                                                onRequestAddNewItem = { showAddItemEditor = true },
                                                 onAddNewItem = null,
                                                 onAddNewCharge = null
                                             )
@@ -773,7 +773,7 @@ fun FactoryInvoiceEditorScreen(
 
     // ── In-Editor Full-Screen Overlays (Add Product / Add Customer) with Smooth Spring Slide ──
     AnimatedVisibility(
-        visible = showAddProductEditor,
+        visible = showAddItemEditor,
         enter = slideInHorizontally(
             initialOffsetX = { fullWidth -> fullWidth },
             animationSpec = spring(stiffness = Spring.StiffnessLow, dampingRatio = Spring.DampingRatioNoBouncy)
@@ -784,17 +784,17 @@ fun FactoryInvoiceEditorScreen(
         ),
         modifier = Modifier.zIndex(100f)
     ) {
-        AppBackHandler { showAddProductEditor = false }
+        AppBackHandler { showAddItemEditor = false }
         Box(
             modifier = Modifier
                 .fillMaxSize()
                 .background(colors.background)
         ) {
-            FactoryProductEditorScreen(
+            FactoryItemEditorScreen(
                 item = null,
                 onBack = {
-                    showAddProductEditor = false
-                    FactoryProductRepository.loadAll()
+                    showAddItemEditor = false
+                    FactoryItemRepository.loadAll()
                 }
             )
         }
@@ -829,11 +829,11 @@ fun FactoryInvoiceEditorScreen(
     }
 }
 
-@Deprecated("Use FactoryInvoiceEditorScreen", ReplaceWith("FactoryInvoiceEditorScreen(invoice, onBack, onRequestAddNewCustomer, onRequestAddNewProduct)"))
+@Deprecated("Use FactoryInvoiceEditorScreen", ReplaceWith("FactoryInvoiceEditorScreen(invoice, onBack, onRequestAddNewCustomer, onRequestAddNewItem)"))
 @Composable
 fun CoolieInvoiceEditorScreen(
     invoice: InvoiceModel? = null,
     onBack: () -> Unit,
     onRequestAddNewCustomer: () -> Unit = {},
-    onRequestAddNewProduct: () -> Unit = {}
-) = FactoryInvoiceEditorScreen(invoice, onBack, onRequestAddNewCustomer, onRequestAddNewProduct)
+    onRequestAddNewItem: () -> Unit = {}
+) = FactoryInvoiceEditorScreen(invoice, onBack, onRequestAddNewCustomer, onRequestAddNewItem)

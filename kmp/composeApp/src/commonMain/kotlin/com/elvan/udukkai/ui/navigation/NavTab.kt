@@ -23,9 +23,9 @@ enum class NavTab(
         titleKey = K.make,
         headerTitleKey = K.createBtn
     ),
-    Products(
-        icon = MaterialSymbols.CustomNav.Products,
-        activeIcon = MaterialSymbols.CustomNav.ProductsFill,
+    Items(
+        icon = MaterialSymbols.CustomNav.Items,
+        activeIcon = MaterialSymbols.CustomNav.ItemsFill,
         titleKey = K.item,
         headerTitleKey = K.items
     ),

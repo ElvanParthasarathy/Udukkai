@@ -26,8 +26,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.elvan.udukkai.core.utils.CurrencyUtils
-import com.elvan.udukkai.data.model.ProductModel
-import com.elvan.udukkai.factory.data.FactoryProductRepository
+import com.elvan.udukkai.data.model.ItemModel
+import com.elvan.udukkai.factory.data.FactoryItemRepository
 import com.elvan.udukkai.localization.K
 import com.elvan.udukkai.localization.PrintLanguageManager
 import com.elvan.udukkai.localization.tr
@@ -73,7 +73,7 @@ fun FactoryItemCard(
     onItemDeleted: () -> Unit,
     onItemCleared: () -> Unit,
     onDirty: () -> Unit,
-    onRequestAddNewProduct: () -> Unit,
+    onRequestAddNewItem: () -> Unit,
     onAddNewItem: (() -> Unit)? = null,
     onAddNewCharge: (() -> Unit)? = null,
     modifier: Modifier = Modifier,
@@ -84,9 +84,9 @@ fun FactoryItemCard(
     val ff = LocalAppFontFamily.current
 
     var isPickerOpen by remember { mutableStateOf(false) }
-    val allProducts = FactoryProductRepository.products
-    val availableProducts = remember(allProducts, companyId) {
-        allProducts.filter { it.isAvailableForCompany(companyId) }
+    val allItems = FactoryItemRepository.items
+    val availableItems = remember(allItems, companyId) {
+        allItems.filter { it.isAvailableForCompany(companyId) }
     }
 
     Column(
@@ -406,12 +406,12 @@ fun FactoryItemCard(
         val isBilingual = config.isBilingual
 
         ElvanSelectionBottomSheet(
-            title = K.products.tr(),
-            items = availableProducts,
-            currentValue = availableProducts.firstOrNull { it.id.toString() == item.productId },
+            title = K.items.tr(),
+            items = availableItems,
+            currentValue = availableItems.firstOrNull { it.id.toString() == item.productId },
             showSearch = true,
             onDismissRequest = { isPickerOpen = false },
-            onSelected = { p: ProductModel ->
+            onSelected = { p: ItemModel ->
                 val primary = if (p.name.isNotEmpty()) {
                     p.name[primaryLang] ?: p.name.values.firstOrNull().orEmpty()
                 } else ""
@@ -458,7 +458,7 @@ fun FactoryItemCard(
             },
             onRequestAddNew = {
                 isPickerOpen = false
-                onRequestAddNewProduct()
+                onRequestAddNewItem()
             },
             addNewLabel = K.addNew.tr()
         )

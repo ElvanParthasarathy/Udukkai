@@ -6,39 +6,32 @@ import androidx.compose.runtime.setValue
 import com.elvan.udukkai.core.backup.AutoBackupManager
 import com.elvan.udukkai.data.database.getFactoryDatabaseHelper
 import com.elvan.udukkai.core.utils.SearchHelper
-import com.elvan.udukkai.data.model.ProductModel
+import com.elvan.udukkai.data.model.ItemModel
 
 /**
- * Dedicated product/labor repository for Udukkai Factory (ஆலை).
+ * Dedicated item/labor repository for Udukkai Factory (ஆலை).
  */
-typealias FactoryItemRepository = FactoryProductRepository
-
-object FactoryProductRepository {
-    var products by mutableStateOf<List<ProductModel>>(emptyList())
+object FactoryItemRepository {
+    var items by mutableStateOf<List<ItemModel>>(emptyList())
         private set
 
-    var deletedProducts by mutableStateOf<List<ProductModel>>(emptyList())
+    var deletedItems by mutableStateOf<List<ItemModel>>(emptyList())
         private set
 
     var searchQuery by mutableStateOf("")
 
-    val filteredProducts: List<ProductModel>
+    val filteredItems: List<ItemModel>
         get() {
             val activeId = FactoryProfileRepository.profile.id
-            return products.filter { product ->
-                val belongsToActiveCompany = if (product.companyIds.isEmpty()) {
+            return items.filter { item ->
+                val belongsToActiveCompany = if (item.companyIds.isEmpty()) {
                     true
                 } else {
-                    activeId != null && product.companyIds.contains(activeId)
+                    activeId != null && item.companyIds.contains(activeId)
                 }
-                belongsToActiveCompany && SearchHelper.matchesProduct(product, searchQuery)
+                belongsToActiveCompany && SearchHelper.matchesItem(item, searchQuery)
             }
         }
-
-    // Backward-compatible delegates
-    val items: List<ProductModel> get() = products
-    val deletedItems: List<ProductModel> get() = deletedProducts
-    val filteredItems: List<ProductModel> get() = filteredProducts
 
     init {
         loadAll()
@@ -47,29 +40,29 @@ object FactoryProductRepository {
 
     fun loadAll() {
         try {
-            products = getFactoryDatabaseHelper().loadAllProducts()
+            items = getFactoryDatabaseHelper().loadAllItems()
         } catch (_: Exception) {
-            products = emptyList()
+            items = emptyList()
         }
     }
 
     fun purgeExpired(days: Int = 30): Int {
-        val count = getFactoryDatabaseHelper().purgeExpiredProducts(days)
+        val count = getFactoryDatabaseHelper().purgeExpiredItems(days)
         if (count > 0) loadDeleted()
         return count
     }
 
     fun loadDeleted() {
         try {
-            deletedProducts = getFactoryDatabaseHelper().loadDeletedProducts()
+            deletedItems = getFactoryDatabaseHelper().loadDeletedItems()
         } catch (_: Exception) {
-            deletedProducts = emptyList()
+            deletedItems = emptyList()
         }
     }
 
-    fun save(product: ProductModel): Long {
+    fun save(item: ItemModel): Long {
         val helper = getFactoryDatabaseHelper()
-        val id = helper.saveProduct(product)
+        val id = helper.saveItem(item)
         if (id > 0) {
             loadAll()
             AutoBackupManager.onDataChanged()
@@ -78,7 +71,7 @@ object FactoryProductRepository {
     }
 
     fun delete(id: Long): Boolean {
-        val success = getFactoryDatabaseHelper().deleteProduct(id)
+        val success = getFactoryDatabaseHelper().deleteItem(id)
         if (success) {
             loadAll()
             loadDeleted()
@@ -88,7 +81,7 @@ object FactoryProductRepository {
     }
 
     fun restore(id: Long): Boolean {
-        val success = getFactoryDatabaseHelper().restoreProduct(id)
+        val success = getFactoryDatabaseHelper().restoreItem(id)
         if (success) {
             loadAll()
             loadDeleted()
@@ -98,7 +91,7 @@ object FactoryProductRepository {
     }
 
     fun permanentDelete(id: Long): Boolean {
-        val success = getFactoryDatabaseHelper().permanentDeleteProduct(id)
+        val success = getFactoryDatabaseHelper().permanentDeleteItem(id)
         if (success) {
             loadDeleted()
             AutoBackupManager.onDataChanged()
@@ -106,5 +99,5 @@ object FactoryProductRepository {
         return success
     }
 
-    fun getById(id: Long): ProductModel? = products.find { it.id == id }
+    fun getById(id: Long): ItemModel? = items.find { it.id == id }
 }

@@ -39,12 +39,12 @@ data class ShellColors(
     // Unified entity card icon colors (Pure Monochrome)
     val invoiceColor: Color = if (isDark) Color.White else Color.Black,
     val receiptColor: Color = if (isDark) Color.White else Color.Black,
-    val productColor: Color = if (isDark) Color.White else Color.Black,
+    val itemColor: Color = if (isDark) Color.White else Color.Black,
     val customerColor: Color = if (isDark) Color.White else Color.Black,
     // Unified entity gradients for card icons (empty/neutral in monochrome)
     val invoiceGradient: List<Color> = emptyList(),
     val receiptGradient: List<Color> = emptyList(),
-    val productGradient: List<Color> = emptyList(),
+    val itemGradient: List<Color> = emptyList(),
     val customerGradient: List<Color> = emptyList()
 )
 
@@ -92,7 +92,7 @@ fun rememberShellColors(): ShellColors {
                 error = Color(0xFFFFB4AB),
                 invoiceColor = monoColor,
                 receiptColor = monoColor,
-                productColor = monoColor,
+                itemColor = monoColor,
                 customerColor = monoColor
             )
         } else {
@@ -124,7 +124,7 @@ fun rememberShellColors(): ShellColors {
                 error = Color(0xFFBA1A1A),
                 invoiceColor = monoColor,
                 receiptColor = monoColor,
-                productColor = monoColor,
+                itemColor = monoColor,
                 customerColor = monoColor
             )
         }

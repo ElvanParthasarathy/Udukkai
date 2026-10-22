@@ -35,7 +35,7 @@ import com.elvan.udukkai.core.platform.getPreferencesHelper
 import com.elvan.udukkai.data.model.InvoiceModel
 import com.elvan.udukkai.data.model.InvoiceDisplayOptions
 import com.elvan.udukkai.textiles.data.TextilesInvoiceRepository
-import com.elvan.udukkai.textiles.data.TextilesProductRepository
+import com.elvan.udukkai.textiles.data.TextilesItemRepository
 import com.elvan.udukkai.textiles.data.TextilesCustomerRepository
 import com.elvan.udukkai.data.settings.LanguageJsonConverter
 import com.elvan.udukkai.data.settings.BusinessProfile
@@ -96,7 +96,7 @@ fun TextilesInvoiceEditorScreen(
     invoice: InvoiceModel? = null,
     onBack: () -> Unit,
     onRequestAddNewCustomer: () -> Unit = {},
-    onRequestAddNewProduct: () -> Unit = {}
+    onRequestAddNewItem: () -> Unit = {}
 ) {
     val colors = rememberShellColors()
     val isDark = colors.isDark
@@ -105,7 +105,7 @@ fun TextilesInvoiceEditorScreen(
 
     LaunchedEffect(Unit) {
         TextilesProfileRepository.refreshFromDatabase()
-        TextilesProductRepository.loadAll()
+        TextilesItemRepository.loadAll()
         TextilesCustomerRepository.loadAll()
         TextilesInvoiceRepository.loadAll()
     }
@@ -135,7 +135,7 @@ fun TextilesInvoiceEditorScreen(
         )
     }
     var isInvoiceNumberOverridden by remember { mutableStateOf(isEditing) }
-    var showAddProductEditor by remember { mutableStateOf(false) }
+    var showAddItemEditor by remember { mutableStateOf(false) }
     var showAddCustomerEditor by remember { mutableStateOf(false) }
 
     // Customer
@@ -320,7 +320,7 @@ fun TextilesInvoiceEditorScreen(
 
     val companyRequiredMsg = K.selectCompanyProfile.tr()
     val customerRequiredMsg = K.selectCustomer.tr()
-    val productRequiredMsg = K.addAtLeastOneProduct.tr()
+    val productRequiredMsg = K.addAtLeastOneItem.tr()
     val receiptNumberRequiredMsg = K.receiptNumber.tr()
     val saveBtnLabel = K.saveBtn.tr()
 
@@ -548,7 +548,7 @@ fun TextilesInvoiceEditorScreen(
 
                 // ── Section 2: ③ Items (பொருட்கள்) ──
                 item(key = "items_section") {
-                    ElvanEditorSection(index = 2, title = K.products.tr()) {
+                    ElvanEditorSection(index = 2, title = K.items.tr()) {
                         Column(
                             modifier = Modifier.fillMaxWidth(),
                             verticalArrangement = Arrangement.spacedBy(10.dp)
@@ -586,7 +586,7 @@ fun TextilesInvoiceEditorScreen(
                                                     hasUnsavedChanges = true
                                                 },
                                                 onDirty = { hasUnsavedChanges = true },
-                                                onRequestAddNewProduct = { showAddProductEditor = true }
+                                                onRequestAddNewItem = { showAddItemEditor = true }
                                             )
                                         }
                                     }
@@ -621,7 +621,7 @@ fun TextilesInvoiceEditorScreen(
                                         modifier = Modifier.size(18.dp)
                                     )
                                     Text(
-                                        text = K.addProductBtn.tr().preventBrokenLigatures(),
+                                        text = K.addItemBtn.tr().preventBrokenLigatures(),
                                         style = TextStyle(
                                             fontFamily = ff,
                                             fontSize = 13.sp,
@@ -732,7 +732,7 @@ fun TextilesInvoiceEditorScreen(
 
     // ── In-Editor Full-Screen Overlays (Add Product / Add Customer) with Smooth Spring Slide ──
     AnimatedVisibility(
-        visible = showAddProductEditor,
+        visible = showAddItemEditor,
         enter = slideInHorizontally(
             initialOffsetX = { fullWidth -> fullWidth },
             animationSpec = spring(stiffness = Spring.StiffnessLow, dampingRatio = Spring.DampingRatioNoBouncy)
@@ -743,17 +743,17 @@ fun TextilesInvoiceEditorScreen(
         ),
         modifier = Modifier.zIndex(100f)
     ) {
-        AppBackHandler { showAddProductEditor = false }
+        AppBackHandler { showAddItemEditor = false }
         Box(
             modifier = Modifier
                 .fillMaxSize()
                 .background(colors.background)
         ) {
-            TextilesProductEditorScreen(
+            TextilesItemEditorScreen(
                 item = null,
                 onBack = {
-                    showAddProductEditor = false
-                    TextilesProductRepository.loadAll()
+                    showAddItemEditor = false
+                    TextilesItemRepository.loadAll()
                 }
             )
         }
@@ -788,11 +788,11 @@ fun TextilesInvoiceEditorScreen(
     }
 }
 
-@Deprecated("Use TextilesInvoiceEditorScreen", ReplaceWith("TextilesInvoiceEditorScreen(invoice, onBack, onRequestAddNewCustomer, onRequestAddNewProduct)"))
+@Deprecated("Use TextilesInvoiceEditorScreen", ReplaceWith("TextilesInvoiceEditorScreen(invoice, onBack, onRequestAddNewCustomer, onRequestAddNewItem)"))
 @Composable
 fun SilkInvoiceEditorScreen(
     invoice: InvoiceModel? = null,
     onBack: () -> Unit,
     onRequestAddNewCustomer: () -> Unit = {},
-    onRequestAddNewProduct: () -> Unit = {}
-) = TextilesInvoiceEditorScreen(invoice, onBack, onRequestAddNewCustomer, onRequestAddNewProduct)
+    onRequestAddNewItem: () -> Unit = {}
+) = TextilesInvoiceEditorScreen(invoice, onBack, onRequestAddNewCustomer, onRequestAddNewItem)

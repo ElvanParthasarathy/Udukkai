@@ -24,7 +24,7 @@ import com.elvan.udukkai.core.backup.getUdukkaiBackupService
 import com.elvan.udukkai.core.utils.DateUtils
 import com.elvan.udukkai.factory.data.FactoryCustomerRepository
 import com.elvan.udukkai.factory.data.FactoryInvoiceRepository
-import com.elvan.udukkai.factory.data.FactoryProductRepository
+import com.elvan.udukkai.factory.data.FactoryItemRepository
 import com.elvan.udukkai.factory.data.FactoryProfileRepository
 import com.elvan.udukkai.factory.data.FactoryReceiptRepository
 import com.elvan.udukkai.localization.K
@@ -259,7 +259,7 @@ fun FactoryStorageBackupScreen(
                     val invCount = FactoryInvoiceRepository.invoices.count { (fallback.id == null || it.companyId == fallback.id) && !it.isDeleted }
                     val recCount = FactoryReceiptRepository.receipts.count { (fallback.id == null || it.companyId == fallback.id) && !it.isDeleted }
                     val cusCount = FactoryCustomerRepository.customers.count { !it.isDeleted }
-                    val proCount = FactoryProductRepository.products.count { (fallback.id == null || it.isAvailableForCompany(fallback.id)) && !it.isDeleted }
+                    val proCount = FactoryItemRepository.items.count { (fallback.id == null || it.isAvailableForCompany(fallback.id)) && !it.isDeleted }
 
                     list.add(
                         FactoryBusinessDisplayItem(
@@ -268,7 +268,7 @@ fun FactoryStorageBackupScreen(
                             invoiceCount = invCount,
                             receiptCount = recCount,
                             customerCount = cusCount,
-                            productCount = proCount
+                            itemCount = proCount
                         )
                     )
                 } else {
@@ -287,7 +287,7 @@ fun FactoryStorageBackupScreen(
                         val invC = FactoryInvoiceRepository.invoices.count { (p.id == null || it.companyId == p.id) && !it.isDeleted }
                         val recC = FactoryReceiptRepository.receipts.count { (p.id == null || it.companyId == p.id) && !it.isDeleted }
                         val cusC = FactoryCustomerRepository.customers.count { !it.isDeleted }
-                        val proC = FactoryProductRepository.products.count { (p.id == null || it.isAvailableForCompany(p.id)) && !it.isDeleted }
+                        val proC = FactoryItemRepository.items.count { (p.id == null || it.isAvailableForCompany(p.id)) && !it.isDeleted }
 
                         list.add(
                             FactoryBusinessDisplayItem(
@@ -296,7 +296,7 @@ fun FactoryStorageBackupScreen(
                                 invoiceCount = invC,
                                 receiptCount = recC,
                                 customerCount = cusC,
-                                productCount = proC
+                                itemCount = proC
                             )
                         )
                     }
@@ -364,7 +364,7 @@ fun FactoryStorageBackupScreen(
                         Spacer(modifier = Modifier.height(6.dp))
                         Row(modifier = Modifier.fillMaxWidth().padding(start = 50.dp)) {
                             Text("${item.customerCount} ${K.customers.tr()}", style = gridStyle, modifier = Modifier.weight(1f))
-                            Text("${item.productCount} ${K.products.tr()}", style = gridStyle, modifier = Modifier.weight(1f))
+                            Text("${item.itemCount} ${K.items.tr()}", style = gridStyle, modifier = Modifier.weight(1f))
                         }
                     }
                 }
@@ -569,5 +569,5 @@ private data class FactoryBusinessDisplayItem(
     val invoiceCount: Int,
     val receiptCount: Int,
     val customerCount: Int,
-    val productCount: Int
+    val itemCount: Int
 )

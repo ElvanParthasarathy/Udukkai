@@ -11,78 +11,78 @@ import kotlin.test.assertNotEquals
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
-class CompanyWorkspaceAndProductTest {
+class CompanyWorkspaceAndItemTest {
 
     @Test
-    fun testProductSharedByDefault() {
-        val sharedProduct = ProductModel(
+    fun testItemSharedByDefault() {
+        val sharedItem = ItemModel(
             id = 1,
             price = 1200.0,
             companyIds = emptyList()
         )
         // Available for all companies
-        assertTrue(sharedProduct.isAvailableForCompany(10L))
-        assertTrue(sharedProduct.isAvailableForCompany(20L))
+        assertTrue(sharedItem.isAvailableForCompany(10L))
+        assertTrue(sharedItem.isAvailableForCompany(20L))
         // And effective price is the default vilai
-        assertEquals(1200.0, sharedProduct.getEffectivePrice(10L))
-        assertEquals(1200.0, sharedProduct.getEffectivePrice(20L))
-        assertEquals(1200.0, sharedProduct.getEffectivePrice(null))
+        assertEquals(1200.0, sharedItem.getEffectivePrice(10L))
+        assertEquals(1200.0, sharedItem.getEffectivePrice(20L))
+        assertEquals(1200.0, sharedItem.getEffectivePrice(null))
     }
 
     @Test
-    fun testProductRestrictedToSpecificCompanies() {
-        val restrictedProduct = ProductModel(
+    fun testItemRestrictedToSpecificCompanies() {
+        val restrictedItem = ItemModel(
             id = 2,
             price = 1500.0,
             companyIds = listOf(101L, 102L)
         )
-        assertTrue(restrictedProduct.isAvailableForCompany(101L))
-        assertTrue(restrictedProduct.isAvailableForCompany(102L))
-        assertFalse(restrictedProduct.isAvailableForCompany(103L))
-        assertFalse(restrictedProduct.isAvailableForCompany(null))
+        assertTrue(restrictedItem.isAvailableForCompany(101L))
+        assertTrue(restrictedItem.isAvailableForCompany(102L))
+        assertFalse(restrictedItem.isAvailableForCompany(103L))
+        assertFalse(restrictedItem.isAvailableForCompany(null))
     }
 
     @Test
     fun testCompanySpecificPriceOverrides() {
-        val productWithOverrides = ProductModel(
+        val itemWithOverrides = ItemModel(
             id = 3,
             price = 1000.0,
             companyPrices = mapOf(101L to 1250.0, 102L to 1400.0)
         )
         // Company 101 gets override 1250.0
-        assertEquals(1250.0, productWithOverrides.getEffectivePrice(101L))
+        assertEquals(1250.0, itemWithOverrides.getEffectivePrice(101L))
         // Company 102 gets override 1400.0
-        assertEquals(1400.0, productWithOverrides.getEffectivePrice(102L))
+        assertEquals(1400.0, itemWithOverrides.getEffectivePrice(102L))
         // Unspecified company 103 falls back to default vilai 1000.0
-        assertEquals(1000.0, productWithOverrides.getEffectivePrice(103L))
+        assertEquals(1000.0, itemWithOverrides.getEffectivePrice(103L))
         // Null company ID falls back to default vilai 1000.0
-        assertEquals(1000.0, productWithOverrides.getEffectivePrice(null))
+        assertEquals(1000.0, itemWithOverrides.getEffectivePrice(null))
     }
 
     @Test
-    fun testProductJsonConverterLongList() {
-        assertEquals(emptyList(), ProductJsonConverter.parseLongList(null))
-        assertEquals(emptyList(), ProductJsonConverter.parseLongList(""))
-        assertEquals(emptyList(), ProductJsonConverter.parseLongList("[]"))
-        assertEquals(listOf(101L, 102L, 103L), ProductJsonConverter.parseLongList("[101, 102, 103]"))
+    fun testItemJsonConverterLongList() {
+        assertEquals(emptyList(), ItemJsonConverter.parseLongList(null))
+        assertEquals(emptyList(), ItemJsonConverter.parseLongList(""))
+        assertEquals(emptyList(), ItemJsonConverter.parseLongList("[]"))
+        assertEquals(listOf(101L, 102L, 103L), ItemJsonConverter.parseLongList("[101, 102, 103]"))
 
-        assertEquals("[]", ProductJsonConverter.stringifyLongList(emptyList()))
-        assertEquals("[]", ProductJsonConverter.stringifyLongList(null))
-        assertEquals("[101,102]", ProductJsonConverter.stringifyLongList(listOf(101L, 102L)))
+        assertEquals("[]", ItemJsonConverter.stringifyLongList(emptyList()))
+        assertEquals("[]", ItemJsonConverter.stringifyLongList(null))
+        assertEquals("[101,102]", ItemJsonConverter.stringifyLongList(listOf(101L, 102L)))
     }
 
     @Test
-    fun testProductJsonConverterCompanyPrices() {
-        assertEquals(emptyMap(), ProductJsonConverter.parseCompanyPrices(null))
-        assertEquals(emptyMap(), ProductJsonConverter.parseCompanyPrices(""))
-        assertEquals(emptyMap(), ProductJsonConverter.parseCompanyPrices("{}"))
+    fun testItemJsonConverterCompanyPrices() {
+        assertEquals(emptyMap(), ItemJsonConverter.parseCompanyPrices(null))
+        assertEquals(emptyMap(), ItemJsonConverter.parseCompanyPrices(""))
+        assertEquals(emptyMap(), ItemJsonConverter.parseCompanyPrices("{}"))
 
-        val parsed = ProductJsonConverter.parseCompanyPrices("""{"101": 1250.0, "102": 1400.5}""")
+        val parsed = ItemJsonConverter.parseCompanyPrices("""{"101": 1250.0, "102": 1400.5}""")
         assertEquals(2, parsed.size)
         assertEquals(1250.0, parsed[101L])
         assertEquals(1400.5, parsed[102L])
 
-        val stringified = ProductJsonConverter.stringifyCompanyPrices(mapOf(101L to 1250.0))
+        val stringified = ItemJsonConverter.stringifyCompanyPrices(mapOf(101L to 1250.0))
         assertEquals("""{"101":1250.0}""", stringified)
     }
 
@@ -95,15 +95,15 @@ class CompanyWorkspaceAndProductTest {
     }
 
     @Test
-    fun testProductFirebasePayloadGeneration() {
-        val product = ProductModel(
+    fun testItemFirebasePayloadGeneration() {
+        val item = ItemModel(
             id = 42,
             name = mapOf("ta" to "பட்டு", "en" to "Kanchipuram Pattu"),
             price = 4500.0,
             companyIds = listOf(101L, 102L),
             companyPrices = mapOf(101L to 4200.0, 102L to 4600.0)
         )
-        val payload = ProductFirebasePayloadConverter.toFirebasePayload(product)
+        val payload = ItemFirebasePayloadConverter.toFirebasePayload(item)
 
         assertEquals(42L, payload["id"])
         assertEquals(4500.0, payload["vilai"])
@@ -118,54 +118,54 @@ class CompanyWorkspaceAndProductTest {
     }
 
     @Test
-    fun testProductFirebasePayloadParsingCompanyIds() {
+    fun testItemFirebasePayloadParsingCompanyIds() {
         // From List of Longs
-        assertEquals(listOf(101L, 102L), ProductFirebasePayloadConverter.parseCompanyIds(listOf(101L, 102L)))
+        assertEquals(listOf(101L, 102L), ItemFirebasePayloadConverter.parseCompanyIds(listOf(101L, 102L)))
         // From List of Ints/Numbers
-        assertEquals(listOf(101L, 102L), ProductFirebasePayloadConverter.parseCompanyIds(listOf(101, 102)))
+        assertEquals(listOf(101L, 102L), ItemFirebasePayloadConverter.parseCompanyIds(listOf(101, 102)))
         // From List of Strings
-        assertEquals(listOf(101L, 102L), ProductFirebasePayloadConverter.parseCompanyIds(listOf("101", "102")))
+        assertEquals(listOf(101L, 102L), ItemFirebasePayloadConverter.parseCompanyIds(listOf("101", "102")))
         // From Map (e.g. Firebase array saved as object / sparse keys)
-        assertEquals(listOf(101L, 102L), ProductFirebasePayloadConverter.parseCompanyIds(mapOf("0" to 101, "1" to 102)))
+        assertEquals(listOf(101L, 102L), ItemFirebasePayloadConverter.parseCompanyIds(mapOf("0" to 101, "1" to 102)))
         // From JSON string
-        assertEquals(listOf(101L, 102L), ProductFirebasePayloadConverter.parseCompanyIds("[101, 102]"))
+        assertEquals(listOf(101L, 102L), ItemFirebasePayloadConverter.parseCompanyIds("[101, 102]"))
         // Null / empty / blank
-        assertEquals(emptyList(), ProductFirebasePayloadConverter.parseCompanyIds(null))
-        assertEquals(emptyList(), ProductFirebasePayloadConverter.parseCompanyIds(""))
-        assertEquals(emptyList(), ProductFirebasePayloadConverter.parseCompanyIds("[]"))
+        assertEquals(emptyList(), ItemFirebasePayloadConverter.parseCompanyIds(null))
+        assertEquals(emptyList(), ItemFirebasePayloadConverter.parseCompanyIds(""))
+        assertEquals(emptyList(), ItemFirebasePayloadConverter.parseCompanyIds("[]"))
     }
 
     @Test
-    fun testProductFirebasePayloadParsingCompanyPrices() {
+    fun testItemFirebasePayloadParsingCompanyPrices() {
         // From Map with String keys and Double values
         val map1 = mapOf("101" to 4200.0, "102" to 4600.0)
-        val parsed1 = ProductFirebasePayloadConverter.parseCompanyPrices(map1)
+        val parsed1 = ItemFirebasePayloadConverter.parseCompanyPrices(map1)
         assertEquals(2, parsed1.size)
         assertEquals(4200.0, parsed1[101L])
         assertEquals(4600.0, parsed1[102L])
 
         // From Map with Long/Int keys and Int/Long values (Firebase numbers)
         val map2 = mapOf(101L to 4200, 102 to 4600L)
-        val parsed2 = ProductFirebasePayloadConverter.parseCompanyPrices(map2)
+        val parsed2 = ItemFirebasePayloadConverter.parseCompanyPrices(map2)
         assertEquals(2, parsed2.size)
         assertEquals(4200.0, parsed2[101L])
         assertEquals(4600.0, parsed2[102L])
 
         // From JSON string
         val json = """{"101": 4200.0, "102": 4600.5}"""
-        val parsed3 = ProductFirebasePayloadConverter.parseCompanyPrices(json)
+        val parsed3 = ItemFirebasePayloadConverter.parseCompanyPrices(json)
         assertEquals(2, parsed3.size)
         assertEquals(4200.0, parsed3[101L])
         assertEquals(4600.5, parsed3[102L])
 
         // Null / empty / blank
-        assertEquals(emptyMap(), ProductFirebasePayloadConverter.parseCompanyPrices(null))
-        assertEquals(emptyMap(), ProductFirebasePayloadConverter.parseCompanyPrices(""))
-        assertEquals(emptyMap(), ProductFirebasePayloadConverter.parseCompanyPrices("{}"))
+        assertEquals(emptyMap(), ItemFirebasePayloadConverter.parseCompanyPrices(null))
+        assertEquals(emptyMap(), ItemFirebasePayloadConverter.parseCompanyPrices(""))
+        assertEquals(emptyMap(), ItemFirebasePayloadConverter.parseCompanyPrices("{}"))
     }
 
     @Test
-    fun testProductFirebaseLegacyPayloadFromRawMap() {
+    fun testItemFirebaseLegacyPayloadFromRawMap() {
         // Payload from older app version without company features
         val legacyPayload: Map<String, Any?> = mapOf(
             "id" to 10L,
@@ -175,7 +175,7 @@ class CompanyWorkspaceAndProductTest {
             "alagu" to "Meter",
             "hsnCode" to "5208"
         )
-        val item = ProductFirebasePayloadConverter.fromRawMap(legacyPayload)
+        val item = ItemFirebasePayloadConverter.fromRawMap(legacyPayload)
         assertNotNull(item)
         assertEquals(10L, item.id)
         assertEquals("Traditional Dhotis", item.name["en"])
@@ -189,8 +189,8 @@ class CompanyWorkspaceAndProductTest {
     }
 
     @Test
-    fun testProductFirebaseRoundtrip() {
-        val original = ProductModel(
+    fun testItemFirebaseRoundtrip() {
+        val original = ItemModel(
             id = 55,
             name = mapOf("ta" to "சட்டை", "en" to "Silk Shirt"),
             price = 2200.0,
@@ -200,8 +200,8 @@ class CompanyWorkspaceAndProductTest {
             companyIds = listOf(201L, 202L),
             companyPrices = mapOf(201L to 2100.0, 202L to 2300.0)
         )
-        val payload = ProductFirebasePayloadConverter.toFirebasePayload(original)
-        val reconstructed = ProductFirebasePayloadConverter.fromRawMap(payload)
+        val payload = ItemFirebasePayloadConverter.toFirebasePayload(original)
+        val reconstructed = ItemFirebasePayloadConverter.fromRawMap(payload)
 
         assertNotNull(reconstructed)
         assertEquals(original.id, reconstructed.id)
@@ -215,29 +215,29 @@ class CompanyWorkspaceAndProductTest {
     }
 
     @Test
-    fun testProductSingleCompanyRestrictionAndOverrides() {
-        // Product restricted to exactly one company
-        val singleCompanyProduct = ProductModel(
+    fun testItemSingleCompanyRestrictionAndOverrides() {
+        // Item restricted to exactly one company
+        val singleCompanyItem = ItemModel(
             id = 77,
             price = 3000.0,
             companyIds = listOf(101L),
             companyPrices = mapOf(101L to 2800.0, 102L to 3200.0)
         )
         // Availability
-        assertTrue(singleCompanyProduct.isAvailableForCompany(101L))
-        assertFalse(singleCompanyProduct.isAvailableForCompany(102L))
-        assertFalse(singleCompanyProduct.isAvailableForCompany(103L))
-        assertFalse(singleCompanyProduct.isAvailableForCompany(null))
+        assertTrue(singleCompanyItem.isAvailableForCompany(101L))
+        assertFalse(singleCompanyItem.isAvailableForCompany(102L))
+        assertFalse(singleCompanyItem.isAvailableForCompany(103L))
+        assertFalse(singleCompanyItem.isAvailableForCompany(null))
 
         // Price overrides for different companies
-        assertEquals(2800.0, singleCompanyProduct.getEffectivePrice(101L))
-        assertEquals(3200.0, singleCompanyProduct.getEffectivePrice(102L))
-        assertEquals(3000.0, singleCompanyProduct.getEffectivePrice(103L)) // Fallback to base vilai
+        assertEquals(2800.0, singleCompanyItem.getEffectivePrice(101L))
+        assertEquals(3200.0, singleCompanyItem.getEffectivePrice(102L))
+        assertEquals(3000.0, singleCompanyItem.getEffectivePrice(103L)) // Fallback to base vilai
     }
 
     @Test
-    fun testProductEditPreservesAvailabilityAndPriceOverrides() {
-        val initialProduct = ProductModel(
+    fun testItemEditPreservesAvailabilityAndPriceOverrides() {
+        val initialItem = ItemModel(
             id = 88,
             name = mapOf("en" to "Cotton Saree"),
             price = 1500.0,
@@ -246,20 +246,20 @@ class CompanyWorkspaceAndProductTest {
         )
 
         // Perform edit: changing base price and name, leaving company metadata intact
-        val editedProduct = initialProduct.copy(
+        val editedItem = initialItem.copy(
             name = mapOf("en" to "Premium Cotton Saree"),
             price = 1600.0,
             updatedAt = System.currentTimeMillis()
         )
 
         // Verify fields are preserved on edit
-        assertEquals(listOf(101L), editedProduct.companyIds)
-        assertEquals(mapOf(101L to 1350.0), editedProduct.companyPrices)
-        assertTrue(editedProduct.isAvailableForCompany(101L))
-        assertEquals(1350.0, editedProduct.getEffectivePrice(101L))
+        assertEquals(listOf(101L), editedItem.companyIds)
+        assertEquals(mapOf(101L to 1350.0), editedItem.companyPrices)
+        assertTrue(editedItem.isAvailableForCompany(101L))
+        assertEquals(1350.0, editedItem.getEffectivePrice(101L))
 
         // Verify Firebase payload preserves both
-        val payload = ProductFirebasePayloadConverter.toFirebasePayload(editedProduct)
+        val payload = ItemFirebasePayloadConverter.toFirebasePayload(editedItem)
         assertEquals(listOf(101L), payload["niruvanamIds"])
         @Suppress("UNCHECKED_CAST")
         val prices = payload["companyPrices"] as Map<String, Double>
@@ -377,23 +377,23 @@ class CompanyWorkspaceAndProductTest {
     }
 
     @Test
-    fun testRecycleBinProductAvailabilityScope() {
+    fun testRecycleBinItemAvailabilityScope() {
         val companyAId = 101L
         val companyBId = 202L
 
-        val sharedProduct = ProductModel(id = 1, companyIds = emptyList(), isDeleted = true)
-        val restrictedProductA = ProductModel(id = 2, companyIds = listOf(companyAId), isDeleted = true)
+        val sharedItem = ItemModel(id = 1, companyIds = emptyList(), isDeleted = true)
+        val restrictedItemA = ItemModel(id = 2, companyIds = listOf(companyAId), isDeleted = true)
 
-        val deletedProducts = listOf(sharedProduct, restrictedProductA)
+        val deletedItems = listOf(sharedItem, restrictedItemA)
 
         // Workspace Company A: displays shared + restricted to A
-        val companyAProducts = deletedProducts.filter { it.isAvailableForCompany(companyAId) }
-        assertEquals(2, companyAProducts.size)
+        val companyAItems = deletedItems.filter { it.isAvailableForCompany(companyAId) }
+        assertEquals(2, companyAItems.size)
 
         // Workspace Company B: displays shared only
-        val companyBProducts = deletedProducts.filter { it.isAvailableForCompany(companyBId) }
-        assertEquals(1, companyBProducts.size)
-        assertEquals(1L, companyBProducts.first().id)
+        val companyBItems = deletedItems.filter { it.isAvailableForCompany(companyBId) }
+        assertEquals(1, companyBItems.size)
+        assertEquals(1L, companyBItems.first().id)
     }
 }
 

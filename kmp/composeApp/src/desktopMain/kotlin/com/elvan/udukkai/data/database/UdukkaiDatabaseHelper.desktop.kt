@@ -5,8 +5,8 @@ import com.elvan.udukkai.data.model.CustomerModel
 import com.elvan.udukkai.data.model.InvoiceModel
 import com.elvan.udukkai.data.model.ReceiptInvoiceLinkModel
 import com.elvan.udukkai.data.model.ReceiptModel
-import com.elvan.udukkai.data.model.ProductJsonConverter
-import com.elvan.udukkai.data.model.ProductModel
+import com.elvan.udukkai.data.model.ItemJsonConverter
+import com.elvan.udukkai.data.model.ItemModel
 import com.elvan.udukkai.data.settings.LanguageJsonConverter
 import com.elvan.udukkai.data.settings.BusinessProfile
 import java.io.File
@@ -24,7 +24,7 @@ class DesktopUdukkaiDatabaseHelper(
 
     private val customersTable = "${tablePrefix}customers"
     private val itemsTable = "${tablePrefix}items"
-    private val productsTable = itemsTable
+    // itemsTable is standardized
     private val invoicesTable = "${tablePrefix}invoices"
     private val receiptsTable = "${tablePrefix}receipts"
     private val linksTable = "${tablePrefix}receipt_invoice_links"
@@ -133,7 +133,7 @@ class DesktopUdukkaiDatabaseHelper(
         renameColumnIfExists(conn, customersTable, "minnanjal", "email")
         renameColumnIfExists(conn, customersTable, "tholaipaesi", "phone")
 
-        // 3. Rename legacy columns in productsTable
+        // 3. Rename legacy columns in itemsTable
         renameColumnIfExists(conn, itemsTable, "porul_peyar", "name")
         renameColumnIfExists(conn, itemsTable, "vilai", "price")
         renameColumnIfExists(conn, itemsTable, "vari_veetham", "tax_rate")
@@ -238,9 +238,9 @@ class DesktopUdukkaiDatabaseHelper(
                 )
             """.trimIndent())
 
-            // 2. Products Table
+            // 2. Items Table
             stmt.execute("""
-                CREATE TABLE IF NOT EXISTS "$productsTable" (
+                CREATE TABLE IF NOT EXISTS "$itemsTable" (
                     "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
                     "name" TEXT NOT NULL DEFAULT '{}',
                     "hsn_code" TEXT NOT NULL DEFAULT '',
@@ -567,40 +567,40 @@ class DesktopUdukkaiDatabaseHelper(
     override fun permanentDeleteMerchant(id: Long): Boolean = permanentDeleteCustomer(id)
     override fun purgeExpiredMerchants(days: Int): Int = purgeExpiredCustomers(days)
 
-    // ── Products ─────────────────────────────────────────────────────────────
-    override fun loadAllProducts(): List<ProductModel> = useConn { conn ->
-        val list = mutableListOf<ProductModel>()
+    // ── Items ────────────────────────────────────────────────────────────────
+    override fun loadAllItems(): List<ItemModel> = useConn { conn ->
+        val list = mutableListOf<ItemModel>()
         conn.createStatement().use { stmt ->
-            stmt.executeQuery("SELECT * FROM \"$productsTable\" WHERE is_deleted = 0 ORDER BY id DESC").use { rs ->
+            stmt.executeQuery("SELECT * FROM \"$itemsTable\" WHERE is_deleted = 0 ORDER BY id DESC").use { rs ->
                 while (rs.next()) list.add(rsToItem(rs))
             }
         }
         list
     }
 
-    override fun saveProduct(product: ProductModel): Long = useConn { conn ->
-        val isUpdate = product.id != null && product.id > 0
+    override fun saveItem(item: ItemModel): Long = useConn { conn ->
+        val isUpdate = item.id != null && item.id > 0
         val sql = if (isUpdate) {
-            "UPDATE \"$productsTable\" SET name=?, hsn_code=?, price=?, tax_rate=?, quantity_type=?, unit=?, company_ids=?, company_prices=?, updated_at=?, is_deleted=0 WHERE id=?"
+            "UPDATE \"$itemsTable\" SET name=?, hsn_code=?, price=?, tax_rate=?, quantity_type=?, unit=?, company_ids=?, company_prices=?, updated_at=?, is_deleted=0 WHERE id=?"
         } else {
-            "INSERT INTO \"$productsTable\" (name, hsn_code, price, tax_rate, quantity_type, unit, company_ids, company_prices, created_at, updated_at, is_deleted) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0)"
+            "INSERT INTO \"$itemsTable\" (name, hsn_code, price, tax_rate, quantity_type, unit, company_ids, company_prices, created_at, updated_at, is_deleted) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0)"
         }
         conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS).use { stmt ->
-            stmt.setString(1, LanguageJsonConverter.stringify(product.name))
-            stmt.setString(2, product.hsnCode)
-            stmt.setDouble(3, product.price)
-            stmt.setDouble(4, product.taxRate)
-            stmt.setString(5, product.quantityType)
-            stmt.setString(6, product.unit)
-            stmt.setString(7, product.companyIds.toString())
-            stmt.setString(8, product.companyPrices.toString())
+            stmt.setString(1, LanguageJsonConverter.stringify(item.name))
+            stmt.setString(2, item.hsnCode)
+            stmt.setDouble(3, item.price)
+            stmt.setDouble(4, item.taxRate)
+            stmt.setString(5, item.quantityType)
+            stmt.setString(6, item.unit)
+            stmt.setString(7, item.companyIds.toString())
+            stmt.setString(8, item.companyPrices.toString())
 
             val now = System.currentTimeMillis() / 1000
             if (isUpdate) {
                 stmt.setLong(9, now)
-                stmt.setLong(10, product.id!!)
+                stmt.setLong(10, item.id!!)
                 stmt.executeUpdate()
-                product.id!!
+                item.id!!
             } else {
                 stmt.setLong(9, now)
                 stmt.setLong(10, now)
@@ -612,54 +612,45 @@ class DesktopUdukkaiDatabaseHelper(
         }
     }
 
-    override fun deleteProduct(id: Long): Boolean = useConn { conn ->
-        conn.prepareStatement("UPDATE \"$productsTable\" SET is_deleted = 1, deleted_at = ? WHERE id = ?").use { stmt ->
+    override fun deleteItem(id: Long): Boolean = useConn { conn ->
+        conn.prepareStatement("UPDATE \"$itemsTable\" SET is_deleted = 1, deleted_at = ? WHERE id = ?").use { stmt ->
             stmt.setLong(1, System.currentTimeMillis() / 1000)
             stmt.setLong(2, id)
             stmt.executeUpdate() > 0
         }
     }
 
-    override fun loadDeletedProducts(): List<ProductModel> = useConn { conn ->
-        val list = mutableListOf<ProductModel>()
+    override fun loadDeletedItems(): List<ItemModel> = useConn { conn ->
+        val list = mutableListOf<ItemModel>()
         conn.createStatement().use { stmt ->
-            stmt.executeQuery("SELECT * FROM \"$productsTable\" WHERE is_deleted = 1 ORDER BY deleted_at DESC").use { rs ->
+            stmt.executeQuery("SELECT * FROM \"$itemsTable\" WHERE is_deleted = 1 ORDER BY deleted_at DESC").use { rs ->
                 while (rs.next()) list.add(rsToItem(rs))
             }
         }
         list
     }
 
-    override fun restoreProduct(id: Long): Boolean = useConn { conn ->
-        conn.prepareStatement("UPDATE \"$productsTable\" SET is_deleted = 0, deleted_at = NULL WHERE id = ?").use { stmt ->
+    override fun restoreItem(id: Long): Boolean = useConn { conn ->
+        conn.prepareStatement("UPDATE \"$itemsTable\" SET is_deleted = 0, deleted_at = NULL WHERE id = ?").use { stmt ->
             stmt.setLong(1, id)
             stmt.executeUpdate() > 0
         }
     }
 
-    override fun permanentDeleteProduct(id: Long): Boolean = useConn { conn ->
-        conn.prepareStatement("DELETE FROM \"$productsTable\" WHERE id = ?").use { stmt ->
+    override fun permanentDeleteItem(id: Long): Boolean = useConn { conn ->
+        conn.prepareStatement("DELETE FROM \"$itemsTable\" WHERE id = ?").use { stmt ->
             stmt.setLong(1, id)
             stmt.executeUpdate() > 0
         }
     }
 
-    override fun purgeExpiredProducts(days: Int): Int = useConn { conn ->
+    override fun purgeExpiredItems(days: Int): Int = useConn { conn ->
         val threshold = (System.currentTimeMillis() / 1000) - (days * 86400L)
-        conn.prepareStatement("DELETE FROM \"$productsTable\" WHERE is_deleted = 1 AND deleted_at < ?").use { stmt ->
+        conn.prepareStatement("DELETE FROM \"$itemsTable\" WHERE is_deleted = 1 AND deleted_at < ?").use { stmt ->
             stmt.setLong(1, threshold)
             stmt.executeUpdate()
         }
     }
-
-    // Backward-compatible delegates
-    override fun loadAllItems(): List<ProductModel> = loadAllProducts()
-    override fun saveItem(item: ProductModel): Long = saveProduct(item)
-    override fun deleteItem(id: Long): Boolean = deleteProduct(id)
-    override fun loadDeletedItems(): List<ProductModel> = loadDeletedProducts()
-    override fun restoreItem(id: Long): Boolean = restoreProduct(id)
-    override fun permanentDeleteItem(id: Long): Boolean = permanentDeleteProduct(id)
-    override fun purgeExpiredItems(days: Int): Int = purgeExpiredProducts(days)
 
     // ── Invoices ─────────────────────────────────────────────────────────────
     override fun loadAllInvoices(): List<InvoiceModel> = useConn { conn ->
@@ -1107,7 +1098,7 @@ class DesktopUdukkaiDatabaseHelper(
             stmt.execute("DELETE FROM \"$linksTable\"")
             stmt.execute("DELETE FROM \"$receiptsTable\"")
             stmt.execute("DELETE FROM \"$invoicesTable\"")
-            stmt.execute("DELETE FROM \"$productsTable\"")
+            stmt.execute("DELETE FROM \"$itemsTable\"")
             stmt.execute("DELETE FROM \"$customersTable\"")
             stmt.execute("DELETE FROM \"$profilesTable\"")
             true
@@ -1128,14 +1119,14 @@ class DesktopUdukkaiDatabaseHelper(
         gstin = getStringCol(rs, "gstin"),
         email = getStringCol(rs, "email", "minnanjal"),
         phone = getStringCol(rs, "phone", "tholaipaesi"),
-        companyIds = ProductJsonConverter.parseLongList(getStringCol(rs, "company_ids", "niruvanam_ids", default = "[]")),
+        companyIds = ItemJsonConverter.parseLongList(getStringCol(rs, "company_ids", "niruvanam_ids", default = "[]")),
         createdAt = getLongCol(rs, "created_at"),
         updatedAt = getLongCol(rs, "updated_at"),
         isDeleted = getIntCol(rs, "is_deleted") == 1,
         deletedAt = getLongOrNull(rs, "deleted_at")
     )
 
-    private fun rsToItem(rs: ResultSet): ProductModel = ProductModel(
+    private fun rsToItem(rs: ResultSet): ItemModel = ItemModel(
         id = getLongCol(rs, "id"),
         name = LanguageJsonConverter.parse(getStringCol(rs, "name", "porul_peyar")),
         hsnCode = getStringCol(rs, "hsn_code"),
@@ -1143,8 +1134,8 @@ class DesktopUdukkaiDatabaseHelper(
         taxRate = getDoubleCol(rs, "tax_rate", "vari_veetham"),
         quantityType = getStringCol(rs, "quantity_type", "alavu_vagai", default = "quantity"),
         unit = getStringCol(rs, "unit", "alagu", default = "Nos"),
-        companyIds = ProductJsonConverter.parseLongList(getStringCol(rs, "company_ids", "niruvanam_ids", default = "[]")),
-        companyPrices = ProductJsonConverter.parseCompanyPrices(getStringCol(rs, "company_prices", default = "{}")),
+        companyIds = ItemJsonConverter.parseLongList(getStringCol(rs, "company_ids", "niruvanam_ids", default = "[]")),
+        companyPrices = ItemJsonConverter.parseCompanyPrices(getStringCol(rs, "company_prices", default = "{}")),
         createdAt = getLongCol(rs, "created_at"),
         updatedAt = getLongCol(rs, "updated_at"),
         isDeleted = getIntCol(rs, "is_deleted") == 1,

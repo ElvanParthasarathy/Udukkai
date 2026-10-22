@@ -3,8 +3,6 @@ package com.elvan.udukkai.textiles.ui.screens.editor
 import androidx.compose.ui.Alignment
 import com.elvan.udukkai.ui.screens.editor.ElvanEditorBottomBar
 
-
-
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -24,8 +22,8 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.elvan.udukkai.core.platform.AppBackHandler
-import com.elvan.udukkai.data.model.ProductModel
-import com.elvan.udukkai.textiles.data.TextilesProductRepository
+import com.elvan.udukkai.data.model.ItemModel
+import com.elvan.udukkai.textiles.data.TextilesItemRepository
 import com.elvan.udukkai.textiles.data.TextilesProfileRepository
 import com.elvan.udukkai.localization.K
 import com.elvan.udukkai.localization.tr
@@ -36,13 +34,13 @@ import com.elvan.udukkai.ui.components.shell.*
 import com.elvan.udukkai.ui.screens.editor.*
 
 /**
- * Dedicated Product / Finished Goods Editor for Udukkai Textiles (சவுளி).
- * Distinct Textiles product schema: Product Name, HSN Code, Tax Rate (GST %), Measure Type, Unit Price.
+ * Dedicated Item / Finished Goods Editor for Udukkai Textiles (சவுளி).
+ * Distinct Textiles item schema: Item Name, HSN Code, Tax Rate (GST %), Measure Type, Unit Price.
  * Reactively follows TextilesProfileRepository.profile.isBilingual for bilingual toggling.
  */
 @Composable
-fun TextilesProductEditorScreen(
-    item: ProductModel? = null,
+fun TextilesItemEditorScreen(
+    item: ItemModel? = null,
     onBack: () -> Unit
 ) {
     val colors = rememberShellColors()
@@ -56,7 +54,7 @@ fun TextilesProductEditorScreen(
     val primaryLang = profile.primaryLanguage.ifEmpty { "ta" }
     val secondaryLang = profile.secondaryLanguage.ifEmpty { "en" }
 
-    var productNameMap by remember { mutableStateOf(item?.name ?: emptyMap()) }
+    var itemNameMap by remember { mutableStateOf(item?.name ?: emptyMap()) }
     var hsnCode by remember { mutableStateOf(item?.hsnCode ?: "") }
     var price by remember {
         mutableStateOf(
@@ -106,11 +104,11 @@ fun TextilesProductEditorScreen(
     val currentCompanyId = selectedCompanyOption.id
     val companyChanged = item != null && initialCompanyId != currentCompanyId
 
-    val hasChanges = remember(productNameMap, hsnCode, price, variVeetham, quantityType, companyChanged) {
+    val hasChanges = remember(itemNameMap, hsnCode, price, variVeetham, quantityType, companyChanged) {
         if (item == null) {
-            productNameMap.values.any { it.isNotBlank() } || hsnCode.isNotBlank() || price.isNotBlank() || companyChanged
+            itemNameMap.values.any { it.isNotBlank() } || hsnCode.isNotBlank() || price.isNotBlank() || companyChanged
         } else {
-            productNameMap != item.name || hsnCode != item.hsnCode ||
+            itemNameMap != item.name || hsnCode != item.hsnCode ||
                 (price.toDoubleOrNull() ?: 0.0) != item.price ||
                 (variVeetham.toDoubleOrNull() ?: 0.0) != item.taxRate ||
                 quantityType != item.quantityType || companyChanged
@@ -132,13 +130,13 @@ fun TextilesProductEditorScreen(
         handleBackAttempt()
     }
 
-    val pageTitle = if (isEditing) K.editProduct.tr() else K.createProduct.tr()
-    val nameRequiredMsg = K.productNameRequired.tr()
-    val savedMsg = K.productSavedSuccessfully.tr()
+    val pageTitle = if (isEditing) K.editItem.tr() else K.createItem.tr()
+    val nameRequiredMsg = K.itemNameRequired.tr()
+    val savedMsg = K.itemSavedSuccessfully.tr()
     val saveFailedMsg = K.couldNotSavePrefix.tr()
 
     fun handleSave() {
-        val hasName = productNameMap.values.any { it.trim().isNotBlank() }
+        val hasName = itemNameMap.values.any { it.trim().isNotBlank() }
         if (!hasName) {
             validationError = nameRequiredMsg
             return
@@ -149,9 +147,9 @@ fun TextilesProductEditorScreen(
 
         val companyIds = selectedCompanyOption.id?.let { listOf(it) } ?: emptyList()
 
-        val itemToSave = ProductModel(
+        val itemToSave = ItemModel(
             id = item?.id ?: 0L,
-            name = productNameMap.filterValues { it.isNotBlank() },
+            name = itemNameMap.filterValues { it.isNotBlank() },
             hsnCode = hsnCode.trim(),
             price = priceVal,
             taxRate = taxVal,
@@ -161,7 +159,7 @@ fun TextilesProductEditorScreen(
             updatedAt = System.currentTimeMillis()
         )
 
-        val newId = TextilesProductRepository.save(itemToSave)
+        val newId = TextilesItemRepository.save(itemToSave)
         if (newId > 0L) {
             isExiting = true
             ElvanSnackbar.show(savedMsg)
@@ -188,7 +186,7 @@ fun TextilesProductEditorScreen(
         floatingBar = {}
     ) {
         Box(modifier = Modifier.fillMaxSize()) {
-            CompositionLocalProvider(LocalEditorAccentColor provides colors.productColor) {
+            CompositionLocalProvider(LocalEditorAccentColor provides colors.itemColor) {
                 LazyColumn(
                     state = scrollState,
                     modifier = Modifier.fillMaxSize(),
@@ -199,97 +197,96 @@ fun TextilesProductEditorScreen(
                     ),
                     verticalArrangement = Arrangement.spacedBy(24.dp)
                 ) {
-                item(key = "top_spacer") {
-                    Spacer(modifier = Modifier.height(LocalElvanTopSpacerHeight.current))
-                }
+                    item(key = "top_spacer") {
+                        Spacer(modifier = Modifier.height(LocalElvanTopSpacerHeight.current))
+                    }
 
-                // Section 1: Item Details
-                item(key = "product_details") {
-                    ElvanEditorSection(
-                        index = 0,
-                        title = K.productDetails.tr()
-                    ) {
-                        Column(
-                            modifier = Modifier.fillMaxWidth(),
-                            verticalArrangement = Arrangement.spacedBy(16.dp)
+                    // Section 1: Item Details
+                    item(key = "item_details") {
+                        ElvanEditorSection(
+                            index = 0,
+                            title = K.itemDetails.tr()
                         ) {
-                            ElvanIrumozhiPulan(
-                                label = "${K.productName.tr()} *",
-                                value = productNameMap,
-                                onChanged = {
-                                    productNameMap = it
-                                    validationError = null
-                                },
-                                isBilingual = isBilingual,
-                                primaryLang = primaryLang,
-                                secondaryLang = secondaryLang,
-                                placeholder = K.productName.tr()
-                            )
+                            Column(
+                                modifier = Modifier.fillMaxWidth(),
+                                verticalArrangement = Arrangement.spacedBy(16.dp)
+                            ) {
+                                ElvanIrumozhiPulan(
+                                    label = "${K.itemName.tr()} *",
+                                    value = itemNameMap,
+                                    onChanged = {
+                                        itemNameMap = it
+                                        validationError = null
+                                    },
+                                    isBilingual = isBilingual,
+                                    primaryLang = primaryLang,
+                                    secondaryLang = secondaryLang,
+                                    placeholder = K.itemName.tr()
+                                )
 
-                            if (validationError != null) {
-                                Text(
-                                    text = validationError!!,
-                                    style = TextStyle(
-                                        fontFamily = ff,
-                                        fontSize = 12.sp,
-                                        color = MaterialTheme.colorScheme.error
-                                    ),
-                                    modifier = Modifier.padding(start = 4.dp)
+                                if (validationError != null) {
+                                    Text(
+                                        text = validationError!!,
+                                        style = TextStyle(
+                                            fontFamily = ff,
+                                            fontSize = 12.sp,
+                                            color = MaterialTheme.colorScheme.error
+                                        ),
+                                        modifier = Modifier.padding(start = 4.dp)
+                                    )
+                                }
+
+                                if (allProfiles.isNotEmpty()) {
+                                    ElvanEditorDropdown<CompanyOption>(
+                                        label = K.company.tr(),
+                                        value = selectedCompanyOption,
+                                        items = companyOptions,
+                                        onSelected = { selectedCompanyOption = it },
+                                        itemLabelBuilder = { it.name },
+                                        subtitleBuilder = { it.subtitle }
+                                    )
+                                }
+
+                                ElvanEditorTextField(
+                                    value = hsnCode,
+                                    onValueChange = { hsnCode = it },
+                                    label = "HSN / SAC",
+                                    placeholder = "5208"
+                                )
+
+                                val measureUnits = listOf(
+                                    "quantity" to K.measureQuantity.tr(),
+                                    "weight" to K.measureWeight.tr()
+                                )
+                                ElvanEditorDropdown<Pair<String, String>>(
+                                    label = K.unitOfMeasurement.tr(),
+                                    value = measureUnits.firstOrNull { it.first == quantityType } ?: measureUnits.first(),
+                                    items = measureUnits,
+                                    onSelected = { quantityType = it.first },
+                                    itemLabelBuilder = { it.second }
+                                )
+
+                                ElvanEditorTextField(
+                                    value = price,
+                                    onValueChange = { price = it },
+                                    label = K.ratePerUnit.tr(),
+                                    placeholder = "0.00",
+                                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
+                                )
+
+                                ElvanEditorTextField(
+                                    value = variVeetham,
+                                    onValueChange = { variVeetham = it },
+                                    label = "${K.taxRate.tr()} (%)",
+                                    placeholder = "5",
+                                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
                                 )
                             }
-
-                            if (allProfiles.isNotEmpty()) {
-                                ElvanEditorDropdown<CompanyOption>(
-                                    label = K.company.tr(),
-                                    value = selectedCompanyOption,
-                                    items = companyOptions,
-                                    onSelected = { selectedCompanyOption = it },
-                                    itemLabelBuilder = { it.name },
-                                    subtitleBuilder = { it.subtitle }
-                                )
-                            }
-
-                            ElvanEditorTextField(
-                                value = hsnCode,
-                                onValueChange = { hsnCode = it },
-                                label = "HSN / SAC",
-                                placeholder = "5208"
-                            )
-
-                            // Match the React Make/Create product editor's capsule measurement selector.
-                            val measureUnits = listOf(
-                                "quantity" to K.measureQuantity.tr(),
-                                "weight" to K.measureWeight.tr()
-                            )
-                            ElvanEditorDropdown<Pair<String, String>>(
-                                label = K.unitOfMeasurement.tr(),
-                                value = measureUnits.firstOrNull { it.first == quantityType } ?: measureUnits.first(),
-                                items = measureUnits,
-                                onSelected = { quantityType = it.first },
-                                itemLabelBuilder = { it.second }
-                            )
-
-                            ElvanEditorTextField(
-                                value = price,
-                                onValueChange = { price = it },
-                                label = K.ratePerUnit.tr(),
-                                placeholder = "0.00",
-                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
-                            )
-
-                            ElvanEditorTextField(
-                                value = variVeetham,
-                                onValueChange = { variVeetham = it },
-                                label = "${K.taxRate.tr()} (%)",
-                                placeholder = "5",
-                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
-                            )
                         }
                     }
                 }
             }
         }
-    }
     }
 
     if (showDiscardDialog && !isExiting) {

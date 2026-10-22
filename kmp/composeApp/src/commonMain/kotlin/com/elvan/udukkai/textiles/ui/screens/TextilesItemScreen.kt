@@ -17,9 +17,9 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.elvan.udukkai.core.utils.CurrencyUtils
-import com.elvan.udukkai.data.model.ProductModel
-import com.elvan.udukkai.ui.screens.product.TextilesProductCard
-import com.elvan.udukkai.textiles.data.TextilesProductRepository
+import com.elvan.udukkai.data.model.ItemModel
+import com.elvan.udukkai.ui.screens.item.TextilesItemCard
+import com.elvan.udukkai.textiles.data.TextilesItemRepository
 import com.elvan.udukkai.textiles.data.TextilesProfileRepository
 import com.elvan.udukkai.localization.K
 import com.elvan.udukkai.localization.tr
@@ -33,15 +33,15 @@ import com.elvan.udukkai.ui.components.ElvanCardLeadingIcon
 import com.elvan.udukkai.ui.components.ElvanCardSelector
 import com.elvan.udukkai.ui.components.ElvanCommonCard
 import com.elvan.udukkai.ui.components.shell.LocalElvanTopSpacerHeight
-import com.elvan.udukkai.ui.components.shell.ProductCardSkeleton
+import com.elvan.udukkai.ui.components.shell.ItemCardSkeleton
 import com.elvan.udukkai.ui.navigation.MaterialSymbols
 import com.elvan.udukkai.ui.screens.create.components.ElvanPillShifter
 import com.elvan.udukkai.ui.screens.create.components.PillShifterItem
 import kotlinx.coroutines.delay
 
 @Composable
-fun TextilesProductScreen(
-    onItemClick: (ProductModel) -> Unit,
+fun TextilesItemScreen(
+    onItemClick: (ItemModel) -> Unit,
     modifier: Modifier = Modifier,
     scrollState: LazyListState = rememberLazyListState(),
     colors: ShellColors = rememberShellColors(),
@@ -51,7 +51,7 @@ fun TextilesProductScreen(
     onToggleSelect: ((Long) -> Unit)? = null,
     onItemLongClick: ((Long) -> Unit)? = null
 ) {
-    val items = TextilesProductRepository.filteredItems
+    val items = TextilesItemRepository.filteredItems
     val ff = LocalAppFontFamily.current
     var selectedTabIndex by remember { mutableIntStateOf(0) }
 
@@ -90,7 +90,7 @@ fun TextilesProductScreen(
     val pageSize = 30
     var visibleItemCount by remember { mutableIntStateOf(pageSize) }
 
-    LaunchedEffect(TextilesProductRepository.searchQuery, selectedTabIndex) {
+    LaunchedEffect(TextilesItemRepository.searchQuery, selectedTabIndex) {
         visibleItemCount = pageSize
     }
 
@@ -100,8 +100,8 @@ fun TextilesProductScreen(
     val hasMoreItems = tabFilteredItems.size > visibleItemCount
 
     var isSearchLoading by remember { mutableStateOf(false) }
-    LaunchedEffect(TextilesProductRepository.searchQuery) {
-        if (TextilesProductRepository.searchQuery.isNotBlank()) {
+    LaunchedEffect(TextilesItemRepository.searchQuery) {
+        if (TextilesItemRepository.searchQuery.isNotBlank()) {
             isSearchLoading = true
             delay(300)
             isSearchLoading = false
@@ -121,11 +121,11 @@ fun TextilesProductScreen(
             ),
             verticalArrangement = Arrangement.spacedBy(Dimens.ItemSpacing)
         ) {
-            item(key = "product_top_spacer") {
+            item(key = "item_top_spacer") {
                 Spacer(modifier = Modifier.height(LocalElvanTopSpacerHeight.current))
             }
 
-            item(key = "product_measure_type_pill_shifter") {
+            item(key = "item_measure_type_pill_shifter") {
                 Box(
                     contentAlignment = Alignment.Center,
                     modifier = Modifier
@@ -147,10 +147,10 @@ fun TextilesProductScreen(
 
             if (isSearchLoading || isRefreshing) {
                 items(10) {
-                    ProductCardSkeleton()
+                    ItemCardSkeleton()
                 }
             } else if (tabFilteredItems.isEmpty()) {
-                item(key = "empty_products") {
+                item(key = "empty_items") {
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -162,17 +162,17 @@ fun TextilesProductScreen(
                             verticalArrangement = Arrangement.Center
                         ) {
                             Icon(
-                                imageVector = MaterialSymbols.CustomNav.Products,
+                                imageVector = MaterialSymbols.CustomNav.Items,
                                 contentDescription = null,
                                 tint = LocalShellColors.current.textQuaternary,
                                 modifier = Modifier.size(48.dp)
                             )
                             Spacer(modifier = Modifier.height(12.dp))
                             Text(
-                                text = if (TextilesProductRepository.searchQuery.isNotBlank()) {
-                                    K.noMatchingProducts.tr()
+                                text = if (TextilesItemRepository.searchQuery.isNotBlank()) {
+                                    K.noMatchingItems.tr()
                                 } else {
-                                    K.noProductsYet.tr()
+                                    K.noItemsYet.tr()
                                 },
                                 style = TextStyle(
                                     fontFamily = ff,
@@ -187,7 +187,7 @@ fun TextilesProductScreen(
             } else {
                 itemsIndexed(
                     items = displayedItems,
-                    key = { _, item -> "porul_${item.id}" }
+                    key = { _, item -> "item_${item.id}" }
                 ) { index, item ->
                     val isSelected = selectedItemIds.contains(item.id)
                     val onCardClick: () -> Unit = {
@@ -201,9 +201,9 @@ fun TextilesProductScreen(
                         onItemLongClick?.invoke(item.id)
                     }
 
-                    TextilesProductCard(
+                    TextilesItemCard(
                         index = index,
-                        product = item,
+                        item = item,
                         onClick = onCardClick,
                         colors = colors,
                         isSelectionMode = isSelectionMode,
@@ -221,7 +221,7 @@ fun TextilesProductScreen(
                             contentAlignment = Alignment.Center
                         ) {
                             CircularProgressIndicator(
-                                color = colors.productColor,
+                                color = colors.itemColor,
                                 modifier = Modifier.size(24.dp),
                                 strokeWidth = 2.dp
                             )

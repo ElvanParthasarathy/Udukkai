@@ -43,7 +43,7 @@ import com.elvan.udukkai.ui.components.shell.ElvanTopBarIconButton
 import com.elvan.udukkai.ui.components.shell.LocalElvanTopSpacerHeight
 import com.elvan.udukkai.ui.navigation.ElvanSearchBar
 import com.elvan.udukkai.ui.navigation.MaterialSymbols
-import com.elvan.udukkai.ui.screens.product.TextilesProductCard
+import com.elvan.udukkai.ui.screens.item.TextilesItemCard
 import com.elvan.udukkai.ui.screens.create.components.ElvanPillShifter
 import com.elvan.udukkai.ui.screens.create.components.TextilesInvoiceCard
 import com.elvan.udukkai.ui.screens.create.components.ReceiptCard
@@ -75,12 +75,12 @@ fun TextilesRecycleBinScreen(
 
     // Auto-purge items older than 30 days on launch & load deleted items
     LaunchedEffect(Unit) {
-        com.elvan.udukkai.textiles.data.TextilesProductRepository.purgeExpired(days = 30)
+        com.elvan.udukkai.textiles.data.TextilesItemRepository.purgeExpired(days = 30)
         com.elvan.udukkai.textiles.data.TextilesCustomerRepository.purgeExpired(days = 30)
         com.elvan.udukkai.textiles.data.TextilesInvoiceRepository.purgeExpired(days = 30)
         com.elvan.udukkai.textiles.data.TextilesReceiptRepository.purgeExpired(days = 30)
 
-        com.elvan.udukkai.textiles.data.TextilesProductRepository.loadDeleted()
+        com.elvan.udukkai.textiles.data.TextilesItemRepository.loadDeleted()
         com.elvan.udukkai.textiles.data.TextilesCustomerRepository.loadDeleted()
         com.elvan.udukkai.textiles.data.TextilesInvoiceRepository.loadDeleted()
         com.elvan.udukkai.textiles.data.TextilesReceiptRepository.loadDeleted()
@@ -90,7 +90,7 @@ fun TextilesRecycleBinScreen(
     var createSegment by remember { mutableIntStateOf(0) } // 0 = Invoices, 1 = Receipts
 
     val createScrollState = rememberLazyListState()
-    val productsScrollState = rememberLazyListState()
+    val itemsScrollState = rememberLazyListState()
     val customersScrollState = rememberLazyListState()
 
     var isSearchActive by remember { mutableStateOf(false) }
@@ -132,11 +132,11 @@ fun TextilesRecycleBinScreen(
         }
     }
 
-    val allDeletedProducts = com.elvan.udukkai.textiles.data.TextilesProductRepository.deletedProducts
-    val displayedProducts = remember(allDeletedProducts, activeId, searchQuery) {
-        allDeletedProducts.filter { item ->
+    val allDeletedItems = com.elvan.udukkai.textiles.data.TextilesItemRepository.deletedItems
+    val displayedItems = remember(allDeletedItems, activeId, searchQuery) {
+        allDeletedItems.filter { item ->
             val matchesCompany = if (activeId != null) item.isAvailableForCompany(activeId) else true
-            val matchesQuery = com.elvan.udukkai.core.utils.SearchHelper.matchesProduct(item, searchQuery)
+            val matchesQuery = com.elvan.udukkai.core.utils.SearchHelper.matchesItem(item, searchQuery)
             matchesCompany && matchesQuery
         }
     }
@@ -154,7 +154,7 @@ fun TextilesRecycleBinScreen(
             if (createSegment == 0) displayedInvoices.map { it.id }.toSet()
             else displayedReceipts.map { it.id }.toSet()
         }
-        RecycleBinTab.Products -> displayedProducts.map { it.id }.toSet()
+        RecycleBinTab.Items -> displayedItems.map { it.id }.toSet()
         RecycleBinTab.Customers -> displayedCustomers.map { it.id }.toSet()
     }
     val isAllSelected = selectedItemIds.isNotEmpty() && allSelectionIds.isNotEmpty() && selectedItemIds.size == allSelectionIds.size
@@ -191,8 +191,8 @@ fun TextilesRecycleBinScreen(
                             selectedItemIds.forEach { id -> com.elvan.udukkai.textiles.data.TextilesReceiptRepository.restore(id) }
                         }
                     }
-                    RecycleBinTab.Products -> {
-                        selectedItemIds.forEach { id -> com.elvan.udukkai.textiles.data.TextilesProductRepository.restore(id) }
+                    RecycleBinTab.Items -> {
+                        selectedItemIds.forEach { id -> com.elvan.udukkai.textiles.data.TextilesItemRepository.restore(id) }
                     }
                     RecycleBinTab.Customers -> {
                         selectedItemIds.forEach { id -> com.elvan.udukkai.textiles.data.TextilesCustomerRepository.restore(id) }
@@ -216,8 +216,8 @@ fun TextilesRecycleBinScreen(
                             selectedItemIds.forEach { id -> com.elvan.udukkai.textiles.data.TextilesReceiptRepository.permanentDelete(id) }
                         }
                     }
-                    RecycleBinTab.Products -> {
-                        selectedItemIds.forEach { id -> com.elvan.udukkai.textiles.data.TextilesProductRepository.permanentDelete(id) }
+                    RecycleBinTab.Items -> {
+                        selectedItemIds.forEach { id -> com.elvan.udukkai.textiles.data.TextilesItemRepository.permanentDelete(id) }
                     }
                     RecycleBinTab.Customers -> {
                         selectedItemIds.forEach { id -> com.elvan.udukkai.textiles.data.TextilesCustomerRepository.permanentDelete(id) }
@@ -233,7 +233,7 @@ fun TextilesRecycleBinScreen(
 
     val currentScrollState = when (selectedTab) {
         RecycleBinTab.Create -> createScrollState
-        RecycleBinTab.Products -> productsScrollState
+        RecycleBinTab.Items -> itemsScrollState
         RecycleBinTab.Customers -> customersScrollState
     }
 
@@ -432,35 +432,35 @@ fun TextilesRecycleBinScreen(
                 }
             }
 
-            RecycleBinTab.Products -> {
+            RecycleBinTab.Items -> {
                 LazyColumn(
-                    state = productsScrollState,
+                    state = itemsScrollState,
                     modifier = Modifier.fillMaxSize(),
                     contentPadding = PaddingValues(start = Dimens.ContentPadding, top = 0.dp, end = Dimens.ContentPadding, bottom = Dimens.ContentPaddingBottom),
                     verticalArrangement = Arrangement.spacedBy(14.dp)
                 ) {
-                    item(key = "meetpagam_products_top_spacer") {
+                    item(key = "meetpagam_items_top_spacer") {
                         Spacer(modifier = Modifier.height(LocalElvanTopSpacerHeight.current))
                     }
 
-                    if (displayedProducts.isEmpty()) {
-                        item(key = "empty_products") {
+                    if (displayedItems.isEmpty()) {
+                        item(key = "empty_items") {
                             EmptyMeetpagamState(
                                 colors = colors,
-                                emptyTitle = K.noDeletedProducts.tr()
+                                emptyTitle = K.noDeletedItems.tr()
                             )
                         }
                     } else {
-                        itemsIndexed(displayedProducts, key = { _, item -> item.id }) { index, item ->
+                        itemsIndexed(displayedItems, key = { _, item -> item.id }) { index, item ->
                             val isSelected = selectedItemIds.contains(item.id)
                             val onCardClick = {
                                 if (isSelectionMode) onToggleItem(item.id) else onStartSelection(item.id)
                             }
                             val onCardLongClick = { onStartSelection(item.id) }
 
-                            TextilesProductCard(
+                            TextilesItemCard(
                                 index = index + 1,
-                                product = item,
+                                item = item,
                                 onClick = onCardClick,
                                 onLongClick = onCardLongClick,
                                 colors = colors,

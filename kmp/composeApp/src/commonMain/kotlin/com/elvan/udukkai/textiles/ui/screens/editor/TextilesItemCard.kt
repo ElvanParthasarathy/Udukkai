@@ -20,7 +20,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.elvan.udukkai.core.utils.CurrencyUtils
-import com.elvan.udukkai.textiles.data.TextilesProductRepository
+import com.elvan.udukkai.textiles.data.TextilesItemRepository
 import com.elvan.udukkai.localization.K
 import com.elvan.udukkai.localization.PrintLanguageManager
 import com.elvan.udukkai.localization.tr
@@ -45,7 +45,7 @@ fun TextilesItemCard(
     onItemDeleted: () -> Unit,
     onItemCleared: () -> Unit,
     onDirty: () -> Unit,
-    onRequestAddNewProduct: () -> Unit,
+    onRequestAddNewItem: () -> Unit,
     modifier: Modifier = Modifier,
     companyId: Long? = null
 ) {
@@ -54,9 +54,9 @@ fun TextilesItemCard(
     val ff = LocalAppFontFamily.current
 
     var isPickerOpen by remember { mutableStateOf(false) }
-    val allProducts = TextilesProductRepository.products
-    val availableProducts = remember(allProducts, companyId) {
-        allProducts.filter { it.isAvailableForCompany(companyId) }
+    val allItems = TextilesItemRepository.items
+    val availableItems = remember(allItems, companyId) {
+        allItems.filter { it.isAvailableForCompany(companyId) }
     }
 
     Column(
@@ -71,7 +71,7 @@ fun TextilesItemCard(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = "${K.product.tr()} #${index + 1}".preventBrokenLigatures(),
+                text = "${K.item.tr()} #${index + 1}".preventBrokenLigatures(),
                 style = TextStyle(
                     fontFamily = ff,
                     fontSize = 13.sp,
@@ -108,7 +108,7 @@ fun TextilesItemCard(
         ) {
             // ── Product Picker Pill ──
             Column(modifier = Modifier.fillMaxWidth()) {
-                ElvanEditorLabel(label = K.product.tr())
+                ElvanEditorLabel(label = K.item.tr())
 
                 val config = PrintLanguageManager.getTextilesConfig()
                 val primaryName = if (item.languageMap.isNotEmpty()) {
@@ -142,7 +142,7 @@ fun TextilesItemCard(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
-                            text = (if (displayName.isNotEmpty()) displayName else K.products.tr()).preventBrokenLigatures(),
+                            text = (if (displayName.isNotEmpty()) displayName else K.items.tr()).preventBrokenLigatures(),
                             style = TextStyle(
                                 fontFamily = ff,
                                 fontSize = 14.sp,
@@ -297,9 +297,9 @@ fun TextilesItemCard(
     // ── Product Selection Bottom Sheet ──
     if (isPickerOpen) {
         ElvanSelectionBottomSheet(
-            title = K.products.tr(),
-            items = availableProducts,
-            currentValue = availableProducts.firstOrNull { it.id.toString() == item.productId },
+            title = K.items.tr(),
+            items = availableItems,
+            currentValue = availableItems.firstOrNull { it.id.toString() == item.productId },
             showSearch = true,
             onDismissRequest = { isPickerOpen = false },
             onSelected = { selected ->
@@ -340,7 +340,7 @@ fun TextilesItemCard(
             },
             onRequestAddNew = {
                 isPickerOpen = false
-                onRequestAddNewProduct()
+                onRequestAddNewItem()
             },
             addNewLabel = K.addNew.tr()
         )

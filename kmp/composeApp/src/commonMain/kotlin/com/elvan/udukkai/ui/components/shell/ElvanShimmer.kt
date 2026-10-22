@@ -230,11 +230,6 @@ fun CustomerCardSkeleton(
     shimmerBrush: Brush = rememberShimmerBrush()
 ) = ItemCardSkeleton(modifier = modifier, shimmerBrush = shimmerBrush, hasThirdLine = true)
 
-@Composable
-fun ProductCardSkeleton(
-    modifier: Modifier = Modifier,
-    shimmerBrush: Brush = rememberShimmerBrush()
-) = ItemCardSkeleton(modifier = modifier, shimmerBrush = shimmerBrush, hasThirdLine = false)
 
 /**
  * Skeleton placeholder for the Mugappu Home Screen Bento Stats Grid (2 side-by-side summary tiles).

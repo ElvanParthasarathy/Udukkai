@@ -26,7 +26,7 @@ import com.elvan.udukkai.localization.K
 import com.elvan.udukkai.localization.tr
 import com.elvan.udukkai.textiles.data.TextilesCustomerRepository
 import com.elvan.udukkai.textiles.data.TextilesInvoiceRepository
-import com.elvan.udukkai.textiles.data.TextilesProductRepository
+import com.elvan.udukkai.textiles.data.TextilesItemRepository
 import com.elvan.udukkai.textiles.data.TextilesProfileRepository
 import com.elvan.udukkai.textiles.data.TextilesReceiptRepository
 import com.elvan.udukkai.theme.Dimens
@@ -259,7 +259,7 @@ fun TextilesStorageBackupScreen(
                     val invCount = TextilesInvoiceRepository.invoices.count { (fallback.id == null || it.companyId == fallback.id) && !it.isDeleted }
                     val recCount = TextilesReceiptRepository.receipts.count { (fallback.id == null || it.companyId == fallback.id) && !it.isDeleted }
                     val cusCount = TextilesCustomerRepository.customers.count { !it.isDeleted }
-                    val proCount = TextilesProductRepository.products.count { (fallback.id == null || it.isAvailableForCompany(fallback.id)) && !it.isDeleted }
+                    val proCount = TextilesItemRepository.items.count { (fallback.id == null || it.isAvailableForCompany(fallback.id)) && !it.isDeleted }
 
                     list.add(
                         TextilesBusinessDisplayItem(
@@ -268,7 +268,7 @@ fun TextilesStorageBackupScreen(
                             invoiceCount = invCount,
                             receiptCount = recCount,
                             customerCount = cusCount,
-                            productCount = proCount
+                            itemCount = proCount
                         )
                     )
                 } else {
@@ -287,7 +287,7 @@ fun TextilesStorageBackupScreen(
                         val invC = TextilesInvoiceRepository.invoices.count { (p.id == null || it.companyId == p.id) && !it.isDeleted }
                         val recC = TextilesReceiptRepository.receipts.count { (p.id == null || it.companyId == p.id) && !it.isDeleted }
                         val cusC = TextilesCustomerRepository.customers.count { !it.isDeleted }
-                        val proC = TextilesProductRepository.products.count { (p.id == null || it.isAvailableForCompany(p.id)) && !it.isDeleted }
+                        val proC = TextilesItemRepository.items.count { (p.id == null || it.isAvailableForCompany(p.id)) && !it.isDeleted }
 
                         list.add(
                             TextilesBusinessDisplayItem(
@@ -296,7 +296,7 @@ fun TextilesStorageBackupScreen(
                                 invoiceCount = invC,
                                 receiptCount = recC,
                                 customerCount = cusC,
-                                productCount = proC
+                                itemCount = proC
                             )
                         )
                     }
@@ -364,7 +364,7 @@ fun TextilesStorageBackupScreen(
                         Spacer(modifier = Modifier.height(6.dp))
                         Row(modifier = Modifier.fillMaxWidth().padding(start = 50.dp)) {
                             Text("${item.customerCount} ${K.customers.tr()}", style = gridStyle, modifier = Modifier.weight(1f))
-                            Text("${item.productCount} ${K.products.tr()}", style = gridStyle, modifier = Modifier.weight(1f))
+                            Text("${item.itemCount} ${K.items.tr()}", style = gridStyle, modifier = Modifier.weight(1f))
                         }
                     }
                 }
@@ -569,5 +569,5 @@ private data class TextilesBusinessDisplayItem(
     val invoiceCount: Int,
     val receiptCount: Int,
     val customerCount: Int,
-    val productCount: Int
+    val itemCount: Int
 )

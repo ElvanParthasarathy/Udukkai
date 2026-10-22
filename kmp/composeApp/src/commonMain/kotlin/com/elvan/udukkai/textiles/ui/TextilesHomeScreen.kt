@@ -19,21 +19,21 @@ import com.elvan.udukkai.core.platform.PlatformType
 import com.elvan.udukkai.core.platform.currentPlatform
 import com.elvan.udukkai.data.model.ReceiptModel
 import com.elvan.udukkai.data.model.InvoiceModel
-import com.elvan.udukkai.data.model.ProductModel
+import com.elvan.udukkai.data.model.ItemModel
 import com.elvan.udukkai.data.model.CustomerModel
 import com.elvan.udukkai.textiles.data.TextilesCustomerRepository
 import com.elvan.udukkai.textiles.data.TextilesInvoiceRepository
-import com.elvan.udukkai.textiles.data.TextilesProductRepository
+import com.elvan.udukkai.textiles.data.TextilesItemRepository
 import com.elvan.udukkai.textiles.data.TextilesProfileRepository
 import com.elvan.udukkai.textiles.data.TextilesReceiptRepository
 import com.elvan.udukkai.textiles.ui.screens.TextilesCreateScreen
 import com.elvan.udukkai.textiles.ui.screens.TextilesCustomerScreen
 import com.elvan.udukkai.textiles.ui.screens.TextilesDashboardScreen
-import com.elvan.udukkai.textiles.ui.screens.TextilesProductScreen
+import com.elvan.udukkai.textiles.ui.screens.TextilesItemScreen
 import com.elvan.udukkai.textiles.ui.screens.TextilesSettingsScreen
 import com.elvan.udukkai.textiles.ui.screens.editor.TextilesCustomerEditorScreen
 import com.elvan.udukkai.textiles.ui.screens.editor.TextilesInvoiceEditorScreen
-import com.elvan.udukkai.textiles.ui.screens.editor.TextilesProductEditorScreen
+import com.elvan.udukkai.textiles.ui.screens.editor.TextilesItemEditorScreen
 import com.elvan.udukkai.localization.K
 import com.elvan.udukkai.localization.LanguageManager
 import com.elvan.udukkai.localization.tr
@@ -53,7 +53,7 @@ import com.elvan.udukkai.textiles.ui.screens.TextilesRecycleBinScreen
 import com.elvan.udukkai.textiles.ui.screens.editor.TextilesReceiptEditorScreen
 import com.elvan.udukkai.ui.screens.view.CustomerViewScreen
 import com.elvan.udukkai.ui.screens.view.InvoiceViewScreen
-import com.elvan.udukkai.ui.screens.view.ProductViewScreen
+import com.elvan.udukkai.ui.screens.view.ItemViewScreen
 import com.elvan.udukkai.ui.screens.view.ReceiptViewScreen
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -65,7 +65,7 @@ fun TextilesHomeScreen() {
 
     val homeScrollState = rememberLazyListState()
     val createScrollState = rememberLazyListState()
-    val productsScrollState = rememberLazyListState()
+    val itemsScrollState = rememberLazyListState()
     val customersScrollState = rememberLazyListState()
 
     var selectedTab by remember { mutableStateOf(NavTab.Home) }
@@ -107,7 +107,7 @@ fun TextilesHomeScreen() {
 
     val copySuffix = " (${K.copyNoun.tr()})"
 
-    val copyProductAndEdit: (ProductModel) -> Unit = { item ->
+    val copyItemAndEdit: (ItemModel) -> Unit = { item ->
         val copied = item.copy(
             id = 0L,
             name = item.name.mapValues { "${it.value}$copySuffix" },
@@ -135,7 +135,7 @@ fun TextilesHomeScreen() {
     val scope = rememberCoroutineScope()
     val colors = rememberShellColors()
 
-    val productDeletedMsg = K.productDeleted.tr()
+    val itemDeletedMsg = K.itemDeleted.tr()
     val customerDeletedMsg = K.customerDeleted.tr()
     val invoicesLabel = K.invoices.tr()
     val receiptsLabel = K.receipts.tr()
@@ -160,7 +160,7 @@ fun TextilesHomeScreen() {
                 isSearchActive = false
                 TextilesInvoiceRepository.searchQuery = ""
                 TextilesReceiptRepository.searchQuery = ""
-                TextilesProductRepository.searchQuery = ""
+                TextilesItemRepository.searchQuery = ""
                 TextilesCustomerRepository.searchQuery = ""
             } else if (selectedTab != NavTab.Home) {
                 // Bottom tabs remain unanimated; Back simply returns to Home.
@@ -173,7 +173,7 @@ fun TextilesHomeScreen() {
     LaunchedEffect("textiles") {
         TextilesInvoiceRepository.loadAll()
         TextilesReceiptRepository.loadAll()
-        TextilesProductRepository.loadAll()
+        TextilesItemRepository.loadAll()
         TextilesCustomerRepository.loadAll()
         TextilesProfileRepository.refreshFromDatabase()
 
@@ -187,21 +187,21 @@ fun TextilesHomeScreen() {
         selectedItemIds = emptySet()
         TextilesInvoiceRepository.searchQuery = ""
         TextilesReceiptRepository.searchQuery = ""
-        TextilesProductRepository.searchQuery = ""
+        TextilesItemRepository.searchQuery = ""
         TextilesCustomerRepository.searchQuery = ""
     }
 
     val currentScrollState = when (selectedTab) {
         NavTab.Home -> homeScrollState
         NavTab.Create -> createScrollState
-        NavTab.Products -> productsScrollState
+        NavTab.Items -> itemsScrollState
         NavTab.Customers -> customersScrollState
     }
 
     val currentSearchQuery = when (selectedTab) {
         NavTab.Home -> ""
         NavTab.Create -> if (uruvakkuSegment == 0) TextilesInvoiceRepository.searchQuery else TextilesReceiptRepository.searchQuery
-        NavTab.Products -> TextilesProductRepository.searchQuery
+        NavTab.Items -> TextilesItemRepository.searchQuery
         NavTab.Customers -> TextilesCustomerRepository.searchQuery
     }
 
@@ -234,7 +234,7 @@ fun TextilesHomeScreen() {
                     )
                 }
                 is ActiveSubpage.ItemEditor -> {
-                    TextilesProductEditorScreen(
+                    TextilesItemEditorScreen(
                         item = subpage.item,
                         onBack = popSubpage
                     )
@@ -271,17 +271,17 @@ fun TextilesHomeScreen() {
                         }
                     )
                 }
-                is ActiveSubpage.ProductView -> {
-                    ProductViewScreen(
-                        item = subpage.product,
+                is ActiveSubpage.ItemView -> {
+                    ItemViewScreen(
+                        item = subpage.item,
                         profile = TextilesProfileRepository.profile,
                         allProfiles = TextilesProfileRepository.profiles,
                         onBack = popSubpage,
                         onEdit = {
-                            navigateToSubpage(ActiveSubpage.ItemEditor(subpage.product))
+                            navigateToSubpage(ActiveSubpage.ItemEditor(subpage.item))
                         },
                         onCopy = {
-                            copyProductAndEdit(subpage.product)
+                            copyItemAndEdit(subpage.item)
                         }
                     )
                 }
@@ -327,7 +327,7 @@ fun TextilesHomeScreen() {
         @Composable
         fun RenderMainShell() {
             val allSelectionIds: Set<Long> = when (selectedTab) {
-                        NavTab.Products -> TextilesProductRepository.filteredItems.map { it.id }.toSet()
+                        NavTab.Items -> TextilesItemRepository.filteredItems.map { it.id }.toSet()
                         NavTab.Customers -> TextilesCustomerRepository.filteredMerchants.map { it.id }.toSet()
                         NavTab.Create -> {
                             if (uruvakkuSegment == 0) {
@@ -475,7 +475,7 @@ fun TextilesHomeScreen() {
                                     label = "bottomBarSelectionCrossfade"
                                 ) { inSelection ->
                                     if (inSelection) {
-                                        val canCopyTab = selectedTab == NavTab.Products ||
+                                        val canCopyTab = selectedTab == NavTab.Items ||
                                                          selectedTab == NavTab.Customers ||
                                                          (selectedTab == NavTab.Create && uruvakkuSegment == 0)
 
@@ -484,8 +484,8 @@ fun TextilesHomeScreen() {
                                                 if (selectedItemIds.size == 1) {
                                                     val selectedId = selectedItemIds.first()
                                                     when (selectedTab) {
-                                                        NavTab.Products -> {
-                                                            TextilesProductRepository.items.find { it.id == selectedId }?.let { copyProductAndEdit(it) }
+                                                        NavTab.Items -> {
+                                                            TextilesItemRepository.items.find { it.id == selectedId }?.let { copyItemAndEdit(it) }
                                                         }
                                                         NavTab.Customers -> {
                                                             TextilesCustomerRepository.merchants.find { it.id == selectedId }?.let { copyCustomerAndEdit(it) }
@@ -525,7 +525,7 @@ fun TextilesHomeScreen() {
                                                         NavTab.Home -> {
                                                             navigateToSubpage(ActiveSubpage.InvoiceEditor(null))
                                                         }
-                                                        NavTab.Products -> {
+                                                        NavTab.Items -> {
                                                             navigateToSubpage(ActiveSubpage.ItemEditor(null))
                                                         }
                                                         NavTab.Customers -> {
@@ -550,7 +550,7 @@ fun TextilesHomeScreen() {
                                                         val targetScrollState = when (tab) {
                                                             NavTab.Home -> homeScrollState
                                                             NavTab.Create -> createScrollState
-                                                            NavTab.Products -> productsScrollState
+                                                            NavTab.Items -> itemsScrollState
                                                             NavTab.Customers -> customersScrollState
                                                         }
                                                         scope.launch { targetScrollState.scrollToItem(0, 0) }
@@ -571,8 +571,8 @@ fun TextilesHomeScreen() {
                                                                 TextilesReceiptRepository.searchQuery = newQuery
                                                             }
                                                         }
-                                                        NavTab.Products -> {
-                                                            TextilesProductRepository.searchQuery = newQuery
+                                                        NavTab.Items -> {
+                                                            TextilesItemRepository.searchQuery = newQuery
                                                         }
                                                         NavTab.Customers -> {
                                                             TextilesCustomerRepository.searchQuery = newQuery
@@ -584,7 +584,7 @@ fun TextilesHomeScreen() {
                                                     isSearchActive = false
                                                     TextilesInvoiceRepository.searchQuery = ""
                                                     TextilesReceiptRepository.searchQuery = ""
-                                                    TextilesProductRepository.searchQuery = ""
+                                                    TextilesItemRepository.searchQuery = ""
                                                     TextilesCustomerRepository.searchQuery = ""
                                                 },
                                                 colors = colors
@@ -680,24 +680,24 @@ fun TextilesHomeScreen() {
                                 }
                             }
 
-                            NavTab.Products -> {
+                            NavTab.Items -> {
                                 ExpressivePullToRefreshBox(
                                     enabled = !isSelectionMode,
                                     isRefreshing = isRefreshing,
                                     onRefresh = {
                                         scope.launch {
                                             isRefreshing = true
-                                            TextilesProductRepository.loadAll()
+                                            TextilesItemRepository.loadAll()
                                             delay(700)
                                             isRefreshing = false
                                         }
                                     },
                                     colors = colors
                                 ) {
-                                    TextilesProductScreen(
-                                        scrollState = productsScrollState,
+                                    TextilesItemScreen(
+                                        scrollState = itemsScrollState,
                                         isRefreshing = isRefreshing,
-                                        onItemClick = { navigateToSubpage(ActiveSubpage.ProductView(it)) },
+                                        onItemClick = { navigateToSubpage(ActiveSubpage.ItemView(it)) },
                                         isSelectionMode = isSelectionMode,
                                         selectedItemIds = selectedItemIds,
                                         onToggleSelect = onToggleItem,
@@ -748,7 +748,7 @@ fun TextilesHomeScreen() {
                             val targetScrollState = when (tab) {
                                 NavTab.Home -> homeScrollState
                                 NavTab.Create -> createScrollState
-                                NavTab.Products -> productsScrollState
+                                NavTab.Items -> itemsScrollState
                                 NavTab.Customers -> customersScrollState
                             }
                             scope.launch { targetScrollState.scrollToItem(0, 0) }
@@ -796,7 +796,7 @@ fun TextilesHomeScreen() {
 
         if (showBulkDeleteConfirm && selectedItemIds.isNotEmpty()) {
             val deleteSheetTitle = when (selectedTab) {
-                NavTab.Products -> "${selectedItemIds.size} ${K.productDeleted.tr()}"
+                NavTab.Items -> "${selectedItemIds.size} ${K.itemDeleted.tr()}"
                 NavTab.Customers -> "${selectedItemIds.size} ${K.customerDeleted.tr()}"
                 NavTab.Create -> {
                     if (uruvakkuSegment == 0) {
@@ -814,9 +814,9 @@ fun TextilesHomeScreen() {
                 confirmColor = Color(0xFFBA1A1A),
                 onConfirm = {
                     when (selectedTab) {
-                        NavTab.Products -> {
-                            selectedItemIds.forEach { TextilesProductRepository.delete(it) }
-                            ElvanSnackbar.show(productDeletedMsg)
+                        NavTab.Items -> {
+                            selectedItemIds.forEach { TextilesItemRepository.delete(it) }
+                            ElvanSnackbar.show(itemDeletedMsg)
                         }
                         NavTab.Customers -> {
                             selectedItemIds.forEach { TextilesCustomerRepository.delete(it) }

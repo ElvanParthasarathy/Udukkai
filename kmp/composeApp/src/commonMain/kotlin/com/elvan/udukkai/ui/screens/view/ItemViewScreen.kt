@@ -21,7 +21,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.elvan.udukkai.core.platform.AppBackHandler
 import com.elvan.udukkai.core.utils.CurrencyUtils
-import com.elvan.udukkai.data.model.ProductModel
+import com.elvan.udukkai.data.model.ItemModel
 import com.elvan.udukkai.data.settings.BusinessProfile
 import com.elvan.udukkai.localization.K
 import com.elvan.udukkai.localization.tr
@@ -33,12 +33,11 @@ import com.elvan.udukkai.ui.components.shell.LocalElvanTopSpacerHeight
 import com.elvan.udukkai.ui.navigation.MaterialSymbols
 
 /**
- * Product / Item View Screen (பொருள் பார்வை)
- * Ported 1:1 from Flutter's porul_paarvai.dart.
+ * Item View Screen (உருப்படி பார்வை)
  */
 @Composable
-fun ProductViewScreen(
-    item: ProductModel,
+fun ItemViewScreen(
+    item: ItemModel,
     profile: BusinessProfile,
     allProfiles: List<BusinessProfile>,
     isCoolie: Boolean = false,
@@ -62,7 +61,7 @@ fun ProductViewScreen(
     val scrollState = rememberLazyListState()
 
     ViewTile(
-        title = K.productDetails.tr(),
+        title = K.itemDetails.tr(),
         onBack = onBack,
         scrollState = scrollState,
         onEdit = onEdit,
@@ -83,7 +82,7 @@ fun ProductViewScreen(
                 Spacer(modifier = Modifier.height(LocalElvanTopSpacerHeight.current))
             }
 
-            // Product Header Card
+            // Item Header Card
             item(key = "header_card") {
                 Box(
                     modifier = Modifier
@@ -101,7 +100,7 @@ fun ProductViewScreen(
                         modifier = Modifier.fillMaxWidth(),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        // Product Icon Avatar
+                        // Item Icon Avatar
                         Box(
                             modifier = Modifier
                                 .size(64.dp)

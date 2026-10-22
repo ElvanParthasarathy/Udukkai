@@ -3,14 +3,14 @@ package com.elvan.udukkai.data.database
 import com.elvan.udukkai.data.model.InvoiceModel
 import com.elvan.udukkai.data.model.ReceiptInvoiceLinkModel
 import com.elvan.udukkai.data.model.ReceiptModel
-import com.elvan.udukkai.data.model.ProductModel
+import com.elvan.udukkai.data.model.ItemModel
 import com.elvan.udukkai.data.model.CustomerModel
 import com.elvan.udukkai.data.settings.BusinessProfile
 
 /**
  * Clean, decoupled database interface for Udukkai applications.
- * Standardized English interface with full backward-compatibility defaults.
- * Each standalone app (Factory and Textiles) has its own dedicated instance.
+ * Standardized English interface across Factory and Textiles.
+ * Each standalone app has its own dedicated instance.
  */
 interface UdukkaiDatabaseHelper {
     // ── Customers ────────────────────────────────────────────────────────────
@@ -30,22 +30,14 @@ interface UdukkaiDatabaseHelper {
     fun permanentDeleteMerchant(id: Long): Boolean = permanentDeleteCustomer(id)
     fun purgeExpiredMerchants(days: Int = 30): Int = purgeExpiredCustomers(days)
 
-    // ── Products ─────────────────────────────────────────────────────────────
-    fun loadAllProducts(): List<ProductModel>
-    fun saveProduct(product: ProductModel): Long
-    fun deleteProduct(id: Long): Boolean
-    fun loadDeletedProducts(): List<ProductModel>
-    fun restoreProduct(id: Long): Boolean
-    fun permanentDeleteProduct(id: Long): Boolean
-    fun purgeExpiredProducts(days: Int = 30): Int
-
-    fun loadAllItems(): List<ProductModel> = loadAllProducts()
-    fun saveItem(item: ProductModel): Long = saveProduct(item)
-    fun deleteItem(id: Long): Boolean = deleteProduct(id)
-    fun loadDeletedItems(): List<ProductModel> = loadDeletedProducts()
-    fun restoreItem(id: Long): Boolean = restoreProduct(id)
-    fun permanentDeleteItem(id: Long): Boolean = permanentDeleteProduct(id)
-    fun purgeExpiredItems(days: Int = 30): Int = purgeExpiredProducts(days)
+    // ── Items ────────────────────────────────────────────────────────────────
+    fun loadAllItems(): List<ItemModel>
+    fun saveItem(item: ItemModel): Long
+    fun deleteItem(id: Long): Boolean
+    fun loadDeletedItems(): List<ItemModel>
+    fun restoreItem(id: Long): Boolean
+    fun permanentDeleteItem(id: Long): Boolean
+    fun purgeExpiredItems(days: Int = 30): Int
 
     // ── Invoices ─────────────────────────────────────────────────────────────
     fun loadAllInvoices(): List<InvoiceModel>

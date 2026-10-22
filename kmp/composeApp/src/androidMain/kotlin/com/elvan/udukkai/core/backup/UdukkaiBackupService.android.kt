@@ -374,7 +374,7 @@ class AndroidUdukkaiBackupService : UdukkaiBackupService {
             val payloadCrc32 = crc.value
 
             val stats = getLiveStats()
-            val jsonString = """{"invoices":${stats.invoiceCount},"receipts":${stats.receiptCount},"customers":${stats.customerCount},"products":${stats.productCount},"time":${System.currentTimeMillis()},"mode":"${if (isFactory()) "factory" else "textiles"}"}"""
+            val jsonString = """{"invoices":${stats.invoiceCount},"receipts":${stats.receiptCount},"customers":${stats.customerCount},"items":${stats.itemCount},"products":${stats.itemCount},"time":${System.currentTimeMillis()},"mode":"${if (isFactory()) "factory" else "textiles"}"}"""
             val jsonBytes = jsonString.toByteArray(Charsets.UTF_8)
 
             // 64-byte v1 header
@@ -657,7 +657,7 @@ class AndroidUdukkaiBackupService : UdukkaiBackupService {
         var invoiceCount = 0
         var receiptCount = 0
         var customerCount = 0
-        var productCount = 0
+        var itemCount = 0
         var recordedTime = file.lastModified()
 
         try {
@@ -678,7 +678,7 @@ class AndroidUdukkaiBackupService : UdukkaiBackupService {
                             invoiceCount = Regex("\"invoices\":(\\d+)").find(json)?.groupValues?.get(1)?.toIntOrNull() ?: 0
                             receiptCount = Regex("\"receipts\":(\\d+)").find(json)?.groupValues?.get(1)?.toIntOrNull() ?: 0
                             customerCount = Regex("\"customers\":(\\d+)").find(json)?.groupValues?.get(1)?.toIntOrNull() ?: 0
-                            productCount = Regex("\"products\":(\\d+)").find(json)?.groupValues?.get(1)?.toIntOrNull() ?: 0
+                            itemCount = Regex("\"(?:items|products)\":(\\d+)").find(json)?.groupValues?.get(1)?.toIntOrNull() ?: 0
                             recordedTime = Regex("\"time\":(\\d+)").find(json)?.groupValues?.get(1)?.toLongOrNull() ?: file.lastModified()
                         }
                     }
@@ -693,7 +693,7 @@ class AndroidUdukkaiBackupService : UdukkaiBackupService {
             invoiceCount = invoiceCount,
             receiptCount = receiptCount,
             customerCount = customerCount,
-            productCount = productCount,
+            itemCount = itemCount,
             mode = currentMode(),
             isSafetySnapshot = slot == BackupSlot.SAFETY_VAULT,
             isValid = isValid
@@ -746,12 +746,12 @@ class AndroidUdukkaiBackupService : UdukkaiBackupService {
             com.elvan.udukkai.textiles.data.TextilesCustomerRepository.customers.count { !it.isDeleted }
         }
 
-        val proCount = if (isFact) {
+        val itemCountVal = if (isFact) {
             val activeId = com.elvan.udukkai.factory.data.FactoryProfileRepository.profile.id
-            com.elvan.udukkai.factory.data.FactoryProductRepository.products.count { (activeId == null || it.isAvailableForCompany(activeId)) && !it.isDeleted }
+            com.elvan.udukkai.factory.data.FactoryItemRepository.items.count { (activeId == null || it.isAvailableForCompany(activeId)) && !it.isDeleted }
         } else {
             val activeId = com.elvan.udukkai.textiles.data.TextilesProfileRepository.profile.id
-            com.elvan.udukkai.textiles.data.TextilesProductRepository.products.count { (activeId == null || it.isAvailableForCompany(activeId)) && !it.isDeleted }
+            com.elvan.udukkai.textiles.data.TextilesItemRepository.items.count { (activeId == null || it.isAvailableForCompany(activeId)) && !it.isDeleted }
         }
 
         return DatabaseLiveStats(
@@ -759,7 +759,7 @@ class AndroidUdukkaiBackupService : UdukkaiBackupService {
             invoiceCount = invCount,
             receiptCount = recCount,
             customerCount = cusCount,
-            productCount = proCount
+            itemCount = itemCountVal
         )
     }
 

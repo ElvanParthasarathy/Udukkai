@@ -9,8 +9,8 @@ import com.elvan.udukkai.data.model.CustomerModel
 import com.elvan.udukkai.data.model.InvoiceModel
 import com.elvan.udukkai.data.model.ReceiptInvoiceLinkModel
 import com.elvan.udukkai.data.model.ReceiptModel
-import com.elvan.udukkai.data.model.ProductJsonConverter
-import com.elvan.udukkai.data.model.ProductModel
+import com.elvan.udukkai.data.model.ItemJsonConverter
+import com.elvan.udukkai.data.model.ItemModel
 import com.elvan.udukkai.data.settings.LanguageJsonConverter
 import com.elvan.udukkai.data.settings.BusinessProfile
 import java.io.File
@@ -25,7 +25,7 @@ class AndroidUdukkaiDatabaseHelper(
 
     private val customersTable = "${tablePrefix}customers"
     private val itemsTable = "${tablePrefix}items"
-    private val productsTable = itemsTable
+    // itemsTable is standardized
     private val invoicesTable = "${tablePrefix}invoices"
     private val receiptsTable = "${tablePrefix}receipts"
     private val linksTable = "${tablePrefix}receipt_invoice_links"
@@ -134,7 +134,7 @@ class AndroidUdukkaiDatabaseHelper(
         renameColumnIfExists(db, customersTable, "minnanjal", "email")
         renameColumnIfExists(db, customersTable, "tholaipaesi", "phone")
 
-        // 3. Rename legacy columns in productsTable
+        // 3. Rename legacy columns in itemsTable
         renameColumnIfExists(db, itemsTable, "porul_peyar", "name")
         renameColumnIfExists(db, itemsTable, "vilai", "price")
         renameColumnIfExists(db, itemsTable, "vari_veetham", "tax_rate")
@@ -238,9 +238,9 @@ class AndroidUdukkaiDatabaseHelper(
             )
         """.trimIndent())
 
-        // 2. Products Table
+        // 2. Items Table
         db.execSQL("""
-            CREATE TABLE IF NOT EXISTS "$productsTable" (
+            CREATE TABLE IF NOT EXISTS "$itemsTable" (
                 "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
                 "name" TEXT NOT NULL DEFAULT '{}',
                 "hsn_code" TEXT NOT NULL DEFAULT '',
@@ -545,78 +545,69 @@ class AndroidUdukkaiDatabaseHelper(
     override fun permanentDeleteMerchant(id: Long): Boolean = permanentDeleteCustomer(id)
     override fun purgeExpiredMerchants(days: Int): Int = purgeExpiredCustomers(days)
 
-    // ── Products ─────────────────────────────────────────────────────────────
-    override fun loadAllProducts(): List<ProductModel> = useDb { db ->
-        val list = mutableListOf<ProductModel>()
-        db.rawQuery("SELECT * FROM \"$productsTable\" WHERE is_deleted = 0 ORDER BY id DESC", null).use { c ->
+    // ── Items ────────────────────────────────────────────────────────────────
+    override fun loadAllItems(): List<ItemModel> = useDb { db ->
+        val list = mutableListOf<ItemModel>()
+        db.rawQuery("SELECT * FROM \"$itemsTable\" WHERE is_deleted = 0 ORDER BY id DESC", null).use { c ->
             while (c.moveToNext()) list.add(cursorToItem(c))
         }
         list
     } ?: emptyList()
 
-    override fun saveProduct(product: ProductModel): Long = useDb { db ->
+    override fun saveItem(item: ItemModel): Long = useDb { db ->
         val cv = ContentValues().apply {
-            put("name", LanguageJsonConverter.stringify(product.name))
-            put("hsn_code", product.hsnCode)
-            put("price", product.price)
-            put("tax_rate", product.taxRate)
-            put("quantity_type", product.quantityType)
-            put("unit", product.unit)
-            put("company_ids", product.companyIds.toString())
-            put("company_prices", product.companyPrices.toString())
+            put("name", LanguageJsonConverter.stringify(item.name))
+            put("hsn_code", item.hsnCode)
+            put("price", item.price)
+            put("tax_rate", item.taxRate)
+            put("quantity_type", item.quantityType)
+            put("unit", item.unit)
+            put("company_ids", item.companyIds.toString())
+            put("company_prices", item.companyPrices.toString())
             put("updated_at", System.currentTimeMillis() / 1000)
             put("is_deleted", 0)
         }
-        if (product.id != null && product.id > 0) {
-            db.update("\"$productsTable\"", cv, "id = ?", arrayOf(product.id.toString()))
-            product.id
+        if (item.id != null && item.id > 0) {
+            db.update("\"$itemsTable\"", cv, "id = ?", arrayOf(item.id.toString()))
+            item.id
         } else {
             cv.put("created_at", System.currentTimeMillis() / 1000)
-            db.insert("\"$productsTable\"", null, cv)
+            db.insert("\"$itemsTable\"", null, cv)
         }
     } ?: -1L
 
-    override fun deleteProduct(id: Long): Boolean = useDb { db ->
+    override fun deleteItem(id: Long): Boolean = useDb { db ->
         val cv = ContentValues().apply {
             put("is_deleted", 1)
             put("deleted_at", System.currentTimeMillis() / 1000)
         }
-        db.update("\"$productsTable\"", cv, "id = ?", arrayOf(id.toString())) > 0
+        db.update("\"$itemsTable\"", cv, "id = ?", arrayOf(id.toString())) > 0
     } ?: false
 
-    override fun loadDeletedProducts(): List<ProductModel> = useDb { db ->
-        val list = mutableListOf<ProductModel>()
-        db.rawQuery("SELECT * FROM \"$productsTable\" WHERE is_deleted = 1 ORDER BY deleted_at DESC", null).use { c ->
+    override fun loadDeletedItems(): List<ItemModel> = useDb { db ->
+        val list = mutableListOf<ItemModel>()
+        db.rawQuery("SELECT * FROM \"$itemsTable\" WHERE is_deleted = 1 ORDER BY deleted_at DESC", null).use { c ->
             while (c.moveToNext()) list.add(cursorToItem(c))
         }
         list
     } ?: emptyList()
 
-    override fun restoreProduct(id: Long): Boolean = useDb { db ->
+    override fun restoreItem(id: Long): Boolean = useDb { db ->
         val cv = ContentValues().apply {
             put("is_deleted", 0)
             putNull("deleted_at")
         }
-        db.update("\"$productsTable\"", cv, "id = ?", arrayOf(id.toString())) > 0
+        db.update("\"$itemsTable\"", cv, "id = ?", arrayOf(id.toString())) > 0
     } ?: false
 
-    override fun permanentDeleteProduct(id: Long): Boolean = useDb { db ->
-        db.delete("\"$productsTable\"", "id = ?", arrayOf(id.toString())) > 0
+    override fun permanentDeleteItem(id: Long): Boolean = useDb { db ->
+        db.delete("\"$itemsTable\"", "id = ?", arrayOf(id.toString())) > 0
     } ?: false
 
-    override fun purgeExpiredProducts(days: Int): Int = useDb { db ->
+    override fun purgeExpiredItems(days: Int): Int = useDb { db ->
         val threshold = (System.currentTimeMillis() / 1000) - (days * 86400L)
-        db.delete("\"$productsTable\"", "is_deleted = 1 AND deleted_at < ?", arrayOf(threshold.toString()))
+        db.delete("\"$itemsTable\"", "is_deleted = 1 AND deleted_at < ?", arrayOf(threshold.toString()))
     } ?: 0
-
-    // Backward-compatible delegates
-    override fun loadAllItems(): List<ProductModel> = loadAllProducts()
-    override fun saveItem(item: ProductModel): Long = saveProduct(item)
-    override fun deleteItem(id: Long): Boolean = deleteProduct(id)
-    override fun loadDeletedItems(): List<ProductModel> = loadDeletedProducts()
-    override fun restoreItem(id: Long): Boolean = restoreProduct(id)
-    override fun permanentDeleteItem(id: Long): Boolean = permanentDeleteProduct(id)
-    override fun purgeExpiredItems(days: Int): Int = purgeExpiredProducts(days)
 
     // ── Invoices ─────────────────────────────────────────────────────────────
     override fun loadAllInvoices(): List<InvoiceModel> = useDb { db ->
@@ -926,7 +917,7 @@ class AndroidUdukkaiDatabaseHelper(
         db.delete("\"$linksTable\"", null, null)
         db.delete("\"$receiptsTable\"", null, null)
         db.delete("\"$invoicesTable\"", null, null)
-        db.delete("\"$productsTable\"", null, null)
+        db.delete("\"$itemsTable\"", null, null)
         db.delete("\"$customersTable\"", null, null)
         db.delete("\"$profilesTable\"", null, null)
         true
@@ -946,14 +937,14 @@ class AndroidUdukkaiDatabaseHelper(
         gstin = getStringCol(c, "gstin"),
         email = getStringCol(c, "email", "minnanjal"),
         phone = getStringCol(c, "phone", "tholaipaesi"),
-        companyIds = ProductJsonConverter.parseLongList(getStringCol(c, "company_ids", "niruvanam_ids", default = "[]")),
+        companyIds = ItemJsonConverter.parseLongList(getStringCol(c, "company_ids", "niruvanam_ids", default = "[]")),
         createdAt = getLongCol(c, "created_at"),
         updatedAt = getLongCol(c, "updated_at"),
         isDeleted = getIntCol(c, "is_deleted") == 1,
         deletedAt = getLongOrNull(c, "deleted_at")
     )
 
-    private fun cursorToItem(c: Cursor): ProductModel = ProductModel(
+    private fun cursorToItem(c: Cursor): ItemModel = ItemModel(
         id = getLongCol(c, "id"),
         name = LanguageJsonConverter.parse(getStringCol(c, "name", "porul_peyar")),
         hsnCode = getStringCol(c, "hsn_code"),
@@ -961,8 +952,8 @@ class AndroidUdukkaiDatabaseHelper(
         taxRate = getDoubleCol(c, "tax_rate", "vari_veetham"),
         quantityType = getStringCol(c, "quantity_type", "alavu_vagai", default = "quantity"),
         unit = getStringCol(c, "unit", "alagu", default = "Nos"),
-        companyIds = ProductJsonConverter.parseLongList(getStringCol(c, "company_ids", "niruvanam_ids", default = "[]")),
-        companyPrices = ProductJsonConverter.parseCompanyPrices(getStringCol(c, "company_prices", default = "{}")),
+        companyIds = ItemJsonConverter.parseLongList(getStringCol(c, "company_ids", "niruvanam_ids", default = "[]")),
+        companyPrices = ItemJsonConverter.parseCompanyPrices(getStringCol(c, "company_prices", default = "{}")),
         createdAt = getLongCol(c, "created_at"),
         updatedAt = getLongCol(c, "updated_at"),
         isDeleted = getIntCol(c, "is_deleted") == 1,

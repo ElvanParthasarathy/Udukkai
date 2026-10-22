@@ -194,11 +194,11 @@ object TextilesCalculation {
             if (idx > 0) sb.append(",")
             sb.append("{")
             val pId = item.productId
-            sb.append("\"productId\":").append(if (pId != null) "\"${escapeJson(pId)}\"" else "null").append(",")
+            sb.append("\"itemId\":").append(if (pId != null) "\"${escapeJson(pId)}\"" else "null").append(",").append("\"productId\":").append(if (pId != null) "\"${escapeJson(pId)}\"" else "null").append(",")
             sb.append("\"porulId\":").append(if (pId != null) "\"${escapeJson(pId)}\"" else "null").append(",")
-            sb.append("\"productName\":\"${escapeJson(item.name)}\",")
+            sb.append("\"itemName\":\"${escapeJson(item.name)}\",").append("\"productName\":\"${escapeJson(item.name)}\",")
             sb.append("\"porulPeyar\":\"${escapeJson(item.name)}\",")
-            sb.append("\"productNameEn\":\"${escapeJson(item.productNameEn)}\",")
+            sb.append("\"itemNameEn\":\"${escapeJson(item.productNameEn)}\",").append("\"productNameEn\":\"${escapeJson(item.productNameEn)}\",")
             sb.append("\"porulPeyarEn\":\"${escapeJson(item.productNameEn)}\",")
             sb.append("\"hsnCode\":\"${escapeJson(item.hsnCode)}\",")
             sb.append("\"hsnKuriyeedu\":\"${escapeJson(item.hsnCode)}\",")
@@ -229,12 +229,12 @@ object TextilesCalculation {
         val objects = splitJsonObjects(json)
         return objects.mapNotNull { body ->
             try {
-                val pId = Regex(""""(?:productId|porulId)"\s*:\s*(?:"([^"]*)"|null)""").find(body)?.let {
+                val pId = Regex(""""(?:itemId|productId|porulId)"\s*:\s*(?:"([^"]*)"|null)""").find(body)?.let {
                     if (it.groupValues[1].isNotEmpty()) it.groupValues[1] else null
                 }
-                val pName = Regex(""""(?:productName|porulPeyar)"\s*:\s*"((?:\\.|[^"\\])*)"""").find(body)?.groupValues?.get(1)
+                val pName = Regex(""""(?:itemName|productName|porulPeyar)"\s*:\s*"((?:\\.|[^"\\])*)"""").find(body)?.groupValues?.get(1)
                     ?.replace("\\\"", "\"")?.replace("\\\\", "\\") ?: ""
-                val pNameEn = Regex(""""(?:productNameEn|porulPeyarEn)"\s*:\s*"((?:\\.|[^"\\])*)"""").find(body)?.groupValues?.get(1)
+                val pNameEn = Regex(""""(?:itemNameEn|productNameEn|porulPeyarEn)"\s*:\s*"((?:\\.|[^"\\])*)"""").find(body)?.groupValues?.get(1)
                     ?.replace("\\\"", "\"")?.replace("\\\\", "\\") ?: ""
                 val hsn = Regex(""""(?:hsnCode|hsnKuriyeedu)"\s*:\s*"((?:\\.|[^"\\])*)"""").find(body)?.groupValues?.get(1)
                     ?.replace("\\\"", "\"")?.replace("\\\\", "\\") ?: ""

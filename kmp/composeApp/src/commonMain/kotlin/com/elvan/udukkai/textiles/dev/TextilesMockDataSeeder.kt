@@ -8,7 +8,7 @@ import com.elvan.udukkai.data.model.CustomerModel
 import com.elvan.udukkai.data.model.InvoiceModel
 import com.elvan.udukkai.data.model.ReceiptInvoiceLinkModel
 import com.elvan.udukkai.data.model.ReceiptModel
-import com.elvan.udukkai.data.model.ProductModel
+import com.elvan.udukkai.data.model.ItemModel
 import com.elvan.udukkai.data.settings.BusinessProfile
 import com.elvan.udukkai.localization.Language
 import com.elvan.udukkai.localization.LanguageManager
@@ -109,7 +109,7 @@ object TextilesMockDataSeeder {
         )
     }
 
-    private fun parseSilkItems(rawJson: String, items: List<ProductModel>): List<TextilesItem> {
+    private fun parseSilkItems(rawJson: String, items: List<ItemModel>): List<TextilesItem> {
         val parsed = TextilesCalculation.itemsFromJson(rawJson)
         return parsed.map { item ->
             val matched = items.find {
@@ -179,8 +179,8 @@ object TextilesMockDataSeeder {
             val unit = item["alagu"] as? String ?: "Nos"
             val quantityType = item["alavuVagai"] as? String ?: "quantity"
 
-            helper.saveProduct(
-                ProductModel(
+            helper.saveItem(
+                ItemModel(
                     name = mapOf("ta" to nameTa, "en" to nameEn),
                     hsnCode = hsn,
                     price = price,
@@ -190,7 +190,7 @@ object TextilesMockDataSeeder {
                 )
             )
         }
-        val textilesItems = helper.loadAllProducts()
+        val textilesItems = helper.loadAllItems()
 
         // 3. Customers
         for (m in mockTextilesCustomers) {
@@ -303,7 +303,7 @@ object TextilesMockDataSeeder {
                 TextilesProfileRepository.setActiveProfile(it)
             }
             TextilesCustomerRepository.loadAll()
-            TextilesProductRepository.loadAll()
+            TextilesItemRepository.loadAll()
             TextilesInvoiceRepository.loadAll()
             TextilesReceiptRepository.loadAll()
         }
@@ -317,7 +317,7 @@ object TextilesMockDataSeeder {
         withContext(Dispatchers.Main) {
             TextilesProfileRepository.refreshFromDatabase()
             TextilesCustomerRepository.loadAll()
-            TextilesProductRepository.loadAll()
+            TextilesItemRepository.loadAll()
             TextilesInvoiceRepository.loadAll()
             TextilesReceiptRepository.loadAll()
         }
@@ -384,7 +384,7 @@ object TextilesMockDataSeeder {
             TextilesProfileRepository.setActiveProfile(activeId)
         }
         TextilesCustomerRepository.loadAll()
-        TextilesProductRepository.loadAll()
+        TextilesItemRepository.loadAll()
         TextilesInvoiceRepository.loadAll()
         TextilesReceiptRepository.loadAll()
         AutoBackupManager.onDataChanged()

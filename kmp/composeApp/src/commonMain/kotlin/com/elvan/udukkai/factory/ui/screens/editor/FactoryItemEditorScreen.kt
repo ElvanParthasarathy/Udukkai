@@ -13,8 +13,8 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.elvan.udukkai.core.platform.AppBackHandler
-import com.elvan.udukkai.data.model.ProductModel
-import com.elvan.udukkai.factory.data.FactoryProductRepository
+import com.elvan.udukkai.data.model.ItemModel
+import com.elvan.udukkai.factory.data.FactoryItemRepository
 import com.elvan.udukkai.factory.data.FactoryProfileRepository
 import com.elvan.udukkai.localization.K
 import com.elvan.udukkai.localization.tr
@@ -25,13 +25,13 @@ import com.elvan.udukkai.ui.components.shell.*
 import com.elvan.udukkai.ui.screens.editor.*
 
 /**
- * Dedicated Product / Labor Process Editor for Udukkai Factory (ஆலை).
+ * Dedicated Item / Labor Process Editor for Udukkai Factory (ஆலை).
  * Distinct Factory labor schema: Process Name ONLY (Coolie job-work name).
  * Reactively follows FactoryProfileRepository.profile.isBilingual for bilingual toggling.
  */
 @Composable
-fun FactoryProductEditorScreen(
-    item: ProductModel? = null,
+fun FactoryItemEditorScreen(
+    item: ItemModel? = null,
     onBack: () -> Unit
 ) {
     val colors = rememberShellColors()
@@ -45,7 +45,7 @@ fun FactoryProductEditorScreen(
     val primaryLang = profile.primaryLanguage.ifEmpty { "ta" }
     val secondaryLang = profile.secondaryLanguage.ifEmpty { "en" }
 
-    var productNameMap by remember { mutableStateOf(item?.name ?: emptyMap()) }
+    var itemNameMap by remember { mutableStateOf(item?.name ?: emptyMap()) }
 
     val companyOptions = rememberCompanyOptions(
         profiles = allProfiles,
@@ -79,11 +79,11 @@ fun FactoryProductEditorScreen(
     val currentCompanyId = selectedCompanyOption.id
     val companyChanged = item != null && initialCompanyId != currentCompanyId
 
-    val hasChanges = remember(productNameMap, companyChanged) {
+    val hasChanges = remember(itemNameMap, companyChanged) {
         if (item == null) {
-            productNameMap.values.any { it.isNotBlank() } || companyChanged
+            itemNameMap.values.any { it.isNotBlank() } || companyChanged
         } else {
-            productNameMap != item.name || companyChanged
+            itemNameMap != item.name || companyChanged
         }
     }
 
@@ -102,13 +102,13 @@ fun FactoryProductEditorScreen(
         handleBackAttempt()
     }
 
-    val pageTitle = if (isEditing) K.editProduct.tr() else K.createProduct.tr()
-    val nameRequiredMsg = K.productNameRequired.tr()
-    val savedMsg = K.productSavedSuccessfully.tr()
+    val pageTitle = if (isEditing) K.editItem.tr() else K.createItem.tr()
+    val nameRequiredMsg = K.itemNameRequired.tr()
+    val savedMsg = K.itemSavedSuccessfully.tr()
     val saveFailedMsg = K.couldNotSavePrefix.tr()
 
     fun handleSave() {
-        val hasName = productNameMap.values.any { it.trim().isNotBlank() }
+        val hasName = itemNameMap.values.any { it.trim().isNotBlank() }
         if (!hasName) {
             validationError = nameRequiredMsg
             return
@@ -116,9 +116,9 @@ fun FactoryProductEditorScreen(
 
         val companyIds = selectedCompanyOption.id?.let { listOf(it) } ?: emptyList()
 
-        val itemToSave = ProductModel(
+        val itemToSave = ItemModel(
             id = item?.id ?: 0L,
-            name = productNameMap.filterValues { it.isNotBlank() },
+            name = itemNameMap.filterValues { it.isNotBlank() },
             hsnCode = "",
             price = 0.0,
             taxRate = 0.0,
@@ -129,7 +129,7 @@ fun FactoryProductEditorScreen(
             updatedAt = System.currentTimeMillis()
         )
 
-        val newId = FactoryProductRepository.save(itemToSave)
+        val newId = FactoryItemRepository.save(itemToSave)
         if (newId > 0L) {
             isExiting = true
             ElvanSnackbar.show(savedMsg)
@@ -156,7 +156,7 @@ fun FactoryProductEditorScreen(
         floatingBar = {}
     ) {
         Box(modifier = Modifier.fillMaxSize()) {
-            CompositionLocalProvider(LocalEditorAccentColor provides colors.productColor) {
+            CompositionLocalProvider(LocalEditorAccentColor provides colors.itemColor) {
                 LazyColumn(
                     state = scrollState,
                     modifier = Modifier.fillMaxSize(),
@@ -171,27 +171,27 @@ fun FactoryProductEditorScreen(
                         Spacer(modifier = Modifier.height(LocalElvanTopSpacerHeight.current))
                     }
 
-                    // Section 1: Process Details (தொழில் / பணி விவரம்)
+                    // Section 1: Item Details
                     item(key = "process_details") {
                         ElvanEditorSection(
                             index = 0,
-                            title = K.productDetails.tr()
+                            title = K.itemDetails.tr()
                         ) {
                             Column(
                                 modifier = Modifier.fillMaxWidth(),
                                 verticalArrangement = Arrangement.spacedBy(16.dp)
                             ) {
                                 ElvanIrumozhiPulan(
-                                    label = "${K.productName.tr()} *",
-                                    value = productNameMap,
+                                    label = "${K.itemName.tr()} *",
+                                    value = itemNameMap,
                                     onChanged = {
-                                        productNameMap = it
+                                        itemNameMap = it
                                         validationError = null
                                     },
                                     isBilingual = isBilingual,
                                     primaryLang = primaryLang,
                                     secondaryLang = secondaryLang,
-                                    placeholder = K.productName.tr()
+                                    placeholder = K.itemName.tr()
                                 )
 
                                 if (validationError != null) {

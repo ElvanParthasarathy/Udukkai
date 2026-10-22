@@ -26,8 +26,8 @@ import com.elvan.udukkai.theme.rememberShellColors
  * Textiles (சவுளி / Goods) specific billing item component.
  */
 @Composable
-fun TextilesProductCard(
-    productName: String,
+fun TextilesItemRowCard(
+    itemName: String,
     hsnCode: String,
     weightGrams: String,
     gstRate: String,
@@ -60,56 +60,27 @@ fun TextilesProductCard(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Column {
-                    Text(
-                        text = productName.preventBrokenLigatures(),
-                        style = TextStyle(
-                            fontFamily = ff,
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 16.sp
-                        ),
-                        color = colors.textPrimary
-                    )
-                    Spacer(modifier = Modifier.height(2.dp))
-                    Text(
-                        text = "HSN: $hsnCode",
-                        style = TextStyle(
-                            fontFamily = ff,
-                            fontSize = 12.sp
-                        ),
-                        color = colors.textSecondary
-                    )
-                }
                 Text(
-                    text = "₹$price",
-                    style = TextStyle(
-                        fontFamily = ff,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 16.sp
-                    ),
-                    color = colors.accent
+                    text = itemName.preventBrokenLigatures(),
+                    style = TextStyle(fontFamily = ff, fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = colors.textPrimary)
+                )
+                Text(
+                    text = price.preventBrokenLigatures(),
+                    style = TextStyle(fontFamily = ff, fontSize = 16.sp, fontWeight = FontWeight.Bold, color = colors.accent)
                 )
             }
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(6.dp))
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Text(
-                    text = "${K.weight.tr()}: $weightGrams g",
-                    style = TextStyle(
-                        fontFamily = ff,
-                        fontSize = 13.sp
-                    ),
-                    color = colors.textSecondary
+                    text = "${K.hsnSacCode.tr()}: $hsnCode".preventBrokenLigatures(),
+                    style = TextStyle(fontFamily = ff, fontSize = 13.sp, color = colors.textSecondary)
                 )
                 Text(
-                    text = "GST: $gstRate%",
-                    style = TextStyle(
-                        fontFamily = ff,
-                        fontSize = 13.sp
-                    ),
-                    color = colors.textSecondary
+                    text = "${K.gstRate.tr()}: $gstRate%".preventBrokenLigatures(),
+                    style = TextStyle(fontFamily = ff, fontSize = 13.sp, color = colors.textSecondary)
                 )
             }
         }

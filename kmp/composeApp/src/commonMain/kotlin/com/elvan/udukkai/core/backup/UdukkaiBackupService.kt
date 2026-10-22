@@ -26,7 +26,7 @@ data class BackupItemMetadata(
     val invoiceCount: Int = 0,
     val receiptCount: Int = 0,
     val customerCount: Int = 0,
-    val productCount: Int = 0,
+    val itemCount: Int = 0,
     val mode: String? = null,
     val isSafetySnapshot: Boolean = false,
     val isValid: Boolean = true
@@ -37,7 +37,7 @@ data class DatabaseLiveStats(
     val invoiceCount: Int,
     val receiptCount: Int,
     val customerCount: Int,
-    val productCount: Int
+    val itemCount: Int
 )
 
 /**
@@ -48,8 +48,8 @@ fun reloadFactoryRepositories() {
     try { com.elvan.udukkai.factory.data.FactoryInvoiceRepository.loadDeleted() } catch (_: Exception) {}
     try { com.elvan.udukkai.factory.data.FactoryReceiptRepository.loadAll() } catch (_: Exception) {}
     try { com.elvan.udukkai.factory.data.FactoryReceiptRepository.loadDeleted() } catch (_: Exception) {}
-    try { com.elvan.udukkai.factory.data.FactoryProductRepository.loadAll() } catch (_: Exception) {}
-    try { com.elvan.udukkai.factory.data.FactoryProductRepository.loadDeleted() } catch (_: Exception) {}
+    try { com.elvan.udukkai.factory.data.FactoryItemRepository.loadAll() } catch (_: Exception) {}
+    try { com.elvan.udukkai.factory.data.FactoryItemRepository.loadDeleted() } catch (_: Exception) {}
     try { com.elvan.udukkai.factory.data.FactoryCustomerRepository.loadAll() } catch (_: Exception) {}
     try { com.elvan.udukkai.factory.data.FactoryCustomerRepository.loadDeleted() } catch (_: Exception) {}
     try { com.elvan.udukkai.factory.data.FactoryProfileRepository.refreshFromDatabase() } catch (_: Exception) {}
@@ -63,8 +63,8 @@ fun reloadTextilesRepositories() {
     try { com.elvan.udukkai.textiles.data.TextilesInvoiceRepository.loadDeleted() } catch (_: Exception) {}
     try { com.elvan.udukkai.textiles.data.TextilesReceiptRepository.loadAll() } catch (_: Exception) {}
     try { com.elvan.udukkai.textiles.data.TextilesReceiptRepository.loadDeleted() } catch (_: Exception) {}
-    try { com.elvan.udukkai.textiles.data.TextilesProductRepository.loadAll() } catch (_: Exception) {}
-    try { com.elvan.udukkai.textiles.data.TextilesProductRepository.loadDeleted() } catch (_: Exception) {}
+    try { com.elvan.udukkai.textiles.data.TextilesItemRepository.loadAll() } catch (_: Exception) {}
+    try { com.elvan.udukkai.textiles.data.TextilesItemRepository.loadDeleted() } catch (_: Exception) {}
     try { com.elvan.udukkai.textiles.data.TextilesCustomerRepository.loadAll() } catch (_: Exception) {}
     try { com.elvan.udukkai.textiles.data.TextilesCustomerRepository.loadDeleted() } catch (_: Exception) {}
     try { com.elvan.udukkai.textiles.data.TextilesProfileRepository.refreshFromDatabase() } catch (_: Exception) {}

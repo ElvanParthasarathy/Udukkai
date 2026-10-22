@@ -2,7 +2,7 @@ package com.elvan.udukkai.core.utils
 
 import com.elvan.udukkai.data.model.CustomerModel
 import com.elvan.udukkai.data.model.InvoiceModel
-import com.elvan.udukkai.data.model.ProductModel
+import com.elvan.udukkai.data.model.ItemModel
 import com.elvan.udukkai.data.model.ReceiptModel
 
 /**
@@ -130,7 +130,7 @@ object SearchHelper {
     /**
      * High-power product matcher.
      */
-    fun matchesProduct(item: ProductModel, query: String): Boolean {
+    fun matchesItem(item: ItemModel, query: String): Boolean {
         if (query.isBlank()) return true
         val targetList = ArrayList<String?>(4 + item.name.size)
         targetList.add(item.hsnCode)

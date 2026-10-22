@@ -9,8 +9,8 @@ import com.elvan.udukkai.data.model.CustomerModel
 import com.elvan.udukkai.data.model.InvoiceModel
 import com.elvan.udukkai.data.model.ReceiptInvoiceLinkModel
 import com.elvan.udukkai.data.model.ReceiptModel
-import com.elvan.udukkai.data.model.ProductModel
-import com.elvan.udukkai.data.model.ProductFirebasePayloadConverter
+import com.elvan.udukkai.data.model.ItemModel
+import com.elvan.udukkai.data.model.ItemFirebasePayloadConverter
 import com.elvan.udukkai.data.settings.LanguageJsonConverter
 import com.google.firebase.FirebaseApp
 import com.google.firebase.database.DataSnapshot
@@ -239,7 +239,7 @@ class AndroidFirebaseSyncManager : FirebaseSyncManager {
     private fun handleProductsSnapshot(scope: String, snapshot: DataSnapshot) {
         val isFact = scope == "factory" || scope == "kooli"
         val helper = if (isFact) com.elvan.udukkai.data.database.getFactoryDatabaseHelper() else com.elvan.udukkai.data.database.getTextilesDatabaseHelper()
-        val localList = helper.loadAllProducts()
+        val localList = helper.loadAllItems()
 
         if (localList.isNotEmpty() && (!snapshot.exists() || snapshot.childrenCount == 0L)) {
             triggerAntiErasureGuard("products", localList.size)
@@ -257,7 +257,7 @@ class AndroidFirebaseSyncManager : FirebaseSyncManager {
                 val localUpdated = existing?.updatedAt ?: 0L
 
                 if (existing == null || remoteUpdated > localUpdated) {
-                    helper.saveProduct(item)
+                    helper.saveItem(item)
                     anyChanged = true
                 }
             }
@@ -269,11 +269,11 @@ class AndroidFirebaseSyncManager : FirebaseSyncManager {
             _lastSyncTime.value = System.currentTimeMillis()
             CoroutineScope(Dispatchers.Main).launch {
                 if (isFact) {
-                    com.elvan.udukkai.factory.data.FactoryProductRepository.loadAll()
-                    com.elvan.udukkai.factory.data.FactoryProductRepository.loadDeleted()
+                    com.elvan.udukkai.factory.data.FactoryItemRepository.loadAll()
+                    com.elvan.udukkai.factory.data.FactoryItemRepository.loadDeleted()
                 } else {
-                    com.elvan.udukkai.textiles.data.TextilesProductRepository.loadAll()
-                    com.elvan.udukkai.textiles.data.TextilesProductRepository.loadDeleted()
+                    com.elvan.udukkai.textiles.data.TextilesItemRepository.loadAll()
+                    com.elvan.udukkai.textiles.data.TextilesItemRepository.loadDeleted()
                 }
             }
         }
@@ -417,14 +417,14 @@ class AndroidFirebaseSyncManager : FirebaseSyncManager {
         }
     }
 
-    override fun pushItem(item: ProductModel, scope: String) {
+    override fun pushItem(item: ItemModel, scope: String) {
         if (isApplyingRemoteChange) return
         val db = getDatabase() ?: return
         val prefix = getPrefix(scope)
         val itemRef = db.getReference("udukkai").child(prefix).child("items").child("${item.id}")
         val legacyRef = db.getReference("udukkai").child(prefix).child("products").child("${item.id}")
 
-        val data = ProductFirebasePayloadConverter.toFirebasePayload(item)
+        val data = ItemFirebasePayloadConverter.toFirebasePayload(item)
 
         itemRef.setValue(data).addOnSuccessListener {
             _lastSyncTime.value = System.currentTimeMillis()
@@ -608,14 +608,14 @@ class AndroidFirebaseSyncManager : FirebaseSyncManager {
         }
     }
 
-    private fun snapshotToItem(s: DataSnapshot): ProductModel? {
+    private fun snapshotToItem(s: DataSnapshot): ItemModel? {
         return try {
             val id = (s.child("id").value as? Number)?.toLong() ?: s.key?.toLongOrNull() ?: return null
             val productNameStr = (s.child("name").value ?: s.child("productName").value ?: s.child("porulPeyar").value) as? String ?: "{}"
 
             val companyIds = if (s.hasChild("companyIds") || s.hasChild("niruvanamIds")) {
                 val rawVal = s.child("companyIds").value ?: s.child("niruvanamIds").value
-                val parsed = ProductFirebasePayloadConverter.parseCompanyIds(rawVal)
+                val parsed = ItemFirebasePayloadConverter.parseCompanyIds(rawVal)
                 if (parsed.isNotEmpty()) {
                     parsed
                 } else {
@@ -629,7 +629,7 @@ class AndroidFirebaseSyncManager : FirebaseSyncManager {
 
             val companyPrices = if (s.hasChild("companyPrices")) {
                 val rawVal = s.child("companyPrices").value
-                val parsed = ProductFirebasePayloadConverter.parseCompanyPrices(rawVal)
+                val parsed = ItemFirebasePayloadConverter.parseCompanyPrices(rawVal)
                 if (parsed.isNotEmpty()) {
                     parsed
                 } else {
@@ -647,7 +647,7 @@ class AndroidFirebaseSyncManager : FirebaseSyncManager {
                 emptyMap()
             }
 
-            ProductModel(
+            ItemModel(
                 id = id,
                 name = LanguageJsonConverter.parse(productNameStr),
                 hsnCode = s.child("hsnCode").value as? String ?: "",

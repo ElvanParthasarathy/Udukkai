@@ -52,11 +52,11 @@ enum class RecycleBinTab(
         titleKey = K.make,
         headerTitleKey = K.createBtn
     ),
-    Products(
-        icon = MaterialSymbols.CustomNav.Products,
-        activeIcon = MaterialSymbols.CustomNav.ProductsFill,
-        titleKey = K.product,
-        headerTitleKey = K.products
+    Items(
+        icon = MaterialSymbols.CustomNav.Items,
+        activeIcon = MaterialSymbols.CustomNav.ItemsFill,
+        titleKey = K.item,
+        headerTitleKey = K.items
     ),
     Customers(
         icon = MaterialSymbols.CustomNav.Customers,

@@ -2,7 +2,7 @@ package com.elvan.udukkai.data.model
 
 import com.elvan.udukkai.data.settings.LanguageJsonConverter
 
-data class ProductModel(
+data class ItemModel(
     val id: Long = 0,
     val name: Map<String, String> = emptyMap(),
     val hsnCode: String = "",
@@ -19,9 +19,9 @@ data class ProductModel(
 ) {
 
     /**
-     * Determines whether this product is available for the given company.
-     * If [companyIds] is empty, the product is shared across all companies.
-     * If [companyId] is null, it is available if the product is shared.
+     * Determines whether this item is available for the given company.
+     * If [companyIds] is empty, the item is shared across all companies.
+     * If [companyId] is null, it is available if the item is shared.
      */
     fun isAvailableForCompany(companyId: Long?): Boolean {
         if (companyIds.isEmpty()) return true
@@ -43,13 +43,7 @@ data class ProductModel(
     }
 }
 
-typealias Product = ProductModel
-typealias ItemModel = ProductModel
-typealias Item = ProductModel
-
-typealias ItemJsonConverter = ProductJsonConverter
-
-object ProductJsonConverter {
+object ItemJsonConverter {
     fun parseLongList(json: String?): List<Long> {
         if (json.isNullOrBlank() || json.trim() == "[]" || json.trim() == "null") return emptyList()
         val trimmed = json.trim()
@@ -89,15 +83,13 @@ object ProductJsonConverter {
     }
 }
 
-typealias ItemFirebasePayloadConverter = ProductFirebasePayloadConverter
-
-object ProductFirebasePayloadConverter {
+object ItemFirebasePayloadConverter {
     /**
-     * Converts a ProductModel to a HashMap suitable for Firebase Realtime Database.
-     * Serializes niruvanamIds as a List of Longs and companyPrices as a Map<String, Double>
+     * Converts an ItemModel to a HashMap suitable for Firebase Realtime Database.
+     * Serializes companyIds as a List of Longs and companyPrices as a Map<String, Double>
      * where keys are stable string representations of company IDs.
      */
-    fun toFirebasePayload(item: ProductModel): HashMap<String, Any?> {
+    fun toFirebasePayload(item: ItemModel): HashMap<String, Any?> {
         val pricesMap = hashMapOf<String, Double>()
         item.companyPrices.forEach { (companyId, price) ->
             if (companyId > 0 && price > 0.0) {
@@ -108,8 +100,8 @@ object ProductFirebasePayloadConverter {
         return hashMapOf(
             "id" to item.id,
             "name" to LanguageJsonConverter.stringify(item.name),
-            "productName" to LanguageJsonConverter.stringify(item.name),
             "itemName" to LanguageJsonConverter.stringify(item.name),
+            "productName" to LanguageJsonConverter.stringify(item.name),
             "porulPeyar" to LanguageJsonConverter.stringify(item.name),
             "hsnCode" to item.hsnCode,
             "price" to item.price,
@@ -131,7 +123,7 @@ object ProductFirebasePayloadConverter {
     }
 
     /**
-     * Parses niruvanamIds from a raw object.
+     * Parses companyIds from a raw object.
      * Supports:
      * - List<*> (e.g. ArrayList from Firebase RTDB)
      * - Map<*, *> (sparse arrays in Firebase RTDB: {"0": 101, "1": 102})
@@ -161,7 +153,7 @@ object ProductFirebasePayloadConverter {
                 }
             }
             is String -> {
-                ProductJsonConverter.parseLongList(raw)
+                ItemJsonConverter.parseLongList(raw)
             }
             is Number -> {
                 listOf(raw.toLong())
@@ -169,7 +161,6 @@ object ProductFirebasePayloadConverter {
             else -> emptyList()
         }
     }
-
 
     /**
      * Parses companyPrices from a raw object.
@@ -201,17 +192,17 @@ object ProductFirebasePayloadConverter {
                 result
             }
             is String -> {
-                ProductJsonConverter.parseCompanyPrices(raw)
+                ItemJsonConverter.parseCompanyPrices(raw)
             }
             else -> emptyMap()
         }
     }
 
     /**
-     * Reconstructs a ProductModel from a raw Map (e.g. snapshot.value or simulated payload).
-     * Backwards-compatible with legacy records missing niruvanamIds and/or companyPrices.
+     * Reconstructs an ItemModel from a raw Map (e.g. snapshot.value or simulated payload).
+     * Backwards-compatible with legacy records missing companyIds and/or companyPrices.
      */
-    fun fromRawMap(map: Map<String, Any?>, fallbackId: Long = 0L): ProductModel? {
+    fun fromRawMap(map: Map<String, Any?>, fallbackId: Long = 0L): ItemModel? {
         val id = when (val rawId = map["id"]) {
             is Number -> rawId.toLong()
             is String -> rawId.trim().toLongOrNull() ?: fallbackId
@@ -253,7 +244,7 @@ object ProductFirebasePayloadConverter {
         val companyIds = parseCompanyIds(map["companyIds"] ?: map["niruvanamIds"])
         val companyPrices = parseCompanyPrices(map["companyPrices"])
 
-        return ProductModel(
+        return ItemModel(
             id = id,
             name = LanguageJsonConverter.parse(nameStr),
             hsnCode = hsnCode,
@@ -270,5 +261,3 @@ object ProductFirebasePayloadConverter {
         )
     }
 }
-
-

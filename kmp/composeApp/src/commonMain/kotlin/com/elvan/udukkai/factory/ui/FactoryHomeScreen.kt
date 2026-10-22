@@ -19,21 +19,21 @@ import com.elvan.udukkai.core.platform.PlatformType
 import com.elvan.udukkai.core.platform.currentPlatform
 import com.elvan.udukkai.data.model.ReceiptModel
 import com.elvan.udukkai.data.model.InvoiceModel
-import com.elvan.udukkai.data.model.ProductModel
+import com.elvan.udukkai.data.model.ItemModel
 import com.elvan.udukkai.data.model.CustomerModel
 import com.elvan.udukkai.factory.data.FactoryCustomerRepository
 import com.elvan.udukkai.factory.data.FactoryInvoiceRepository
-import com.elvan.udukkai.factory.data.FactoryProductRepository
+import com.elvan.udukkai.factory.data.FactoryItemRepository
 import com.elvan.udukkai.factory.data.FactoryProfileRepository
 import com.elvan.udukkai.factory.data.FactoryReceiptRepository
 import com.elvan.udukkai.factory.ui.screens.FactoryCreateScreen
 import com.elvan.udukkai.factory.ui.screens.FactoryCustomerScreen
 import com.elvan.udukkai.factory.ui.screens.FactoryDashboardScreen
-import com.elvan.udukkai.factory.ui.screens.FactoryProductScreen
+import com.elvan.udukkai.factory.ui.screens.FactoryItemScreen
 import com.elvan.udukkai.factory.ui.screens.FactorySettingsScreen
 import com.elvan.udukkai.factory.ui.screens.editor.FactoryCustomerEditorScreen
 import com.elvan.udukkai.factory.ui.screens.editor.FactoryInvoiceEditorScreen
-import com.elvan.udukkai.factory.ui.screens.editor.FactoryProductEditorScreen
+import com.elvan.udukkai.factory.ui.screens.editor.FactoryItemEditorScreen
 import com.elvan.udukkai.localization.K
 import com.elvan.udukkai.localization.LanguageManager
 import com.elvan.udukkai.localization.tr
@@ -53,7 +53,7 @@ import com.elvan.udukkai.factory.ui.screens.FactoryRecycleBinScreen
 import com.elvan.udukkai.factory.ui.screens.editor.FactoryReceiptEditorScreen
 import com.elvan.udukkai.ui.screens.view.CustomerViewScreen
 import com.elvan.udukkai.ui.screens.view.InvoiceViewScreen
-import com.elvan.udukkai.ui.screens.view.ProductViewScreen
+import com.elvan.udukkai.ui.screens.view.ItemViewScreen
 import com.elvan.udukkai.ui.screens.view.ReceiptViewScreen
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -65,7 +65,7 @@ fun FactoryHomeScreen() {
 
     val homeScrollState = rememberLazyListState()
     val createScrollState = rememberLazyListState()
-    val productsScrollState = rememberLazyListState()
+    val itemsScrollState = rememberLazyListState()
     val customersScrollState = rememberLazyListState()
 
     var selectedTab by remember { mutableStateOf(NavTab.Home) }
@@ -107,7 +107,7 @@ fun FactoryHomeScreen() {
 
     val copySuffix = " (${K.copyNoun.tr()})"
 
-    val copyProductAndEdit: (ProductModel) -> Unit = { item ->
+    val copyItemAndEdit: (ItemModel) -> Unit = { item ->
         val copied = item.copy(
             id = 0L,
             name = item.name.mapValues { "${it.value}$copySuffix" },
@@ -135,7 +135,7 @@ fun FactoryHomeScreen() {
     val scope = rememberCoroutineScope()
     val colors = rememberShellColors()
 
-    val productDeletedMsg = K.productDeleted.tr()
+    val itemDeletedMsg = K.itemDeleted.tr()
     val customerDeletedMsg = K.customerDeleted.tr()
     val invoicesLabel = K.invoices.tr()
     val receiptsLabel = K.receipts.tr()
@@ -160,7 +160,7 @@ fun FactoryHomeScreen() {
                 isSearchActive = false
                 FactoryInvoiceRepository.searchQuery = ""
                 FactoryReceiptRepository.searchQuery = ""
-                FactoryProductRepository.searchQuery = ""
+                FactoryItemRepository.searchQuery = ""
                 FactoryCustomerRepository.searchQuery = ""
             } else if (selectedTab != NavTab.Home) {
                 // Bottom tabs remain unanimated; Back simply returns to Home.
@@ -173,7 +173,7 @@ fun FactoryHomeScreen() {
     LaunchedEffect("factory") {
         FactoryInvoiceRepository.loadAll()
         FactoryReceiptRepository.loadAll()
-        FactoryProductRepository.loadAll()
+        FactoryItemRepository.loadAll()
         FactoryCustomerRepository.loadAll()
         FactoryProfileRepository.refreshFromDatabase()
 
@@ -187,21 +187,21 @@ fun FactoryHomeScreen() {
         selectedItemIds = emptySet()
         FactoryInvoiceRepository.searchQuery = ""
         FactoryReceiptRepository.searchQuery = ""
-        FactoryProductRepository.searchQuery = ""
+        FactoryItemRepository.searchQuery = ""
         FactoryCustomerRepository.searchQuery = ""
     }
 
     val currentScrollState = when (selectedTab) {
         NavTab.Home -> homeScrollState
         NavTab.Create -> createScrollState
-        NavTab.Products -> productsScrollState
+        NavTab.Items -> itemsScrollState
         NavTab.Customers -> customersScrollState
     }
 
     val currentSearchQuery = when (selectedTab) {
         NavTab.Home -> ""
         NavTab.Create -> if (uruvakkuSegment == 0) FactoryInvoiceRepository.searchQuery else FactoryReceiptRepository.searchQuery
-        NavTab.Products -> FactoryProductRepository.searchQuery
+        NavTab.Items -> FactoryItemRepository.searchQuery
         NavTab.Customers -> FactoryCustomerRepository.searchQuery
     }
 
@@ -234,7 +234,7 @@ fun FactoryHomeScreen() {
                     )
                 }
                 is ActiveSubpage.ItemEditor -> {
-                    FactoryProductEditorScreen(
+                    FactoryItemEditorScreen(
                         item = subpage.item,
                         onBack = popSubpage
                     )
@@ -272,18 +272,18 @@ fun FactoryHomeScreen() {
                         }
                     )
                 }
-                is ActiveSubpage.ProductView -> {
-                    ProductViewScreen(
-                        item = subpage.product,
+                is ActiveSubpage.ItemView -> {
+                    ItemViewScreen(
+                        item = subpage.item,
                         profile = FactoryProfileRepository.profile,
                         allProfiles = FactoryProfileRepository.profiles,
                         isCoolie = true,
                         onBack = popSubpage,
                         onEdit = {
-                            navigateToSubpage(ActiveSubpage.ItemEditor(subpage.product))
+                            navigateToSubpage(ActiveSubpage.ItemEditor(subpage.item))
                         },
                         onCopy = {
-                            copyProductAndEdit(subpage.product)
+                            copyItemAndEdit(subpage.item)
                         }
                     )
                 }
@@ -329,7 +329,7 @@ fun FactoryHomeScreen() {
         @Composable
         fun RenderMainShell() {
             val allSelectionIds: Set<Long> = when (selectedTab) {
-                        NavTab.Products -> FactoryProductRepository.filteredItems.map { it.id }.toSet()
+                        NavTab.Items -> FactoryItemRepository.filteredItems.map { it.id }.toSet()
                         NavTab.Customers -> FactoryCustomerRepository.filteredMerchants.map { it.id }.toSet()
                         NavTab.Create -> {
                             if (uruvakkuSegment == 0) {
@@ -477,7 +477,7 @@ fun FactoryHomeScreen() {
                                     label = "bottomBarSelectionCrossfade"
                                 ) { inSelection ->
                                     if (inSelection) {
-                                        val canCopyTab = selectedTab == NavTab.Products ||
+                                        val canCopyTab = selectedTab == NavTab.Items ||
                                                          selectedTab == NavTab.Customers ||
                                                          (selectedTab == NavTab.Create && uruvakkuSegment == 0)
 
@@ -486,8 +486,8 @@ fun FactoryHomeScreen() {
                                                 if (selectedItemIds.size == 1) {
                                                     val selectedId = selectedItemIds.first()
                                                     when (selectedTab) {
-                                                        NavTab.Products -> {
-                                                            FactoryProductRepository.items.find { it.id == selectedId }?.let { copyProductAndEdit(it) }
+                                                        NavTab.Items -> {
+                                                            FactoryItemRepository.items.find { it.id == selectedId }?.let { copyItemAndEdit(it) }
                                                         }
                                                         NavTab.Customers -> {
                                                             FactoryCustomerRepository.merchants.find { it.id == selectedId }?.let { copyCustomerAndEdit(it) }
@@ -527,7 +527,7 @@ fun FactoryHomeScreen() {
                                                         NavTab.Home -> {
                                                             navigateToSubpage(ActiveSubpage.InvoiceEditor(null))
                                                         }
-                                                        NavTab.Products -> {
+                                                        NavTab.Items -> {
                                                             navigateToSubpage(ActiveSubpage.ItemEditor(null))
                                                         }
                                                         NavTab.Customers -> {
@@ -552,7 +552,7 @@ fun FactoryHomeScreen() {
                                                         val targetScrollState = when (tab) {
                                                             NavTab.Home -> homeScrollState
                                                             NavTab.Create -> createScrollState
-                                                            NavTab.Products -> productsScrollState
+                                                            NavTab.Items -> itemsScrollState
                                                             NavTab.Customers -> customersScrollState
                                                         }
                                                         scope.launch { targetScrollState.scrollToItem(0, 0) }
@@ -573,8 +573,8 @@ fun FactoryHomeScreen() {
                                                                 FactoryReceiptRepository.searchQuery = newQuery
                                                             }
                                                         }
-                                                        NavTab.Products -> {
-                                                            FactoryProductRepository.searchQuery = newQuery
+                                                        NavTab.Items -> {
+                                                            FactoryItemRepository.searchQuery = newQuery
                                                         }
                                                         NavTab.Customers -> {
                                                             FactoryCustomerRepository.searchQuery = newQuery
@@ -586,7 +586,7 @@ fun FactoryHomeScreen() {
                                                     isSearchActive = false
                                                     FactoryInvoiceRepository.searchQuery = ""
                                                     FactoryReceiptRepository.searchQuery = ""
-                                                    FactoryProductRepository.searchQuery = ""
+                                                    FactoryItemRepository.searchQuery = ""
                                                     FactoryCustomerRepository.searchQuery = ""
                                                 },
                                                 colors = colors
@@ -682,24 +682,24 @@ fun FactoryHomeScreen() {
                                 }
                             }
 
-                            NavTab.Products -> {
+                            NavTab.Items -> {
                                 ExpressivePullToRefreshBox(
                                     enabled = !isSelectionMode,
                                     isRefreshing = isRefreshing,
                                     onRefresh = {
                                         scope.launch {
                                             isRefreshing = true
-                                            FactoryProductRepository.loadAll()
+                                            FactoryItemRepository.loadAll()
                                             delay(700)
                                             isRefreshing = false
                                         }
                                     },
                                     colors = colors
                                 ) {
-                                    FactoryProductScreen(
-                                        scrollState = productsScrollState,
+                                    FactoryItemScreen(
+                                        scrollState = itemsScrollState,
                                         isRefreshing = isRefreshing,
-                                        onItemClick = { navigateToSubpage(ActiveSubpage.ProductView(it)) },
+                                        onItemClick = { navigateToSubpage(ActiveSubpage.ItemView(it)) },
                                         isSelectionMode = isSelectionMode,
                                         selectedItemIds = selectedItemIds,
                                         onToggleSelect = onToggleItem,
@@ -750,7 +750,7 @@ fun FactoryHomeScreen() {
                             val targetScrollState = when (tab) {
                                 NavTab.Home -> homeScrollState
                                 NavTab.Create -> createScrollState
-                                NavTab.Products -> productsScrollState
+                                NavTab.Items -> itemsScrollState
                                 NavTab.Customers -> customersScrollState
                             }
                             scope.launch { targetScrollState.scrollToItem(0, 0) }
@@ -798,7 +798,7 @@ fun FactoryHomeScreen() {
 
         if (showBulkDeleteConfirm && selectedItemIds.isNotEmpty()) {
             val deleteSheetTitle = when (selectedTab) {
-                NavTab.Products -> "${selectedItemIds.size} ${K.productDeleted.tr()}"
+                NavTab.Items -> "${selectedItemIds.size} ${K.itemDeleted.tr()}"
                 NavTab.Customers -> "${selectedItemIds.size} ${K.customerDeleted.tr()}"
                 NavTab.Create -> {
                     if (uruvakkuSegment == 0) {
@@ -816,9 +816,9 @@ fun FactoryHomeScreen() {
                 confirmColor = Color(0xFFBA1A1A),
                 onConfirm = {
                     when (selectedTab) {
-                        NavTab.Products -> {
-                            selectedItemIds.forEach { FactoryProductRepository.delete(it) }
-                            ElvanSnackbar.show(productDeletedMsg)
+                        NavTab.Items -> {
+                            selectedItemIds.forEach { FactoryItemRepository.delete(it) }
+                            ElvanSnackbar.show(itemDeletedMsg)
                         }
                         NavTab.Customers -> {
                             selectedItemIds.forEach { FactoryCustomerRepository.delete(it) }

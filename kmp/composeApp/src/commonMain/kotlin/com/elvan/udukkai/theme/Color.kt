@@ -80,8 +80,8 @@ object ElvanBillingColorArchive {
         val ReceiptGreen = Color(0xFF16A34A)
         val ReceiptGradient = listOf(Color(0xFF34D399), Color(0xFF16A34A))
 
-        val ProductAmber = Color(0xFFF59E0B)
-        val ProductGradient = listOf(Color(0xFFFBBF24), Color(0xFFEA580C))
+        val ItemAmber = Color(0xFFF59E0B)
+        val ItemGradient = listOf(Color(0xFFFBBF24), Color(0xFFEA580C))
 
         val CustomerPurple = Color(0xFF7C3AED)
         val CustomerGradient = listOf(Color(0xFFC084FC), Color(0xFF7C3AED))

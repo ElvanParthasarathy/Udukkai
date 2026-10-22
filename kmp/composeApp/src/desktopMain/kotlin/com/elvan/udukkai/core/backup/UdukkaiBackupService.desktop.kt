@@ -220,7 +220,7 @@ class DesktopUdukkaiBackupService : UdukkaiBackupService {
             val payloadCrc32 = crc.value
 
             val stats = getLiveStats()
-            val jsonString = """{"invoices":${stats.invoiceCount},"receipts":${stats.receiptCount},"customers":${stats.customerCount},"products":${stats.productCount},"time":${System.currentTimeMillis()},"mode":"${mode ?: "common"}"}"""
+            val jsonString = """{"invoices":${stats.invoiceCount},"receipts":${stats.receiptCount},"customers":${stats.customerCount},"items":${stats.itemCount},"products":${stats.itemCount},"time":${System.currentTimeMillis()},"mode":"${mode ?: "common"}"}"""
             val jsonBytes = jsonString.toByteArray(Charsets.UTF_8)
 
             val header = ByteBuffer.allocate(64).order(ByteOrder.LITTLE_ENDIAN)
@@ -472,7 +472,7 @@ class DesktopUdukkaiBackupService : UdukkaiBackupService {
         var invoiceCount = 0
         var receiptCount = 0
         var customerCount = 0
-        var productCount = 0
+        var itemCount = 0
         var recordedTime = file.lastModified()
 
         try {
@@ -493,7 +493,7 @@ class DesktopUdukkaiBackupService : UdukkaiBackupService {
                             invoiceCount = Regex("\"invoices\":(\\d+)").find(json)?.groupValues?.get(1)?.toIntOrNull() ?: 0
                             receiptCount = Regex("\"receipts\":(\\d+)").find(json)?.groupValues?.get(1)?.toIntOrNull() ?: 0
                             customerCount = Regex("\"customers\":(\\d+)").find(json)?.groupValues?.get(1)?.toIntOrNull() ?: 0
-                            productCount = Regex("\"products\":(\\d+)").find(json)?.groupValues?.get(1)?.toIntOrNull() ?: 0
+                            itemCount = Regex("\"(?:items|products)\":(\\d+)").find(json)?.groupValues?.get(1)?.toIntOrNull() ?: 0
                             recordedTime = Regex("\"time\":(\\d+)").find(json)?.groupValues?.get(1)?.toLongOrNull() ?: file.lastModified()
                         }
                     }
@@ -508,7 +508,7 @@ class DesktopUdukkaiBackupService : UdukkaiBackupService {
             invoiceCount = invoiceCount,
             receiptCount = receiptCount,
             customerCount = customerCount,
-            productCount = productCount,
+            itemCount = itemCount,
             mode = currentMode(),
             isSafetySnapshot = slot == BackupSlot.SAFETY_VAULT,
             isValid = isValid
@@ -547,14 +547,14 @@ class DesktopUdukkaiBackupService : UdukkaiBackupService {
         val invCount = com.elvan.udukkai.factory.data.FactoryInvoiceRepository.invoices.count { (activeId == null || it.companyId == activeId) && !it.isDeleted }
         val recCount = com.elvan.udukkai.factory.data.FactoryReceiptRepository.receipts.count { (activeId == null || it.companyId == activeId) && !it.isDeleted }
         val cusCount = com.elvan.udukkai.factory.data.FactoryCustomerRepository.customers.count { !it.isDeleted }
-        val proCount = com.elvan.udukkai.factory.data.FactoryProductRepository.products.count { (activeId == null || it.isAvailableForCompany(activeId)) && !it.isDeleted }
+        val itemCountVal = com.elvan.udukkai.factory.data.FactoryItemRepository.items.count { (activeId == null || it.isAvailableForCompany(activeId)) && !it.isDeleted }
 
         return DatabaseLiveStats(
             totalDbSizeBytes = getTotalDatabaseSize(),
             invoiceCount = invCount,
             receiptCount = recCount,
             customerCount = cusCount,
-            productCount = proCount
+            itemCount = itemCountVal
         )
     }
 

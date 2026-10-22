@@ -140,8 +140,8 @@ fun AboutAppScreen(
                 ElvanSettingsDivider(colors = colors)
                 ElvanSettingsRow(
                     icon = MaterialSymbols.Rounded.Inventory2,
-                    title = K.products.tr(),
-                    description = K.productInventoryManagement.tr(),
+                    title = K.items.tr(),
+                    description = K.itemInventoryManagement.tr(),
                     onClick = {},
                     colors = colors
                 )

@@ -8,7 +8,7 @@ import com.elvan.udukkai.data.model.CustomerModel
 import com.elvan.udukkai.data.model.InvoiceModel
 import com.elvan.udukkai.data.model.ReceiptInvoiceLinkModel
 import com.elvan.udukkai.data.model.ReceiptModel
-import com.elvan.udukkai.data.model.ProductModel
+import com.elvan.udukkai.data.model.ItemModel
 import com.elvan.udukkai.data.settings.BusinessProfile
 import com.elvan.udukkai.factory.data.*
 import com.elvan.udukkai.factory.ui.screens.editor.FactoryCalculation
@@ -109,7 +109,7 @@ object FactoryMockDataSeeder {
         )
     }
 
-    private fun parseCoolieItems(rawJson: String, items: List<ProductModel>): List<FactoryItem> {
+    private fun parseCoolieItems(rawJson: String, items: List<ItemModel>): List<FactoryItem> {
         val parsed = FactoryCalculation.itemsFromJson(rawJson)
         return parsed.map { item ->
             val matched = items.find { it.name["ta"] == item.name }
@@ -160,13 +160,13 @@ object FactoryMockDataSeeder {
         for (item in mockFactoryProducts) {
             val nameTa = item["peyar_ta"] ?: ""
             val nameEn = item["peyar_en"] ?: ""
-            helper.saveProduct(
-                ProductModel(
+            helper.saveItem(
+                ItemModel(
                     name = mapOf("ta" to nameTa, "en" to nameEn)
                 )
             )
         }
-        val factoryItems = helper.loadAllProducts()
+        val factoryItems = helper.loadAllItems()
 
         // 3. Customers
         for (m in mockFactoryCustomers) {
@@ -278,7 +278,7 @@ object FactoryMockDataSeeder {
                 FactoryProfileRepository.setActiveProfile(it)
             }
             FactoryCustomerRepository.loadAll()
-            FactoryProductRepository.loadAll()
+            FactoryItemRepository.loadAll()
             FactoryInvoiceRepository.loadAll()
             FactoryReceiptRepository.loadAll()
         }
@@ -292,7 +292,7 @@ object FactoryMockDataSeeder {
         withContext(Dispatchers.Main) {
             FactoryProfileRepository.refreshFromDatabase()
             FactoryCustomerRepository.loadAll()
-            FactoryProductRepository.loadAll()
+            FactoryItemRepository.loadAll()
             FactoryInvoiceRepository.loadAll()
             FactoryReceiptRepository.loadAll()
         }
@@ -359,7 +359,7 @@ object FactoryMockDataSeeder {
             FactoryProfileRepository.setActiveProfile(activeId)
         }
         FactoryCustomerRepository.loadAll()
-        FactoryProductRepository.loadAll()
+        FactoryItemRepository.loadAll()
         FactoryInvoiceRepository.loadAll()
         FactoryReceiptRepository.loadAll()
         AutoBackupManager.onDataChanged()

@@ -5,7 +5,7 @@ import androidx.compose.runtime.mutableStateOf
 import com.elvan.udukkai.data.model.InvoiceModel
 import com.elvan.udukkai.data.model.ReceiptInvoiceLinkModel
 import com.elvan.udukkai.data.model.ReceiptModel
-import com.elvan.udukkai.data.model.ProductModel
+import com.elvan.udukkai.data.model.ItemModel
 import com.elvan.udukkai.data.model.CustomerModel
 
 class DesktopFirebaseSyncManager : FirebaseSyncManager {
@@ -28,7 +28,7 @@ class DesktopFirebaseSyncManager : FirebaseSyncManager {
     override fun dismissGuardAlert() { _guardAlertMessage.value = null }
 
     override fun pushMerchant(merchant: CustomerModel, scope: String) {}
-    override fun pushItem(item: ProductModel, scope: String) {}
+    override fun pushItem(item: ItemModel, scope: String) {}
     override fun pushInvoice(invoice: InvoiceModel, scope: String) {}
     override fun pushReceipt(receipt: ReceiptModel, scope: String) {}
     override fun pushReceiptLinks(receiptId: Long, links: List<ReceiptInvoiceLinkModel>, scope: String) {}

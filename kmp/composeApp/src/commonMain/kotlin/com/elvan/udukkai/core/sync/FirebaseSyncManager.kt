@@ -4,7 +4,7 @@ import androidx.compose.runtime.State
 import com.elvan.udukkai.data.model.InvoiceModel
 import com.elvan.udukkai.data.model.ReceiptInvoiceLinkModel
 import com.elvan.udukkai.data.model.ReceiptModel
-import com.elvan.udukkai.data.model.ProductModel
+import com.elvan.udukkai.data.model.ItemModel
 import com.elvan.udukkai.data.model.CustomerModel
 
 enum class SyncStatus {
@@ -29,7 +29,7 @@ interface FirebaseSyncManager {
     fun dismissGuardAlert()
 
     fun pushMerchant(merchant: CustomerModel, scope: String = "factory")
-    fun pushItem(item: ProductModel, scope: String = "factory")
+    fun pushItem(item: ItemModel, scope: String = "factory")
     fun pushInvoice(invoice: InvoiceModel, scope: String = "factory")
     fun pushReceipt(receipt: ReceiptModel, scope: String = "factory")
     fun pushReceiptLinks(receiptId: Long, links: List<ReceiptInvoiceLinkModel>, scope: String = "factory")

@@ -15,9 +15,9 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.elvan.udukkai.data.model.ProductModel
-import com.elvan.udukkai.ui.screens.product.FactoryProductCard
-import com.elvan.udukkai.factory.data.FactoryProductRepository
+import com.elvan.udukkai.data.model.ItemModel
+import com.elvan.udukkai.ui.screens.item.FactoryItemCard
+import com.elvan.udukkai.factory.data.FactoryItemRepository
 import com.elvan.udukkai.factory.data.FactoryProfileRepository
 import com.elvan.udukkai.localization.K
 import com.elvan.udukkai.localization.tr
@@ -31,13 +31,13 @@ import com.elvan.udukkai.ui.components.ElvanCardLeadingIcon
 import com.elvan.udukkai.ui.components.ElvanCardSelector
 import com.elvan.udukkai.ui.components.ElvanCommonCard
 import com.elvan.udukkai.ui.components.shell.LocalElvanTopSpacerHeight
-import com.elvan.udukkai.ui.components.shell.ProductCardSkeleton
+import com.elvan.udukkai.ui.components.shell.ItemCardSkeleton
 import com.elvan.udukkai.ui.navigation.MaterialSymbols
 import kotlinx.coroutines.delay
 
 @Composable
-fun FactoryProductScreen(
-    onItemClick: (ProductModel) -> Unit,
+fun FactoryItemScreen(
+    onItemClick: (ItemModel) -> Unit,
     modifier: Modifier = Modifier,
     scrollState: LazyListState = rememberLazyListState(),
     colors: ShellColors = rememberShellColors(),
@@ -47,13 +47,13 @@ fun FactoryProductScreen(
     onToggleSelect: ((Long) -> Unit)? = null,
     onItemLongClick: ((Long) -> Unit)? = null
 ) {
-    val items = FactoryProductRepository.filteredItems
+    val items = FactoryItemRepository.filteredItems
     val ff = LocalAppFontFamily.current
 
     val pageSize = 30
     var visibleItemCount by remember { mutableIntStateOf(pageSize) }
 
-    LaunchedEffect(FactoryProductRepository.searchQuery) {
+    LaunchedEffect(FactoryItemRepository.searchQuery) {
         visibleItemCount = pageSize
     }
 
@@ -63,8 +63,8 @@ fun FactoryProductScreen(
     val hasMoreItems = items.size > visibleItemCount
 
     var isSearchLoading by remember { mutableStateOf(false) }
-    LaunchedEffect(FactoryProductRepository.searchQuery) {
-        if (FactoryProductRepository.searchQuery.isNotBlank()) {
+    LaunchedEffect(FactoryItemRepository.searchQuery) {
+        if (FactoryItemRepository.searchQuery.isNotBlank()) {
             isSearchLoading = true
             delay(300)
             isSearchLoading = false
@@ -84,16 +84,16 @@ fun FactoryProductScreen(
             ),
             verticalArrangement = Arrangement.spacedBy(Dimens.ItemSpacing)
         ) {
-            item(key = "product_top_spacer") {
+            item(key = "item_top_spacer") {
                 Spacer(modifier = Modifier.height(LocalElvanTopSpacerHeight.current))
             }
 
             if (isSearchLoading || isRefreshing) {
                 items(10) {
-                    ProductCardSkeleton()
+                    ItemCardSkeleton()
                 }
             } else if (items.isEmpty()) {
-                item(key = "empty_products") {
+                item(key = "empty_items") {
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -105,17 +105,17 @@ fun FactoryProductScreen(
                             verticalArrangement = Arrangement.Center
                         ) {
                             Icon(
-                                imageVector = MaterialSymbols.CustomNav.Products,
+                                imageVector = MaterialSymbols.CustomNav.Items,
                                 contentDescription = null,
                                 tint = LocalShellColors.current.textQuaternary,
                                 modifier = Modifier.size(48.dp)
                             )
                             Spacer(modifier = Modifier.height(12.dp))
                             Text(
-                                text = if (FactoryProductRepository.searchQuery.isNotBlank()) {
-                                    K.noMatchingProducts.tr()
+                                text = if (FactoryItemRepository.searchQuery.isNotBlank()) {
+                                    K.noMatchingItems.tr()
                                 } else {
-                                    K.noProductsYet.tr()
+                                    K.noItemsYet.tr()
                                 },
                                 style = TextStyle(
                                     fontFamily = ff,
@@ -130,7 +130,7 @@ fun FactoryProductScreen(
             } else {
                 itemsIndexed(
                     items = displayedItems,
-                    key = { _, item -> "porul_${item.id}" }
+                    key = { _, item -> "item_${item.id}" }
                 ) { index, item ->
                     val isSelected = selectedItemIds.contains(item.id)
                     val onCardClick: () -> Unit = {
@@ -144,9 +144,9 @@ fun FactoryProductScreen(
                         onItemLongClick?.invoke(item.id)
                     }
 
-                    FactoryProductCard(
+                    FactoryItemCard(
                         index = index,
-                        product = item,
+                        item = item,
                         onClick = onCardClick,
                         colors = colors,
                         isSelectionMode = isSelectionMode,
@@ -164,7 +164,7 @@ fun FactoryProductScreen(
                             contentAlignment = Alignment.Center
                         ) {
                             CircularProgressIndicator(
-                                color = colors.productColor,
+                                color = colors.itemColor,
                                 modifier = Modifier.size(24.dp),
                                 strokeWidth = 2.dp
                             )
