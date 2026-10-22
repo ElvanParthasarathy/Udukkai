@@ -26,8 +26,8 @@ enum class NavTab(
     Products(
         icon = MaterialSymbols.CustomNav.Products,
         activeIcon = MaterialSymbols.CustomNav.ProductsFill,
-        titleKey = K.product,
-        headerTitleKey = K.products
+        titleKey = K.item,
+        headerTitleKey = K.items
     ),
     Customers(
         icon = MaterialSymbols.CustomNav.Customers,
