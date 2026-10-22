@@ -276,7 +276,7 @@ val en: Map<String, String> = mapOf(
     K.customers to "Customers",
     K.noCustomersYet to "No customers yet",
     K.ahimsaSilk to "Ahimsa Silk",
-    K.ahimsaSilkAmount to "Ahimsa Silk (\\u20b9)",
+    K.ahimsaSilkAmount to "Ahimsa Silk (₹)",
     K.forWhichInvoice to "For which invoice?",
     K.gstRate to "GST Rate %",
     K.gstin to "GSTIN",
