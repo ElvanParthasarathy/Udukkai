@@ -364,6 +364,9 @@ class DesktopUdukkaiDatabaseHelper(
             """.trimIndent())
 
             try { stmt.execute("ALTER TABLE \"$customersTable\" ADD COLUMN \"company_ids\" TEXT NOT NULL DEFAULT '[]'") } catch (_: Exception) {}
+            try { stmt.execute("ALTER TABLE \"$linksTable\" ADD COLUMN \"created_at\" INTEGER NOT NULL DEFAULT 0") } catch (_: Exception) {}
+            try { stmt.execute("ALTER TABLE \"$linksTable\" ADD COLUMN \"applied_amount\" REAL NOT NULL DEFAULT 0.0") } catch (_: Exception) {}
+            try { stmt.execute("UPDATE \"$linksTable\" SET applied_amount = poruthiya_thogai WHERE (applied_amount = 0.0 OR applied_amount IS NULL) AND poruthiya_thogai > 0.0") } catch (_: Exception) {}
 
             // 6. Profiles Table
             stmt.execute("""

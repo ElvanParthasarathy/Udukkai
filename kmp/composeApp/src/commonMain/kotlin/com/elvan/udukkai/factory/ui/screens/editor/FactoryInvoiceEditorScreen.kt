@@ -352,7 +352,7 @@ fun FactoryInvoiceEditorScreen(
     val invoiceSavedMsg = K.invoiceSaved.tr()
     val invoiceNumberDuplicateMsg = K.invoiceNumberAlreadyExists.tr()
     val invoiceLockedMsg = K.invoiceLockedDueToReceipt.tr()
-    val saveBtnLabel = K.saveBtn.tr()
+    val saveBtnLabel = K.draft.tr()
 
     val handleSave: () -> Unit = {
         errorMessage = null
@@ -431,7 +431,8 @@ fun FactoryInvoiceEditorScreen(
                 onClick = handleSave,
                 enabled = !isSaving && !isPaidLocked,
                 isLoading = isSaving,
-                accentColor = colors.invoiceColor
+                accentColor = colors.invoiceColor,
+                showSave = !isPaidLocked
             )
         }
     ) {

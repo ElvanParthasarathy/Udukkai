@@ -718,26 +718,33 @@ fun ElvanEditorBottomBar(
     enabled: Boolean = true,
     isLoading: Boolean = false,
     accentColor: Color? = null,
-    onPreview: (() -> Unit)? = null
+    onPreview: (() -> Unit)? = null,
+    showSave: Boolean = true
 ) {
     var showPreviewDialog by remember { mutableStateOf(false) }
     val previewLabel = K.previewToolbarBtn.tr()
 
-    val actions = remember(label, enabled, isLoading, onClick, onPreview, previewLabel) {
-        listOf(
-            ElvanFloatingAction(
-                label = previewLabel,
-                icon = MaterialSymbols.Rounded.Visibility,
-                onClick = onPreview ?: { showPreviewDialog = true }
-            ),
-            ElvanFloatingAction(
-                label = label,
-                icon = MaterialSymbols.Rounded.Save,
-                onClick = onClick,
-                enabled = enabled,
-                isLoading = isLoading
+    val actions = remember(label, enabled, isLoading, onClick, onPreview, previewLabel, showSave) {
+        buildList {
+            add(
+                ElvanFloatingAction(
+                    label = previewLabel,
+                    icon = MaterialSymbols.Rounded.Visibility,
+                    onClick = onPreview ?: { showPreviewDialog = true }
+                )
             )
-        )
+            if (showSave) {
+                add(
+                    ElvanFloatingAction(
+                        label = label,
+                        icon = MaterialSymbols.Rounded.Save,
+                        onClick = onClick,
+                        enabled = enabled,
+                        isLoading = isLoading
+                    )
+                )
+            }
+        }
     }
 
     ElvanFloatingActionBar(
