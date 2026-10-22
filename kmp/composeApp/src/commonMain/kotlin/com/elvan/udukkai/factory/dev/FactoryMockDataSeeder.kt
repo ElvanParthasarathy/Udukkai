@@ -114,8 +114,8 @@ object FactoryMockDataSeeder {
         return parsed.map { item ->
             val matched = items.find { it.name["ta"] == item.name }
             item.copy(
-                productId = matched?.id?.toString(),
-                productNameEn = matched?.name?.get("en") ?: item.productNameEn,
+                itemId = matched?.id?.toString(),
+                itemNameEn = matched?.name?.get("en") ?: item.itemNameEn,
                 languageMap = matched?.name ?: emptyMap()
             )
         }
@@ -156,8 +156,8 @@ object FactoryMockDataSeeder {
         val factoryProfiles = helper.loadAllProfiles()
         val profileMap = factoryProfiles.associateBy { it.shortName }
 
-        // 2. Products
-        for (item in mockFactoryProducts) {
+        // 2. Items
+        for (item in mockFactoryItems) {
             val nameTa = item["peyar_ta"] ?: ""
             val nameEn = item["peyar_en"] ?: ""
             helper.saveItem(

@@ -113,18 +113,18 @@ object TextilesMockDataSeeder {
         val parsed = TextilesCalculation.itemsFromJson(rawJson)
         return parsed.map { item ->
             val matched = items.find {
-                it.name["ta"] == item.productName ||
-                    (item.productNameEn.isNotEmpty() && it.name["en"] == item.productNameEn)
+                it.name["ta"] == item.name ||
+                    (item.itemNameEn.isNotEmpty() && it.name["en"] == item.itemNameEn)
             }
-            val id = matched?.id?.toString() ?: item.productId
+            val id = matched?.id?.toString() ?: item.itemId
             val hsn = if (item.hsnCode.isNotEmpty()) item.hsnCode else (matched?.hsnCode ?: "")
             val price = if (item.price > 0.0) item.price else (matched?.price ?: 0.0)
             val taxRate = if (item.taxRate > 0.0) item.taxRate else (matched?.taxRate ?: 0.0)
             val unit = if (item.unit.isNotEmpty()) item.unit else (matched?.unit ?: "Nos")
-            val langMap = if (item.languageMap.isNotEmpty()) item.languageMap else (matched?.name ?: mapOf("ta" to item.productName, "en" to item.productNameEn))
+            val langMap = if (item.languageMap.isNotEmpty()) item.languageMap else (matched?.name ?: mapOf("ta" to item.name, "en" to item.itemNameEn))
             item.copy(
-                productId = id,
-                productNameEn = langMap["en"] ?: item.productNameEn,
+                itemId = id,
+                itemNameEn = langMap["en"] ?: item.itemNameEn,
                 hsnCode = hsn,
                 unit = unit,
                 price = price,
@@ -169,8 +169,8 @@ object TextilesMockDataSeeder {
         val textilesProfiles = helper.loadAllProfiles()
         val profileMap = textilesProfiles.associateBy { it.shortName }
 
-        // 2. Products
-        for (item in mockTextilesProducts) {
+        // 2. Items
+        for (item in mockTextilesItems) {
             val nameTa = item["peyar_ta"] as? String ?: ""
             val nameEn = item["peyar_en"] as? String ?: ""
             val hsn = item["hsnCode"] as? String ?: ""

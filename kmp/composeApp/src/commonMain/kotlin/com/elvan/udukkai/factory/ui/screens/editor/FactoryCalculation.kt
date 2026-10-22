@@ -12,23 +12,21 @@ fun generateKooliId(): String = generateFactoryId()
 
 /**
  * Single line item for Factory (ஆலை) mode invoices.
- * Holds product reference, weight in kg, and rate per kg.
+ * Holds item reference, weight in kg, and rate per kg.
  * Row total is truncated (floored), matching Flutter and React 1:1.
  */
 data class FactoryItem(
     val id: String = generateFactoryId(),
-    val productId: String? = null,
-    val productName: String = "",
-    val productNameEn: String = "",
+    val itemId: String? = null,
+    val itemName: String = "",
+    val itemNameEn: String = "",
     val weight: Double = 0.0,
     val price: Double = 0.0,
     val languageMap: Map<String, String> = emptyMap()
 ) {
-    val name: String get() = productName
+    val name: String get() = itemName
     val rate: Double get() = price
     val rowTotal: Int get() = floor(weight * price).toInt()
-
-
 }
 
 
@@ -111,19 +109,15 @@ object FactoryCalculation {
         items.forEachIndexed { idx, item ->
             if (idx > 0) sb.append(",")
             sb.append("{")
-            val pId = item.productId
-            sb.append("\"itemId\":").append(if (pId != null) "\"${escapeJson(pId)}\"" else "null").append(",").append("\"productId\":").append(if (pId != null) "\"${escapeJson(pId)}\"" else "null").append(",")
-            sb.append("\"porulId\":").append(if (pId != null) "\"${escapeJson(pId)}\"" else "null").append(",")
-            sb.append("\"itemName\":\"${escapeJson(item.name)}\",").append("\"productName\":\"${escapeJson(item.name)}\",")
-            sb.append("\"porulPeyar\":\"${escapeJson(item.name)}\",")
-            sb.append("\"itemNameEn\":\"${escapeJson(item.productNameEn)}\",").append("\"productNameEn\":\"${escapeJson(item.productNameEn)}\",")
-            sb.append("\"porulPeyarEn\":\"${escapeJson(item.productNameEn)}\",")
+            val pId = item.itemId
+            sb.append("\"itemId\":").append(if (pId != null) "\"${escapeJson(pId)}\"" else "null").append(",")
+            sb.append("\"itemName\":\"${escapeJson(item.name)}\",")
+            sb.append("\"itemNameEn\":\"${escapeJson(item.itemNameEn)}\",")
             sb.append("\"weight\":${item.weight},")
             sb.append("\"edai\":${item.weight},")
             sb.append("\"price\":${item.price},")
             sb.append("\"vilai\":${item.price},")
-            sb.append("\"languageMap\":${LanguageJsonConverter.stringify(item.languageMap)},")
-            sb.append("\"mozhiMap\":${LanguageJsonConverter.stringify(item.languageMap)}")
+            sb.append("\"languageMap\":${LanguageJsonConverter.stringify(item.languageMap)}")
             sb.append("}")
         }
         sb.append("]")
@@ -149,9 +143,9 @@ object FactoryCalculation {
                 val langMap = LanguageJsonConverter.parse(langMapMatch)
 
                 FactoryItem(
-                    productId = pId,
-                    productName = pName,
-                    productNameEn = pNameEn,
+                    itemId = pId,
+                    itemName = pName,
+                    itemNameEn = pNameEn,
                     weight = weight,
                     price = price,
                     languageMap = langMap

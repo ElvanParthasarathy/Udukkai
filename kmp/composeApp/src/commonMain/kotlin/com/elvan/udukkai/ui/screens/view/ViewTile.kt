@@ -29,7 +29,7 @@ import com.elvan.udukkai.ui.screens.preview.PreviewScreen
  * Floating action bar for View (Paarvai) screens.
  * Displays Edit ("மாற்றியமை"), Preview ("முன்னோட்டம்"), Print ("அச்சிடு"), and Share ("பகிர்") in a unified floating pill
  * for document views (Invoice / Receipt).
- * For all other entity views (Customer / Product), displays only Edit ("மாற்று") and Copy ("நகலெடு").
+ * For all other entity views (Customer / Item), displays only Edit ("மாற்று") and Copy ("நகலெடு").
  * Powered by the shared ElvanFloatingActionBar component.
  */
 @Composable
@@ -83,7 +83,7 @@ fun ElvanViewActionBar(
             )
         )
     } else {
-        // For non-document entities (Customer, Product, etc.): Only Edit and Copy!
+        // For non-document entities (Customer, Item, etc.): Only Edit and Copy!
         if (onCopy != null) {
             actions.add(
                 ElvanFloatingAction(
@@ -107,7 +107,7 @@ fun ElvanViewActionBar(
  * Wraps read-only detail views with One UI collapsible shell, smooth bottom fade mask,
  * and unified bottom floating action pill:
  * - Documents (Invoice / Receipt): Edit, Preview, Print, and Share.
- * - Entities (Customer / Product): Edit and Copy.
+ * - Entities (Customer / Item): Edit and Copy.
  */
 @Composable
 fun ViewTile(

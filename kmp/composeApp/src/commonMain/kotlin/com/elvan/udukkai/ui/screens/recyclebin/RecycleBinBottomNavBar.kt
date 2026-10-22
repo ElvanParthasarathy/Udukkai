@@ -74,7 +74,7 @@ enum class RecycleBinTab(
 
 /**
  * RecycleBinBottomNavBar — Floating Draggable Bottom Navigation Bar for Recycle Bin.
- * Contains 3 tabs (Aakku, Porul, Vaangunar), no home tab, and no '+' button.
+ * Contains 3 tabs (Aakku, Items, Vaangunar), no home tab, and no '+' button.
  */
 @Composable
 fun RecycleBinBottomNavBar(

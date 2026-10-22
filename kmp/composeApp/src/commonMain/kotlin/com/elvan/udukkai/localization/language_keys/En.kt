@@ -260,14 +260,12 @@ val en: Map<String, String> = mapOf(
     K.aboutDeveloper to "About Developer",
     K.aboutDeveloperDummy to "About Developer (Dummy)",
     K.invoiceNoCustomerPlaceholder to "Invoice No / Customer...",
-    // replaced product
     K.itemDeleted to "Item deleted",
     K.itemSavedSuccessfully to "Item saved successfully",
     K.itemNameRequired to "Item name is required",
     K.itemDetails to "Item Details",
     K.addFirstItem to "Add First Item",
     K.noItemsYet to "No items yet",
-    // replaced products
     K.customer to "Customer",
     K.customerDeleted to "Customer deleted",
     K.customerSavedSuccessfully to "Customer saved successfully",

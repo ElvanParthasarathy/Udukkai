@@ -156,7 +156,7 @@ fun UruvakkuCardSkeleton(
 }
 
 /**
- * Skeleton card placeholder matching customer (Vaangunar) and item (Porul) list cards.
+ * Skeleton card placeholder matching customer (Vaangunar) and item (Uruppadi) list cards.
  */
 @Composable
 fun ItemCardSkeleton(

@@ -178,18 +178,18 @@ fun FactoryInvoiceEditorScreen(
         if (FactoryItemRepository.items.isNotEmpty()) {
             items = items.map { item ->
                 if (item.languageMap.isEmpty()) {
-                    val matched = FactoryItemRepository.items.firstOrNull { it.id.toString() == item.productId }
-                        ?: FactoryItemRepository.items.firstOrNull { it.name.values.any { v -> v.equals(item.productName, ignoreCase = true) || v.equals(item.productNameEn, ignoreCase = true) } }
+                    val matched = FactoryItemRepository.items.firstOrNull { it.id.toString() == item.itemId }
+                        ?: FactoryItemRepository.items.firstOrNull { it.name.values.any { v -> v.equals(item.itemName, ignoreCase = true) || v.equals(item.itemNameEn, ignoreCase = true) } }
                     if (matched != null && matched.name.isNotEmpty()) {
                         item.copy(
-                            productId = matched.id.toString(),
-                            productName = matched.name["ta"] ?: item.productName,
-                            productNameEn = matched.name["en"] ?: item.productNameEn,
+                            itemId = matched.id.toString(),
+                            itemName = matched.name["ta"] ?: item.itemName,
+                            itemNameEn = matched.name["en"] ?: item.itemNameEn,
                             languageMap = matched.name
                         )
-                    } else if (item.productName.isNotEmpty() || item.productNameEn.isNotEmpty()) {
+                    } else if (item.itemName.isNotEmpty() || item.itemNameEn.isNotEmpty()) {
                         item.copy(
-                            languageMap = mapOf("ta" to item.productName, "en" to item.productNameEn).filterValues { it.isNotEmpty() }
+                            languageMap = mapOf("ta" to item.itemName, "en" to item.itemNameEn).filterValues { it.isNotEmpty() }
                         )
                     } else {
                         item
@@ -343,7 +343,7 @@ fun FactoryInvoiceEditorScreen(
 
     val companyRequiredMsg = K.selectCompanyProfile.tr()
     val customerRequiredMsg = K.selectCustomer.tr()
-    val productRequiredMsg = K.addAtLeastOneItem.tr()
+    val itemRequiredMsg = K.addAtLeastOneItem.tr()
     val receiptNumberRequiredMsg = K.receiptNumber.tr()
     val saveBtnLabel = K.saveBtn.tr()
 
@@ -358,7 +358,7 @@ fun FactoryInvoiceEditorScreen(
         } else {
             val validItems = activeItems.filter { it.weight > 0 && it.price > 0 }
             if (validItems.isEmpty()) {
-                errorMessage = productRequiredMsg
+                errorMessage = itemRequiredMsg
             } else {
                 isSaving = true
                 val vanakkam = FactoryInvoiceRepository.getNextVanakkam(selectedCompanyId)
@@ -522,7 +522,7 @@ fun FactoryInvoiceEditorScreen(
                             modifier = Modifier.fillMaxWidth(),
                             verticalArrangement = Arrangement.spacedBy(10.dp)
                         ) {
-                            // ── Product Line Items ──
+                            // ── Item Line Items ──
                             ElvanAnimatedList {
                                 items.forEachIndexed { idx, itm ->
                                     key(itm.id) {
@@ -771,7 +771,7 @@ fun FactoryInvoiceEditorScreen(
         )
     }
 
-    // ── In-Editor Full-Screen Overlays (Add Product / Add Customer) with Smooth Spring Slide ──
+    // ── In-Editor Full-Screen Overlays (Add Item / Add Customer) with Smooth Spring Slide ──
     AnimatedVisibility(
         visible = showAddItemEditor,
         enter = slideInHorizontally(

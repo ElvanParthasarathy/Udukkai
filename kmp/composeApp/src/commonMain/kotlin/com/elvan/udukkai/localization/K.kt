@@ -202,7 +202,6 @@ object K {
     const val copyBtn = "copyBtn"
     const val syncAppBtn = "syncAppBtn"
     const val saveUserBtn = "saveUserBtn"
-    // removed addProductBtn, use addItemBtn
     const val addItemBtn = "addItemBtn"
     const val item = "item"
     const val items = "items"
@@ -260,14 +259,12 @@ object K {
     const val aboutDeveloper = "aboutDeveloper"
     const val aboutDeveloperDummy = "aboutDeveloperDummy"
     const val invoiceNoCustomerPlaceholder = "invoiceNoCustomerPlaceholder"
-    // product replaced by item
     const val itemDeleted = "itemDeleted"
     const val itemSavedSuccessfully = "itemSavedSuccessfully"
     const val itemNameRequired = "itemNameRequired"
     const val itemDetails = "itemDetails"
     const val addFirstItem = "addFirstItem"
     const val noItemsYet = "noItemsYet"
-    // products replaced by items
     const val customer = "customer"
     const val customerDeleted = "customerDeleted"
     const val customerSavedSuccessfully = "customerSavedSuccessfully"

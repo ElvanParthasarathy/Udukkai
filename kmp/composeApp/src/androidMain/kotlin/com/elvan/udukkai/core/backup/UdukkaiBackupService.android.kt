@@ -374,7 +374,7 @@ class AndroidUdukkaiBackupService : UdukkaiBackupService {
             val payloadCrc32 = crc.value
 
             val stats = getLiveStats()
-            val jsonString = """{"invoices":${stats.invoiceCount},"receipts":${stats.receiptCount},"customers":${stats.customerCount},"items":${stats.itemCount},"products":${stats.itemCount},"time":${System.currentTimeMillis()},"mode":"${if (isFactory()) "factory" else "textiles"}"}"""
+            val jsonString = """{"invoices":${stats.invoiceCount},"receipts":${stats.receiptCount},"customers":${stats.customerCount},"items":${stats.itemCount},"time":${System.currentTimeMillis()},"mode":"${if (isFactory()) "factory" else "textiles"}"}"""
             val jsonBytes = jsonString.toByteArray(Charsets.UTF_8)
 
             // 64-byte v1 header

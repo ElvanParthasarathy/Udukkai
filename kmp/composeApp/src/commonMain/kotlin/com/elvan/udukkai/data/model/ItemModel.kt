@@ -101,8 +101,6 @@ object ItemFirebasePayloadConverter {
             "id" to item.id,
             "name" to LanguageJsonConverter.stringify(item.name),
             "itemName" to LanguageJsonConverter.stringify(item.name),
-            "productName" to LanguageJsonConverter.stringify(item.name),
-            "porulPeyar" to LanguageJsonConverter.stringify(item.name),
             "hsnCode" to item.hsnCode,
             "price" to item.price,
             "vilai" to item.price,

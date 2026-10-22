@@ -54,7 +54,7 @@ import kotlinx.coroutines.launch
 /**
  * MeetpagamScreen — One UI 7 / iOS 18 styled Recycle Bin screen.
  * Features:
- * - Floating bottom navigation bar matching outside design: Aakku (bills/receipts), Porul (products), Vaangunar (customers).
+ * - Floating bottom navigation bar matching outside design: Aakku (bills/receipts), Items (uruppadigal), Vaangunar (customers).
  * - Full native source cards with clear visual distinction.
  * - Multi-selection mode with Restore and Permanent Delete floating capsule bar.
  * - Selection mode stays open even if all items are deselected (until explicit back/cancel).

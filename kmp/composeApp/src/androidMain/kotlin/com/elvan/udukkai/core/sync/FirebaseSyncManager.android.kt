@@ -116,7 +116,7 @@ class AndroidFirebaseSyncManager : FirebaseSyncManager {
         val itemListener = object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
                 if (snapshot.exists() && snapshot.childrenCount > 0L) {
-                    handleProductsSnapshot(scope, snapshot)
+                    handleItemsSnapshot(scope, snapshot)
                 }
             }
             override fun onCancelled(error: DatabaseError) {
@@ -130,7 +130,7 @@ class AndroidFirebaseSyncManager : FirebaseSyncManager {
         productRef.keepSynced(true)
         val productListener = object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
-                handleProductsSnapshot(scope, snapshot)
+                handleItemsSnapshot(scope, snapshot)
             }
             override fun onCancelled(error: DatabaseError) {
                 Log.e(tag, "Product sync cancelled: ${error.message}")
@@ -236,13 +236,13 @@ class AndroidFirebaseSyncManager : FirebaseSyncManager {
         }
     }
 
-    private fun handleProductsSnapshot(scope: String, snapshot: DataSnapshot) {
+    private fun handleItemsSnapshot(scope: String, snapshot: DataSnapshot) {
         val isFact = scope == "factory" || scope == "kooli"
         val helper = if (isFact) com.elvan.udukkai.data.database.getFactoryDatabaseHelper() else com.elvan.udukkai.data.database.getTextilesDatabaseHelper()
         val localList = helper.loadAllItems()
 
         if (localList.isNotEmpty() && (!snapshot.exists() || snapshot.childrenCount == 0L)) {
-            triggerAntiErasureGuard("products", localList.size)
+            triggerAntiErasureGuard("items", localList.size)
             return
         }
 
@@ -611,7 +611,7 @@ class AndroidFirebaseSyncManager : FirebaseSyncManager {
     private fun snapshotToItem(s: DataSnapshot): ItemModel? {
         return try {
             val id = (s.child("id").value as? Number)?.toLong() ?: s.key?.toLongOrNull() ?: return null
-            val productNameStr = (s.child("name").value ?: s.child("productName").value ?: s.child("porulPeyar").value) as? String ?: "{}"
+            val itemNameStr = (s.child("itemName").value ?: s.child("name").value ?: s.child("productName").value ?: s.child("porulPeyar").value) as? String ?: "{}"
 
             val companyIds = if (s.hasChild("companyIds") || s.hasChild("niruvanamIds")) {
                 val rawVal = s.child("companyIds").value ?: s.child("niruvanamIds").value
@@ -649,7 +649,7 @@ class AndroidFirebaseSyncManager : FirebaseSyncManager {
 
             ItemModel(
                 id = id,
-                name = LanguageJsonConverter.parse(productNameStr),
+                name = LanguageJsonConverter.parse(itemNameStr),
                 hsnCode = s.child("hsnCode").value as? String ?: "",
                 price = (s.child("price").value as? Number)?.toDouble() ?: (s.child("vilai").value as? Number)?.toDouble() ?: 0.0,
                 taxRate = (s.child("taxRate").value as? Number)?.toDouble() ?: (s.child("variVeetham").value as? Number)?.toDouble() ?: 0.0,
@@ -663,7 +663,7 @@ class AndroidFirebaseSyncManager : FirebaseSyncManager {
                 deletedAt = (s.child("deletedAt").value as? Number)?.toLong()
             )
         } catch (e: Exception) {
-            Log.w(tag, "Failed to parse RTDB product: ${e.message}")
+            Log.w(tag, "Failed to parse RTDB item: ${e.message}")
             null
         }
     }

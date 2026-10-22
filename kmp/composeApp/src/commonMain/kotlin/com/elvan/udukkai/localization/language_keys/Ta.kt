@@ -261,14 +261,12 @@ val ta: Map<String, String> = mapOf(
     K.aboutDeveloper to "மென்பொருள் வடிவாளர் பற்றி",
     K.aboutDeveloperDummy to "மென்பொருள் வடிவாளர் பற்றி (மாதிரி)",
     K.invoiceNoCustomerPlaceholder to "பட்டியல் எண் / வாங்குநர்...",
-    // replaced product
     K.itemDeleted to "உருப்படி அழிக்கப்பட்டது",
     K.itemSavedSuccessfully to "உருப்படி சேமிக்கப்பட்டது",
     K.itemNameRequired to "உருப்படிப் பெயர் தேவை",
     K.itemDetails to "உருப்படித் தரவுகள்",
     K.addFirstItem to "முதல் உருப்படியைச் சேர்",
     K.noItemsYet to "உருப்படிகள் எதுவும் இல்லை",
-    // replaced products
     K.customer to "வாங்குநர்",
     K.customerDeleted to "வாங்குநர் அழிக்கப்பட்டது",
     K.customerSavedSuccessfully to "வாங்குநர் சேமிக்கப்பட்டது",

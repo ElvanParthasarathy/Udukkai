@@ -15,9 +15,9 @@ fun generatePattuId(): String = generateTextilesId()
  */
 data class TextilesItem(
     val id: String = generateTextilesId(),
-    val productId: String? = null,
-    val productName: String = "",
-    val productNameEn: String = "",
+    val itemId: String? = null,
+    val itemName: String = "",
+    val itemNameEn: String = "",
     val hsnCode: String = "",
     val quantity: Double = 1.0,
     val unit: String = "Nos",
@@ -27,7 +27,7 @@ data class TextilesItem(
     val discountType: String = "%",
     val languageMap: Map<String, String> = emptyMap()
 ) {
-    val name: String get() = productName
+    val name: String get() = itemName
     val rate: Double get() = price
 
     val baseAmount: Double get() = quantity * price
@@ -193,13 +193,10 @@ object TextilesCalculation {
         items.forEachIndexed { idx, item ->
             if (idx > 0) sb.append(",")
             sb.append("{")
-            val pId = item.productId
-            sb.append("\"itemId\":").append(if (pId != null) "\"${escapeJson(pId)}\"" else "null").append(",").append("\"productId\":").append(if (pId != null) "\"${escapeJson(pId)}\"" else "null").append(",")
-            sb.append("\"porulId\":").append(if (pId != null) "\"${escapeJson(pId)}\"" else "null").append(",")
-            sb.append("\"itemName\":\"${escapeJson(item.name)}\",").append("\"productName\":\"${escapeJson(item.name)}\",")
-            sb.append("\"porulPeyar\":\"${escapeJson(item.name)}\",")
-            sb.append("\"itemNameEn\":\"${escapeJson(item.productNameEn)}\",").append("\"productNameEn\":\"${escapeJson(item.productNameEn)}\",")
-            sb.append("\"porulPeyarEn\":\"${escapeJson(item.productNameEn)}\",")
+            val pId = item.itemId
+            sb.append("\"itemId\":").append(if (pId != null) "\"${escapeJson(pId)}\"" else "null").append(",")
+            sb.append("\"itemName\":\"${escapeJson(item.name)}\",")
+            sb.append("\"itemNameEn\":\"${escapeJson(item.itemNameEn)}\",")
             sb.append("\"hsnCode\":\"${escapeJson(item.hsnCode)}\",")
             sb.append("\"hsnKuriyeedu\":\"${escapeJson(item.hsnCode)}\",")
             sb.append("\"quantity\":${item.quantity},")
@@ -216,8 +213,7 @@ object TextilesCalculation {
             sb.append("\"thallupadiVagai\":\"${escapeJson(item.discountType)}\",")
             sb.append("\"discountAmount\":${item.discountAmount},")
             sb.append("\"thallupadiThogai\":${item.discountAmount},")
-            sb.append("\"languageMap\":${LanguageJsonConverter.stringify(item.languageMap)},")
-            sb.append("\"mozhiMap\":${LanguageJsonConverter.stringify(item.languageMap)}")
+            sb.append("\"languageMap\":${LanguageJsonConverter.stringify(item.languageMap)}")
             sb.append("}")
         }
         sb.append("]")
@@ -251,9 +247,9 @@ object TextilesCalculation {
                 val langMap = LanguageJsonConverter.parse(langMapMatch)
 
                 TextilesItem(
-                    productId = pId,
-                    productName = pName,
-                    productNameEn = pNameEn,
+                    itemId = pId,
+                    itemName = pName,
+                    itemNameEn = pNameEn,
                     hsnCode = hsn,
                     quantity = quantity,
                     unit = unit,

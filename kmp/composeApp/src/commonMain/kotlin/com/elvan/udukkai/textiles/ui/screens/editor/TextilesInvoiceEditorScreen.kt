@@ -86,7 +86,7 @@ private fun FormLockWrapper(
 /**
  * Pixel-Perfect Textiles (சவுளி / GST) Invoice Editor — matches Flutter's `SilkInvoiceEditor` 1:1.
  * Features:
- * - Bottom-up sheet selectors for Customer, Product, Invoice Type, and Company.
+ * - Bottom-up sheet selectors for Customer, Item, Invoice Type, and Company.
  * - Real-time CGST/SGST (Intra-state) vs IGST (Inter-state) GST calculation engine.
  * - Smooth 300ms animated line items addition and deletion.
  * - Unsaved changes confirmation action sheet guard.
@@ -320,7 +320,7 @@ fun TextilesInvoiceEditorScreen(
 
     val companyRequiredMsg = K.selectCompanyProfile.tr()
     val customerRequiredMsg = K.selectCustomer.tr()
-    val productRequiredMsg = K.addAtLeastOneItem.tr()
+    val itemRequiredMsg = K.addAtLeastOneItem.tr()
     val receiptNumberRequiredMsg = K.receiptNumber.tr()
     val saveBtnLabel = K.saveBtn.tr()
 
@@ -335,7 +335,7 @@ fun TextilesInvoiceEditorScreen(
         } else {
             val validItems = activeItems.filter { it.quantity > 0 && it.price > 0 }
             if (validItems.isEmpty()) {
-                errorMessage = productRequiredMsg
+                errorMessage = itemRequiredMsg
             } else {
                 isSaving = true
                 val nextVanakkam = TextilesInvoiceRepository.getNextVanakkam(selectedCompanyId)
@@ -730,7 +730,7 @@ fun TextilesInvoiceEditorScreen(
         )
     }
 
-    // ── In-Editor Full-Screen Overlays (Add Product / Add Customer) with Smooth Spring Slide ──
+    // ── In-Editor Full-Screen Overlays (Add Item / Add Customer) with Smooth Spring Slide ──
     AnimatedVisibility(
         visible = showAddItemEditor,
         enter = slideInHorizontally(

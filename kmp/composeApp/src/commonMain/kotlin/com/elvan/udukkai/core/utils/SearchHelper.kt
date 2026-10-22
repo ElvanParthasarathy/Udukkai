@@ -128,7 +128,7 @@ object SearchHelper {
     }
 
     /**
-     * High-power product matcher.
+     * High-power item matcher.
      */
     fun matchesItem(item: ItemModel, query: String): Boolean {
         if (query.isBlank()) return true

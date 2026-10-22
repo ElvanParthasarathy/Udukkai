@@ -106,7 +106,7 @@ fun TextilesItemCard(
             padding = PaddingValues(16.dp),
             borderRadius = 24.dp
         ) {
-            // ── Product Picker Pill ──
+            // ── Item Picker Pill ──
             Column(modifier = Modifier.fillMaxWidth()) {
                 ElvanEditorLabel(label = K.item.tr())
 
@@ -120,7 +120,7 @@ fun TextilesItemCard(
                     if (item.languageMap.isNotEmpty()) {
                         item.languageMap[config.secondaryLanguage.code].orEmpty()
                     } else {
-                        item.productNameEn
+                        item.itemNameEn
                     }
                 } else ""
                 val displayName = primaryName.ifEmpty { secondaryName }
@@ -294,12 +294,12 @@ fun TextilesItemCard(
         }
     }
 
-    // ── Product Selection Bottom Sheet ──
+    // ── Item Selection Bottom Sheet ──
     if (isPickerOpen) {
         ElvanSelectionBottomSheet(
             title = K.items.tr(),
             items = availableItems,
-            currentValue = availableItems.firstOrNull { it.id.toString() == item.productId },
+            currentValue = availableItems.firstOrNull { it.id.toString() == item.itemId },
             showSearch = true,
             onDismissRequest = { isPickerOpen = false },
             onSelected = { selected ->
@@ -310,9 +310,9 @@ fun TextilesItemCard(
                 val priceToUse = if (effectivePrice > 0.0) effectivePrice else selected.price
                 onItemUpdated(
                     item.copy(
-                        productId = selected.id.toString(),
-                        productName = primaryName,
-                        productNameEn = secondaryName,
+                        itemId = selected.id.toString(),
+                        itemName = primaryName,
+                        itemNameEn = secondaryName,
                         languageMap = selected.name,
                         hsnCode = selected.hsnCode,
                         price = priceToUse,

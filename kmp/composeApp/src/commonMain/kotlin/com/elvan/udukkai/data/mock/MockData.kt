@@ -165,7 +165,7 @@ val mockFactoryProfiles: List<Map<String, Any>> = listOf(
     )
 )
 
-val mockFactoryProducts: List<Map<String, String>> = listOf(
+val mockFactoryItems: List<Map<String, String>> = listOf(
     mapOf(
         "peyar_ta" to "இரண்டு இழை சப்புரி செய்ய கூலி",
         "peyar_en" to "Irandu Izhai Sappuri Seiyya Coolie"
@@ -188,7 +188,7 @@ val mockFactoryProducts: List<Map<String, String>> = listOf(
     )
 )
 
-val mockTextilesProducts: List<Map<String, Any>> = listOf(
+val mockTextilesItems: List<Map<String, Any>> = listOf(
     mapOf(
         "peyar_ta" to "கச்சா பட்டு",
         "peyar_en" to "Raw Silk",
@@ -282,7 +282,7 @@ val mockFactoryInvoices: List<Map<String, Any>> = listOf(
         "setharamGrams" to 950.0,
         "thabaalThogai" to 0.0,
         "ahimsaPattuThogai" to 0.0,
-        "items" to """[{"porulPeyar": "ஜரி தடை செய்ய கூலி", "edai": 26.3, "vilai": 610.0}]"""
+        "items" to """[{"itemName": "ஜரி தடை செய்ய கூலி", "edai": 26.3, "vilai": 610.0}]"""
     ),
     mapOf(
         "bill_no" to "PVS-20",
@@ -295,7 +295,7 @@ val mockFactoryInvoices: List<Map<String, Any>> = listOf(
         "setharamGrams" to 1300.0,
         "thabaalThogai" to 600.0,
         "ahimsaPattuThogai" to 0.0,
-        "items" to """[{"porulPeyar": "மூன்று இழை சப்புரி செய்ய கூலி", "edai": 27.65, "vilai": 430.0}]"""
+        "items" to """[{"itemName": "மூன்று இழை சப்புரி செய்ய கூலி", "edai": 27.65, "vilai": 430.0}]"""
     ),
     mapOf(
         "bill_no" to "VRM-105",
@@ -308,7 +308,7 @@ val mockFactoryInvoices: List<Map<String, Any>> = listOf(
         "setharamGrams" to 1370.0,
         "thabaalThogai" to 0.0,
         "ahimsaPattuThogai" to 0.0,
-        "items" to """[{"porulPeyar": "ஜரி தடை செய்ய கூலி", "edai": 19.5, "vilai": 610.0}, {"porulPeyar": "மூன்று இழை சப்புரி செய்ய கூலி", "edai": 18.33, "vilai": 380.0}]"""
+        "items" to """[{"itemName": "ஜரி தடை செய்ய கூலி", "edai": 19.5, "vilai": 610.0}, {"itemName": "மூன்று இழை சப்புரி செய்ய கூலி", "edai": 18.33, "vilai": 380.0}]"""
     ),
     mapOf(
         "bill_no" to "PVS-16",
@@ -321,7 +321,7 @@ val mockFactoryInvoices: List<Map<String, Any>> = listOf(
         "setharamGrams" to 1530.0,
         "thabaalThogai" to 700.0,
         "ahimsaPattuThogai" to 0.0,
-        "items" to """[{"porulPeyar": "ஒண்டி தடை செய்ய கூலி", "edai": 13.18, "vilai": 660.0}, {"porulPeyar": "மூன்று இழை சப்புரி செய்ய கூலி", "edai": 19.34, "vilai": 430.0}]"""
+        "items" to """[{"itemName": "ஒண்டி தடை செய்ய கூலி", "edai": 13.18, "vilai": 660.0}, {"itemName": "மூன்று இழை சப்புரி செய்ய கூலி", "edai": 19.34, "vilai": 430.0}]"""
     ),
     mapOf(
         "bill_no" to "VRM-104",
@@ -334,7 +334,7 @@ val mockFactoryInvoices: List<Map<String, Any>> = listOf(
         "setharamGrams" to 930.0,
         "thabaalThogai" to 0.0,
         "ahimsaPattuThogai" to 0.0,
-        "items" to """[{"porulPeyar": "இரண்டு இழை சப்புரி செய்ய கூலி", "edai": 25.72, "vilai": 380.0}]"""
+        "items" to """[{"itemName": "இரண்டு இழை சப்புரி செய்ய கூலி", "edai": 25.72, "vilai": 380.0}]"""
     ),
     mapOf(
         "bill_no" to "VRM-107",
@@ -347,7 +347,7 @@ val mockFactoryInvoices: List<Map<String, Any>> = listOf(
         "setharamGrams" to 1100.0,
         "thabaalThogai" to 0.0,
         "ahimsaPattuThogai" to 0.0,
-        "items" to """[{"porulPeyar": "இரண்டு இழை சப்புரி செய்ய கூலி", "edai": 30.4, "vilai": 380.0}]"""
+        "items" to """[{"itemName": "இரண்டு இழை சப்புரி செய்ய கூலி", "edai": 30.4, "vilai": 380.0}]"""
     ),
     mapOf(
         "bill_no" to "PVS-18",
@@ -360,7 +360,7 @@ val mockFactoryInvoices: List<Map<String, Any>> = listOf(
         "setharamGrams" to 1420.0,
         "thabaalThogai" to 640.0,
         "ahimsaPattuThogai" to 0.0,
-        "items" to """[{"porulPeyar": "ஒண்டி தடை செய்ய கூலி", "edai": 4.4, "vilai": 660.0}, {"porulPeyar": "மூன்று இழை சப்புரி செய்ய கூலி", "edai": 25.73, "vilai": 430.0}]"""
+        "items" to """[{"itemName": "ஒண்டி தடை செய்ய கூலி", "edai": 4.4, "vilai": 660.0}, {"itemName": "மூன்று இழை சப்புரி செய்ய கூலி", "edai": 25.73, "vilai": 430.0}]"""
     ),
     mapOf(
         "bill_no" to "VRM-111",
@@ -373,7 +373,7 @@ val mockFactoryInvoices: List<Map<String, Any>> = listOf(
         "setharamGrams" to 1090.0,
         "thabaalThogai" to 0.0,
         "ahimsaPattuThogai" to 0.0,
-        "items" to """[{"porulPeyar": "இரண்டு இழை சப்புரி செய்ய கூலி", "edai": 30.16, "vilai": 380.0}]"""
+        "items" to """[{"itemName": "இரண்டு இழை சப்புரி செய்ய கூலி", "edai": 30.16, "vilai": 380.0}]"""
     ),
     mapOf(
         "bill_no" to "VRM-106",
@@ -386,7 +386,7 @@ val mockFactoryInvoices: List<Map<String, Any>> = listOf(
         "setharamGrams" to 870.0,
         "thabaalThogai" to 0.0,
         "ahimsaPattuThogai" to 0.0,
-        "items" to """[{"porulPeyar": "ஜரி தடை செய்ய கூலி", "edai": 24.08, "vilai": 610.0}]"""
+        "items" to """[{"itemName": "ஜரி தடை செய்ய கூலி", "edai": 24.08, "vilai": 610.0}]"""
     ),
     mapOf(
         "bill_no" to "VRM-112",
@@ -399,7 +399,7 @@ val mockFactoryInvoices: List<Map<String, Any>> = listOf(
         "setharamGrams" to 1040.0,
         "thabaalThogai" to 0.0,
         "ahimsaPattuThogai" to 0.0,
-        "items" to """[{"porulPeyar": "ஜரி தடை செய்ய கூலி", "edai": 28.76, "vilai": 610.0}]"""
+        "items" to """[{"itemName": "ஜரி தடை செய்ய கூலி", "edai": 28.76, "vilai": 610.0}]"""
     ),
     mapOf(
         "bill_no" to "PVS-23",
@@ -412,7 +412,7 @@ val mockFactoryInvoices: List<Map<String, Any>> = listOf(
         "setharamGrams" to 960.0,
         "thabaalThogai" to 620.0,
         "ahimsaPattuThogai" to 0.0,
-        "items" to """[{"porulPeyar": "ஒண்டி தடை செய்ய கூலி", "edai": 23.14, "vilai": 660.0}]"""
+        "items" to """[{"itemName": "ஒண்டி தடை செய்ய கூலி", "edai": 23.14, "vilai": 660.0}]"""
     ),
     mapOf(
         "bill_no" to "VRM-108",
@@ -425,7 +425,7 @@ val mockFactoryInvoices: List<Map<String, Any>> = listOf(
         "setharamGrams" to 1090.0,
         "thabaalThogai" to 0.0,
         "ahimsaPattuThogai" to 0.0,
-        "items" to """[{"porulPeyar": "ஜரி தடை செய்ய கூலி", "edai": 30.11, "vilai": 610.0}]"""
+        "items" to """[{"itemName": "ஜரி தடை செய்ய கூலி", "edai": 30.11, "vilai": 610.0}]"""
     ),
     mapOf(
         "bill_no" to "PVS-17",
@@ -438,7 +438,7 @@ val mockFactoryInvoices: List<Map<String, Any>> = listOf(
         "setharamGrams" to 1200.0,
         "thabaalThogai" to 600.0,
         "ahimsaPattuThogai" to 0.0,
-        "items" to """[{"porulPeyar": "ஒண்டி தடை செய்ய கூலி", "edai": 7.8, "vilai": 660.0}, {"porulPeyar": "மூன்று இழை சப்புரி செய்ய கூலி", "edai": 17.7, "vilai": 430.0}]"""
+        "items" to """[{"itemName": "ஒண்டி தடை செய்ய கூலி", "edai": 7.8, "vilai": 660.0}, {"itemName": "மூன்று இழை சப்புரி செய்ய கூலி", "edai": 17.7, "vilai": 430.0}]"""
     ),
     mapOf(
         "bill_no" to "PVS-21",
@@ -451,7 +451,7 @@ val mockFactoryInvoices: List<Map<String, Any>> = listOf(
         "setharamGrams" to 1570.0,
         "thabaalThogai" to 0.0,
         "ahimsaPattuThogai" to 0.0,
-        "items" to """[{"porulPeyar": "ஜரி தடை செய்ய கூலி", "edai": 8.93, "vilai": 610.0}, {"porulPeyar": "மூன்று இழை சப்புரி செய்ய கூலி", "edai": 24.45, "vilai": 430.0}]"""
+        "items" to """[{"itemName": "ஜரி தடை செய்ய கூலி", "edai": 8.93, "vilai": 610.0}, {"itemName": "மூன்று இழை சப்புரி செய்ய கூலி", "edai": 24.45, "vilai": 430.0}]"""
     ),
     mapOf(
         "bill_no" to "PVS-22",
@@ -464,7 +464,7 @@ val mockFactoryInvoices: List<Map<String, Any>> = listOf(
         "setharamGrams" to 1600.0,
         "thabaalThogai" to 900.0,
         "ahimsaPattuThogai" to 0.0,
-        "items" to """[{"porulPeyar": "ஒண்டி தடை செய்ய கூலி", "edai": 9.55, "vilai": 660.0}, {"porulPeyar": "மூன்று இழை சப்புரி செய்ய கூலி", "edai": 23.95, "vilai": 430.0}]"""
+        "items" to """[{"itemName": "ஒண்டி தடை செய்ய கூலி", "edai": 9.55, "vilai": 660.0}, {"itemName": "மூன்று இழை சப்புரி செய்ய கூலி", "edai": 23.95, "vilai": 430.0}]"""
     ),
     mapOf(
         "bill_no" to "VRM-101",
@@ -477,7 +477,7 @@ val mockFactoryInvoices: List<Map<String, Any>> = listOf(
         "setharamGrams" to 1050.0,
         "thabaalThogai" to 0.0,
         "ahimsaPattuThogai" to 0.0,
-        "items" to """[{"porulPeyar": "ஜரி தடை செய்ய கூலி", "edai": 29.1, "vilai": 610.0}]"""
+        "items" to """[{"itemName": "ஜரி தடை செய்ய கூலி", "edai": 29.1, "vilai": 610.0}]"""
     ),
     mapOf(
         "bill_no" to "VRM-115",
@@ -490,7 +490,7 @@ val mockFactoryInvoices: List<Map<String, Any>> = listOf(
         "setharamGrams" to 1220.0,
         "thabaalThogai" to 0.0,
         "ahimsaPattuThogai" to 1.0,
-        "items" to """[{"porulPeyar": "இரண்டு இழை சப்புரி செய்ய கூலி", "edai": 33.68, "vilai": 380.0}]"""
+        "items" to """[{"itemName": "இரண்டு இழை சப்புரி செய்ய கூலி", "edai": 33.68, "vilai": 380.0}]"""
     ),
     mapOf(
         "bill_no" to "VRM-113",
@@ -503,7 +503,7 @@ val mockFactoryInvoices: List<Map<String, Any>> = listOf(
         "setharamGrams" to 1170.0,
         "thabaalThogai" to 0.0,
         "ahimsaPattuThogai" to 0.0,
-        "items" to """[{"porulPeyar": "இரண்டு இழை சப்புரி செய்ய கூலி", "edai": 32.18, "vilai": 380.0}]"""
+        "items" to """[{"itemName": "இரண்டு இழை சப்புரி செய்ய கூலி", "edai": 32.18, "vilai": 380.0}]"""
     ),
     mapOf(
         "bill_no" to "PVS-24",
@@ -516,7 +516,7 @@ val mockFactoryInvoices: List<Map<String, Any>> = listOf(
         "setharamGrams" to 1670.0,
         "thabaalThogai" to 950.0,
         "ahimsaPattuThogai" to 0.0,
-        "items" to """[{"porulPeyar": "இரண்டு இழை சப்புரி செய்ய கூலி", "edai": 35.33, "vilai": 430.0}]"""
+        "items" to """[{"itemName": "இரண்டு இழை சப்புரி செய்ய கூலி", "edai": 35.33, "vilai": 430.0}]"""
     ),
     mapOf(
         "bill_no" to "VRM-109",
@@ -529,7 +529,7 @@ val mockFactoryInvoices: List<Map<String, Any>> = listOf(
         "setharamGrams" to 900.0,
         "thabaalThogai" to 0.0,
         "ahimsaPattuThogai" to 0.0,
-        "items" to """[{"porulPeyar": "இரண்டு இழை சப்புரி செய்ய கூலி", "edai": 24.95, "vilai": 380.0}]"""
+        "items" to """[{"itemName": "இரண்டு இழை சப்புரி செய்ய கூலி", "edai": 24.95, "vilai": 380.0}]"""
     ),
     mapOf(
         "bill_no" to "PVS-19",
@@ -542,7 +542,7 @@ val mockFactoryInvoices: List<Map<String, Any>> = listOf(
         "setharamGrams" to 1220.0,
         "thabaalThogai" to 620.0,
         "ahimsaPattuThogai" to 0.0,
-        "items" to """[{"porulPeyar": "ஒண்டி தடை செய்ய கூலி", "edai": 11.65, "vilai": 660.0}, {"porulPeyar": "மூன்று இழை சப்புரி செய்ய கூலி", "edai": 17.53, "vilai": 430.0}]"""
+        "items" to """[{"itemName": "ஒண்டி தடை செய்ய கூலி", "edai": 11.65, "vilai": 660.0}, {"itemName": "மூன்று இழை சப்புரி செய்ய கூலி", "edai": 17.53, "vilai": 430.0}]"""
     )
 )
 
@@ -556,7 +556,7 @@ val mockTextilesInvoices: List<Map<String, Any>> = listOf(
         "grandTotal" to 139924.6,
         "totalDiscount" to 0.0,
         "totalTax" to 0.0,
-        "items" to """[{"porulPeyar": "கச்சா பட்டு", "hsnKuriyeedu": "50072000", "alavu": 24.1, "alagu": "Kg", "vilai": 5806.0, "variVizhukkaadu": 0.0, "thallupadi": 0.0, "thallupadiVagai": "₹"}]"""
+        "items" to """[{"itemName": "கச்சா பட்டு", "hsnKuriyeedu": "50072000", "alavu": 24.1, "alagu": "Kg", "vilai": 5806.0, "variVizhukkaadu": 0.0, "thallupadi": 0.0, "thallupadiVagai": "₹"}]"""
     ),
     mapOf(
         "invoiceNumber" to "SJPS-31",
@@ -567,7 +567,7 @@ val mockTextilesInvoices: List<Map<String, Any>> = listOf(
         "grandTotal" to 52365011.2,
         "totalDiscount" to 0.0,
         "totalTax" to 0.0,
-        "items" to """[{"porulPeyar": "கச்சா பட்டு", "hsnKuriyeedu": "50072000", "alavu": 1400.2, "alagu": "Kg", "vilai": 5806.0, "variVizhukkaadu": 0.0, "thallupadi": 0.0, "thallupadiVagai": "₹"}, {"porulPeyar": "முறுக்கு பட்டு", "hsnKuriyeedu": "50072019", "alavu": 2340.5, "alagu": "Kg", "vilai": 18900.0, "variVizhukkaadu": 0.0, "thallupadi": 0.0, "thallupadiVagai": "₹"}]"""
+        "items" to """[{"itemName": "கச்சா பட்டு", "hsnKuriyeedu": "50072000", "alavu": 1400.2, "alagu": "Kg", "vilai": 5806.0, "variVizhukkaadu": 0.0, "thallupadi": 0.0, "thallupadiVagai": "₹"}, {"itemName": "முறுக்கு பட்டு", "hsnKuriyeedu": "50072019", "alavu": 2340.5, "alagu": "Kg", "vilai": 18900.0, "variVizhukkaadu": 0.0, "thallupadi": 0.0, "thallupadiVagai": "₹"}]"""
     ),
     mapOf(
         "invoiceNumber" to "SJPS-32",
@@ -578,7 +578,7 @@ val mockTextilesInvoices: List<Map<String, Any>> = listOf(
         "grandTotal" to 75811.05,
         "totalDiscount" to 99.0,
         "totalTax" to 3610.05,
-        "items" to """[{"porulPeyar": "ஃபேன்ஸி சேலை", "hsnKuriyeedu": "50072010", "alavu": 6.0, "alagu": "Nos", "vilai": 7900.0, "variVizhukkaadu": 5.0, "thallupadi": 0.0, "thallupadiVagai": "₹"}, {"porulPeyar": "ஃபேன்ஸி முத்து முந்தி கட்டம் சேலை", "hsnKuriyeedu": "50072010", "alavu": 1.0, "alagu": "Nos", "vilai": 8200.0, "variVizhukkaadu": 5.0, "thallupadi": 0.0, "thallupadiVagai": "₹"}, {"porulPeyar": "ஃபேன்ஸி முத்து முந்தி கட்டம் சேலை", "hsnKuriyeedu": "50072010", "alavu": 1.0, "alagu": "Nos", "vilai": 8200.0, "variVizhukkaadu": 5.0, "thallupadi": 0.0, "thallupadiVagai": "₹"}, {"porulPeyar": "ஃபேன்ஸி கட்டம் புட்டா", "hsnKuriyeedu": "50072010", "alavu": 1.0, "alagu": "Nos", "vilai": 8500.0, "variVizhukkaadu": 5.0, "thallupadi": 99.0, "thallupadiVagai": "₹"}]"""
+        "items" to """[{"itemName": "ஃபேன்ஸி சேலை", "hsnKuriyeedu": "50072010", "alavu": 6.0, "alagu": "Nos", "vilai": 7900.0, "variVizhukkaadu": 5.0, "thallupadi": 0.0, "thallupadiVagai": "₹"}, {"itemName": "ஃபேன்ஸி முத்து முந்தி கட்டம் சேலை", "hsnKuriyeedu": "50072010", "alavu": 1.0, "alagu": "Nos", "vilai": 8200.0, "variVizhukkaadu": 5.0, "thallupadi": 0.0, "thallupadiVagai": "₹"}, {"itemName": "ஃபேன்ஸி முத்து முந்தி கட்டம் சேலை", "hsnKuriyeedu": "50072010", "alavu": 1.0, "alagu": "Nos", "vilai": 8200.0, "variVizhukkaadu": 5.0, "thallupadi": 0.0, "thallupadiVagai": "₹"}, {"itemName": "ஃபேன்ஸி கட்டம் புட்டா", "hsnKuriyeedu": "50072010", "alavu": 1.0, "alagu": "Nos", "vilai": 8500.0, "variVizhukkaadu": 5.0, "thallupadi": 99.0, "thallupadiVagai": "₹"}]"""
     )
 )
 

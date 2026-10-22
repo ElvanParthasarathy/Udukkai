@@ -146,18 +146,18 @@ fun FactoryItemCard(
                 val primaryName = if (item.languageMap.isNotEmpty()) {
                     item.languageMap[primaryLang] ?: item.languageMap.values.firstOrNull().orEmpty()
                 } else {
-                    if (primaryLang == "ta") item.productName.ifEmpty { item.productNameEn }
-                    else item.productNameEn.ifEmpty { item.productName }
+                    if (primaryLang == "ta") item.itemName.ifEmpty { item.itemNameEn }
+                    else item.itemNameEn.ifEmpty { item.itemName }
                 }
                 val secondaryName = if (item.languageMap.isNotEmpty()) {
                     item.languageMap[secondaryLang] ?: ""
                 } else {
-                    if (secondaryLang == "en") item.productNameEn else item.productName
+                    if (secondaryLang == "en") item.itemNameEn else item.itemName
                 }
-                val displayName = primaryName.ifEmpty { item.productName.ifEmpty { item.productNameEn } }
+                val displayName = primaryName.ifEmpty { item.itemName.ifEmpty { item.itemNameEn } }
                 val containerBg = colors.iconBg
 
-                val productSearchPill = @Composable {
+                val itemSearchPill = @Composable {
                     Column(modifier = Modifier.fillMaxWidth()) {
                         ElvanEditorLabel(label = K.item.tr())
                         Box(
@@ -282,7 +282,7 @@ fun FactoryItemCard(
                         modifier = Modifier.fillMaxWidth(),
                         verticalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
-                        productSearchPill()
+                        itemSearchPill()
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.spacedBy(12.dp),
@@ -298,7 +298,7 @@ fun FactoryItemCard(
                         modifier = Modifier.fillMaxWidth(),
                         verticalArrangement = Arrangement.spacedBy(14.dp)
                     ) {
-                        productSearchPill()
+                        itemSearchPill()
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.spacedBy(12.dp)
@@ -320,12 +320,12 @@ fun FactoryItemCard(
                 horizontalArrangement = Arrangement.spacedBy(10.dp)
             ) {
                 if (onAddNewItem != null) {
-                    val addProductShape = RoundedCornerShape(100.dp)
+                    val addItemShape = RoundedCornerShape(100.dp)
                     Box(
                         modifier = Modifier
                             .weight(1f)
                             .height(44.dp)
-                            .clip(addProductShape)
+                            .clip(addItemShape)
                             .background(colors.iconBg)
                             .clickable(
                                 interactionSource = remember { MutableInteractionSource() },
@@ -398,7 +398,7 @@ fun FactoryItemCard(
         }
     }
 
-    // ── Product Selection Bottom Sheet ──
+    // ── Item Selection Bottom Sheet ──
     if (isPickerOpen) {
         val config = PrintLanguageManager.getFactoryConfig()
         val primaryLang = config.primaryLanguage.code
@@ -408,7 +408,7 @@ fun FactoryItemCard(
         ElvanSelectionBottomSheet(
             title = K.items.tr(),
             items = availableItems,
-            currentValue = availableItems.firstOrNull { it.id.toString() == item.productId },
+            currentValue = availableItems.firstOrNull { it.id.toString() == item.itemId },
             showSearch = true,
             onDismissRequest = { isPickerOpen = false },
             onSelected = { p: ItemModel ->
@@ -427,9 +427,9 @@ fun FactoryItemCard(
 
                 onItemUpdated(
                     item.copy(
-                        productId = p.id.toString(),
-                        productName = primary,
-                        productNameEn = secondary,
+                        itemId = p.id.toString(),
+                        itemName = primary,
+                        itemNameEn = secondary,
                         price = if (priceForCompany > 0) priceForCompany else item.price,
                         languageMap = p.name
                     )
