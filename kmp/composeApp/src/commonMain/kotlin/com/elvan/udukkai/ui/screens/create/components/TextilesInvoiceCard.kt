@@ -151,93 +151,71 @@ fun TextilesInvoiceCard(
 
                 Spacer(modifier = Modifier.height(8.dp))
 
-                // Row 2: Invoice #  •  Date
-                Text(
-                    text = "${invoice.invoiceNumber}  •  $dateStr",
-                    style = TextStyle(
-                        fontFamily = ff,
-                        fontSize = 13.5.sp,
-                        color = LocalShellColors.current.textSecondary
-                    ),
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
-
-                // Row 3: Oor (Place / Address)
-                if (leftDetail.isNotEmpty()) {
-                    Spacer(modifier = Modifier.height(3.dp))
-                    Text(
-                        text = leftDetail.preventBrokenLigatures(),
-                        style = TextStyle(
-                            fontFamily = ff,
-                            fontSize = 13.sp,
-                            color = LocalShellColors.current.textSecondary
-                        ),
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                // Row 4: Status Pill (Bottom Left) + Amount (Bottom Right)
+                // Bottom Section: Left (Invoice # • Date, City) + Right (Status over Amount)
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
+                    verticalAlignment = Alignment.Top
                 ) {
-                    val statusBg = if (isPaid) {
-                        if (isDark) Color(0xFF22C55E).copy(alpha = 0.18f) else Color(0xFF16A34A).copy(alpha = 0.12f)
-                    } else {
-                        if (isDark) Color(0xFFF59E0B).copy(alpha = 0.18f) else Color(0xFFF59E0B).copy(alpha = 0.12f)
-                    }
-                    val statusColor = if (isPaid) {
-                        if (isDark) Color(0xFF4ADE80) else Color(0xFF15803D)
-                    } else {
-                        if (isDark) Color(0xFFFBBF24) else Color(0xFFB45309)
-                    }
-
-                    Box(
-                        modifier = Modifier
-                            .clip(CircleShape)
-                            .background(statusBg)
-                            .padding(horizontal = 9.dp, vertical = 3.5.dp)
+                    // Left Column: Invoice #  •  Date + Oor (Place / Address)
+                    Column(
+                        modifier = Modifier.weight(1f, fill = false),
+                        verticalArrangement = Arrangement.spacedBy(3.dp)
                     ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(4.dp)
-                        ) {
-                            if (isPaid) {
-                                Icon(
-                                    imageVector = MaterialSymbols.Rounded.Check,
-                                    contentDescription = null,
-                                    modifier = Modifier.size(11.dp),
-                                    tint = statusColor
-                                )
-                            }
+                        Text(
+                            text = "${invoice.invoiceNumber}  •  $dateStr",
+                            style = TextStyle(
+                                fontFamily = ff,
+                                fontSize = 13.5.sp,
+                                color = LocalShellColors.current.textSecondary
+                            ),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+
+                        if (leftDetail.isNotEmpty()) {
                             Text(
-                                text = (if (isPaid) K.statusPaid.tr() else K.draft.tr()).preventBrokenLigatures(),
+                                text = leftDetail.preventBrokenLigatures(),
                                 style = TextStyle(
                                     fontFamily = ff,
-                                    fontSize = 11.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = statusColor
-                                )
+                                    fontSize = 13.sp,
+                                    color = LocalShellColors.current.textSecondary
+                                ),
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
                             )
                         }
                     }
 
                     Spacer(modifier = Modifier.width(8.dp))
 
-                    Text(
-                        text = amountStr,
-                        style = TextStyle(
-                            fontFamily = ff,
-                            fontSize = if (amountStr.length > 11) 13.sp else 15.sp,
-                            fontWeight = FontWeight.ExtraBold,
-                            color = colors.textPrimary
+                    // Right Column: Status on top of Amount (no pill, clean text)
+                    Column(
+                        horizontalAlignment = Alignment.End,
+                        verticalArrangement = Arrangement.spacedBy(3.dp)
+                    ) {
+                        Text(
+                            text = (if (isPaid) K.statusPaid.tr() else K.draft.tr()).preventBrokenLigatures(),
+                            style = TextStyle(
+                                fontFamily = ff,
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Normal,
+                                color = LocalShellColors.current.textSecondary
+                            ),
+                            maxLines = 1
                         )
-                    )
+
+                        Text(
+                            text = amountStr,
+                            style = TextStyle(
+                                fontFamily = ff,
+                                fontSize = if (amountStr.length > 11) 13.sp else 15.sp,
+                                fontWeight = FontWeight.ExtraBold,
+                                color = colors.textPrimary
+                            ),
+                            maxLines = 1
+                        )
+                    }
                 }
             }
         }
