@@ -337,6 +337,10 @@ object K {
     const val usedForCoolieBillsReceipts = usedForFactoryBillsReceipts
     const val receipt = "receipt"
     const val invoiceSaved = "invoiceSaved"
+    const val invoiceNumberAlreadyExists = "invoiceNumberAlreadyExists"
+    const val invoiceLockedDueToReceipt = "invoiceLockedDueToReceipt"
+    const val statusUnpaid = "statusUnpaid"
+    const val statusPaid = "statusPaid"
     const val savedInvoiceNumberLocked = "savedInvoiceNumberLocked"
     const val savedInvoiceDateLocked = "savedInvoiceDateLocked"
     const val savedReceiptNumberLocked = "savedReceiptNumberLocked"

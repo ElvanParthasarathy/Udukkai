@@ -295,6 +295,7 @@ fun FactoryHomeScreen() {
                         invoice = currentInvoice,
                         profile = FactoryProfileRepository.profile,
                         allProfiles = FactoryProfileRepository.profiles,
+                        isPaid = FactoryInvoiceRepository.hasLinkedReceipts(currentInvoice.id),
                         onBack = popSubpage,
                         onEdit = {
                             navigateToSubpage(ActiveSubpage.InvoiceEditor(currentInvoice))

@@ -1,6 +1,7 @@
 package com.elvan.udukkai.data.model
 
 import com.elvan.udukkai.factory.data.FactoryInvoiceRepository
+import com.elvan.udukkai.textiles.data.TextilesInvoiceRepository
 import com.elvan.udukkai.localization.BillingLanguage
 import com.elvan.udukkai.localization.PrintLanguageManager
 import kotlin.test.Test
@@ -395,5 +396,73 @@ class CompanyWorkspaceAndItemTest {
         assertEquals(1, companyBItems.size)
         assertEquals(1L, companyBItems.first().id)
     }
-}
 
+    @Test
+    fun testFactoryInvoiceDuplicateDetectionAndRecycling() {
+        val companyAId = 30L
+        val companyBId = 31L
+
+        val existingInv1 = InvoiceModel(
+            id = 101L,
+            invoiceNumber = "VRM-3690",
+            companyId = companyAId,
+            isDeleted = false
+        )
+        val existingInv2 = InvoiceModel(
+            id = 102L,
+            invoiceNumber = "VRM-3691",
+            companyId = companyAId,
+            isDeleted = false
+        )
+
+        FactoryInvoiceRepository.invoices = listOf(existingInv1, existingInv2)
+
+        // 1. Exact match returns true (duplicate detected)
+        assertTrue(FactoryInvoiceRepository.isInvoiceNumberDuplicate("VRM-3690", companyAId))
+
+        // 2. Case-insensitive and whitespace-insensitive match returns true
+        assertTrue(FactoryInvoiceRepository.isInvoiceNumberDuplicate("  vrm-3690  ", companyAId))
+
+        // 3. Same invoice editing itself (excludeId) returns false (allowed)
+        assertFalse(FactoryInvoiceRepository.isInvoiceNumberDuplicate("VRM-3690", companyAId, excludeId = 101L))
+
+        // 4. Different company allows the same number (company workspace isolation)
+        assertFalse(FactoryInvoiceRepository.isInvoiceNumberDuplicate("VRM-3690", companyBId))
+
+        // 5. New unique number returns false (allowed)
+        assertFalse(FactoryInvoiceRepository.isInvoiceNumberDuplicate("VRM-3692", companyAId))
+
+        // 6. Recycling: When an invoice is deleted, it is removed from active invoices list, allowing reuse
+        FactoryInvoiceRepository.invoices = listOf(existingInv2) // 101 was deleted
+        assertFalse(FactoryInvoiceRepository.isInvoiceNumberDuplicate("VRM-3690", companyAId))
+    }
+
+    @Test
+    fun testTextilesInvoiceDuplicateDetectionAndRecycling() {
+        val companyAId = 10L
+        val companyBId = 20L
+
+        val existingInv = InvoiceModel(
+            id = 201L,
+            invoiceNumber = "TXT-100",
+            companyId = companyAId,
+            isDeleted = false
+        )
+
+        TextilesInvoiceRepository.invoices = listOf(existingInv)
+
+        // 1. Duplicate detected for same company
+        assertTrue(TextilesInvoiceRepository.isInvoiceNumberDuplicate("TXT-100", companyAId))
+        assertTrue(TextilesInvoiceRepository.isInvoiceNumberDuplicate(" txt-100 ", companyAId))
+
+        // 2. Self excluded when editing
+        assertFalse(TextilesInvoiceRepository.isInvoiceNumberDuplicate("TXT-100", companyAId, excludeId = 201L))
+
+        // 3. Different company allowed
+        assertFalse(TextilesInvoiceRepository.isInvoiceNumberDuplicate("TXT-100", companyBId))
+
+        // 4. Deleted invoice number can be recycled
+        TextilesInvoiceRepository.invoices = emptyList()
+        assertFalse(TextilesInvoiceRepository.isInvoiceNumberDuplicate("TXT-100", companyAId))
+    }
+}

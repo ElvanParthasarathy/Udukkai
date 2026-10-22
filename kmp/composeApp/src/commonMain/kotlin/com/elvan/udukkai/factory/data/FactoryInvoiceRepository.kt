@@ -11,10 +11,10 @@ import com.elvan.udukkai.data.model.InvoiceModel
 object FactoryInvoiceRepository {
 
     var invoices by mutableStateOf<List<InvoiceModel>>(emptyList())
-        private set
+        internal set
 
     var deletedInvoices by mutableStateOf<List<InvoiceModel>>(emptyList())
-        private set
+        internal set
 
     var searchQuery by mutableStateOf("")
     var startDateFilter by mutableStateOf<Long?>(null)
@@ -92,6 +92,25 @@ object FactoryInvoiceRepository {
     fun getNextInvoiceNumber(companyId: Long?, prefix: String): String {
         val vanakkam = getNextVanakkam(companyId)
         return formatInvoiceNumber(prefix, vanakkam)
+    }
+
+    fun isInvoiceNumberDuplicate(
+        invoiceNumber: String,
+        companyId: Long?,
+        excludeId: Long? = null
+    ): Boolean {
+        val target = invoiceNumber.trim().uppercase()
+        if (target.isBlank()) return false
+        return invoices.any { inv ->
+            (excludeId == null || inv.id != excludeId) &&
+            (companyId == null || inv.companyId == companyId) &&
+            inv.invoiceNumber.trim().uppercase() == target
+        }
+    }
+
+    fun hasLinkedReceipts(invoiceId: Long): Boolean {
+        if (invoiceId <= 0L) return false
+        return FactoryReceiptRepository.getPaidAmount(invoiceId) > 0.0
     }
 
     fun loadAll() {

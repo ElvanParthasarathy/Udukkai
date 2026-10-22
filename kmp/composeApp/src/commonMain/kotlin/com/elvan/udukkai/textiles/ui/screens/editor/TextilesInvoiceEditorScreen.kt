@@ -103,6 +103,9 @@ fun TextilesInvoiceEditorScreen(
     val isDark = colors.isDark
     val ff = LocalAppFontFamily.current
     val isEditing = invoice != null && invoice.id > 0L
+    val isPaidLocked = remember(invoice) {
+        invoice != null && invoice.id > 0L && TextilesInvoiceRepository.hasLinkedReceipts(invoice.id)
+    }
 
     LaunchedEffect(Unit) {
         TextilesProfileRepository.refreshFromDatabase()
@@ -324,6 +327,8 @@ fun TextilesInvoiceEditorScreen(
     val itemRequiredMsg = K.addAtLeastOneItem.tr()
     val invoiceNumberRequiredMsg = K.invoiceNumber.tr()
     val invoiceSavedMsg = K.invoiceSaved.tr()
+    val invoiceNumberDuplicateMsg = K.invoiceNumberAlreadyExists.tr()
+    val invoiceLockedMsg = K.invoiceLockedDueToReceipt.tr()
     val saveBtnLabel = K.saveBtn.tr()
 
     val handleSave: () -> Unit = {
@@ -337,6 +342,13 @@ fun TextilesInvoiceEditorScreen(
         } else if (invoiceNumber.isBlank()) {
             errorMessage = invoiceNumberRequiredMsg
             ElvanSnackbar.show(invoiceNumberRequiredMsg)
+        } else if (TextilesInvoiceRepository.isInvoiceNumberDuplicate(invoiceNumber, selectedCompanyId, invoice?.id)) {
+            val dupMsg = "$invoiceNumber - $invoiceNumberDuplicateMsg"
+            errorMessage = dupMsg
+            ElvanSnackbar.show(dupMsg)
+        } else if (isPaidLocked) {
+            errorMessage = invoiceLockedMsg
+            ElvanSnackbar.show(invoiceLockedMsg)
         } else {
             val validItems = activeItems.filter { it.quantity > 0 && it.price > 0 }
             if (validItems.isEmpty()) {
@@ -399,7 +411,7 @@ fun TextilesInvoiceEditorScreen(
             ElvanEditorBottomBar(
                 label = saveBtnLabel,
                 onClick = handleSave,
-                enabled = !isSaving,
+                enabled = !isSaving && !isPaidLocked,
                 isLoading = isSaving,
                 accentColor = colors.invoiceColor
             )
@@ -420,6 +432,35 @@ fun TextilesInvoiceEditorScreen(
                 // Top spacer driven by One UI collapsible header
                 item(key = "top_spacer") {
                     Spacer(modifier = Modifier.height(LocalElvanTopSpacerHeight.current))
+                }
+
+                // ── Paid Locked Banner ──
+                if (isPaidLocked) {
+                    item(key = "paid_locked_banner") {
+                        Surface(
+                            shape = RoundedCornerShape(12.dp),
+                            color = colors.accent.copy(alpha = 0.12f),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(14.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(10.dp)
+                            ) {
+                                Icon(
+                                    imageVector = MaterialSymbols.Rounded.Lock,
+                                    contentDescription = "Locked",
+                                    tint = colors.accent,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                                Text(
+                                    text = K.invoiceLockedDueToReceipt.tr().preventBrokenLigatures(),
+                                    color = colors.textPrimary,
+                                    style = TextStyle(fontFamily = ff, fontSize = 14.sp, fontWeight = FontWeight.Medium)
+                                )
+                            }
+                        }
+                    }
                 }
 
                 // ── Error Message Banner ──
@@ -607,6 +648,7 @@ fun TextilesInvoiceEditorScreen(
                             }
 
                             // Add Item Button
+                            if (!isPaidLocked) {
                             Box(
                                 modifier = Modifier
                                     .fillMaxWidth()
@@ -643,6 +685,7 @@ fun TextilesInvoiceEditorScreen(
                                         )
                                     )
                                 }
+                            }
                             }
                         }
                     }

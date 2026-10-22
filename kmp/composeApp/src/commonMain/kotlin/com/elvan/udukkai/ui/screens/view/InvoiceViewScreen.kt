@@ -47,6 +47,7 @@ fun InvoiceViewScreen(
     invoice: InvoiceModel,
     profile: BusinessProfile,
     allProfiles: List<BusinessProfile> = emptyList(),
+    isPaid: Boolean = false,
     onBack: () -> Unit,
     onEdit: () -> Unit,
     onPrint: (() -> Unit)? = null,
@@ -179,26 +180,66 @@ fun InvoiceViewScreen(
                                 )
                             )
                             Spacer(modifier = Modifier.height(6.dp))
-                            // Invoice Type Pill
-                            Box(
-                                modifier = Modifier
-                                    .clip(RoundedCornerShape(6.dp))
-                                    .background(
-                                        if (isProforma) colors.accent.copy(alpha = 0.15f)
-                                        else if (isDark) Color.White.copy(alpha = 0.08f)
-                                        else Color.Black.copy(alpha = 0.06f)
-                                    )
-                                    .padding(horizontal = 8.dp, vertical = 4.dp)
+                            Row(
+                                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                                verticalAlignment = Alignment.CenterVertically
                             ) {
-                                Text(
-                                    text = if (isProforma) K.proforma.tr() else K.taxInvoice.tr(),
-                                    style = TextStyle(
-                                        fontFamily = ff,
-                                        fontSize = 11.5.sp,
-                                        fontWeight = FontWeight.Bold,
-                                        color = if (isProforma) colors.accent else colors.textPrimary
+                                // Invoice Type Pill
+                                Box(
+                                    modifier = Modifier
+                                        .clip(RoundedCornerShape(6.dp))
+                                        .background(
+                                            if (isProforma) colors.accent.copy(alpha = 0.15f)
+                                            else if (isDark) Color.White.copy(alpha = 0.08f)
+                                            else Color.Black.copy(alpha = 0.06f)
+                                        )
+                                        .padding(horizontal = 8.dp, vertical = 4.dp)
+                                ) {
+                                    Text(
+                                        text = if (isProforma) K.proforma.tr() else K.taxInvoice.tr(),
+                                        style = TextStyle(
+                                            fontFamily = ff,
+                                            fontSize = 11.5.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = if (isProforma) colors.accent else colors.textPrimary
+                                        )
                                     )
-                                )
+                                }
+
+                                // Payment Status Pill
+                                Box(
+                                    modifier = Modifier
+                                        .clip(RoundedCornerShape(6.dp))
+                                        .background(
+                                            if (isPaid) colors.accent.copy(alpha = 0.15f)
+                                            else if (isDark) Color.White.copy(alpha = 0.08f)
+                                            else Color.Black.copy(alpha = 0.06f)
+                                        )
+                                        .padding(horizontal = 8.dp, vertical = 4.dp)
+                                ) {
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                                    ) {
+                                        if (isPaid) {
+                                            Icon(
+                                                imageVector = MaterialSymbols.Rounded.Lock,
+                                                contentDescription = null,
+                                                tint = colors.accent,
+                                                modifier = Modifier.size(12.dp)
+                                            )
+                                        }
+                                        Text(
+                                            text = if (isPaid) K.statusPaid.tr() else K.statusUnpaid.tr(),
+                                            style = TextStyle(
+                                                fontFamily = ff,
+                                                fontSize = 11.5.sp,
+                                                fontWeight = FontWeight.Bold,
+                                                color = if (isPaid) colors.accent else colors.textSecondary
+                                            )
+                                        )
+                                    }
+                                }
                             }
                         }
                     }
