@@ -204,7 +204,6 @@ fun TextilesInvoiceEditorScreen(
     var hasUnsavedChanges by remember { mutableStateOf(false) }
     var showUnsavedDialog by remember { mutableStateOf(false) }
     var isSaving by remember { mutableStateOf(false) }
-    var errorMessage by remember { mutableStateOf<String?>(null) }
     var isExiting by remember { mutableStateOf(false) }
 
     // Draft persistence
@@ -332,27 +331,20 @@ fun TextilesInvoiceEditorScreen(
     val saveBtnLabel = K.draft.tr()
 
     val handleSave: () -> Unit = {
-        errorMessage = null
         if (!isProfileConfigured) {
-            errorMessage = companyRequiredMsg
             ElvanSnackbar.show(companyRequiredMsg)
         } else if (selectedCustomerId == null && selectedCustomerNameMap.isEmpty()) {
-            errorMessage = customerRequiredMsg
             ElvanSnackbar.show(customerRequiredMsg)
         } else if (invoiceNumber.isBlank()) {
-            errorMessage = invoiceNumberRequiredMsg
             ElvanSnackbar.show(invoiceNumberRequiredMsg)
         } else if (TextilesInvoiceRepository.isInvoiceNumberDuplicate(invoiceNumber, selectedCompanyId, invoice?.id)) {
             val dupMsg = "$invoiceNumber - $invoiceNumberDuplicateMsg"
-            errorMessage = dupMsg
             ElvanSnackbar.show(dupMsg)
         } else if (isPaidLocked) {
-            errorMessage = invoiceLockedMsg
             ElvanSnackbar.show(invoiceLockedMsg)
         } else {
             val validItems = activeItems.filter { it.quantity > 0 && it.price > 0 }
             if (validItems.isEmpty()) {
-                errorMessage = itemRequiredMsg
                 ElvanSnackbar.show(itemRequiredMsg)
             } else {
                 isSaving = true
@@ -464,24 +456,6 @@ fun TextilesInvoiceEditorScreen(
                     }
                 }
 
-                // ── Error Message Banner ──
-                if (!errorMessage.isNullOrBlank()) {
-                    item(key = "error_banner") {
-                        Surface(
-                            shape = RoundedCornerShape(12.dp),
-                            color = MaterialTheme.colorScheme.errorContainer,
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            Text(
-                                text = errorMessage!!.preventBrokenLigatures(),
-                                color = MaterialTheme.colorScheme.onErrorContainer,
-                                style = TextStyle(fontFamily = ff, fontSize = 14.sp, fontWeight = FontWeight.Medium),
-                                modifier = Modifier.padding(14.dp)
-                            )
-                        }
-                    }
-                }
-
                 if (!isProfileConfigured) {
                     item(key = "unconfigured_warning") {
                         ElvanSettingsSection(colors = colors) {
@@ -511,7 +485,6 @@ fun TextilesInvoiceEditorScreen(
                                     placeOfSupplyTa = sTa
                                 }
                                 hasUnsavedChanges = true
-                                errorMessage = null
                             },
                             onCustomerCleared = {
                                 selectedCustomerId = null
