@@ -207,16 +207,23 @@ fun InvoiceViewScreen(
                                     )
                                 }
 
+                                val statusBg = if (isPaid) {
+                                    if (isDark) Color(0xFF22C55E).copy(alpha = 0.18f) else Color(0xFF16A34A).copy(alpha = 0.12f)
+                                } else {
+                                    if (isDark) Color(0xFFF59E0B).copy(alpha = 0.18f) else Color(0xFFF59E0B).copy(alpha = 0.12f)
+                                }
+                                val statusColor = if (isPaid) {
+                                    if (isDark) Color(0xFF4ADE80) else Color(0xFF15803D)
+                                } else {
+                                    if (isDark) Color(0xFFFBBF24) else Color(0xFFB45309)
+                                }
+
                                 // Payment Status Pill
                                 Box(
                                     modifier = Modifier
                                         .clip(CircleShape)
-                                        .background(
-                                            if (isPaid) colors.accent.copy(alpha = 0.15f)
-                                            else if (isDark) Color.White.copy(alpha = 0.08f)
-                                            else Color.Black.copy(alpha = 0.06f)
-                                        )
-                                        .padding(horizontal = 8.dp, vertical = 4.dp)
+                                        .background(statusBg)
+                                        .padding(horizontal = 9.dp, vertical = 3.5.dp)
                                 ) {
                                     Row(
                                         verticalAlignment = Alignment.CenterVertically,
@@ -226,7 +233,7 @@ fun InvoiceViewScreen(
                                             Icon(
                                                 imageVector = MaterialSymbols.Rounded.Check,
                                                 contentDescription = null,
-                                                tint = colors.accent,
+                                                tint = statusColor,
                                                 modifier = Modifier.size(12.dp)
                                             )
                                         }
@@ -236,7 +243,7 @@ fun InvoiceViewScreen(
                                                 fontFamily = ff,
                                                 fontSize = 11.5.sp,
                                                 fontWeight = FontWeight.Bold,
-                                                color = if (isPaid) colors.accent else colors.textSecondary
+                                                color = statusColor
                                             )
                                         )
                                     }
