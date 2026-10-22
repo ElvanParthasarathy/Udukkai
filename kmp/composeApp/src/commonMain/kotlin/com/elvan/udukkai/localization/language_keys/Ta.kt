@@ -331,7 +331,7 @@ val ta: Map<String, String> = mapOf(
     K.invoiceNumberAlreadyExists to "பட்டியல் எண் ஏற்கனவே உள்ளது!",
     K.invoiceLockedDueToReceipt to "பற்றுச்சீட்டு இணைக்கப்பட்டுள்ளதால் பட்டியலை மாற்ற முடியாது",
     K.statusUnpaid to "செலுத்தப்படாதது",
-    K.statusPaid to "செலுத்தப்பட்டது",
+    K.statusPaid to "பெற்றது",
     K.savedInvoiceNumberLocked to "சேமித்த பட்டியல் எண் மாற்ற முடியாது",
     K.savedInvoiceDateLocked to "சேமித்த பட்டியல் நாள் மாற்ற முடியாது",
     K.savedReceiptNumberLocked to "சேமித்த பற்றுச்சீட்டு எண் மாற்ற முடியாது",

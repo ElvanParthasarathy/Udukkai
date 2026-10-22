@@ -5,6 +5,7 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -187,7 +188,7 @@ fun InvoiceViewScreen(
                                 // Invoice Type Pill
                                 Box(
                                     modifier = Modifier
-                                        .clip(RoundedCornerShape(6.dp))
+                                        .clip(CircleShape)
                                         .background(
                                             if (isProforma) colors.accent.copy(alpha = 0.15f)
                                             else if (isDark) Color.White.copy(alpha = 0.08f)
@@ -209,7 +210,7 @@ fun InvoiceViewScreen(
                                 // Payment Status Pill
                                 Box(
                                     modifier = Modifier
-                                        .clip(RoundedCornerShape(6.dp))
+                                        .clip(CircleShape)
                                         .background(
                                             if (isPaid) colors.accent.copy(alpha = 0.15f)
                                             else if (isDark) Color.White.copy(alpha = 0.08f)
@@ -223,14 +224,14 @@ fun InvoiceViewScreen(
                                     ) {
                                         if (isPaid) {
                                             Icon(
-                                                imageVector = MaterialSymbols.Rounded.Lock,
+                                                imageVector = MaterialSymbols.Rounded.Check,
                                                 contentDescription = null,
                                                 tint = colors.accent,
                                                 modifier = Modifier.size(12.dp)
                                             )
                                         }
                                         Text(
-                                            text = if (isPaid) K.statusPaid.tr() else K.statusUnpaid.tr(),
+                                            text = (if (isPaid) K.statusPaid.tr() else K.draft.tr()).preventBrokenLigatures(),
                                             style = TextStyle(
                                                 fontFamily = ff,
                                                 fontSize = 11.5.sp,

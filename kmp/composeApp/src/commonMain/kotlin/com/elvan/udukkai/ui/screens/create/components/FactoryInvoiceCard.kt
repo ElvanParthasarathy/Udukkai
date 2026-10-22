@@ -148,80 +148,74 @@ fun FactoryInvoiceCard(
 
                 Spacer(modifier = Modifier.height(8.dp))
 
-                // Row 2: Invoice #  •  Date + Status Pill
+                // Row 2: Invoice #  •  Date
+                Text(
+                    text = "${invoice.invoiceNumber}  •  $dateStr",
+                    style = TextStyle(
+                        fontFamily = ff,
+                        fontSize = 13.5.sp,
+                        color = LocalShellColors.current.textSecondary
+                    ),
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+
+                // Row 3: Oor (Place / Address)
+                if (primaryCity.isNotEmpty()) {
+                    Spacer(modifier = Modifier.height(3.dp))
+                    Text(
+                        text = primaryCity.preventBrokenLigatures(),
+                        style = TextStyle(
+                            fontFamily = ff,
+                            fontSize = 13.sp,
+                            color = LocalShellColors.current.textSecondary
+                        ),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                // Row 4: Status Pill (Bottom Left) + Amount (Bottom Right)
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text(
-                        text = "${invoice.invoiceNumber}  •  $dateStr",
-                        style = TextStyle(
-                            fontFamily = ff,
-                            fontSize = 13.5.sp,
-                            color = LocalShellColors.current.textSecondary
-                        ),
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier.weight(1f, fill = false)
-                    )
-
-                    Spacer(modifier = Modifier.width(8.dp))
-
                     Box(
                         modifier = Modifier
-                            .clip(RoundedCornerShape(6.dp))
+                            .clip(CircleShape)
                             .background(
                                 if (isPaid) colors.accent.copy(alpha = 0.15f)
                                 else if (isDark) Color.White.copy(alpha = 0.08f)
                                 else Color.Black.copy(alpha = 0.06f)
                             )
-                            .padding(horizontal = 7.dp, vertical = 3.dp)
+                            .padding(horizontal = 9.dp, vertical = 3.5.dp)
                     ) {
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(3.dp)
+                            horizontalArrangement = Arrangement.spacedBy(4.dp)
                         ) {
                             if (isPaid) {
                                 Icon(
-                                    imageVector = MaterialSymbols.Rounded.Lock,
+                                    imageVector = MaterialSymbols.Rounded.Check,
                                     contentDescription = null,
-                                    modifier = Modifier.size(10.dp),
+                                    modifier = Modifier.size(11.dp),
                                     tint = colors.accent
                                 )
                             }
                             Text(
-                                text = (if (isPaid) K.statusPaid.tr() else K.statusUnpaid.tr()).preventBrokenLigatures(),
+                                text = (if (isPaid) K.statusPaid.tr() else K.draft.tr()).preventBrokenLigatures(),
                                 style = TextStyle(
                                     fontFamily = ff,
-                                    fontSize = 10.5.sp,
-                                    fontWeight = FontWeight.SemiBold,
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Bold,
                                     color = if (isPaid) colors.accent else LocalShellColors.current.textSecondary
                                 )
                             )
                         }
                     }
-                }
-
-                Spacer(modifier = Modifier.height(4.dp))
-
-                // Row 3: Oor (Place) + Amount
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.Bottom
-                ) {
-                    Text(
-                        text = primaryCity.preventBrokenLigatures(),
-                        style = TextStyle(
-                            fontFamily = ff,
-                            fontSize = 13.5.sp,
-                            color = LocalShellColors.current.textSecondary
-                        ),
-                        modifier = Modifier.weight(1f, fill = false),
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
 
                     Spacer(modifier = Modifier.width(8.dp))
 
@@ -229,7 +223,7 @@ fun FactoryInvoiceCard(
                         text = amountStr,
                         style = TextStyle(
                             fontFamily = ff,
-                            fontSize = if (amountStr.length > 11) 12.5.sp else 14.5.sp,
+                            fontSize = if (amountStr.length > 11) 13.sp else 15.sp,
                             fontWeight = FontWeight.ExtraBold,
                             color = colors.textPrimary
                         )
