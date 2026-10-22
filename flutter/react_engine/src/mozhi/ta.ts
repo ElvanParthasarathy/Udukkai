@@ -1055,7 +1055,7 @@ export const ta = {
   customer: "வாடிக்கையாளர்",
   company: "நிறுவனம்",
   quantity: "அளவு",
-  addOtherCharges: "கூடுதல் கட்டணம் சேர்",
+  addOtherCharges: "மற்ற கட்டணம்",
   chargeName: "கட்டணத்தின் பெயர்",
   otherCharges: "கூடுதல் கட்டணங்கள்",
   setharam: "சேதாரம்",

@@ -124,7 +124,7 @@ val en: Map<String, String> = mapOf(
     K.nameAlreadyExists to "This name already exists.",
     K.enterName to "Enter name",
     K.other to "Other",
-    K.addOtherCharges to "Add Charge",
+    K.addOtherCharges to "Other Charges",
     K.dateOfBirth to "Date of Birth",
     K.createRecord to "Create",
     K.addNew to "Add New",

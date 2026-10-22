@@ -737,7 +737,7 @@ fun FactoryTotalsSection(
             for (charge in charges) {
                 if (charge.amount > 0) {
                     FactoryTotalsRow(
-                        label = charge.name.ifEmpty { K.other.tr() },
+                        label = charge.name.ifEmpty { K.addOtherCharges.tr() },
                         value = CurrencyUtils.formatInr(charge.amount)
                     )
                 }
@@ -754,7 +754,7 @@ fun FactoryTotalsSection(
             // Setharam grams
             if (setharamGrams > 0) {
                 FactoryTotalsRow(
-                    label = "+ ${K.wastage.tr()} (g)",
+                    label = "+ ${K.wastage.tr()}",
                     value = "${cleanNum(setharamGrams)} g"
                 )
             }

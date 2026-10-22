@@ -1035,7 +1035,7 @@ export const en: Record<TranslationKey, string> = {
   customer: "Customer",
   company: "Company",
   quantity: "Quantity",
-  addOtherCharges: "Add Other Charges",
+  addOtherCharges: "Other Charges",
   chargeName: "Charge Name",
   otherCharges: "Other Charges",
   setharam: "Setharam",
