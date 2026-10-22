@@ -38,6 +38,7 @@ import com.elvan.udukkai.ui.components.shell.ElvanSelectionBottomSheet
 import com.elvan.udukkai.ui.navigation.MaterialSymbols
 import com.elvan.udukkai.ui.screens.editor.ElvanEditorCard
 import com.elvan.udukkai.ui.screens.editor.ElvanEditorLabel
+import com.elvan.udukkai.ui.screens.editor.ElvanEditorNumericField
 import com.elvan.udukkai.ui.screens.editor.ElvanEditorTextField
 import kotlin.math.floor
 import kotlin.math.round
@@ -232,32 +233,31 @@ fun FactoryItemCard(
                 }
 
                 val weightInput = @Composable {
-                    ElvanEditorTextField(
+                    ElvanEditorNumericField(
                         label = "${K.weight.tr()} (kg)",
-                        value = if (item.weight == 0.0) "" else cleanNum(item.weight, isWeight = true),
-                        onValueChange = {
-                            val parsed = it.toDoubleOrNull() ?: 0.0
-                            onItemUpdated(item.copy(weight = parsed))
-                            onDirty()
+                        value = item.weight,
+                        onValueChange = { weight ->
+                            onItemUpdated(item.copy(weight = weight))
                         },
                         suffixText = "kg",
                         placeholder = "0.000",
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
+                        isWeight = true,
+                        key = item.id,
+                        onDirty = onDirty
                     )
                 }
 
                 val rateInput = @Composable {
-                    ElvanEditorTextField(
+                    ElvanEditorNumericField(
                         label = "${K.rate.tr()} (₹)",
-                        value = if (item.price == 0.0) "" else cleanNum(item.price),
-                        onValueChange = {
-                            val parsed = it.toDoubleOrNull() ?: 0.0
-                            onItemUpdated(item.copy(price = parsed))
-                            onDirty()
+                        value = item.price,
+                        onValueChange = { price ->
+                            onItemUpdated(item.copy(price = price))
                         },
                         prefixText = "₹ ",
                         placeholder = "0",
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
+                        key = item.id,
+                        onDirty = onDirty
                     )
                 }
 
@@ -561,17 +561,16 @@ fun FactoryAdditionalChargeCard(
                         }
 
                         Box(modifier = Modifier.weight(1f)) {
-                            ElvanEditorTextField(
+                            ElvanEditorNumericField(
                                 label = "${K.total.tr()} (₹)",
-                                value = if (charge.amount == 0.0) "" else cleanNum(charge.amount),
-                                onValueChange = {
-                                    val parsed = it.toDoubleOrNull() ?: 0.0
+                                value = charge.amount,
+                                onValueChange = { parsed ->
                                     onUpdated(charge.copy(amount = parsed))
-                                    onDirty()
                                 },
                                 prefixText = "₹ ",
                                 placeholder = "0",
-                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
+                                key = charge.id,
+                                onDirty = onDirty
                             )
                         }
                     }
@@ -605,17 +604,16 @@ fun FactoryAdditionalChargeCard(
                     }
 
                     Box(modifier = Modifier.weight(1f)) {
-                        ElvanEditorTextField(
+                        ElvanEditorNumericField(
                             label = "${K.total.tr()} (₹)",
-                            value = if (charge.amount == 0.0) "" else cleanNum(charge.amount),
-                            onValueChange = {
-                                val parsed = it.toDoubleOrNull() ?: 0.0
+                            value = charge.amount,
+                            onValueChange = { parsed ->
                                 onUpdated(charge.copy(amount = parsed))
-                                onDirty()
                             },
                             prefixText = "₹ ",
                             placeholder = "0",
-                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
+                            key = charge.id,
+                            onDirty = onDirty
                         )
                     }
                 }
@@ -642,17 +640,14 @@ fun FactoryExtraChargesSection(
         modifier = modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        ElvanEditorTextField(
+        ElvanEditorNumericField(
             label = "${K.wastage.tr()} (g)",
-            value = if (setharamGrams == 0.0) "" else cleanNum(setharamGrams),
-            onValueChange = {
-                val parsed = it.toDoubleOrNull() ?: 0.0
-                onSetharamChanged(parsed)
-                onDirty()
-            },
+            value = setharamGrams,
+            onValueChange = onSetharamChanged,
             suffixText = "g",
             placeholder = "0",
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
+            maxDecimals = 2,
+            onDirty = onDirty
         )
 
         Row(
@@ -660,32 +655,26 @@ fun FactoryExtraChargesSection(
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             Box(modifier = Modifier.weight(1f)) {
-                ElvanEditorTextField(
+                ElvanEditorNumericField(
                     label = K.ahimsaSilkAmount.tr(),
-                    value = if (ahimsaPattuThogai == 0.0) "" else cleanNum(ahimsaPattuThogai),
-                    onValueChange = {
-                        val parsed = it.toDoubleOrNull() ?: 0.0
-                        onAhimsaChanged(parsed)
-                        onDirty()
-                    },
+                    value = ahimsaPattuThogai,
+                    onValueChange = onAhimsaChanged,
                     prefixText = "₹ ",
                     placeholder = "0",
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
+                    maxDecimals = 2,
+                    onDirty = onDirty
                 )
             }
 
             Box(modifier = Modifier.weight(1f)) {
-                ElvanEditorTextField(
+                ElvanEditorNumericField(
                     label = K.courierCharge.tr(),
-                    value = if (thabaalThogai == 0.0) "" else cleanNum(thabaalThogai),
-                    onValueChange = {
-                        val parsed = it.toDoubleOrNull() ?: 0.0
-                        onThabaalChanged(parsed)
-                        onDirty()
-                    },
+                    value = thabaalThogai,
+                    onValueChange = onThabaalChanged,
                     prefixText = "₹ ",
                     placeholder = "0",
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
+                    maxDecimals = 2,
+                    onDirty = onDirty
                 )
             }
         }

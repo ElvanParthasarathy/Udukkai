@@ -33,6 +33,7 @@ import com.elvan.udukkai.ui.components.shell.ElvanSelectionBottomSheet
 import com.elvan.udukkai.ui.navigation.MaterialSymbols
 import com.elvan.udukkai.ui.screens.editor.ElvanEditorCard
 import com.elvan.udukkai.ui.screens.editor.ElvanEditorLabel
+import com.elvan.udukkai.ui.screens.editor.ElvanEditorNumericField
 import com.elvan.udukkai.ui.screens.editor.ElvanEditorTextField
 
 /**
@@ -223,31 +224,31 @@ fun TextilesItemCard(
                 horizontalArrangement = Arrangement.spacedBy(10.dp)
             ) {
                 Box(modifier = Modifier.weight(1f)) {
-                    ElvanEditorTextField(
+                    ElvanEditorNumericField(
                         label = if (isWeightItem) K.weight.tr() else K.quantity.tr(),
-                        value = if (item.quantity == 0.0) "" else if (item.quantity % 1.0 == 0.0) item.quantity.toInt().toString() else item.quantity.toString(),
-                        onValueChange = { str ->
-                            val qty = str.toDoubleOrNull() ?: 0.0
+                        value = item.quantity,
+                        onValueChange = { qty ->
                             onItemUpdated(item.copy(quantity = qty))
-                            onDirty()
                         },
                         placeholder = if (isWeightItem) "0.000" else "1",
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
+                        suffixText = if (isWeightItem) "kg" else null,
+                        isWeight = isWeightItem,
+                        key = item.id,
+                        onDirty = onDirty
                     )
                 }
 
                 Box(modifier = Modifier.weight(1f)) {
-                    ElvanEditorTextField(
+                    ElvanEditorNumericField(
                         label = K.sellingRate.tr(),
-                        value = if (item.price == 0.0) "" else if (item.price % 1.0 == 0.0) item.price.toInt().toString() else item.price.toString(),
-                        onValueChange = { str ->
-                            val rate = str.toDoubleOrNull() ?: 0.0
+                        value = item.price,
+                        onValueChange = { rate ->
                             onItemUpdated(item.copy(price = rate))
-                            onDirty()
                         },
                         prefixText = "₹ ",
                         placeholder = "0",
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
+                        key = item.id,
+                        onDirty = onDirty
                     )
                 }
             }
@@ -259,16 +260,15 @@ fun TextilesItemCard(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Box(modifier = Modifier.weight(1f)) {
-                    ElvanEditorTextField(
+                    ElvanEditorNumericField(
                         label = K.discount.tr(),
-                        value = if (item.discount == 0.0) "" else if (item.discount % 1.0 == 0.0) item.discount.toInt().toString() else item.discount.toString(),
-                        onValueChange = { str ->
-                            val disc = str.toDoubleOrNull() ?: 0.0
+                        value = item.discount,
+                        onValueChange = { disc ->
                             onItemUpdated(item.copy(discount = disc))
-                            onDirty()
                         },
                         placeholder = "0",
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                        key = item.id,
+                        onDirty = onDirty,
                         suffixIcon = {
                             Box(
                                 modifier = Modifier

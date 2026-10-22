@@ -27,10 +27,13 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import kotlin.math.floor
+import kotlin.math.round
 import com.elvan.udukkai.core.extensions.cssShadow
 import com.elvan.udukkai.core.platform.navigationBarsPaddingIfMobile
 import com.elvan.udukkai.localization.K
@@ -274,7 +277,8 @@ fun ElvanEditorTextField(
     keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
     keyboardActions: KeyboardActions = KeyboardActions.Default,
     errorMessage: String? = null,
-    backgroundColor: Color? = null
+    backgroundColor: Color? = null,
+    onFocusChanged: ((Boolean) -> Unit)? = null
 ) {
     val colors = rememberShellColors()
     val isDark = colors.isDark
@@ -382,6 +386,7 @@ fun ElvanEditorTextField(
                             .fillMaxWidth()
                             .onFocusChanged { focusState ->
                                 isFocused = focusState.isFocused
+                                onFocusChanged?.invoke(focusState.isFocused)
                                 if (focusState.isFocused) {
                                     coroutineScope.launch {
                                         try { bringIntoViewRequester.bringIntoView() } catch (_: Exception) {}
@@ -429,6 +434,125 @@ fun ElvanEditorTextField(
             )
         }
     }
+}
+
+private fun formatNumericDisplay(v: Double, isWeight: Boolean): String {
+    if (v == 0.0) return ""
+    return if (isWeight) {
+        val r = round(v * 1000.0) / 1000.0
+        val s = r.toString()
+        val dot = s.indexOf('.')
+        if (dot == -1) {
+            "$s.000"
+        } else {
+            val dec = s.length - dot - 1
+            when {
+                dec >= 3 -> s.substring(0, dot + 4)
+                else -> s + "0".repeat(3 - dec)
+            }
+        }
+    } else {
+        if (v == floor(v)) v.toLong().toString() else v.toString()
+    }
+}
+
+/**
+ * Stateful numeric input field for Elvan Editors.
+ * 1:1 matches Flutter's ItemFieldWidget:
+ * - Maintains local text state during active editing so keystrokes like "32."
+ *   do NOT collapse calculations to zero or erase the typed decimal point.
+ * - Prevents multiple decimal points (".." etc.).
+ * - Parses intermediate input safely ("32." -> 32.0, so totals do not collapse to zero).
+ * - Formats on blur (e.g. 3 decimals for weight matching weighing machines, clean integer for rates).
+ * - Syncs with external value updates when not focused (e.g. item picker selection, profile changes).
+ */
+@Composable
+fun ElvanEditorNumericField(
+    value: Double,
+    onValueChange: (Double) -> Unit,
+    modifier: Modifier = Modifier,
+    label: String? = null,
+    placeholder: String? = null,
+    prefixText: String? = null,
+    suffixText: String? = null,
+    suffixIcon: @Composable (() -> Unit)? = null,
+    enabled: Boolean = true,
+    isWeight: Boolean = false,
+    maxDecimals: Int = if (isWeight) 3 else 2,
+    key: Any? = null,
+    onDirty: (() -> Unit)? = null,
+    backgroundColor: Color? = null
+) {
+    var isFocused by remember { mutableStateOf(false) }
+    var localText by remember(key) { mutableStateOf(formatNumericDisplay(value, isWeight)) }
+
+    // Sync from external value changes (e.g. item picker, database load, external reset)
+    // ONLY when the field does NOT have active focus.
+    LaunchedEffect(key, value, isFocused) {
+        if (!isFocused) {
+            val parsed = localText.toDoubleOrNull() ?: 0.0
+            if (parsed != value || (value == 0.0 && localText.isNotEmpty()) || (value > 0.0 && localText.isEmpty())) {
+                localText = formatNumericDisplay(value, isWeight)
+            }
+        }
+    }
+
+    ElvanEditorTextField(
+        value = localText,
+        onValueChange = { input ->
+            val normalized = input.replace(',', '.')
+            if (normalized.isEmpty()) {
+                localText = ""
+                onDirty?.invoke()
+                onValueChange(0.0)
+                return@ElvanEditorTextField
+            }
+
+            val dotCount = normalized.count { it == '.' }
+            val validChars = normalized.all { it.isDigit() || it == '.' }
+            if (dotCount <= 1 && validChars) {
+                val dotIdx = normalized.indexOf('.')
+                val decimalsValid = if (dotIdx != -1) {
+                    normalized.length - dotIdx - 1 <= maxDecimals
+                } else true
+
+                if (decimalsValid) {
+                    localText = normalized
+                    onDirty?.invoke()
+
+                    // Safe parse: if input ends with '.', parse without the dot so
+                    // intermediate typing like "32." parses as 32.0 and does NOT collapse totals to zero!
+                    val clean = normalized.trimEnd('.')
+                    val parsed = if (clean.isEmpty() || clean == ".") 0.0 else clean.toDoubleOrNull() ?: 0.0
+                    onValueChange(parsed)
+                }
+            }
+        },
+        onFocusChanged = { focused ->
+            isFocused = focused
+            if (!focused) {
+                // On blur: format cleanly matching weighing machine (3 decimals for weight) or clean integer
+                val clean = localText.trimEnd('.')
+                val parsed = if (clean.isEmpty() || clean == ".") 0.0 else clean.toDoubleOrNull() ?: 0.0
+                if (parsed > 0.0) {
+                    localText = formatNumericDisplay(parsed, isWeight)
+                    onValueChange(parsed)
+                } else {
+                    localText = ""
+                    onValueChange(0.0)
+                }
+            }
+        },
+        modifier = modifier,
+        label = label,
+        placeholder = placeholder,
+        prefixText = prefixText,
+        suffixText = suffixText,
+        suffixIcon = suffixIcon,
+        enabled = enabled,
+        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+        backgroundColor = backgroundColor
+    )
 }
 
 /**
