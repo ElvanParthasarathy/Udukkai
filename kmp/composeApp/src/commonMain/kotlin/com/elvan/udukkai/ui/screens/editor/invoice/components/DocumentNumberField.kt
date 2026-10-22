@@ -55,7 +55,9 @@ fun ElvanDocumentNumberField(
     var editedNumberPart by remember(numberPart) { mutableStateOf(numberPart) }
 
     val commitNumber = {
-        val committed = if (editedNumberPart.isNotBlank()) "$prefix$editedNumberPart" else currentFullNumber
+        val committed = if (editedNumberPart.isNotBlank()) {
+            if (prefix.isNotEmpty() && !editedNumberPart.startsWith(prefix)) "$prefix$editedNumberPart" else editedNumberPart
+        } else currentFullNumber
         currentFullNumber = committed
         onFullNumberChanged(committed)
         onDirty()
@@ -72,6 +74,11 @@ fun ElvanDocumentNumberField(
                 value = editedNumberPart,
                 onValueChange = {
                     editedNumberPart = it
+                    val liveFull = if (it.isNotBlank()) {
+                        if (prefix.isNotEmpty() && !it.startsWith(prefix)) "$prefix$it" else it
+                    } else if (prefix.isNotEmpty()) prefix else it
+                    currentFullNumber = liveFull
+                    onFullNumberChanged(liveFull)
                     onDirty()
                 },
                 prefixText = prefix,

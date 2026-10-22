@@ -326,6 +326,7 @@ val en: Map<String, String> = mapOf(
     K.usedForFactoryBillsReceipts to "Used for Factory bills and receipts.",
     K.usedForTextilesBillsReceipts to "Used for Textiles bills and receipts.",
     K.receipt to "Receipt",
+    K.invoiceSaved to "Invoice saved",
     K.receiptSaved to "Receipt saved",
     K.receiptNumber to "Receipt Number",
     K.receiptNumberAlreadyExists to "Receipt number already exists!",

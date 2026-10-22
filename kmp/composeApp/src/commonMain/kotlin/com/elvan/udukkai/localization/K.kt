@@ -336,6 +336,7 @@ object K {
     const val usedForTextilesBillsReceipts = "usedForTextilesBillsReceipts"
     const val usedForCoolieBillsReceipts = usedForFactoryBillsReceipts
     const val receipt = "receipt"
+    const val invoiceSaved = "invoiceSaved"
     const val receiptSaved = "receiptSaved"
     const val receiptNumber = "receiptNumber"
     const val receiptNumberAlreadyExists = "receiptNumberAlreadyExists"

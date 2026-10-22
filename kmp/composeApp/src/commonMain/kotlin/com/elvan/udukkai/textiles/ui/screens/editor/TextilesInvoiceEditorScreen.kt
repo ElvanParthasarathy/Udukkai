@@ -2,6 +2,7 @@ package com.elvan.udukkai.textiles.ui.screens.editor
 
 import androidx.compose.ui.Alignment
 import com.elvan.udukkai.ui.screens.editor.ElvanEditorBottomBar
+import com.elvan.udukkai.ui.components.shell.ElvanSnackbar
 
 
 
@@ -322,20 +323,25 @@ fun TextilesInvoiceEditorScreen(
     val customerRequiredMsg = K.selectCustomer.tr()
     val itemRequiredMsg = K.addAtLeastOneItem.tr()
     val invoiceNumberRequiredMsg = K.invoiceNumber.tr()
+    val invoiceSavedMsg = K.invoiceSaved.tr()
     val saveBtnLabel = K.saveBtn.tr()
 
     val handleSave: () -> Unit = {
         errorMessage = null
         if (!isProfileConfigured) {
             errorMessage = companyRequiredMsg
+            ElvanSnackbar.show(companyRequiredMsg)
         } else if (selectedCustomerId == null && selectedCustomerNameMap.isEmpty()) {
             errorMessage = customerRequiredMsg
+            ElvanSnackbar.show(customerRequiredMsg)
         } else if (invoiceNumber.isBlank()) {
             errorMessage = invoiceNumberRequiredMsg
+            ElvanSnackbar.show(invoiceNumberRequiredMsg)
         } else {
             val validItems = activeItems.filter { it.quantity > 0 && it.price > 0 }
             if (validItems.isEmpty()) {
                 errorMessage = itemRequiredMsg
+                ElvanSnackbar.show(itemRequiredMsg)
             } else {
                 isSaving = true
                 val nextVanakkam = TextilesInvoiceRepository.getNextVanakkam(selectedCompanyId)
@@ -367,11 +373,14 @@ fun TextilesInvoiceEditorScreen(
                     bankDetailsJson = selectedAcc?.toJson() ?: "{}",
                     updatedAt = System.currentTimeMillis()
                 )
-                TextilesInvoiceRepository.save(newInvoice)
+                val savedId = TextilesInvoiceRepository.save(newInvoice)
                 prefs.setString(draftKey, null)
                 isExiting = true
                 hasUnsavedChanges = false
                 isSaving = false
+                if (savedId > 0) {
+                    ElvanSnackbar.show(invoiceSavedMsg)
+                }
                 onBack()
             }
         }

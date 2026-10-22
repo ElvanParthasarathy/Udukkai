@@ -258,49 +258,52 @@ fun FactoryHomeScreen() {
                     )
                 }
                 is ActiveSubpage.CustomerView -> {
+                    val currentCustomer = FactoryCustomerRepository.merchants.find { it.id == subpage.customer.id } ?: subpage.customer
                     CustomerViewScreen(
-                        merchant = subpage.customer,
+                        merchant = currentCustomer,
                         profile = FactoryProfileRepository.profile,
                         allProfiles = FactoryProfileRepository.profiles,
                         showGst = false,
                         onBack = popSubpage,
                         onEdit = {
-                            navigateToSubpage(ActiveSubpage.MerchantEditor(subpage.customer))
+                            navigateToSubpage(ActiveSubpage.MerchantEditor(currentCustomer))
                         },
                         onCopy = {
-                            copyCustomerAndEdit(subpage.customer)
+                            copyCustomerAndEdit(currentCustomer)
                         }
                     )
                 }
                 is ActiveSubpage.ItemView -> {
+                    val currentItem = FactoryItemRepository.items.find { it.id == subpage.item.id } ?: subpage.item
                     ItemViewScreen(
-                        item = subpage.item,
+                        item = currentItem,
                         profile = FactoryProfileRepository.profile,
                         allProfiles = FactoryProfileRepository.profiles,
                         isCoolie = true,
                         onBack = popSubpage,
                         onEdit = {
-                            navigateToSubpage(ActiveSubpage.ItemEditor(subpage.item))
+                            navigateToSubpage(ActiveSubpage.ItemEditor(currentItem))
                         },
                         onCopy = {
-                            copyItemAndEdit(subpage.item)
+                            copyItemAndEdit(currentItem)
                         }
                     )
                 }
                 is ActiveSubpage.InvoiceView -> {
+                    val currentInvoice = FactoryInvoiceRepository.invoices.find { it.id == subpage.invoice.id } ?: subpage.invoice
                     InvoiceViewScreen(
-                        invoice = subpage.invoice,
+                        invoice = currentInvoice,
                         profile = FactoryProfileRepository.profile,
                         allProfiles = FactoryProfileRepository.profiles,
                         onBack = popSubpage,
                         onEdit = {
-                            navigateToSubpage(ActiveSubpage.InvoiceEditor(subpage.invoice))
+                            navigateToSubpage(ActiveSubpage.InvoiceEditor(currentInvoice))
                         },
                         onCopy = {
-                            copyInvoiceAndEdit(subpage.invoice)
+                            copyInvoiceAndEdit(currentInvoice)
                         },
                         onConvertToTaxInvoice = {
-                            val converted = subpage.invoice.copy(
+                            val converted = currentInvoice.copy(
                                 id = 0L,
                                 invoiceNumber = "",
                                 invoiceType = "tax-invoice",
@@ -313,13 +316,14 @@ fun FactoryHomeScreen() {
                     )
                 }
                 is ActiveSubpage.ReceiptView -> {
+                    val currentReceipt = FactoryReceiptRepository.receipts.find { it.id == subpage.receipt.id } ?: subpage.receipt
                     ReceiptViewScreen(
-                        receipt = subpage.receipt,
+                        receipt = currentReceipt,
                         profile = FactoryProfileRepository.profile,
                         allProfiles = FactoryProfileRepository.profiles,
                         onBack = popSubpage,
                         onEdit = {
-                            navigateToSubpage(ActiveSubpage.ReceiptEditor(subpage.receipt))
+                            navigateToSubpage(ActiveSubpage.ReceiptEditor(currentReceipt))
                         }
                     )
                 }

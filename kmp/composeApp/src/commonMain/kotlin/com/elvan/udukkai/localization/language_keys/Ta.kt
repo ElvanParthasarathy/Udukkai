@@ -327,6 +327,7 @@ val ta: Map<String, String> = mapOf(
     K.usedForFactoryBillsReceipts to "ஆலைப் பட்டியல்கள் மற்றும் பற்றுச்சீட்டுகளுக்குப் பயன்படுத்தப்படும்.",
     K.usedForTextilesBillsReceipts to "சவுளிப் பட்டியல்கள் மற்றும் பற்றுச்சீட்டுகளுக்குப் பயன்படுத்தப்படும்.",
     K.receipt to "பற்றுச்சீட்டு",
+    K.invoiceSaved to "பட்டியல் சேமிக்கப்பட்டது",
     K.receiptSaved to "பற்றுச்சீட்டு சேமிக்கப்பட்டது",
     K.receiptNumber to "பற்றுச்சீட்டு எண்",
     K.receiptNumberAlreadyExists to "பற்றுச்சீட்டு எண் ஏற்கனவே உள்ளது!",

@@ -258,47 +258,50 @@ fun TextilesHomeScreen() {
                     )
                 }
                 is ActiveSubpage.CustomerView -> {
+                    val currentCustomer = TextilesCustomerRepository.customers.find { it.id == subpage.customer.id } ?: subpage.customer
                     CustomerViewScreen(
-                        merchant = subpage.customer,
+                        merchant = currentCustomer,
                         profile = TextilesProfileRepository.profile,
                         allProfiles = TextilesProfileRepository.profiles,
                         onBack = popSubpage,
                         onEdit = {
-                            navigateToSubpage(ActiveSubpage.MerchantEditor(subpage.customer))
+                            navigateToSubpage(ActiveSubpage.MerchantEditor(currentCustomer))
                         },
                         onCopy = {
-                            copyCustomerAndEdit(subpage.customer)
+                            copyCustomerAndEdit(currentCustomer)
                         }
                     )
                 }
                 is ActiveSubpage.ItemView -> {
+                    val currentItem = TextilesItemRepository.items.find { it.id == subpage.item.id } ?: subpage.item
                     ItemViewScreen(
-                        item = subpage.item,
+                        item = currentItem,
                         profile = TextilesProfileRepository.profile,
                         allProfiles = TextilesProfileRepository.profiles,
                         onBack = popSubpage,
                         onEdit = {
-                            navigateToSubpage(ActiveSubpage.ItemEditor(subpage.item))
+                            navigateToSubpage(ActiveSubpage.ItemEditor(currentItem))
                         },
                         onCopy = {
-                            copyItemAndEdit(subpage.item)
+                            copyItemAndEdit(currentItem)
                         }
                     )
                 }
                 is ActiveSubpage.InvoiceView -> {
+                    val currentInvoice = TextilesInvoiceRepository.invoices.find { it.id == subpage.invoice.id } ?: subpage.invoice
                     InvoiceViewScreen(
-                        invoice = subpage.invoice,
+                        invoice = currentInvoice,
                         profile = TextilesProfileRepository.profile,
                         allProfiles = TextilesProfileRepository.profiles,
                         onBack = popSubpage,
                         onEdit = {
-                            navigateToSubpage(ActiveSubpage.InvoiceEditor(subpage.invoice))
+                            navigateToSubpage(ActiveSubpage.InvoiceEditor(currentInvoice))
                         },
                         onCopy = {
-                            copyInvoiceAndEdit(subpage.invoice)
+                            copyInvoiceAndEdit(currentInvoice)
                         },
                         onConvertToTaxInvoice = {
-                            val converted = subpage.invoice.copy(
+                            val converted = currentInvoice.copy(
                                 id = 0L,
                                 invoiceNumber = "",
                                 invoiceType = "tax-invoice",
@@ -311,13 +314,14 @@ fun TextilesHomeScreen() {
                     )
                 }
                 is ActiveSubpage.ReceiptView -> {
+                    val currentReceipt = TextilesReceiptRepository.receipts.find { it.id == subpage.receipt.id } ?: subpage.receipt
                     ReceiptViewScreen(
-                        receipt = subpage.receipt,
+                        receipt = currentReceipt,
                         profile = TextilesProfileRepository.profile,
                         allProfiles = TextilesProfileRepository.profiles,
                         onBack = popSubpage,
                         onEdit = {
-                            navigateToSubpage(ActiveSubpage.ReceiptEditor(subpage.receipt))
+                            navigateToSubpage(ActiveSubpage.ReceiptEditor(currentReceipt))
                         }
                     )
                 }
