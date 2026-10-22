@@ -110,7 +110,22 @@ class AndroidFirebaseSyncManager : FirebaseSyncManager {
         merchantRef.addValueEventListener(merchantListener)
         activeListeners[merchantRef] = merchantListener
 
-        // 2. Products Listener
+        // 2. Items Listener (supports new "items" node and legacy "products" node)
+        val itemRef = rootRef.child("items")
+        itemRef.keepSynced(true)
+        val itemListener = object : ValueEventListener {
+            override fun onDataChange(snapshot: DataSnapshot) {
+                if (snapshot.exists() && snapshot.childrenCount > 0L) {
+                    handleProductsSnapshot(scope, snapshot)
+                }
+            }
+            override fun onCancelled(error: DatabaseError) {
+                Log.e(tag, "Item sync cancelled: ${error.message}")
+            }
+        }
+        itemRef.addValueEventListener(itemListener)
+        activeListeners[itemRef] = itemListener
+
         val productRef = rootRef.child("products")
         productRef.keepSynced(true)
         val productListener = object : ValueEventListener {
@@ -406,16 +421,18 @@ class AndroidFirebaseSyncManager : FirebaseSyncManager {
         if (isApplyingRemoteChange) return
         val db = getDatabase() ?: return
         val prefix = getPrefix(scope)
-        val ref = db.getReference("udukkai").child(prefix).child("products").child("${item.id}")
+        val itemRef = db.getReference("udukkai").child(prefix).child("items").child("${item.id}")
+        val legacyRef = db.getReference("udukkai").child(prefix).child("products").child("${item.id}")
 
         val data = ProductFirebasePayloadConverter.toFirebasePayload(item)
 
-        ref.setValue(data).addOnSuccessListener {
+        itemRef.setValue(data).addOnSuccessListener {
             _lastSyncTime.value = System.currentTimeMillis()
             _syncStatus.value = SyncStatus.SYNCED
         }.addOnFailureListener { e ->
-            Log.w(tag, "Push product ${item.id} queued offline: ${e.message}")
+            Log.w(tag, "Push item ${item.id} queued offline: ${e.message}")
         }
+        legacyRef.setValue(data)
     }
 
     override fun pushInvoice(invoice: InvoiceModel, scope: String) {

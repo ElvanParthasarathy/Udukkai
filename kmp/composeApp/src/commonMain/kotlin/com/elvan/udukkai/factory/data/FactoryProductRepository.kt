@@ -11,6 +11,8 @@ import com.elvan.udukkai.data.model.ProductModel
 /**
  * Dedicated product/labor repository for Udukkai Factory (ஆலை).
  */
+typealias FactoryItemRepository = FactoryProductRepository
+
 object FactoryProductRepository {
     var products by mutableStateOf<List<ProductModel>>(emptyList())
         private set

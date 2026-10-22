@@ -44,6 +44,10 @@ data class ProductModel(
 }
 
 typealias Product = ProductModel
+typealias ItemModel = ProductModel
+typealias Item = ProductModel
+
+typealias ItemJsonConverter = ProductJsonConverter
 
 object ProductJsonConverter {
     fun parseLongList(json: String?): List<Long> {
@@ -85,6 +89,8 @@ object ProductJsonConverter {
     }
 }
 
+typealias ItemFirebasePayloadConverter = ProductFirebasePayloadConverter
+
 object ProductFirebasePayloadConverter {
     /**
      * Converts a ProductModel to a HashMap suitable for Firebase Realtime Database.
@@ -103,6 +109,7 @@ object ProductFirebasePayloadConverter {
             "id" to item.id,
             "name" to LanguageJsonConverter.stringify(item.name),
             "productName" to LanguageJsonConverter.stringify(item.name),
+            "itemName" to LanguageJsonConverter.stringify(item.name),
             "porulPeyar" to LanguageJsonConverter.stringify(item.name),
             "hsnCode" to item.hsnCode,
             "price" to item.price,
@@ -212,7 +219,7 @@ object ProductFirebasePayloadConverter {
         }
         if (id <= 0L) return null
 
-        val nameStr = (map["productName"] ?: map["name"] ?: map["porulPeyar"]) as? String ?: "{}"
+        val nameStr = (map["itemName"] ?: map["productName"] ?: map["name"] ?: map["porulPeyar"]) as? String ?: "{}"
         val hsnCode = map["hsnCode"] as? String ?: ""
         val price = when (val rawPrice = map["price"] ?: map["vilai"]) {
             is Number -> rawPrice.toDouble()

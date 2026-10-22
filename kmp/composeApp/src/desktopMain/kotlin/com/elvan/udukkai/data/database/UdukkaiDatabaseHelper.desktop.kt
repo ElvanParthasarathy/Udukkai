@@ -23,7 +23,8 @@ class DesktopUdukkaiDatabaseHelper(
 ) : UdukkaiDatabaseHelper {
 
     private val customersTable = "${tablePrefix}customers"
-    private val productsTable = "${tablePrefix}products"
+    private val itemsTable = "${tablePrefix}items"
+    private val productsTable = itemsTable
     private val invoicesTable = "${tablePrefix}invoices"
     private val receiptsTable = "${tablePrefix}receipts"
     private val linksTable = "${tablePrefix}receipt_invoice_links"
@@ -103,8 +104,10 @@ class DesktopUdukkaiDatabaseHelper(
         renameTableIfExists(conn, "${legacyPrefix}vaangunar_table", customersTable)
         renameTableIfExists(conn, "${tablePrefix}vaangunar_table", customersTable)
 
-        renameTableIfExists(conn, "${legacyPrefix}porul_table", productsTable)
-        renameTableIfExists(conn, "${tablePrefix}porul_table", productsTable)
+        renameTableIfExists(conn, "${legacyPrefix}porul_table", itemsTable)
+        renameTableIfExists(conn, "${tablePrefix}porul_table", itemsTable)
+        renameTableIfExists(conn, "${legacyPrefix}products", itemsTable)
+        renameTableIfExists(conn, "${tablePrefix}products", itemsTable)
 
         renameTableIfExists(conn, "${legacyPrefix}pattiyal_table", invoicesTable)
         renameTableIfExists(conn, "${tablePrefix}pattiyal_table", invoicesTable)
@@ -131,12 +134,12 @@ class DesktopUdukkaiDatabaseHelper(
         renameColumnIfExists(conn, customersTable, "tholaipaesi", "phone")
 
         // 3. Rename legacy columns in productsTable
-        renameColumnIfExists(conn, productsTable, "porul_peyar", "name")
-        renameColumnIfExists(conn, productsTable, "vilai", "price")
-        renameColumnIfExists(conn, productsTable, "vari_veetham", "tax_rate")
-        renameColumnIfExists(conn, productsTable, "alavu_vagai", "quantity_type")
-        renameColumnIfExists(conn, productsTable, "alagu", "unit")
-        renameColumnIfExists(conn, productsTable, "niruvanam_ids", "company_ids")
+        renameColumnIfExists(conn, itemsTable, "porul_peyar", "name")
+        renameColumnIfExists(conn, itemsTable, "vilai", "price")
+        renameColumnIfExists(conn, itemsTable, "vari_veetham", "tax_rate")
+        renameColumnIfExists(conn, itemsTable, "alavu_vagai", "quantity_type")
+        renameColumnIfExists(conn, itemsTable, "alagu", "unit")
+        renameColumnIfExists(conn, itemsTable, "niruvanam_ids", "company_ids")
 
         // 4. Rename legacy columns in invoicesTable
         renameColumnIfExists(conn, invoicesTable, "niruvanam_id", "company_id")

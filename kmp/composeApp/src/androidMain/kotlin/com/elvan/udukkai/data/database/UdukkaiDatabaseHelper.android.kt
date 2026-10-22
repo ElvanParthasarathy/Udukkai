@@ -24,7 +24,8 @@ class AndroidUdukkaiDatabaseHelper(
     private val tag = "UdukkaiDbHelper"
 
     private val customersTable = "${tablePrefix}customers"
-    private val productsTable = "${tablePrefix}products"
+    private val itemsTable = "${tablePrefix}items"
+    private val productsTable = itemsTable
     private val invoicesTable = "${tablePrefix}invoices"
     private val receiptsTable = "${tablePrefix}receipts"
     private val linksTable = "${tablePrefix}receipt_invoice_links"
@@ -104,8 +105,10 @@ class AndroidUdukkaiDatabaseHelper(
         renameTableIfExists(db, "${legacyPrefix}vaangunar_table", customersTable)
         renameTableIfExists(db, "${tablePrefix}vaangunar_table", customersTable)
 
-        renameTableIfExists(db, "${legacyPrefix}porul_table", productsTable)
-        renameTableIfExists(db, "${tablePrefix}porul_table", productsTable)
+        renameTableIfExists(db, "${legacyPrefix}porul_table", itemsTable)
+        renameTableIfExists(db, "${tablePrefix}porul_table", itemsTable)
+        renameTableIfExists(db, "${legacyPrefix}products", itemsTable)
+        renameTableIfExists(db, "${tablePrefix}products", itemsTable)
 
         renameTableIfExists(db, "${legacyPrefix}pattiyal_table", invoicesTable)
         renameTableIfExists(db, "${tablePrefix}pattiyal_table", invoicesTable)
@@ -132,12 +135,12 @@ class AndroidUdukkaiDatabaseHelper(
         renameColumnIfExists(db, customersTable, "tholaipaesi", "phone")
 
         // 3. Rename legacy columns in productsTable
-        renameColumnIfExists(db, productsTable, "porul_peyar", "name")
-        renameColumnIfExists(db, productsTable, "vilai", "price")
-        renameColumnIfExists(db, productsTable, "vari_veetham", "tax_rate")
-        renameColumnIfExists(db, productsTable, "alavu_vagai", "quantity_type")
-        renameColumnIfExists(db, productsTable, "alagu", "unit")
-        renameColumnIfExists(db, productsTable, "niruvanam_ids", "company_ids")
+        renameColumnIfExists(db, itemsTable, "porul_peyar", "name")
+        renameColumnIfExists(db, itemsTable, "vilai", "price")
+        renameColumnIfExists(db, itemsTable, "vari_veetham", "tax_rate")
+        renameColumnIfExists(db, itemsTable, "alavu_vagai", "quantity_type")
+        renameColumnIfExists(db, itemsTable, "alagu", "unit")
+        renameColumnIfExists(db, itemsTable, "niruvanam_ids", "company_ids")
 
         // 4. Rename legacy columns in invoicesTable
         renameColumnIfExists(db, invoicesTable, "niruvanam_id", "company_id")

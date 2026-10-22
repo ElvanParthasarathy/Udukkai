@@ -12,6 +12,8 @@ import com.elvan.udukkai.data.model.ProductModel
  * Dedicated product repository for Udukkai Textiles (சவுளி).
  * Finished goods, textiles merchandise, and retail/wholesale items.
  */
+typealias TextilesItemRepository = TextilesProductRepository
+
 object TextilesProductRepository {
     var products by mutableStateOf<List<ProductModel>>(emptyList())
         private set
