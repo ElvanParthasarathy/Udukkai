@@ -185,6 +185,7 @@ class AndroidUdukkaiDatabaseHelper(
         renameColumnIfExists(db, linksTable, "patru_id", "receipt_id")
         renameColumnIfExists(db, linksTable, "pattiyal_id", "invoice_id")
         renameColumnIfExists(db, linksTable, "inaippu_thogai", "applied_amount")
+        renameColumnIfExists(db, linksTable, "poruthiya_thogai", "applied_amount")
 
         // 7. Rename legacy columns in profilesTable
         renameColumnIfExists(db, profilesTable, "mudhan_mozhi", "primary_language")

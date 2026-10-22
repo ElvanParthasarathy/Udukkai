@@ -184,6 +184,7 @@ class DesktopUdukkaiDatabaseHelper(
         renameColumnIfExists(conn, linksTable, "patru_id", "receipt_id")
         renameColumnIfExists(conn, linksTable, "pattiyal_id", "invoice_id")
         renameColumnIfExists(conn, linksTable, "inaippu_thogai", "applied_amount")
+        renameColumnIfExists(conn, linksTable, "poruthiya_thogai", "applied_amount")
 
         // 7. Rename legacy columns in profilesTable
         renameColumnIfExists(conn, profilesTable, "mudhan_mozhi", "primary_language")
@@ -889,7 +890,7 @@ class DesktopUdukkaiDatabaseHelper(
                         id = getLongCol(rs, "id"),
                         receiptId = getLongCol(rs, "receipt_id", "patru_id"),
                         invoiceId = getLongCol(rs, "invoice_id", "pattiyal_id"),
-                        appliedAmount = getDoubleCol(rs, "applied_amount", "inaippu_thogai")
+                        appliedAmount = getDoubleCol(rs, "applied_amount", "inaippu_thogai", "poruthiya_thogai")
                     ))
                 }
             }

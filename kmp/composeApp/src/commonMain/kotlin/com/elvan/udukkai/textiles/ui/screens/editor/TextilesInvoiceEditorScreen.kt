@@ -549,8 +549,8 @@ fun TextilesInvoiceEditorScreen(
                                     hasUnsavedChanges = true
                                 },
                                 onDirty = { hasUnsavedChanges = true },
-                                isReadOnly = isEditing,
-                                readOnlyMessage = K.savedInvoiceNumberLocked.tr()
+                                isReadOnly = isPaidLocked,
+                                readOnlyMessage = invoiceLockedMsg
                             )
 
                             // Date Picker Pill
@@ -561,8 +561,8 @@ fun TextilesInvoiceEditorScreen(
                                     invoiceDate = it
                                     hasUnsavedChanges = true
                                 },
-                                isReadOnly = isEditing,
-                                readOnlyMessage = K.savedInvoiceDateLocked.tr()
+                                isReadOnly = isPaidLocked,
+                                readOnlyMessage = invoiceLockedMsg
                             )
 
                             // Place of Supply with Indian states selection

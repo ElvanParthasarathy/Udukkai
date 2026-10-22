@@ -5,6 +5,12 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Surface
+import com.elvan.udukkai.factory.data.FactoryInvoiceRepository
+import com.elvan.udukkai.localization.K
+import com.elvan.udukkai.localization.tr
+
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -36,6 +42,7 @@ fun FactoryInvoiceCard(
     invoice: InvoiceModel,
     colors: ShellColors,
     modifier: Modifier = Modifier,
+    isPaid: Boolean = FactoryInvoiceRepository.hasLinkedReceipts(invoice.id),
     isSelectionMode: Boolean = false,
     isSelected: Boolean = false,
     onClick: () -> Unit = {},
@@ -141,17 +148,60 @@ fun FactoryInvoiceCard(
 
                 Spacer(modifier = Modifier.height(8.dp))
 
-                // Row 2: Invoice #  •  Date
-                Text(
-                    text = "${invoice.invoiceNumber}  •  $dateStr",
-                    style = TextStyle(
-                        fontFamily = ff,
-                        fontSize = 13.5.sp,
-                        color = LocalShellColors.current.textSecondary
-                    ),
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
+                // Row 2: Invoice #  •  Date + Status Pill
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "${invoice.invoiceNumber}  •  $dateStr",
+                        style = TextStyle(
+                            fontFamily = ff,
+                            fontSize = 13.5.sp,
+                            color = LocalShellColors.current.textSecondary
+                        ),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.weight(1f, fill = false)
+                    )
+
+                    Spacer(modifier = Modifier.width(8.dp))
+
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(6.dp))
+                            .background(
+                                if (isPaid) colors.accent.copy(alpha = 0.15f)
+                                else if (isDark) Color.White.copy(alpha = 0.08f)
+                                else Color.Black.copy(alpha = 0.06f)
+                            )
+                            .padding(horizontal = 7.dp, vertical = 3.dp)
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(3.dp)
+                        ) {
+                            if (isPaid) {
+                                Icon(
+                                    imageVector = MaterialSymbols.Rounded.Lock,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(10.dp),
+                                    tint = colors.accent
+                                )
+                            }
+                            Text(
+                                text = (if (isPaid) K.statusPaid.tr() else K.statusUnpaid.tr()).preventBrokenLigatures(),
+                                style = TextStyle(
+                                    fontFamily = ff,
+                                    fontSize = 10.5.sp,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = if (isPaid) colors.accent else LocalShellColors.current.textSecondary
+                                )
+                            )
+                        }
+                    }
+                }
 
                 Spacer(modifier = Modifier.height(4.dp))
 
