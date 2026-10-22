@@ -425,7 +425,7 @@ fun InvoiceViewScreen(
                                     horizontalArrangement = Arrangement.SpaceBetween
                                 ) {
                                     Text(
-                                        text = "சேதாரம் (கிராம்)",
+                                        text = "${K.wastage.tr()} (g)",
                                         style = TextStyle(fontFamily = ff, fontSize = 14.sp, color = colors.textSecondary)
                                     )
                                     Text(

@@ -101,7 +101,7 @@ fun FactoryItemCard(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = "${K.product.tr()} #${index + 1}".preventBrokenLigatures(),
+                text = "${K.item.tr()} #${index + 1}".preventBrokenLigatures(),
                 style = TextStyle(
                     fontFamily = ff,
                     fontSize = 13.sp,
@@ -159,7 +159,7 @@ fun FactoryItemCard(
 
                 val productSearchPill = @Composable {
                     Column(modifier = Modifier.fillMaxWidth()) {
-                        ElvanEditorLabel(label = K.product.tr())
+                        ElvanEditorLabel(label = K.item.tr())
                         Box(
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -176,7 +176,7 @@ fun FactoryItemCard(
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Text(
-                                    text = (if (displayName.isNotEmpty()) displayName else K.products.tr()).preventBrokenLigatures(),
+                                    text = (if (displayName.isNotEmpty()) displayName else K.item.tr()).preventBrokenLigatures(),
                                     style = TextStyle(
                                         fontFamily = ff,
                                         fontSize = 14.sp,
@@ -223,13 +223,14 @@ fun FactoryItemCard(
 
                 val weightInput = @Composable {
                     ElvanEditorTextField(
-                        label = "${K.weight.tr()} (Kg)",
+                        label = "${K.weight.tr()} (kg)",
                         value = if (item.weight == 0.0) "" else cleanNum(item.weight, isWeight = true),
                         onValueChange = {
                             val parsed = it.toDoubleOrNull() ?: 0.0
                             onItemUpdated(item.copy(weight = parsed))
                             onDirty()
                         },
+                        suffixText = "kg",
                         placeholder = "0.000",
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
                     )
@@ -237,7 +238,7 @@ fun FactoryItemCard(
 
                 val rateInput = @Composable {
                     ElvanEditorTextField(
-                        label = "${K.sellingRate.tr()} (₹)",
+                        label = "${K.rate.tr()} (₹)",
                         value = if (item.price == 0.0) "" else cleanNum(item.price),
                         onValueChange = {
                             val parsed = it.toDoubleOrNull() ?: 0.0
@@ -344,7 +345,7 @@ fun FactoryItemCard(
                                 modifier = Modifier.size(18.dp)
                             )
                             Text(
-                                text = K.addProductBtn.tr().preventBrokenLigatures(),
+                                text = K.addItemBtn.tr().preventBrokenLigatures(),
                                 style = TextStyle(
                                     fontFamily = ff,
                                     fontSize = 13.sp,
@@ -632,13 +633,14 @@ fun FactoryExtraChargesSection(
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         ElvanEditorTextField(
-            label = K.wastage.tr(),
+            label = "${K.wastage.tr()} (g)",
             value = if (setharamGrams == 0.0) "" else cleanNum(setharamGrams),
             onValueChange = {
                 val parsed = it.toDoubleOrNull() ?: 0.0
                 onSetharamChanged(parsed)
                 onDirty()
             },
+            suffixText = "g",
             placeholder = "0",
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
         )
@@ -744,7 +746,7 @@ fun FactoryTotalsSection(
             // Total Weight
             FactoryTotalsRow(
                 label = K.totalWeight.tr(),
-                value = "${cleanNum(totals.totalWeight, isWeight = true)} Kg",
+                value = "${cleanNum(totals.totalWeight, isWeight = true)} kg",
                 labelWeight = FontWeight.SemiBold,
                 valueWeight = FontWeight.Bold
             )
@@ -752,7 +754,7 @@ fun FactoryTotalsSection(
             // Setharam grams
             if (setharamGrams > 0) {
                 FactoryTotalsRow(
-                    label = "+ ${K.wastage.tr()}",
+                    label = "+ ${K.wastage.tr()} (g)",
                     value = "${cleanNum(setharamGrams)} g"
                 )
             }

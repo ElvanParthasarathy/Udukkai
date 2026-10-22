@@ -517,7 +517,7 @@ fun FactoryInvoiceEditorScreen(
 
                 // ── Section 2: Items (பொருட்கள்) ──
                 item(key = "items_section") {
-                    ElvanEditorSection(index = 2, title = K.products.tr()) {
+                    ElvanEditorSection(index = 2, title = K.items.tr()) {
                         Column(
                             modifier = Modifier.fillMaxWidth(),
                             verticalArrangement = Arrangement.spacedBy(10.dp)
@@ -598,7 +598,7 @@ fun FactoryInvoiceEditorScreen(
                                             modifier = Modifier.size(18.dp)
                                         )
                                         Text(
-                                            text = K.addProductBtn.tr().preventBrokenLigatures(),
+                                            text = K.addItemBtn.tr().preventBrokenLigatures(),
                                             style = TextStyle(
                                                 fontFamily = ff,
                                                 fontSize = 13.sp,
