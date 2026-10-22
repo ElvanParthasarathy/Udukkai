@@ -649,9 +649,7 @@ fun FactoryInvoiceEditorScreen(
                             }
 
                             // ── Other Charges Animated Cards (BELOW BUTTONS) ──
-                            if (additionalCharges.isNotEmpty()) {
-                                Spacer(modifier = Modifier.height(16.dp))
-                                ElvanAnimatedList {
+                            ElvanAnimatedList {
                                     additionalCharges.forEachIndexed { cIdx, charge ->
                                         key(charge.id) {
                                             ElvanAnimatedCard(
@@ -684,7 +682,6 @@ fun FactoryInvoiceEditorScreen(
                                         }
                                     }
                                 }
-                            }
 
                         }
                     }
