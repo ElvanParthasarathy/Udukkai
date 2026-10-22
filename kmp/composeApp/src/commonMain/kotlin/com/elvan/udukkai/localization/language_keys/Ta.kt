@@ -125,7 +125,7 @@ val ta: Map<String, String> = mapOf(
     K.nameAlreadyExists to "இப்பெயர் ஏற்கனவே உள்ளது.",
     K.enterName to "பெயரை உள்ளிடுக",
     K.other to "பிற",
-    K.addOtherCharges to "பிற கட்டணம் சேர்",
+    K.addOtherCharges to "கட்டணம் சேர்",
     K.dateOfBirth to "பிறந்த தேதி",
     K.createRecord to "புதிய ஆக்கம்",
     K.addNew to "புதிய சேர்க்கை",

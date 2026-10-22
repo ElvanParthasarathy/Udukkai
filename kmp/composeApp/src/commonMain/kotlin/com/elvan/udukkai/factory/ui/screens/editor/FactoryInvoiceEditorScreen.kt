@@ -597,8 +597,7 @@ fun FactoryInvoiceEditorScreen(
                             // ── Add Item & Add Charge Buttons ──
                             Row(
                                 modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(top = 4.dp),
+                                    .fillMaxWidth(),
                                 horizontalArrangement = Arrangement.spacedBy(10.dp)
                             ) {
                                 Box(

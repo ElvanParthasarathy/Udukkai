@@ -62,7 +62,7 @@ fun TextilesItemCard(
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .padding(bottom = if (index < itemCount - 1) 12.dp else 0.dp)
+            .padding(bottom = 16.dp)
     ) {
         // ── Header: "பொருள் #N" + trash icon ──
         Row(

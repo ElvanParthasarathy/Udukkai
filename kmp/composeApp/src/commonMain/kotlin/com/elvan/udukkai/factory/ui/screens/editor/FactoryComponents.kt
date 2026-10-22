@@ -92,7 +92,7 @@ fun FactoryItemCard(
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .padding(bottom = if (index < itemCount - 1) 12.dp else 0.dp)
+            .padding(bottom = 16.dp)
     ) {
         // ── Header: "பொருள் #N" + trash icon ──
         Row(
@@ -497,7 +497,7 @@ fun FactoryAdditionalChargeCard(
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .padding(bottom = 12.dp)
+            .padding(bottom = 16.dp)
     ) {
         // ── Header: "பிற #N" + trash icon ──
         Row(
@@ -543,7 +543,7 @@ fun FactoryAdditionalChargeCard(
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
                 verticalAlignment = Alignment.Top
             ) {
-                Box(modifier = Modifier.weight(2f)) {
+                Box(modifier = Modifier.weight(1.3f)) {
                     ElvanEditorTextField(
                         label = K.chargeName.tr(),
                         value = charge.name,
