@@ -1,5 +1,8 @@
 package com.elvan.udukkai.factory.ui.screens.editor
 
+import androidx.compose.animation.*
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -136,80 +139,92 @@ fun FactoryCustomerField(
             }
         }
 
-        // ── Saved Details Card ──
-        if (selectedCustomer != null) {
-            Spacer(modifier = Modifier.height(24.dp))
-            ElvanEditorCard(
-                padding = PaddingValues(16.dp),
-                borderRadius = 24.dp
-            ) {
-                Column(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalArrangement = Arrangement.spacedBy(4.dp)
-                ) {
-                    Text(
-                        text = K.savedDetails.tr().preventBrokenLigatures(),
-                        style = TextStyle(
-                            fontFamily = ff,
-                            fontSize = 11.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            color = colors.textSecondary,
-                            letterSpacing = 0.5.sp
-                        )
-                    )
-
-                    // Secondary language name if bilingual
-                    val secName = if (isBilingual) selectedCustomer.name[secondaryLang].orEmpty() else ""
-                    if (secName.isNotEmpty()) {
-                        Text(
-                            text = secName.preventBrokenLigatures(),
-                            style = TextStyle(
-                                fontFamily = ff,
-                                fontSize = 15.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = colors.textPrimary
-                            )
-                        )
-                    }
-
-                    // Address & Town (Oor)
-                    val primAddress = selectedCustomer.address[primaryLang]
-                        ?: selectedCustomer.address.values.firstOrNull().orEmpty()
-                    val primCity = selectedCustomer.city[primaryLang]
-                        ?: selectedCustomer.city.values.firstOrNull().orEmpty()
-                    val primAddressCombined = listOf(primAddress, primCity)
-                        .filter { it.isNotBlank() }
-                        .joinToString(", ")
-
-                    if (primAddressCombined.isNotBlank()) {
-                        Text(
-                            text = primAddressCombined.preventBrokenLigatures(),
-                            style = TextStyle(
-                                fontFamily = ff,
-                                fontSize = 13.sp,
-                                color = colors.textSecondary,
-                                lineHeight = 18.sp
-                            )
-                        )
-                    }
-
-                    if (isBilingual) {
-                        val secAddress = selectedCustomer.address[secondaryLang].orEmpty()
-                        val secCity = selectedCustomer.city[secondaryLang].orEmpty()
-                        val secAddressCombined = listOf(secAddress, secCity)
-                            .filter { it.isNotBlank() }
-                            .joinToString(", ")
-
-                        if (secAddressCombined.isNotBlank() && secAddressCombined != primAddressCombined) {
+        // ── Saved Details Card (Smooth Fluid Entrance Animation) ──
+        AnimatedVisibility(
+            visible = selectedCustomer != null,
+            enter = expandVertically(
+                animationSpec = spring(stiffness = Spring.StiffnessMediumLow, dampingRatio = Spring.DampingRatioNoBouncy)
+            ) + fadeIn(),
+            exit = shrinkVertically(
+                animationSpec = spring(stiffness = Spring.StiffnessMediumLow, dampingRatio = Spring.DampingRatioNoBouncy)
+            ) + fadeOut()
+        ) {
+            if (selectedCustomer != null) {
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    Spacer(modifier = Modifier.height(16.dp))
+                    ElvanEditorCard(
+                        padding = PaddingValues(16.dp),
+                        borderRadius = 24.dp
+                    ) {
+                        Column(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalArrangement = Arrangement.spacedBy(4.dp)
+                        ) {
                             Text(
-                                text = secAddressCombined.preventBrokenLigatures(),
+                                text = K.savedDetails.tr().preventBrokenLigatures(),
                                 style = TextStyle(
                                     fontFamily = ff,
-                                    fontSize = 13.sp,
-                                    color = colors.textSecondary.copy(alpha = 0.7f),
-                                    lineHeight = 18.sp
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = colors.textSecondary,
+                                    letterSpacing = 0.5.sp
                                 )
                             )
+
+                            // Secondary language name if bilingual
+                            val secName = if (isBilingual) selectedCustomer.name[secondaryLang].orEmpty() else ""
+                            if (secName.isNotEmpty()) {
+                                Text(
+                                    text = secName.preventBrokenLigatures(),
+                                    style = TextStyle(
+                                        fontFamily = ff,
+                                        fontSize = 15.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = colors.textPrimary
+                                    )
+                                )
+                            }
+
+                            // Address & Town (Oor)
+                            val primAddress = selectedCustomer.address[primaryLang]
+                                ?: selectedCustomer.address.values.firstOrNull().orEmpty()
+                            val primCity = selectedCustomer.city[primaryLang]
+                                ?: selectedCustomer.city.values.firstOrNull().orEmpty()
+                            val primAddressCombined = listOf(primAddress, primCity)
+                                .filter { it.isNotBlank() }
+                                .joinToString(", ")
+
+                            if (primAddressCombined.isNotBlank()) {
+                                Text(
+                                    text = primAddressCombined.preventBrokenLigatures(),
+                                    style = TextStyle(
+                                        fontFamily = ff,
+                                        fontSize = 13.sp,
+                                        color = colors.textSecondary,
+                                        lineHeight = 18.sp
+                                    )
+                                )
+                            }
+
+                            if (isBilingual) {
+                                val secAddress = selectedCustomer.address[secondaryLang].orEmpty()
+                                val secCity = selectedCustomer.city[secondaryLang].orEmpty()
+                                val secAddressCombined = listOf(secAddress, secCity)
+                                    .filter { it.isNotBlank() }
+                                    .joinToString(", ")
+
+                                if (secAddressCombined.isNotBlank() && secAddressCombined != primAddressCombined) {
+                                    Text(
+                                        text = secAddressCombined.preventBrokenLigatures(),
+                                        style = TextStyle(
+                                            fontFamily = ff,
+                                            fontSize = 13.sp,
+                                            color = colors.textSecondary.copy(alpha = 0.7f),
+                                            lineHeight = 18.sp
+                                        )
+                                    )
+                                }
+                            }
                         }
                     }
                 }

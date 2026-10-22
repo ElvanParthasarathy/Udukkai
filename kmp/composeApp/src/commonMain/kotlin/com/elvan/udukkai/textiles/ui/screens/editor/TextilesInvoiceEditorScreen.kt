@@ -51,6 +51,7 @@ import com.elvan.udukkai.ui.components.shell.*
 import com.elvan.udukkai.ui.navigation.MaterialSymbols
 import androidx.compose.ui.zIndex
 import com.elvan.udukkai.ui.screens.editor.ElvanEditorSection
+import com.elvan.udukkai.ui.screens.editor.ElvanEditorDisabledOverlay
 import com.elvan.udukkai.ui.screens.editor.ElvanEditorLabel
 import com.elvan.udukkai.ui.screens.editor.LocalEditorAccentColor
 import com.elvan.udukkai.ui.screens.editor.invoice.components.*
@@ -155,6 +156,7 @@ fun TextilesInvoiceEditorScreen(
     var selectedCustomerNameMap by remember { mutableStateOf(invoice?.customerName ?: emptyMap()) }
     var selectedCustomerAddressMap by remember { mutableStateOf(invoice?.customerAddress ?: emptyMap()) }
     var customerState by remember { mutableStateOf("") }
+    val isCustomerSelected = (selectedCustomerId != null && selectedCustomerId!! > 0L) || selectedCustomerNameMap.isNotEmpty()
 
     val initialDisplayOptions = remember(invoice) {
         InvoiceDisplayOptions.fromJson(invoice?.customPreferencesJson)
@@ -214,18 +216,53 @@ fun TextilesInvoiceEditorScreen(
     var isSaving by remember { mutableStateOf(false) }
     var isExiting by remember { mutableStateOf(false) }
 
+    val isFormActuallyDirty: Boolean = if (isEditing) {
+        hasUnsavedChanges
+    } else {
+        hasUnsavedChanges && (
+            isCustomerSelected ||
+            activeItems.any { it.quantity > 0.0 || it.rate > 0.0 || it.itemName.isNotBlank() } ||
+            isInvoiceNumberOverridden ||
+            globalDiscountValue.isNotBlank()
+        )
+    }
+
     // Draft persistence
     val draftKey = "udukkai_draft_textiles_invoice"
     val prefs = remember { getPreferencesHelper() }
     var showDraftRestoreDialog by remember { mutableStateOf(false) }
     var pendingDraftJson by remember { mutableStateOf<String?>(null) }
 
+    fun isDraftMeaningful(json: String): Boolean {
+        try {
+            val custId = Regex(""""(?:selectedCustomerId|vaangunarId)"\s*:\s*(\d+)""").find(json)?.groupValues?.get(1)?.toLongOrNull()
+            if (custId != null && custId > 0L) return true
+
+            val discVal = Regex(""""globalDiscountValue"\s*:\s*"([^"]*)"""").find(json)?.groupValues?.get(1)
+            if (!discVal.isNullOrBlank()) return true
+
+            val numOverride = Regex(""""invoiceNumberOverride"\s*:\s*"([^"]*)"""").find(json)?.groupValues?.get(1)
+            if (!numOverride.isNullOrBlank()) return true
+
+            val itemsMatch = Regex(""""items"\s*:\s*(\[.*?\])(?=\s*,\s*"\w+"|\s*\})""").find(json)?.groupValues?.get(1)
+            if (!itemsMatch.isNullOrEmpty()) {
+                val parsedItems = TextilesCalculation.itemsFromJson(itemsMatch)
+                if (parsedItems.any { it.itemName.isNotBlank() || it.quantity > 0.0 || it.rate > 0.0 }) return true
+            }
+        } catch (_: Exception) {}
+        return false
+    }
+
     LaunchedEffect(Unit) {
         if (!isEditing) {
             val saved = prefs.getString(draftKey)
             if (!saved.isNullOrBlank()) {
-                pendingDraftJson = saved
-                showDraftRestoreDialog = true
+                if (isDraftMeaningful(saved)) {
+                    pendingDraftJson = saved
+                    showDraftRestoreDialog = true
+                } else {
+                    prefs.setString(draftKey, null)
+                }
             }
         }
     }
@@ -295,8 +332,10 @@ fun TextilesInvoiceEditorScreen(
 
     DisposableEffect(Unit) {
         onDispose {
-            if (hasUnsavedChanges && !isEditing && !isExiting) {
+            if (isFormActuallyDirty && !isEditing && !isExiting) {
                 prefs.setString(draftKey, serializeDraft())
+            } else if (!isFormActuallyDirty && !isEditing) {
+                prefs.setString(draftKey, null)
             }
         }
     }
@@ -318,16 +357,17 @@ fun TextilesInvoiceEditorScreen(
 
     val handleBack: () -> Unit = {
         if (!isExiting) {
-            if (hasUnsavedChanges) {
+            if (isFormActuallyDirty) {
                 showUnsavedDialog = true
             } else {
                 isExiting = true
+                if (!isEditing) prefs.setString(draftKey, null)
                 onBack()
             }
         }
     }
 
-    AppBackHandler(enabled = !isExiting, onBack = handleBack)
+    AppBackHandler(enabled = !isExiting && isFormActuallyDirty, onBack = handleBack)
 
     val companyRequiredMsg = K.selectCompanyProfile.tr()
     val customerRequiredMsg = K.selectCustomer.tr()
@@ -410,10 +450,11 @@ fun TextilesInvoiceEditorScreen(
             ElvanEditorBottomBar(
                 label = saveBtnLabel,
                 onClick = handleSave,
-                enabled = !isSaving && !isPaidLocked,
+                enabled = isCustomerSelected && !isSaving && !isPaidLocked,
                 isLoading = isSaving,
                 accentColor = colors.invoiceColor,
-                showSave = !isPaidLocked
+                showSave = !isPaidLocked,
+                previewEnabled = isCustomerSelected
             )
         }
     ) {
@@ -507,7 +548,8 @@ fun TextilesInvoiceEditorScreen(
 
                 // ── Section 1: ② Invoice Details (பட்டியல் தரவுகள்) ──
                 item(key = "invoice_details_section") {
-                    ElvanEditorSection(index = 1, title = K.invoiceDetails.tr()) {
+                    ElvanEditorDisabledOverlay(disabled = !isCustomerSelected) {
+                        ElvanEditorSection(index = 1, title = K.invoiceDetails.tr()) {
                         Column(
                             modifier = Modifier.fillMaxWidth(),
                             verticalArrangement = Arrangement.spacedBy(24.dp)
@@ -579,11 +621,13 @@ fun TextilesInvoiceEditorScreen(
                             )
                         }
                     }
+                    }
                 }
 
                 // ── Section 2: ③ Items (பொருட்கள்) ──
                 item(key = "items_section") {
-                    ElvanEditorSection(index = 2, title = K.items.tr()) {
+                    ElvanEditorDisabledOverlay(disabled = !isCustomerSelected) {
+                        ElvanEditorSection(index = 2, title = K.items.tr()) {
                         Column(
                             modifier = Modifier.fillMaxWidth(),
                             verticalArrangement = Arrangement.spacedBy(10.dp)
@@ -667,59 +711,68 @@ fun TextilesInvoiceEditorScreen(
                                     )
                                 }
                             }
-                            }
                         }
                     }
+                    }
+                }
                 }
 
                 // ── Section 3: ④ Discount (தள்ளுபடி) ──
                 item(key = "discount_section") {
-                    ElvanEditorSection(index = 3, title = K.discount.tr()) {
-                        TextilesDiscountField(
-                            discountValue = globalDiscountValue,
-                            discountType = globalDiscountType,
-                            onValueChanged = {
-                                globalDiscountValue = it
-                                hasUnsavedChanges = true
-                            },
-                            onTypeChanged = {
-                                globalDiscountType = it
-                                hasUnsavedChanges = true
-                            }
-                        )
+                    ElvanEditorDisabledOverlay(disabled = !isCustomerSelected) {
+                        ElvanEditorSection(index = 3, title = K.discount.tr()) {
+                            TextilesDiscountField(
+                                discountValue = globalDiscountValue,
+                                discountType = globalDiscountType,
+                                onValueChanged = {
+                                    globalDiscountValue = it
+                                    hasUnsavedChanges = true
+                                },
+                                onTypeChanged = {
+                                    globalDiscountType = it
+                                    hasUnsavedChanges = true
+                                }
+                            )
+                        }
                     }
                 }
 
                 // ── Section 4: ⑤ Totals (மொத்தங்கள்) ──
                 item(key = "totals_section") {
-                    ElvanEditorSection(index = 4, title = K.totals.tr()) {
-                        TextilesTotalsField(totals = totals)
+                    ElvanEditorDisabledOverlay(disabled = !isCustomerSelected) {
+                        ElvanEditorSection(index = 4, title = K.totals.tr()) {
+                            TextilesTotalsField(totals = totals)
+                        }
                     }
                 }
 
                 // ── Section 5: Bill Options (பட்டியல் விருப்பங்கள்) ──
                 item(key = "bill_options_section") {
-                    InvoiceBillOptionsSection(
-                        options = displayOptions,
-                        onOptionsChanged = {
-                            displayOptions = it
-                            hasUnsavedChanges = true
-                        },
-                        showTaxInclusiveOption = true
-                    )
+                    ElvanEditorDisabledOverlay(disabled = !isCustomerSelected) {
+                        InvoiceBillOptionsSection(
+                            options = displayOptions,
+                            onOptionsChanged = {
+                                displayOptions = it
+                                hasUnsavedChanges = true
+                            },
+                            showTaxInclusiveOption = true
+                        )
+                    }
                 }
 
                 // ── Section 6: Bank Account (வங்கிக் கணக்கு) ──
                 item(key = "bank_account_section") {
-                    InvoiceBankAccountPicker(
-                        accounts = selectedProfile.getPaymentAccounts(),
-                        selectedAccountId = selectedAccountId,
-                        onAccountSelected = { acc ->
-                            selectedAccountId = acc.id
-                            displayOptions = displayOptions.copy(selectedAccountId = acc.id)
-                            hasUnsavedChanges = true
-                        }
-                    )
+                    ElvanEditorDisabledOverlay(disabled = !isCustomerSelected) {
+                        InvoiceBankAccountPicker(
+                            accounts = selectedProfile.getPaymentAccounts(),
+                            selectedAccountId = selectedAccountId,
+                            onAccountSelected = { acc ->
+                                selectedAccountId = acc.id
+                                displayOptions = displayOptions.copy(selectedAccountId = acc.id)
+                                hasUnsavedChanges = true
+                            }
+                        )
+                    }
                 }
             }
         }

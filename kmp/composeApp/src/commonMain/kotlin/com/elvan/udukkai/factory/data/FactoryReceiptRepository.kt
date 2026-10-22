@@ -108,6 +108,7 @@ object FactoryReceiptRepository {
         val id = helper.saveReceiptWithLinks(receipt, links)
         if (id > 0) {
             loadAll()
+            FactoryInvoiceRepository.loadAll()
             AutoBackupManager.onDataChanged()
         }
         return id
@@ -118,6 +119,7 @@ object FactoryReceiptRepository {
         if (success) {
             loadAll()
             loadDeleted()
+            FactoryInvoiceRepository.loadAll()
             AutoBackupManager.onDataChanged()
         }
         return success
@@ -128,6 +130,7 @@ object FactoryReceiptRepository {
         if (success) {
             loadAll()
             loadDeleted()
+            FactoryInvoiceRepository.loadAll()
             AutoBackupManager.onDataChanged()
         }
         return success
@@ -137,6 +140,7 @@ object FactoryReceiptRepository {
         val success = getFactoryDatabaseHelper().permanentDeleteReceipt(id)
         if (success) {
             loadDeleted()
+            FactoryInvoiceRepository.loadAll()
             AutoBackupManager.onDataChanged()
         }
         return success

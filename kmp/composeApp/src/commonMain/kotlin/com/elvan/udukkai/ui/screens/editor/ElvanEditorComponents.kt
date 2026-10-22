@@ -18,11 +18,15 @@ import androidx.compose.material3.ripple
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.input.pointer.PointerEventPass
+import androidx.compose.ui.input.pointer.pointerInput
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import androidx.compose.ui.text.TextStyle
@@ -171,6 +175,43 @@ fun ElvanEditorSection(
 }
 
 /**
+ * Dims and disables downstream form content when a prerequisite (such as customer selection) is not met.
+ * Matches React's invoice editor disabled behavior:
+ * - Content remains visible on screen so the entire layout is readable.
+ * - When [disabled] is true: opacity is dimmed to 0.38f and pointer events are blocked so fields cannot be edited.
+ */
+@Composable
+fun ElvanEditorDisabledOverlay(
+    disabled: Boolean,
+    modifier: Modifier = Modifier,
+    content: @Composable BoxScope.() -> Unit
+) {
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .then(
+                if (disabled) {
+                    Modifier
+                        .alpha(0.38f)
+                        .focusProperties { canFocus = false }
+                } else Modifier
+            )
+    ) {
+        content()
+        if (disabled) {
+            Box(
+                modifier = Modifier
+                    .matchParentSize()
+                    .clickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = null
+                    ) {}
+            )
+        }
+    }
+}
+
+/**
  * Boxed Card Container for Elvan Editors.
  * Matches Flutter's `ElvanEditorCard`:
  * Default `borderRadius = 24.dp`, no shadow, no border.
@@ -271,6 +312,7 @@ fun ElvanEditorTextField(
     prefixIcon: @Composable (() -> Unit)? = null,
     suffixIcon: @Composable (() -> Unit)? = null,
     enabled: Boolean = true,
+    readOnly: Boolean = false,
     singleLine: Boolean = true,
     minLines: Int = if (singleLine) 1 else 2,
     maxLines: Int = if (singleLine) 1 else 6,
@@ -370,16 +412,17 @@ fun ElvanEditorTextField(
                         value = value,
                         onValueChange = onValueChange,
                         enabled = enabled,
+                        readOnly = readOnly,
                         singleLine = singleLine,
                         minLines = minLines,
                         maxLines = maxLines,
                         keyboardOptions = keyboardOptions,
                         keyboardActions = keyboardActions,
-                        cursorBrush = SolidColor(colors.textPrimary),
+                        cursorBrush = if (readOnly) SolidColor(Color.Transparent) else SolidColor(colors.textPrimary),
                         textStyle = TextStyle(
                             fontFamily = ff,
                             fontSize = 14.sp,
-                            fontWeight = FontWeight.Normal,
+                            fontWeight = if (readOnly) FontWeight.Medium else FontWeight.Normal,
                             color = if (enabled) colors.textPrimary else colors.textSecondary
                         ),
                         modifier = Modifier
@@ -843,18 +886,20 @@ fun ElvanEditorBottomBar(
     isLoading: Boolean = false,
     accentColor: Color? = null,
     onPreview: (() -> Unit)? = null,
-    showSave: Boolean = true
+    showSave: Boolean = true,
+    previewEnabled: Boolean = true
 ) {
     var showPreviewDialog by remember { mutableStateOf(false) }
     val previewLabel = K.previewToolbarBtn.tr()
 
-    val actions = remember(label, enabled, isLoading, onClick, onPreview, previewLabel, showSave) {
+    val actions = remember(label, enabled, isLoading, onClick, onPreview, previewLabel, showSave, previewEnabled) {
         buildList {
             add(
                 ElvanFloatingAction(
                     label = previewLabel,
                     icon = MaterialSymbols.Rounded.Visibility,
-                    onClick = onPreview ?: { showPreviewDialog = true }
+                    onClick = onPreview ?: { showPreviewDialog = true },
+                    enabled = previewEnabled
                 )
             )
             if (showSave) {

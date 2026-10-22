@@ -868,6 +868,10 @@ class DesktopUdukkaiDatabaseHelper(
     }
 
     override fun permanentDeleteReceipt(id: Long): Boolean = useConn { conn ->
+        conn.prepareStatement("DELETE FROM \"$linksTable\" WHERE receipt_id = ?").use { stmt ->
+            stmt.setLong(1, id)
+            stmt.executeUpdate()
+        }
         conn.prepareStatement("DELETE FROM \"$receiptsTable\" WHERE id = ?").use { stmt ->
             stmt.setLong(1, id)
             stmt.executeUpdate() > 0
@@ -936,7 +940,8 @@ class DesktopUdukkaiDatabaseHelper(
 
     override fun getPaidAmountForInvoice(invoiceId: Long): Double = useConn { conn ->
         var sum = 0.0
-        conn.prepareStatement("SELECT SUM(applied_amount) FROM \"$linksTable\" WHERE invoice_id = ?").use { stmt ->
+        val sql = "SELECT SUM(l.applied_amount) FROM \"$linksTable\" l INNER JOIN \"$receiptsTable\" r ON l.receipt_id = r.id WHERE l.invoice_id = ? AND r.is_deleted = 0"
+        conn.prepareStatement(sql).use { stmt ->
             stmt.setLong(1, invoiceId)
             stmt.executeQuery().use { rs ->
                 if (rs.next()) sum = rs.getDouble(1)
@@ -949,7 +954,7 @@ class DesktopUdukkaiDatabaseHelper(
         val result = mutableMapOf<Long, Double>()
         if (invoiceIds.isEmpty()) return@useConn result
         val placeholders = invoiceIds.joinToString(",") { "?" }
-        val sql = "SELECT invoice_id, SUM(applied_amount) FROM \"$linksTable\" WHERE invoice_id IN ($placeholders) GROUP BY invoice_id"
+        val sql = "SELECT l.invoice_id, SUM(l.applied_amount) FROM \"$linksTable\" l INNER JOIN \"$receiptsTable\" r ON l.receipt_id = r.id WHERE l.invoice_id IN ($placeholders) AND r.is_deleted = 0 GROUP BY l.invoice_id"
         conn.prepareStatement(sql).use { stmt ->
             invoiceIds.forEachIndexed { i, id ->
                 stmt.setLong(i + 1, id)

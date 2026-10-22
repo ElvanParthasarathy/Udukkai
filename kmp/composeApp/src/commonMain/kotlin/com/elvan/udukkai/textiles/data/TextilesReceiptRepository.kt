@@ -108,6 +108,7 @@ object TextilesReceiptRepository {
         val id = helper.saveReceiptWithLinks(receipt, links)
         if (id > 0) {
             loadAll()
+            TextilesInvoiceRepository.loadAll()
             AutoBackupManager.onDataChanged()
         }
         return id
@@ -118,6 +119,7 @@ object TextilesReceiptRepository {
         if (success) {
             loadAll()
             loadDeleted()
+            TextilesInvoiceRepository.loadAll()
             AutoBackupManager.onDataChanged()
         }
         return success
@@ -128,6 +130,7 @@ object TextilesReceiptRepository {
         if (success) {
             loadAll()
             loadDeleted()
+            TextilesInvoiceRepository.loadAll()
             AutoBackupManager.onDataChanged()
         }
         return success
@@ -137,6 +140,7 @@ object TextilesReceiptRepository {
         val success = getTextilesDatabaseHelper().permanentDeleteReceipt(id)
         if (success) {
             loadDeleted()
+            TextilesInvoiceRepository.loadAll()
             AutoBackupManager.onDataChanged()
         }
         return success

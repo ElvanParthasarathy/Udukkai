@@ -319,9 +319,20 @@ fun TextilesReceiptEditorScreen(
         }
     }
 
+    val isFormActuallyDirty: Boolean = if (isEditing) {
+        hasUnsavedChanges
+    } else {
+        hasUnsavedChanges && (
+            selectedInvoices.isNotEmpty() ||
+            selectedCustomerId != null ||
+            suttruEn.isNotBlank() ||
+            ullkurippu.isNotBlank()
+        )
+    }
+
     // Back navigation guard
     fun handleBackAttempt() {
-                if (hasUnsavedChanges) {
+        if (isFormActuallyDirty) {
             showUnsavedDialog = true
         } else {
             isExiting = true
@@ -329,7 +340,7 @@ fun TextilesReceiptEditorScreen(
         }
     }
 
-    AppBackHandler(enabled = !isExiting && (hasUnsavedChanges || showUnsavedDialog)) {
+    AppBackHandler(enabled = !isExiting && isFormActuallyDirty) {
         handleBackAttempt()
     }
 
@@ -604,16 +615,22 @@ fun TextilesReceiptEditorScreen(
                             modifier = Modifier.fillMaxWidth(),
                             verticalArrangement = Arrangement.spacedBy(24.dp)
                         ) {
-                            // 1. Amount
+                            // 1. Amount (Read-Only: Auto-calculated from selected invoices)
                             ElvanEditorTextField(
                                 value = thogai,
-                                onValueChange = {
-                                    thogai = it
-                                    hasUnsavedChanges = true
-                                },
+                                onValueChange = {},
+                                readOnly = true,
                                 label = K.amountRequired.tr(),
                                 prefixText = "₹ ",
-                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
+                                placeholder = "0.00",
+                                suffixIcon = {
+                                    Icon(
+                                        imageVector = MaterialSymbols.Rounded.Lock,
+                                        contentDescription = "Calculated",
+                                        tint = colors.textSecondary.copy(alpha = 0.4f),
+                                        modifier = Modifier.size(16.dp)
+                                    )
+                                }
                             )
 
                             // 2. Payment Mode Selector Pill

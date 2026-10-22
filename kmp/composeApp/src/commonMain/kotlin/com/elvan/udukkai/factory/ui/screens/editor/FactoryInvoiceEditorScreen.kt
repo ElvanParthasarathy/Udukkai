@@ -50,6 +50,7 @@ import com.elvan.udukkai.theme.rememberShellColors
 import com.elvan.udukkai.ui.components.shell.*
 import com.elvan.udukkai.ui.navigation.MaterialSymbols
 import com.elvan.udukkai.ui.screens.editor.ElvanEditorSection
+import com.elvan.udukkai.ui.screens.editor.ElvanEditorDisabledOverlay
 import com.elvan.udukkai.ui.screens.editor.ElvanEditorLabel
 import com.elvan.udukkai.ui.screens.editor.LocalEditorAccentColor
 import androidx.compose.ui.zIndex
@@ -161,6 +162,7 @@ fun FactoryInvoiceEditorScreen(
     var selectedCustomerId by remember { mutableStateOf(invoice?.customerId) }
     var selectedCustomerNameMap by remember { mutableStateOf(invoice?.customerName ?: emptyMap()) }
     var selectedCustomerAddressMap by remember { mutableStateOf(invoice?.customerAddress ?: emptyMap()) }
+    val isCustomerSelected = (selectedCustomerId != null && selectedCustomerId!! > 0L) || selectedCustomerNameMap.isNotEmpty()
 
     // Invoice Type & Options
     var invoiceType by remember { mutableStateOf(invoice?.invoiceType?.ifEmpty { "tax-invoice" } ?: "tax-invoice") }
@@ -265,12 +267,48 @@ fun FactoryInvoiceEditorScreen(
     var isExiting by remember { mutableStateOf(false) }
     var isSaving by remember { mutableStateOf(false) }
 
+    val isFormActuallyDirty: Boolean = if (isEditing) {
+        hasUnsavedChanges
+    } else {
+        hasUnsavedChanges && (
+            isCustomerSelected ||
+            activeItems.any { it.weight > 0.0 || it.price > 0.0 || it.itemName.isNotBlank() } ||
+            isInvoiceNumberOverridden ||
+            setharamGrams > 0.0 || thabaalThogai > 0.0 || ahimsaPattuThogai > 0.0 || activeCharges.isNotEmpty()
+        )
+    }
+
     // Local draft management
     val prefs = remember { getPreferencesHelper() }
     val draftKey = "draft_factory_invoice_${invoice?.id ?: 0L}"
 
+    fun isDraftMeaningful(json: String): Boolean {
+        try {
+            val cId = Regex(""""customerId"\s*:\s*([0-9]+)""").find(json)?.groupValues?.get(1)?.toLongOrNull()
+            if (cId != null && cId > 0L) return true
+
+            val setharam = Regex(""""setharam"\s*:\s*([0-9.]+)""").find(json)?.groupValues?.get(1)?.toDoubleOrNull() ?: 0.0
+            val courier = Regex(""""courier"\s*:\s*([0-9.]+)""").find(json)?.groupValues?.get(1)?.toDoubleOrNull() ?: 0.0
+            val ahimsa = Regex(""""ahimsa"\s*:\s*([0-9.]+)""").find(json)?.groupValues?.get(1)?.toDoubleOrNull() ?: 0.0
+            if (setharam > 0.0 || courier > 0.0 || ahimsa > 0.0) return true
+
+            val otherJson = Regex(""""other"\s*:\s*(\[.*?\])""").find(json)?.groupValues?.get(1)
+            if (!otherJson.isNullOrEmpty()) {
+                val parsedCharges = FactoryCalculation.chargesFromJson(otherJson)
+                if (parsedCharges.isNotEmpty()) return true
+            }
+
+            val itemsJson = Regex(""""items"\s*:\s*(\[.*?\])""").find(json)?.groupValues?.get(1)
+            if (!itemsJson.isNullOrEmpty()) {
+                val parsedItems = FactoryCalculation.itemsFromJson(itemsJson)
+                if (parsedItems.any { it.itemName.isNotBlank() || it.weight > 0.0 || it.price > 0.0 }) return true
+            }
+        } catch (_: Exception) {}
+        return false
+    }
+
     fun saveDraftLocally() {
-        if (!hasUnsavedChanges || isEditing) return
+        if (!isFormActuallyDirty || isEditing) return
         val draftJson = StringBuilder("{")
             .append("\"invoiceNumber\":\"$invoiceNumber\",")
             .append("\"invoiceDate\":$invoiceDate,")
@@ -325,32 +363,39 @@ fun FactoryInvoiceEditorScreen(
         if (!isEditing) {
             val savedDraft = prefs.getString(draftKey, null)
             if (!savedDraft.isNullOrBlank()) {
-                pendingDraftJson = savedDraft
-                showDraftRestoreDialog = true
+                if (isDraftMeaningful(savedDraft)) {
+                    pendingDraftJson = savedDraft
+                    showDraftRestoreDialog = true
+                } else {
+                    prefs.setString(draftKey, null)
+                }
             }
         }
     }
 
     DisposableEffect(Unit) {
         onDispose {
-            if (hasUnsavedChanges && !isEditing && !isExiting) {
+            if (isFormActuallyDirty && !isEditing && !isExiting) {
                 saveDraftLocally()
+            } else if (!isFormActuallyDirty && !isEditing) {
+                prefs.setString(draftKey, null)
             }
         }
     }
 
     val handleBack: () -> Unit = {
         if (!isExiting) {
-            if (hasUnsavedChanges) {
+            if (isFormActuallyDirty) {
                 showUnsavedDialog = true
             } else {
                 isExiting = true
+                if (!isEditing) prefs.setString(draftKey, null)
                 onBack()
             }
         }
     }
 
-    AppBackHandler(enabled = !isExiting, onBack = handleBack)
+    AppBackHandler(enabled = !isExiting && isFormActuallyDirty, onBack = handleBack)
 
     val companyRequiredMsg = K.selectCompanyProfile.tr()
     val customerRequiredMsg = K.selectCustomer.tr()
@@ -428,10 +473,11 @@ fun FactoryInvoiceEditorScreen(
             ElvanEditorBottomBar(
                 label = saveBtnLabel,
                 onClick = handleSave,
-                enabled = !isSaving && !isPaidLocked,
+                enabled = isCustomerSelected && !isSaving && !isPaidLocked,
                 isLoading = isSaving,
                 accentColor = colors.invoiceColor,
-                showSave = !isPaidLocked
+                showSave = !isPaidLocked,
+                previewEnabled = isCustomerSelected
             )
         }
     ) {
@@ -517,43 +563,46 @@ fun FactoryInvoiceEditorScreen(
 
                 // ── Section 1: Invoice Details (பட்டியல் தரவுகள்) ──
                 item(key = "invoice_details_section") {
-                    ElvanEditorSection(index = 1, title = K.invoiceDetails.tr()) {
-                        val currentPrefix = computePrefix(selectedProfile)
-                        Column(
-                            modifier = Modifier.fillMaxWidth(),
-                            verticalArrangement = Arrangement.spacedBy(16.dp)
-                        ) {
-                            ElvanDocumentNumberField(
-                                label = K.invoiceNumber.tr(),
-                                prefix = "$currentPrefix-",
-                                initialFullNumber = invoiceNumber,
-                                onFullNumberChanged = { newNum ->
-                                    invoiceNumber = newNum
-                                    isInvoiceNumberOverridden = true
-                                    hasUnsavedChanges = true
-                                },
-                                onDirty = { hasUnsavedChanges = true },
-                                isReadOnly = isPaidLocked,
-                                readOnlyMessage = invoiceLockedMsg
-                            )
+                    ElvanEditorDisabledOverlay(disabled = !isCustomerSelected) {
+                        ElvanEditorSection(index = 1, title = K.invoiceDetails.tr()) {
+                            val currentPrefix = computePrefix(selectedProfile)
+                            Column(
+                                modifier = Modifier.fillMaxWidth(),
+                                verticalArrangement = Arrangement.spacedBy(16.dp)
+                            ) {
+                                ElvanDocumentNumberField(
+                                    label = K.invoiceNumber.tr(),
+                                    prefix = "$currentPrefix-",
+                                    initialFullNumber = invoiceNumber,
+                                    onFullNumberChanged = { newNum ->
+                                        invoiceNumber = newNum
+                                        isInvoiceNumberOverridden = true
+                                        hasUnsavedChanges = true
+                                    },
+                                    onDirty = { hasUnsavedChanges = true },
+                                    isReadOnly = isPaidLocked,
+                                    readOnlyMessage = invoiceLockedMsg
+                                )
 
-                            InvoiceDateField(
-                                label = K.date.tr(),
-                                selectedDate = invoiceDate,
-                                onDateChanged = { newDate ->
-                                    invoiceDate = newDate
-                                    hasUnsavedChanges = true
-                                },
-                                isReadOnly = isPaidLocked,
-                                readOnlyMessage = invoiceLockedMsg
-                            )
+                                InvoiceDateField(
+                                    label = K.date.tr(),
+                                    selectedDate = invoiceDate,
+                                    onDateChanged = { newDate ->
+                                        invoiceDate = newDate
+                                        hasUnsavedChanges = true
+                                    },
+                                    isReadOnly = isPaidLocked,
+                                    readOnlyMessage = invoiceLockedMsg
+                                )
+                            }
                         }
                     }
                 }
 
                 // ── Section 2: Items (பொருட்கள்) ──
                 item(key = "items_section") {
-                    ElvanEditorSection(index = 2, title = K.items.tr()) {
+                    ElvanEditorDisabledOverlay(disabled = !isCustomerSelected) {
+                        ElvanEditorSection(index = 2, title = K.items.tr()) {
                         Column(
                             modifier = Modifier.fillMaxWidth(),
                             verticalArrangement = Arrangement.spacedBy(10.dp)
@@ -723,41 +772,44 @@ fun FactoryInvoiceEditorScreen(
 
                         }
                     }
+                    }
                 }
 
                 // ── Section 3: Totals & Extra Charges (மொத்தங்கள்) ──
                 item(key = "totals_section") {
-                    ElvanEditorSection(index = 3, title = K.totals.tr()) {
-                        Column(
-                            modifier = Modifier.fillMaxWidth(),
-                            verticalArrangement = Arrangement.spacedBy(16.dp)
-                        ) {
-                            FactoryExtraChargesSection(
-                                setharamGrams = setharamGrams,
-                                ahimsaPattuThogai = ahimsaPattuThogai,
-                                thabaalThogai = thabaalThogai,
-                                onSetharamChanged = {
-                                    setharamGrams = it
-                                    hasUnsavedChanges = true
-                                },
-                                onAhimsaChanged = {
-                                    ahimsaPattuThogai = it
-                                    hasUnsavedChanges = true
-                                },
-                                onThabaalChanged = {
-                                    thabaalThogai = it
-                                    hasUnsavedChanges = true
-                                },
-                                onDirty = { hasUnsavedChanges = true }
-                            )
+                    ElvanEditorDisabledOverlay(disabled = !isCustomerSelected) {
+                        ElvanEditorSection(index = 3, title = K.totals.tr()) {
+                            Column(
+                                modifier = Modifier.fillMaxWidth(),
+                                verticalArrangement = Arrangement.spacedBy(16.dp)
+                            ) {
+                                FactoryExtraChargesSection(
+                                    setharamGrams = setharamGrams,
+                                    ahimsaPattuThogai = ahimsaPattuThogai,
+                                    thabaalThogai = thabaalThogai,
+                                    onSetharamChanged = {
+                                        setharamGrams = it
+                                        hasUnsavedChanges = true
+                                    },
+                                    onAhimsaChanged = {
+                                        ahimsaPattuThogai = it
+                                        hasUnsavedChanges = true
+                                    },
+                                    onThabaalChanged = {
+                                        thabaalThogai = it
+                                        hasUnsavedChanges = true
+                                    },
+                                    onDirty = { hasUnsavedChanges = true }
+                                )
 
-                            FactoryTotalsSection(
-                                totals = totals,
-                                setharamGrams = setharamGrams,
-                                ahimsaPattuThogai = ahimsaPattuThogai,
-                                thabaalThogai = thabaalThogai,
-                                charges = activeCharges
-                            )
+                                FactoryTotalsSection(
+                                    totals = totals,
+                                    setharamGrams = setharamGrams,
+                                    ahimsaPattuThogai = ahimsaPattuThogai,
+                                    thabaalThogai = thabaalThogai,
+                                    charges = activeCharges
+                                )
+                            }
                         }
                     }
                 }

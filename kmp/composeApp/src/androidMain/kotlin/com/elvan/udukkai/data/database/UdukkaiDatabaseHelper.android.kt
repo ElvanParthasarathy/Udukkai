@@ -762,6 +762,7 @@ class AndroidUdukkaiDatabaseHelper(
     } ?: false
 
     override fun permanentDeleteReceipt(id: Long): Boolean = useDb { db ->
+        db.delete("\"$linksTable\"", "receipt_id = ?", arrayOf(id.toString()))
         db.delete("\"$receiptsTable\"", "id = ?", arrayOf(id.toString())) > 0
     } ?: false
 
@@ -812,7 +813,8 @@ class AndroidUdukkaiDatabaseHelper(
 
     override fun getPaidAmountForInvoice(invoiceId: Long): Double = useDb { db ->
         var sum = 0.0
-        db.rawQuery("SELECT SUM(applied_amount) FROM \"$linksTable\" WHERE invoice_id = ?", arrayOf(invoiceId.toString())).use { c ->
+        val sql = "SELECT SUM(l.applied_amount) FROM \"$linksTable\" l INNER JOIN \"$receiptsTable\" r ON l.receipt_id = r.id WHERE l.invoice_id = ? AND r.is_deleted = 0"
+        db.rawQuery(sql, arrayOf(invoiceId.toString())).use { c ->
             if (c.moveToFirst() && !c.isNull(0)) sum = c.getDouble(0)
         }
         sum
@@ -823,7 +825,8 @@ class AndroidUdukkaiDatabaseHelper(
         if (invoiceIds.isEmpty()) return@useDb result
         val placeholders = invoiceIds.joinToString(",") { "?" }
         val args = invoiceIds.map { it.toString() }.toTypedArray()
-        db.rawQuery("SELECT invoice_id, SUM(applied_amount) FROM \"$linksTable\" WHERE invoice_id IN ($placeholders) GROUP BY invoice_id", args).use { c ->
+        val sql = "SELECT l.invoice_id, SUM(l.applied_amount) FROM \"$linksTable\" l INNER JOIN \"$receiptsTable\" r ON l.receipt_id = r.id WHERE l.invoice_id IN ($placeholders) AND r.is_deleted = 0 GROUP BY l.invoice_id"
+        db.rawQuery(sql, args).use { c ->
             while (c.moveToNext()) {
                 result[c.getLong(0)] = c.getDouble(1)
             }
