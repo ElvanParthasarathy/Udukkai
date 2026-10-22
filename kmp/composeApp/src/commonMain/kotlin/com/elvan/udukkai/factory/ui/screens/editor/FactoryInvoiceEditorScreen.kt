@@ -110,6 +110,14 @@ fun FactoryInvoiceEditorScreen(
     val isPaidLocked = remember(invoice) {
         invoice != null && invoice.id > 0L && FactoryInvoiceRepository.hasLinkedReceipts(invoice.id)
     }
+    val invoiceLockedMsg = K.invoiceLockedDueToReceipt.tr()
+
+    LaunchedEffect(isPaidLocked) {
+        if (isPaidLocked) {
+            ElvanSnackbar.show(invoiceLockedMsg)
+            onBack()
+        }
+    }
 
     LaunchedEffect(Unit) {
         FactoryProfileRepository.refreshFromDatabase()
@@ -350,7 +358,6 @@ fun FactoryInvoiceEditorScreen(
     val invoiceNumberRequiredMsg = K.invoiceNumber.tr()
     val invoiceSavedMsg = K.invoiceSaved.tr()
     val invoiceNumberDuplicateMsg = K.invoiceNumberAlreadyExists.tr()
-    val invoiceLockedMsg = K.invoiceLockedDueToReceipt.tr()
     val saveBtnLabel = K.draft.tr()
 
     val handleSave: () -> Unit = {

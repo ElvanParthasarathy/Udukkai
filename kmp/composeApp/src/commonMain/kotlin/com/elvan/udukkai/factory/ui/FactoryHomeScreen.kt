@@ -291,6 +291,7 @@ fun FactoryHomeScreen() {
                 }
                 is ActiveSubpage.InvoiceView -> {
                     val currentInvoice = FactoryInvoiceRepository.invoices.find { it.id == subpage.invoice.id } ?: subpage.invoice
+                    val invoiceLockedMsg = K.invoiceLockedDueToReceipt.tr()
                     InvoiceViewScreen(
                         invoice = currentInvoice,
                         profile = FactoryProfileRepository.profile,
@@ -298,7 +299,11 @@ fun FactoryHomeScreen() {
                         isPaid = FactoryInvoiceRepository.hasLinkedReceipts(currentInvoice.id),
                         onBack = popSubpage,
                         onEdit = {
-                            navigateToSubpage(ActiveSubpage.InvoiceEditor(currentInvoice))
+                            if (FactoryInvoiceRepository.hasLinkedReceipts(currentInvoice.id)) {
+                                ElvanSnackbar.show(invoiceLockedMsg)
+                            } else {
+                                navigateToSubpage(ActiveSubpage.InvoiceEditor(currentInvoice))
+                            }
                         },
                         onCopy = {
                             copyInvoiceAndEdit(currentInvoice)

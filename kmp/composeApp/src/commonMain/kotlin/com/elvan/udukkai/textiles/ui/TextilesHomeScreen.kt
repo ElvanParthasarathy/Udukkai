@@ -289,6 +289,7 @@ fun TextilesHomeScreen() {
                 }
                 is ActiveSubpage.InvoiceView -> {
                     val currentInvoice = TextilesInvoiceRepository.invoices.find { it.id == subpage.invoice.id } ?: subpage.invoice
+                    val invoiceLockedMsg = K.invoiceLockedDueToReceipt.tr()
                     InvoiceViewScreen(
                         invoice = currentInvoice,
                         profile = TextilesProfileRepository.profile,
@@ -296,7 +297,11 @@ fun TextilesHomeScreen() {
                         isPaid = TextilesInvoiceRepository.hasLinkedReceipts(currentInvoice.id),
                         onBack = popSubpage,
                         onEdit = {
-                            navigateToSubpage(ActiveSubpage.InvoiceEditor(currentInvoice))
+                            if (TextilesInvoiceRepository.hasLinkedReceipts(currentInvoice.id)) {
+                                ElvanSnackbar.show(invoiceLockedMsg)
+                            } else {
+                                navigateToSubpage(ActiveSubpage.InvoiceEditor(currentInvoice))
+                            }
                         },
                         onCopy = {
                             copyInvoiceAndEdit(currentInvoice)

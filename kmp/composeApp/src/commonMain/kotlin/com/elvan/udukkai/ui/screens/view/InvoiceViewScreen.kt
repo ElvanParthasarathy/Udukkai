@@ -100,7 +100,7 @@ fun InvoiceViewScreen(
         onBack = onBack,
         scrollState = scrollState,
         isDocument = true,
-        onEdit = onEdit,
+        onEdit = if (isPaid) null else onEdit,
         onPrint = onPrint,
         onCopy = onCopy
     ) {
