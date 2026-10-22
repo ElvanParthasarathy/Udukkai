@@ -125,6 +125,9 @@ fun FactoryInvoiceEditorScreen(
     }
     val selectedCompanyId = if (isEditing) (invoice?.companyId ?: selectedProfile.id) else (selectedProfile.id ?: profiles.firstOrNull()?.id)
     val isProfileConfigured = profiles.isNotEmpty() && selectedCompanyId != null
+    val isBilingual = selectedProfile.isBilingual
+    val primaryLang = selectedProfile.primaryLanguage.ifEmpty { "ta" }
+    val secondaryLang = selectedProfile.secondaryLanguage.ifEmpty { "en" }
 
     fun computePrefix(p: BusinessProfile?): String {
         return if (p != null && p.shortName.isNotEmpty()) p.shortName else "CB"
@@ -170,9 +173,6 @@ fun FactoryInvoiceEditorScreen(
             }
         )
     }
-    val billingConfig = PrintLanguageManager.getFactoryConfig()
-    val primaryLang = billingConfig.primaryLanguage.code
-    val secondaryLang = billingConfig.secondaryLanguage.code
 
     LaunchedEffect(FactoryProductRepository.items) {
         if (FactoryProductRepository.items.isNotEmpty()) {
@@ -563,35 +563,6 @@ fun FactoryInvoiceEditorScreen(
                                         }
                                     }
                                 }
-
-                                additionalCharges.forEachIndexed { cIdx, charge ->
-                                        key(charge.id) {
-                                            ElvanAnimatedCard(
-                                                key = charge.id,
-                                                isInitial = charge.id in initialChargeIds,
-                                                onDeleted = {
-                                                    deletingChargeIds = deletingChargeIds - charge.id
-                                                    additionalCharges = additionalCharges.filter { it.id != charge.id }
-                                                    hasUnsavedChanges = true
-                                                }
-                                            ) { requestDelete ->
-                                                FactoryAdditionalChargeCard(
-                                                    charge = charge,
-                                                    index = cIdx,
-                                                    onUpdated = { updated ->
-                                                        additionalCharges = additionalCharges.map { if (it.id == charge.id) updated else it }
-                                                        hasUnsavedChanges = true
-                                                    },
-                                                    onDeleted = {
-                                                        deletingChargeIds = deletingChargeIds + charge.id
-                                                        hasUnsavedChanges = true
-                                                        requestDelete()
-                                                    },
-                                                    onDirty = { hasUnsavedChanges = true }
-                                                )
-                                            }
-                                        }
-                                    }
                             }
 
                             // ── Add Item & Add Charge Buttons ──
@@ -673,6 +644,44 @@ fun FactoryInvoiceEditorScreen(
                                                 color = colors.textPrimary
                                             )
                                         )
+                                    }
+                                }
+                            }
+
+                            // ── Other Charges Animated Cards (BELOW BUTTONS) ──
+                            if (additionalCharges.isNotEmpty()) {
+                                Spacer(modifier = Modifier.height(16.dp))
+                                ElvanAnimatedList {
+                                    additionalCharges.forEachIndexed { cIdx, charge ->
+                                        key(charge.id) {
+                                            ElvanAnimatedCard(
+                                                key = charge.id,
+                                                isInitial = charge.id in initialChargeIds,
+                                                onDeleted = {
+                                                    deletingChargeIds = deletingChargeIds - charge.id
+                                                    additionalCharges = additionalCharges.filter { it.id != charge.id }
+                                                    hasUnsavedChanges = true
+                                                }
+                                            ) { requestDelete ->
+                                                FactoryAdditionalChargeCard(
+                                                    charge = charge,
+                                                    index = cIdx,
+                                                    isBilingual = isBilingual,
+                                                    primaryLang = primaryLang,
+                                                    secondaryLang = secondaryLang,
+                                                    onUpdated = { updated ->
+                                                        additionalCharges = additionalCharges.map { if (it.id == charge.id) updated else it }
+                                                        hasUnsavedChanges = true
+                                                    },
+                                                    onDeleted = {
+                                                        deletingChargeIds = deletingChargeIds + charge.id
+                                                        hasUnsavedChanges = true
+                                                        requestDelete()
+                                                    },
+                                                    onDirty = { hasUnsavedChanges = true }
+                                                )
+                                            }
+                                        }
                                     }
                                 }
                             }

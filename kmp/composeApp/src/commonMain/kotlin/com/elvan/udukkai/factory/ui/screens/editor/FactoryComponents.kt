@@ -488,7 +488,10 @@ fun FactoryAdditionalChargeCard(
     onUpdated: (FactoryAdditionalCharge) -> Unit,
     onDeleted: () -> Unit,
     onDirty: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    isBilingual: Boolean = false,
+    primaryLang: String = "ta",
+    secondaryLang: String = "en"
 ) {
     val colors = rememberShellColors()
     val isDark = colors.isDark
@@ -518,7 +521,7 @@ fun FactoryAdditionalChargeCard(
 
             Box(
                 modifier = Modifier
-                    .padding(end = 8.dp, bottom = 6.dp)
+                    .padding(end = 4.dp, bottom = 6.dp)
                     .size(32.dp)
                     .clip(CircleShape)
                     .background(if (isDark) Color.White.copy(alpha = 0.08f) else Color.Black.copy(alpha = 0.05f))
@@ -538,36 +541,86 @@ fun FactoryAdditionalChargeCard(
             padding = PaddingValues(16.dp),
             borderRadius = 24.dp
         ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-                verticalAlignment = Alignment.Top
-            ) {
-                Box(modifier = Modifier.weight(1.3f)) {
+            if (isBilingual) {
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                        verticalAlignment = Alignment.Top
+                    ) {
+                        Box(modifier = Modifier.weight(1.3f)) {
+                            ElvanEditorTextField(
+                                label = "${K.chargeName.tr()} (${if (primaryLang == "ta") K.tamil.tr() else K.english.tr()})",
+                                value = charge.name,
+                                onValueChange = {
+                                    onUpdated(charge.copy(name = it))
+                                    onDirty()
+                                },
+                                placeholder = K.chargeName.tr()
+                            )
+                        }
+
+                        Box(modifier = Modifier.weight(1f)) {
+                            ElvanEditorTextField(
+                                label = "${K.total.tr()} (₹)",
+                                value = if (charge.amount == 0.0) "" else cleanNum(charge.amount),
+                                onValueChange = {
+                                    val parsed = it.toDoubleOrNull() ?: 0.0
+                                    onUpdated(charge.copy(amount = parsed))
+                                    onDirty()
+                                },
+                                prefixText = "₹ ",
+                                placeholder = "0",
+                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
+                            )
+                        }
+                    }
+
                     ElvanEditorTextField(
-                        label = K.chargeName.tr(),
-                        value = charge.name,
+                        label = "${K.chargeName.tr()} (${if (secondaryLang == "en") K.english.tr() else K.tamil.tr()})",
+                        value = charge.nameSecondary,
                         onValueChange = {
-                            onUpdated(charge.copy(name = it))
+                            onUpdated(charge.copy(nameSecondary = it))
                             onDirty()
                         },
                         placeholder = K.chargeName.tr()
                     )
                 }
+            } else {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    verticalAlignment = Alignment.Top
+                ) {
+                    Box(modifier = Modifier.weight(1.3f)) {
+                        ElvanEditorTextField(
+                            label = K.chargeName.tr(),
+                            value = charge.name,
+                            onValueChange = {
+                                onUpdated(charge.copy(name = it))
+                                onDirty()
+                            },
+                            placeholder = K.chargeName.tr()
+                        )
+                    }
 
-                Box(modifier = Modifier.weight(1f)) {
-                    ElvanEditorTextField(
-                        label = "${K.total.tr()} (₹)",
-                        value = if (charge.amount == 0.0) "" else cleanNum(charge.amount),
-                        onValueChange = {
-                            val parsed = it.toDoubleOrNull() ?: 0.0
-                            onUpdated(charge.copy(amount = parsed))
-                            onDirty()
-                        },
-                        prefixText = "₹ ",
-                        placeholder = "0",
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
-                    )
+                    Box(modifier = Modifier.weight(1f)) {
+                        ElvanEditorTextField(
+                            label = "${K.total.tr()} (₹)",
+                            value = if (charge.amount == 0.0) "" else cleanNum(charge.amount),
+                            onValueChange = {
+                                val parsed = it.toDoubleOrNull() ?: 0.0
+                                onUpdated(charge.copy(amount = parsed))
+                                onDirty()
+                            },
+                            prefixText = "₹ ",
+                            placeholder = "0",
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
+                        )
+                    }
                 }
             }
         }
@@ -713,7 +766,7 @@ fun FactoryTotalsSection(
             // Setharam grams
             if (setharamGrams > 0) {
                 FactoryTotalsRow(
-                    label = "+ ${K.setharam.tr()}",
+                    label = "+ ${K.wastage.tr()}",
                     value = "${cleanNum(setharamGrams)} g"
                 )
             }

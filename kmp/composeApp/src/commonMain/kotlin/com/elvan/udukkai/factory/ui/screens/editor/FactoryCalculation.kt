@@ -39,6 +39,7 @@ data class FactoryItem(
 data class FactoryAdditionalCharge(
     val id: String = System.currentTimeMillis().toString() + (0..999).random(),
     val name: String = "",
+    val nameSecondary: String = "",
     val amount: Double = 0.0
 )
 
@@ -169,6 +170,7 @@ object FactoryCalculation {
             sb.append("{")
             sb.append("\"id\":\"${escapeJson(charge.id)}\",")
             sb.append("\"name\":\"${escapeJson(charge.name)}\",")
+            sb.append("\"nameSecondary\":\"${escapeJson(charge.nameSecondary)}\",")
             sb.append("\"peyar\":\"${escapeJson(charge.name)}\",")
             sb.append("\"amount\":${charge.amount},")
             sb.append("\"thogai\":${charge.amount}")
