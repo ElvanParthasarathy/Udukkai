@@ -28,6 +28,7 @@ import com.elvan.udukkai.theme.rememberShellColors
 import com.elvan.udukkai.ui.navigation.MaterialSymbols
 import com.elvan.udukkai.ui.screens.editor.ElvanEditorLabel
 import com.elvan.udukkai.ui.screens.editor.ElvanEditorTextField
+import com.elvan.udukkai.ui.components.shell.ElvanSnackbar
 
 @Composable
 fun ElvanDocumentNumberField(
@@ -36,7 +37,9 @@ fun ElvanDocumentNumberField(
     initialFullNumber: String,
     onFullNumberChanged: (String) -> Unit,
     onDirty: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    isReadOnly: Boolean = false,
+    readOnlyMessage: String? = null
 ) {
     val colors = rememberShellColors()
     val isDark = colors.isDark
@@ -114,10 +117,16 @@ fun ElvanDocumentNumberField(
                     .background(containerBg)
                     .clickable(
                         interactionSource = remember { MutableInteractionSource() },
-                        indication = ripple(color = colors.accent)
+                        indication = if (isReadOnly) null else ripple(color = colors.accent)
                     ) {
-                        editedNumberPart = numberPart
-                        isEditing = true
+                        if (isReadOnly) {
+                            if (!readOnlyMessage.isNullOrBlank()) {
+                                ElvanSnackbar.show(readOnlyMessage)
+                            }
+                        } else {
+                            editedNumberPart = numberPart
+                            isEditing = true
+                        }
                     }
                     .padding(start = 20.dp, end = 8.dp),
                 contentAlignment = Alignment.CenterStart
@@ -142,10 +151,10 @@ fun ElvanDocumentNumberField(
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
-                            imageVector = MaterialSymbols.Rounded.Edit,
-                            contentDescription = "Edit",
-                            tint = colors.textSecondary,
-                            modifier = Modifier.size(18.dp)
+                            imageVector = if (isReadOnly) MaterialSymbols.Rounded.Lock else MaterialSymbols.Rounded.Edit,
+                            contentDescription = if (isReadOnly) "Locked" else "Edit",
+                            tint = if (isReadOnly) colors.textSecondary.copy(alpha = 0.5f) else colors.textSecondary,
+                            modifier = Modifier.size(if (isReadOnly) 16.dp else 18.dp)
                         )
                     }
                 }

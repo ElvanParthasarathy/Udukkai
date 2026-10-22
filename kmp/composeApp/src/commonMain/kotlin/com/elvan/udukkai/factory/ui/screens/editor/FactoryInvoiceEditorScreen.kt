@@ -509,7 +509,9 @@ fun FactoryInvoiceEditorScreen(
                                     isInvoiceNumberOverridden = true
                                     hasUnsavedChanges = true
                                 },
-                                onDirty = { hasUnsavedChanges = true }
+                                onDirty = { hasUnsavedChanges = true },
+                                isReadOnly = isEditing,
+                                readOnlyMessage = K.savedInvoiceNumberLocked.tr()
                             )
 
                             InvoiceDateField(
@@ -518,7 +520,9 @@ fun FactoryInvoiceEditorScreen(
                                 onDateChanged = { newDate ->
                                     invoiceDate = newDate
                                     hasUnsavedChanges = true
-                                }
+                                },
+                                isReadOnly = isEditing,
+                                readOnlyMessage = K.savedInvoiceDateLocked.tr()
                             )
                         }
                     }

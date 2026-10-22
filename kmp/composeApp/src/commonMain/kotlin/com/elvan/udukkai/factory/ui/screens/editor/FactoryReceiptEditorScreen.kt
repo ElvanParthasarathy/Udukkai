@@ -498,7 +498,9 @@ fun FactoryReceiptEditorScreen(
                                     onDateChanged = {
                                         receiptDate = it
                                         hasUnsavedChanges = true
-                                    }
+                                    },
+                                    isReadOnly = isEditing,
+                                    readOnlyMessage = K.savedReceiptDateLocked.tr()
                                 )
                             }
 
@@ -587,7 +589,9 @@ fun FactoryReceiptEditorScreen(
                                     receiptNumber = it
                                     hasUnsavedChanges = true
                                 },
-                                onDirty = { hasUnsavedChanges = true }
+                                onDirty = { hasUnsavedChanges = true },
+                                isReadOnly = isEditing,
+                                readOnlyMessage = K.savedReceiptNumberLocked.tr()
                             )
                         }
                     }

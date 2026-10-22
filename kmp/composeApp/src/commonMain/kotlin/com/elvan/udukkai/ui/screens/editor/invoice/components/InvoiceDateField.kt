@@ -23,6 +23,7 @@ import com.elvan.udukkai.theme.preventBrokenLigatures
 import com.elvan.udukkai.theme.rememberShellColors
 import com.elvan.udukkai.ui.navigation.MaterialSymbols
 import com.elvan.udukkai.ui.screens.editor.ElvanEditorLabel
+import com.elvan.udukkai.ui.components.shell.ElvanSnackbar
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -30,7 +31,9 @@ fun InvoiceDateField(
     selectedDate: Long,
     onDateChanged: (Long) -> Unit,
     modifier: Modifier = Modifier,
-    label: String? = null
+    label: String? = null,
+    isReadOnly: Boolean = false,
+    readOnlyMessage: String? = null
 ) {
     val colors = rememberShellColors()
     val isDark = colors.isDark
@@ -52,8 +55,16 @@ fun InvoiceDateField(
                 .background(containerBg)
                 .clickable(
                     interactionSource = remember { MutableInteractionSource() },
-                    indication = ripple(color = colors.accent)
-                ) { isPickerOpen = true }
+                    indication = if (isReadOnly) null else ripple(color = colors.accent)
+                ) {
+                    if (isReadOnly) {
+                        if (!readOnlyMessage.isNullOrBlank()) {
+                            ElvanSnackbar.show(readOnlyMessage)
+                        }
+                    } else {
+                        isPickerOpen = true
+                    }
+                }
                 .padding(start = 20.dp, end = 8.dp),
             contentAlignment = Alignment.CenterStart
         ) {
@@ -77,10 +88,10 @@ fun InvoiceDateField(
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
-                        imageVector = MaterialSymbols.Rounded.CalendarToday,
-                        contentDescription = null,
-                        tint = colors.textSecondary,
-                        modifier = Modifier.size(20.dp)
+                        imageVector = if (isReadOnly) MaterialSymbols.Rounded.Lock else MaterialSymbols.Rounded.CalendarToday,
+                        contentDescription = if (isReadOnly) "Locked" else null,
+                        tint = if (isReadOnly) colors.textSecondary.copy(alpha = 0.5f) else colors.textSecondary,
+                        modifier = Modifier.size(if (isReadOnly) 16.dp else 20.dp)
                     )
                 }
             }

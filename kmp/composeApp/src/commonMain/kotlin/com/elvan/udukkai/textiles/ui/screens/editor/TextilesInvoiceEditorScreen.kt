@@ -507,7 +507,9 @@ fun TextilesInvoiceEditorScreen(
                                     isInvoiceNumberOverridden = true
                                     hasUnsavedChanges = true
                                 },
-                                onDirty = { hasUnsavedChanges = true }
+                                onDirty = { hasUnsavedChanges = true },
+                                isReadOnly = isEditing,
+                                readOnlyMessage = K.savedInvoiceNumberLocked.tr()
                             )
 
                             // Date Picker Pill
@@ -517,7 +519,9 @@ fun TextilesInvoiceEditorScreen(
                                 onDateChanged = {
                                     invoiceDate = it
                                     hasUnsavedChanges = true
-                                }
+                                },
+                                isReadOnly = isEditing,
+                                readOnlyMessage = K.savedInvoiceDateLocked.tr()
                             )
 
                             // Place of Supply with Indian states selection
