@@ -217,21 +217,7 @@ fun FactoryItemCard(
                             }
                         }
 
-                        if (isBilingual && secondaryName.isNotEmpty()) {
-                            Spacer(modifier = Modifier.height(4.dp))
-                            Text(
-                                text = secondaryName.preventBrokenLigatures(),
-                                style = TextStyle(
-                                    fontFamily = ff,
-                                    fontSize = 12.sp,
-                                    color = colors.textSecondary,
-                                    fontWeight = FontWeight.Medium
-                                ),
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis,
-                                modifier = Modifier.padding(start = 20.dp)
-                            )
-                        }
+
                     }
                 }
 

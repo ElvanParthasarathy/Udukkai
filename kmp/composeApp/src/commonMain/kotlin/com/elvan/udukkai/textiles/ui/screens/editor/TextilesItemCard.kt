@@ -185,9 +185,7 @@ fun TextilesItemCard(
 
                 // Subtitle Info (Secondary/English name • GST%)
                 val subtitleParts = mutableListOf<String>()
-                if (config.isBilingual && secondaryName.isNotEmpty() && secondaryName != displayName) {
-                    subtitleParts.add(secondaryName)
-                }
+
                 if (item.taxRate > 0) {
                     subtitleParts.add("GST ${item.taxRate.toInt()}%")
                 }
