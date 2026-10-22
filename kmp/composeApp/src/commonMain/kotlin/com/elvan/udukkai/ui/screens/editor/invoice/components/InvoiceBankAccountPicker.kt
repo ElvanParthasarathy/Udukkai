@@ -2,6 +2,8 @@ package com.elvan.udukkai.ui.screens.editor.invoice.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.material3.ripple
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
@@ -64,12 +66,15 @@ fun InvoiceBankAccountPicker(
                 .height(48.dp)
                 .clip(RoundedCornerShape(100.dp))
                 .background(colors.iconBg)
-                .clickable {
+                .clickable(
+                    interactionSource = remember { MutableInteractionSource() },
+                    indication = ripple(color = colors.accent)
+                ) {
                     if (activeAccounts.size > 1) {
                         isSheetOpen = true
                     }
                 }
-                .padding(horizontal = 16.dp),
+                .padding(start = 20.dp, end = 8.dp),
             contentAlignment = Alignment.CenterStart
         ) {
             Row(
@@ -96,12 +101,17 @@ fun InvoiceBankAccountPicker(
                     )
                 }
                 if (activeAccounts.size > 1) {
-                    Icon(
-                        imageVector = MaterialSymbols.Rounded.KeyboardArrowDown,
-                        contentDescription = null,
-                        tint = colors.textSecondary,
-                        modifier = Modifier.size(20.dp)
-                    )
+                    Box(
+                        modifier = Modifier.size(36.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = MaterialSymbols.Rounded.KeyboardArrowDown,
+                            contentDescription = null,
+                            tint = colors.textSecondary,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
                 }
             }
         }

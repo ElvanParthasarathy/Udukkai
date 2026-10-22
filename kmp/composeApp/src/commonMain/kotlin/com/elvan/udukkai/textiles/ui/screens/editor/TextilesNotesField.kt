@@ -2,6 +2,8 @@ package com.elvan.udukkai.textiles.ui.screens.editor
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.material3.ripple
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -79,7 +81,10 @@ fun TextilesPlaceOfSupplyField(
                 .height(48.dp)
                 .clip(RoundedCornerShape(100.dp))
                 .background(containerBg)
-                .clickable { isSheetOpen = true }
+                .clickable(
+                    interactionSource = remember { MutableInteractionSource() },
+                    indication = ripple(color = colors.accent)
+                ) { isSheetOpen = true }
                 .padding(start = 20.dp, end = 8.dp),
             contentAlignment = Alignment.CenterStart
         ) {
@@ -104,9 +109,12 @@ fun TextilesPlaceOfSupplyField(
                 if (displayText.isNotEmpty()) {
                     Box(
                         modifier = Modifier
-                            .size(24.dp)
+                            .size(36.dp)
                             .clip(CircleShape)
-                            .clickable {
+                            .clickable(
+                                interactionSource = remember { MutableInteractionSource() },
+                                indication = ripple(bounded = true, radius = 18.dp)
+                            ) {
                                 isCustom = false
                                 onCleared()
                             },
@@ -116,16 +124,21 @@ fun TextilesPlaceOfSupplyField(
                             imageVector = MaterialSymbols.Rounded.Close,
                             contentDescription = K.cancel.tr(),
                             tint = colors.textSecondary,
-                            modifier = Modifier.size(16.dp)
+                            modifier = Modifier.size(18.dp)
                         )
                     }
                 } else {
-                    Icon(
-                        imageVector = MaterialSymbols.Rounded.KeyboardArrowDown,
-                        contentDescription = null,
-                        tint = colors.textSecondary,
-                        modifier = Modifier.size(20.dp)
-                    )
+                    Box(
+                        modifier = Modifier.size(36.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = MaterialSymbols.Rounded.KeyboardArrowDown,
+                            contentDescription = null,
+                            tint = colors.textSecondary,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
                 }
             }
         }

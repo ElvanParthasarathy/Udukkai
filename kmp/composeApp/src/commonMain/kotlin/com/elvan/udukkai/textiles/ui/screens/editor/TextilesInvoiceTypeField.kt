@@ -2,6 +2,8 @@ package com.elvan.udukkai.textiles.ui.screens.editor
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.material3.ripple
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
@@ -58,7 +60,10 @@ fun TextilesInvoiceTypeField(
                     .height(48.dp)
                     .clip(RoundedCornerShape(100.dp))
                     .background(containerBg)
-                    .clickable { isSheetOpen = true }
+                    .clickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = ripple(color = colors.accent)
+                    ) { isSheetOpen = true }
                     .padding(start = 20.dp, end = 8.dp),
                 contentAlignment = Alignment.CenterStart
             ) {
@@ -77,12 +82,17 @@ fun TextilesInvoiceTypeField(
                         )
                     )
 
-                    Icon(
-                        imageVector = MaterialSymbols.Rounded.KeyboardArrowDown,
-                        contentDescription = null,
-                        tint = colors.textSecondary,
-                        modifier = Modifier.size(20.dp)
-                    )
+                    Box(
+                        modifier = Modifier.size(36.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = MaterialSymbols.Rounded.KeyboardArrowDown,
+                            contentDescription = null,
+                            tint = colors.textSecondary,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
                 }
             }
         }

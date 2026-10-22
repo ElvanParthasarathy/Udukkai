@@ -2,6 +2,7 @@ package com.elvan.udukkai.ui.screens.editor.invoice.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
@@ -49,8 +50,11 @@ fun InvoiceDateField(
                 .height(48.dp)
                 .clip(RoundedCornerShape(100.dp))
                 .background(containerBg)
-                .clickable { isPickerOpen = true }
-                .padding(horizontal = 20.dp),
+                .clickable(
+                    interactionSource = remember { MutableInteractionSource() },
+                    indication = ripple(color = colors.accent)
+                ) { isPickerOpen = true }
+                .padding(start = 20.dp, end = 8.dp),
             contentAlignment = Alignment.CenterStart
         ) {
             Row(
@@ -68,12 +72,17 @@ fun InvoiceDateField(
                     )
                 )
 
-                Icon(
-                    imageVector = MaterialSymbols.Rounded.CalendarToday,
-                    contentDescription = null,
-                    tint = colors.textSecondary,
-                    modifier = Modifier.size(20.dp)
-                )
+                Box(
+                    modifier = Modifier.size(36.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = MaterialSymbols.Rounded.CalendarToday,
+                        contentDescription = null,
+                        tint = colors.textSecondary,
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
             }
         }
     }

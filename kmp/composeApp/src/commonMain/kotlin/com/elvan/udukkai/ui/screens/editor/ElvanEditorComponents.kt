@@ -320,7 +320,7 @@ fun ElvanEditorTextField(
                 )
                 .clip(shape)
                 .background(containerBg)
-                .padding(horizontal = 20.dp, vertical = if (singleLine) 0.dp else 12.dp),
+                .padding(start = 20.dp, end = if (suffixIcon != null) 8.dp else 20.dp, top = if (singleLine) 0.dp else 12.dp, bottom = if (singleLine) 0.dp else 12.dp),
             contentAlignment = if (singleLine) Alignment.CenterStart else Alignment.TopStart
         ) {
             Row(
@@ -592,11 +592,11 @@ fun <T> ElvanEditorDropdown(
                 if (value != null && onClear != null) {
                     Box(
                         modifier = Modifier
-                            .size(32.dp)
+                            .size(36.dp)
                             .clip(CircleShape)
                             .clickable(
                                 interactionSource = remember { MutableInteractionSource() },
-                                indication = ripple(bounded = true, radius = 16.dp)
+                                indication = ripple(bounded = true, radius = 18.dp)
                             ) { onClear() },
                         contentAlignment = Alignment.Center
                     ) {
@@ -604,12 +604,12 @@ fun <T> ElvanEditorDropdown(
                             imageVector = MaterialSymbols.Rounded.Close,
                             contentDescription = "Clear",
                             tint = colors.textSecondary,
-                            modifier = Modifier.size(16.dp)
+                            modifier = Modifier.size(18.dp)
                         )
                     }
                 } else {
                     Box(
-                        modifier = Modifier.size(32.dp),
+                        modifier = Modifier.size(36.dp),
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(

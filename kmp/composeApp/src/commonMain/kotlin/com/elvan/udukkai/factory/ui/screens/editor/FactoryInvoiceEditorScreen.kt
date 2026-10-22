@@ -344,7 +344,7 @@ fun FactoryInvoiceEditorScreen(
     val companyRequiredMsg = K.selectCompanyProfile.tr()
     val customerRequiredMsg = K.selectCustomer.tr()
     val itemRequiredMsg = K.addAtLeastOneItem.tr()
-    val receiptNumberRequiredMsg = K.receiptNumber.tr()
+    val invoiceNumberRequiredMsg = K.invoiceNumber.tr()
     val saveBtnLabel = K.saveBtn.tr()
 
     val handleSave: () -> Unit = {
@@ -354,7 +354,7 @@ fun FactoryInvoiceEditorScreen(
         } else if (selectedCustomerId == null && selectedCustomerNameMap.isEmpty()) {
             errorMessage = customerRequiredMsg
         } else if (invoiceNumber.isBlank()) {
-            errorMessage = receiptNumberRequiredMsg
+            errorMessage = invoiceNumberRequiredMsg
         } else {
             val validItems = activeItems.filter { it.weight > 0 && it.price > 0 }
             if (validItems.isEmpty()) {
@@ -492,7 +492,7 @@ fun FactoryInvoiceEditorScreen(
                             verticalArrangement = Arrangement.spacedBy(16.dp)
                         ) {
                             ElvanDocumentNumberField(
-                                label = K.receiptNumber.tr(),
+                                label = K.invoiceNumber.tr(),
                                 prefix = "$currentPrefix-",
                                 initialFullNumber = invoiceNumber,
                                 onFullNumberChanged = { newNum ->

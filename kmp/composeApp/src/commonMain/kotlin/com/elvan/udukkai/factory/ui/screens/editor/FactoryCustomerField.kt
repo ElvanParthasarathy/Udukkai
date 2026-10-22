@@ -2,11 +2,13 @@ package com.elvan.udukkai.factory.ui.screens.editor
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
+import androidx.compose.material3.ripple
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -75,7 +77,10 @@ fun FactoryCustomerField(
                 .height(48.dp)
                 .clip(RoundedCornerShape(100.dp))
                 .background(containerBg)
-                .clickable { isBottomSheetOpen = true }
+                .clickable(
+                    interactionSource = remember { MutableInteractionSource() },
+                    indication = ripple(color = colors.accent)
+                ) { isBottomSheetOpen = true }
                 .padding(start = 20.dp, end = 8.dp),
             contentAlignment = Alignment.CenterStart
         ) {
@@ -100,25 +105,33 @@ fun FactoryCustomerField(
                 if (selectedCustomer != null) {
                     Box(
                         modifier = Modifier
-                            .size(24.dp)
+                            .size(36.dp)
                             .clip(CircleShape)
-                            .clickable { onCustomerCleared() },
+                            .clickable(
+                                interactionSource = remember { MutableInteractionSource() },
+                                indication = ripple(bounded = true, radius = 18.dp)
+                            ) { onCustomerCleared() },
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
                             imageVector = MaterialSymbols.Rounded.Close,
                             contentDescription = K.cancel.tr(),
                             tint = colors.textSecondary,
-                            modifier = Modifier.size(16.dp)
+                            modifier = Modifier.size(18.dp)
                         )
                     }
                 } else {
-                    Icon(
-                        imageVector = MaterialSymbols.Rounded.KeyboardArrowDown,
-                        contentDescription = null,
-                        tint = colors.textSecondary,
-                        modifier = Modifier.size(20.dp)
-                    )
+                    Box(
+                        modifier = Modifier.size(36.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = MaterialSymbols.Rounded.KeyboardArrowDown,
+                            contentDescription = null,
+                            tint = colors.textSecondary,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
                 }
             }
         }
@@ -191,18 +204,18 @@ fun FactoryCustomerField(
                             Text(
                                 text = secAddressCombined.preventBrokenLigatures(),
                                 style = TextStyle(
-                                fontFamily = ff,
-                                fontSize = 13.sp,
-                                color = colors.textSecondary.copy(alpha = 0.7f),
-                                lineHeight = 18.sp
+                                    fontFamily = ff,
+                                    fontSize = 13.sp,
+                                    color = colors.textSecondary.copy(alpha = 0.7f),
+                                    lineHeight = 18.sp
+                                )
                             )
-                        )
+                        }
                     }
                 }
             }
         }
     }
-}
 
     // ── Customer Selection Bottom Sheet ──
     if (isBottomSheetOpen) {

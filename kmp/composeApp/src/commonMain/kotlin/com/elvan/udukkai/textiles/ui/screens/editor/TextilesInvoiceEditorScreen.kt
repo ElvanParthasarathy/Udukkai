@@ -321,7 +321,7 @@ fun TextilesInvoiceEditorScreen(
     val companyRequiredMsg = K.selectCompanyProfile.tr()
     val customerRequiredMsg = K.selectCustomer.tr()
     val itemRequiredMsg = K.addAtLeastOneItem.tr()
-    val receiptNumberRequiredMsg = K.receiptNumber.tr()
+    val invoiceNumberRequiredMsg = K.invoiceNumber.tr()
     val saveBtnLabel = K.saveBtn.tr()
 
     val handleSave: () -> Unit = {
@@ -331,7 +331,7 @@ fun TextilesInvoiceEditorScreen(
         } else if (selectedCustomerId == null && selectedCustomerNameMap.isEmpty()) {
             errorMessage = customerRequiredMsg
         } else if (invoiceNumber.isBlank()) {
-            errorMessage = receiptNumberRequiredMsg
+            errorMessage = invoiceNumberRequiredMsg
         } else {
             val validItems = activeItems.filter { it.quantity > 0 && it.price > 0 }
             if (validItems.isEmpty()) {

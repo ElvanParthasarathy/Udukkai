@@ -514,7 +514,7 @@ fun TextilesReceiptEditorScreen(
                                         .height(48.dp)
                                         .clip(RoundedCornerShape(100.dp))
                                         .background(pillBg)
-                                        .padding(horizontal = 20.dp),
+                                        .padding(start = 20.dp, end = 8.dp),
                                     contentAlignment = Alignment.CenterStart
                                 ) {
                                     if (customerName.isNotEmpty()) {
@@ -535,12 +535,17 @@ fun TextilesReceiptEditorScreen(
                                                 overflow = TextOverflow.Ellipsis,
                                                 modifier = Modifier.weight(1f)
                                             )
-                                            Icon(
-                                                imageVector = MaterialSymbols.Rounded.Lock,
-                                                contentDescription = "Locked",
-                                                tint = colors.textSecondary.copy(alpha = 0.4f),
-                                                modifier = Modifier.size(16.dp)
-                                            )
+                                            Box(
+                                                modifier = Modifier.size(36.dp),
+                                                contentAlignment = Alignment.Center
+                                            ) {
+                                                Icon(
+                                                    imageVector = MaterialSymbols.Rounded.Lock,
+                                                    contentDescription = "Locked",
+                                                    tint = colors.textSecondary.copy(alpha = 0.4f),
+                                                    modifier = Modifier.size(16.dp)
+                                                )
+                                            }
                                         }
                                     } else {
                                         Row(

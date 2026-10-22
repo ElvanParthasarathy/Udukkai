@@ -166,8 +166,11 @@ fun FactoryItemCard(
                                 .height(48.dp)
                                 .clip(RoundedCornerShape(100.dp))
                                 .background(containerBg)
-                                .clickable { isPickerOpen = true }
-                                .padding(horizontal = 20.dp),
+                                .clickable(
+                                    interactionSource = remember { MutableInteractionSource() },
+                                    indication = ripple(color = colors.accent)
+                                ) { isPickerOpen = true }
+                                .padding(start = 20.dp, end = 8.dp),
                             contentAlignment = Alignment.CenterStart
                         ) {
                             Row(
@@ -191,33 +194,40 @@ fun FactoryItemCard(
                                 if (displayName.isNotEmpty()) {
                                     Box(
                                         modifier = Modifier
-                                            .size(24.dp)
+                                            .size(36.dp)
                                             .clip(CircleShape)
-                                            .clickable {
+                                            .clickable(
+                                                interactionSource = remember { MutableInteractionSource() },
+                                                indication = ripple(bounded = true, radius = 18.dp)
+                                            ) {
                                                 onItemCleared()
                                                 onDirty()
                                             },
                                         contentAlignment = Alignment.Center
                                     ) {
+
                                         Icon(
                                             imageVector = MaterialSymbols.Rounded.Close,
                                             contentDescription = K.cancel.tr(),
                                             tint = colors.textSecondary,
-                                            modifier = Modifier.size(16.dp)
+                                            modifier = Modifier.size(18.dp)
                                         )
                                     }
                                 } else {
-                                    Icon(
-                                        imageVector = MaterialSymbols.Rounded.KeyboardArrowDown,
-                                        contentDescription = null,
-                                        tint = colors.textSecondary,
-                                        modifier = Modifier.size(20.dp)
-                                    )
+                                    Box(
+                                        modifier = Modifier.size(36.dp),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Icon(
+                                            imageVector = MaterialSymbols.Rounded.KeyboardArrowDown,
+                                            contentDescription = null,
+                                            tint = colors.textSecondary,
+                                            modifier = Modifier.size(20.dp)
+                                        )
+                                    }
                                 }
                             }
                         }
-
-
                     }
                 }
 
