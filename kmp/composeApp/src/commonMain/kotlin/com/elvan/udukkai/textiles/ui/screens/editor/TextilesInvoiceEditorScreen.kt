@@ -210,6 +210,10 @@ fun TextilesInvoiceEditorScreen(
         )
     }
 
+    val initialItemsList = remember(invoice) {
+        if (invoice != null) TextilesCalculation.itemsFromJson(invoice.itemsJson) else emptyList()
+    }
+
     // Guards & states
     var hasUnsavedChanges by remember { mutableStateOf(false) }
     var showUnsavedDialog by remember { mutableStateOf(false) }
@@ -217,7 +221,24 @@ fun TextilesInvoiceEditorScreen(
     var isExiting by remember { mutableStateOf(false) }
 
     val isFormActuallyDirty: Boolean = if (isEditing) {
-        hasUnsavedChanges
+        val itemsChanged = activeItems.size != initialItemsList.size ||
+            activeItems.zip(initialItemsList).any { (a, b) ->
+                a.itemName != b.itemName || a.quantity != b.quantity || a.rate != b.rate || a.unit != b.unit
+            }
+        val initialDiscount = if (invoice != null && invoice.globalDiscountValue > 0) invoice.globalDiscountValue.toString() else ""
+        val initialPlaceOfSupply = if (invoice != null && initialDisplayOptions.placeOfSupply.isNotEmpty()) initialDisplayOptions.placeOfSupply else "Tamil Nadu"
+
+        hasUnsavedChanges && (
+            selectedCustomerId != invoice?.customerId ||
+            invoiceNumber != (invoice?.invoiceNumber ?: "") ||
+            invoiceDate != (invoice?.invoiceDate ?: 0L) ||
+            invoiceType != (invoice?.invoiceType ?: "tax-invoice") ||
+            globalDiscountValue != initialDiscount ||
+            globalDiscountType != (invoice?.globalDiscountType ?: initialDisplayOptions.globalDiscountType) ||
+            placeOfSupplyEn != initialPlaceOfSupply ||
+            selectedAccountId != initialDisplayOptions.selectedAccountId ||
+            itemsChanged
+        )
     } else {
         hasUnsavedChanges && (
             isCustomerSelected ||

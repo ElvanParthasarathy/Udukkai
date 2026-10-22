@@ -126,6 +126,7 @@ fun FactoryReceiptEditorScreen(
 
     // Initial load of linked invoices when editing
     var isInitialized by remember { mutableStateOf(false) }
+    var initialInvoiceIds by remember { mutableStateOf<Set<Long>>(emptySet()) }
     LaunchedEffect(receipt?.id, allInvoices) {
         if (receipt != null && !isInitialized && allInvoices.isNotEmpty()) {
             isInitialized = true
@@ -135,6 +136,7 @@ fun FactoryReceiptEditorScreen(
             }
             selectedInvoices.clear()
             selectedInvoices.addAll(matching)
+            initialInvoiceIds = matching.map { it.id }.toSet()
         }
     }
 
@@ -320,7 +322,14 @@ fun FactoryReceiptEditorScreen(
     }
 
     val isFormActuallyDirty: Boolean = if (isEditing) {
-        hasUnsavedChanges
+        val invoicesChanged = isInitialized && selectedInvoices.map { it.id }.toSet() != initialInvoiceIds
+        hasUnsavedChanges && (
+            invoicesChanged ||
+            selectedCustomerId != receipt?.customerId ||
+            suttruEn != (receipt?.transactionNumber.orEmpty()) ||
+            ullkurippu != (receipt?.notes.orEmpty()) ||
+            paymentType != PaymentType.fromStored(receipt?.paymentMode)
+        )
     } else {
         hasUnsavedChanges && (
             selectedInvoices.isNotEmpty() ||
@@ -622,15 +631,7 @@ fun FactoryReceiptEditorScreen(
                                 readOnly = true,
                                 label = K.amountRequired.tr(),
                                 prefixText = "₹ ",
-                                placeholder = "0.00",
-                                suffixIcon = {
-                                    Icon(
-                                        imageVector = MaterialSymbols.Rounded.Lock,
-                                        contentDescription = "Calculated",
-                                        tint = colors.textSecondary.copy(alpha = 0.4f),
-                                        modifier = Modifier.size(16.dp)
-                                    )
-                                }
+                                placeholder = "0.00"
                             )
 
                             // 2. Payment Mode Selector Pill

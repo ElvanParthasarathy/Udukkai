@@ -63,6 +63,10 @@ fun FactoryCustomerField(
     val selectedCustomer = remember(selectedCustomerId, allMerchants) {
         allMerchants.firstOrNull { it.id == selectedCustomerId }
     }
+    var lastCustomer by remember { mutableStateOf<CustomerModel?>(null) }
+    if (selectedCustomer != null) {
+        lastCustomer = selectedCustomer
+    }
 
     Column(modifier = modifier.fillMaxWidth()) {
         ElvanEditorLabel(label = K.clientNameSearch.tr())
@@ -139,7 +143,7 @@ fun FactoryCustomerField(
             }
         }
 
-        // ── Saved Details Card (Smooth Fluid Entrance Animation) ──
+        // ── Saved Details Card (Smooth Fluid Entrance & Reverse Exit Animation) ──
         AnimatedVisibility(
             visible = selectedCustomer != null,
             enter = expandVertically(
@@ -149,7 +153,8 @@ fun FactoryCustomerField(
                 animationSpec = spring(stiffness = Spring.StiffnessMediumLow, dampingRatio = Spring.DampingRatioNoBouncy)
             ) + fadeOut()
         ) {
-            if (selectedCustomer != null) {
+            val displayCustomer = selectedCustomer ?: lastCustomer
+            if (displayCustomer != null) {
                 Column(modifier = Modifier.fillMaxWidth()) {
                     Spacer(modifier = Modifier.height(16.dp))
                     ElvanEditorCard(
@@ -172,7 +177,7 @@ fun FactoryCustomerField(
                             )
 
                             // Secondary language name if bilingual
-                            val secName = if (isBilingual) selectedCustomer.name[secondaryLang].orEmpty() else ""
+                            val secName = if (isBilingual) displayCustomer.name[secondaryLang].orEmpty() else ""
                             if (secName.isNotEmpty()) {
                                 Text(
                                     text = secName.preventBrokenLigatures(),
@@ -186,10 +191,10 @@ fun FactoryCustomerField(
                             }
 
                             // Address & Town (Oor)
-                            val primAddress = selectedCustomer.address[primaryLang]
-                                ?: selectedCustomer.address.values.firstOrNull().orEmpty()
-                            val primCity = selectedCustomer.city[primaryLang]
-                                ?: selectedCustomer.city.values.firstOrNull().orEmpty()
+                            val primAddress = displayCustomer.address[primaryLang]
+                                ?: displayCustomer.address.values.firstOrNull().orEmpty()
+                            val primCity = displayCustomer.city[primaryLang]
+                                ?: displayCustomer.city.values.firstOrNull().orEmpty()
                             val primAddressCombined = listOf(primAddress, primCity)
                                 .filter { it.isNotBlank() }
                                 .joinToString(", ")
@@ -207,8 +212,8 @@ fun FactoryCustomerField(
                             }
 
                             if (isBilingual) {
-                                val secAddress = selectedCustomer.address[secondaryLang].orEmpty()
-                                val secCity = selectedCustomer.city[secondaryLang].orEmpty()
+                                val secAddress = displayCustomer.address[secondaryLang].orEmpty()
+                                val secCity = displayCustomer.city[secondaryLang].orEmpty()
                                 val secAddressCombined = listOf(secAddress, secCity)
                                     .filter { it.isNotBlank() }
                                     .joinToString(", ")

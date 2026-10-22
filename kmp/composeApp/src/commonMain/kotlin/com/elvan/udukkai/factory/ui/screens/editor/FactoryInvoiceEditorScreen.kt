@@ -260,6 +260,13 @@ fun FactoryInvoiceEditorScreen(
         )
     }
 
+    val initialItemsList = remember(invoice) {
+        if (invoice != null) FactoryCalculation.itemsFromJson(invoice.itemsJson) else emptyList()
+    }
+    val initialChargesList = remember(invoice) {
+        if (invoice != null) FactoryCalculation.chargesFromJson(invoice.otherTaxesJson) else emptyList()
+    }
+
     var hasUnsavedChanges by remember { mutableStateOf(false) }
     var showUnsavedDialog by remember { mutableStateOf(false) }
     var showDraftRestoreDialog by remember { mutableStateOf(false) }
@@ -268,7 +275,27 @@ fun FactoryInvoiceEditorScreen(
     var isSaving by remember { mutableStateOf(false) }
 
     val isFormActuallyDirty: Boolean = if (isEditing) {
-        hasUnsavedChanges
+        val itemsChanged = activeItems.size != initialItemsList.size ||
+            activeItems.zip(initialItemsList).any { (a, b) ->
+                a.itemName != b.itemName || a.weight != b.weight || a.price != b.price
+            }
+        val chargesChanged = activeCharges.size != initialChargesList.size ||
+            activeCharges.zip(initialChargesList).any { (a, b) ->
+                a.name != b.name || a.amount != b.amount
+            }
+
+        hasUnsavedChanges && (
+            selectedCustomerId != invoice?.customerId ||
+            invoiceNumber != (invoice?.invoiceNumber ?: "") ||
+            invoiceDate != (invoice?.invoiceDate ?: 0L) ||
+            invoiceType != (invoice?.invoiceType ?: "tax-invoice") ||
+            setharamGrams != (invoice?.wastageGrams ?: 0.0) ||
+            thabaalThogai != (invoice?.postalCharges ?: 0.0) ||
+            ahimsaPattuThogai != (invoice?.ahimsaSilkAmount ?: 0.0) ||
+            selectedAccountId != initialDisplayOptions.selectedAccountId ||
+            itemsChanged ||
+            chargesChanged
+        )
     } else {
         hasUnsavedChanges && (
             isCustomerSelected ||
