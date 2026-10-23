@@ -427,7 +427,8 @@ fun FactoryCreateScreen(
                                     onClick = onCardClick,
                                     onLongClick = onCardLongClick,
                                     profile = FactoryProfileRepository.profile,
-                                    allProfiles = FactoryProfileRepository.allProfiles
+                                    allProfiles = FactoryProfileRepository.allProfiles,
+                                    linkedInvoiceNumbers = FactoryReceiptRepository.getLinkedInvoiceNumbers(receipt.id)
                                 )
                             }
                         }

@@ -427,7 +427,8 @@ fun TextilesCreateScreen(
                                     onClick = onCardClick,
                                     onLongClick = onCardLongClick,
                                     profile = TextilesProfileRepository.profile,
-                                    allProfiles = TextilesProfileRepository.allProfiles
+                                    allProfiles = TextilesProfileRepository.allProfiles,
+                                    linkedInvoiceNumbers = TextilesReceiptRepository.getLinkedInvoiceNumbers(receipt.id)
                                 )
                             }
                         }

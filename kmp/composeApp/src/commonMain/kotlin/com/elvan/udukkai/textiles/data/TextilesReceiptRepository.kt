@@ -69,9 +69,15 @@ object TextilesReceiptRepository {
         loadDeleted()
     }
 
+    private val linksCache = mutableMapOf<Long, List<String>>()
+
     fun loadAll() {
         try {
             receipts = getTextilesDatabaseHelper().loadAllReceipts()
+            linksCache.clear()
+            for (r in receipts) {
+                getLinkedInvoiceNumbers(r.id)
+            }
         } catch (_: Exception) {
             receipts = emptyList()
         }
@@ -80,6 +86,9 @@ object TextilesReceiptRepository {
     fun loadDeleted() {
         try {
             deletedReceipts = getTextilesDatabaseHelper().loadDeletedReceipts()
+            for (r in deletedReceipts) {
+                getLinkedInvoiceNumbers(r.id)
+            }
         } catch (_: Exception) {
             deletedReceipts = emptyList()
         }
@@ -149,8 +158,56 @@ object TextilesReceiptRepository {
     fun getLinks(receiptId: Long): List<ReceiptInvoiceLinkModel> =
         getTextilesDatabaseHelper().getLinksForReceipt(receiptId)
 
-    fun getLinksForReceipt(receiptId: Long): List<ReceiptInvoiceLinkModel> =
-        getLinks(receiptId)
+    fun getLinksForReceipt(receiptId: Long): List<ReceiptInvoiceLinkModel> {
+        val existing = getLinks(receiptId)
+        if (existing.isNotEmpty()) return existing
+
+        val receipt = receipts.find { it.id == receiptId }
+            ?: deletedReceipts.find { it.id == receiptId }
+            ?: return emptyList()
+
+        val mockItem = com.elvan.udukkai.data.mock.mockTextilesReceipts.find { it["receiptNo"] == receipt.receiptNumber }
+            ?: return emptyList()
+        val against = mockItem["againstInvoice"] as? String ?: return emptyList()
+
+        val invoices = TextilesInvoiceRepository.invoices.ifEmpty {
+            try { getTextilesDatabaseHelper().loadAllInvoices() } catch (_: Exception) { emptyList() }
+        }
+        val invEnToId = invoices.associate { it.invoiceNumber to it.id }
+        val invEnToTotal = invoices.associate { it.invoiceNumber to it.totalAmount }
+
+        val links = mutableListOf<ReceiptInvoiceLinkModel>()
+        val invList = against.split(",").map { it.trim() }.filter { it.isNotEmpty() }
+        var remaining = receipt.amount
+        for (invEn in invList) {
+            val id = invEnToId[invEn] ?: continue
+            val balance = invEnToTotal[invEn] ?: 0.0
+            val apply = remaining.coerceIn(0.0, balance)
+            if (apply > 0.0) {
+                links.add(ReceiptInvoiceLinkModel(receiptId = receipt.id, invoiceId = id, appliedAmount = apply))
+                remaining -= apply
+            }
+        }
+        if (links.isNotEmpty()) {
+            try {
+                getTextilesDatabaseHelper().saveReceiptWithLinks(receipt, links)
+            } catch (_: Exception) {}
+            return links
+        }
+        return emptyList()
+    }
+
+    fun getLinkedInvoiceNumbers(receiptId: Long): List<String> {
+        return linksCache.getOrPut(receiptId) {
+            val links = getLinksForReceipt(receiptId)
+            if (links.isEmpty()) return@getOrPut emptyList()
+            val invIds = links.map { it.invoiceId }.toSet()
+            val invoices = TextilesInvoiceRepository.invoices.ifEmpty {
+                try { getTextilesDatabaseHelper().loadAllInvoices() } catch (_: Exception) { emptyList() }
+            }.filter { it.id in invIds }
+            links.mapNotNull { link -> invoices.find { it.id == link.invoiceId }?.invoiceNumber }
+        }
+    }
 
 
     fun getPaidAmount(invoiceId: Long): Double =

@@ -34,7 +34,8 @@ fun ReceiptCard(
     onClick: () -> Unit = {},
     onLongClick: (() -> Unit)? = null,
     profile: com.elvan.udukkai.data.settings.BusinessProfile? = null,
-    allProfiles: List<com.elvan.udukkai.data.settings.BusinessProfile> = emptyList()
+    allProfiles: List<com.elvan.udukkai.data.settings.BusinessProfile> = emptyList(),
+    linkedInvoiceNumbers: List<String> = emptyList()
 ) {
     val ff = LocalAppFontFamily.current
 
@@ -66,13 +67,8 @@ fun ReceiptCard(
         else -> receipt.paymentMode to ""
     }
 
-    val paymentModeText = if (!isBilingual || enLabel.isEmpty() || taLabel.equals(enLabel, ignoreCase = true)) {
-        if (primaryLang.lowercase().startsWith("en") && enLabel.isNotEmpty()) enLabel else taLabel
-    } else if (primaryLang.lowercase().startsWith("en")) {
-        "$enLabel  •  $taLabel"
-    } else {
-        "$taLabel  •  $enLabel"
-    }
+    val paymentModeText = if (primaryLang.lowercase().startsWith("en") && enLabel.isNotEmpty()) enLabel else taLabel
+    val linkedInvoicesText = linkedInvoiceNumbers.joinToString(", ")
 
     ElvanCommonCard(
         onClick = onClick,
@@ -144,47 +140,71 @@ fun ReceiptCard(
 
                 Spacer(modifier = Modifier.height(8.dp))
 
-                Text(
-                    text = "${receipt.receiptNumber}  •  $dateStr",
-                    style = TextStyle(
-                        fontFamily = ff,
-                        fontSize = 13.5.sp,
-                        color = LocalShellColors.current.textSecondary
-                    ),
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
-
-                Spacer(modifier = Modifier.height(4.dp))
-
+                // Bottom Section: Left (Receipt # • Date, Linked Invoices) + Right (Payment Mode over Amount)
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.Bottom
+                    verticalAlignment = Alignment.Top
                 ) {
-                    Text(
-                        text = paymentModeText.preventBrokenLigatures(),
-                        style = TextStyle(
-                            fontFamily = ff,
-                            fontSize = 13.5.sp,
-                            color = LocalShellColors.current.textSecondary
-                        ),
+                    // Left Column: Receipt #  •  Date + Linked Invoices
+                    Column(
                         modifier = Modifier.weight(1f, fill = false),
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
+                        verticalArrangement = Arrangement.spacedBy(3.dp)
+                    ) {
+                        Text(
+                            text = "${receipt.receiptNumber}  •  $dateStr",
+                            style = TextStyle(
+                                fontFamily = ff,
+                                fontSize = 13.5.sp,
+                                color = LocalShellColors.current.textSecondary
+                            ),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+
+                        if (linkedInvoicesText.isNotEmpty()) {
+                            Text(
+                                text = linkedInvoicesText.preventBrokenLigatures(),
+                                style = TextStyle(
+                                    fontFamily = ff,
+                                    fontSize = 13.sp,
+                                    color = LocalShellColors.current.textSecondary
+                                ),
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                        }
+                    }
 
                     Spacer(modifier = Modifier.width(8.dp))
 
-                    Text(
-                        text = amountStr,
-                        style = TextStyle(
-                            fontFamily = ff,
-                            fontSize = if (amountStr.length > 11) 12.5.sp else 14.5.sp,
-                            fontWeight = FontWeight.ExtraBold,
-                            color = colors.textPrimary
+                    // Right Column: Payment mode on top of Amount
+                    Column(
+                        horizontalAlignment = Alignment.End,
+                        verticalArrangement = Arrangement.spacedBy(3.dp)
+                    ) {
+                        Text(
+                            text = paymentModeText.preventBrokenLigatures(),
+                            style = TextStyle(
+                                fontFamily = ff,
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Normal,
+                                color = LocalShellColors.current.textSecondary
+                            ),
+                            maxLines = 1
                         )
-                    )
+
+                        Text(
+                            text = amountStr,
+                            style = TextStyle(
+                                fontFamily = ff,
+                                fontSize = if (amountStr.length > 11) 13.sp else 15.sp,
+                                fontWeight = FontWeight.ExtraBold,
+                                color = colors.textPrimary
+                            ),
+                            maxLines = 1
+                        )
+                    }
                 }
             }
         }

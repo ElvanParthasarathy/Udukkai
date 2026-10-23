@@ -47,6 +47,7 @@ import com.elvan.udukkai.ui.screens.item.FactoryItemCard
 import com.elvan.udukkai.ui.screens.create.components.ElvanPillShifter
 import com.elvan.udukkai.ui.screens.create.components.FactoryInvoiceCard
 import com.elvan.udukkai.ui.screens.create.components.ReceiptCard
+import com.elvan.udukkai.factory.data.FactoryReceiptRepository
 import com.elvan.udukkai.ui.screens.create.components.PillShifterItem
 import com.elvan.udukkai.ui.screens.customer.FactoryCustomerCard
 import kotlinx.coroutines.launch
@@ -424,7 +425,8 @@ fun FactoryRecycleBinScreen(
                                     isSelected = isSelected,
                                     onClick = onCardClick,
                                     onLongClick = onCardLongClick,
-                                    modifier = Modifier.padding(horizontal = Dimens.ContentPadding)
+                                    modifier = Modifier.padding(horizontal = Dimens.ContentPadding),
+                                    linkedInvoiceNumbers = FactoryReceiptRepository.getLinkedInvoiceNumbers(receipt.id)
                                 )
                             }
                         }

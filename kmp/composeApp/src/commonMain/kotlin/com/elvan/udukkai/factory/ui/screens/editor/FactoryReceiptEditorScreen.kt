@@ -41,6 +41,7 @@ import com.elvan.udukkai.ui.screens.editor.LocalEditorAccentColor
 import com.elvan.udukkai.ui.screens.editor.ElvanEditorDropdown
 import com.elvan.udukkai.ui.screens.editor.ElvanEditorLabel
 import com.elvan.udukkai.ui.screens.editor.ElvanEditorTextField
+import com.elvan.udukkai.ui.screens.editor.ElvanEditorDisabledOverlay
 import com.elvan.udukkai.ui.screens.editor.receipt.components.ReceiptInvoiceSelectionSheet
 import com.elvan.udukkai.ui.screens.editor.invoice.components.ElvanDocumentNumberField
 import com.elvan.udukkai.ui.screens.editor.invoice.components.InvoiceDateField
@@ -49,34 +50,6 @@ import com.elvan.udukkai.ui.components.shell.LocalElvanTopSpacerHeight
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.ui.graphics.graphicsLayer
 
-/**
- * Form Lock container matching Flutter's `Opacity(0.4) + IgnorePointer`.
- * Dims and locks downstream form sections until a business profile is selected.
- */
-@Composable
-private fun FormLockWrapper(
-    isLocked: Boolean,
-    content: @Composable () -> Unit
-) {
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .graphicsLayer { alpha = if (isLocked) 0.4f else 1f }
-    ) {
-        content()
-        if (isLocked) {
-            Box(
-                modifier = Modifier
-                    .matchParentSize()
-                    .clickable(
-                        interactionSource = remember { MutableInteractionSource() },
-                        indication = null,
-                        onClick = {}
-                    )
-            )
-        }
-    }
-}
 
 /**
  * Receipt Editor Screen (பற்றுச்சீட்டு திருத்தி)
@@ -233,7 +206,7 @@ fun FactoryReceiptEditorScreen(
             return
         }
 
-        if (selectedInvoices.isEmpty()) {
+        if (!isEditing && selectedInvoices.isEmpty()) {
             ElvanSnackbar.show(selectInvoiceMsg)
             return
         }
@@ -259,27 +232,29 @@ fun FactoryReceiptEditorScreen(
 
         // FIFO allocation across selected invoices
         val links = mutableListOf<ReceiptInvoiceLinkModel>()
-        var remaining = amount
-        for (inv in selectedInvoices) {
-            if (remaining <= 0.0) break
-            val apply = remaining.coerceAtMost(inv.totalAmount)
-            if (apply > 0.0) {
-                links.add(
-                    ReceiptInvoiceLinkModel(
-                        receiptId = receipt?.id ?: 0L,
-                        invoiceId = inv.id,
-                        appliedAmount = apply
+        if (selectedInvoices.isNotEmpty()) {
+            var remaining = amount
+            for (inv in selectedInvoices) {
+                if (remaining <= 0.0) break
+                val apply = remaining.coerceAtMost(inv.totalAmount)
+                if (apply > 0.0) {
+                    links.add(
+                        ReceiptInvoiceLinkModel(
+                            receiptId = receipt?.id ?: 0L,
+                            invoiceId = inv.id,
+                            appliedAmount = apply
+                        )
                     )
-                )
-                remaining -= apply
+                    remaining -= apply
+                }
             }
-        }
 
-        // Validate links
-        val validationErr = com.elvan.udukkai.factory.data.FactoryReceiptRepository.validateLinks(links, receipt?.id)
-        if (validationErr != null) {
-            ElvanSnackbar.show(validationErr)
-            return
+            // Validate links
+            val validationErr = com.elvan.udukkai.factory.data.FactoryReceiptRepository.validateLinks(links, receipt?.id)
+            if (validationErr != null) {
+                ElvanSnackbar.show(validationErr)
+                return
+            }
         }
 
         isSaving = true
@@ -353,6 +328,7 @@ fun FactoryReceiptEditorScreen(
         handleBackAttempt()
     }
 
+    val isInvoiceSelected = if (isEditing) true else selectedInvoices.isNotEmpty()
     val pageTitle = if (isEditing) K.editRecord.tr() else K.createRecord.tr()
     val scrollState = rememberLazyListState()
     val pillBg = colors.iconBg
@@ -367,7 +343,7 @@ fun FactoryReceiptEditorScreen(
             ElvanEditorBottomBar(
                 label = K.saveBtn.tr(),
                 onClick = { handleSave() },
-                enabled = !isSaving,
+                enabled = !isSaving && isInvoiceSelected,
                 isLoading = isSaving,
                 accentColor = colors.receiptColor
             )
@@ -505,7 +481,8 @@ fun FactoryReceiptEditorScreen(
 
             // ── Section 1: Receipt Data ──
             item(key = "receipt_data_section") {
-                ElvanEditorSection(index = 1, title = K.receiptDetails.tr()) {
+                ElvanEditorDisabledOverlay(disabled = !isInvoiceSelected) {
+                    ElvanEditorSection(index = 1, title = K.receiptDetails.tr()) {
                         Column(
                             modifier = Modifier.fillMaxWidth(),
                             verticalArrangement = Arrangement.spacedBy(24.dp)
@@ -540,35 +517,17 @@ fun FactoryReceiptEditorScreen(
                                     contentAlignment = Alignment.CenterStart
                                 ) {
                                     if (customerName.isNotEmpty()) {
-                                        Row(
-                                            modifier = Modifier.fillMaxWidth(),
-                                            horizontalArrangement = Arrangement.SpaceBetween,
-                                            verticalAlignment = Alignment.CenterVertically
-                                        ) {
-                                            Text(
-                                                text = customerName.preventBrokenLigatures(),
-                                                style = TextStyle(
-                                                    fontFamily = ff,
-                                                    fontSize = 14.sp,
-                                                    fontWeight = FontWeight.Medium,
-                                                    color = colors.textPrimary
-                                                ),
-                                                maxLines = 1,
-                                                overflow = TextOverflow.Ellipsis,
-                                                modifier = Modifier.weight(1f)
-                                            )
-                                            Box(
-                                                modifier = Modifier.size(36.dp),
-                                                contentAlignment = Alignment.Center
-                                            ) {
-                                                Icon(
-                                                    imageVector = MaterialSymbols.Rounded.Lock,
-                                                    contentDescription = "Locked",
-                                                    tint = colors.textSecondary.copy(alpha = 0.4f),
-                                                    modifier = Modifier.size(16.dp)
-                                                )
-                                            }
-                                        }
+                                        Text(
+                                            text = customerName.preventBrokenLigatures(),
+                                            style = TextStyle(
+                                                fontFamily = ff,
+                                                fontSize = 14.sp,
+                                                fontWeight = FontWeight.Medium,
+                                                color = colors.textPrimary
+                                            ),
+                                            maxLines = 1,
+                                            overflow = TextOverflow.Ellipsis
+                                        )
                                     } else {
                                         Row(
                                             modifier = Modifier.fillMaxWidth(),
@@ -616,10 +575,12 @@ fun FactoryReceiptEditorScreen(
                         }
                     }
                 }
+            }
 
             // ── Section 2: Payment Details ──
             item(key = "payment_section") {
-                ElvanEditorSection(index = 2, title = K.paymentDetails.tr()) {
+                ElvanEditorDisabledOverlay(disabled = !isInvoiceSelected) {
+                    ElvanEditorSection(index = 2, title = K.paymentDetails.tr()) {
                         Column(
                             modifier = Modifier.fillMaxWidth(),
                             verticalArrangement = Arrangement.spacedBy(24.dp)
@@ -719,9 +680,10 @@ fun FactoryReceiptEditorScreen(
                     }
                 }
             }
+                }
+            }
         }
     }
-}
 
     // Modal: Invoice Picker Bottom Sheet (Multi-select)
     if (isInvoicePickerOpen) {

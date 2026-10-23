@@ -47,6 +47,7 @@ import com.elvan.udukkai.ui.screens.item.TextilesItemCard
 import com.elvan.udukkai.ui.screens.create.components.ElvanPillShifter
 import com.elvan.udukkai.ui.screens.create.components.TextilesInvoiceCard
 import com.elvan.udukkai.ui.screens.create.components.ReceiptCard
+import com.elvan.udukkai.textiles.data.TextilesReceiptRepository
 import com.elvan.udukkai.ui.screens.create.components.PillShifterItem
 import com.elvan.udukkai.ui.screens.customer.TextilesCustomerCard
 import kotlinx.coroutines.launch
@@ -424,7 +425,8 @@ fun TextilesRecycleBinScreen(
                                     isSelected = isSelected,
                                     onClick = onCardClick,
                                     onLongClick = onCardLongClick,
-                                    modifier = Modifier.padding(horizontal = Dimens.ContentPadding)
+                                    modifier = Modifier.padding(horizontal = Dimens.ContentPadding),
+                                    linkedInvoiceNumbers = TextilesReceiptRepository.getLinkedInvoiceNumbers(receipt.id)
                                 )
                             }
                         }
