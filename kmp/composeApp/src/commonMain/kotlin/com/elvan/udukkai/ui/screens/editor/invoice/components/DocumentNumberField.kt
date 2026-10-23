@@ -146,16 +146,18 @@ fun ElvanDocumentNumberField(
                         )
                     )
 
-                    Box(
-                        modifier = Modifier.size(36.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            imageVector = if (isReadOnly) MaterialSymbols.Rounded.Lock else MaterialSymbols.Rounded.Edit,
-                            contentDescription = if (isReadOnly) "Locked" else "Edit",
-                            tint = if (isReadOnly) colors.textSecondary.copy(alpha = 0.5f) else colors.textSecondary,
-                            modifier = Modifier.size(if (isReadOnly) 16.dp else 18.dp)
-                        )
+                    if (!isReadOnly) {
+                        Box(
+                            modifier = Modifier.size(36.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = MaterialSymbols.Rounded.Edit,
+                                contentDescription = "Edit",
+                                tint = colors.textSecondary,
+                                modifier = Modifier.size(18.dp)
+                            )
+                        }
                     }
                 }
             }

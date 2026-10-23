@@ -539,8 +539,8 @@ fun FactoryInvoiceEditorScreen(
                                 horizontalArrangement = Arrangement.spacedBy(10.dp)
                             ) {
                                 Icon(
-                                    imageVector = MaterialSymbols.Rounded.Lock,
-                                    contentDescription = "Locked",
+                                    imageVector = MaterialSymbols.Rounded.Info,
+                                    contentDescription = "Info",
                                     tint = colors.accent,
                                     modifier = Modifier.size(20.dp)
                                 )

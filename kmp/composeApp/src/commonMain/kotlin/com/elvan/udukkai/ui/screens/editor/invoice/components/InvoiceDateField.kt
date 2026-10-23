@@ -88,10 +88,10 @@ fun InvoiceDateField(
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
-                        imageVector = if (isReadOnly) MaterialSymbols.Rounded.Lock else MaterialSymbols.Rounded.CalendarToday,
-                        contentDescription = if (isReadOnly) "Locked" else null,
+                        imageVector = MaterialSymbols.Rounded.CalendarToday,
+                        contentDescription = null,
                         tint = if (isReadOnly) colors.textSecondary.copy(alpha = 0.5f) else colors.textSecondary,
-                        modifier = Modifier.size(if (isReadOnly) 16.dp else 20.dp)
+                        modifier = Modifier.size(20.dp)
                     )
                 }
             }

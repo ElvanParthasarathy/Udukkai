@@ -496,8 +496,7 @@ fun TextilesReceiptEditorScreen(
                                         receiptDate = it
                                         hasUnsavedChanges = true
                                     },
-                                    isReadOnly = isEditing,
-                                    readOnlyMessage = K.savedReceiptDateLocked.tr()
+                                    isReadOnly = false
                                 )
                             }
 
