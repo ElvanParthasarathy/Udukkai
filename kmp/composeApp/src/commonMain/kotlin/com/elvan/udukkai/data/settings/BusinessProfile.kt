@@ -140,7 +140,11 @@ data class BusinessProfile(
     var tagline: MutableMap<String, String> = mutableMapOf(),
     var upiId: String = "",
     var themeColor: String = "#388e3c",
-    var paymentAccountsJson: String = "[]"
+    var paymentAccountsJson: String = "[]",
+
+    // Print-only settings (React template names): logoHeight, wideLogoX/Y/Scale,
+    // invoiceDisplayOptions, receiptLanguage …
+    var printSettingsJson: String = "{}"
 ) {
     val fullSignatoryName: String
         get() {
@@ -274,7 +278,8 @@ data class BusinessProfile(
             tagline = HashMap(tagline),
             upiId = upiId,
             themeColor = themeColor,
-            paymentAccountsJson = paymentAccountsJson
+            paymentAccountsJson = paymentAccountsJson,
+            printSettingsJson = printSettingsJson
         )
     }
 }

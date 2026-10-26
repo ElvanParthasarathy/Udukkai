@@ -5,6 +5,7 @@ import com.elvan.udukkai.core.utils.DateUtils
 import com.elvan.udukkai.data.database.getTextilesDatabaseHelper
 import com.elvan.udukkai.data.mock.*
 import com.elvan.udukkai.data.model.CustomerModel
+import com.elvan.udukkai.data.model.InvoiceDisplayOptions
 import com.elvan.udukkai.data.model.InvoiceModel
 import com.elvan.udukkai.data.model.ReceiptInvoiceLinkModel
 import com.elvan.udukkai.data.model.ReceiptModel
@@ -163,7 +164,7 @@ object TextilesMockDataSeeder {
 
         // 1. Seed Profiles
         for (map in mockTextilesProfiles) {
-            val p = profileFromMap(map)
+            val p = ReactSeedAssets.apply(profileFromMap(map))
             helper.saveProfile(p)
         }
         val textilesProfiles = helper.loadAllProfiles()
@@ -250,6 +251,9 @@ object TextilesMockDataSeeder {
                     globalDiscountType = "₹",
                     globalDiscountAmount = discTotal,
                     taxAmount = taxTotal,
+                    customPreferencesJson = InvoiceDisplayOptions(
+                        measureMode = if (parsedItems.isNotEmpty() && parsedItems.all { it.unit.equals("Kg", ignoreCase = true) }) "weight" else ""
+                    ).toJson(),
                     createdAt = dateMillis,
                     updatedAt = dateMillis
                 )
@@ -333,7 +337,7 @@ object TextilesMockDataSeeder {
             "Textiles EPS Removed ✗"
         } else {
             if (mockTextilesProfiles.size > 1) {
-                helper.saveProfile(profileFromMap(mockTextilesProfiles[1]))
+                helper.saveProfile(ReactSeedAssets.apply(profileFromMap(mockTextilesProfiles[1])))
             }
             "Textiles EPS Added ✓"
         }

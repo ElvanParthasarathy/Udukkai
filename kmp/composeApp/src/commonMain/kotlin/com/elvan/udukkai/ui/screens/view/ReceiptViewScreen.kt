@@ -43,7 +43,8 @@ fun ReceiptViewScreen(
     allProfiles: List<BusinessProfile>,
     onBack: () -> Unit,
     onEdit: () -> Unit,
-    onPrint: (() -> Unit)? = null
+    onPrint: (() -> Unit)? = null,
+    printPayload: ((activeProfile: BusinessProfile) -> String)? = null
 ) {
     val colors = rememberShellColors()
     val isDark = colors.isDark
@@ -70,7 +71,9 @@ fun ReceiptViewScreen(
         scrollState = scrollState,
         isDocument = true,
         onEdit = onEdit,
-        onPrint = onPrint
+        onPrint = onPrint,
+        printPayload = printPayload?.let { build -> { build(activeProfile) } },
+        printFileName = "RCPT_" + receipt.receiptNumber.replace('/', '-')
     ) {
         LazyColumn(
             state = scrollState,

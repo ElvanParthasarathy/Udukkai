@@ -46,3 +46,6 @@ local.properties
 .dart_tool/
 .flutter-plugins
 .flutter-plugins-dependencies
+# React company logos / signatures exported for KMP sample data (personal - keep local only).
+# Regenerate with: python -I kmp/tools/export_react_seed.py
+kmp/composeApp/src/commonMain/composeResources/files/seed/

@@ -22,6 +22,7 @@ import com.elvan.udukkai.data.model.InvoiceModel
 import com.elvan.udukkai.data.model.ItemModel
 import com.elvan.udukkai.data.model.CustomerModel
 import com.elvan.udukkai.factory.data.FactoryCustomerRepository
+import com.elvan.udukkai.core.print.PrintPayload
 import com.elvan.udukkai.factory.data.FactoryInvoiceRepository
 import com.elvan.udukkai.factory.data.FactoryItemRepository
 import com.elvan.udukkai.factory.data.FactoryProfileRepository
@@ -318,6 +319,14 @@ fun FactoryHomeScreen() {
                                 updatedAt = System.currentTimeMillis()
                             )
                             navigateToSubpage(ActiveSubpage.InvoiceEditor(converted))
+                        },
+                        printPayload = { activeProfile ->
+                            PrintPayload.forFactoryInvoice(
+                                invoice = currentInvoice,
+                                profile = activeProfile,
+                                customer = currentInvoice.customerId?.let { FactoryCustomerRepository.getById(it) },
+                                appLanguage = if (LanguageManager.activeLanguageCode.startsWith("ta")) "ta" else "en"
+                            )
                         }
                     )
                 }
@@ -330,6 +339,17 @@ fun FactoryHomeScreen() {
                         onBack = popSubpage,
                         onEdit = {
                             navigateToSubpage(ActiveSubpage.ReceiptEditor(currentReceipt))
+                        },
+                        printPayload = { activeProfile ->
+                            PrintPayload.forReceipt(
+                                receipt = currentReceipt,
+                                profile = activeProfile,
+                                invoiceNumbers = FactoryReceiptRepository.getLinksForReceipt(currentReceipt.id).mapNotNull { link ->
+                                    FactoryInvoiceRepository.invoices.find { it.id == link.invoiceId }?.invoiceNumber
+                                },
+                                isCoolie = true,
+                                appLanguage = if (LanguageManager.activeLanguageCode.startsWith("ta")) "ta" else "en"
+                            )
                         }
                     )
                 }

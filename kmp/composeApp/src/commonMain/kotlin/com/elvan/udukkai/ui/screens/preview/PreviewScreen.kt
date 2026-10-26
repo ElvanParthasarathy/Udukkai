@@ -7,9 +7,15 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
+import com.elvan.udukkai.core.print.DocumentPrintController
+import com.elvan.udukkai.core.print.DocumentPrintView
+import com.elvan.udukkai.core.print.isDocumentPrintSupported
+import com.elvan.udukkai.ui.components.shell.ElvanActionButton
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -31,13 +37,87 @@ import com.elvan.udukkai.ui.components.shell.ElvanSubShell
 import com.elvan.udukkai.ui.navigation.MaterialSymbols
 
 /**
- * Universal Dummy Preview Screen (முன்னோட்டம்).
- * Provides a clean One UI document preview placeholder for Invoices, Receipts, and Reports.
+ * Universal Preview Screen (முன்னோட்டம்).
+ * When a [printPayload] is given (and the platform supports it), renders the real
+ * document with the React print templates and offers Print / Share. Otherwise
+ * shows the placeholder preview.
  */
 @Composable
 fun PreviewScreen(
     title: String = K.previewBtn.tr(),
     subtitle: String? = null,
+    onBack: () -> Unit,
+    printPayload: String? = null,
+    printFileName: String = subtitle ?: title,
+    printController: DocumentPrintController? = null
+) {
+    if (printPayload != null && isDocumentPrintSupported) {
+        val controller = printController ?: remember { DocumentPrintController() }
+        DocumentPreview(
+            title = title,
+            onBack = onBack,
+            payloadJson = printPayload,
+            fileName = printFileName,
+            controller = controller
+        )
+    } else {
+        PlaceholderPreview(title = title, subtitle = subtitle, onBack = onBack)
+    }
+}
+
+@Composable
+private fun DocumentPreview(
+    title: String,
+    onBack: () -> Unit,
+    payloadJson: String,
+    fileName: String,
+    controller: DocumentPrintController
+) {
+    val colors = rememberShellColors()
+    ElvanSubShell(
+        title = title,
+        onBack = onBack,
+        hasActions = true,
+        actions = {
+            ElvanActionButton(
+                label = K.printBtn.tr(),
+                onClick = { controller.print() },
+                enabled = controller.isReady
+            )
+            ElvanActionButton(
+                label = K.shareBtn.tr(),
+                onClick = { controller.share() },
+                enabled = controller.isReady && !controller.isBusy
+            )
+        },
+        showBottomFade = false
+    ) {
+        Column(modifier = Modifier.fillMaxSize()) {
+            Spacer(modifier = Modifier.height(LocalElvanTopSpacerHeight.current))
+            Box(modifier = Modifier.fillMaxWidth().weight(1f)) {
+                DocumentPrintView(
+                    payloadJson = payloadJson,
+                    fileName = fileName,
+                    controller = controller,
+                    modifier = Modifier.fillMaxSize()
+                )
+                if (!controller.isReady) {
+                    Box(
+                        modifier = Modifier.fillMaxSize().background(colors.background),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        CircularProgressIndicator(color = colors.textPrimary)
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun PlaceholderPreview(
+    title: String,
+    subtitle: String?,
     onBack: () -> Unit
 ) {
     val colors = rememberShellColors()

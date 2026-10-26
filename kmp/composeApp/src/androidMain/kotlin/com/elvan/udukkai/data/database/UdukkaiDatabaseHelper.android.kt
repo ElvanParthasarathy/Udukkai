@@ -366,6 +366,7 @@ class AndroidUdukkaiDatabaseHelper(
         """.trimIndent())
 
         try { db.execSQL("ALTER TABLE \"$customersTable\" ADD COLUMN \"company_ids\" TEXT NOT NULL DEFAULT '[]'") } catch (_: Exception) {}
+        try { db.execSQL("ALTER TABLE \"$profilesTable\" ADD COLUMN \"print_settings\" TEXT NOT NULL DEFAULT '{}'") } catch (_: Exception) {}
         try { db.execSQL("ALTER TABLE \"$linksTable\" ADD COLUMN \"created_at\" INTEGER NOT NULL DEFAULT 0") } catch (_: Exception) {}
         try { db.execSQL("ALTER TABLE \"$linksTable\" ADD COLUMN \"applied_amount\" REAL NOT NULL DEFAULT 0.0") } catch (_: Exception) {}
         try { db.execSQL("UPDATE \"$linksTable\" SET applied_amount = poruthiya_thogai WHERE (applied_amount = 0.0 OR applied_amount IS NULL) AND poruthiya_thogai > 0.0") } catch (_: Exception) {}
@@ -404,6 +405,7 @@ class AndroidUdukkaiDatabaseHelper(
                 "tagline" TEXT NOT NULL DEFAULT '{}',
                 "upi_id" TEXT NOT NULL DEFAULT '',
                 "theme_color" TEXT NOT NULL DEFAULT '',
+                "print_settings" TEXT NOT NULL DEFAULT '{}',
                 "created_at" INTEGER NOT NULL DEFAULT (CAST(strftime('%s', CURRENT_TIMESTAMP) AS INTEGER)),
                 "updated_at" INTEGER NOT NULL DEFAULT (CAST(strftime('%s', CURRENT_TIMESTAMP) AS INTEGER)),
                 "is_deleted" INTEGER NOT NULL DEFAULT 0 CHECK ("is_deleted" IN (0, 1)),
@@ -889,6 +891,7 @@ class AndroidUdukkaiDatabaseHelper(
             put("tagline", LanguageJsonConverter.stringify(profile.tagline))
             put("upi_id", profile.upiId)
             put("theme_color", profile.themeColor)
+            put("print_settings", profile.printSettingsJson)
             put("updated_at", System.currentTimeMillis() / 1000)
             put("is_deleted", 0)
         }
@@ -1053,7 +1056,8 @@ class AndroidUdukkaiDatabaseHelper(
         signatoryLastName = getStringCol(c, "signatory_last_name", "oppam_irudhi_peyar"),
         tagline = LanguageJsonConverter.parse(getStringCol(c, "tagline", "adaimozhi")),
         upiId = getStringCol(c, "upi_id"),
-        themeColor = getStringCol(c, "theme_color", "thoatra_niram")
+        themeColor = getStringCol(c, "theme_color", "thoatra_niram"),
+        printSettingsJson = getStringCol(c, "print_settings", default = "{}")
     )
 }
 

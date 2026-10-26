@@ -53,7 +53,8 @@ fun InvoiceViewScreen(
     onEdit: () -> Unit,
     onPrint: (() -> Unit)? = null,
     onCopy: (() -> Unit)? = null,
-    onConvertToTaxInvoice: (() -> Unit)? = null
+    onConvertToTaxInvoice: (() -> Unit)? = null,
+    printPayload: ((activeProfile: BusinessProfile) -> String)? = null
 ) {
     val colors = rememberShellColors()
     val isDark = colors.isDark
@@ -102,7 +103,9 @@ fun InvoiceViewScreen(
         isDocument = true,
         onEdit = if (isPaid) null else onEdit,
         onPrint = onPrint,
-        onCopy = onCopy
+        onCopy = onCopy,
+        printPayload = printPayload?.let { build -> { build(activeProfile) } },
+        printFileName = (if (isProforma) "EST_" else "INV_") + invoice.invoiceNumber.replace('/', '-')
     ) {
         LazyColumn(
             state = scrollState,

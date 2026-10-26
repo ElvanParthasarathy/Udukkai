@@ -22,6 +22,7 @@ import com.elvan.udukkai.data.model.InvoiceModel
 import com.elvan.udukkai.data.model.ItemModel
 import com.elvan.udukkai.data.model.CustomerModel
 import com.elvan.udukkai.textiles.data.TextilesCustomerRepository
+import com.elvan.udukkai.core.print.PrintPayload
 import com.elvan.udukkai.textiles.data.TextilesInvoiceRepository
 import com.elvan.udukkai.textiles.data.TextilesItemRepository
 import com.elvan.udukkai.textiles.data.TextilesProfileRepository
@@ -316,6 +317,14 @@ fun TextilesHomeScreen() {
                                 updatedAt = System.currentTimeMillis()
                             )
                             navigateToSubpage(ActiveSubpage.InvoiceEditor(converted))
+                        },
+                        printPayload = { activeProfile ->
+                            PrintPayload.forTextilesInvoice(
+                                invoice = currentInvoice,
+                                profile = activeProfile,
+                                customer = currentInvoice.customerId?.let { TextilesCustomerRepository.getById(it) },
+                                appLanguage = if (LanguageManager.activeLanguageCode.startsWith("ta")) "ta" else "en"
+                            )
                         }
                     )
                 }
@@ -328,6 +337,17 @@ fun TextilesHomeScreen() {
                         onBack = popSubpage,
                         onEdit = {
                             navigateToSubpage(ActiveSubpage.ReceiptEditor(currentReceipt))
+                        },
+                        printPayload = { activeProfile ->
+                            PrintPayload.forReceipt(
+                                receipt = currentReceipt,
+                                profile = activeProfile,
+                                invoiceNumbers = TextilesReceiptRepository.getLinksForReceipt(currentReceipt.id).mapNotNull { link ->
+                                    TextilesInvoiceRepository.invoices.find { it.id == link.invoiceId }?.invoiceNumber
+                                },
+                                isCoolie = false,
+                                appLanguage = if (LanguageManager.activeLanguageCode.startsWith("ta")) "ta" else "en"
+                            )
                         }
                     )
                 }

@@ -3,6 +3,9 @@ package com.elvan.udukkai.data.mock
 /**
  * Mock Seed Data — Extracted from Firebase RTDB Export.
  * Matches Flutter `sodhanai_tharavugal.dart` 1:1.
+ * Company profiles (SJPS, VRM, PVS) match the React app's data (archive/tharavu).
+ * "seed:<name>" images resolve to composeResources/files/seed/<name>.txt
+ * (exported by kmp/tools/export_react_seed.py).
  */
 const val MOCK_LOGO: String =
     "iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAIAAAD8GO2jAAAAK0lEQVR4nGPIkp5FU8QwasGoBaMWjFowasGoBaMWjFowasGoBaMWSA8RCwCj8Hw9ZAkoRwAAAABJRU5ErkJggg=="
@@ -15,16 +18,16 @@ val mockTextilesProfiles: List<Map<String, Any>> = listOf(
         "niruvanathinPeyar_ta" to "ஶ்ரீ ஜெய்பிரியா சில்க்ஸ்",
         "niruvanathinPeyar_en" to "Sri Jaipriya Silks",
         "kurumPeyar" to "SJPS",
-        "tholaipesi_1" to "8144604797",
-        "tholaipesi_2" to "9360779191",
+        "tholaipesi_1" to "9360779191",
+        "tholaipesi_2" to "8144604797",
         "minnanjal" to "srijaipriyasilks@gmail.com",
         "gstin" to "33ASSPV0378E1ZD",
         "mugavari_ta" to "4/606, முதல் தெரு, சிவசக்தி நகர்",
         "mugavari_en" to "4/606, First Street, Sivasakthi Nagar",
         "oor_ta" to "ஆரணி",
         "oor_en" to "Arani",
-        "maavattam_ta" to "திருவண்ணாமலை",
-        "maavattam_en" to "Thiruvannamalai",
+        "maavattam_ta" to "திருவண்ணாமலை மாவட்டம்",
+        "maavattam_en" to "Thiruvannamalai District",
         "maanilam_ta" to "தமிழ்நாடு",
         "maanilam_en" to "Tamil Nadu",
         "naadu_ta" to "இந்தியா",
@@ -34,17 +37,17 @@ val mockTextilesProfiles: List<Map<String, Any>> = listOf(
         "vangiPeyar_en" to "Tamilnad Mercantile Bank",
         "kilai_ta" to "ஆரணி",
         "kilai_en" to "Arani",
-        "vangiKanakku" to "309150050800239",
+        "vangiKanakku" to "309150050800162",
         "ifsc" to "TMBL0000309",
-        "oavuru" to MOCK_LOGO,
-        "agalaOavuru" to MOCK_LOGO,
+        "oavuru" to "seed:sjps_logo",
+        "agalaOavuru" to "seed:sjps_wide_logo",
         "thalaippuVadivu" to "wide",
-        "kaiyoppam" to MOCK_LOGO,
+        "kaiyoppam" to "seed:sjps_signature",
         "oppamPeyar" to "பா. வனிதாஶ்ரீ",
         "adaimozhi_ta" to "கைத்தறி பட்டு சேலைகள் & ராசில்க்",
         "adaimozhi_en" to "Handloom Silk Sarees & Rawsilk",
-        "upiId" to "srijaipriya@ybl",
-        "thoatraNiram" to "#6a1b9a"
+        "upiId" to "",
+        "thoatraNiram" to "#388e3c"
     ),
     mapOf(
         "mudhanMozhi" to "ta",
@@ -102,8 +105,8 @@ val mockFactoryProfiles: List<Map<String, Any>> = listOf(
         "mugavari_en" to "4/606, First Street, Sivasakthi Nagar",
         "oor_ta" to "ஆரணி",
         "oor_en" to "Arani",
-        "maavattam_ta" to "திருவண்ணாமலை",
-        "maavattam_en" to "Thiruvannamalai",
+        "maavattam_ta" to "திருவண்ணாமலை மாவட்டம்",
+        "maavattam_en" to "Thiruvannamalai District",
         "maanilam_ta" to "தமிழ்நாடு",
         "maanilam_en" to "Tamil Nadu",
         "naadu_ta" to "இந்தியா",
@@ -115,10 +118,10 @@ val mockFactoryProfiles: List<Map<String, Any>> = listOf(
         "kilai_en" to "Arani",
         "vangiKanakku" to "309150050800162",
         "ifsc" to "TMBL0000309",
-        "oavuru" to MOCK_LOGO,
-        "agalaOavuru" to MOCK_LOGO,
+        "oavuru" to "seed:vrm_logo",
+        "agalaOavuru" to "",
         "thalaippuVadivu" to "small",
-        "kaiyoppam" to MOCK_LOGO,
+        "kaiyoppam" to "seed:vrm_signature",
         "oppamPeyar" to "இரா. பார்த்தசாரதி",
         "adaimozhi_ta" to "",
         "adaimozhi_en" to "",
@@ -140,8 +143,8 @@ val mockFactoryProfiles: List<Map<String, Any>> = listOf(
         "mugavari_en" to "4/606, First Street, Sivasakthi Nagar",
         "oor_ta" to "ஆரணி",
         "oor_en" to "Arani",
-        "maavattam_ta" to "திருவண்ணாமலை",
-        "maavattam_en" to "Thiruvannamalai",
+        "maavattam_ta" to "திருவண்ணாமலை மாவட்டம்",
+        "maavattam_en" to "Thiruvannamalai District",
         "maanilam_ta" to "தமிழ்நாடு",
         "maanilam_en" to "Tamil Nadu",
         "naadu_ta" to "இந்தியா",
@@ -153,15 +156,15 @@ val mockFactoryProfiles: List<Map<String, Any>> = listOf(
         "kilai_en" to "Arani",
         "vangiKanakku" to "309150050800162",
         "ifsc" to "TMBL0000309",
-        "oavuru" to MOCK_LOGO,
-        "agalaOavuru" to MOCK_LOGO,
+        "oavuru" to "",
+        "agalaOavuru" to "",
         "thalaippuVadivu" to "small",
-        "kaiyoppam" to MOCK_LOGO,
+        "kaiyoppam" to "seed:pvs_signature",
         "oppamPeyar" to "பா. வனிதாஶ்ரீ",
         "adaimozhi_ta" to "",
         "adaimozhi_en" to "",
         "upiId" to "",
-        "thoatraNiram" to "#6a1b9a"
+        "thoatraNiram" to "#388e3c"
     )
 )
 

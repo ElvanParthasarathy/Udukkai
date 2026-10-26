@@ -15,7 +15,9 @@ data class InvoiceDisplayOptions(
     val placeOfSupply: String = "Tamil Nadu",
     val placeOfSupplyTa: String = "தமிழ்நாடு",
     val globalDiscountValue: Double = 0.0,
-    val globalDiscountType: String = "%"
+    val globalDiscountType: String = "%",
+    /** React per-bill measure mode: "weight" shows the எடை / Weight column with " Kg". */
+    val measureMode: String = ""
 ) {
     fun toJson(): String {
         val sb = StringBuilder("{")
@@ -34,7 +36,8 @@ data class InvoiceDisplayOptions(
         sb.append("\"placeOfSupply\":\"").append(placeOfSupply.replace("\"", "\\\"")).append("\",")
         sb.append("\"placeOfSupplyTa\":\"").append(placeOfSupplyTa.replace("\"", "\\\"")).append("\",")
         sb.append("\"globalDiscountValue\":").append(globalDiscountValue).append(",")
-        sb.append("\"globalDiscountType\":\"").append(globalDiscountType.replace("\"", "\\\"")).append("\"")
+        sb.append("\"globalDiscountType\":\"").append(globalDiscountType.replace("\"", "\\\"")).append("\",")
+        sb.append("\"measureMode\":\"").append(measureMode.replace("\"", "\\\"")).append("\"")
         sb.append("}")
         return sb.toString()
     }
@@ -57,6 +60,7 @@ data class InvoiceDisplayOptions(
                 val posTa = Regex(""""placeOfSupplyTa"\s*:\s*"([^"]*)"""").find(json)?.groupValues?.get(1)?.ifEmpty { "தமிழ்நாடு" } ?: "தமிழ்நாடு"
                 val gDiscVal = Regex(""""globalDiscountValue"\s*:\s*([\d.]+)""").find(json)?.groupValues?.get(1)?.toDoubleOrNull() ?: 0.0
                 val gDiscType = Regex(""""globalDiscountType"\s*:\s*"([^"]*)"""").find(json)?.groupValues?.get(1) ?: "%"
+                val measure = Regex(""""measureMode"\s*:\s*"([^"]*)"""").find(json)?.groupValues?.get(1) ?: ""
 
                 InvoiceDisplayOptions(
                     taxInclusive = taxInc,
@@ -70,7 +74,8 @@ data class InvoiceDisplayOptions(
                     placeOfSupply = pos,
                     placeOfSupplyTa = posTa,
                     globalDiscountValue = gDiscVal,
-                    globalDiscountType = gDiscType
+                    globalDiscountType = gDiscType,
+                    measureMode = measure
                 )
             } catch (e: Exception) {
                 InvoiceDisplayOptions()

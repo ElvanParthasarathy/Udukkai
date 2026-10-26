@@ -364,6 +364,7 @@ class DesktopUdukkaiDatabaseHelper(
             """.trimIndent())
 
             try { stmt.execute("ALTER TABLE \"$customersTable\" ADD COLUMN \"company_ids\" TEXT NOT NULL DEFAULT '[]'") } catch (_: Exception) {}
+            try { stmt.execute("ALTER TABLE \"$profilesTable\" ADD COLUMN \"print_settings\" TEXT NOT NULL DEFAULT '{}'") } catch (_: Exception) {}
             try { stmt.execute("ALTER TABLE \"$linksTable\" ADD COLUMN \"created_at\" INTEGER NOT NULL DEFAULT 0") } catch (_: Exception) {}
             try { stmt.execute("ALTER TABLE \"$linksTable\" ADD COLUMN \"applied_amount\" REAL NOT NULL DEFAULT 0.0") } catch (_: Exception) {}
             try { stmt.execute("UPDATE \"$linksTable\" SET applied_amount = poruthiya_thogai WHERE (applied_amount = 0.0 OR applied_amount IS NULL) AND poruthiya_thogai > 0.0") } catch (_: Exception) {}
@@ -402,6 +403,7 @@ class DesktopUdukkaiDatabaseHelper(
                     "tagline" TEXT NOT NULL DEFAULT '{}',
                     "upi_id" TEXT NOT NULL DEFAULT '',
                     "theme_color" TEXT NOT NULL DEFAULT '',
+                    "print_settings" TEXT NOT NULL DEFAULT '{}',
                     "created_at" INTEGER NOT NULL DEFAULT (CAST(strftime('%s', CURRENT_TIMESTAMP) AS INTEGER)),
                     "updated_at" INTEGER NOT NULL DEFAULT (CAST(strftime('%s', CURRENT_TIMESTAMP) AS INTEGER)),
                     "is_deleted" INTEGER NOT NULL DEFAULT 0 CHECK ("is_deleted" IN (0, 1)),
@@ -1013,7 +1015,7 @@ class DesktopUdukkaiDatabaseHelper(
                 pin_code=?, bank_name=?, branch=?, account_number=?, ifsc=?, 
                 logo=?, wide_logo=?, header_layout=?, signature=?, 
                 signatory_name=?, signatory_first_name=?, signatory_last_name=?, 
-                tagline=?, upi_id=?, theme_color=?, updated_at=?, is_deleted=0 
+                tagline=?, upi_id=?, theme_color=?, print_settings=?, updated_at=?, is_deleted=0 
             WHERE id=?
             """.trimIndent()
         } else {
@@ -1025,7 +1027,7 @@ class DesktopUdukkaiDatabaseHelper(
                 pin_code, bank_name, branch, account_number, ifsc, 
                 logo, wide_logo, header_layout, signature, 
                 signatory_name, signatory_first_name, signatory_last_name, 
-                tagline, upi_id, theme_color, created_at, updated_at, is_deleted
+                tagline, upi_id, theme_color, print_settings, created_at, updated_at, is_deleted
                 ${if (pId != null) ", id" else ""}
             ) VALUES (
                 ?, ?, ?, ?, ?, 
@@ -1034,7 +1036,7 @@ class DesktopUdukkaiDatabaseHelper(
                 ?, ?, ?, ?, ?, 
                 ?, ?, ?, ?, 
                 ?, ?, ?, 
-                ?, ?, ?, ?, ?, 0
+                ?, ?, ?, ?, ?, ?, 0
                 ${if (pId != null) ", ?" else ""}
             )
             """.trimIndent()
@@ -1071,16 +1073,17 @@ class DesktopUdukkaiDatabaseHelper(
             stmt.setString(28, LanguageJsonConverter.stringify(profile.tagline))
             stmt.setString(29, profile.upiId)
             stmt.setString(30, profile.themeColor)
+            stmt.setString(31, profile.printSettingsJson)
 
             val now = System.currentTimeMillis() / 1000
             if (exists) {
-                stmt.setLong(31, now)
-                stmt.setLong(32, pId!!)
-            } else {
-                stmt.setLong(31, now)
                 stmt.setLong(32, now)
+                stmt.setLong(33, pId!!)
+            } else {
+                stmt.setLong(32, now)
+                stmt.setLong(33, now)
                 if (pId != null) {
-                    stmt.setLong(33, pId)
+                    stmt.setLong(34, pId)
                 }
             }
             stmt.executeUpdate() > 0
@@ -1246,7 +1249,8 @@ class DesktopUdukkaiDatabaseHelper(
         signatoryLastName = getStringCol(rs, "signatory_last_name", "oppam_irudhi_peyar"),
         tagline = LanguageJsonConverter.parse(getStringCol(rs, "tagline", "adaimozhi")),
         upiId = getStringCol(rs, "upi_id"),
-        themeColor = getStringCol(rs, "theme_color", "thoatra_niram", "thoatraNiram")
+        themeColor = getStringCol(rs, "theme_color", "thoatra_niram", "thoatraNiram"),
+        printSettingsJson = getStringCol(rs, "print_settings", default = "{}")
     )
 }
 

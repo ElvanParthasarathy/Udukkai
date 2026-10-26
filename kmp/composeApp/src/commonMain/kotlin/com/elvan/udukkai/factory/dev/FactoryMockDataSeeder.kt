@@ -150,7 +150,7 @@ object FactoryMockDataSeeder {
 
         // 1. Seed Profiles
         for (map in mockFactoryProfiles) {
-            val p = profileFromMap(map)
+            val p = ReactSeedAssets.apply(profileFromMap(map))
             helper.saveProfile(p)
         }
         val factoryProfiles = helper.loadAllProfiles()
@@ -308,7 +308,7 @@ object FactoryMockDataSeeder {
             "Factory PVS Removed ✗"
         } else {
             if (mockFactoryProfiles.size > 1) {
-                helper.saveProfile(profileFromMap(mockFactoryProfiles[1]))
+                helper.saveProfile(ReactSeedAssets.apply(profileFromMap(mockFactoryProfiles[1])))
             }
             "Factory PVS Added ✓"
         }

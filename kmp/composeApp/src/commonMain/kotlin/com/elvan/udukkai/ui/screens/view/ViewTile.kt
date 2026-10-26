@@ -14,6 +14,9 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.compose.ui.zIndex
 import com.elvan.udukkai.core.platform.AppBackHandler
+import com.elvan.udukkai.core.print.DocumentPrintAction
+import com.elvan.udukkai.core.print.DocumentPrintController
+import com.elvan.udukkai.core.print.isDocumentPrintSupported
 import com.elvan.udukkai.localization.K
 import com.elvan.udukkai.localization.tr
 import com.elvan.udukkai.theme.rememberShellColors
@@ -121,10 +124,23 @@ fun ViewTile(
     onCopy: (() -> Unit)? = null,
     onShare: (() -> Unit)? = null,
     onPreview: (() -> Unit)? = null,
+    printPayload: (() -> String)? = null,
+    printFileName: String = title,
     content: @Composable () -> Unit
 ) {
     val colors = rememberShellColors()
     var showPreview by remember { mutableStateOf(false) }
+    val canRender = printPayload != null && isDocumentPrintSupported
+    var printController by remember { mutableStateOf(DocumentPrintController()) }
+    val openDocument: (DocumentPrintAction?) -> Unit = { action ->
+        printController = DocumentPrintController()
+        when (action) {
+            DocumentPrintAction.Print -> printController.print()
+            DocumentPrintAction.Share -> printController.share()
+            null -> Unit
+        }
+        showPreview = true
+    }
 
     ElvanSubShell(
         title = title,
@@ -144,9 +160,9 @@ fun ViewTile(
             if (isDocument) {
                 ElvanViewActionBar(
                     onEdit = onEdit,
-                    onPreview = onPreview ?: { showPreview = true },
-                    onPrint = onPrint,
-                    onShare = onShare,
+                    onPreview = onPreview ?: { openDocument(null) },
+                    onPrint = onPrint ?: if (canRender) ({ openDocument(DocumentPrintAction.Print) }) else null,
+                    onShare = onShare ?: if (canRender) ({ openDocument(DocumentPrintAction.Share) }) else null,
                     onCopy = onCopy,
                     isDocument = true
                 )
@@ -164,10 +180,14 @@ fun ViewTile(
             onDismissRequest = { showPreview = false },
             properties = DialogProperties(usePlatformDefaultWidth = false)
         ) {
+            val payload = remember(printPayload) { if (canRender) printPayload?.invoke() else null }
             PreviewScreen(
                 title = K.previewBtn.tr(),
                 subtitle = title,
-                onBack = { showPreview = false }
+                onBack = { showPreview = false },
+                printPayload = payload,
+                printFileName = printFileName,
+                printController = printController
             )
         }
     }
