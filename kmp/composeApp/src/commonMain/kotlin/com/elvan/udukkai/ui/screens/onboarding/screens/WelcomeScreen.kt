@@ -30,10 +30,10 @@ fun WelcomeScreen(
 ) {
     val isDark = ThemeManager.isDark()
     val logoBg = if (isDark) Color.White else Color(0xFF111111)
-    val logoTint = LocalShellColors.current.surface
+    val logoTint = if (isDark) Color.Black else Color.White
     val textSecondary = if (isDark) Color.White.copy(alpha = 0.4f) else Color(0xFF999999)
 
-    AuthLayout(showBranding = true) {
+    AuthLayout {
         // 1. LOGO SECTION matching Flutter 1:1 (96x96, radius 28dp, soft shadow, storage/database icon)
         AuthAnimatedElement(delayIndex = 0) {
             Box(
@@ -50,7 +50,7 @@ fun WelcomeScreen(
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
-                    imageVector = MaterialSymbols.Rounded.Storage,
+                    imageVector = MaterialSymbols.Rounded.DatabaseFill,
                     contentDescription = "Udukkai Database",
                     tint = logoTint,
                     modifier = Modifier.size(48.dp)
@@ -78,8 +78,6 @@ fun WelcomeScreen(
                 color = textSecondary
             )
         }
-
-        Spacer(modifier = Modifier.height(16.dp))
 
         // 4. ACTION BUTTON matching Flutter (K.getStartedBtn -> "தொடங்குக" / "Get Started")
         AuthButton(

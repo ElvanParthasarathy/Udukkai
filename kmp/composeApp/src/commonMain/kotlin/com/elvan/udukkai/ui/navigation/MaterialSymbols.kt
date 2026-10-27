@@ -422,6 +422,10 @@ object MaterialSymbols {
         val CheckBox: ImageVector get() = LibSymbols.Rounded.Check_box
         val CheckBoxOutlineBlank: ImageVector get() = LibSymbols.Rounded.Check_box_outline_blank
         val Restore: ImageVector get() = LibSymbols.Rounded.Settings_backup_restore
+        val HistoryFill: ImageVector get() = LibSymbols.RoundedFilled.History
+        val Autorenew: ImageVector get() = LibSymbols.Rounded.Autorenew
+        val Language: ImageVector get() = LibSymbols.Rounded.Language
+        val DatabaseFill: ImageVector get() = LibSymbols.RoundedFilled.Database
         val ContentCopy: ImageVector get() = LibSymbols.Rounded.Content_copy
         val ContentPaste: ImageVector get() = LibSymbols.Rounded.Content_paste
         val Print: ImageVector get() = LibSymbols.Rounded.Print

@@ -30,6 +30,8 @@ kotlin {
             implementation(project.dependencies.platform(libs.firebase.bom))
             implementation(libs.firebase.database)
             implementation(libs.firebase.analytics)
+            // SVG logos (data:image/svg+xml) in ElvanImageViewer
+            implementation("com.caverock:androidsvg-aar:1.4")
         }
         commonMain.dependencies {
             implementation(compose.runtime)

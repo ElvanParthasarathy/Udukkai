@@ -21,6 +21,8 @@ import com.elvan.udukkai.ui.components.shell.ElvanBottomSheetHost
 import com.elvan.udukkai.ui.components.shell.ElvanSnackbarHost
 import com.elvan.udukkai.ui.components.shell.LocalElvanBottomSheetController
 import com.elvan.udukkai.ui.screens.onboarding.screens.AnumadhiKaavalarThirai
+import com.elvan.udukkai.ui.screens.onboarding.OnboardingGate
+import com.elvan.udukkai.core.auth.AppScope
 
 /**
  * Root Composable for Udukkai Textiles (சவுளி).
@@ -57,7 +59,7 @@ fun TextilesApp() {
                             }
                         )
                     } else {
-                        TextilesHomeScreen()
+                        OnboardingGate(AppScope.TEXTILES) { TextilesHomeScreen() }
                     }
 
                     ElvanBottomSheetHost(bottomSheetController)

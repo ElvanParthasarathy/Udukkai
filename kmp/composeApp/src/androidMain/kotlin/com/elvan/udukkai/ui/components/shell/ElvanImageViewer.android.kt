@@ -1,83 +1,42 @@
 package com.elvan.udukkai.ui.components.shell
 
-import android.graphics.BitmapFactory
+import android.graphics.Bitmap
+import android.graphics.Canvas
 import android.net.Uri
-import android.util.Base64
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.size
-import androidx.compose.material3.Icon
-import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.unit.dp
-import com.elvan.udukkai.ui.navigation.MaterialSymbols
+import androidx.compose.ui.graphics.painter.BitmapPainter
+import androidx.compose.ui.graphics.painter.Painter
+import androidx.compose.ui.unit.Density
+import com.caverock.androidsvg.SVG
+import com.elvan.udukkai.core.platform.AppContext
 import java.io.File
+import kotlin.math.roundToInt
 
-@Composable
-actual fun ElvanImageViewer(
-    value: String?,
-    modifier: Modifier,
-    contentScale: ContentScale
-) {
-    if (value.isNullOrBlank()) {
-        Box(modifier = modifier, contentAlignment = Alignment.Center) {
-            Icon(
-                imageVector = MaterialSymbols.Rounded.BrokenImage,
-                contentDescription = null,
-                tint = Color.Gray,
-                modifier = Modifier.size(24.dp)
-            )
-        }
-        return
-    }
-
-    val context = LocalContext.current
-    val imageBitmap = remember(value) {
-        try {
-            when {
-                value.startsWith("content://") || value.startsWith("file://") -> {
-                    val uri = Uri.parse(value)
-                    context.contentResolver.openInputStream(uri)?.use { stream ->
-                        BitmapFactory.decodeStream(stream)?.asImageBitmap()
-                    }
-                }
-                value.contains("/") || value.contains("\\") -> {
-                    val file = File(value)
-                    if (file.exists()) {
-                        BitmapFactory.decodeFile(file.absolutePath)?.asImageBitmap()
-                    } else null
-                }
-                else -> {
-                    val cleanBase64 = if (value.contains(",")) value.substringAfter(",") else value
-                    val decodedBytes = Base64.decode(cleanBase64, Base64.DEFAULT)
-                    BitmapFactory.decodeByteArray(decodedBytes, 0, decodedBytes.size)?.asImageBitmap()
-                }
-            }
-        } catch (_: Exception) {
-            null
-        }
-    }
-
-    if (imageBitmap != null) {
-        Image(
-            bitmap = imageBitmap,
-            contentDescription = null,
-            modifier = modifier,
-            contentScale = contentScale
-        )
+actual fun loadElvanImageBytes(value: String): ByteArray? = try {
+    if (value.startsWith("content://") || value.startsWith("file://")) {
+        AppContext.context.contentResolver.openInputStream(Uri.parse(value))?.use { it.readBytes() }
     } else {
-        Box(modifier = modifier, contentAlignment = Alignment.Center) {
-            Icon(
-                imageVector = MaterialSymbols.Rounded.BrokenImage,
-                contentDescription = null,
-                tint = Color.Gray,
-                modifier = Modifier.size(24.dp)
-            )
-        }
+        val file = File(value)
+        if (file.isFile) file.readBytes() else null
     }
+} catch (_: Exception) {
+    null
+}
+
+// Rasterises the SVG at 3x its intrinsic size so it stays sharp when scaled to fit.
+actual fun decodeSvgPainter(bytes: ByteArray, density: Density): Painter? = try {
+    val svg = SVG.getFromString(bytes.decodeToString())
+    val box = svg.documentViewBox
+    val baseW = if (svg.documentWidth > 0) svg.documentWidth else box?.width() ?: 512f
+    val baseH = if (svg.documentHeight > 0) svg.documentHeight else box?.height() ?: 512f
+    val scale = 3f
+    val w = (baseW * scale).roundToInt().coerceIn(1, 4096)
+    val h = (baseH * scale).roundToInt().coerceIn(1, 4096)
+    svg.documentWidth = w.toFloat()
+    svg.documentHeight = h.toFloat()
+    val bitmap = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888)
+    svg.renderToCanvas(Canvas(bitmap))
+    BitmapPainter(bitmap.asImageBitmap())
+} catch (_: Exception) {
+    null
 }

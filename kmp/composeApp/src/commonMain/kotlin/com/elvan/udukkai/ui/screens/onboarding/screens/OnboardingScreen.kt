@@ -27,12 +27,9 @@ fun UllnuzhaivuThirai(
     val emptyFieldsError = K.fillAllFields.tr()
     val scope = rememberCoroutineScope()
 
-    AuthLayout(showBranding = true) {
+    AuthLayout {
         // Back Button
-        Column(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalAlignment = Alignment.Start
-        ) {
+        AuthAnimatedElement(delayIndex = 0) {
             AuthBackButton(onClick = onBack)
         }
 

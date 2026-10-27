@@ -68,7 +68,8 @@ object FactoryProfileRepository {
     var profile by mutableStateOf(defaultProfile)
         private set
 
-    var allProfiles by mutableStateOf<List<BusinessProfile>>(listOf(defaultProfile))
+    // Empty until the user creates their business in the setup flow (Flutter: isSetupComplete).
+    var allProfiles by mutableStateOf<List<BusinessProfile>>(emptyList())
         private set
 
     init {
@@ -102,10 +103,10 @@ object FactoryProfileRepository {
                     profile = it
                     allProfiles = listOf(it)
                 } ?: run {
-                    // Seed default profile
-                    helper.saveProfile(defaultProfile)
+                    // No business yet: keep the placeholder in memory only so the
+                    // onboarding setup flow runs (nothing is written to the database).
                     profile = defaultProfile
-                    allProfiles = listOf(defaultProfile)
+                    allProfiles = emptyList()
                 }
             }
         } catch (_: Exception) {}

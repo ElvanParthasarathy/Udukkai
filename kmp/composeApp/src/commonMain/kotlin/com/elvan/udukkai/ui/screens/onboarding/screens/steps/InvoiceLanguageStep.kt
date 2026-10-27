@@ -8,15 +8,13 @@ import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import com.elvan.udukkai.ui.navigation.MaterialSymbols
 import com.elvan.udukkai.localization.K
 import com.elvan.udukkai.localization.tr
 import com.elvan.udukkai.theme.ThemeManager
-import com.elvan.udukkai.ui.navigation.MaterialSymbols
 import com.elvan.udukkai.ui.screens.onboarding.components.*
-import com.elvan.udukkai.theme.LocalShellColors
 
 /**
  * Billing Language Selection Step matching Flutter's BillingLanguageStep (pattiyal_mozhi_padi.dart) 1:1.
@@ -28,32 +26,27 @@ fun BillingLanguageStep(
     onLanguageSelected: (String) -> Unit,
     onContinue: () -> Unit
 ) {
-    val textColor = LocalShellColors.current.textPrimary
-    val containerBg = LocalShellColors.current.pillBackground
-    val dividerColor = LocalShellColors.current.divider
+    val isDark = ThemeManager.isDark()
+    val textColor = if (isDark) Color.White else Color.Black
+    val inputBg = if (isDark) Color(0xFF1E1E1E) else Color(0xFFF5F5F5) // Colors.grey[100]
+    val dividerColor = if (isDark) Color.White.copy(alpha = 0.12f) else Color.Black.copy(alpha = 0.12f)
 
     Column(
         modifier = Modifier.fillMaxWidth(),
-        horizontalAlignment = Alignment.CenterHorizontally
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
     ) {
-        Column(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalAlignment = Alignment.Start
-        ) {
-            AuthBackButton(onClick = onBack)
-        }
+        AuthBackButton(onClick = onBack)
 
-        // Document Icon matching Flutter
         Icon(
-            imageVector = MaterialSymbols.Rounded.Description,
-            contentDescription = "Billing Language",
+            imageVector = MaterialSymbols.Rounded.DescriptionFill,
+            contentDescription = null,
             tint = textColor,
             modifier = Modifier.size(80.dp)
         )
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        // Header: "பட்டியல் முதன்மை மொழி" / "Invoice Language"
         AuthHeader(
             title = K.selectPrimaryBillingLanguage.tr(),
             subtitle = K.whichBillingLanguagePrompt.tr()
@@ -61,36 +54,28 @@ fun BillingLanguageStep(
 
         Spacer(modifier = Modifier.height(32.dp))
 
-        // Language Selection Card matching Flutter
         AuthAnimatedElement(delayIndex = 2) {
-            Box(
+            Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clip(RoundedCornerShape(16.dp))
-                    .background(containerBg, RoundedCornerShape(16.dp))
+                    .background(inputBg, RoundedCornerShape(16.dp))
             ) {
-                Column(modifier = Modifier.fillMaxWidth()) {
-                    LanguageTile(
-                        title = "தமிழ்",
-                        isSelected = billingLanguage == "ta",
-                        onTap = { onLanguageSelected("ta") }
-                    )
-                    HorizontalDivider(
-                        color = dividerColor,
-                        modifier = Modifier.padding(horizontal = 24.dp)
-                    )
-                    LanguageTile(
-                        title = "English",
-                        isSelected = billingLanguage == "en",
-                        onTap = { onLanguageSelected("en") }
-                    )
-                }
+                LanguageTile(
+                    title = "தமிழ்",
+                    isSelected = billingLanguage == "ta",
+                    onTap = { onLanguageSelected("ta") }
+                )
+                HorizontalDivider(thickness = 1.dp, color = dividerColor, modifier = Modifier.padding(horizontal = 24.dp))
+                LanguageTile(
+                    title = "English",
+                    isSelected = billingLanguage == "en",
+                    onTap = { onLanguageSelected("en") }
+                )
             }
         }
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        // Continue Button: "தொடரவும்" / "Continue"
         AuthButton(
             text = K.continueText.tr(),
             onClick = onContinue

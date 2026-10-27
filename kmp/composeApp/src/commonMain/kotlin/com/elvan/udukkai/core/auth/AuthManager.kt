@@ -7,6 +7,9 @@ import com.elvan.udukkai.core.platform.getPreferencesHelper
 import com.elvan.udukkai.factory.data.FactoryProfileRepository
 import com.elvan.udukkai.textiles.data.TextilesProfileRepository
 
+/** Which standalone app is running: each has its own business profiles. */
+enum class AppScope { TEXTILES, FACTORY }
+
 /**
  * Central authentication and onboarding state manager.
  * Manages login status and profile setup completion for the app flow.
@@ -36,6 +39,17 @@ object AuthManager {
             isLoggedIn = false
         }
         refreshProfileStatus()
+        // Installs from before the login flow existed already have a business set up:
+        // keep them signed in instead of sending them back to the welcome page.
+        if (!isLoggedIn && (FactoryProfileRepository.allProfiles.isNotEmpty() || TextilesProfileRepository.allProfiles.isNotEmpty())) {
+            login("", "")
+        }
+    }
+
+    /** Flutter's isSetupComplete, for one standalone app. */
+    fun isSetupComplete(scope: AppScope): Boolean = when (scope) {
+        AppScope.TEXTILES -> TextilesProfileRepository.allProfiles.isNotEmpty()
+        AppScope.FACTORY -> FactoryProfileRepository.allProfiles.isNotEmpty()
     }
 
     fun login(email: String, password: String): Boolean {

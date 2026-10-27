@@ -5,52 +5,54 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.elvan.udukkai.core.auth.AppScope
 import com.elvan.udukkai.core.auth.AuthManager
 import com.elvan.udukkai.core.backup.getUdukkaiBackupService
 import com.elvan.udukkai.data.settings.BusinessProfile
 import com.elvan.udukkai.factory.data.FactoryProfileRepository
-import com.elvan.udukkai.textiles.data.TextilesProfileRepository
 import com.elvan.udukkai.localization.K
 import com.elvan.udukkai.localization.tr
-import com.elvan.udukkai.ui.screens.onboarding.components.*
+import com.elvan.udukkai.textiles.data.TextilesProfileRepository
+import com.elvan.udukkai.ui.components.shell.ElvanSnackbar
+import com.elvan.udukkai.ui.screens.onboarding.components.AuthBackButton
+import com.elvan.udukkai.ui.screens.onboarding.components.AuthButton
+import com.elvan.udukkai.ui.screens.onboarding.components.AuthHeader
+import com.elvan.udukkai.ui.screens.onboarding.components.AuthInput
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 /**
  * Business Name Setup Page matching Flutter's VanakkamPage (vanakkam_thirai.dart) 1:1.
- * Prompts for GST Business Name (if Silk profile missing) and/or
- * Coolie Business Name (if Coolie profile missing).
+ * Textiles asks for the GST business name, Factory for the Coolie business name.
+ * Rendered inside the setup flow's AuthLayout (no layout of its own, like Flutter's KeyedSubtree).
  */
 @Composable
 fun GreetingScreen(
+    scope: AppScope,
     billingLanguage: String = "ta",
     onSetupComplete: () -> Unit,
     onBack: (() -> Unit)? = null
 ) {
     val coroutineScope = rememberCoroutineScope()
-
-    val missingProfiles = remember { AuthManager.missingProfiles }
-    val needsSilk = missingProfiles.any { it.equals("silk", ignoreCase = true) || it.equals("pattu", ignoreCase = true) }
-    val needsCoolie = missingProfiles.any { it.equals("coolie", ignoreCase = true) || it.equals("kooli", ignoreCase = true) }
+    val needsSilk = scope == AppScope.TEXTILES
+    val needsCoolie = scope == AppScope.FACTORY
 
     var gstBusinessName by remember { mutableStateOf("") }
     var coolieBusinessName by remember { mutableStateOf("") }
     var isSaving by remember { mutableStateOf(false) }
 
+    val enterNameMsg = K.enterName.tr()
     val isButtonDisabled = (needsSilk && gstBusinessName.trim().isEmpty()) ||
             (needsCoolie && coolieBusinessName.trim().isEmpty())
 
-    AuthLayout(showBranding = true) {
-        // Back Button
-        if (onBack != null) {
-            Column(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalAlignment = Alignment.Start
-            ) {
-                AuthBackButton(onClick = onBack)
-            }
-        }
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        if (onBack != null) AuthBackButton(onClick = onBack)
 
-        // Header: "தரவுகளை உள்ளிடுக" / "Enter Company Details"
         AuthHeader(
             title = K.enterCompanyDetails.tr(),
             subtitle = ""
@@ -58,7 +60,6 @@ fun GreetingScreen(
 
         Spacer(modifier = Modifier.height(32.dp))
 
-        // Silk / GST Business Name input
         if (needsSilk) {
             AuthInput(
                 value = gstBusinessName,
@@ -69,7 +70,6 @@ fun GreetingScreen(
             )
         }
 
-        // Coolie Business Name input
         if (needsCoolie) {
             AuthInput(
                 value = coolieBusinessName,
@@ -80,42 +80,50 @@ fun GreetingScreen(
             )
         }
 
-        Spacer(modifier = Modifier.height(24.dp))
+        Spacer(modifier = Modifier.height(32.dp))
 
-        // Continue Button ("தொடரவும்" / "Continue")
         AuthButton(
             text = K.continueText.tr(),
             loading = isSaving,
             disabled = isButtonDisabled,
             onClick = {
-                if (isButtonDisabled) return@AuthButton
+                if (isButtonDisabled) {
+                    ElvanSnackbar.show(enterNameMsg)
+                    return@AuthButton
+                }
                 isSaving = true
                 coroutineScope.launch {
                     try {
-                        if (needsSilk) {
-                            val silkProfile = BusinessProfile(
-                                primaryLanguage = billingLanguage,
-                                businessName = mutableMapOf(billingLanguage to gstBusinessName.trim()),
-                                shortName = gstBusinessName.trim()
-                            )
-                            TextilesProfileRepository.createProfile(silkProfile)
+                        val secondary = if (billingLanguage == "en") "ta" else "en"
+                        withContext(Dispatchers.Default) {
+                            if (needsSilk) {
+                                TextilesProfileRepository.createProfile(
+                                    BusinessProfile(
+                                        primaryLanguage = billingLanguage,
+                                        secondaryLanguage = secondary,
+                                        isBilingual = true,
+                                        businessName = mutableMapOf(billingLanguage to gstBusinessName.trim())
+                                    )
+                                )
+                            }
+                            if (needsCoolie) {
+                                FactoryProfileRepository.createProfile(
+                                    BusinessProfile(
+                                        primaryLanguage = billingLanguage,
+                                        secondaryLanguage = secondary,
+                                        isBilingual = false,
+                                        businessName = mutableMapOf(billingLanguage to coolieBusinessName.trim())
+                                    )
+                                )
+                            }
+                            // Save the initial setup right away (Flutter: backupService.createBackup())
+                            getUdukkaiBackupService().createBackup()
                         }
-
-                        if (needsCoolie) {
-                            val coolieProfile = BusinessProfile(
-                                primaryLanguage = billingLanguage,
-                                businessName = mutableMapOf(billingLanguage to coolieBusinessName.trim()),
-                                shortName = coolieBusinessName.trim()
-                            )
-                            FactoryProfileRepository.createProfile(coolieProfile)
-                        }
-
-                        // Create backup and refresh profile status
                         AuthManager.refreshProfileStatus()
-                        getUdukkaiBackupService().createBackup()
                         onSetupComplete()
-                    } finally {
+                    } catch (e: Exception) {
                         isSaving = false
+                        ElvanSnackbar.show("Error: ${e.message}")
                     }
                 }
             }

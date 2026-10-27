@@ -1,9 +1,9 @@
 package com.elvan.udukkai.ui.screens.onboarding.screens.steps
 
-import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -14,40 +14,42 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 import com.elvan.udukkai.theme.ThemeManager
 import kotlinx.coroutines.delay
-import com.elvan.udukkai.theme.LocalShellColors
 
-private val greetings = listOf("வணக்கம்!", "Hello!", "നமസ്കാരം!")
+private val greetings = listOf("வணக்கம்!", "Hello!", "നമസ്കാരം!")
 
 /**
- * Animated Greeting Step matching Flutter's GreetingStep (vanakkam_padi.dart) 1:1.
- * Fades in (500ms), holds (1200ms), fades out (500ms), pauses (800ms), cycles through 3 greetings.
+ * Animated Greeting Step matching Flutter's GreetingStep (vanakkam_padi.dart) 1:1:
+ * each greeting is shown for 1200ms and hidden for 800ms, with a 500ms
+ * AnimatedOpacity fade running inside those windows.
  */
 @Composable
 fun GreetingStep(
     onComplete: () -> Unit
 ) {
-    val textColor = LocalShellColors.current.textPrimary
+    val isDark = ThemeManager.isDark()
+    val textColor = if (isDark) Color.White else Color(0xFF1A1A1A)
 
     var greetingIndex by remember { mutableStateOf(0) }
-    val opacityAnim = remember { Animatable(0f) }
+    var visible by remember { mutableStateOf(false) }
+    val opacity by animateFloatAsState(
+        targetValue = if (visible) 1f else 0f,
+        animationSpec = tween(500),
+        label = "greeting_opacity"
+    )
 
     LaunchedEffect(Unit) {
         for (i in greetings.indices) {
             greetingIndex = i
-            // Fade in: 500ms
-            opacityAnim.animateTo(1f, animationSpec = tween(500))
-            // Hold: 1200ms
+            visible = true
             delay(1200)
-            // Fade out: 500ms
-            opacityAnim.animateTo(0f, animationSpec = tween(500))
-            // Pause: 800ms
+            visible = false
             delay(800)
         }
         onComplete()
     }
 
     Box(
-        modifier = Modifier.fillMaxSize(),
+        modifier = Modifier.fillMaxWidth(),
         contentAlignment = Alignment.Center
     ) {
         Text(
@@ -56,7 +58,7 @@ fun GreetingStep(
             fontWeight = FontWeight.Light,
             letterSpacing = (-1).sp,
             color = textColor,
-            modifier = Modifier.alpha(opacityAnim.value)
+            modifier = Modifier.alpha(opacity)
         )
     }
 }

@@ -21,6 +21,10 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.graphics.TransformOrigin
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.text.TextStyle
@@ -37,6 +41,11 @@ import com.elvan.udukkai.ui.navigation.MaterialSymbols
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import com.elvan.udukkai.theme.LocalShellColors
+
+// Flutter Curves.easeOut / Curves.easeInOut / Curves.easeOutBack
+private val FlutterEaseOut = CubicBezierEasing(0.0f, 0.0f, 0.58f, 1.0f)
+private val FlutterEaseInOut = CubicBezierEasing(0.42f, 0.0f, 0.58f, 1.0f)
+private val FlutterEaseOutBack = CubicBezierEasing(0.175f, 0.885f, 0.32f, 1.275f)
 
 /**
  * Handles the staggered entrance animation from Flutter/React:
@@ -59,7 +68,7 @@ fun AuthAnimatedElement(
                 targetValue = 1f,
                 animationSpec = tween(
                     durationMillis = durationMillis,
-                    easing = FastOutSlowInEasing
+                    easing = FlutterEaseOut
                 )
             )
         }
@@ -69,17 +78,19 @@ fun AuthAnimatedElement(
                 targetValue = 0f,
                 animationSpec = tween(
                     durationMillis = durationMillis,
-                    easing = CubicBezierEasing(0.175f, 0.885f, 0.32f, 1.275f)
+                    easing = FlutterEaseOutBack
                 )
             )
         }
     }
 
+    // Flutter children are centred in their Column (crossAxisAlignment.center)
     Box(
         modifier = Modifier
             .alpha(alphaAnim.value)
             .offset(y = translateYAnim.value.dp)
-            .fillMaxWidth()
+            .fillMaxWidth(),
+        contentAlignment = Alignment.TopCenter
     ) {
         content()
     }
@@ -117,9 +128,10 @@ fun AuthLayout(
     val rotate2 by infiniteTransition.animateFloat(
         initialValue = 360f,
         targetValue = 0f,
+        // Flutter: Tween(1, 0) over repeat(reverse: true) swings back and forth
         animationSpec = infiniteRepeatable(
             animation = tween(durationMillis = 40000, easing = LinearEasing),
-            repeatMode = RepeatMode.Restart
+            repeatMode = RepeatMode.Reverse
         ),
         label = "rotate2"
     )
@@ -129,7 +141,7 @@ fun AuthLayout(
         initialValue = 0f,
         targetValue = 30f,
         animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 4000, easing = FastOutSlowInEasing),
+            animation = tween(durationMillis = 4000, easing = FlutterEaseInOut),
             repeatMode = RepeatMode.Reverse
         ),
         label = "float1"
@@ -140,7 +152,7 @@ fun AuthLayout(
         initialValue = 30f,
         targetValue = 0f,
         animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 5000, easing = FastOutSlowInEasing),
+            animation = tween(durationMillis = 5000, easing = FlutterEaseInOut),
             repeatMode = RepeatMode.Reverse
         ),
         label = "float2"
@@ -163,7 +175,11 @@ fun AuthLayout(
                     y = screenH * 0.02f
                 )
                 .size(s1Size)
-                .rotate(rotate1)
+                .graphicsLayer {
+                    // Flutter rotates around Alignment(0.85, 0.15)
+                    rotationZ = rotate1
+                    transformOrigin = TransformOrigin(0.925f, 0.575f)
+                }
                 .background(shapeColor, RoundedCornerShape(80.dp))
         )
 
@@ -173,7 +189,7 @@ fun AuthLayout(
             modifier = Modifier
                 .offset(
                     x = -screenW * 0.1f,
-                    y = screenH * 0.65f + float1.dp
+                    y = screenH * 0.95f - s2Size + float1.dp
                 )
                 .size(s2Size)
                 .background(shapeColor, CircleShape)
@@ -197,7 +213,7 @@ fun AuthLayout(
         Box(
             modifier = Modifier
                 .offset(
-                    x = screenW * 0.85f,
+                    x = screenW * 0.75f,
                     y = screenH * 0.60f + float2.dp
                 )
                 .size(s4Size)
@@ -205,17 +221,19 @@ fun AuthLayout(
         )
 
         // Centered Scrollable Main Content matching Flutter's ConstrainedBox(maxWidth: 480)
+        // Flutter: SafeArea > Center > SingleChildScrollView > maxWidth 480 > padding(24, 32)
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = 24.dp, vertical = 32.dp),
+                .windowInsetsPadding(WindowInsets.safeDrawing),
             contentAlignment = Alignment.Center
         ) {
             Column(
                 modifier = Modifier
+                    .verticalScroll(rememberScrollState())
                     .widthIn(max = 480.dp)
                     .fillMaxWidth()
-                    .verticalScroll(rememberScrollState()),
+                    .padding(horizontal = 24.dp, vertical = 32.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center
             ) {
@@ -229,7 +247,7 @@ fun AuthLayout(
                 modifier = Modifier
                     .fillMaxWidth()
                     .align(Alignment.BottomCenter)
-                    .padding(bottom = 28.dp),
+                    .padding(bottom = 64.dp),
                 contentAlignment = Alignment.Center
             ) {
                 Text(
@@ -237,7 +255,7 @@ fun AuthLayout(
                     fontSize = 13.sp,
                     fontWeight = FontWeight.Normal,
                     letterSpacing = 1.2.sp,
-                    color = (if (isDark) Color.White else Color(0xFF1D1D1F)).copy(alpha = 0.45f)
+                    color = LocalShellColors.current.textPrimary.copy(alpha = 0.5f)
                 )
             }
         }
@@ -262,7 +280,7 @@ fun AuthHeader(
     subtitle: String = ""
 ) {
     val isDark = ThemeManager.isDark()
-    val titleColor = LocalShellColors.current.textPrimary
+    val titleColor = if (isDark) Color.White else Color(0xFF1A1A1A)
     val subtitleColor = if (isDark) Color.White.copy(alpha = 0.6f) else Color(0xFF666666)
 
     AuthAnimatedElement(delayIndex = 1) {
@@ -272,6 +290,7 @@ fun AuthHeader(
         ) {
             Text(
                 text = title,
+                textAlign = TextAlign.Center,
                 fontSize = 28.sp,
                 fontWeight = FontWeight.ExtraBold,
                 letterSpacing = (-0.5).sp,
@@ -281,6 +300,7 @@ fun AuthHeader(
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
                     text = subtitle,
+                    textAlign = TextAlign.Center,
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Normal,
                     color = subtitleColor
@@ -311,11 +331,12 @@ fun AuthInput(
     modifier: Modifier = Modifier
 ) {
     val isDark = ThemeManager.isDark()
-    val textColor = LocalShellColors.current.textPrimary
+    val textColor = if (isDark) Color.White else Color(0xFF1A1A1A)
     val labelColor = if (isDark) Color.White.copy(alpha = 0.6f) else Color(0xFF666666)
     val inputBg = if (isDark) Color(0xFF1E1E1E) else Color.White
 
     var passwordVisible by remember { mutableStateOf(false) }
+    var isFocused by remember { mutableStateOf(false) }
 
     AuthAnimatedElement(delayIndex = 2) {
         Column(
@@ -344,7 +365,7 @@ fun AuthInput(
                         if (!isDark) {
                             Modifier.cssShadow(
                                 color = Color.Black,
-                                alpha = 0.08f,
+                                alpha = if (isFocused) 0.16f else 0.08f,
                                 blurRadius = 24.dp,
                                 offsetY = 8.dp
                             )
@@ -385,7 +406,9 @@ fun AuthInput(
                             } else {
                                 VisualTransformation.None
                             },
-                            modifier = Modifier.fillMaxWidth()
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .onFocusChanged { isFocused = it.isFocused }
                         )
                     }
 
@@ -442,9 +465,11 @@ fun AuthButton(
     modifier: Modifier = Modifier
 ) {
     val isDark = ThemeManager.isDark()
-    val btnBg = LocalShellColors.current.textPrimary
-    val btnText = LocalShellColors.current.surface
+    val btnBg = if (isDark) Color.White else Color.Black
+    val btnText = if (isDark) Color.Black else Color.White
     val isDisabled = disabled || loading
+    // ElevatedButton's default disabled foreground: onSurface at 38%
+    val disabledText = (if (isDark) Color.White else Color.Black).copy(alpha = 0.38f)
 
     AuthAnimatedElement(delayIndex = 3) {
         Box(
@@ -476,7 +501,7 @@ fun AuthButton(
                     text = text,
                     fontSize = 16.sp,
                     fontWeight = FontWeight.SemiBold,
-                    color = btnText
+                    color = if (isDisabled) disabledText else btnText
                 )
             }
         }
@@ -497,6 +522,11 @@ fun AuthBackButton(
     val isDark = ThemeManager.isDark()
     val iconColor = LocalShellColors.current.textPrimary
 
+    // Flutter: Align(alignment: Alignment.centerLeft)
+    Box(
+        modifier = Modifier.fillMaxWidth(),
+        contentAlignment = Alignment.CenterStart
+    ) {
     Box(
         modifier = modifier
             .padding(bottom = 24.dp)
@@ -517,6 +547,7 @@ fun AuthBackButton(
                 .size(24.dp)
                 .offset(x = (-1).dp) // Optical centering for back chevron
         )
+    }
     }
 }
 
@@ -539,6 +570,7 @@ fun LanguageTile(
     Row(
         modifier = modifier
             .fillMaxWidth()
+            .clip(RoundedCornerShape(16.dp))
             .clickable(onClick = onTap)
             .padding(horizontal = 24.dp, vertical = 20.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
