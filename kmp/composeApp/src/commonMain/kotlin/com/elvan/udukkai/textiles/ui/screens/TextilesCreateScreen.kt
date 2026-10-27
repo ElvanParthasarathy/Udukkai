@@ -62,8 +62,9 @@ fun TextilesCreateScreen(
     val ff = LocalAppFontFamily.current
     val activeProfile = TextilesProfileRepository.profile
 
-    val invoices = TextilesInvoiceRepository.filteredInvoices
-    val receipts = TextilesReceiptRepository.filteredReceipts
+    // Cached until the underlying data, search text, date range or company changes
+    val invoices by remember { derivedStateOf { TextilesInvoiceRepository.filteredInvoices } }
+    val receipts by remember { derivedStateOf { TextilesReceiptRepository.filteredReceipts } }
 
     val pageSize = 10
     var visibleInvoiceCount by remember { mutableIntStateOf(pageSize) }
@@ -74,6 +75,16 @@ fun TextilesCreateScreen(
     }
     LaunchedEffect(activeProfile.id, TextilesReceiptRepository.startDateFilter, TextilesReceiptRepository.endDateFilter) {
         visibleReceiptCount = pageSize
+    }
+
+    // The pill slides over 150ms. Swapping the (Tamil text heavy) card list in the same frames made
+    // that slide stutter, so the list follows once the pill has settled.
+    var listSegment by remember { mutableIntStateOf(selectedSegment) }
+    LaunchedEffect(selectedSegment) {
+        if (listSegment != selectedSegment) {
+            delay(170)
+            listSegment = selectedSegment
+        }
     }
 
     val currentSearchQuery = if (selectedSegment == 0) TextilesInvoiceRepository.searchQuery else TextilesReceiptRepository.searchQuery
@@ -250,7 +261,7 @@ fun TextilesCreateScreen(
                         UruvakkuCardSkeleton()
                     }
                 }
-            } else if (selectedSegment == 0) {
+            } else if (listSegment == 0) {
                 if (invoices.isEmpty()) {
                     item(key = "empty_invoices") {
                         Box(

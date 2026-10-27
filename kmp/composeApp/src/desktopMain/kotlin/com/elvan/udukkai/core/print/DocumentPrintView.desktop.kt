@@ -12,6 +12,7 @@ actual fun DocumentPrintView(
     payloadJson: String,
     fileName: String,
     controller: DocumentPrintController,
-    modifier: Modifier
+    modifier: Modifier,
+    topInset: androidx.compose.ui.unit.Dp
 ) {
 }

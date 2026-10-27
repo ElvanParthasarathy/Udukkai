@@ -414,12 +414,23 @@ class AndroidUdukkaiDatabaseHelper(
         """.trimIndent())
     }
 
+    // ensureTables runs dozens of CREATE / ALTER / migration statements. Doing that on every query
+    // made each database call slow, so it only runs when the database file is new or has been
+    // changed (a write, a restore from backup, ...), tracked by path + modified time + size.
+    @Volatile
+    private var schemaStamp: String? = null
+
+    private fun fileStamp(file: File) = "${file.absolutePath}|${file.lastModified()}|${file.length()}"
+
     private inline fun <T> useDb(crossinline block: (SQLiteDatabase) -> T): T? {
         val file = resolveActiveDatabase() ?: return null
         var db: SQLiteDatabase? = null
         return try {
             db = SQLiteDatabase.openOrCreateDatabase(file, null)
-            ensureTables(db)
+            if (schemaStamp != fileStamp(file)) {
+                ensureTables(db)
+                schemaStamp = fileStamp(file)
+            }
             block(db)
         } catch (e: Exception) {
             Log.e(tag, "Database execution error ($dbName): ${e.message}", e)

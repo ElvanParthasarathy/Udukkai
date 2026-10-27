@@ -110,11 +110,12 @@ object FactoryInvoiceRepository {
 
     fun hasLinkedReceipts(invoiceId: Long): Boolean {
         if (invoiceId <= 0L) return false
-        return FactoryReceiptRepository.getPaidAmount(invoiceId) > 0.0
+        return FactoryReceiptRepository.hasPaidAmount(invoiceId)
     }
 
     fun loadAll() {
         try {
+            FactoryReceiptRepository.invalidatePaidCache()
             invoices = getFactoryDatabaseHelper().loadAllInvoices()
         } catch (_: Exception) {
             invoices = emptyList()

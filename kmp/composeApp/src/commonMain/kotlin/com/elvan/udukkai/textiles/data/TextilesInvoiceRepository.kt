@@ -110,11 +110,12 @@ object TextilesInvoiceRepository {
 
     fun hasLinkedReceipts(invoiceId: Long): Boolean {
         if (invoiceId <= 0L) return false
-        return TextilesReceiptRepository.getPaidAmount(invoiceId) > 0.0
+        return TextilesReceiptRepository.hasPaidAmount(invoiceId)
     }
 
     fun loadAll() {
         try {
+            TextilesReceiptRepository.invalidatePaidCache()
             invoices = getTextilesDatabaseHelper().loadAllInvoices()
         } catch (_: Exception) {
             invoices = emptyList()

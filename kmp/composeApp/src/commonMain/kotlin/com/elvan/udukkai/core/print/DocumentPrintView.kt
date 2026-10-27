@@ -5,11 +5,19 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
 
 /** Whether this platform can render the React print templates. */
 expect val isDocumentPrintSupported: Boolean
 
-enum class DocumentPrintAction { Print, Share }
+enum class DocumentPrintAction { Print, Share, Save }
+
+enum class PrintNoticeKind { Saved, Failed }
+
+/** Result message shown after a save / failure; [detail] is e.g. the saved location. */
+data class PrintNotice(val kind: PrintNoticeKind, val detail: String = "")
 
 /**
  * Drives a [DocumentPrintView]: print / share requests made before the
@@ -21,11 +29,34 @@ class DocumentPrintController {
     var isBusy by mutableStateOf(false)
         internal set
 
+    /** Current zoom level of the shown sheet (1 = fitted to the screen). */
+    var zoomScale by mutableStateOf(1f)
+
+    /** The sheet (paper only) rendered to a sharp image once the document is ready. */
+    var sheet by mutableStateOf<ImageBitmap?>(null)
+        internal set
+
+    /** Layout of the printed / saved / shared PDF; remembered between sessions. */
+    var options by mutableStateOf(PrintOptions.load())
+        private set
+
+    /** PDF file name without extension (edited in the options panel). */
+    var fileName by mutableStateOf("")
+
+    var notice by mutableStateOf<PrintNotice?>(null)
+        internal set
+
+    fun updateOptions(newOptions: PrintOptions) {
+        options = newOptions
+        newOptions.save()
+    }
+
     internal var handler: ((DocumentPrintAction) -> Unit)? = null
     private var pending: DocumentPrintAction? = null
 
     fun print() = request(DocumentPrintAction.Print)
     fun share() = request(DocumentPrintAction.Share)
+    fun save() = request(DocumentPrintAction.Save)
 
     private fun request(action: DocumentPrintAction) {
         val h = handler
@@ -49,5 +80,6 @@ expect fun DocumentPrintView(
     payloadJson: String,
     fileName: String,
     controller: DocumentPrintController,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    topInset: Dp = 0.dp
 )

@@ -46,6 +46,17 @@ const shimAvanam = () => ({
   },
 })
 
+// Same idea for React's custom pinch-zoom hook: the WebView zooms natively instead.
+const pinchShim = path.resolve(__dirname, 'print/shims/usePinchZoom.ts').split(path.sep).join('/')
+const shimPinchZoom = () => ({
+  name: 'shim-pinch-zoom',
+  enforce: 'pre',
+  resolveId(source, importer) {
+    if (importer && /hooks\/usePinchZoom$/.test(source) && /[\\/]moolam[\\/]/.test(importer)) return pinchShim
+    return null
+  },
+})
+
 export default defineConfig({
   root: path.resolve(__dirname, 'print'),
   // Absolute base: the KMP WebView serves this folder at the origin root, so
@@ -58,6 +69,7 @@ export default defineConfig({
       globals: { Buffer: true, global: true, process: true },
     }),
     shimAvanam(),
+    shimPinchZoom(),
     react(),
     copyPrintFonts(),
   ],

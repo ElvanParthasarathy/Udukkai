@@ -12,10 +12,18 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.zIndex
+import com.elvan.udukkai.ui.components.shell.ElvanStandardTopBar
+import com.elvan.udukkai.ui.components.shell.elvanStandardTopBarInset
+import com.elvan.udukkai.ui.components.shell.LocalElvanTopSpacerHeight
 import com.elvan.udukkai.core.platform.AppBackHandler
 import com.elvan.udukkai.core.print.DocumentPrintAction
 import com.elvan.udukkai.core.print.DocumentPrintController
+import com.elvan.udukkai.core.print.DocumentPrintView
 import com.elvan.udukkai.core.print.isDocumentPrintSupported
 import com.elvan.udukkai.localization.K
 import com.elvan.udukkai.localization.tr
@@ -131,33 +139,73 @@ fun ViewTile(
     val colors = rememberShellColors()
     var showPreview by remember { mutableStateOf(false) }
     val canRender = printPayload != null && isDocumentPrintSupported
-    var printController by remember { mutableStateOf(DocumentPrintController()) }
+    // One controller per opened document: the PDF is prepared (or fetched from the cache) while the
+    // view page is shown, so the preview opens at once.
+    val printController = remember { DocumentPrintController() }
+    val payload = remember(printPayload) { if (canRender) printPayload?.invoke() else null }
+    if (payload != null) {
+        DocumentPrintView(
+            payloadJson = payload,
+            fileName = printFileName,
+            controller = printController,
+            modifier = Modifier.size(1.dp).graphicsLayer { alpha = 0f }
+        )
+    }
     val openDocument: (DocumentPrintAction?) -> Unit = { action ->
-        printController = DocumentPrintController()
         when (action) {
             DocumentPrintAction.Print -> printController.print()
             DocumentPrintAction.Share -> printController.share()
+            DocumentPrintAction.Save -> printController.save()
             null -> Unit
         }
         showPreview = true
     }
 
-    ElvanSubShell(
-        title = title,
-        onBack = onBack,
-        scrollState = scrollState,
-        hasActions = !isDocument && onEdit != null,
-        actions = {
-            if (!isDocument && onEdit != null) {
-                ElvanActionButton(
-                    label = K.editRecord.tr(),
-                    onClick = onEdit
-                )
+    if (isDocument) {
+        // Document views use a plain fixed top bar instead of the collapsing One UI header.
+        SideEffect { ElvanSnackbar.isBottomBarVisible = true }
+        val navBarsPadding = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(colors.background)
+        ) {
+            Box(modifier = modifier.fillMaxSize()) {
+                CompositionLocalProvider(LocalElvanTopSpacerHeight provides elvanStandardTopBarInset()) {
+                    content()
+                }
             }
-        },
-        showBottomFade = isDocument,
-        floatingBar = {
-            if (isDocument) {
+            val scrolled by remember(scrollState) {
+                derivedStateOf { scrollState.firstVisibleItemIndex > 0 || scrollState.firstVisibleItemScrollOffset > 8 }
+            }
+            ElvanStandardTopBar(
+                title = title,
+                onBack = onBack,
+                scrolled = scrolled,
+                modifier = Modifier.align(Alignment.TopCenter).zIndex(100f)
+            )
+            // Soft fade above the system navigation bar, then the floating action pill
+            Box(
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .fillMaxWidth()
+                    .height(72.dp + navBarsPadding)
+                    .background(
+                        Brush.verticalGradient(
+                            0.0f to Color.Transparent,
+                            0.3f to colors.background.copy(alpha = 0.16f),
+                            0.65f to colors.background.copy(alpha = 0.55f),
+                            1.0f to colors.background
+                        )
+                    )
+            )
+            Box(
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .fillMaxWidth()
+                    .zIndex(100f),
+                contentAlignment = Alignment.BottomCenter
+            ) {
                 ElvanViewActionBar(
                     onEdit = onEdit,
                     onPreview = onPreview ?: { openDocument(null) },
@@ -167,27 +215,55 @@ fun ViewTile(
                     isDocument = true
                 )
             }
-        },
-        content = {
-            Box(modifier = modifier.fillMaxSize()) {
-                content()
-            }
         }
-    )
+    } else {
+        ElvanSubShell(
+            title = title,
+            onBack = onBack,
+            scrollState = scrollState,
+            hasActions = !isDocument && onEdit != null,
+            actions = {
+                if (!isDocument && onEdit != null) {
+                    ElvanActionButton(
+                        label = K.editRecord.tr(),
+                        onClick = onEdit
+                    )
+                }
+            },
+            showBottomFade = isDocument,
+            floatingBar = {
+                if (isDocument) {
+                    ElvanViewActionBar(
+                        onEdit = onEdit,
+                        onPreview = onPreview ?: { openDocument(null) },
+                        onPrint = onPrint ?: if (canRender) ({ openDocument(DocumentPrintAction.Print) }) else null,
+                        onShare = onShare ?: if (canRender) ({ openDocument(DocumentPrintAction.Share) }) else null,
+                        onCopy = onCopy,
+                        isDocument = true
+                    )
+                }
+            },
+            content = {
+                Box(modifier = modifier.fillMaxSize()) {
+                    content()
+                }
+            }
+        )
+    }
 
     if (showPreview) {
         Dialog(
             onDismissRequest = { showPreview = false },
             properties = DialogProperties(usePlatformDefaultWidth = false)
         ) {
-            val payload = remember(printPayload) { if (canRender) printPayload?.invoke() else null }
             PreviewScreen(
                 title = K.previewBtn.tr(),
                 subtitle = title,
                 onBack = { showPreview = false },
                 printPayload = payload,
                 printFileName = printFileName,
-                printController = printController
+                printController = printController,
+                externalPrintView = true
             )
         }
     }

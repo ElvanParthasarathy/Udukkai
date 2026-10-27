@@ -108,8 +108,9 @@ const DOC_TYPES = {
 };
 
 // Mirrors the mobile preview frame in React's InvoiceView (Paper elevation 8,
-// 12px radius, scaled to fit the screen width with 16px side gutters).
-// The receipt and Coolie views draw this frame themselves.
+// 12px radius, scaled to fit the screen width with 16px side gutters, pinch to
+// zoom 1x-4x with React's own usePinchZoom). The receipt and Coolie views draw
+// this frame themselves.
 const PreviewFrame = ({ children }) => {
   const initialScale = Math.min((window.innerWidth - 32) / 793.7, 1);
   const mbPercent = (1 - initialScale) * 141;
@@ -155,6 +156,8 @@ const renderDocument = (docType, props) => {
 
 let root = null;
 let renderToken = 0;
+let topInset = 0;
+const setTopInset = (px) => { topInset = Number(px) || 0; };
 let current = { docType: 'gst-invoice', props: null };
 
 const paperElement = () => document.querySelector(DOC_TYPES[current.docType].paper);
@@ -189,7 +192,7 @@ const renderProps = async (props, appLanguage, docType = 'gst-invoice') => {
     root.render(
       <LanguageProvider key={token}>
         <Mounted onMounted={resolve}>
-          <div className="print-scroll" style={{ width: '100%', height: '100%', overflowY: 'auto', overflowX: 'hidden', padding: '12px 0 24px' }}>
+          <div className="print-scroll" style={{ width: '100%', height: '100%', overflow: 'hidden', padding: `${12 + topInset}px 0 24px` }}>
             {renderDocument(current.docType, props)}
           </div>
         </Mounted>
@@ -211,8 +214,28 @@ const renderProps = async (props, appLanguage, docType = 'gst-invoice') => {
   if (token === renderToken) notify(paper ? 'onReady' : 'onError', ...(paper ? [] : ['Template did not render']));
 };
 
-// Same pipeline as buildPDF in each React view.
-const buildPdfDocument = async () => {
+// Paper sizes in mm (portrait: width x height)
+const PAPER_MM = { A4: [210, 297], A5: [148, 210], Letter: [215.9, 279.4], Legal: [215.9, 355.6] };
+
+const DEFAULT_PDF_OPTIONS = { paper: 'A4', orientation: 'portrait', marginMm: 0, color: true, fit: 'width' };
+
+// Copies a canvas region, optionally converted to black & white.
+const cropCanvas = (src, y, h, grayscale) => {
+  const out = document.createElement('canvas');
+  out.width = src.width;
+  out.height = h;
+  const ctx = out.getContext('2d');
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(0, 0, out.width, out.height);
+  if (grayscale) ctx.filter = 'grayscale(1)';
+  ctx.drawImage(src, 0, y, src.width, h, 0, 0, src.width, h);
+  return out;
+};
+
+// Same capture settings as each React view's buildPDF (html2canvas + jsPDF), but the page is laid
+// out from the chosen print options instead of a fixed A4.
+const buildPdfDocument = async (options) => {
+  const o = { ...DEFAULT_PDF_OPTIONS, ...(options || {}) };
   const cfg = DOC_TYPES[current.docType];
   const paper = paperElement();
   const frameEl = paper.closest(cfg.frame);
@@ -223,9 +246,15 @@ const buildPdfDocument = async () => {
     frameEl.style.zoom = '1';
   }
 
-  const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4', compress: true });
-  const pdfWidth = pdf.internal.pageSize.getWidth();
-  const pdfPageHeight = pdf.internal.pageSize.getHeight();
+  const [shortSide, longSide] = PAPER_MM[o.paper] || PAPER_MM.A4;
+  const landscape = o.orientation === 'landscape';
+  const pageW = landscape ? longSide : shortSide;
+  const pageH = landscape ? shortSide : longSide;
+  const margin = Number(o.marginMm) || 0;
+  const contentW = pageW - 2 * margin;
+  const contentH = pageH - 2 * margin;
+
+  const pdf = new jsPDF({ orientation: landscape ? 'landscape' : 'portrait', unit: 'mm', format: [shortSide, longSide], compress: true });
   const extraPages = cfg.extraPages ? paper.querySelectorAll('[data-pdf-page]') : [];
   const renderScale = Math.max(3, Math.round((window.devicePixelRatio || 1) * 2));
 
@@ -240,6 +269,30 @@ const buildPdfDocument = async () => {
     height: el.scrollHeight,
   });
 
+  let pageCount = 0;
+  const addSheet = (canvas) => {
+    const gray = !o.color;
+    if (o.fit === 'page') {
+      // whole sheet on one page, centred horizontally
+      const s = Math.min(contentW / canvas.width, contentH / canvas.height);
+      const w = canvas.width * s;
+      const h = canvas.height * s;
+      if (pageCount++) pdf.addPage();
+      pdf.addImage(cropCanvas(canvas, 0, canvas.height, gray).toDataURL('image/jpeg', 0.95), 'JPEG', margin + (contentW - w) / 2, margin, w, h, undefined, 'MEDIUM');
+    } else {
+      // fit to the page width, continue on more pages when the sheet is taller
+      const s = contentW / canvas.width;
+      const slicePx = Math.max(1, Math.floor(contentH / s));
+      // up to 2mm of overhang still counts as one page (as before), otherwise start a new page
+      for (let y = 0; (canvas.height - y) * s > 2; y += slicePx) {
+        const remaining = canvas.height - y;
+        const h = remaining * s <= contentH + 2 ? remaining : slicePx;
+        if (pageCount++) pdf.addPage();
+        pdf.addImage(cropCanvas(canvas, y, h, gray).toDataURL('image/jpeg', 0.95), 'JPEG', margin, margin, contentW, h * s, undefined, 'MEDIUM');
+      }
+    }
+  };
+
   extraPages.forEach(el => el.style.display = 'none');
   const mainCanvas = await html2canvas(paper, {
     ...captureOptions(paper),
@@ -251,40 +304,78 @@ const buildPdfDocument = async () => {
     }
   });
   extraPages.forEach(el => el.style.display = '');
-
-  const mainImg = mainCanvas.toDataURL('image/jpeg', 0.95);
-  const mainImgHeight = (mainCanvas.height * pdfWidth) / mainCanvas.width;
-  if (mainImgHeight <= pdfPageHeight + 2) {
-    pdf.addImage(mainImg, 'JPEG', 0, 0, pdfWidth, Math.min(mainImgHeight, pdfPageHeight), undefined, 'MEDIUM');
-  } else {
-    let heightLeft = mainImgHeight, position = 0;
-    pdf.addImage(mainImg, 'JPEG', 0, position, pdfWidth, mainImgHeight, undefined, 'MEDIUM');
-    heightLeft -= pdfPageHeight;
-    while (heightLeft > 2) { position -= pdfPageHeight; pdf.addPage(); pdf.addImage(mainImg, 'JPEG', 0, position, pdfWidth, mainImgHeight, undefined, 'MEDIUM'); heightLeft -= pdfPageHeight; }
-  }
+  addSheet(mainCanvas);
 
   for (const pageEl of extraPages) {
     const c = await html2canvas(pageEl, {
       ...captureOptions(pageEl),
       onclone: (cd) => { cd.querySelectorAll('*').forEach(n => { n.style.letterSpacing = '0px'; n.style.wordSpacing = '0px'; }); }
     });
-    pdf.addPage();
-    pdf.addImage(c.toDataURL('image/jpeg', 0.95), 'JPEG', 0, 0, pdfWidth, Math.min((c.height * pdfWidth) / c.width, pdfPageHeight), undefined, 'MEDIUM');
+    addSheet(c);
   }
 
   if (frameEl) {
     frameEl.style.transform = origTransform;
     frameEl.style.zoom = origZoom;
   }
-  return pdf;
+  return { pdf, pageCount };
 };
 
-const buildPdf = async () => {
+// Renders the sheet (the paper only, never the page around it) to a sharp JPEG with the same
+// html2canvas settings as the PDF, and hands it to the host app. The host shows this image in a
+// gallery-style zoom viewer, so panning is bounded by the sheet and the theme colour shows around it.
+const captureSheet = async () => {
+  try {
+    const cfg = DOC_TYPES[current.docType];
+    const paper = paperElement();
+    if (!paper) throw new Error('Nothing rendered yet');
+    const frameEl = paper.closest(cfg.frame);
+    const origTransform = frameEl ? frameEl.style.transform : '';
+    const origZoom = frameEl ? frameEl.style.zoom : '';
+    if (frameEl) {
+      frameEl.style.transform = 'none';
+      frameEl.style.zoom = '1';
+    }
+    const extraPages = cfg.extraPages ? paper.querySelectorAll('[data-pdf-page]') : [];
+    extraPages.forEach(el => el.style.display = 'none');
+    const width = paper.scrollWidth;
+    const height = paper.scrollHeight;
+    // 3x is sharp up to ~4x zoom; keep the longest side within a safe GPU texture size.
+    const scale = Math.min(3, 4096 / Math.max(width, height));
+    const canvas = await html2canvas(paper, {
+      scale,
+      useCORS: true,
+      logging: false,
+      letterRendering: true,
+      backgroundColor: '#ffffff',
+      imageTimeout: 0,
+      width,
+      height,
+      onclone: (clonedDoc) => {
+        clonedDoc.querySelectorAll('*').forEach(n => { n.style.letterSpacing = '0px'; n.style.wordSpacing = '0px'; });
+        const inv = clonedDoc.querySelector(cfg.clone);
+        if (inv) Object.assign(inv.style, cfg.cloneStyle);
+        if (cfg.extraPages) clonedDoc.querySelectorAll('[data-pdf-page]').forEach(el => el.style.display = 'none');
+      }
+    });
+    extraPages.forEach(el => el.style.display = '');
+    if (frameEl) {
+      frameEl.style.transform = origTransform;
+      frameEl.style.zoom = origZoom;
+    }
+    notify('onSheet', canvas.toDataURL('image/jpeg', 0.95).split(',')[1]);
+  } catch (e) {
+    console.error(e);
+    notify('onError', String(e?.message || e));
+  }
+};
+
+const buildPdf = async (options) => {
   try {
     if (!paperElement()) throw new Error('Nothing rendered yet');
-    const pdf = await buildPdfDocument();
+    const { pdf, pageCount } = await buildPdfDocument(options);
     const base64 = pdf.output('datauristring').split(',')[1];
-    notify('onPdf', base64);
+    notify('onPdf', base64, pageCount);
     return base64;
   } catch (e) {
     console.error(e);
@@ -293,14 +384,64 @@ const buildPdf = async () => {
   }
 };
 
-// Same document each React view's handlePrint builds: the app <head> + print
-// rules, and a body holding only the paper (not the preview frame).
-const printHtml = () => {
+// Converts an rgb()/rgba() colour to its grey equivalent (keeps alpha).
+const toGray = (css) => {
+  const m = /rgba?\(([^)]+)\)/.exec(css);
+  if (!m) return css;
+  const [r, g, b, a] = m[1].split(',').map(x => parseFloat(x));
+  const y = Math.round(0.299 * r + 0.587 * g + 0.114 * b);
+  return a !== undefined && a < 1 ? `rgba(${y},${y},${y},${a})` : `rgb(${y},${y},${y})`;
+};
+const GRAY_PROPS = ['color', 'background-color', 'border-top-color', 'border-right-color', 'border-bottom-color', 'border-left-color', 'outline-color', 'text-decoration-color', 'fill', 'stroke'];
+
+// Black & white without rasterising: every colour on the clone becomes its grey value, so text
+// stays real text. Only images (logo, signature, QR) get an image filter.
+const grayscaleClone = (orig, clone) => {
+  const o = [orig, ...orig.querySelectorAll('*')];
+  const c = [clone, ...clone.querySelectorAll('*')];
+  o.forEach((el, i) => {
+    const cs = getComputedStyle(el);
+    for (const prop of GRAY_PROPS) {
+      const v = cs.getPropertyValue(prop);
+      if (v && v.includes('rgb')) c[i].style.setProperty(prop, toGray(v), 'important');
+    }
+    if (el.tagName === 'IMG') c[i].style.setProperty('filter', 'grayscale(1)', 'important');
+  });
+};
+
+const MM_PER_PX = 25.4 / 96;
+
+// The document each React view's handlePrint builds (app <head> + print rules + the paper only),
+// laid out for the chosen print options. It is printed by Chromium itself, so the result is a real
+// vector PDF: text stays selectable and copyable.
+//  - page size / margins / orientation come from the options (@page),
+//  - the sheet keeps its A4 design width (210mm) and is zoomed to fit the page content width,
+//    or to fit one whole page ("fit page"),
+//  - black & white converts the colours to grey.
+const printHtml = (options) => {
+  const o = { ...DEFAULT_PDF_OPTIONS, ...(options || {}) };
   const printContent = paperElement();
   if (!printContent) return '';
   const cfg = DOC_TYPES[current.docType];
   const title = cfg.title(current.props);
   const headContent = document.head.innerHTML;
+
+  const [shortSide, longSide] = PAPER_MM[o.paper] || PAPER_MM.A4;
+  const landscape = o.orientation === 'landscape';
+  const pageW = landscape ? longSide : shortSide;
+  const pageH = landscape ? shortSide : longSide;
+  const margin = Number(o.marginMm) || 0;
+  const contentW = pageW - 2 * margin;
+  const contentH = pageH - 2 * margin;
+
+  const sheetW = 210; // mm: the width every sheet is designed for
+  const sheetH = Math.max(1, printContent.scrollHeight * MM_PER_PX);
+  let zoom = contentW / sheetW;
+  if (o.fit === 'page') zoom = Math.min(zoom, contentH / sheetH);
+
+  const clone = printContent.cloneNode(true);
+  if (!o.color) grayscaleClone(printContent, clone);
+
   return `
       <!DOCTYPE html>
       <html>
@@ -311,9 +452,16 @@ const printHtml = () => {
             @media print {${cfg.printRules}
             }
           </style>
+          <style>
+            @page { size: ${pageW}mm ${pageH}mm; margin: ${margin}mm; }
+            html, body { position: static !important; width: auto !important; height: auto !important; min-height: 0 !important;
+                         overflow: visible !important; margin: 0 !important; padding: 0 !important; background: #fff !important; }
+            .udk-sheet { width: ${sheetW}mm; margin: 0 auto; zoom: ${zoom}; }
+            * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+          </style>
         </head>
         <body style="background-color: white; margin: 0; padding: 0;">
-          ${printContent.outerHTML}
+          <div class="udk-sheet">${clone.outerHTML}</div>
         </body>
       </html>
     `;
@@ -337,5 +485,15 @@ const hideToolbars = document.createElement('style');
 hideToolbars.textContent = '.no-print, .print-scroll > .print-wrapper > :not(.print-wrapper) { display: none !important; }';
 document.head.appendChild(hideToolbars);
 
-window.UdukkaiPrint = { render, renderProps, buildPdf, printHtml };
+// Native pinch-zoom: React's views lock touch-action to 'none' for their own zoom code.
+const allowNativeZoom = document.createElement('style');
+allowNativeZoom.textContent = 'html, body, #root, #root * { touch-action: auto !important; }';
+document.head.appendChild(allowNativeZoom);
+
+// Tell the host app when the page is zoomed (it hides the title bar text while zoomed in).
+if (window.visualViewport) {
+  window.visualViewport.addEventListener('resize', () => notify('onZoom', window.visualViewport.scale));
+}
+
+window.UdukkaiPrint = { render, renderProps, buildPdf, printHtml, setTopInset, captureSheet };
 notify('onLoaded');

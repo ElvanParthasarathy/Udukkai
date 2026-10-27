@@ -71,8 +71,32 @@ object FactoryReceiptRepository {
 
     private val linksCache = mutableMapOf<Long, List<String>>()
 
+    // Invoice id -> paid amount. Cards ask for this once each while composing, so it is filled
+    // by ONE batched query per data change instead of one database open per card.
+    private var paidCache: Map<Long, Double>? = null
+
+    fun invalidatePaidCache() {
+        paidCache = null
+    }
+
+    fun hasPaidAmount(invoiceId: Long): Boolean {
+        val cache = paidCache ?: run {
+            val ids = FactoryInvoiceRepository.invoices.map { it.id }
+            val loaded = try {
+                ids.chunked(500).fold(HashMap<Long, Double>()) { acc, chunk ->
+                    acc.apply { putAll(getFactoryDatabaseHelper().getPaidAmountsForInvoices(chunk)) }
+                }
+            } catch (_: Exception) {
+                emptyMap<Long, Double>()
+            }
+            loaded.also { paidCache = it }
+        }
+        return (cache[invoiceId] ?: 0.0) > 0.0
+    }
+
     fun loadAll() {
         try {
+            paidCache = null
             receipts = getFactoryDatabaseHelper().loadAllReceipts()
             linksCache.clear()
             for (r in receipts) {
@@ -85,6 +109,7 @@ object FactoryReceiptRepository {
 
     fun loadDeleted() {
         try {
+            paidCache = null
             deletedReceipts = getFactoryDatabaseHelper().loadDeletedReceipts()
             for (r in deletedReceipts) {
                 getLinkedInvoiceNumbers(r.id)
