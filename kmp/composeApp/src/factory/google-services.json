@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "661826206532",
+    "project_id": "udukkai-factory",
+    "storage_bucket": "udukkai-factory.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:661826206532:android:d1a47ca1f5efae27b7b511",
+        "android_client_info": {
+          "package_name": "com.elvan.udukkai.factory"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDCPD7DKel-s8vdKoTyCNnWLodIinS_yQY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

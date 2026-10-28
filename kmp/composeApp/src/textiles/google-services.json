@@ -1,0 +1,30 @@
+{
+  "project_info": {
+    "project_number": "316200042939",
+    "firebase_url": "https://udukkai-textiles-default-rtdb.asia-southeast1.firebasedatabase.app",
+    "project_id": "udukkai-textiles",
+    "storage_bucket": "udukkai-textiles.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:316200042939:android:284f65f950d4977f7bc49e",
+        "android_client_info": {
+          "package_name": "com.elvan.udukkai.textiles"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAJ4boBFHVh6SVnTjC_f4-tUGB0Z5ZiqfA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
