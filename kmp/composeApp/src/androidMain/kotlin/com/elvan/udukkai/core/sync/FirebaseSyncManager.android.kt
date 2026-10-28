@@ -61,7 +61,7 @@ class AndroidFirebaseSyncManager : FirebaseSyncManager {
 
     private val phases = listOf(
         Phase(RestorePhase.PROFILES, "profiles"),
-        Phase(RestorePhase.CUSTOMERS, "merchants"),
+        Phase(RestorePhase.CUSTOMERS, "customers"),
         Phase(RestorePhase.ITEMS, "items"),
         Phase(RestorePhase.INVOICES, "invoices"),
         Phase(RestorePhase.RECEIPTS, "receipts")
@@ -118,7 +118,7 @@ class AndroidFirebaseSyncManager : FirebaseSyncManager {
         getDatabase()
     }
 
-    private fun getPrefix(scope: String): String = if (scope == "factory" || scope == "kooli") "kooli" else "pattu"
+    private fun getPrefix(scope: String): String = if (scope == "factory" || scope == "kooli") "factory" else "textiles"
 
     override fun startSync(scope: String) {
         stopSync()
@@ -145,7 +145,7 @@ class AndroidFirebaseSyncManager : FirebaseSyncManager {
             if (generation == syncGeneration) _profilesRestored.value = true
         }, 15000)
 
-        val rootRef = db.getReference("udukkai").child(getPrefix(scope))
+        val rootRef = db.getReference(getPrefix(scope))
         _restoreProgress.value = null
         attachPhase(0, scope, rootRef, generation)
         Log.i(tag, "RTDB restore started for ${getPrefix(scope)}")
@@ -474,31 +474,21 @@ class AndroidFirebaseSyncManager : FirebaseSyncManager {
         if (isApplyingRemoteChange || !isSyncAllowed()) return
         val db = getDatabase() ?: return
         val prefix = getPrefix(scope)
-        val ref = db.getReference("udukkai").child(prefix).child("merchants").child("${merchant.id}")
+        val ref = db.getReference(prefix).child("customers").child("${merchant.id}")
 
         val data = hashMapOf<String, Any?>(
             "id" to merchant.id,
             "name" to LanguageJsonConverter.stringify(merchant.name),
-            "peyar" to LanguageJsonConverter.stringify(merchant.name),
             "address" to LanguageJsonConverter.stringify(merchant.address),
-            "mugavari" to LanguageJsonConverter.stringify(merchant.address),
             "city" to LanguageJsonConverter.stringify(merchant.city),
-            "oor" to LanguageJsonConverter.stringify(merchant.city),
             "district" to LanguageJsonConverter.stringify(merchant.district),
-            "maavattam" to LanguageJsonConverter.stringify(merchant.district),
             "state" to LanguageJsonConverter.stringify(merchant.state),
-            "maanilam" to LanguageJsonConverter.stringify(merchant.state),
             "country" to LanguageJsonConverter.stringify(merchant.country),
-            "naadu" to LanguageJsonConverter.stringify(merchant.country),
             "internationalAddress" to LanguageJsonConverter.stringify(merchant.internationalAddress),
-            "velinaadMugavari" to LanguageJsonConverter.stringify(merchant.internationalAddress),
             "pinCode" to merchant.pinCode,
-            "anjalKuriyeedu" to merchant.pinCode,
             "gstin" to merchant.gstin,
             "email" to merchant.email,
-            "minnanjal" to merchant.email,
             "phone" to merchant.phone,
-            "tholaipaesi" to merchant.phone,
             "createdAt" to merchant.createdAt,
             "updatedAt" to merchant.updatedAt,
             "isDeleted" to merchant.isDeleted,
@@ -517,8 +507,7 @@ class AndroidFirebaseSyncManager : FirebaseSyncManager {
         if (isApplyingRemoteChange || !isSyncAllowed()) return
         val db = getDatabase() ?: return
         val prefix = getPrefix(scope)
-        val itemRef = db.getReference("udukkai").child(prefix).child("items").child("${item.id}")
-        val legacyRef = db.getReference("udukkai").child(prefix).child("products").child("${item.id}")
+        val itemRef = db.getReference(prefix).child("items").child("${item.id}")
 
         val data = ItemFirebasePayloadConverter.toFirebasePayload(item)
 
@@ -528,67 +517,42 @@ class AndroidFirebaseSyncManager : FirebaseSyncManager {
         }.addOnFailureListener { e ->
             Log.w(tag, "Push item ${item.id} queued offline: ${e.message}")
         }
-        legacyRef.setValue(data)
     }
 
     override fun pushInvoice(invoice: InvoiceModel, scope: String) {
         if (isApplyingRemoteChange || !isSyncAllowed()) return
         val db = getDatabase() ?: return
         val prefix = getPrefix(scope)
-        val ref = db.getReference("udukkai").child(prefix).child("invoices").child("${invoice.id}")
+        val ref = db.getReference(prefix).child("invoices").child("${invoice.id}")
 
         val data = hashMapOf<String, Any?>(
             "id" to invoice.id,
             "companyId" to invoice.companyId,
-            "niruvanamId" to invoice.companyId,
             "invoiceNumber" to invoice.invoiceNumber,
-            "patrucheettuEn" to invoice.invoiceNumber,
             "finYear" to invoice.finYear,
             "vanakkam" to invoice.vanakkam,
             "invoiceType" to invoice.invoiceType,
-            "pattiyalVagai" to invoice.invoiceType,
             "customerId" to invoice.customerId,
-            "vaangunarId" to invoice.customerId,
             "customerName" to LanguageJsonConverter.stringify(invoice.customerName),
-            "vaangunarPeyar" to LanguageJsonConverter.stringify(invoice.customerName),
             "customerAddress" to LanguageJsonConverter.stringify(invoice.customerAddress),
-            "vaangunarMunvari" to LanguageJsonConverter.stringify(invoice.customerAddress),
             "invoiceDate" to invoice.invoiceDate,
-            "pattiyalNaal" to invoice.invoiceDate,
             "itemsJson" to invoice.itemsJson,
-            "tharavugal" to invoice.itemsJson,
             "totalAmount" to invoice.totalAmount,
-            "mothaThogai" to invoice.totalAmount,
             "discount" to invoice.discount,
-            "thallupadi" to invoice.discount,
             "globalDiscountValue" to invoice.globalDiscountValue,
-            "podhuThallupadiMathippu" to invoice.globalDiscountValue,
             "globalDiscountType" to invoice.globalDiscountType,
-            "podhuThallupadiVagai" to invoice.globalDiscountType,
             "globalDiscountAmount" to invoice.globalDiscountAmount,
-            "podhuThallupadiThogai" to invoice.globalDiscountAmount,
             "taxAmount" to invoice.taxAmount,
-            "variThogai" to invoice.taxAmount,
             "taxDataJson" to invoice.taxDataJson,
-            "variTharavugal" to invoice.taxDataJson,
             "totalWeight" to invoice.totalWeight,
-            "mothaEdai" to invoice.totalWeight,
             "wastageGrams" to invoice.wastageGrams,
-            "setharamGrams" to invoice.wastageGrams,
             "postalCharges" to invoice.postalCharges,
-            "thabaalThogai" to invoice.postalCharges,
             "ahimsaSilkAmount" to invoice.ahimsaSilkAmount,
-            "ahimsaPattuThogai" to invoice.ahimsaSilkAmount,
             "otherTaxesJson" to invoice.otherTaxesJson,
-            "piravariVugal" to invoice.otherTaxesJson,
             "customPreferencesJson" to invoice.customPreferencesJson,
-            "sonthaViruppangal" to invoice.customPreferencesJson,
             "termsAndConditions" to invoice.termsAndConditions,
-            "nibandhanaigal" to invoice.termsAndConditions,
             "notes" to invoice.notes,
-            "ullkurippu" to invoice.notes,
             "bankDetailsJson" to invoice.bankDetailsJson,
-            "vangiTharavugal" to invoice.bankDetailsJson,
             "createdAt" to invoice.createdAt,
             "updatedAt" to invoice.updatedAt,
             "isDeleted" to invoice.isDeleted,
@@ -607,34 +571,23 @@ class AndroidFirebaseSyncManager : FirebaseSyncManager {
         if (isApplyingRemoteChange || !isSyncAllowed()) return
         val db = getDatabase() ?: return
         val prefix = getPrefix(scope)
-        val ref = db.getReference("udukkai").child(prefix).child("receipts").child("${receipt.id}")
+        val ref = db.getReference(prefix).child("receipts").child("${receipt.id}")
 
         val data = hashMapOf<String, Any?>(
             "id" to receipt.id,
             "companyId" to receipt.companyId,
-            "niruvanamId" to receipt.companyId,
             "receiptNumber" to receipt.receiptNumber,
-            "patruEn" to receipt.receiptNumber,
             "finYear" to receipt.finYear,
             "vanakkam" to receipt.vanakkam,
             "customerId" to receipt.customerId,
-            "vaangunarId" to receipt.customerId,
             "customerName" to LanguageJsonConverter.stringify(receipt.customerName),
-            "vaangunarPeyar" to LanguageJsonConverter.stringify(receipt.customerName),
             "customerAddress" to LanguageJsonConverter.stringify(receipt.customerAddress),
-            "vaangunarMunvari" to LanguageJsonConverter.stringify(receipt.customerAddress),
             "receiptDate" to receipt.receiptDate,
-            "patruNaal" to receipt.receiptDate,
             "amount" to receipt.amount,
-            "thogai" to receipt.amount,
             "paymentMode" to receipt.paymentMode,
-            "seluthumMurai" to receipt.paymentMode,
             "bankName" to receipt.bankName,
-            "vangiPeyar" to receipt.bankName,
             "transactionNumber" to receipt.transactionNumber,
-            "parivarthanaiEn" to receipt.transactionNumber,
             "notes" to receipt.notes,
-            "ullkurippu" to receipt.notes,
             "createdAt" to receipt.createdAt,
             "updatedAt" to receipt.updatedAt,
             "isDeleted" to receipt.isDeleted,
@@ -653,7 +606,7 @@ class AndroidFirebaseSyncManager : FirebaseSyncManager {
         if (isApplyingRemoteChange || !isSyncAllowed()) return
         val db = getDatabase() ?: return
         val prefix = getPrefix(scope)
-        val root = db.getReference("udukkai").child(prefix).child("receipt_links").child("$receiptId")
+        val root = db.getReference(prefix).child("receipt_links").child("$receiptId")
 
         if (links.isEmpty()) {
             root.removeValue()
@@ -662,9 +615,9 @@ class AndroidFirebaseSyncManager : FirebaseSyncManager {
         val linksMap = hashMapOf<String, Any>()
         links.forEach { link ->
             linksMap["${link.invoiceId}"] = hashMapOf(
-                "patruId" to receiptId,
-                "pattiyalId" to link.invoiceId,
-                "poruthiyaThogai" to link.appliedAmount
+                "receiptId" to receiptId,
+                "invoiceId" to link.invoiceId,
+                "appliedAmount" to link.appliedAmount
             )
         }
         root.setValue(linksMap)
@@ -674,7 +627,7 @@ class AndroidFirebaseSyncManager : FirebaseSyncManager {
         if (isApplyingRemoteChange || !isSyncAllowed()) return
         val id = profile.id ?: return
         val db = getDatabase() ?: return
-        val ref = db.getReference("udukkai").child(getPrefix(scope)).child("profiles").child("$id")
+        val ref = db.getReference(getPrefix(scope)).child("profiles").child("$id")
         fun text(map: Map<String, String>) = LanguageJsonConverter.stringify(map)
         val data = hashMapOf<String, Any?>(
             "id" to id,
@@ -723,9 +676,8 @@ class AndroidFirebaseSyncManager : FirebaseSyncManager {
     override fun pushRemove(collection: String, id: Long, scope: String) {
         if (!isSyncAllowed()) return
         val db = getDatabase() ?: return
-        val root = db.getReference("udukkai").child(getPrefix(scope))
+        val root = db.getReference(getPrefix(scope))
         root.child(collection).child("$id").removeValue()
-        if (collection == "items") root.child("products").child("$id").removeValue()
         if (collection == "receipts") root.child("receipt_links").child("$id").removeValue()
     }
 

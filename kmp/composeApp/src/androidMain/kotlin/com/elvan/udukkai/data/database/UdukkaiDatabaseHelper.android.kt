@@ -573,7 +573,7 @@ class AndroidUdukkaiDatabaseHelper(
 
     override fun permanentDeleteCustomer(id: Long): Boolean = (useDb { db ->
         db.delete("\"$customersTable\"", "id = ?", arrayOf(id.toString())) > 0
-    } ?: false).also { if (it) removeRemote("merchants", id) }
+    } ?: false).also { if (it) removeRemote("customers", id) }
 
     override fun purgeExpiredCustomers(days: Int): Int = useDb { db ->
         val threshold = (System.currentTimeMillis() / 1000) - (days * 86400L)
