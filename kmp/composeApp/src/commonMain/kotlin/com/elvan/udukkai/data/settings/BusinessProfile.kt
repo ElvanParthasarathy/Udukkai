@@ -146,7 +146,10 @@ data class BusinessProfile(
 
     // Print-only settings (React template names): logoHeight, wideLogoX/Y/Scale,
     // invoiceDisplayOptions, receiptLanguage …
-    var printSettingsJson: String = "{}"
+    var printSettingsJson: String = "{}",
+
+    /** Seconds since 1970 of the last save; used to decide which copy wins when syncing. */
+    var updatedAt: Long = 0L
 ) {
     val fullSignatoryName: String
         get() {
@@ -282,7 +285,8 @@ data class BusinessProfile(
             upiId = upiId,
             themeColor = themeColor,
             paymentAccountsJson = paymentAccountsJson,
-            printSettingsJson = printSettingsJson
+            printSettingsJson = printSettingsJson,
+            updatedAt = updatedAt
         )
     }
 }

@@ -439,4 +439,10 @@ object K {
     const val syncStatusIdle = "syncStatusIdle"
     const val lastSyncedAt = "lastSyncedAt"
     const val eraseConfirmFinal = "eraseConfirmFinal"
+    const val restoreCloudTitle = "restoreCloudTitle"
+    const val restorePhaseProfiles = "restorePhaseProfiles"
+    const val restorePhaseCustomers = "restorePhaseCustomers"
+    const val restorePhaseItems = "restorePhaseItems"
+    const val restorePhaseInvoices = "restorePhaseInvoices"
+    const val restorePhaseReceipts = "restorePhaseReceipts"
 }

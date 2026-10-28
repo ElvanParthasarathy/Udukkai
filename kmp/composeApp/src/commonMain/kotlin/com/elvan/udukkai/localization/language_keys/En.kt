@@ -431,6 +431,12 @@ val en: Map<String, String> = mapOf(
     K.syncStatusIdle to "Not syncing, tap to start",
     K.lastSyncedAt to "Last synced",
     K.eraseConfirmFinal to "All data on this phone will be erased. A safety copy is kept first.",
+    K.restoreCloudTitle to "Restoring your data from the cloud",
+    K.restorePhaseProfiles to "Business details",
+    K.restorePhaseCustomers to "Customers",
+    K.restorePhaseItems to "Items",
+    K.restorePhaseInvoices to "Bills",
+    K.restorePhaseReceipts to "Receipts",
 )
 
 

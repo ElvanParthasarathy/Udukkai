@@ -15,6 +15,7 @@ import androidx.compose.ui.graphics.Color
 import com.elvan.udukkai.core.auth.AppScope
 import com.elvan.udukkai.core.auth.AuthManager
 import com.elvan.udukkai.core.platform.AppBackHandler
+import com.elvan.udukkai.core.sync.getFirebaseSyncManager
 import com.elvan.udukkai.ui.screens.onboarding.screens.UllnuzhaivuThirai
 import com.elvan.udukkai.ui.screens.onboarding.screens.WelcomeScreen
 import com.elvan.udukkai.ui.screens.onboarding.screens.WelcomeSlideScreen
@@ -46,6 +47,8 @@ fun OnboardingGate(
     val stage = when {
         !AuthManager.isLoggedIn -> if (showLogin) GateStage.LOGIN else GateStage.WELCOME
         AuthManager.isProfilesLoading -> GateStage.LOADING
+        // A new phone: wait for the business profiles that are being restored instead of asking to create one
+        !AuthManager.isSetupComplete(scope) && !getFirebaseSyncManager().profilesRestored.value -> GateStage.LOADING
         !AuthManager.isSetupComplete(scope) -> GateStage.SETUP
         else -> GateStage.APP
     }

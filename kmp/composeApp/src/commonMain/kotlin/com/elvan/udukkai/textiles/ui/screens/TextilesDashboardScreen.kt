@@ -84,6 +84,10 @@ fun TextilesDashboardScreen(
                 )
             }
 
+            item(key = "restore_banner") {
+                com.elvan.udukkai.ui.screens.settings.RestoreBanner()
+            }
+
             if (showSkeleton) {
                 // Shimmer state when pull-down-to-refresh is active
                 item(key = "stats_shimmer") {

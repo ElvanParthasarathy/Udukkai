@@ -66,7 +66,6 @@ class MainActivity : ComponentActivity() {
 
         try {
             com.elvan.udukkai.core.sync.getFirebaseSyncManager().initialize()
-            com.elvan.udukkai.core.sync.getFirebaseSyncManager().startSync(if (isFactory) "factory" else "textiles")
         } catch (e: Exception) {
             android.util.Log.e("MainActivity", "Failed to start sync: ${e.message}")
         }

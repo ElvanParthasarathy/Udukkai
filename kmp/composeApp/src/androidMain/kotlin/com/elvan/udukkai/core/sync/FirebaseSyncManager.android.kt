@@ -38,6 +38,35 @@ class AndroidFirebaseSyncManager : FirebaseSyncManager {
     private val _isOnline = mutableStateOf(true)
     override val isOnline: State<Boolean> = _isOnline
 
+    private val _restoreProgress = mutableStateOf<RestoreProgress?>(null)
+    override val restoreProgress: State<RestoreProgress?> = _restoreProgress
+
+    private val _profilesRestored = mutableStateOf(true)
+    override val profilesRestored: State<Boolean> = _profilesRestored
+
+    /** Cloud records are applied one batch at a time on this thread, so the screen never freezes. */
+    private val worker = java.util.concurrent.Executors.newSingleThreadExecutor()
+    private val mainHandler = android.os.Handler(android.os.Looper.getMainLooper())
+
+    /** Bumped on every start and stop, so callbacks of an older sync are ignored. */
+    @Volatile private var syncGeneration = 0
+
+    /** Receipts that were just taken from the cloud: their links are taken from the cloud as well. */
+    private val receiptsFromCloud = java.util.Collections.synchronizedSet(HashSet<Long>())
+
+    /** True only while the first snapshot of a phase is being applied: later live updates stay silent. */
+    @Volatile private var reportProgress = false
+
+    private class Phase(val kind: RestorePhase, val node: String)
+
+    private val phases = listOf(
+        Phase(RestorePhase.PROFILES, "profiles"),
+        Phase(RestorePhase.CUSTOMERS, "merchants"),
+        Phase(RestorePhase.ITEMS, "items"),
+        Phase(RestorePhase.INVOICES, "invoices"),
+        Phase(RestorePhase.RECEIPTS, "receipts")
+    )
+
     private companion object {
         const val TEXTILES_DB_URL = "https://udukkai-textiles-default-rtdb.asia-southeast1.firebasedatabase.app"
         const val FACTORY_DB_URL = "https://udukkai-factory-default-rtdb.asia-southeast1.firebasedatabase.app"
@@ -94,7 +123,7 @@ class AndroidFirebaseSyncManager : FirebaseSyncManager {
     override fun startSync(scope: String) {
         stopSync()
         // Nothing is read or written until an approved Google account is signed in
-        if (!com.elvan.udukkai.core.auth.AllowedAccounts.isAllowed(com.elvan.udukkai.core.auth.platformSignedInEmail())) {
+        if (!isSyncAllowed()) {
             _syncStatus.value = SyncStatus.IDLE
             return
         }
@@ -108,92 +137,107 @@ class AndroidFirebaseSyncManager : FirebaseSyncManager {
             Log.w(tag, "Pre-sync safety snapshot warning: ${e.message}")
         }
 
+        val generation = ++syncGeneration
         _syncStatus.value = SyncStatus.SYNCING
-        val prefix = getPrefix(scope)
-        val rootRef = db.getReference("udukkai").child(prefix)
+        _profilesRestored.value = false
+        // Offline or slow: do not hold the app back for the business profiles forever
+        mainHandler.postDelayed({
+            if (generation == syncGeneration) _profilesRestored.value = true
+        }, 15000)
 
-        // 1. Merchants Listener
-        val merchantRef = rootRef.child("merchants")
-        merchantRef.keepSynced(true)
-        val merchantListener = object : ValueEventListener {
+        val rootRef = db.getReference("udukkai").child(getPrefix(scope))
+        _restoreProgress.value = null
+        attachPhase(0, scope, rootRef, generation)
+        Log.i(tag, "RTDB restore started for ${getPrefix(scope)}")
+    }
+
+    /** Phases run one after the other: each starts when the one before it has been stored. */
+    private fun attachPhase(index: Int, scope: String, rootRef: DatabaseReference, generation: Int) {
+        if (generation != syncGeneration) return
+        if (index >= phases.size) {
+            attachLinks(scope, rootRef, generation)
+            return
+        }
+        val phase = phases[index]
+        val ref = rootRef.child(phase.node)
+        ref.keepSynced(true)
+        var first = true
+        val listener = object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
-                handleMerchantsSnapshot(scope, snapshot)
+                val isFirst = first
+                first = false
+                worker.execute {
+                    if (generation != syncGeneration) return@execute
+                    reportProgress = isFirst
+                    try {
+                        applyPhase(phase.kind, scope, snapshot)
+                    } catch (e: Exception) {
+                        Log.e(tag, "Applying ${phase.node} failed: ${e.message}", e)
+                        _syncStatus.value = SyncStatus.ERROR
+                    }
+                    if (isFirst) mainHandler.post {
+                        if (phase.kind == RestorePhase.PROFILES) _profilesRestored.value = true
+                        attachPhase(index + 1, scope, rootRef, generation)
+                    }
+                }
             }
+
             override fun onCancelled(error: DatabaseError) {
-                Log.e(tag, "Merchant sync cancelled: ${error.message}")
+                Log.e(tag, "${phase.node} sync cancelled: ${error.message}")
+                _syncStatus.value = SyncStatus.ERROR
+                if (first) {
+                    first = false
+                    _restoreProgress.value = null
+                    _profilesRestored.value = true
+                }
+            }
+        }
+        ref.addValueEventListener(listener)
+        activeListeners[ref] = listener
+    }
+
+    private fun attachLinks(scope: String, rootRef: DatabaseReference, generation: Int) {
+        val ref = rootRef.child("receipt_links")
+        ref.keepSynced(true)
+        var first = true
+        val listener = object : ValueEventListener {
+            override fun onDataChange(snapshot: DataSnapshot) {
+                val isFirst = first
+                first = false
+                worker.execute {
+                    if (generation != syncGeneration) return@execute
+                    try {
+                        applyLinks(scope, snapshot)
+                    } catch (e: Exception) {
+                        Log.e(tag, "Applying receipt links failed: ${e.message}", e)
+                        _syncStatus.value = SyncStatus.ERROR
+                    }
+                    if (isFirst) {
+                        _restoreProgress.value = null
+                        _syncStatus.value = SyncStatus.SYNCED
+                        _lastSyncTime.value = System.currentTimeMillis()
+                    }
+                }
+            }
+
+            override fun onCancelled(error: DatabaseError) {
+                Log.e(tag, "Receipt links sync cancelled: ${error.message}")
+                _restoreProgress.value = null
                 _syncStatus.value = SyncStatus.ERROR
             }
         }
-        merchantRef.addValueEventListener(merchantListener)
-        activeListeners[merchantRef] = merchantListener
-
-        // 2. Items Listener (supports new "items" node and legacy "products" node)
-        val itemRef = rootRef.child("items")
-        itemRef.keepSynced(true)
-        val itemListener = object : ValueEventListener {
-            override fun onDataChange(snapshot: DataSnapshot) {
-                if (snapshot.exists() && snapshot.childrenCount > 0L) {
-                    handleItemsSnapshot(scope, snapshot)
-                }
-            }
-            override fun onCancelled(error: DatabaseError) {
-                Log.e(tag, "Item sync cancelled: ${error.message}")
-            }
-        }
-        itemRef.addValueEventListener(itemListener)
-        activeListeners[itemRef] = itemListener
-
-        val productRef = rootRef.child("products")
-        productRef.keepSynced(true)
-        val productListener = object : ValueEventListener {
-            override fun onDataChange(snapshot: DataSnapshot) {
-                handleItemsSnapshot(scope, snapshot)
-            }
-            override fun onCancelled(error: DatabaseError) {
-                Log.e(tag, "Product sync cancelled: ${error.message}")
-            }
-        }
-        productRef.addValueEventListener(productListener)
-        activeListeners[productRef] = productListener
-
-        // 3. Invoices Listener
-        val invoiceRef = rootRef.child("invoices")
-        invoiceRef.keepSynced(true)
-        val invoiceListener = object : ValueEventListener {
-            override fun onDataChange(snapshot: DataSnapshot) {
-                handleInvoicesSnapshot(scope, snapshot)
-            }
-            override fun onCancelled(error: DatabaseError) {
-                Log.e(tag, "Invoice sync cancelled: ${error.message}")
-            }
-        }
-        invoiceRef.addValueEventListener(invoiceListener)
-        activeListeners[invoiceRef] = invoiceListener
-
-        // 4. Receipts Listener
-        val receiptRef = rootRef.child("receipts")
-        receiptRef.keepSynced(true)
-        val receiptListener = object : ValueEventListener {
-            override fun onDataChange(snapshot: DataSnapshot) {
-                handleReceiptsSnapshot(scope, snapshot)
-            }
-            override fun onCancelled(error: DatabaseError) {
-                Log.e(tag, "Receipt sync cancelled: ${error.message}")
-            }
-        }
-        receiptRef.addValueEventListener(receiptListener)
-        activeListeners[receiptRef] = receiptListener
-
-        _syncStatus.value = SyncStatus.SYNCED
-        _lastSyncTime.value = System.currentTimeMillis()
-        Log.i(tag, "RTDB fast multi-device sync active for $prefix mode")
+        ref.addValueEventListener(listener)
+        activeListeners[ref] = listener
     }
 
     override fun stopSync() {
+        syncGeneration++
         activeListeners.forEach { (ref, listener) ->
             ref.removeEventListener(listener)
         }
         activeListeners.clear()
+        _restoreProgress.value = null
+        _profilesRestored.value = true
         _syncStatus.value = SyncStatus.IDLE
     }
 
@@ -210,173 +254,208 @@ class AndroidFirebaseSyncManager : FirebaseSyncManager {
 
     // --- Anti-Erasure Guard & RTDB Inbound Snapshot Processors ---
 
-    private fun handleMerchantsSnapshot(scope: String, snapshot: DataSnapshot) {
-        val isFact = scope == "factory" || scope == "kooli"
-        val helper = if (isFact) com.elvan.udukkai.data.database.getFactoryDatabaseHelper() else com.elvan.udukkai.data.database.getTextilesDatabaseHelper()
-        val localList = helper.loadAllCustomers()
+    private fun isFactoryScope(scope: String) = scope == "factory" || scope == "kooli"
 
-        if (localList.isNotEmpty() && (!snapshot.exists() || snapshot.childrenCount == 0L)) {
-            triggerAntiErasureGuard("merchants", localList.size)
-            return
-        }
+    private fun helperFor(scope: String) =
+        if (isFactoryScope(scope)) com.elvan.udukkai.data.database.getFactoryDatabaseHelper()
+        else com.elvan.udukkai.data.database.getTextilesDatabaseHelper()
 
-        var anyChanged = false
-        isApplyingRemoteChange = true
-        try {
-            val localMap = localList.associateBy { it.id }
-            for (child in snapshot.children) {
-                val merchant = snapshotToMerchant(child) ?: continue
-                val existing = localMap[merchant.id]
-                val remoteUpdated = merchant.updatedAt
-                val localUpdated = existing?.updatedAt ?: 0L
+    private fun isSyncAllowed(): Boolean = com.elvan.udukkai.core.auth.AllowedAccounts.isAllowed(
+        com.elvan.udukkai.core.auth.platformSignedInEmail()
+    )
 
-                if (existing == null || remoteUpdated > localUpdated) {
-                    helper.saveCustomer(merchant)
-                    anyChanged = true
+    private fun applyPhase(kind: RestorePhase, scope: String, snapshot: DataSnapshot) {
+        val isFact = isFactoryScope(scope)
+        val helper = helperFor(scope)
+        when (kind) {
+            RestorePhase.PROFILES -> mergeCollection(
+                kind, snapshot, helper.loadAllProfiles(),
+                parse = { snapshotToProfile(it) }, id = { it.id ?: 0L }, updated = { it.updatedAt },
+                isDeleted = { false }, deletedAt = { null },
+                upsert = { helper.upsertProfilesFromSync(it) }, push = { pushProfile(it, scope) },
+                reload = {
+                    if (isFact) com.elvan.udukkai.factory.data.FactoryProfileRepository.refreshFromDatabase()
+                    else com.elvan.udukkai.textiles.data.TextilesProfileRepository.refreshFromDatabase()
+                    com.elvan.udukkai.core.auth.AuthManager.refreshProfileStatus()
                 }
-            }
-        } finally {
-            isApplyingRemoteChange = false
-        }
-
-        if (anyChanged) {
-            _lastSyncTime.value = System.currentTimeMillis()
-            CoroutineScope(Dispatchers.Main).launch {
-                if (isFact) {
-                    com.elvan.udukkai.factory.data.FactoryCustomerRepository.loadAll()
-                    com.elvan.udukkai.factory.data.FactoryCustomerRepository.loadDeleted()
-                } else {
-                    com.elvan.udukkai.textiles.data.TextilesCustomerRepository.loadAll()
-                    com.elvan.udukkai.textiles.data.TextilesCustomerRepository.loadDeleted()
+            )
+            RestorePhase.CUSTOMERS -> mergeCollection(
+                kind, snapshot, helper.loadEveryCustomer(),
+                parse = { snapshotToMerchant(it) }, id = { it.id ?: 0L }, updated = { it.updatedAt },
+                isDeleted = { it.isDeleted }, deletedAt = { it.deletedAt },
+                upsert = { helper.upsertCustomersFromSync(it) }, push = { pushMerchant(it, scope) },
+                reload = {
+                    if (isFact) {
+                        com.elvan.udukkai.factory.data.FactoryCustomerRepository.loadAll()
+                        com.elvan.udukkai.factory.data.FactoryCustomerRepository.loadDeleted()
+                    } else {
+                        com.elvan.udukkai.textiles.data.TextilesCustomerRepository.loadAll()
+                        com.elvan.udukkai.textiles.data.TextilesCustomerRepository.loadDeleted()
+                    }
                 }
-            }
+            )
+            RestorePhase.ITEMS -> mergeCollection(
+                kind, snapshot, helper.loadEveryItem(),
+                parse = { snapshotToItem(it) }, id = { it.id }, updated = { it.updatedAt },
+                isDeleted = { it.isDeleted }, deletedAt = { it.deletedAt },
+                upsert = { helper.upsertItemsFromSync(it) }, push = { pushItem(it, scope) },
+                reload = {
+                    if (isFact) {
+                        com.elvan.udukkai.factory.data.FactoryItemRepository.loadAll()
+                        com.elvan.udukkai.factory.data.FactoryItemRepository.loadDeleted()
+                    } else {
+                        com.elvan.udukkai.textiles.data.TextilesItemRepository.loadAll()
+                        com.elvan.udukkai.textiles.data.TextilesItemRepository.loadDeleted()
+                    }
+                }
+            )
+            RestorePhase.INVOICES -> mergeCollection(
+                kind, snapshot, helper.loadEveryInvoice(),
+                parse = { snapshotToInvoice(it) }, id = { it.id }, updated = { it.updatedAt },
+                isDeleted = { it.isDeleted }, deletedAt = { it.deletedAt },
+                upsert = { helper.upsertInvoicesFromSync(it) }, push = { pushInvoice(it, scope) },
+                reload = {
+                    if (isFact) {
+                        com.elvan.udukkai.factory.data.FactoryInvoiceRepository.loadAll()
+                        com.elvan.udukkai.factory.data.FactoryInvoiceRepository.loadDeleted()
+                    } else {
+                        com.elvan.udukkai.textiles.data.TextilesInvoiceRepository.loadAll()
+                        com.elvan.udukkai.textiles.data.TextilesInvoiceRepository.loadDeleted()
+                    }
+                }
+            )
+            RestorePhase.RECEIPTS -> mergeCollection(
+                kind, snapshot, helper.loadEveryReceipt(),
+                parse = { snapshotToReceipt(it) }, id = { it.id }, updated = { it.updatedAt },
+                isDeleted = { it.isDeleted }, deletedAt = { it.deletedAt },
+                upsert = { helper.upsertReceiptsFromSync(it) }, push = { pushReceipt(it, scope) },
+                reload = {
+                    if (isFact) {
+                        com.elvan.udukkai.factory.data.FactoryReceiptRepository.loadAll()
+                        com.elvan.udukkai.factory.data.FactoryReceiptRepository.loadDeleted()
+                    } else {
+                        com.elvan.udukkai.textiles.data.TextilesReceiptRepository.loadAll()
+                        com.elvan.udukkai.textiles.data.TextilesReceiptRepository.loadDeleted()
+                    }
+                },
+                onApplied = { receiptsFromCloud.add(it.id) }
+            )
         }
     }
 
-    private fun handleItemsSnapshot(scope: String, snapshot: DataSnapshot) {
-        val isFact = scope == "factory" || scope == "kooli"
-        val helper = if (isFact) com.elvan.udukkai.data.database.getFactoryDatabaseHelper() else com.elvan.udukkai.data.database.getTextilesDatabaseHelper()
-        val localList = helper.loadAllItems()
+    /**
+     * Merges one cloud collection with the phone, both ways: newer cloud records are stored (in batches,
+     * so the lists fill up while it runs), newer or missing phone records are uploaded. Nothing is ever
+     * removed from the phone because it is missing in the cloud.
+     */
+    private fun <T> mergeCollection(
+        kind: RestorePhase,
+        snapshot: DataSnapshot,
+        local: List<T>,
+        parse: (DataSnapshot) -> T?,
+        id: (T) -> Long,
+        updated: (T) -> Long,
+        isDeleted: (T) -> Boolean,
+        deletedAt: (T) -> Long?,
+        upsert: (List<T>) -> Unit,
+        push: (T) -> Unit,
+        reload: () -> Unit,
+        onApplied: (T) -> Unit = {}
+    ) {
+        val total = snapshot.childrenCount.toInt()
+        val localById = local.associateBy(id)
+        val remoteIds = HashSet<Long>()
+        val batch = ArrayList<T>()
+        var done = 0
+        var storedAny = false
+        val purgeLimit = System.currentTimeMillis() / 1000 - 30 * 86400
 
-        if (localList.isNotEmpty() && (!snapshot.exists() || snapshot.childrenCount == 0L)) {
-            triggerAntiErasureGuard("items", localList.size)
-            return
-        }
-
-        var anyChanged = false
-        isApplyingRemoteChange = true
-        try {
-            val localMap = localList.associateBy { it.id }
-            for (child in snapshot.children) {
-                val item = snapshotToItem(child) ?: continue
-                val existing = localMap[item.id]
-                val remoteUpdated = item.updatedAt
-                val localUpdated = existing?.updatedAt ?: 0L
-
-                if (existing == null || remoteUpdated > localUpdated) {
-                    helper.saveItem(item)
-                    anyChanged = true
-                }
+        fun flush() {
+            if (batch.isEmpty()) return
+            isApplyingRemoteChange = true
+            try {
+                upsert(batch.toList())
+            } finally {
+                isApplyingRemoteChange = false
             }
-        } finally {
-            isApplyingRemoteChange = false
-        }
-
-        if (anyChanged) {
+            storedAny = true
+            batch.forEach(onApplied)
+            batch.clear()
             _lastSyncTime.value = System.currentTimeMillis()
-            CoroutineScope(Dispatchers.Main).launch {
-                if (isFact) {
-                    com.elvan.udukkai.factory.data.FactoryItemRepository.loadAll()
-                    com.elvan.udukkai.factory.data.FactoryItemRepository.loadDeleted()
-                } else {
-                    com.elvan.udukkai.textiles.data.TextilesItemRepository.loadAll()
-                    com.elvan.udukkai.textiles.data.TextilesItemRepository.loadDeleted()
+            mainHandler.post { reload() }
+        }
+
+        for (child in snapshot.children) {
+            val remote = parse(child)
+            if (remote != null) {
+                remoteIds.add(id(remote))
+                val mine = localById[id(remote)]
+                // A record deleted for good here long ago is not brought back from the cloud
+                val oldTombstone = mine == null && isDeleted(remote) && (deletedAt(remote) ?: Long.MAX_VALUE) < purgeLimit
+                if (!oldTombstone && (mine == null || updated(remote) > updated(mine))) {
+                    batch.add(remote)
+                    if (batch.size >= 40) flush()
+                } else if (mine != null && updated(mine) > updated(remote)) {
+                    push(mine)
                 }
             }
+            done++
+            if (reportProgress && (storedAny || batch.isNotEmpty()) && (done % 10 == 0 || done == total)) {
+                _restoreProgress.value = RestoreProgress(kind, done, total)
+            }
+        }
+        flush()
+        // Records only this phone has (first sync, or made while offline) go up
+        for (mine in local) {
+            if (id(mine) !in remoteIds) push(mine)
         }
     }
 
-    private fun handleInvoicesSnapshot(scope: String, snapshot: DataSnapshot) {
-        val isFact = scope == "factory" || scope == "kooli"
-        val helper = if (isFact) com.elvan.udukkai.data.database.getFactoryDatabaseHelper() else com.elvan.udukkai.data.database.getTextilesDatabaseHelper()
-        val localList = helper.loadAllInvoices()
-
-        if (localList.isNotEmpty() && (!snapshot.exists() || snapshot.childrenCount == 0L)) {
-            triggerAntiErasureGuard("invoices", localList.size)
-            return
-        }
-
-        var anyChanged = false
-        isApplyingRemoteChange = true
-        try {
-            val localMap = localList.associateBy { it.id }
-            for (child in snapshot.children) {
-                val invoice = snapshotToInvoice(child) ?: continue
-                val existing = localMap[invoice.id]
-                val remoteUpdated = invoice.updatedAt
-                val localUpdated = existing?.updatedAt ?: 0L
-
-                if (existing == null || remoteUpdated > localUpdated) {
-                    helper.saveInvoice(invoice)
-                    anyChanged = true
-                }
-            }
-        } finally {
-            isApplyingRemoteChange = false
-        }
-
-        if (anyChanged) {
-            _lastSyncTime.value = System.currentTimeMillis()
-            CoroutineScope(Dispatchers.Main).launch {
-                if (isFact) {
-                    com.elvan.udukkai.factory.data.FactoryInvoiceRepository.loadAll()
-                    com.elvan.udukkai.factory.data.FactoryInvoiceRepository.loadDeleted()
-                } else {
-                    com.elvan.udukkai.textiles.data.TextilesInvoiceRepository.loadAll()
-                    com.elvan.udukkai.textiles.data.TextilesInvoiceRepository.loadDeleted()
-                }
-            }
-        }
+    private fun sameLinks(a: List<ReceiptInvoiceLinkModel>, b: List<ReceiptInvoiceLinkModel>): Boolean {
+        fun key(l: List<ReceiptInvoiceLinkModel>) = l.map { "${it.invoiceId}:${it.appliedAmount}" }.sorted()
+        return key(a) == key(b)
     }
 
-    private fun handleReceiptsSnapshot(scope: String, snapshot: DataSnapshot) {
-        val isFact = scope == "factory" || scope == "kooli"
-        val helper = if (isFact) com.elvan.udukkai.data.database.getFactoryDatabaseHelper() else com.elvan.udukkai.data.database.getTextilesDatabaseHelper()
-        val localList = helper.loadAllReceipts()
-
-        if (localList.isNotEmpty() && (!snapshot.exists() || snapshot.childrenCount == 0L)) {
-            triggerAntiErasureGuard("receipts", localList.size)
-            return
-        }
-
-        var anyChanged = false
-        isApplyingRemoteChange = true
-        try {
-            val localMap = localList.associateBy { it.id }
-            for (child in snapshot.children) {
-                val receipt = snapshotToReceipt(child) ?: continue
-                val existing = localMap[receipt.id]
-                val remoteUpdated = receipt.updatedAt
-                val localUpdated = existing?.updatedAt ?: 0L
-
-                if (existing == null || remoteUpdated > localUpdated) {
-                    helper.saveReceipt(receipt)
-                    anyChanged = true
-                }
+    private fun applyLinks(scope: String, snapshot: DataSnapshot) {
+        val isFact = isFactoryScope(scope)
+        val helper = helperFor(scope)
+        val remote = HashMap<Long, List<ReceiptInvoiceLinkModel>>()
+        for (child in snapshot.children) {
+            val receiptId = child.key?.toLongOrNull() ?: continue
+            remote[receiptId] = child.children.mapNotNull { l ->
+                val invoiceId = ((l.child("pattiyalId").value ?: l.child("invoiceId").value) as? Number)?.toLong() ?: return@mapNotNull null
+                val amount = ((l.child("poruthiyaThogai").value ?: l.child("appliedAmount").value) as? Number)?.toDouble() ?: 0.0
+                ReceiptInvoiceLinkModel(id = 0L, receiptId = receiptId, invoiceId = invoiceId, appliedAmount = amount)
             }
-        } finally {
-            isApplyingRemoteChange = false
         }
-
-        if (anyChanged) {
-            _lastSyncTime.value = System.currentTimeMillis()
-            CoroutineScope(Dispatchers.Main).launch {
+        val receiptIds = helper.loadEveryReceipt().map { it.id }.toSet()
+        val toApply = HashMap<Long, List<ReceiptInvoiceLinkModel>>()
+        for ((receiptId, links) in remote) {
+            if (receiptId !in receiptIds) continue
+            val mine = helper.getLinksForReceipt(receiptId)
+            if (sameLinks(mine, links)) continue
+            if (mine.isEmpty() || receiptId in receiptsFromCloud) toApply[receiptId] = links
+            else pushReceiptLinks(receiptId, mine, scope)
+        }
+        for (receiptId in receiptIds) {
+            if (receiptId in remote) continue
+            val mine = helper.getLinksForReceipt(receiptId)
+            if (mine.isNotEmpty()) pushReceiptLinks(receiptId, mine, scope)
+        }
+        if (toApply.isNotEmpty()) {
+            isApplyingRemoteChange = true
+            try {
+                helper.replaceLinksFromSync(toApply)
+            } finally {
+                isApplyingRemoteChange = false
+            }
+            mainHandler.post {
                 if (isFact) {
                     com.elvan.udukkai.factory.data.FactoryReceiptRepository.loadAll()
-                    com.elvan.udukkai.factory.data.FactoryReceiptRepository.loadDeleted()
+                    com.elvan.udukkai.factory.data.FactoryInvoiceRepository.loadAll()
                 } else {
                     com.elvan.udukkai.textiles.data.TextilesReceiptRepository.loadAll()
-                    com.elvan.udukkai.textiles.data.TextilesReceiptRepository.loadDeleted()
+                    com.elvan.udukkai.textiles.data.TextilesInvoiceRepository.loadAll()
                 }
             }
         }
@@ -392,7 +471,7 @@ class AndroidFirebaseSyncManager : FirebaseSyncManager {
     // --- Outbound Push Operations (Offline-Persistent) ---
 
     override fun pushMerchant(merchant: CustomerModel, scope: String) {
-        if (isApplyingRemoteChange) return
+        if (isApplyingRemoteChange || !isSyncAllowed()) return
         val db = getDatabase() ?: return
         val prefix = getPrefix(scope)
         val ref = db.getReference("udukkai").child(prefix).child("merchants").child("${merchant.id}")
@@ -435,7 +514,7 @@ class AndroidFirebaseSyncManager : FirebaseSyncManager {
     }
 
     override fun pushItem(item: ItemModel, scope: String) {
-        if (isApplyingRemoteChange) return
+        if (isApplyingRemoteChange || !isSyncAllowed()) return
         val db = getDatabase() ?: return
         val prefix = getPrefix(scope)
         val itemRef = db.getReference("udukkai").child(prefix).child("items").child("${item.id}")
@@ -453,7 +532,7 @@ class AndroidFirebaseSyncManager : FirebaseSyncManager {
     }
 
     override fun pushInvoice(invoice: InvoiceModel, scope: String) {
-        if (isApplyingRemoteChange) return
+        if (isApplyingRemoteChange || !isSyncAllowed()) return
         val db = getDatabase() ?: return
         val prefix = getPrefix(scope)
         val ref = db.getReference("udukkai").child(prefix).child("invoices").child("${invoice.id}")
@@ -525,7 +604,7 @@ class AndroidFirebaseSyncManager : FirebaseSyncManager {
     }
 
     override fun pushReceipt(receipt: ReceiptModel, scope: String) {
-        if (isApplyingRemoteChange) return
+        if (isApplyingRemoteChange || !isSyncAllowed()) return
         val db = getDatabase() ?: return
         val prefix = getPrefix(scope)
         val ref = db.getReference("udukkai").child(prefix).child("receipts").child("${receipt.id}")
@@ -571,21 +650,131 @@ class AndroidFirebaseSyncManager : FirebaseSyncManager {
     }
 
     override fun pushReceiptLinks(receiptId: Long, links: List<ReceiptInvoiceLinkModel>, scope: String) {
-        if (isApplyingRemoteChange) return
+        if (isApplyingRemoteChange || !isSyncAllowed()) return
         val db = getDatabase() ?: return
         val prefix = getPrefix(scope)
         val root = db.getReference("udukkai").child(prefix).child("receipt_links").child("$receiptId")
 
+        if (links.isEmpty()) {
+            root.removeValue()
+            return
+        }
         val linksMap = hashMapOf<String, Any>()
         links.forEach { link ->
-            linksMap["${link.id}"] = hashMapOf(
-                "id" to link.id,
-                "patruId" to link.receiptId,
+            linksMap["${link.invoiceId}"] = hashMapOf(
+                "patruId" to receiptId,
                 "pattiyalId" to link.invoiceId,
                 "poruthiyaThogai" to link.appliedAmount
             )
         }
         root.setValue(linksMap)
+    }
+
+    override fun pushProfile(profile: com.elvan.udukkai.data.settings.BusinessProfile, scope: String) {
+        if (isApplyingRemoteChange || !isSyncAllowed()) return
+        val id = profile.id ?: return
+        val db = getDatabase() ?: return
+        val ref = db.getReference("udukkai").child(getPrefix(scope)).child("profiles").child("$id")
+        fun text(map: Map<String, String>) = LanguageJsonConverter.stringify(map)
+        val data = hashMapOf<String, Any?>(
+            "id" to id,
+            "primaryLanguage" to profile.primaryLanguage,
+            "secondaryLanguage" to profile.secondaryLanguage,
+            "isBilingual" to profile.isBilingual,
+            "splitGst" to profile.splitGst,
+            "businessName" to text(profile.businessName),
+            "shortName" to profile.shortName,
+            "phone1" to profile.phone1,
+            "phone2" to profile.phone2,
+            "email" to profile.email,
+            "gstin" to profile.gstin,
+            "pan" to profile.pan,
+            "address" to text(profile.address),
+            "city" to text(profile.city),
+            "district" to text(profile.district),
+            "state" to text(profile.state),
+            "country" to text(profile.country),
+            "pinCode" to profile.pinCode,
+            "bankName" to text(profile.bankName),
+            "branch" to text(profile.branch),
+            "accountNumber" to profile.accountNumber,
+            "ifsc" to profile.ifsc,
+            "logo" to profile.logo,
+            "wideLogo" to profile.wideLogo,
+            "headerLayout" to profile.headerLayout,
+            "signature" to profile.signature,
+            "signatoryName" to profile.signatoryName,
+            "signatoryFirstName" to profile.signatoryFirstName,
+            "signatoryLastName" to profile.signatoryLastName,
+            "tagline" to text(profile.tagline),
+            "upiId" to profile.upiId,
+            "themeColor" to profile.themeColor,
+            "paymentAccountsJson" to profile.paymentAccountsJson,
+            "printSettingsJson" to profile.printSettingsJson,
+            "updatedAt" to profile.updatedAt
+        )
+        ref.setValue(data).addOnSuccessListener {
+            _lastSyncTime.value = System.currentTimeMillis()
+        }.addOnFailureListener { e ->
+            Log.w(tag, "Push profile $id queued offline: ${e.message}")
+        }
+    }
+
+    override fun pushRemove(collection: String, id: Long, scope: String) {
+        if (!isSyncAllowed()) return
+        val db = getDatabase() ?: return
+        val root = db.getReference("udukkai").child(getPrefix(scope))
+        root.child(collection).child("$id").removeValue()
+        if (collection == "items") root.child("products").child("$id").removeValue()
+        if (collection == "receipts") root.child("receipt_links").child("$id").removeValue()
+    }
+
+    private fun snapshotToProfile(s: DataSnapshot): com.elvan.udukkai.data.settings.BusinessProfile? {
+        return try {
+            val id = (s.child("id").value as? Number)?.toLong() ?: s.key?.toLongOrNull() ?: return null
+            fun str(key: String) = s.child(key).value as? String ?: ""
+            fun map(key: String) = LanguageJsonConverter.parse(s.child(key).value as? String ?: "{}")
+            com.elvan.udukkai.data.settings.BusinessProfile(
+                id = id,
+                primaryLanguage = str("primaryLanguage").ifEmpty { "ta" },
+                secondaryLanguage = str("secondaryLanguage").ifEmpty { "en" },
+                isBilingual = s.child("isBilingual").value as? Boolean ?: true,
+                splitGst = s.child("splitGst").value as? Boolean ?: false,
+                businessName = map("businessName"),
+                shortName = str("shortName"),
+                phone1 = str("phone1"),
+                phone2 = str("phone2"),
+                email = str("email"),
+                gstin = str("gstin"),
+                pan = str("pan"),
+                address = map("address"),
+                city = map("city"),
+                district = map("district"),
+                state = map("state"),
+                country = map("country"),
+                pinCode = str("pinCode"),
+                bankName = map("bankName"),
+                branch = map("branch"),
+                accountNumber = str("accountNumber"),
+                ifsc = str("ifsc"),
+                logo = str("logo"),
+                wideLogo = str("wideLogo"),
+                headerLayout = str("headerLayout").ifEmpty { "small" },
+                signature = str("signature"),
+                signatoryName = str("signatoryName"),
+                signatoryFirstName = str("signatoryFirstName"),
+                signatoryLastName = str("signatoryLastName"),
+                tagline = map("tagline"),
+                upiId = str("upiId"),
+                themeColor = str("themeColor").ifEmpty { "#388e3c" },
+                paymentAccountsJson = str("paymentAccountsJson").ifEmpty { "[]" },
+                printSettingsJson = str("printSettingsJson").ifEmpty { "{}" },
+                updatedAt = (s.child("updatedAt").value as? Number)?.toLong() ?: 0L
+            )
+        } catch (e: Exception) {
+            Log.w(tag, "Skipping unreadable profile ${s.key}: ${e.message}")
+            null
+        }
     }
 
     // --- Deserialization Helpers ---

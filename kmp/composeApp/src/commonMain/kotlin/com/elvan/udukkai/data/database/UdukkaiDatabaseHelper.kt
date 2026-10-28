@@ -75,6 +75,21 @@ interface UdukkaiDatabaseHelper {
 
     // ── Maintenance ──────────────────────────────────────────────────────────
     fun clearAllData(): Boolean
+
+    // Applying records that came from the cloud: stored as they are (ids, timestamps and deleted flags
+    // kept) and never pushed back. Only the Android build syncs, so these default to nothing.
+    fun upsertCustomersFromSync(list: List<CustomerModel>) {}
+    fun upsertItemsFromSync(list: List<ItemModel>) {}
+    fun upsertInvoicesFromSync(list: List<InvoiceModel>) {}
+    fun upsertReceiptsFromSync(list: List<ReceiptModel>) {}
+    fun replaceLinksFromSync(linksByReceipt: Map<Long, List<ReceiptInvoiceLinkModel>>) {}
+    fun upsertProfilesFromSync(list: List<BusinessProfile>) {}
+
+    /** Every receipt, deleted ones included, for merging with the cloud. */
+    fun loadEveryReceipt(): List<ReceiptModel> = loadAllReceipts() + loadDeletedReceipts()
+    fun loadEveryInvoice(): List<InvoiceModel> = loadAllInvoices() + loadDeletedInvoices()
+    fun loadEveryCustomer(): List<CustomerModel> = loadAllCustomers() + loadDeletedCustomers()
+    fun loadEveryItem(): List<ItemModel> = loadAllItems() + loadDeletedItems()
 }
 
 expect fun getFactoryDatabaseHelper(): UdukkaiDatabaseHelper

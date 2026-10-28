@@ -29,6 +29,7 @@ fun CloudSyncSection(colors: ShellColors) {
         SyncStatus.IDLE -> K.syncStatusIdle.tr()
     }
 
+    RestoreBanner()
     ElvanSettingsSection(title = K.cloudSync.tr(), colors = colors) {
         ElvanSettingsRow(
             icon = MaterialSymbols.Rounded.CloudUpload,

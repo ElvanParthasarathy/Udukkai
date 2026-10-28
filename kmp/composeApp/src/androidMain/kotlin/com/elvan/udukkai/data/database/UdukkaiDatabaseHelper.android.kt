@@ -495,8 +495,7 @@ class AndroidUdukkaiDatabaseHelper(
         list
     } ?: emptyList()
 
-    override fun saveCustomer(customer: CustomerModel): Long = useDb { db ->
-        val cv = ContentValues().apply {
+    private fun customerValues(customer: CustomerModel, fromSync: Boolean): ContentValues = ContentValues().apply {
             put("name", LanguageJsonConverter.stringify(customer.name))
             put("address", LanguageJsonConverter.stringify(customer.address))
             put("city", LanguageJsonConverter.stringify(customer.city))
@@ -509,25 +508,52 @@ class AndroidUdukkaiDatabaseHelper(
             put("email", customer.email)
             put("phone", customer.phone)
             put("company_ids", customer.companyIds.toString())
-            put("updated_at", System.currentTimeMillis() / 1000)
-            put("is_deleted", 0)
-        }
+            put("updated_at", if (fromSync) customer.updatedAt else System.currentTimeMillis() / 1000)
+            put("is_deleted", if (fromSync && customer.isDeleted) 1 else 0)
+            if (fromSync) {
+                put("created_at", customer.createdAt)
+                customer.deletedAt?.let { put("deleted_at", it) }
+            }
+    }
+
+    override fun saveCustomer(customer: CustomerModel): Long = (useDb { db ->
+        val cv = customerValues(customer, false)
         if (customer.id != null && customer.id > 0) {
             db.update("\"$customersTable\"", cv, "id = ?", arrayOf(customer.id.toString()))
             customer.id
         } else {
+            val newId = Ids.next()
+            cv.put("id", newId)
             cv.put("created_at", System.currentTimeMillis() / 1000)
             db.insert("\"$customersTable\"", null, cv)
+            newId
         }
-    } ?: -1L
+    } ?: -1L).also { if (it > 0) pushCustomerRow(it) }
 
-    override fun deleteCustomer(id: Long): Boolean = useDb { db ->
+    override fun upsertCustomersFromSync(list: List<CustomerModel>) {
+        if (list.isEmpty()) return
+        useDb { db ->
+            db.beginTransaction()
+            try {
+                for (customer in list) {
+                    val cv = customerValues(customer, true)
+                    cv.put("id", customer.id)
+                    db.insertWithOnConflict("\"$customersTable\"", null, cv, SQLiteDatabase.CONFLICT_REPLACE)
+                }
+                db.setTransactionSuccessful()
+            } finally {
+                db.endTransaction()
+            }
+        }
+    }
+
+    override fun deleteCustomer(id: Long): Boolean = (useDb { db ->
         val cv = ContentValues().apply {
             put("is_deleted", 1)
             put("deleted_at", System.currentTimeMillis() / 1000)
         }
         db.update("\"$customersTable\"", cv, "id = ?", arrayOf(id.toString())) > 0
-    } ?: false
+    } ?: false).also { if (it) pushCustomerRow(id) }
 
     override fun loadDeletedCustomers(): List<CustomerModel> = useDb { db ->
         val list = mutableListOf<CustomerModel>()
@@ -537,17 +563,17 @@ class AndroidUdukkaiDatabaseHelper(
         list
     } ?: emptyList()
 
-    override fun restoreCustomer(id: Long): Boolean = useDb { db ->
+    override fun restoreCustomer(id: Long): Boolean = (useDb { db ->
         val cv = ContentValues().apply {
             put("is_deleted", 0)
             putNull("deleted_at")
         }
         db.update("\"$customersTable\"", cv, "id = ?", arrayOf(id.toString())) > 0
-    } ?: false
+    } ?: false).also { if (it) pushCustomerRow(id) }
 
-    override fun permanentDeleteCustomer(id: Long): Boolean = useDb { db ->
+    override fun permanentDeleteCustomer(id: Long): Boolean = (useDb { db ->
         db.delete("\"$customersTable\"", "id = ?", arrayOf(id.toString())) > 0
-    } ?: false
+    } ?: false).also { if (it) removeRemote("merchants", id) }
 
     override fun purgeExpiredCustomers(days: Int): Int = useDb { db ->
         val threshold = (System.currentTimeMillis() / 1000) - (days * 86400L)
@@ -572,8 +598,7 @@ class AndroidUdukkaiDatabaseHelper(
         list
     } ?: emptyList()
 
-    override fun saveItem(item: ItemModel): Long = useDb { db ->
-        val cv = ContentValues().apply {
+    private fun itemValues(item: ItemModel, fromSync: Boolean): ContentValues = ContentValues().apply {
             put("name", LanguageJsonConverter.stringify(item.name))
             put("hsn_code", item.hsnCode)
             put("price", item.price)
@@ -582,25 +607,52 @@ class AndroidUdukkaiDatabaseHelper(
             put("unit", item.unit)
             put("company_ids", item.companyIds.toString())
             put("company_prices", item.companyPrices.toString())
-            put("updated_at", System.currentTimeMillis() / 1000)
-            put("is_deleted", 0)
-        }
+            put("updated_at", if (fromSync) item.updatedAt else System.currentTimeMillis() / 1000)
+            put("is_deleted", if (fromSync && item.isDeleted) 1 else 0)
+            if (fromSync) {
+                put("created_at", item.createdAt)
+                item.deletedAt?.let { put("deleted_at", it) }
+            }
+    }
+
+    override fun saveItem(item: ItemModel): Long = (useDb { db ->
+        val cv = itemValues(item, false)
         if (item.id != null && item.id > 0) {
             db.update("\"$itemsTable\"", cv, "id = ?", arrayOf(item.id.toString()))
             item.id
         } else {
+            val newId = Ids.next()
+            cv.put("id", newId)
             cv.put("created_at", System.currentTimeMillis() / 1000)
             db.insert("\"$itemsTable\"", null, cv)
+            newId
         }
-    } ?: -1L
+    } ?: -1L).also { if (it > 0) pushItemRow(it) }
 
-    override fun deleteItem(id: Long): Boolean = useDb { db ->
+    override fun upsertItemsFromSync(list: List<ItemModel>) {
+        if (list.isEmpty()) return
+        useDb { db ->
+            db.beginTransaction()
+            try {
+                for (item in list) {
+                    val cv = itemValues(item, true)
+                    cv.put("id", item.id)
+                    db.insertWithOnConflict("\"$itemsTable\"", null, cv, SQLiteDatabase.CONFLICT_REPLACE)
+                }
+                db.setTransactionSuccessful()
+            } finally {
+                db.endTransaction()
+            }
+        }
+    }
+
+    override fun deleteItem(id: Long): Boolean = (useDb { db ->
         val cv = ContentValues().apply {
             put("is_deleted", 1)
             put("deleted_at", System.currentTimeMillis() / 1000)
         }
         db.update("\"$itemsTable\"", cv, "id = ?", arrayOf(id.toString())) > 0
-    } ?: false
+    } ?: false).also { if (it) pushItemRow(id) }
 
     override fun loadDeletedItems(): List<ItemModel> = useDb { db ->
         val list = mutableListOf<ItemModel>()
@@ -610,17 +662,17 @@ class AndroidUdukkaiDatabaseHelper(
         list
     } ?: emptyList()
 
-    override fun restoreItem(id: Long): Boolean = useDb { db ->
+    override fun restoreItem(id: Long): Boolean = (useDb { db ->
         val cv = ContentValues().apply {
             put("is_deleted", 0)
             putNull("deleted_at")
         }
         db.update("\"$itemsTable\"", cv, "id = ?", arrayOf(id.toString())) > 0
-    } ?: false
+    } ?: false).also { if (it) pushItemRow(id) }
 
-    override fun permanentDeleteItem(id: Long): Boolean = useDb { db ->
+    override fun permanentDeleteItem(id: Long): Boolean = (useDb { db ->
         db.delete("\"$itemsTable\"", "id = ?", arrayOf(id.toString())) > 0
-    } ?: false
+    } ?: false).also { if (it) removeRemote("items", id) }
 
     override fun purgeExpiredItems(days: Int): Int = useDb { db ->
         val threshold = (System.currentTimeMillis() / 1000) - (days * 86400L)
@@ -636,8 +688,7 @@ class AndroidUdukkaiDatabaseHelper(
         list
     } ?: emptyList()
 
-    override fun saveInvoice(invoice: InvoiceModel): Long = useDb { db ->
-        val cv = ContentValues().apply {
+    private fun invoiceValues(invoice: InvoiceModel, fromSync: Boolean): ContentValues = ContentValues().apply {
             put("company_id", invoice.companyId)
             put("invoice_number", invoice.invoiceNumber)
             put("fin_year", invoice.finYear)
@@ -666,25 +717,52 @@ class AndroidUdukkaiDatabaseHelper(
             put("custom_preferences_json", invoice.customPreferencesJson)
             put("terms_and_conditions", invoice.termsAndConditions)
             put("notes", invoice.notes)
-            put("updated_at", System.currentTimeMillis() / 1000)
-            put("is_deleted", 0)
-        }
+            put("updated_at", if (fromSync) invoice.updatedAt else System.currentTimeMillis() / 1000)
+            put("is_deleted", if (fromSync && invoice.isDeleted) 1 else 0)
+            if (fromSync) {
+                put("created_at", invoice.createdAt)
+                invoice.deletedAt?.let { put("deleted_at", it) }
+            }
+    }
+
+    override fun saveInvoice(invoice: InvoiceModel): Long = (useDb { db ->
+        val cv = invoiceValues(invoice, false)
         if (invoice.id != null && invoice.id > 0) {
             db.update("\"$invoicesTable\"", cv, "id = ?", arrayOf(invoice.id.toString()))
             invoice.id
         } else {
+            val newId = Ids.next()
+            cv.put("id", newId)
             cv.put("created_at", System.currentTimeMillis() / 1000)
             db.insert("\"$invoicesTable\"", null, cv)
+            newId
         }
-    } ?: -1L
+    } ?: -1L).also { if (it > 0) pushInvoiceRow(it) }
 
-    override fun deleteInvoice(id: Long): Boolean = useDb { db ->
+    override fun upsertInvoicesFromSync(list: List<InvoiceModel>) {
+        if (list.isEmpty()) return
+        useDb { db ->
+            db.beginTransaction()
+            try {
+                for (invoice in list) {
+                    val cv = invoiceValues(invoice, true)
+                    cv.put("id", invoice.id)
+                    db.insertWithOnConflict("\"$invoicesTable\"", null, cv, SQLiteDatabase.CONFLICT_REPLACE)
+                }
+                db.setTransactionSuccessful()
+            } finally {
+                db.endTransaction()
+            }
+        }
+    }
+
+    override fun deleteInvoice(id: Long): Boolean = (useDb { db ->
         val cv = ContentValues().apply {
             put("is_deleted", 1)
             put("deleted_at", System.currentTimeMillis() / 1000)
         }
         db.update("\"$invoicesTable\"", cv, "id = ?", arrayOf(id.toString())) > 0
-    } ?: false
+    } ?: false).also { if (it) pushInvoiceRow(id) }
 
     override fun loadDeletedInvoices(): List<InvoiceModel> = useDb { db ->
         val list = mutableListOf<InvoiceModel>()
@@ -694,22 +772,53 @@ class AndroidUdukkaiDatabaseHelper(
         list
     } ?: emptyList()
 
-    override fun restoreInvoice(id: Long): Boolean = useDb { db ->
+    override fun restoreInvoice(id: Long): Boolean = (useDb { db ->
         val cv = ContentValues().apply {
             put("is_deleted", 0)
             putNull("deleted_at")
         }
         db.update("\"$invoicesTable\"", cv, "id = ?", arrayOf(id.toString())) > 0
-    } ?: false
+    } ?: false).also { if (it) pushInvoiceRow(id) }
 
-    override fun permanentDeleteInvoice(id: Long): Boolean = useDb { db ->
+    override fun permanentDeleteInvoice(id: Long): Boolean = (useDb { db ->
         db.delete("\"$invoicesTable\"", "id = ?", arrayOf(id.toString())) > 0
-    } ?: false
+    } ?: false).also { if (it) removeRemote("invoices", id) }
 
     override fun purgeExpiredInvoices(days: Int): Int = useDb { db ->
         val threshold = (System.currentTimeMillis() / 1000) - (days * 86400L)
         db.delete("\"$invoicesTable\"", "is_deleted = 1 AND deleted_at < ?", arrayOf(threshold.toString()))
     } ?: 0
+
+
+    // ── Cloud sync hooks ─────────────────────────────────────────────────────
+    private val scopeName: String get() = if (isFactory) "factory" else "textiles"
+
+    private fun syncManager() = com.elvan.udukkai.core.sync.getFirebaseSyncManager()
+
+    private inline fun <T> loadRow(table: String, id: Long, crossinline map: (Cursor) -> T): T? = useDb { db ->
+        db.rawQuery("SELECT * FROM \"$table\" WHERE id = ?", arrayOf(id.toString())).use { c ->
+            if (c.moveToFirst()) map(c) else null
+        }
+    }
+
+    private fun safely(block: () -> Unit) {
+        try { block() } catch (e: Exception) { Log.w(tag, "Cloud push skipped: ${e.message}") }
+    }
+
+    private fun pushCustomerRow(id: Long) = safely { loadRow(customersTable, id) { cursorToMerchant(it) }?.let { syncManager().pushMerchant(it, scopeName) } }
+    private fun pushItemRow(id: Long) = safely { loadRow(itemsTable, id) { cursorToItem(it) }?.let { syncManager().pushItem(it, scopeName) } }
+    private fun pushInvoiceRow(id: Long) = safely { loadRow(invoicesTable, id) { cursorToInvoice(it) }?.let { syncManager().pushInvoice(it, scopeName) } }
+    private fun pushReceiptRow(id: Long, withLinks: Boolean) = safely {
+        loadRow(receiptsTable, id) { cursorToReceipt(it) }?.let { syncManager().pushReceipt(it, scopeName) }
+        if (withLinks) syncManager().pushReceiptLinks(id, getLinksForReceipt(id), scopeName)
+    }
+    private fun pushProfileRow(id: Long?) = safely {
+        val target = id ?: useDb { db ->
+            db.rawQuery("SELECT MAX(id) FROM \"$profilesTable\"", null).use { c -> if (c.moveToFirst()) c.getLong(0) else null }
+        } ?: return@safely
+        loadRow(profilesTable, target) { cursorToProfile(it) }?.let { syncManager().pushProfile(it, scopeName) }
+    }
+    private fun removeRemote(collection: String, id: Long) = safely { syncManager().pushRemove(collection, id, scopeName) }
 
     // ── Receipts ─────────────────────────────────────────────────────────────
     override fun loadAllReceipts(): List<ReceiptModel> = useDb { db ->
@@ -720,8 +829,7 @@ class AndroidUdukkaiDatabaseHelper(
         list
     } ?: emptyList()
 
-    private fun saveReceiptInternal(db: SQLiteDatabase, receipt: ReceiptModel): Long {
-        val cv = ContentValues().apply {
+    private fun receiptValues(receipt: ReceiptModel, fromSync: Boolean): ContentValues = ContentValues().apply {
             put("company_id", receipt.companyId)
             put("receipt_number", receipt.receiptNumber)
             put("fin_year", receipt.finYear)
@@ -735,29 +843,80 @@ class AndroidUdukkaiDatabaseHelper(
             put("bank_name", receipt.bankName)
             put("transaction_number", receipt.transactionNumber)
             put("notes", receipt.notes)
-            put("updated_at", System.currentTimeMillis() / 1000)
-            put("is_deleted", 0)
-        }
+            put("updated_at", if (fromSync) receipt.updatedAt else System.currentTimeMillis() / 1000)
+            put("is_deleted", if (fromSync && receipt.isDeleted) 1 else 0)
+            if (fromSync) {
+                put("created_at", receipt.createdAt)
+                receipt.deletedAt?.let { put("deleted_at", it) }
+            }
+    }
+
+    private fun saveReceiptInternal(db: SQLiteDatabase, receipt: ReceiptModel): Long {
+        val cv = receiptValues(receipt, false)
         return if (receipt.id != null && receipt.id > 0) {
             db.update("\"$receiptsTable\"", cv, "id = ?", arrayOf(receipt.id.toString()))
             receipt.id
         } else {
+            val newId = Ids.next()
+            cv.put("id", newId)
             cv.put("created_at", System.currentTimeMillis() / 1000)
             db.insert("\"$receiptsTable\"", null, cv)
+            newId
         }
     }
 
-    override fun saveReceipt(receipt: ReceiptModel): Long = useDb { db ->
-        saveReceiptInternal(db, receipt)
-    } ?: -1L
+    override fun upsertReceiptsFromSync(list: List<ReceiptModel>) {
+        if (list.isEmpty()) return
+        useDb { db ->
+            db.beginTransaction()
+            try {
+                for (receipt in list) {
+                    val cv = receiptValues(receipt, true)
+                    cv.put("id", receipt.id)
+                    db.insertWithOnConflict("\"$receiptsTable\"", null, cv, SQLiteDatabase.CONFLICT_REPLACE)
+                }
+                db.setTransactionSuccessful()
+            } finally {
+                db.endTransaction()
+            }
+        }
+    }
 
-    override fun deleteReceipt(id: Long): Boolean = useDb { db ->
+    override fun replaceLinksFromSync(linksByReceipt: Map<Long, List<ReceiptInvoiceLinkModel>>) {
+        if (linksByReceipt.isEmpty()) return
+        useDb { db ->
+            db.beginTransaction()
+            try {
+                for ((receiptId, links) in linksByReceipt) {
+                    db.delete("\"$linksTable\"", "receipt_id = ?", arrayOf(receiptId.toString()))
+                    for (link in links) {
+                        val cv = ContentValues().apply {
+                            put("receipt_id", receiptId)
+                            put("invoice_id", link.invoiceId)
+                            put("applied_amount", link.appliedAmount)
+                            put("created_at", System.currentTimeMillis() / 1000)
+                        }
+                        db.insert("\"$linksTable\"", null, cv)
+                    }
+                }
+                db.setTransactionSuccessful()
+            } finally {
+                db.endTransaction()
+            }
+        }
+    }
+
+    override fun saveReceipt(receipt: ReceiptModel): Long = (useDb { db ->
+        saveReceiptInternal(db, receipt)
+    } ?: -1L).also { if (it > 0) pushReceiptRow(it, false) }
+
+    override fun deleteReceipt(id: Long): Boolean = (useDb { db ->
         val cv = ContentValues().apply {
             put("is_deleted", 1)
             put("deleted_at", System.currentTimeMillis() / 1000)
         }
         db.update("\"$receiptsTable\"", cv, "id = ?", arrayOf(id.toString())) > 0
-    } ?: false
+    } ?: false).also { if (it) pushReceiptRow(id, false) }
 
     override fun loadDeletedReceipts(): List<ReceiptModel> = useDb { db ->
         val list = mutableListOf<ReceiptModel>()
@@ -767,18 +926,18 @@ class AndroidUdukkaiDatabaseHelper(
         list
     } ?: emptyList()
 
-    override fun restoreReceipt(id: Long): Boolean = useDb { db ->
+    override fun restoreReceipt(id: Long): Boolean = (useDb { db ->
         val cv = ContentValues().apply {
             put("is_deleted", 0)
             putNull("deleted_at")
         }
         db.update("\"$receiptsTable\"", cv, "id = ?", arrayOf(id.toString())) > 0
-    } ?: false
+    } ?: false).also { if (it) pushReceiptRow(id, false) }
 
-    override fun permanentDeleteReceipt(id: Long): Boolean = useDb { db ->
+    override fun permanentDeleteReceipt(id: Long): Boolean = (useDb { db ->
         db.delete("\"$linksTable\"", "receipt_id = ?", arrayOf(id.toString()))
         db.delete("\"$receiptsTable\"", "id = ?", arrayOf(id.toString())) > 0
-    } ?: false
+    } ?: false).also { if (it) removeRemote("receipts", id) }
 
     override fun purgeExpiredReceipts(days: Int): Int = useDb { db ->
         val threshold = (System.currentTimeMillis() / 1000) - (days * 86400L)
@@ -817,7 +976,7 @@ class AndroidUdukkaiDatabaseHelper(
         list
     } ?: emptyList()
 
-    override fun saveReceiptWithLinks(receipt: ReceiptModel, links: List<ReceiptInvoiceLinkModel>): Long = useDb { db ->
+    override fun saveReceiptWithLinks(receipt: ReceiptModel, links: List<ReceiptInvoiceLinkModel>): Long = (useDb { db ->
         db.beginTransaction()
         try {
             val rId = saveReceiptInternal(db, receipt)
@@ -838,7 +997,7 @@ class AndroidUdukkaiDatabaseHelper(
         } finally {
             db.endTransaction()
         }
-    } ?: -1L
+    } ?: -1L).also { if (it > 0) pushReceiptRow(it, true) }
 
     override fun getPaidAmountForInvoice(invoiceId: Long): Double = useDb { db ->
         var sum = 0.0
@@ -886,8 +1045,7 @@ class AndroidUdukkaiDatabaseHelper(
         list
     } ?: emptyList()
 
-    override fun saveProfile(profile: BusinessProfile): Boolean = useDb { db ->
-        val cv = ContentValues().apply {
+    private fun profileValues(profile: BusinessProfile, fromSync: Boolean): ContentValues = ContentValues().apply {
             put("primary_language", profile.primaryLanguage)
             put("secondary_language", profile.secondaryLanguage)
             put("is_bilingual", if (profile.isBilingual) 1 else 0)
@@ -920,9 +1078,12 @@ class AndroidUdukkaiDatabaseHelper(
             put("upi_id", profile.upiId)
             put("theme_color", profile.themeColor)
             put("print_settings", profile.printSettingsJson)
-            put("updated_at", System.currentTimeMillis() / 1000)
+            put("updated_at", if (fromSync) profile.updatedAt else System.currentTimeMillis() / 1000)
             put("is_deleted", 0)
-        }
+    }
+
+    override fun saveProfile(profile: BusinessProfile): Boolean = (useDb { db ->
+        val cv = profileValues(profile, false)
         val exists = if (profile.id != null) {
             val checkCur = db.rawQuery("SELECT id FROM \"$profilesTable\" WHERE id = ?", arrayOf(profile.id.toString()))
             val found = checkCur.moveToFirst()
@@ -937,15 +1098,34 @@ class AndroidUdukkaiDatabaseHelper(
             if (profile.id != null) cv.put("id", profile.id)
             db.insert("\"$profilesTable\"", null, cv) > 0
         }
-    } ?: false
+    } ?: false).also { if (it) pushProfileRow(profile.id) }
 
-    override fun deleteProfile(profileId: Long): Boolean = useDb { db ->
+    override fun upsertProfilesFromSync(list: List<BusinessProfile>) {
+        if (list.isEmpty()) return
+        useDb { db ->
+            db.beginTransaction()
+            try {
+                for (profile in list) {
+                    val id = profile.id ?: continue
+                    val cv = profileValues(profile, true)
+                    cv.put("id", id)
+                    cv.put("created_at", profile.updatedAt)
+                    db.insertWithOnConflict("\"$profilesTable\"", null, cv, SQLiteDatabase.CONFLICT_REPLACE)
+                }
+                db.setTransactionSuccessful()
+            } finally {
+                db.endTransaction()
+            }
+        }
+    }
+
+    override fun deleteProfile(profileId: Long): Boolean = (useDb { db ->
         val cv = ContentValues().apply {
             put("is_deleted", 1)
             put("deleted_at", System.currentTimeMillis() / 1000)
         }
         db.update("\"$profilesTable\"", cv, "id = ?", arrayOf(profileId.toString())) > 0
-    } ?: false
+    } ?: false).also { if (it) removeRemote("profiles", profileId) }
 
     override fun clearProfiles(): Boolean = useDb { db ->
         db.delete("\"$profilesTable\"", null, null) > 0
@@ -1086,7 +1266,8 @@ class AndroidUdukkaiDatabaseHelper(
         tagline = LanguageJsonConverter.parse(getStringCol(c, "tagline", "adaimozhi")),
         upiId = getStringCol(c, "upi_id"),
         themeColor = getStringCol(c, "theme_color", "thoatra_niram"),
-        printSettingsJson = getStringCol(c, "print_settings", default = "{}")
+        printSettingsJson = getStringCol(c, "print_settings", default = "{}"),
+        updatedAt = getLongCol(c, "updated_at")
     )
 }
 
@@ -1108,3 +1289,17 @@ private val textilesDbHelperInstance by lazy {
 
 actual fun getFactoryDatabaseHelper(): UdukkaiDatabaseHelper = factoryDbHelperInstance
 actual fun getTextilesDatabaseHelper(): UdukkaiDatabaseHelper = textilesDbHelperInstance
+
+/** Ids that cannot clash between phones: the time in microseconds, always rising. */
+private object Ids {
+    private val last = java.util.concurrent.atomic.AtomicLong(0L)
+
+    fun next(): Long {
+        val now = System.currentTimeMillis() * 1000
+        while (true) {
+            val prev = last.get()
+            val candidate = if (now > prev) now else prev + 1
+            if (last.compareAndSet(prev, candidate)) return candidate
+        }
+    }
+}

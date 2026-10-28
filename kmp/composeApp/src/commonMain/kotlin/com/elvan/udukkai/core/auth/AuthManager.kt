@@ -47,6 +47,11 @@ object AuthManager {
         isLoggedIn = AllowedAccounts.isAllowed(email)
         signedInEmail = if (isLoggedIn) email else null
         refreshProfileStatus()
+        if (isLoggedIn) {
+            try {
+                getFirebaseSyncManager().startSync(if (appScope == AppScope.FACTORY) "factory" else "textiles")
+            } catch (_: Exception) {}
+        }
     }
 
     /** Flutter's isSetupComplete, for one standalone app. */
