@@ -201,7 +201,7 @@ fun UllnuzhaivuThirai(
 }
 
 @Composable
-private fun NeramField(
+internal fun NeramField(
     value: String,
     onValueChange: (String) -> Unit,
     placeholder: String,

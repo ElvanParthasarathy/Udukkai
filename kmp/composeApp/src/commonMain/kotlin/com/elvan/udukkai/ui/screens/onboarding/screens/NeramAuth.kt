@@ -5,7 +5,11 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.material3.ripple
 import androidx.compose.runtime.*
@@ -22,6 +26,7 @@ import androidx.compose.ui.unit.sp
 import com.elvan.udukkai.core.extensions.cssShadow
 import com.elvan.udukkai.theme.ThemeManager
 import com.elvan.udukkai.ui.components.ExpressiveLoadingIndicator
+import com.elvan.udukkai.ui.navigation.MaterialSymbols
 import kotlinx.coroutines.delay
 
 private val EaseOutCubic = CubicBezierEasing(0.215f, 0.61f, 0.355f, 1.0f)
@@ -127,3 +132,106 @@ internal fun Modifier.neramPill(): Modifier =
     this.neramShadow()
         .clip(RoundedCornerShape(50))
         .background(NeramColors.inputBackground())
+
+/**
+ * The layout every sign-in and setup page shares: the content sits in the middle of the free space (and scrolls
+ * only when the screen is too small), and the button stays pinned at the bottom in the same place on every page.
+ */
+@Composable
+internal fun NeramPage(
+    bottom: @Composable () -> Unit,
+    content: @Composable ColumnScope.() -> Unit
+) {
+    Column(modifier = Modifier.fillMaxSize().windowInsetsPadding(WindowInsets.safeDrawing)) {
+        BoxWithConstraints(modifier = Modifier.weight(1f).fillMaxWidth()) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(min = maxHeight)
+                    .verticalScroll(rememberScrollState())
+                    .padding(horizontal = 16.dp, vertical = 24.dp),
+                verticalArrangement = Arrangement.Center,
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                content()
+            }
+        }
+        NeramElement(
+            delayIndex = 3,
+            modifier = Modifier.fillMaxWidth().padding(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 20.dp)
+        ) { bottom() }
+    }
+}
+
+internal data class NeramChoice(val code: String, val title: String, val subtitle: String? = null)
+
+/** Neram's rounded card of choices with a check on the selected one (the language rows). */
+@Composable
+internal fun NeramChoiceCard(
+    choices: List<NeramChoice>,
+    selected: String,
+    onSelect: (String) -> Unit
+) {
+    val dark = ThemeManager.isDark()
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .then(
+                if (dark) Modifier
+                else Modifier.cssShadow(color = Color.Black, alpha = 0.12f, blurRadius = 14.dp, offsetY = 4.dp)
+            )
+            .clip(RoundedCornerShape(24.dp))
+            .background(NeramColors.inputBackground())
+            .padding(vertical = 4.dp)
+    ) {
+        choices.forEachIndexed { index, choice ->
+            val isSelected = selected == choice.code
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = ripple(color = if (dark) Color.White else Color.Black, bounded = true)
+                    ) { onSelect(choice.code) }
+                    .padding(horizontal = 18.dp, vertical = 14.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = choice.title,
+                        style = TextStyle(
+                            fontSize = 16.sp,
+                            fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
+                            lineHeight = 21.sp
+                        ),
+                        color = if (isSelected) NeramColors.textPrimary() else NeramColors.textPrimary().copy(alpha = 0.75f)
+                    )
+                    if (!choice.subtitle.isNullOrBlank()) {
+                        Spacer(Modifier.height(2.dp))
+                        Text(
+                            text = choice.subtitle,
+                            style = TextStyle(fontSize = 12.sp, lineHeight = 16.sp),
+                            color = NeramColors.textSecondary()
+                        )
+                    }
+                }
+                if (isSelected) {
+                    Icon(
+                        imageVector = MaterialSymbols.Rounded.CheckCircleFill,
+                        contentDescription = null,
+                        tint = NeramColors.textPrimary(),
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
+            }
+            if (index < choices.size - 1) {
+                HorizontalDivider(
+                    color = if (dark) Color.White.copy(alpha = 0.055f) else Color.Black.copy(alpha = 0.055f),
+                    thickness = 0.5.dp,
+                    modifier = Modifier.padding(horizontal = 18.dp)
+                )
+            }
+        }
+    }
+}

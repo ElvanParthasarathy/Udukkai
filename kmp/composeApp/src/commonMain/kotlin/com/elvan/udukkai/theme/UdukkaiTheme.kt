@@ -55,10 +55,7 @@ fun UdukkaiTheme(
 ) {
     val rippleColor = if (darkTheme) Color.White else Color.Black
 
-    val currentFontFamily = when (font) {
-        AppFont.NAVIL_SANS -> NavilSansFontFamily
-        AppFont.ELVAN_SANS -> ElvanSansFontFamily
-    }
+    val currentFontFamily = ElvanSansFontFamily
     val typography = remember(currentFontFamily) {
         createTypography(currentFontFamily)
     }

@@ -22,12 +22,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.elvan.udukkai.localization.K
 import com.elvan.udukkai.localization.tr
-import com.elvan.udukkai.theme.AppFont
 import com.elvan.udukkai.theme.Dimens
 import com.elvan.udukkai.theme.ElvanSansFontFamily
 import com.elvan.udukkai.theme.FontManager
 import com.elvan.udukkai.theme.LocalAppFontFamily
-import com.elvan.udukkai.theme.NavilSansFontFamily
 import com.elvan.udukkai.theme.ShellColors
 import com.elvan.udukkai.theme.ShellDefaults
 import com.elvan.udukkai.theme.ThemeManager
@@ -140,43 +138,6 @@ fun DisplaySettingsScreen(
                                 },
                                 colors = colors
                             )
-                        }
-                    }
-                }
-            }
-        }
-
-        item(key = "font_section") {
-            ElvanSectionContainer {
-                ElvanSettingsSection(
-                    title = K.fontFamily.tr(),
-                    colors = colors
-                ) {
-                    val currentFont = FontManager.currentFont
-                    val fontChangedMsg = K.fontUpdatedSuccessfully.tr()
-
-                    AppFont.entries.forEachIndexed { index, fontOption ->
-                        val fontOptionFamily = when (fontOption) {
-                            AppFont.NAVIL_SANS -> NavilSansFontFamily
-                            AppFont.ELVAN_SANS -> ElvanSansFontFamily
-                        }
-
-                        ElvanRadioSettingsRow(
-                            title = fontOption.displayName,
-                            value = fontOption,
-                            groupValue = currentFont,
-                            fontFamily = fontOptionFamily,
-                            onSelected = { selectedFont ->
-                                if (currentFont != selectedFont) {
-                                    FontManager.setFont(selectedFont)
-                                    ElvanSnackbar.show("$fontChangedMsg: ${selectedFont.displayName}")
-                                }
-                            },
-                            colors = colors
-                        )
-
-                        if (index < AppFont.entries.size - 1) {
-                            ElvanSettingsDivider(colors = colors)
                         }
                     }
                 }

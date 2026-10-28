@@ -26,7 +26,10 @@ import com.elvan.udukkai.ui.components.shell.UruvakkuCardSkeleton
 import com.elvan.udukkai.ui.components.shell.rememberShimmerBrush
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.LocalTextStyle
 import androidx.compose.runtime.*
+import androidx.compose.ui.text.TextStyle
+import com.elvan.udukkai.theme.ElvanSansFontFamily
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import androidx.compose.ui.Modifier
@@ -98,6 +101,10 @@ fun OnboardingGate(
         page = if (page == AuthPage.LOGIN) AuthPage.WELCOME else AuthPage.LANGUAGE
     }
 
+    // Every page of the sign-in and setup flow is set in Elvan Sans
+    CompositionLocalProvider(
+        LocalTextStyle provides LocalTextStyle.current.merge(TextStyle(fontFamily = ElvanSansFontFamily))
+    ) {
     AnimatedContent(
         targetState = stage,
         transitionSpec = {
@@ -142,6 +149,7 @@ fun OnboardingGate(
             )
             GateStage.APP -> content()
         }
+    }
     }
 }
 

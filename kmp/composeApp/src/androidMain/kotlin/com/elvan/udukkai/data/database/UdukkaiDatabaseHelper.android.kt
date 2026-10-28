@@ -407,6 +407,7 @@ class AndroidUdukkaiDatabaseHelper(
                 "upi_id" TEXT NOT NULL DEFAULT '',
                 "theme_color" TEXT NOT NULL DEFAULT '',
                 "print_settings" TEXT NOT NULL DEFAULT '{}',
+                "pan" TEXT NOT NULL DEFAULT '',
                 "created_at" INTEGER NOT NULL DEFAULT (CAST(strftime('%s', CURRENT_TIMESTAMP) AS INTEGER)),
                 "updated_at" INTEGER NOT NULL DEFAULT (CAST(strftime('%s', CURRENT_TIMESTAMP) AS INTEGER)),
                 "is_deleted" INTEGER NOT NULL DEFAULT 0 CHECK ("is_deleted" IN (0, 1)),

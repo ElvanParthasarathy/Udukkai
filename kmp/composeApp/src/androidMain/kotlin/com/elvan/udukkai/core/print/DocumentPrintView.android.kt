@@ -1,8 +1,6 @@
 package com.elvan.udukkai.core.print
 
 import com.elvan.udukkai.R
-import com.elvan.udukkai.theme.AppFont
-import com.elvan.udukkai.theme.FontManager
 import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.ContextWrapper

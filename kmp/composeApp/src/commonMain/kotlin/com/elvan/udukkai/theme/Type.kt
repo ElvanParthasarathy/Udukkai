@@ -32,4 +32,4 @@ fun createTypography(fontFamily: FontFamily) = Typography(
     labelSmall = TextStyle(fontFamily = fontFamily, fontWeight = FontWeight.Medium, fontSize = 11.sp, lineHeight = 16.sp, letterSpacing = 0.5.sp)
 )
 
-val UdukkaiTypography = createTypography(NavilSansFontFamily)
+val UdukkaiTypography = createTypography(ElvanSansFontFamily)
