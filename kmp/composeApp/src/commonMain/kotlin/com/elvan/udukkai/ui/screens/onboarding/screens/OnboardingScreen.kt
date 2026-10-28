@@ -30,12 +30,6 @@ fun UllnuzhaivuThirai(
     val scope = rememberCoroutineScope()
 
     AuthLayout {
-        AuthAnimatedElement(delayIndex = 0) {
-            AuthBackButton(onClick = onBack)
-        }
-
-        Spacer(modifier = Modifier.height(16.dp))
-
         AuthHeader(
             title = K.udukkai.tr(),
             subtitle = K.loginToAccessApp.tr()

@@ -49,7 +49,7 @@ fun WelcomeSlideScreen(
     ) {
         currentPhase = when (currentPhase) {
             WelcomePhase.LANGUAGE -> WelcomePhase.CHECKING_BACKUP
-            WelcomePhase.BILLING_LANGUAGE -> WelcomePhase.LANGUAGE
+            WelcomePhase.BILLING_LANGUAGE -> WelcomePhase.CHECKING_BACKUP
             WelcomePhase.BUSINESS_NAME -> WelcomePhase.BILLING_LANGUAGE
             else -> currentPhase
         }
@@ -69,10 +69,10 @@ fun WelcomeSlideScreen(
                 )
                 WelcomePhase.CHECKING_BACKUP -> BackupCheckStep(
                     onBackupFound = { currentPhase = WelcomePhase.RESTORE },
-                    onNoBackupFound = { currentPhase = WelcomePhase.LANGUAGE }
+                    onNoBackupFound = { currentPhase = WelcomePhase.BILLING_LANGUAGE }
                 )
                 WelcomePhase.RESTORE -> RestorePage(
-                    onStartFresh = { currentPhase = WelcomePhase.LANGUAGE },
+                    onStartFresh = { currentPhase = WelcomePhase.BILLING_LANGUAGE },
                     onRestoreComplete = {
                         AuthManager.refreshProfileStatus()
                         onSetupComplete()
@@ -84,7 +84,7 @@ fun WelcomeSlideScreen(
                 )
                 WelcomePhase.BILLING_LANGUAGE -> BillingLanguageStep(
                     billingLanguage = billingLang,
-                    onBack = { currentPhase = WelcomePhase.LANGUAGE },
+                    onBack = { currentPhase = WelcomePhase.CHECKING_BACKUP },
                     onLanguageSelected = { billingLang = it },
                     onContinue = {
                         AuthManager.saveBillingLanguage(billingLang)

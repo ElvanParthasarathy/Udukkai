@@ -1,11 +1,14 @@
 package com.elvan.udukkai.ui.screens.onboarding.screens
 
+import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -35,9 +38,22 @@ fun WelcomeScreen(
 
     AuthLayout {
         // 1. LOGO SECTION matching Flutter 1:1 (96x96, radius 28dp, soft shadow, storage/database icon)
+        val floating = rememberInfiniteTransition(label = "logo_float")
+        val floatOffset by floating.animateFloat(
+            initialValue = -4f, targetValue = 4f,
+            animationSpec = infiniteRepeatable(tween(4500, easing = FastOutSlowInEasing), RepeatMode.Reverse),
+            label = "float_offset"
+        )
+        val pulse by floating.animateFloat(
+            initialValue = 0.97f, targetValue = 1.03f,
+            animationSpec = infiniteRepeatable(tween(5000, easing = FastOutSlowInEasing), RepeatMode.Reverse),
+            label = "logo_pulse"
+        )
         AuthAnimatedElement(delayIndex = 0) {
             Box(
                 modifier = Modifier
+                    .offset(y = floatOffset.dp)
+                    .scale(pulse)
                     .size(96.dp)
                     .cssShadow(
                         color = LocalShellColors.current.textPrimary,

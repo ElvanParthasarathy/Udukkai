@@ -16,11 +16,14 @@ import com.elvan.udukkai.core.auth.AppScope
 import com.elvan.udukkai.core.auth.AuthManager
 import com.elvan.udukkai.core.platform.AppBackHandler
 import com.elvan.udukkai.core.sync.getFirebaseSyncManager
+import com.elvan.udukkai.localization.Language
+import com.elvan.udukkai.localization.LanguageManager
+import com.elvan.udukkai.ui.screens.onboarding.screens.LanguageSelectScreen
 import com.elvan.udukkai.ui.screens.onboarding.screens.UllnuzhaivuThirai
 import com.elvan.udukkai.ui.screens.onboarding.screens.WelcomeScreen
 import com.elvan.udukkai.ui.screens.onboarding.screens.WelcomeSlideScreen
 
-private enum class GateStage { WELCOME, LOGIN, LOADING, SETUP, APP }
+private enum class GateStage { LANGUAGE, WELCOME, LOGIN, LOADING, SETUP, APP }
 
 // Flutter Curves.easeOutCubic / Curves.easeInCubic
 private val EaseOutCubic = CubicBezierEasing(0.215f, 0.61f, 0.355f, 1.0f)
@@ -43,9 +46,15 @@ fun OnboardingGate(
     }
 
     var showLogin by remember { mutableStateOf(false) }
+    // A fresh install asks for the language first; one that already has a saved language skips it
+    var languageDone by remember { mutableStateOf(LanguageManager.currentLanguage != Language.SYSTEM) }
 
     val stage = when {
-        !AuthManager.isLoggedIn -> if (showLogin) GateStage.LOGIN else GateStage.WELCOME
+        !AuthManager.isLoggedIn -> when {
+            !languageDone -> GateStage.LANGUAGE
+            showLogin -> GateStage.LOGIN
+            else -> GateStage.WELCOME
+        }
         AuthManager.isProfilesLoading -> GateStage.LOADING
         // A new phone: wait for the business profiles that are being restored instead of asking to create one
         !AuthManager.isSetupComplete(scope) && !getFirebaseSyncManager().profilesRestored.value -> GateStage.LOADING
@@ -72,6 +81,7 @@ fun OnboardingGate(
         label = "onboarding_gate"
     ) { s ->
         when (s) {
+            GateStage.LANGUAGE -> LanguageSelectScreen(onContinue = { languageDone = true })
             GateStage.WELCOME -> WelcomeScreen(onNavigateToLogin = { showLogin = true })
             GateStage.LOGIN -> UllnuzhaivuThirai(
                 onBack = { showLogin = false },

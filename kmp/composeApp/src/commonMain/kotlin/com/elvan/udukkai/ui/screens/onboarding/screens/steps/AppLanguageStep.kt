@@ -24,7 +24,7 @@ import com.elvan.udukkai.ui.screens.onboarding.components.*
  */
 @Composable
 fun AppLanguageStep(
-    onBack: () -> Unit,
+    onBack: (() -> Unit)? = null,
     onLanguageSelected: () -> Unit
 ) {
     val isDark = ThemeManager.isDark()
@@ -39,16 +39,18 @@ fun AppLanguageStep(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        AuthBackButton(onClick = onBack)
+        if (onBack != null) AuthBackButton(onClick = onBack)
 
+        AuthAnimatedElement(delayIndex = 0) {
         Icon(
             imageVector = MaterialSymbols.Rounded.Language,
             contentDescription = null,
             tint = textColor,
-            modifier = Modifier.size(80.dp)
+            modifier = Modifier.size(64.dp)
         )
+        }
 
-        Spacer(modifier = Modifier.height(24.dp))
+        Spacer(modifier = Modifier.height(20.dp))
 
         AuthHeader(
             title = K.selectLanguage.tr(),
@@ -61,7 +63,7 @@ fun AppLanguageStep(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(inputBg, RoundedCornerShape(16.dp))
+                    .background(inputBg, RoundedCornerShape(24.dp))
             ) {
                 LanguageTile(
                     title = "தமிழ்",
