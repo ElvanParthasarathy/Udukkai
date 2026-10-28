@@ -18,6 +18,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.elvan.udukkai.core.backup.getUdukkaiBackupService
 import com.elvan.udukkai.data.settings.BusinessProfile
 import com.elvan.udukkai.localization.K
 import com.elvan.udukkai.localization.tr
@@ -46,8 +47,11 @@ fun TextilesManageProfilesScreen(
 
     var showNewProfileSheet by remember { mutableStateOf(false) }
     var profileToDelete by remember { mutableStateOf<BusinessProfile?>(null) }
+    var nameInput by remember { mutableStateOf("") }
 
     val deleteSuccessMsg = K.profileDeleted.tr()
+    val nameMismatchMsg = K.businessNameMismatch.tr()
+    val lastBusinessMsg = K.lastBusinessCannotBeDeleted.tr()
 
     Box(modifier = Modifier.fillMaxSize()) {
         LazyColumn(
@@ -96,7 +100,7 @@ fun TextilesManageProfilesScreen(
                                     secondaryValue = if (isBilingual) profileItem.getSecondary("niruvanathinPeyar").takeIf { it.isNotBlank() } else null,
                                     icon = MaterialSymbols.Rounded.Delete,
                                     iconColor = null,
-                                    onEdit = { profileToDelete = profileItem },
+                                    onEdit = if (profiles.size > 1) { { profileToDelete = profileItem; nameInput = "" } } else null,
                                     onTap = if (!isActive && profileItem.id != null) {
                                         {
                                             TextilesProfileRepository.setActiveProfile(profileItem.id!!)
@@ -134,15 +138,36 @@ fun TextilesManageProfilesScreen(
     }
 
     profileToDelete?.let { targetProfile ->
-        ElvanDeleteConfirmSheet(
+        val expectedName = targetProfile.getPrimary("businessName")
+        ElvanActionSheet(
+            title = K.deleteCompanyProfilePrompt.tr(),
+            cancelText = K.cancel.tr(),
+            confirmText = K.delete.tr(),
+            confirmColor = Color(0xFFBA1A1A),
+            customContent = {
+                ElvanSettingsTextField(
+                    label = K.typeNameToDelete.tr(),
+                    value = nameInput,
+                    onValueChange = { nameInput = it },
+                    placeholder = expectedName,
+                    colors = colors
+                )
+            },
             onDismissRequest = { profileToDelete = null },
             onConfirm = {
                 val id = targetProfile.id
-                if (id != null) {
-                    TextilesProfileRepository.deleteProfile(id)
-                    ElvanSnackbar.show(deleteSuccessMsg)
+                if (!nameInput.trim().equals(expectedName.trim(), ignoreCase = true)) {
+                    ElvanSnackbar.show(nameMismatchMsg)
+                } else if (id != null) {
+                    // The data of every business is kept in a safety snapshot before one is removed
+                    try { getUdukkaiBackupService().createSafetySnapshot() } catch (_: Exception) {}
+                    if (TextilesProfileRepository.deleteProfile(id)) {
+                        ElvanSnackbar.show(deleteSuccessMsg)
+                    } else {
+                        ElvanSnackbar.show(lastBusinessMsg)
+                    }
+                    profileToDelete = null
                 }
-                profileToDelete = null
             },
             colors = colors
         )

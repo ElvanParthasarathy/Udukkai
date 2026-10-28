@@ -446,6 +446,9 @@ val ta: Map<String, String> = mapOf(
     K.enterEmailFirst to "முதலில் மின்னஞ்சலை உள்ளிடவும்.",
     K.resetMailSent to "கடவுச்சொல் மாற்ற மின்னஞ்சல் அனுப்பப்பட்டது.",
     K.selectPreferredLanguage to "விருப்பமான மொழியைத் தேர்ந்தெடுக்கவும்",
+    K.typeNameToDelete to "நிறுவனத்தை நீக்க அதன் பெயரை உள்ளிடவும்",
+    K.businessNameMismatch to "பெயர் பொருந்தவில்லை.",
+    K.lastBusinessCannotBeDeleted to "ஒரே நிறுவனத்தை நீக்க முடியாது.",
 )
 
 /**

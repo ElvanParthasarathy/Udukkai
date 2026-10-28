@@ -6,6 +6,9 @@ package com.elvan.udukkai.localization
  * Total keys: 422
  */
 object K {
+    const val typeNameToDelete = "typeNameToDelete"
+    const val businessNameMismatch = "businessNameMismatch"
+    const val lastBusinessCannotBeDeleted = "lastBusinessCannotBeDeleted"
     const val logIn = "logIn"
     const val orDivider = "orDivider"
     const val forgotPassword = "forgotPassword"

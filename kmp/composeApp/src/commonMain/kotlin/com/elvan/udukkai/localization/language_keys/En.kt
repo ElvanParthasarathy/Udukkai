@@ -445,6 +445,9 @@ val en: Map<String, String> = mapOf(
     K.enterEmailFirst to "Enter your email first.",
     K.resetMailSent to "Password reset mail sent.",
     K.selectPreferredLanguage to "Select your preferred language",
+    K.typeNameToDelete to "Type the business name to delete it",
+    K.businessNameMismatch to "The name doesn't match.",
+    K.lastBusinessCannotBeDeleted to "The only business can't be deleted.",
 )
 
 

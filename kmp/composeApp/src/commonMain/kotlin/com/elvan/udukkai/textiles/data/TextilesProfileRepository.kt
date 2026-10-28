@@ -150,6 +150,8 @@ object TextilesProfileRepository {
     }
 
     fun deleteProfile(id: Long): Boolean {
+        // The only business is never deleted
+        if (allProfiles.size <= 1) return false
         val helper = getTextilesDatabaseHelper()
         val success = helper.deleteProfile(id)
         if (success) {
