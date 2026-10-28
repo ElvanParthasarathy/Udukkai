@@ -134,37 +134,9 @@ fun ViewTile(
     onCopy: (() -> Unit)? = null,
     onShare: (() -> Unit)? = null,
     onPreview: (() -> Unit)? = null,
-    printPayload: (() -> String)? = null,
-    printFileName: String = title,
     content: @Composable () -> Unit
 ) {
     val colors = rememberShellColors()
-    var showPreview by remember { mutableStateOf(false) }
-    val canRender = printPayload != null && isDocumentPrintSupported
-    // One controller per opened document: the PDF is prepared (or fetched from the cache) while the
-    // view page is shown, so the preview opens at once.
-    val printController = remember { DocumentPrintController() }
-    val payload = remember(printPayload) { if (canRender) printPayload?.invoke() else null }
-    if (payload != null) {
-        DocumentPrintView(
-            payloadJson = payload,
-            fileName = printFileName,
-            controller = printController,
-            modifier = Modifier.size(1.dp).graphicsLayer { alpha = 0f }
-        )
-    }
-    val preparingMsg = K.preparingPdf.tr()
-    // Print and Share go straight to the system dialog / share sheet; only Preview shows the page
-    val openDocument: (DocumentPrintAction?) -> Unit = { action ->
-        if (action != null && !printController.isReady) ElvanSnackbar.show(preparingMsg)
-        when (action) {
-            DocumentPrintAction.Print -> printController.print()
-            DocumentPrintAction.Share -> printController.share()
-            DocumentPrintAction.Open -> printController.open()
-            null -> showPreview = true
-        }
-    }
-
     Box(modifier = Modifier.fillMaxSize()) {
         if (isDocument) {
             // Document views use a plain fixed top bar instead of the collapsing One UI header.
@@ -213,9 +185,9 @@ fun ViewTile(
                 ) {
                     ElvanViewActionBar(
                         onEdit = onEdit,
-                        onPreview = onPreview ?: { openDocument(null) },
-                        onPrint = onPrint ?: if (canRender) ({ openDocument(DocumentPrintAction.Print) }) else null,
-                        onShare = onShare ?: if (canRender) ({ openDocument(DocumentPrintAction.Share) }) else null,
+                        onPreview = onPreview,
+                        onPrint = onPrint,
+                        onShare = onShare,
                         onCopy = onCopy,
                         isDocument = true
                     )
@@ -240,9 +212,9 @@ fun ViewTile(
                     if (isDocument) {
                         ElvanViewActionBar(
                             onEdit = onEdit,
-                            onPreview = onPreview ?: { openDocument(null) },
-                            onPrint = onPrint ?: if (canRender) ({ openDocument(DocumentPrintAction.Print) }) else null,
-                            onShare = onShare ?: if (canRender) ({ openDocument(DocumentPrintAction.Share) }) else null,
+                            onPreview = onPreview,
+                            onPrint = onPrint,
+                            onShare = onShare,
                             onCopy = onCopy,
                             isDocument = true
                         )
@@ -253,27 +225,6 @@ fun ViewTile(
                         content()
                     }
                 }
-            )
-        }
-        // Slides in from the right and back out, like the other sub-pages
-        val slide = spring<IntOffset>(stiffness = Spring.StiffnessLow, dampingRatio = Spring.DampingRatioNoBouncy)
-        AnimatedVisibility(
-            visible = showPreview,
-            enter = slideInHorizontally(slide) { it },
-            exit = slideOutHorizontally(slide) { it }
-        ) {
-            // A layer of the main window (not a Dialog), so the system bars hide and show over a
-            // window that never changes size, like every other screen
-            AppBackHandler(enabled = showPreview) { showPreview = false }
-            PreviewScreen(
-                title = K.previewBtn.tr(),
-                subtitle = title,
-                onBack = { showPreview = false },
-                onEdit = onEdit?.let { edit -> { showPreview = false; edit() } },
-                printPayload = payload,
-                printFileName = printFileName,
-                printController = printController,
-                externalPrintView = true
             )
         }
     }

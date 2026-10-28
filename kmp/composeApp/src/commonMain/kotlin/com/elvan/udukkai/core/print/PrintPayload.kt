@@ -95,7 +95,10 @@ object PrintPayload {
         return json.toString()
     }
 
-    /** Receipt in either app: Textiles -> "gst-receipt", Factory -> "coolie-receipt". */
+    /**
+     * Receipt in either app: Textiles -> "gst-receipt", Factory -> "coolie-receipt". With bilingual
+     * printing on, Factory receipts use the same bilingual layout as Textiles.
+     */
     fun forReceipt(
         receipt: ReceiptModel,
         profile: BusinessProfile,
@@ -105,7 +108,7 @@ object PrintPayload {
     ): String {
         val json = JsonWriter()
         json.obj {
-            field("docType", if (isCoolie) "coolie-receipt" else "gst-receipt")
+            field("docType", if (isCoolie && !profile.isBilingual) "coolie-receipt" else "gst-receipt")
             field("appLanguage", appLanguage)
             field("profile") { profile(profile) }
             field("receipt") {

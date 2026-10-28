@@ -19,10 +19,10 @@ import '../moolam/pagudhigal/CoolieBill/print.css';
 import { LanguageProvider } from '../moolam/mozhi/LanguageContext';
 import SjsTheme from '../moolam/pagudhigal/GstBill/SjsTheme';
 import ReceiptView from '../moolam/pagudhigal/GstBill/Receipts/ReceiptView';
-import CoolieInvoiceView from '../moolam/pagudhigal/CoolieBill/CoolieInvoiceView';
+import CoolieTheme from '../moolam/pagudhigal/CoolieBill/CoolieTheme';
 import CoolieReceiptView from '../moolam/pagudhigal/CoolieBill/CoolieReceiptView';
 import { setCoolieProfiles } from './shims/Avanam';
-import { toGstInvoiceProps, toGstReceiptProps, toCoolieInvoiceProps, toCoolieReceiptProps } from './adapter';
+import { toGstInvoiceProps, toGstReceiptProps, toCoolieThemeProps, toCoolieReceiptProps } from './adapter';
 
 const native = () => window.UdukkaiNative;
 
@@ -71,10 +71,7 @@ const INVOICE_PRINT_RULES = `
               #invoice-preview .unified-table-box { margin-left: 1.5rem !important; margin-right: 1.5rem !important; }
               #invoice-preview .inv-footer { margin-left: 1.5rem !important; margin-right: 1.5rem !important; }
               #invoice-preview .inv-contact-block { padding-left: 1.5rem !important; padding-right: 1.5rem !important; }`;
-const COOLIE_INVOICE_PRINT_RULES = `
-                  body, html { background-color: white !important; margin: 0; padding: 0; }
-                  .invoice-paper, .a4-paper { box-shadow: none !important; margin: 0 !important; border: none !important; width: 100% !important; }
-                  .no-print { display: none !important; }`;
+
 const RECEIPT_PRINT_RULES = `
               body, html { background-color: white !important; margin: 0; padding: 0; }
               .receipt-box, .invoice-paper { box-shadow: none !important; margin: 0 !important; border: none !important; width: 100% !important; }
@@ -96,9 +93,9 @@ const DOC_TYPES = {
     title: (p) => (p?.receipt?.receiptNo ? `Receipt-${p.receipt.receiptNo}` : 'Print'),
   },
   'coolie-invoice': {
-    paper: '.a4-paper', frame: '.invoice-paper', clone: '.a4-paper', cloneStyle: PAPER_RESET,
-    extraPages: true, printRules: COOLIE_INVOICE_PRINT_RULES,
-    title: (p) => (p?.bill?.bill_no ? `Invoice-${p.bill.bill_no}` : 'Print'),
+    paper: '#invoice-preview', frame: '.invoice-paper', clone: '#invoice-preview', cloneStyle: PAPER_RESET,
+    extraPages: true, printRules: INVOICE_PRINT_RULES,
+    title: (p) => (p?.details?.invoiceNumber ? `Invoice-${p.details.invoiceNumber}` : 'Print'),
   },
   'coolie-receipt': {
     paper: '.print-area', frame: '.invoice-paper', clone: '.receipt-box', cloneStyle: PAPER_RESET,
@@ -146,7 +143,7 @@ const renderDocument = (docType, props) => {
     case 'gst-receipt':
       return <ReceiptView receipt={props.receipt} profile={props.profile} onBack={noop} onEdit={noop} />;
     case 'coolie-invoice':
-      return <CoolieInvoiceView bill={props.bill} onClose={noop} onEdit={noop} />;
+      return <PreviewFrame><CoolieTheme {...props} /></PreviewFrame>;
     case 'coolie-receipt':
       return <CoolieReceiptView receipt={props.receipt} onBack={noop} onEdit={noop} />;
     default:
@@ -165,7 +162,7 @@ const paperElement = () => document.querySelector(DOC_TYPES[current.docType].pap
 const toProps = (data) => {
   switch (data.docType) {
     case 'gst-receipt': return toGstReceiptProps(data);
-    case 'coolie-invoice': return toCoolieInvoiceProps(data);
+    case 'coolie-invoice': return toCoolieThemeProps(data);
     case 'coolie-receipt': return toCoolieReceiptProps(data);
     default: return toGstInvoiceProps(data);
   }

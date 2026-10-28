@@ -62,7 +62,11 @@ actual fun DocumentPdfViewer(
                     .enableSwipe(true)
                     .enableDoubletap(true)
                     .onRender { view.resetZoom() }
-                    .onTap { controller.immersive = !controller.immersive; true }
+                    .onTap {
+                        // A tap hides or shows the bars only while zoomed in; the normal page keeps them
+                        if (view.zoom > 1.05f) controller.immersive = !controller.immersive
+                        true
+                    }
                     .swipeHorizontal(false)
                     .pageFitPolicy(FitPolicy.WIDTH)
                     .spacing(8)

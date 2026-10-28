@@ -1,5 +1,8 @@
 package com.elvan.udukkai.factory.ui.screens.editor
 
+import com.elvan.udukkai.core.print.PrintPayload
+import com.elvan.udukkai.localization.LanguageManager
+import com.elvan.udukkai.ui.screens.preview.DraftBillPreview
 import com.elvan.udukkai.core.print.BillPdfAutoSave
 import com.elvan.udukkai.core.print.receiptPdfName
 import androidx.compose.ui.Alignment
@@ -202,6 +205,55 @@ fun FactoryReceiptEditorScreen(
     }
 
     // Save logic with FIFO distribution
+    // The receipt as the form stands now: used by Save and by the draft preview
+    val buildEntry: (Double) -> ReceiptModel = { amount ->
+    val now = System.currentTimeMillis()
+    val defaultFinYear = DateUtils.formatEpochMillis(now).split("/").last()
+    ReceiptModel(
+        id = receipt?.id ?: 0L,
+        companyId = selectedCompanyId,
+        receiptNumber = receiptNumber.trim(),
+        finYear = receipt?.finYear ?: defaultFinYear,
+        vanakkam = vanakkam,
+        customerId = selectedCustomerId,
+        customerName = selectedCustomerNameMap,
+        customerAddress = selectedCustomerAddressMap,
+        receiptDate = receiptDate,
+        amount = amount,
+        paymentMode = paymentType.storedValue,
+        bankName = receipt?.bankName,
+        transactionNumber = if (paymentType.needsReference) suttruEn.trim() else null,
+        notes = ullkurippu.trim(),
+        createdAt = receipt?.createdAt ?: now,
+        updatedAt = now,
+        isDeleted = false
+    )
+    }
+
+    var previewPayload by remember { mutableStateOf<String?>(null) }
+    fun openPreview() {
+        if (!isProfileConfigured) { ElvanSnackbar.show(selectCompanyProfileMsg); return }
+        val name = selectedCustomerNameMap["ta"] ?: selectedCustomerNameMap.values.firstOrNull().orEmpty()
+        if (name.trim().isEmpty()) { ElvanSnackbar.show(customerNameRequiredMsg); return }
+        val amount = thogai.trim().toDoubleOrNull() ?: 0.0
+        if (amount <= 0.0) { ElvanSnackbar.show(thogaiInvalidMsg); return }
+        // Invoices the amount reaches, in order, like when the receipt is saved
+        var remaining = amount
+        var numbers = selectedInvoices.filter { inv -> (remaining > 0.0).also { remaining -= inv.totalAmount } }.map { it.invoiceNumber }
+        if (numbers.isEmpty() && receipt != null && receipt.id > 0L) {
+            numbers = com.elvan.udukkai.factory.data.FactoryReceiptRepository.getLinksForReceipt(receipt.id).mapNotNull { link ->
+                com.elvan.udukkai.factory.data.FactoryInvoiceRepository.invoices.find { it.id == link.invoiceId }?.invoiceNumber
+            }
+        }
+        previewPayload = PrintPayload.forReceipt(
+            receipt = buildEntry(amount),
+            profile = selectedProfile,
+            invoiceNumbers = numbers,
+            isCoolie = true,
+            appLanguage = if (LanguageManager.activeLanguageCode.startsWith("ta")) "ta" else "en"
+        )
+    }
+
     fun handleSave() {
         if (!isProfileConfigured) {
             ElvanSnackbar.show(selectCompanyProfileMsg)
@@ -261,27 +313,7 @@ fun FactoryReceiptEditorScreen(
 
         isSaving = true
         try {
-            val now = System.currentTimeMillis()
-            val defaultFinYear = DateUtils.formatEpochMillis(now).split("/").last()
-            val entryToSave = ReceiptModel(
-                id = receipt?.id ?: 0L,
-                companyId = selectedCompanyId,
-                receiptNumber = receiptNumber.trim(),
-                finYear = receipt?.finYear ?: defaultFinYear,
-                vanakkam = vanakkam,
-                customerId = selectedCustomerId,
-                customerName = selectedCustomerNameMap,
-                customerAddress = selectedCustomerAddressMap,
-                receiptDate = receiptDate,
-                amount = amount,
-                paymentMode = paymentType.storedValue,
-                bankName = receipt?.bankName,
-                transactionNumber = if (paymentType.needsReference) suttruEn.trim() else null,
-                notes = ullkurippu.trim(),
-                createdAt = receipt?.createdAt ?: now,
-                updatedAt = now,
-                isDeleted = false
-            )
+            val entryToSave = buildEntry(amount)
 
             val savedId = com.elvan.udukkai.factory.data.FactoryReceiptRepository.saveWithLinks(entryToSave, links)
             BillPdfAutoSave.request(BillPdfAutoSave.Kind.Receipt, savedId, receipt?.takeIf { it.id > 0L }?.let(::receiptPdfName))
@@ -338,12 +370,16 @@ fun FactoryReceiptEditorScreen(
 
     ElvanSubShell(
         title = pageTitle,
+        overlay = {
+            DraftBillPreview(previewPayload, K.previewBtn.tr(), "RCPT_" + receiptNumber.replace('/', '-')) { previewPayload = null }
+        },
         onBack = { handleBackAttempt() },
         scrollState = scrollState,
         hasActions = false,
         actions = {},
         floatingBar = {
             ElvanEditorBottomBar(
+                onPreview = ::openPreview,
                 label = K.saveBtn.tr(),
                 onClick = { handleSave() },
                 enabled = !isSaving && isInvoiceSelected,

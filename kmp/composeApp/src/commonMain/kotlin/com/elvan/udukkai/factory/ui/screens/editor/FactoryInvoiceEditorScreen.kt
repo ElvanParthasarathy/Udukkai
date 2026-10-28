@@ -1,5 +1,8 @@
 package com.elvan.udukkai.factory.ui.screens.editor
 
+import com.elvan.udukkai.core.print.PrintPayload
+import com.elvan.udukkai.localization.LanguageManager
+import com.elvan.udukkai.ui.screens.preview.DraftBillPreview
 import com.elvan.udukkai.core.print.BillPdfAutoSave
 import com.elvan.udukkai.core.print.invoicePdfName
 import androidx.compose.ui.Alignment
@@ -434,6 +437,47 @@ fun FactoryInvoiceEditorScreen(
     val invoiceNumberDuplicateMsg = K.invoiceNumberAlreadyExists.tr()
     val saveBtnLabel = K.draft.tr()
 
+    // The bill as the form stands now: used by Save and by the draft preview
+    val buildInvoice: (Int) -> InvoiceModel = { vanakkam ->
+        val validItems = activeItems.filter { it.weight > 0 && it.price > 0 }
+        val selectedAcc = selectedProfile.getPaymentAccounts().find { it.id == selectedAccountId }
+            ?: selectedProfile.getDefaultPaymentAccount()
+        InvoiceModel(
+            id = invoice?.id ?: 0L,
+            companyId = selectedCompanyId,
+            invoiceNumber = invoiceNumber,
+            vanakkam = if (invoice != null && invoice.vanakkam > 0) invoice.vanakkam else vanakkam,
+            invoiceType = invoiceType,
+            customerId = selectedCustomerId,
+            customerName = selectedCustomerNameMap,
+            customerAddress = selectedCustomerAddressMap,
+            invoiceDate = invoiceDate,
+            itemsJson = FactoryCalculation.itemsToJson(validItems),
+            totalAmount = totals.grandTotal,
+            totalWeight = totals.totalWeight,
+            wastageGrams = setharamGrams,
+            postalCharges = thabaalThogai,
+            ahimsaSilkAmount = ahimsaPattuThogai,
+            otherTaxesJson = FactoryCalculation.chargesToJson(additionalCharges),
+            customPreferencesJson = displayOptions.copy(selectedAccountId = selectedAccountId).toJson(),
+            bankDetailsJson = selectedAcc?.toJson() ?: "{}",
+            updatedAt = System.currentTimeMillis()
+        )
+    }
+
+    var previewPayload by remember { mutableStateOf<String?>(null) }
+    val openPreview: () -> Unit = preview@{
+        if (!isProfileConfigured) { ElvanSnackbar.show(companyRequiredMsg); return@preview }
+        if (selectedCustomerId == null && selectedCustomerNameMap.isEmpty()) { ElvanSnackbar.show(customerRequiredMsg); return@preview }
+        if (activeItems.none { it.weight > 0 && it.price > 0 }) { ElvanSnackbar.show(itemRequiredMsg); return@preview }
+        previewPayload = PrintPayload.forFactoryInvoice(
+            invoice = buildInvoice(0),
+            profile = selectedProfile,
+            customer = selectedCustomerId?.let { FactoryCustomerRepository.getById(it) },
+            appLanguage = if (LanguageManager.activeLanguageCode.startsWith("ta")) "ta" else "en"
+        )
+    }
+
     val handleSave: () -> Unit = {
         if (!isProfileConfigured) {
             ElvanSnackbar.show(companyRequiredMsg)
@@ -453,29 +497,7 @@ fun FactoryInvoiceEditorScreen(
             } else {
                 isSaving = true
                 val vanakkam = FactoryInvoiceRepository.getNextVanakkam(selectedCompanyId)
-                val selectedAcc = selectedProfile.getPaymentAccounts().find { it.id == selectedAccountId }
-                    ?: selectedProfile.getDefaultPaymentAccount()
-                val newInvoice = InvoiceModel(
-                    id = invoice?.id ?: 0L,
-                    companyId = selectedCompanyId,
-                    invoiceNumber = invoiceNumber,
-                    vanakkam = if (invoice != null && invoice.vanakkam > 0) invoice.vanakkam else vanakkam,
-                    invoiceType = invoiceType,
-                    customerId = selectedCustomerId,
-                    customerName = selectedCustomerNameMap,
-                    customerAddress = selectedCustomerAddressMap,
-                    invoiceDate = invoiceDate,
-                    itemsJson = FactoryCalculation.itemsToJson(validItems),
-                    totalAmount = totals.grandTotal,
-                    totalWeight = totals.totalWeight,
-                    wastageGrams = setharamGrams,
-                    postalCharges = thabaalThogai,
-                    ahimsaSilkAmount = ahimsaPattuThogai,
-                    otherTaxesJson = FactoryCalculation.chargesToJson(additionalCharges),
-                    customPreferencesJson = displayOptions.copy(selectedAccountId = selectedAccountId).toJson(),
-                    bankDetailsJson = selectedAcc?.toJson() ?: "{}",
-                    updatedAt = System.currentTimeMillis()
-                )
+                val newInvoice = buildInvoice(vanakkam)
                 val savedId = FactoryInvoiceRepository.save(newInvoice)
                 BillPdfAutoSave.request(BillPdfAutoSave.Kind.Invoice, savedId, invoice?.takeIf { it.id > 0L }?.let(::invoicePdfName))
                 prefs.setString(draftKey, null)
@@ -495,19 +517,22 @@ fun FactoryInvoiceEditorScreen(
 
     ElvanSubShell(
         title = pageTitle,
+        overlay = {
+            DraftBillPreview(previewPayload, K.previewBtn.tr(), (if (invoiceType == "proforma") "EST_" else "INV_") + invoiceNumber.replace('/', '-')) { previewPayload = null }
+        },
         onBack = handleBack,
         scrollState = scrollState,
         hasActions = false,
         actions = {},
         floatingBar = {
             ElvanEditorBottomBar(
+                onPreview = openPreview,
                 label = saveBtnLabel,
                 onClick = handleSave,
                 enabled = isCustomerSelected && !isSaving && !isPaidLocked,
                 isLoading = isSaving,
                 accentColor = colors.invoiceColor,
-                showSave = !isPaidLocked,
-                previewEnabled = isCustomerSelected
+                showSave = !isPaidLocked
             )
         }
     ) {

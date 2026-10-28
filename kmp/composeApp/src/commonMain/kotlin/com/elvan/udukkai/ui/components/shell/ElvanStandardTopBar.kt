@@ -49,7 +49,8 @@ fun ElvanStandardTopBar(
     onBack: () -> Unit,
     scrolled: Boolean,
     modifier: Modifier = Modifier,
-    statusTop: Dp = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
+    statusTop: Dp = WindowInsets.statusBars.asPaddingValues().calculateTopPadding(),
+    actions: @Composable RowScope.() -> Unit = {}
 ) {
     val colors = rememberShellColors()
     val lift by animateFloatAsState(
@@ -101,9 +102,11 @@ fun ElvanStandardTopBar(
                     color = colors.textPrimary
                 ),
                 modifier = Modifier
+                    .weight(1f)
                     .padding(start = 12.dp)
                     .graphicsLayer { alpha = 1f - lift }
             )
+            actions()
         }
     }
 }

@@ -9,6 +9,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.runtime.remember
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
@@ -39,6 +40,7 @@ fun ElvanSubShell2(
     onBack: () -> Unit,
     hideChrome: Boolean = false,
     showBottomFade: Boolean = true,
+    actions: @Composable RowScope.() -> Unit = {},
     floatingBar: @Composable () -> Unit = {},
     content: @Composable () -> Unit
 ) {
@@ -86,6 +88,7 @@ fun ElvanSubShell2(
                     onBack = onBack,
                     scrolled = false,
                     statusTop = statusTop,
+                    actions = actions,
                     modifier = Modifier.align(Alignment.TopCenter)
                 )
 

@@ -1,5 +1,7 @@
 package com.elvan.udukkai.ui.screens.view
 
+import com.elvan.udukkai.ui.screens.preview.PreviewScreen
+import com.elvan.udukkai.core.print.isDocumentPrintSupported
 import com.elvan.udukkai.core.print.receiptPdfName
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -9,6 +11,7 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -47,6 +50,33 @@ fun ReceiptViewScreen(
     onPrint: (() -> Unit)? = null,
     printPayload: ((activeProfile: BusinessProfile) -> String)? = null
 ) {
+    if (printPayload != null && isDocumentPrintSupported) {
+        // The receipt itself is the view page: the rendered document with Edit, Open, Print and Share
+        val activeProfile = (if (receipt.companyId != null) allProfiles.find { it.id == receipt.companyId } else null)
+            ?: profile
+        val payload = remember(receipt, activeProfile) { printPayload(activeProfile) }
+        PreviewScreen(
+            title = K.receipt.tr() + " #" + receipt.receiptNumber,
+            onBack = onBack,
+            onEdit = onEdit,
+            printPayload = payload,
+            printFileName = receiptPdfName(receipt)
+        )
+    } else {
+        ReceiptDetailsScreen(receipt, profile, allProfiles, onBack, onEdit, onPrint)
+    }
+}
+
+/** Fallback where documents cannot be rendered (desktop): the receipt's details as cards. */
+@Composable
+private fun ReceiptDetailsScreen(
+    receipt: ReceiptModel,
+    profile: BusinessProfile,
+    allProfiles: List<BusinessProfile>,
+    onBack: () -> Unit,
+    onEdit: () -> Unit,
+    onPrint: (() -> Unit)? = null
+) {
     val colors = rememberShellColors()
     val isDark = colors.isDark
     val ff = LocalAppFontFamily.current
@@ -72,9 +102,7 @@ fun ReceiptViewScreen(
         scrollState = scrollState,
         isDocument = true,
         onEdit = onEdit,
-        onPrint = onPrint,
-        printPayload = printPayload?.let { build -> { build(activeProfile) } },
-        printFileName = receiptPdfName(receipt)
+        onPrint = onPrint
     ) {
         LazyColumn(
             state = scrollState,

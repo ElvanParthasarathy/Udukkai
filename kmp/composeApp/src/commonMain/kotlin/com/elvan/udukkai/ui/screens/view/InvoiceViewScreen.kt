@@ -1,5 +1,8 @@
 package com.elvan.udukkai.ui.screens.view
 
+import com.elvan.udukkai.ui.components.shell.ElvanPopupMenuItem
+import com.elvan.udukkai.ui.screens.preview.PreviewScreen
+import com.elvan.udukkai.core.print.isDocumentPrintSupported
 import com.elvan.udukkai.core.print.invoicePdfName
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -57,6 +60,41 @@ fun InvoiceViewScreen(
     onConvertToTaxInvoice: (() -> Unit)? = null,
     printPayload: ((activeProfile: BusinessProfile) -> String)? = null
 ) {
+    if (printPayload != null && isDocumentPrintSupported) {
+        // The bill itself is the view page: the rendered document with Edit, Open, Print and Share
+        val activeProfile = (if (invoice.companyId != null) allProfiles.find { it.id == invoice.companyId } else null)
+            ?: profile
+        val payload = remember(invoice, activeProfile) { printPayload(activeProfile) }
+        val isProforma = invoice.invoiceType == "proforma"
+        val convertTitle = K.convertToTaxInvoice.tr()
+        PreviewScreen(
+            title = (if (isProforma) K.proforma.tr() else K.invoice.tr()) + " #" + invoice.invoiceNumber,
+            onBack = onBack,
+            onEdit = if (isPaid) null else onEdit,
+            menuItems = if (isProforma && onConvertToTaxInvoice != null) {
+                listOf(ElvanPopupMenuItem(convertTitle, MaterialSymbols.Rounded.SwapHoriz, onConvertToTaxInvoice))
+            } else emptyList(),
+            printPayload = payload,
+            printFileName = invoicePdfName(invoice)
+        )
+    } else {
+        InvoiceDetailsScreen(invoice, profile, allProfiles, isPaid, onBack, onEdit, onPrint, onCopy, onConvertToTaxInvoice)
+    }
+}
+
+/** Fallback where documents cannot be rendered (desktop): the bill's details as cards. */
+@Composable
+private fun InvoiceDetailsScreen(
+    invoice: InvoiceModel,
+    profile: BusinessProfile,
+    allProfiles: List<BusinessProfile> = emptyList(),
+    isPaid: Boolean = false,
+    onBack: () -> Unit,
+    onEdit: () -> Unit,
+    onPrint: (() -> Unit)? = null,
+    onCopy: (() -> Unit)? = null,
+    onConvertToTaxInvoice: (() -> Unit)? = null
+) {
     val colors = rememberShellColors()
     val isDark = colors.isDark
     val ff = LocalAppFontFamily.current
@@ -104,9 +142,7 @@ fun InvoiceViewScreen(
         isDocument = true,
         onEdit = if (isPaid) null else onEdit,
         onPrint = onPrint,
-        onCopy = onCopy,
-        printPayload = printPayload?.let { build -> { build(activeProfile) } },
-        printFileName = invoicePdfName(invoice)
+        onCopy = onCopy
     ) {
         LazyColumn(
             state = scrollState,

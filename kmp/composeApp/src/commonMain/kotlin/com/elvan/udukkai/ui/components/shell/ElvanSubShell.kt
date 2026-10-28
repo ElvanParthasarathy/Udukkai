@@ -39,6 +39,7 @@ fun ElvanSubShell(
     hasActions: Boolean = false,
     actions: @Composable RowScope.() -> Unit = {},
     showBottomFade: Boolean = true,
+    overlay: @Composable () -> Unit = {},
     floatingBar: @Composable () -> Unit = {},
     content: @Composable () -> Unit
 ) {
@@ -56,6 +57,7 @@ fun ElvanSubShell(
         leadingIcon = leadingIcon,
         showNavbar = false,
         showBottomFade = showBottomFade,
+        overlay = overlay,
         scrollState = scrollState,
         hasActions = hasActions,
         actions = actions,

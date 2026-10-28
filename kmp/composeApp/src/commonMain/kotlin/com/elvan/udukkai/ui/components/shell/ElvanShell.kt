@@ -62,6 +62,7 @@ fun ElvanShell(
     onSelectAll: () -> Unit = {},
     onCancelSelection: () -> Unit = {},
     showBottomFade: Boolean = true,
+    overlay: @Composable () -> Unit = {},
     floatingBar: @Composable () -> Unit = {},
     content: @Composable () -> Unit
 ) {
@@ -523,6 +524,9 @@ fun ElvanShell(
                     floatingBar()
                 }
             }
+
+            // Full-screen layer above the header and bars (the editors' draft preview)
+            Box(modifier = Modifier.zIndex(150f)) { overlay() }
 
             // Layer 6: Android System Navigation Bar Touch Shield
             // Blocks touches in the physical system navigation bar area from leaking to the list underneath,

@@ -1,5 +1,8 @@
 package com.elvan.udukkai.textiles.ui.screens.editor
 
+import com.elvan.udukkai.core.print.PrintPayload
+import com.elvan.udukkai.localization.LanguageManager
+import com.elvan.udukkai.ui.screens.preview.DraftBillPreview
 import com.elvan.udukkai.core.print.BillPdfAutoSave
 import com.elvan.udukkai.core.print.invoicePdfName
 import androidx.compose.ui.Alignment
@@ -400,6 +403,52 @@ fun TextilesInvoiceEditorScreen(
     val invoiceNumberDuplicateMsg = K.invoiceNumberAlreadyExists.tr()
     val saveBtnLabel = K.draft.tr()
 
+    // The bill as the form stands now: used by Save and by the draft preview
+    val buildInvoice: (Int) -> InvoiceModel = { nextVanakkam ->
+        val validItems = activeItems.filter { it.quantity > 0 && it.price > 0 }
+        val selectedAcc = selectedProfile.getPaymentAccounts().find { it.id == selectedAccountId }
+            ?: selectedProfile.getDefaultPaymentAccount()
+        InvoiceModel(
+            id = invoice?.id ?: 0L,
+            companyId = selectedCompanyId,
+            invoiceNumber = invoiceNumber,
+            vanakkam = if (invoice != null && invoice.vanakkam > 0) invoice.vanakkam else nextVanakkam,
+            invoiceType = invoiceType,
+            customerId = selectedCustomerId,
+            customerName = selectedCustomerNameMap,
+            customerAddress = selectedCustomerAddressMap,
+            invoiceDate = invoiceDate,
+            itemsJson = TextilesCalculation.itemsToJson(validItems),
+            totalAmount = totals.grandTotal,
+            discount = totals.totalDiscount,
+            globalDiscountValue = globalDiscountValue.toDoubleOrNull() ?: 0.0,
+            globalDiscountType = globalDiscountType,
+            globalDiscountAmount = 0.0,
+            taxAmount = totals.totalTax,
+            taxDataJson = TextilesCalculation.taxToJson(totals),
+            customPreferencesJson = displayOptions.copy(
+                selectedAccountId = selectedAccountId,
+                placeOfSupply = placeOfSupplyEn,
+                placeOfSupplyTa = placeOfSupplyTa
+            ).toJson(),
+            bankDetailsJson = selectedAcc?.toJson() ?: "{}",
+            updatedAt = System.currentTimeMillis()
+        )
+    }
+
+    var previewPayload by remember { mutableStateOf<String?>(null) }
+    val openPreview: () -> Unit = preview@{
+        if (!isProfileConfigured) { ElvanSnackbar.show(companyRequiredMsg); return@preview }
+        if (selectedCustomerId == null && selectedCustomerNameMap.isEmpty()) { ElvanSnackbar.show(customerRequiredMsg); return@preview }
+        if (activeItems.none { it.quantity > 0 && it.price > 0 }) { ElvanSnackbar.show(itemRequiredMsg); return@preview }
+        previewPayload = PrintPayload.forTextilesInvoice(
+            invoice = buildInvoice(0),
+            profile = selectedProfile,
+            customer = selectedCustomerId?.let { TextilesCustomerRepository.getById(it) },
+            appLanguage = if (LanguageManager.activeLanguageCode.startsWith("ta")) "ta" else "en"
+        )
+    }
+
     val handleSave: () -> Unit = {
         if (!isProfileConfigured) {
             ElvanSnackbar.show(companyRequiredMsg)
@@ -419,34 +468,7 @@ fun TextilesInvoiceEditorScreen(
             } else {
                 isSaving = true
                 val nextVanakkam = TextilesInvoiceRepository.getNextVanakkam(selectedCompanyId)
-                val selectedAcc = selectedProfile.getPaymentAccounts().find { it.id == selectedAccountId }
-                    ?: selectedProfile.getDefaultPaymentAccount()
-                val newInvoice = InvoiceModel(
-                    id = invoice?.id ?: 0L,
-                    companyId = selectedCompanyId,
-                    invoiceNumber = invoiceNumber,
-                    vanakkam = if (invoice != null && invoice.vanakkam > 0) invoice.vanakkam else nextVanakkam,
-                    invoiceType = invoiceType,
-                    customerId = selectedCustomerId,
-                    customerName = selectedCustomerNameMap,
-                    customerAddress = selectedCustomerAddressMap,
-                    invoiceDate = invoiceDate,
-                    itemsJson = TextilesCalculation.itemsToJson(validItems),
-                    totalAmount = totals.grandTotal,
-                    discount = totals.totalDiscount,
-                    globalDiscountValue = globalDiscountValue.toDoubleOrNull() ?: 0.0,
-                    globalDiscountType = globalDiscountType,
-                    globalDiscountAmount = 0.0,
-                    taxAmount = totals.totalTax,
-                    taxDataJson = TextilesCalculation.taxToJson(totals),
-                    customPreferencesJson = displayOptions.copy(
-                        selectedAccountId = selectedAccountId,
-                        placeOfSupply = placeOfSupplyEn,
-                        placeOfSupplyTa = placeOfSupplyTa
-                    ).toJson(),
-                    bankDetailsJson = selectedAcc?.toJson() ?: "{}",
-                    updatedAt = System.currentTimeMillis()
-                )
+                val newInvoice = buildInvoice(nextVanakkam)
                 val savedId = TextilesInvoiceRepository.save(newInvoice)
                 BillPdfAutoSave.request(BillPdfAutoSave.Kind.Invoice, savedId, invoice?.takeIf { it.id > 0L }?.let(::invoicePdfName))
                 prefs.setString(draftKey, null)
@@ -466,19 +488,22 @@ fun TextilesInvoiceEditorScreen(
 
     ElvanSubShell(
         title = pageTitle,
+        overlay = {
+            DraftBillPreview(previewPayload, K.previewBtn.tr(), (if (invoiceType == "proforma") "EST_" else "INV_") + invoiceNumber.replace('/', '-')) { previewPayload = null }
+        },
         onBack = handleBack,
         scrollState = scrollState,
         hasActions = false,
         actions = {},
         floatingBar = {
             ElvanEditorBottomBar(
+                onPreview = openPreview,
                 label = saveBtnLabel,
                 onClick = handleSave,
                 enabled = isCustomerSelected && !isSaving && !isPaidLocked,
                 isLoading = isSaving,
                 accentColor = colors.invoiceColor,
-                showSave = !isPaidLocked,
-                previewEnabled = isCustomerSelected
+                showSave = !isPaidLocked
             )
         }
     ) {

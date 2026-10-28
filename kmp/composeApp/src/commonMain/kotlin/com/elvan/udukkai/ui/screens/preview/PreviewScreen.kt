@@ -1,5 +1,11 @@
 package com.elvan.udukkai.ui.screens.preview
 
+import com.elvan.udukkai.ui.components.shell.ElvanTopBarIconButton
+import com.elvan.udukkai.ui.components.shell.ElvanPill
+import com.elvan.udukkai.ui.components.shell.ElvanPopupMenuItem
+import com.elvan.udukkai.ui.components.shell.ElvanPopupMenu
+import com.elvan.udukkai.ui.components.shell.ElvanSnackbar
+import androidx.compose.runtime.SideEffect
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
@@ -68,6 +74,8 @@ fun PreviewScreen(
     subtitle: String? = null,
     onBack: () -> Unit,
     onEdit: (() -> Unit)? = null,
+    menuItems: List<ElvanPopupMenuItem> = emptyList(),
+    isDraft: Boolean = false,
     printPayload: String? = null,
     printFileName: String = subtitle ?: title,
     printController: DocumentPrintController? = null,
@@ -79,6 +87,8 @@ fun PreviewScreen(
             title = title,
             onBack = onBack,
             onEdit = onEdit,
+            menuItems = menuItems,
+            isDraft = isDraft,
             payloadJson = printPayload,
             fileName = printFileName,
             controller = controller,
@@ -94,6 +104,8 @@ private fun DocumentPreview(
     title: String,
     onBack: () -> Unit,
     onEdit: (() -> Unit)?,
+    menuItems: List<ElvanPopupMenuItem>,
+    isDraft: Boolean,
     payloadJson: String,
     fileName: String,
     controller: DocumentPrintController,
@@ -106,12 +118,15 @@ private fun DocumentPreview(
     }
 
     HideSystemBars(hidden = controller.immersive)
+    // Snackbars sit above the bottom bar
+    SideEffect { ElvanSnackbar.isBottomBarVisible = true }
 
     ElvanSubShell2(
         title = title,
         onBack = onBack,
         hideChrome = controller.immersive,
-        floatingBar = { PreviewBottomArea(controller, onEdit) }
+        actions = { if (menuItems.isNotEmpty()) PreviewMenuButton(menuItems) },
+        floatingBar = { PreviewBottomArea(controller, onEdit, isDraft) }
     ) {
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             // The web page only prepares the PDF; it stays hidden (unless the caller already hosts it)
@@ -139,9 +154,34 @@ private fun DocumentPreview(
     }
 }
 
+/** Three-dot button at the end of the top bar that opens [items] in the app's popup menu. */
+@Composable
+private fun PreviewMenuButton(items: List<ElvanPopupMenuItem>) {
+    val colors = rememberShellColors()
+    var expanded by remember { mutableStateOf(false) }
+    Box {
+        ElvanPill(liftProgress = 0f, colors = colors, modifier = Modifier.size(50.dp)) {
+            ElvanTopBarIconButton(onClick = { expanded = true }, size = 44.dp) {
+                Icon(
+                    imageVector = MaterialSymbols.Rounded.MoreVert,
+                    contentDescription = null,
+                    tint = colors.textPrimary,
+                    modifier = Modifier.size(22.dp)
+                )
+            }
+        }
+        ElvanPopupMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false },
+            colors = colors,
+            items = items.map { item -> ElvanPopupMenuItem(item.title, item.icon) { expanded = false; item.onClick() } }
+        )
+    }
+}
+
 /** Status pill and the action pill, stacked above the system navigation bar. */
 @Composable
-private fun PreviewBottomArea(controller: DocumentPrintController, onEdit: (() -> Unit)?) {
+private fun PreviewBottomArea(controller: DocumentPrintController, onEdit: (() -> Unit)?, isDraft: Boolean) {
     val colors = rememberShellColors()
     Column(
         modifier = Modifier.fillMaxWidth(),
@@ -195,7 +235,8 @@ private fun PreviewBottomArea(controller: DocumentPrintController, onEdit: (() -
                             onClick = it
                         )
                     },
-                    ElvanFloatingAction(
+                    // An unsaved bill has no stored PDF to open
+                    if (isDraft) null else ElvanFloatingAction(
                         label = K.openBtn.tr(),
                         icon = MaterialSymbols.Rounded.Description,
                         onClick = { controller.open() }

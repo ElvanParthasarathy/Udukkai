@@ -51,9 +51,6 @@ import com.elvan.udukkai.ui.components.shell.ElvanFloatingActionBar
 import com.elvan.udukkai.ui.components.shell.ElvanSelectionBottomSheet
 import com.elvan.udukkai.ui.components.shell.ElvanSnackbar
 import com.elvan.udukkai.ui.navigation.MaterialSymbols
-import com.elvan.udukkai.ui.screens.preview.PreviewScreen
-import androidx.compose.ui.window.Dialog
-import androidx.compose.ui.window.DialogProperties
 import com.elvan.udukkai.theme.LocalShellColors
 import com.elvan.udukkai.data.settings.BusinessProfile
 import com.elvan.udukkai.ui.components.shell.resolveCompanyItemLabel
@@ -886,50 +883,33 @@ fun ElvanEditorBottomBar(
     isLoading: Boolean = false,
     accentColor: Color? = null,
     onPreview: (() -> Unit)? = null,
-    showSave: Boolean = true,
-    previewEnabled: Boolean = true
+    showSave: Boolean = true
 ) {
-    var showPreviewDialog by remember { mutableStateOf(false) }
     val previewLabel = K.previewToolbarBtn.tr()
-
-    val actions = remember(label, enabled, isLoading, onClick, onPreview, previewLabel, showSave, previewEnabled) {
-        buildList {
-            add(
+    val actions = remember(label, enabled, isLoading, onClick, onPreview, previewLabel, showSave) {
+        listOfNotNull(
+            onPreview?.let {
                 ElvanFloatingAction(
                     label = previewLabel,
                     icon = MaterialSymbols.Rounded.Visibility,
-                    onClick = onPreview ?: { showPreviewDialog = true },
-                    enabled = previewEnabled
+                    onClick = it
                 )
-            )
+            },
             if (showSave) {
-                add(
-                    ElvanFloatingAction(
-                        label = label,
-                        icon = MaterialSymbols.Rounded.Save,
-                        onClick = onClick,
-                        enabled = enabled,
-                        isLoading = isLoading
-                    )
+                ElvanFloatingAction(
+                    label = label,
+                    icon = MaterialSymbols.Rounded.Save,
+                    onClick = onClick,
+                    enabled = enabled,
+                    isLoading = isLoading
                 )
-            }
-        }
+            } else null
+        )
     }
+    if (actions.isEmpty()) return
 
     ElvanFloatingActionBar(
         actions = actions,
         modifier = modifier
     )
-
-    if (showPreviewDialog) {
-        Dialog(
-            onDismissRequest = { showPreviewDialog = false },
-            properties = DialogProperties(usePlatformDefaultWidth = false)
-        ) {
-            PreviewScreen(
-                title = K.previewBtn.tr(),
-                onBack = { showPreviewDialog = false }
-            )
-        }
-    }
 }
