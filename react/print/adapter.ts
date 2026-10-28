@@ -85,6 +85,7 @@ export const toReactProfile = (p, lang) => {
   out.minnanjal = str(p.email);
   out.email = str(p.email);
   out.gstin = str(p.gstin);
+  out.pan = str(p.pan);
 
   const ps = p.printSettings || {};
   out.logo = str(p.logo);
@@ -271,6 +272,10 @@ export const toCoolieProfile = (p) => {
     authorizedSignatoryName: str(p.signatoryName),
     themeColor: str(p.themeColor),
     defaultPrintLanguage: ps.defaultPrintLanguage || 'ta',
+    // Bilingual bills: Tamil line + English line, like the Textiles invoice
+    enableBilingual: p.isBilingual !== false,
+    primaryDataLanguage: langName(p.primaryLanguage || 'ta', 'Tamil'),
+    secondaryDataLanguage: langName(p.secondaryLanguage || 'en', 'English'),
     receiptLanguage: ps.receiptLanguage || 'ta',
     phone: [p.phone1, p.phone2].map(str).filter(Boolean).join(','),
   };
@@ -285,32 +290,50 @@ const toDmy = (iso) => {
 // React keeps unused Coolie amounts as '' (not 0).
 const amountOrBlank = (n) => (Number(n) ? Number(n) : '');
 
-// Coolie invoice payload -> CoolieTheme props (the Textiles invoice paper without GST).
-export const toCoolieThemeProps = (payload) => {
+// Coolie invoice payload -> the Coolie bill's `bill` (CoolieInvoiceBilingual).
+export const toCoolieBillProps = (payload) => {
   const p = payload.profile || {};
   const inv = payload.invoice || {};
-  const lang = resolveLang(p);
-  const items = (inv.items || []).map((it, index) => {
-    const out = { id: `item_${index}`, qty: Number(it.weight) || 0, rate: Number(it.price) || 0 };
-    putBilingual(out, 'name', it.name, lang);
-    return out;
-  });
+  const c = payload.customer || {};
+  const profile = toCoolieProfile(p);
+  const name = c.name && Object.keys(c.name).length ? c.name : inv.customerName || {};
+  const city = c.city && Object.keys(c.city).length ? c.city : inv.customerAddress || {};
+  const charges = (inv.charges || []).filter((ch) => str(ch.name) || Number(ch.amount));
+  const chargesTotal = charges.reduce((s, ch) => s + (Number(ch.amount) || 0), 0);
+  const bankDetails = [profile.bankName, profile.branch].filter(Boolean).join(', ');
+
   return {
-    profile: toReactProfile(p, lang),
-    client: toReactClient(payload.customer, inv, lang),
-    details: {
-      invoiceNumber: str(inv.invoiceNumber),
-      invoiceDate: str(inv.invoiceDate),
-      wastageGrams: Number(inv.wastageGrams) || 0,
-      courier: Number(inv.postalCharges) || 0,
-      ahimsaSilk: Number(inv.ahimsaSilkAmount) || 0,
+    coolieProfiles: [profile],
+    bill: {
+      id: str(inv.id),
+      bill_no: str(inv.invoiceNumber),
+      date: toDmy(inv.invoiceDate),
+      customer_name: str(name.ta),
+      customer_name_en: str(name.en),
+      address: str(c.address?.ta),
+      address_en: str(c.address?.en),
+      city: str(city.ta),
+      city_en: str(city.en),
+      items: (inv.items || []).map((it) => ({
+        porul: str(it.name?.ta),
+        name_english: str(it.name?.en),
+        kg: Number(it.weight) || 0,
+        coolie: Number(it.price) || 0,
+      })),
+      setharam_grams: Number(inv.wastageGrams) ? String(inv.wastageGrams) : '',
+      courier_rs: amountOrBlank(inv.postalCharges),
+      ahimsa_silk_rs: amountOrBlank(inv.ahimsaSilkAmount),
+      custom_charge_name: charges.length ? JSON.stringify(charges.map((ch) => ({ name: str(ch.name), amount: Number(ch.amount) || 0 }))) : '',
+      custom_charge_rs: chargesTotal,
+      bank_details: bankDetails,
+      account_no: profile.accountNo,
+      ifsc: profile.ifsc,
+      company_id: profile.id,
+      grand_total: Number(inv.grandTotal) || 0,
+      show_bank_details: true,
+      show_ifsc: true,
+      _companyProfile: profile,
     },
-    items,
-    totals: { total: round2(inv.grandTotal) },
-    charges: (inv.charges || [])
-      .filter((ch) => str(ch.name) || Number(ch.amount))
-      .map((ch) => ({ name: str(ch.name), amount: Number(ch.amount) || 0 })),
-    options: toReactOptions(p.printSettings?.invoiceDisplayOptions, {}),
   };
 };
 

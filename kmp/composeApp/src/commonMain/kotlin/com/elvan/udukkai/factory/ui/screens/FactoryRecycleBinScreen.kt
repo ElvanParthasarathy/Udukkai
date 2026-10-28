@@ -72,6 +72,8 @@ fun FactoryRecycleBinScreen(
     val ff = LocalAppFontFamily.current
     val scope = rememberCoroutineScope()
     val restoreSuccessMsg = K.restoredSuccessfully.tr()
+    val restoreNumberTakenMsg = K.restoreNumberTaken.tr()
+    val restoreInvoicePaidMsg = K.restoreInvoicePaid.tr()
     val deleteSuccessMsg = K.deletedPermanently.tr()
 
     // Auto-purge items older than 30 days on launch & load deleted items
@@ -187,9 +189,13 @@ fun FactoryRecycleBinScreen(
                 when (selectedTab) {
                     RecycleBinTab.Create -> {
                         if (createSegment == 0) {
-                            selectedItemIds.forEach { id -> com.elvan.udukkai.factory.data.FactoryInvoiceRepository.restore(id) }
+                            selectedItemIds.forEach { id -> if (!com.elvan.udukkai.factory.data.FactoryInvoiceRepository.restore(id)) ElvanSnackbar.show(restoreNumberTakenMsg) }
                         } else {
-                            selectedItemIds.forEach { id -> com.elvan.udukkai.factory.data.FactoryReceiptRepository.restore(id) }
+                            selectedItemIds.forEach { id ->
+                                val block = com.elvan.udukkai.factory.data.FactoryReceiptRepository.restoreBlocker(id)
+                                if (block == null) com.elvan.udukkai.factory.data.FactoryReceiptRepository.restore(id)
+                                else ElvanSnackbar.show(if (block == com.elvan.udukkai.factory.data.FactoryReceiptRepository.RestoreBlock.NumberTaken) restoreNumberTakenMsg else restoreInvoicePaidMsg)
+                            }
                         }
                     }
                     RecycleBinTab.Items -> {

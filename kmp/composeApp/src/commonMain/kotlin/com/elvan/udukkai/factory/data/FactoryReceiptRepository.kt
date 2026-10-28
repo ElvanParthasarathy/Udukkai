@@ -1,5 +1,7 @@
 package com.elvan.udukkai.factory.data
 
+import com.elvan.udukkai.localization.K
+import com.elvan.udukkai.localization.trStatic
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -99,9 +101,7 @@ object FactoryReceiptRepository {
             paidCache = null
             receipts = getFactoryDatabaseHelper().loadAllReceipts()
             linksCache.clear()
-            for (r in receipts) {
-                getLinkedInvoiceNumbers(r.id)
-            }
+            cacheLinkedNumbers(receipts)
         } catch (_: Exception) {
             receipts = emptyList()
         }
@@ -111,9 +111,7 @@ object FactoryReceiptRepository {
         try {
             paidCache = null
             deletedReceipts = getFactoryDatabaseHelper().loadDeletedReceipts()
-            for (r in deletedReceipts) {
-                getLinkedInvoiceNumbers(r.id)
-            }
+            cacheLinkedNumbers(deletedReceipts)
         } catch (_: Exception) {
             deletedReceipts = emptyList()
         }
@@ -159,7 +157,20 @@ object FactoryReceiptRepository {
         return success
     }
 
+    enum class RestoreBlock { NumberTaken, InvoicePaid }
+
+    /** Why a deleted receipt cannot come back, or null when it can. */
+    fun restoreBlocker(id: Long): RestoreBlock? {
+        val r = deletedReceipts.find { it.id == id } ?: return null
+        val target = r.receiptNumber.trim().uppercase()
+        if (receipts.any { it.companyId == r.companyId && it.receiptNumber.trim().uppercase() == target }) return RestoreBlock.NumberTaken
+        val activeInvoiceIds = FactoryInvoiceRepository.invoices.map { it.id }.toSet()
+        if (getLinks(id).any { it.invoiceId in activeInvoiceIds && getPaidAmount(it.invoiceId) > 0.0 }) return RestoreBlock.InvoicePaid
+        return null
+    }
+
     fun restore(id: Long): Boolean {
+        if (restoreBlocker(id) != null) return false
         val success = getFactoryDatabaseHelper().restoreReceipt(id)
         if (success) {
             loadAll()
@@ -183,43 +194,16 @@ object FactoryReceiptRepository {
     fun getLinks(receiptId: Long): List<ReceiptInvoiceLinkModel> =
         getFactoryDatabaseHelper().getLinksForReceipt(receiptId)
 
-    fun getLinksForReceipt(receiptId: Long): List<ReceiptInvoiceLinkModel> {
-        val existing = getLinks(receiptId)
-        if (existing.isNotEmpty()) return existing
+    fun getLinksForReceipt(receiptId: Long): List<ReceiptInvoiceLinkModel> = getLinks(receiptId)
 
-        val receipt = receipts.find { it.id == receiptId }
-            ?: deletedReceipts.find { it.id == receiptId }
-            ?: return emptyList()
-
-        val mockItem = com.elvan.udukkai.data.mock.mockFactoryReceipts.find { it["receiptNo"] == receipt.receiptNumber }
-            ?: return emptyList()
-        val against = mockItem["againstInvoice"] as? String ?: return emptyList()
-
-        val invoices = FactoryInvoiceRepository.invoices.ifEmpty {
-            try { getFactoryDatabaseHelper().loadAllInvoices() } catch (_: Exception) { emptyList() }
+    // The linked invoice numbers of many receipts from one links query, not one query per receipt
+    private fun cacheLinkedNumbers(list: List<ReceiptModel>) {
+        val links = try { getFactoryDatabaseHelper().loadAllLinks().groupBy { it.receiptId } } catch (_: Exception) { emptyMap() }
+        if (links.isEmpty()) return
+        val numbers = FactoryInvoiceRepository.invoices.associate { it.id to it.invoiceNumber }
+        for (r in list) {
+            linksCache[r.id] = links[r.id].orEmpty().mapNotNull { numbers[it.invoiceId] }
         }
-        val invEnToId = invoices.associate { it.invoiceNumber to it.id }
-        val invEnToTotal = invoices.associate { it.invoiceNumber to it.totalAmount }
-
-        val links = mutableListOf<ReceiptInvoiceLinkModel>()
-        val invList = against.split(",").map { it.trim() }.filter { it.isNotEmpty() }
-        var remaining = receipt.amount
-        for (invEn in invList) {
-            val id = invEnToId[invEn] ?: continue
-            val balance = invEnToTotal[invEn] ?: 0.0
-            val apply = remaining.coerceIn(0.0, balance)
-            if (apply > 0.0) {
-                links.add(ReceiptInvoiceLinkModel(receiptId = receipt.id, invoiceId = id, appliedAmount = apply))
-                remaining -= apply
-            }
-        }
-        if (links.isNotEmpty()) {
-            try {
-                getFactoryDatabaseHelper().saveReceiptWithLinks(receipt, links)
-            } catch (_: Exception) {}
-            return links
-        }
-        return emptyList()
     }
 
     fun getLinkedInvoiceNumbers(receiptId: Long): List<String> {
@@ -241,13 +225,8 @@ object FactoryReceiptRepository {
     fun getPaidAmounts(invoiceIds: List<Long>): Map<Long, Double> =
         getFactoryDatabaseHelper().getPaidAmountsForInvoices(invoiceIds)
 
-    fun getPendingBalance(invoice: InvoiceModel): Double {
-        val paid = getPaidAmount(invoice.id)
-        return (invoice.totalAmount - paid).coerceAtLeast(0.0)
-    }
-
     fun getNextVanakkam(companyId: Long?): Int {
-        val matching = receipts.filter {
+        val matching = (receipts + deletedReceipts).filter {
             if (companyId != null) it.companyId == companyId else true
         }
         if (matching.isEmpty()) return 1
@@ -273,7 +252,7 @@ object FactoryReceiptRepository {
         excludeId: Long? = null
     ): Boolean {
         val target = patruEn.trim().uppercase()
-        return receipts.any { r ->
+        return (receipts + deletedReceipts).any { r ->
             (excludeId == null || r.id != excludeId) &&
             (companyId == null || r.companyId == companyId) &&
             r.receiptNumber.trim().uppercase() == target
@@ -293,6 +272,8 @@ object FactoryReceiptRepository {
                 val existingLinks = getLinksForReceipt(excludePatruId)
                 currentReceiptAllocation = existingLinks.find { it.invoiceId == link.invoiceId }?.appliedAmount ?: 0.0
             }
+            // A receipt pays the invoice: another receipt on it is refused
+            if (totalPaid - currentReceiptAllocation > 0.0) return "${invoice.invoiceNumber} - ${K.invoiceAlreadyPaid.trStatic()}"
             val remaining = (invoice.totalAmount - (totalPaid - currentReceiptAllocation)).coerceAtLeast(0.0)
             if (link.appliedAmount > remaining + 0.01) {
                 return "${invoice.invoiceNumber} - Allocated amount exceeds remaining balance."

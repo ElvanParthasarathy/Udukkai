@@ -1,5 +1,7 @@
 package com.elvan.udukkai.ui.screens.editor
 
+import com.elvan.udukkai.core.utils.BillRules
+import com.elvan.udukkai.ui.components.shell.ElvanSnackbar
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -217,12 +219,20 @@ fun CustomerEditorScreen(
     val pageTitle = if (isEditing) K.editCustomer.tr() else K.createCustomer.tr()
     val saveSuccessMsg = K.customerSavedSuccessfully.tr()
     val fillNameMsg = K.customerNameRequired.tr()
+    val invalidGstinMsg = K.invalidGstin.tr()
     val saveFailedMsg = K.couldNotSavePrefix.tr()
 
     fun handleSave() {
         val hasName = nameMap.values.any { it.trim().isNotBlank() }
         if (!hasName) {
             nameValidationError = fillNameMsg
+            return
+        }
+
+        // A GSTIN is checked for customers in India (or with no country set)
+        val inIndia = countryMap.values.all { it.isBlank() } || countryMap.values.any { it.contains("india", ignoreCase = true) || it.contains("இந்தியா") }
+        if (gstin.isNotBlank() && inIndia && !BillRules.isValidGstin(gstin)) {
+            ElvanSnackbar.show(invalidGstinMsg)
             return
         }
 

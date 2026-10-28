@@ -1,5 +1,7 @@
 ﻿package com.elvan.udukkai.textiles.ui.screens.settings
 
+import com.elvan.udukkai.core.utils.BillRules
+import com.elvan.udukkai.ui.components.shell.ElvanSnackbar
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -60,6 +62,9 @@ fun TextilesMerchantSettingsScreen(
     val defaultProfileName = K.activeCompany.tr()
     val selectCompanyTitle = K.selectCompany.tr()
     val bottomSheet = LocalElvanBottomSheetController.current
+
+    val invalidGstinMsg = K.invalidGstin.tr()
+    val invalidPanMsg = K.invalidPan.tr()
 
     fun saveField(action: () -> Unit) {
         action()
@@ -463,8 +468,14 @@ fun TextilesMerchantSettingsScreen(
                                 title = K.gstinTaxId.tr(),
                                 onCancel = { editingSection = null },
                                 onSave = {
-                                    saveField {
-                                        profile.gstin = tempPrimary.uppercase()
+                                    val inIndia = profile.country.values.all { it.isBlank() } ||
+                                        profile.country.values.any { it.contains("india", ignoreCase = true) || it.contains("இந்தியா") }
+                                    if (tempPrimary.isNotBlank() && inIndia && !BillRules.isValidGstin(tempPrimary)) {
+                                        ElvanSnackbar.show(invalidGstinMsg)
+                                    } else {
+                                        saveField {
+                                            profile.gstin = tempPrimary.uppercase()
+                                        }
                                     }
                                 },
                                 colors = colors
@@ -481,6 +492,46 @@ fun TextilesMerchantSettingsScreen(
                         }
                     )
                 }
+
+                // 7. PAN (printed with the bank details)
+                ElvanSettingsDivider(colors = colors)
+                ElvanSettingsAnimatedExpand(
+                    isEditing = editingSection == "pan",
+                    displayContent = {
+                        ElvanSettingsDisplayRow(
+                            title = K.panNumber.tr(),
+                            primaryValue = profile.pan,
+                            onEdit = {
+                                tempPrimary = profile.pan
+                                editingSection = "pan"
+                            },
+                            colors = colors
+                        )
+                    },
+                    editContent = {
+                        ElvanSettingsEditContainer(
+                            title = K.panNumber.tr(),
+                            onCancel = { editingSection = null },
+                            onSave = {
+                                if (tempPrimary.isNotBlank() && !BillRules.isValidPan(tempPrimary)) {
+                                    ElvanSnackbar.show(invalidPanMsg)
+                                } else {
+                                    saveField { profile.pan = tempPrimary.trim().uppercase() }
+                                }
+                            },
+                            colors = colors
+                        ) {
+                            ElvanSettingsTextField(
+                                label = K.panNumber.tr(),
+                                value = tempPrimary,
+                                onValueChange = { tempPrimary = it.uppercase() },
+                                keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Characters),
+                                maxLength = 10,
+                                colors = colors
+                            )
+                        }
+                    }
+                )
             }
         }
     }

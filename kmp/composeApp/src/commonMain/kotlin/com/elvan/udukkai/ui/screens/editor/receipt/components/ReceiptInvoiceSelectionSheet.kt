@@ -18,6 +18,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.elvan.udukkai.core.utils.CurrencyUtils
 import com.elvan.udukkai.core.utils.DateUtils
 import com.elvan.udukkai.data.model.InvoiceModel
 import com.elvan.udukkai.localization.K
@@ -106,12 +107,7 @@ fun ReceiptInvoiceSelectionSheet(
                 ?: inv.customerName["en"]
                 ?: ""
 
-            val formattedAmount = "₹ " + if (inv.totalAmount % 1.0 == 0.0) {
-                inv.totalAmount.toLong().toString()
-            } else {
-                val rounded = (inv.totalAmount * 100).toLong() / 100.0
-                rounded.toString()
-            }
+            val formattedAmount = CurrencyUtils.formatInr(inv.totalAmount)
 
             Row(
                 modifier = Modifier

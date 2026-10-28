@@ -419,9 +419,3 @@ private fun ImageUploadBox(
     }
 }
 
-@Deprecated("Use TextilesIdentityScreen", ReplaceWith("TextilesIdentityScreen(scrollState, colors)"))
-@Composable
-fun SilkIdentityScreen(
-    scrollState: LazyListState = rememberLazyListState(),
-    colors: ShellColors = rememberShellColors()
-) = TextilesIdentityScreen(scrollState, colors)

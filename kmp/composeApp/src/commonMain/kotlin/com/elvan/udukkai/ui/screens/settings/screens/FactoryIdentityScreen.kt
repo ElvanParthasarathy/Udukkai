@@ -283,9 +283,3 @@ private fun ImageUploadBox(
     }
 }
 
-@Deprecated("Use FactoryIdentityScreen", ReplaceWith("FactoryIdentityScreen(scrollState, colors)"))
-@Composable
-fun CoolieIdentityScreen(
-    scrollState: LazyListState = rememberLazyListState(),
-    colors: ShellColors = rememberShellColors()
-) = FactoryIdentityScreen(scrollState, colors)

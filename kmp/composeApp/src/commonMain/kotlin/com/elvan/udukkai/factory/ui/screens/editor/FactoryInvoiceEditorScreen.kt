@@ -1,5 +1,7 @@
 package com.elvan.udukkai.factory.ui.screens.editor
 
+import com.elvan.udukkai.core.utils.DateUtils
+import com.elvan.udukkai.core.utils.BillRules
 import com.elvan.udukkai.core.print.PrintPayload
 import com.elvan.udukkai.localization.LanguageManager
 import com.elvan.udukkai.ui.screens.preview.DraftBillPreview
@@ -175,9 +177,6 @@ fun FactoryInvoiceEditorScreen(
         InvoiceDisplayOptions.fromJson(invoice?.customPreferencesJson)
     }
     var displayOptions by remember { mutableStateOf(initialDisplayOptions) }
-    var selectedAccountId by remember {
-        mutableStateOf(displayOptions.selectedAccountId ?: selectedProfile.getDefaultPaymentAccount()?.id)
-    }
 
     // Date
     var invoiceDate by remember { mutableStateOf(invoice?.invoiceDate ?: System.currentTimeMillis()) }
@@ -297,7 +296,6 @@ fun FactoryInvoiceEditorScreen(
             setharamGrams != (invoice?.wastageGrams ?: 0.0) ||
             thabaalThogai != (invoice?.postalCharges ?: 0.0) ||
             ahimsaPattuThogai != (invoice?.ahimsaSilkAmount ?: 0.0) ||
-            selectedAccountId != initialDisplayOptions.selectedAccountId ||
             itemsChanged ||
             chargesChanged
         )
@@ -440,11 +438,10 @@ fun FactoryInvoiceEditorScreen(
     // The bill as the form stands now: used by Save and by the draft preview
     val buildInvoice: (Int) -> InvoiceModel = { vanakkam ->
         val validItems = activeItems.filter { it.weight > 0 && it.price > 0 }
-        val selectedAcc = selectedProfile.getPaymentAccounts().find { it.id == selectedAccountId }
-            ?: selectedProfile.getDefaultPaymentAccount()
         InvoiceModel(
             id = invoice?.id ?: 0L,
             companyId = selectedCompanyId,
+            finYear = DateUtils.financialYearStart(invoiceDate),
             invoiceNumber = invoiceNumber,
             vanakkam = if (invoice != null && invoice.vanakkam > 0) invoice.vanakkam else vanakkam,
             invoiceType = invoiceType,
@@ -459,8 +456,7 @@ fun FactoryInvoiceEditorScreen(
             postalCharges = thabaalThogai,
             ahimsaSilkAmount = ahimsaPattuThogai,
             otherTaxesJson = FactoryCalculation.chargesToJson(additionalCharges),
-            customPreferencesJson = displayOptions.copy(selectedAccountId = selectedAccountId).toJson(),
-            bankDetailsJson = selectedAcc?.toJson() ?: "{}",
+            customPreferencesJson = displayOptions.toJson(),
             updatedAt = System.currentTimeMillis()
         )
     }
@@ -499,7 +495,7 @@ fun FactoryInvoiceEditorScreen(
                 val vanakkam = FactoryInvoiceRepository.getNextVanakkam(selectedCompanyId)
                 val newInvoice = buildInvoice(vanakkam)
                 val savedId = FactoryInvoiceRepository.save(newInvoice)
-                BillPdfAutoSave.request(BillPdfAutoSave.Kind.Invoice, savedId, invoice?.takeIf { it.id > 0L }?.let(::invoicePdfName))
+                BillPdfAutoSave.request(BillPdfAutoSave.Kind.Invoice, savedId, invoice?.takeIf { it.id > 0L }?.let(::invoicePdfName), invoice?.takeIf { it.id > 0L }?.companyId)
                 prefs.setString(draftKey, null)
                 isExiting = true
                 hasUnsavedChanges = false
@@ -974,11 +970,3 @@ fun FactoryInvoiceEditorScreen(
     }
 }
 
-@Deprecated("Use FactoryInvoiceEditorScreen", ReplaceWith("FactoryInvoiceEditorScreen(invoice, onBack, onRequestAddNewCustomer, onRequestAddNewItem)"))
-@Composable
-fun CoolieInvoiceEditorScreen(
-    invoice: InvoiceModel? = null,
-    onBack: () -> Unit,
-    onRequestAddNewCustomer: () -> Unit = {},
-    onRequestAddNewItem: () -> Unit = {}
-) = FactoryInvoiceEditorScreen(invoice, onBack, onRequestAddNewCustomer, onRequestAddNewItem)

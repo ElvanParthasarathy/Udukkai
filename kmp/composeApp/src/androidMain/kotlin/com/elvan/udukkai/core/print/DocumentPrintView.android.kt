@@ -569,7 +569,7 @@ private class PrintBridge(
     // first, so what opens always matches what is stored.
     private fun openPdf(file: File, bytes: ByteArray) {
         val name = safeName()
-        storeBillPdf(file.absolutePath, name)
+        storeBillPdf(file.absolutePath, name, controller.folder)
         val intent = Intent(Intent.ACTION_VIEW).apply {
             setDataAndType(stagePdf(bytes, name), "application/pdf")
             addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)

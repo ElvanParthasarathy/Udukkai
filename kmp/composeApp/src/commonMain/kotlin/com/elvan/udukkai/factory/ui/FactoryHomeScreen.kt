@@ -1,5 +1,6 @@
 package com.elvan.udukkai.factory.ui
 
+import com.elvan.udukkai.core.print.billBusinessFolder
 import androidx.compose.runtime.LaunchedEffect
 import com.elvan.udukkai.core.print.BillPdfAutoSave
 import com.elvan.udukkai.core.print.BillPdfAutoSaveHost
@@ -147,6 +148,7 @@ fun FactoryHomeScreen() {
     val invoicesLabel = K.invoices.tr()
     val receiptsLabel = K.receipts.tr()
     val erasingLabel = K.erasing.tr()
+    val invoiceHasReceiptsMsg = K.invoiceHasReceipts.tr()
 
 
     // Keep Android Back handling enabled for in-app navigation, but let the single
@@ -219,14 +221,19 @@ fun FactoryHomeScreen() {
             .fillMaxSize()
             .background(colors.background)
     ) {
+        // Folder of the business a bill belongs to
+        val billBusiness: (Long?) -> String = { id ->
+            billBusinessFolder(FactoryProfileRepository.profiles.find { it.id == id } ?: FactoryProfileRepository.profile)
+        }
+
         // Bills that have no PDF yet get one a moment after the app opens
         LaunchedEffect(Unit) {
             delay(8000)
-            BillPdfAutoSave.syncMissing(FactoryInvoiceRepository.invoices, FactoryReceiptRepository.receipts)
+            BillPdfAutoSave.syncMissing(FactoryInvoiceRepository.invoices, FactoryReceiptRepository.receipts, billBusiness)
         }
 
         // Writes the PDF of every saved bill to the documents folder
-        BillPdfAutoSaveHost { request ->
+        BillPdfAutoSaveHost(businessOf = billBusiness) { request ->
             val lang = if (LanguageManager.activeLanguageCode.startsWith("ta")) "ta" else "en"
             when (request.kind) {
                 BillPdfAutoSave.Kind.Invoice -> FactoryInvoiceRepository.invoices.find { it.id == request.id }?.let { invoice ->
@@ -238,7 +245,8 @@ fun FactoryHomeScreen() {
                             customer = invoice.customerId?.let { FactoryCustomerRepository.getById(it) },
                             appLanguage = lang
                         ),
-                        invoicePdfName(invoice)
+                        invoicePdfName(invoice),
+                        billBusinessFolder(profile)
                     )
                 }
                 BillPdfAutoSave.Kind.Receipt -> FactoryReceiptRepository.receipts.find { it.id == request.id }?.let { receipt ->
@@ -253,7 +261,8 @@ fun FactoryHomeScreen() {
                             isCoolie = true,
                             appLanguage = lang
                         ),
-                        receiptPdfName(receipt)
+                        receiptPdfName(receipt),
+                        billBusinessFolder(profile)
                     )
                 }
             }
@@ -902,8 +911,10 @@ fun FactoryHomeScreen() {
                         }
                         NavTab.Create -> {
                             if (uruvakkuSegment == 0) {
-                                selectedItemIds.forEach { FactoryInvoiceRepository.delete(it) }
-                                ElvanSnackbar.show("${selectedItemIds.size} $invoicesLabel $erasingLabel")
+                                val deleted = selectedItemIds.count { FactoryInvoiceRepository.delete(it) }
+                                if (deleted > 0) ElvanSnackbar.show("$deleted $invoicesLabel $erasingLabel")
+                                // Bills that have a receipt are paid and stay
+                                if (deleted < selectedItemIds.size) ElvanSnackbar.show(invoiceHasReceiptsMsg)
                             } else {
                                 selectedItemIds.forEach { FactoryReceiptRepository.delete(it) }
                                 ElvanSnackbar.show("${selectedItemIds.size} $receiptsLabel $erasingLabel")

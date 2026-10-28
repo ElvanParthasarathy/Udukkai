@@ -1,5 +1,6 @@
 package com.elvan.udukkai.ui.screens.view
 
+import com.elvan.udukkai.core.print.billBusinessFolder
 import com.elvan.udukkai.ui.screens.preview.PreviewScreen
 import com.elvan.udukkai.core.print.isDocumentPrintSupported
 import com.elvan.udukkai.core.print.receiptPdfName
@@ -60,7 +61,8 @@ fun ReceiptViewScreen(
             onBack = onBack,
             onEdit = onEdit,
             printPayload = payload,
-            printFileName = receiptPdfName(receipt)
+            printFileName = receiptPdfName(receipt),
+            businessFolder = billBusinessFolder(activeProfile)
         )
     } else {
         ReceiptDetailsScreen(receipt, profile, allProfiles, onBack, onEdit, onPrint)

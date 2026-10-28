@@ -1,13 +1,12 @@
 package com.elvan.udukkai.textiles.ui.screens.editor
 
+import com.elvan.udukkai.core.utils.BillRules
 import com.elvan.udukkai.data.settings.LanguageJsonConverter
-import kotlin.math.round
+import kotlin.math.floor
 
 private var nextTextilesId = 0L
 fun generateTextilesId(): String = "${System.currentTimeMillis()}_${++nextTextilesId}"
 
-@Deprecated("Use generateTextilesId", ReplaceWith("generateTextilesId()"))
-fun generatePattuId(): String = generateTextilesId()
 
 /**
  * Single line item for Textiles (சவுளி) mode invoices.
@@ -31,7 +30,6 @@ data class TextilesItem(
     val rate: Double get() = price
 
     val baseAmount: Double get() = quantity * price
-    val adippadaiThogai: Double get() = baseAmount
 
     val discountAmount: Double
         get() = if (discountType == "%") {
@@ -76,6 +74,8 @@ data class TextilesPreferences(
  * Also supports tax-inclusive pricing with reverse tax calculation.
  */
 object TextilesCalculation {
+    private fun round2(value: Double): Double = floor(value * 100.0 + 0.5 + 1e-9) / 100.0
+
     fun calculate(
         items: List<TextilesItem>,
         globalDiscountValue: Double = 0.0,
@@ -133,9 +133,9 @@ object TextilesCalculation {
 
             if (taxInclusive && item.taxRate > 0) {
                 val taxableAmount = netAfterDiscount / (1.0 + (item.taxRate / 100.0))
-                taxTotal += (netAfterDiscount - taxableAmount)
+                taxTotal += round2(netAfterDiscount - taxableAmount)
             } else {
-                taxTotal += (netAfterDiscount * item.taxRate) / 100.0
+                taxTotal += round2((netAfterDiscount * item.taxRate) / 100.0)
             }
         }
 
@@ -153,8 +153,9 @@ object TextilesCalculation {
             sgst = 0.0
             igst = taxTotal
         } else {
-            cgst = taxTotal / 2.0
-            sgst = taxTotal / 2.0
+            // The two halves add up to the tax to the paisa
+            cgst = round2(taxTotal / 2.0)
+            sgst = round2(taxTotal - cgst)
             igst = 0.0
         }
 
@@ -163,7 +164,8 @@ object TextilesCalculation {
         } else {
             (rawSubtotal - totalDiscount + taxTotal).coerceAtLeast(0.0)
         }
-        val roundedTotal = round(exactTotal)
+        // Indian bills round half up (Rs 1,234.50 becomes Rs 1,235)
+        val roundedTotal = floor(exactTotal + 0.5 + 1e-9)
         val suttruOff = roundedTotal - exactTotal
 
         return TextilesTotals(
@@ -199,20 +201,20 @@ object TextilesCalculation {
             sb.append("\"itemNameEn\":\"${escapeJson(item.itemNameEn)}\",")
             sb.append("\"hsnCode\":\"${escapeJson(item.hsnCode)}\",")
             sb.append("\"hsnKuriyeedu\":\"${escapeJson(item.hsnCode)}\",")
-            sb.append("\"quantity\":${item.quantity},")
-            sb.append("\"alavu\":${item.quantity},")
+            sb.append("\"quantity\":${BillRules.plainNumber(item.quantity)},")
+            sb.append("\"alavu\":${BillRules.plainNumber(item.quantity)},")
             sb.append("\"unit\":\"${escapeJson(item.unit)}\",")
             sb.append("\"alagu\":\"${escapeJson(item.unit)}\",")
-            sb.append("\"price\":${item.price},")
-            sb.append("\"vilai\":${item.price},")
-            sb.append("\"taxRate\":${item.taxRate},")
-            sb.append("\"variVizhukkaadu\":${item.taxRate},")
-            sb.append("\"discount\":${item.discount},")
-            sb.append("\"thallupadi\":${item.discount},")
+            sb.append("\"price\":${BillRules.plainNumber(item.price)},")
+            sb.append("\"vilai\":${BillRules.plainNumber(item.price)},")
+            sb.append("\"taxRate\":${BillRules.plainNumber(item.taxRate)},")
+            sb.append("\"variVizhukkaadu\":${BillRules.plainNumber(item.taxRate)},")
+            sb.append("\"discount\":${BillRules.plainNumber(item.discount)},")
+            sb.append("\"thallupadi\":${BillRules.plainNumber(item.discount)},")
             sb.append("\"discountType\":\"${escapeJson(item.discountType)}\",")
             sb.append("\"thallupadiVagai\":\"${escapeJson(item.discountType)}\",")
-            sb.append("\"discountAmount\":${item.discountAmount},")
-            sb.append("\"thallupadiThogai\":${item.discountAmount},")
+            sb.append("\"discountAmount\":${BillRules.plainNumber(item.discountAmount)},")
+            sb.append("\"thallupadiThogai\":${BillRules.plainNumber(item.discountAmount)},")
             sb.append("\"languageMap\":${LanguageJsonConverter.stringify(item.languageMap)}")
             sb.append("}")
         }
@@ -234,12 +236,12 @@ object TextilesCalculation {
                     ?.replace("\\\"", "\"")?.replace("\\\\", "\\") ?: ""
                 val hsn = Regex(""""(?:hsnCode|hsnKuriyeedu)"\s*:\s*"((?:\\.|[^"\\])*)"""").find(body)?.groupValues?.get(1)
                     ?.replace("\\\"", "\"")?.replace("\\\\", "\\") ?: ""
-                val quantity = Regex(""""(?:quantity|alavu)"\s*:\s*([0-9.]+)""").find(body)?.groupValues?.get(1)?.toDoubleOrNull() ?: 1.0
+                val quantity = Regex(""""(?:quantity|alavu)"\s*:\s*([-+0-9.eE]+)""").find(body)?.groupValues?.get(1)?.toDoubleOrNull() ?: 1.0
                 val unit = Regex(""""(?:unit|alagu)"\s*:\s*"((?:\\.|[^"\\])*)"""").find(body)?.groupValues?.get(1)
                     ?.replace("\\\"", "\"")?.replace("\\\\", "\\") ?: "Nos"
-                val price = Regex(""""(?:price|vilai)"\s*:\s*([0-9.]+)""").find(body)?.groupValues?.get(1)?.toDoubleOrNull() ?: 0.0
-                val taxRate = Regex(""""(?:taxRate|variVizhukkaadu)"\s*:\s*([0-9.]+)""").find(body)?.groupValues?.get(1)?.toDoubleOrNull() ?: 0.0
-                val discount = Regex(""""(?:discount|thallupadi)"\s*:\s*([0-9.]+)""").find(body)?.groupValues?.get(1)?.toDoubleOrNull() ?: 0.0
+                val price = Regex(""""(?:price|vilai)"\s*:\s*([-+0-9.eE]+)""").find(body)?.groupValues?.get(1)?.toDoubleOrNull() ?: 0.0
+                val taxRate = Regex(""""(?:taxRate|variVizhukkaadu)"\s*:\s*([-+0-9.eE]+)""").find(body)?.groupValues?.get(1)?.toDoubleOrNull() ?: 0.0
+                val discount = Regex(""""(?:discount|thallupadi)"\s*:\s*([-+0-9.eE]+)""").find(body)?.groupValues?.get(1)?.toDoubleOrNull() ?: 0.0
                 val discountType = Regex(""""(?:discountType|thallupadiVagai)"\s*:\s*"((?:\\.|[^"\\])*)"""").find(body)?.groupValues?.get(1)
                     ?.replace("\\\"", "\"")?.replace("\\\\", "\\") ?: "%"
 
@@ -266,12 +268,12 @@ object TextilesCalculation {
     }
 
     fun taxToJson(totals: TextilesTotals): String {
-        return "{\"cgst\":${totals.cgst},\"sgst\":${totals.sgst},\"igst\":${totals.igst}}"
+        return "{\"cgst\":${BillRules.plainNumber(totals.cgst)},\"sgst\":${BillRules.plainNumber(totals.sgst)},\"igst\":${BillRules.plainNumber(totals.igst)}}"
     }
 
     fun preferencesToJson(preferences: TextilesPreferences): String {
         return "{" +
-            "\"globalDiscountValue\":${preferences.globalDiscountValue}," +
+            "\"globalDiscountValue\":${BillRules.plainNumber(preferences.globalDiscountValue)}," +
             "\"globalDiscountType\":\"${escapeJson(preferences.globalDiscountType)}\"," +
             "\"placeOfSupply\":\"${escapeJson(preferences.placeOfSupply)}\"," +
             "\"placeOfSupplyTa\":\"${escapeJson(preferences.placeOfSupplyTa)}\"" +
@@ -282,7 +284,7 @@ object TextilesCalculation {
         if (json.isNullOrBlank() || json.trim() == "{}" || json.trim() == "null") {
             return TextilesPreferences()
         }
-        val discountValue = Regex(""""globalDiscountValue"\s*:\s*([0-9.]+)""").find(json)?.groupValues?.get(1)?.toDoubleOrNull() ?: 0.0
+        val discountValue = Regex(""""globalDiscountValue"\s*:\s*([-+0-9.eE]+)""").find(json)?.groupValues?.get(1)?.toDoubleOrNull() ?: 0.0
         val discountType = Regex(""""globalDiscountType"\s*:\s*"((?:\\.|[^"\\])*)"""").find(json)?.groupValues?.get(1)
             ?.replace("\\\"", "\"")?.replace("\\\\", "\\") ?: "%"
         val placeOfSupply = Regex(""""placeOfSupply"\s*:\s*"((?:\\.|[^"\\])*)"""").find(json)?.groupValues?.get(1)
@@ -296,11 +298,6 @@ object TextilesCalculation {
             placeOfSupplyTa = placeOfSupplyTa
         )
     }
-
-    // ── Backward-compatible Aliases ──
-    fun variToJson(totals: TextilesTotals): String = taxToJson(totals)
-    fun viruppangalToJson(preferences: TextilesPreferences): String = preferencesToJson(preferences)
-    fun viruppangalFromJson(json: String?): TextilesPreferences = preferencesFromJson(json)
 
     private fun splitJsonObjects(jsonArray: String): List<String> {
         val result = mutableListOf<String>()

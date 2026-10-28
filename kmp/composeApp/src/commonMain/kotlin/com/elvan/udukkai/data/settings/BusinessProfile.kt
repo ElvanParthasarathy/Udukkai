@@ -112,6 +112,8 @@ data class BusinessProfile(
     var phone2: String = "",
     var email: String = "",
     var gstin: String = "",
+    /** Permanent Account Number, printed with the bank details. */
+    var pan: String = "",
 
     // Address
     var address: MutableMap<String, String> = mutableMapOf(),
@@ -258,6 +260,7 @@ data class BusinessProfile(
             phone2 = phone2,
             email = email,
             gstin = gstin,
+            pan = pan,
             address = HashMap(address),
             city = HashMap(city),
             district = HashMap(district),

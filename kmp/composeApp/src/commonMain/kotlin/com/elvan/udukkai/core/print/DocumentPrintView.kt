@@ -49,6 +49,9 @@ class DocumentPrintController {
         private set
 
     /** PDF file name without extension (edited in the options panel). */
+    /** Business folder the stored PDF goes to (see billBusinessFolder). */
+    var folder by mutableStateOf("")
+
     var fileName by mutableStateOf("")
 
     var notice by mutableStateOf<PrintNotice?>(null)

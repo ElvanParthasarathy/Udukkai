@@ -13,11 +13,11 @@ import java.io.File
 
 private const val TAG = "BillPdfStore"
 
-/** Documents/Udukkai Textiles|Udukkai Factory/<Invoice|Receipt>, one folder per app. */
-private fun billFolder(fileName: String): String {
+/** Documents/Udukkai/<Udukkai Textiles|Udukkai Factory>/<business>/<Invoice|Receipt>. */
+private fun billFolder(fileName: String, business: String): String {
     val app = if (BuildConfig.FLAVOR == "factory") "Udukkai Factory" else "Udukkai Textiles"
     val category = if (fileName.startsWith("RCPT_")) "Receipt" else "Invoice"
-    return "${Environment.DIRECTORY_DOCUMENTS}/$app/$category"
+    return "${Environment.DIRECTORY_DOCUMENTS}/Udukkai/$app/$business/$category"
 }
 
 /** The PDF this app stored earlier under that folder and name, if any. */
@@ -35,12 +35,12 @@ private fun findBillPdf(folder: String, name: String): Uri? {
     return null
 }
 
-actual fun storeBillPdf(pdfPath: String, fileName: String): String? {
+actual fun storeBillPdf(pdfPath: String, fileName: String, business: String): String? {
     // Public Documents without a storage permission needs MediaStore (Android 10+)
     if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) return null
     return try {
         val resolver = AppContext.context.contentResolver
-        val folder = billFolder(fileName)
+        val folder = billFolder(fileName, business)
         val name = "$fileName.pdf"
         val uri = findBillPdf(folder, name) ?: resolver.insert(
             MediaStore.Files.getContentUri("external"),
@@ -61,10 +61,10 @@ actual fun storeBillPdf(pdfPath: String, fileName: String): String? {
     }
 }
 
-actual fun deleteBillPdf(fileName: String) {
+actual fun deleteBillPdf(fileName: String, business: String) {
     if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) return
     try {
-        findBillPdf(billFolder(fileName), "$fileName.pdf")?.let {
+        findBillPdf(billFolder(fileName, business), "$fileName.pdf")?.let {
             AppContext.context.contentResolver.delete(it, null, null)
         }
     } catch (e: Exception) {
@@ -72,11 +72,35 @@ actual fun deleteBillPdf(fileName: String) {
     }
 }
 
-actual fun billPdfExists(fileName: String): Boolean {
+actual fun billPdfExists(fileName: String, business: String): Boolean {
     if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) return true
     return try {
-        findBillPdf(billFolder(fileName), "$fileName.pdf") != null
+        findBillPdf(billFolder(fileName, business), "$fileName.pdf") != null
     } catch (e: Exception) {
         true
+    }
+}
+
+actual fun removeOldBillFolders() {
+    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) return
+    val resolver = AppContext.context.contentResolver
+    val collection = MediaStore.Files.getContentUri("external")
+    for (app in listOf("Udukkai Textiles", "Udukkai Factory")) {
+        val ids = mutableListOf<Long>()
+        try {
+            resolver.query(
+                collection,
+                arrayOf(MediaStore.MediaColumns._ID),
+                "${MediaStore.MediaColumns.RELATIVE_PATH} LIKE ? AND ${MediaStore.MediaColumns.DISPLAY_NAME} LIKE ?",
+                arrayOf("${Environment.DIRECTORY_DOCUMENTS}/$app/%", "%.pdf"),
+                null
+            )?.use { cursor -> while (cursor.moveToNext()) ids += cursor.getLong(0) }
+        } catch (e: Exception) {
+            Log.e(TAG, "Listing old bill folders failed: ${e.message}", e)
+        }
+        // Only the files this app made can be removed; the other app clears its own
+        ids.forEach { id ->
+            try { resolver.delete(ContentUris.withAppendedId(collection, id), null, null) } catch (_: Exception) {}
+        }
     }
 }

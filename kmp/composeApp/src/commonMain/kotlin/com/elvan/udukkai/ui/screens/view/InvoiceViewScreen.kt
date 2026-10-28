@@ -1,5 +1,6 @@
 package com.elvan.udukkai.ui.screens.view
 
+import com.elvan.udukkai.core.print.billBusinessFolder
 import com.elvan.udukkai.ui.components.shell.ElvanPopupMenuItem
 import com.elvan.udukkai.ui.screens.preview.PreviewScreen
 import com.elvan.udukkai.core.print.isDocumentPrintSupported
@@ -75,7 +76,8 @@ fun InvoiceViewScreen(
                 listOf(ElvanPopupMenuItem(convertTitle, MaterialSymbols.Rounded.SwapHoriz, onConvertToTaxInvoice))
             } else emptyList(),
             printPayload = payload,
-            printFileName = invoicePdfName(invoice)
+            printFileName = invoicePdfName(invoice),
+            businessFolder = billBusinessFolder(activeProfile)
         )
     } else {
         InvoiceDetailsScreen(invoice, profile, allProfiles, isPaid, onBack, onEdit, onPrint, onCopy, onConvertToTaxInvoice)
@@ -122,13 +124,8 @@ private fun InvoiceDetailsScreen(
         InvoiceDisplayOptions.fromJson(invoice.customPreferencesJson)
     }
 
-    val selectedBank = remember(invoice.bankDetailsJson, activeProfile, displayOptions.selectedAccountId) {
-        val parsed = if (invoice.bankDetailsJson.isNotBlank() && invoice.bankDetailsJson != "{}") {
-            PaymentAccount.parseList("[${invoice.bankDetailsJson}]").firstOrNull()
-        } else null
-        parsed ?: activeProfile.getPaymentAccounts().find { it.id == displayOptions.selectedAccountId }
-        ?: activeProfile.getDefaultPaymentAccount()
-    }
+    // The bank account is the business's own
+    val selectedBank = remember(activeProfile) { activeProfile.getDefaultPaymentAccount() }
 
     val tamilWords = remember(invoice.totalAmount) { NumberToWords.toTamil(invoice.totalAmount) }
     val englishWords = remember(invoice.totalAmount) { NumberToWords.toEnglish(invoice.totalAmount) }
@@ -322,91 +319,6 @@ private fun InvoiceDetailsScreen(
                                 fontWeight = FontWeight.SemiBold
                             )
                         )
-                    }
-                }
-            }
-
-            // Bill Options Card (Vehicle No, Due Date, Tax-Inclusive badge)
-            val hasActiveOptions = (displayOptions.showVehicle && displayOptions.vehicleNumber.isNotBlank()) ||
-                (displayOptions.showDueDate && displayOptions.dueDate != null) ||
-                displayOptions.taxInclusive
-
-            if (hasActiveOptions) {
-                item(key = "bill_options_card") {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clip(RoundedCornerShape(16.dp))
-                            .background(if (isDark) Color.White.copy(alpha = 0.04f) else Color.Black.copy(alpha = 0.025f))
-                            .border(
-                                width = 1.dp,
-                                color = if (isDark) Color.White.copy(alpha = 0.08f) else Color.Black.copy(alpha = 0.06f),
-                                shape = RoundedCornerShape(16.dp)
-                            )
-                            .padding(18.dp)
-                    ) {
-                        Column(
-                            modifier = Modifier.fillMaxWidth(),
-                            verticalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            Text(
-                                text = K.billOptions.tr().preventBrokenLigatures(),
-                                style = TextStyle(
-                                    fontFamily = ff,
-                                    fontSize = 13.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = colors.textPrimary
-                                )
-                            )
-
-                            if (displayOptions.showVehicle && displayOptions.vehicleNumber.isNotBlank()) {
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.SpaceBetween
-                                ) {
-                                    Text(
-                                        text = K.vehicleNumber.tr(),
-                                        style = TextStyle(fontFamily = ff, fontSize = 13.5.sp, color = colors.textSecondary)
-                                    )
-                                    Text(
-                                        text = displayOptions.vehicleNumber,
-                                        style = TextStyle(fontFamily = ff, fontSize = 13.5.sp, fontWeight = FontWeight.SemiBold, color = colors.textPrimary)
-                                    )
-                                }
-                            }
-
-                            if (displayOptions.showDueDate && displayOptions.dueDate != null) {
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.SpaceBetween
-                                ) {
-                                    Text(
-                                        text = K.dueDate.tr(),
-                                        style = TextStyle(fontFamily = ff, fontSize = 13.5.sp, color = colors.textSecondary)
-                                    )
-                                    Text(
-                                        text = DateUtils.formatDate(displayOptions.dueDate ?: 0L),
-                                        style = TextStyle(fontFamily = ff, fontSize = 13.5.sp, fontWeight = FontWeight.SemiBold, color = colors.textPrimary)
-                                    )
-                                }
-                            }
-
-                            if (displayOptions.taxInclusive) {
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.SpaceBetween
-                                ) {
-                                    Text(
-                                        text = K.taxInclusive.tr(),
-                                        style = TextStyle(fontFamily = ff, fontSize = 13.5.sp, color = colors.textSecondary)
-                                    )
-                                    Text(
-                                        text = "✓",
-                                        style = TextStyle(fontFamily = ff, fontSize = 13.5.sp, fontWeight = FontWeight.Bold, color = colors.accent)
-                                    )
-                                }
-                            }
-                        }
                     }
                 }
             }

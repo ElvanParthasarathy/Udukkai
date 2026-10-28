@@ -367,6 +367,7 @@ class AndroidUdukkaiDatabaseHelper(
 
         try { db.execSQL("ALTER TABLE \"$customersTable\" ADD COLUMN \"company_ids\" TEXT NOT NULL DEFAULT '[]'") } catch (_: Exception) {}
         try { db.execSQL("ALTER TABLE \"$profilesTable\" ADD COLUMN \"print_settings\" TEXT NOT NULL DEFAULT '{}'") } catch (_: Exception) {}
+        try { db.execSQL("ALTER TABLE \"$profilesTable\" ADD COLUMN \"pan\" TEXT NOT NULL DEFAULT ''") } catch (_: Exception) {}
         try { db.execSQL("ALTER TABLE \"$linksTable\" ADD COLUMN \"created_at\" INTEGER NOT NULL DEFAULT 0") } catch (_: Exception) {}
         try { db.execSQL("ALTER TABLE \"$linksTable\" ADD COLUMN \"applied_amount\" REAL NOT NULL DEFAULT 0.0") } catch (_: Exception) {}
         try { db.execSQL("UPDATE \"$linksTable\" SET applied_amount = poruthiya_thogai WHERE (applied_amount = 0.0 OR applied_amount IS NULL) AND poruthiya_thogai > 0.0") } catch (_: Exception) {}
@@ -801,6 +802,21 @@ class AndroidUdukkaiDatabaseHelper(
     } ?: emptyList()
 
 
+    override fun loadAllLinks(): List<ReceiptInvoiceLinkModel> = useDb { db ->
+        val list = mutableListOf<ReceiptInvoiceLinkModel>()
+        db.rawQuery("SELECT * FROM \"$linksTable\"", null).use { c ->
+            while (c.moveToNext()) {
+                list.add(ReceiptInvoiceLinkModel(
+                    id = getLongCol(c, "id"),
+                    receiptId = getLongCol(c, "receipt_id", "patru_id"),
+                    invoiceId = getLongCol(c, "invoice_id", "pattiyal_id"),
+                    appliedAmount = getDoubleCol(c, "applied_amount", "poruthiya_thogai", "inaippu_thogai")
+                ))
+            }
+        }
+        list
+    } ?: emptyList()
+
     override fun saveReceiptWithLinks(receipt: ReceiptModel, links: List<ReceiptInvoiceLinkModel>): Long = useDb { db ->
         db.beginTransaction()
         try {
@@ -882,6 +898,7 @@ class AndroidUdukkaiDatabaseHelper(
             put("phone2", profile.phone2)
             put("email", profile.email)
             put("gstin", profile.gstin)
+            put("pan", profile.pan)
             put("address", LanguageJsonConverter.stringify(profile.address))
             put("city", LanguageJsonConverter.stringify(profile.city))
             put("district", LanguageJsonConverter.stringify(profile.district))
@@ -1048,6 +1065,7 @@ class AndroidUdukkaiDatabaseHelper(
         phone2 = getStringCol(c, "phone2", "tholaipaesi2"),
         email = getStringCol(c, "email", "minnanjal"),
         gstin = getStringCol(c, "gstin"),
+        pan = getStringCol(c, "pan"),
         address = LanguageJsonConverter.parse(getStringCol(c, "address", "mugavari")),
         city = LanguageJsonConverter.parse(getStringCol(c, "city", "oor")),
         district = LanguageJsonConverter.parse(getStringCol(c, "district", "maavattam")),

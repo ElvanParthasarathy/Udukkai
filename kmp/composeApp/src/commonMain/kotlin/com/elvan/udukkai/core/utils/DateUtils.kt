@@ -53,4 +53,21 @@ object DateUtils {
         val days = era * 146097 + doe - 719468
         return days * 86400000L
     }
+
+    /** Whole days since 1970 in the same UTC calendar [formatEpochMillis] shows. */
+    fun dayOf(millis: Long): Long = millis / 86400000L
+
+    /** First year of the Indian financial year (April to March) the date falls in. */
+    fun financialYearStart(millis: Long): Int {
+        val parts = formatEpochMillis(millis).split("/")
+        val month = parts[1].toInt()
+        val year = parts[2].toInt()
+        return if (month >= 4) year else year - 1
+    }
+
+    /** "2026-27" for a date between April 2026 and March 2027. */
+    fun financialYearLabel(millis: Long): String {
+        val start = financialYearStart(millis)
+        return "$start-${((start + 1) % 100).toString().padStart(2, '0')}"
+    }
 }

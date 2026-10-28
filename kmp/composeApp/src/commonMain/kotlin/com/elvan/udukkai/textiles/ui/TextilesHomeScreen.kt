@@ -1,5 +1,6 @@
 package com.elvan.udukkai.textiles.ui
 
+import com.elvan.udukkai.core.print.billBusinessFolder
 import androidx.compose.runtime.LaunchedEffect
 import com.elvan.udukkai.core.print.BillPdfAutoSave
 import com.elvan.udukkai.core.print.BillPdfAutoSaveHost
@@ -147,6 +148,7 @@ fun TextilesHomeScreen() {
     val invoicesLabel = K.invoices.tr()
     val receiptsLabel = K.receipts.tr()
     val erasingLabel = K.erasing.tr()
+    val invoiceHasReceiptsMsg = K.invoiceHasReceipts.tr()
 
 
     // Keep Android Back handling enabled for in-app navigation, but let the single
@@ -219,14 +221,19 @@ fun TextilesHomeScreen() {
             .fillMaxSize()
             .background(colors.background)
     ) {
+        // Folder of the business a bill belongs to
+        val billBusiness: (Long?) -> String = { id ->
+            billBusinessFolder(TextilesProfileRepository.profiles.find { it.id == id } ?: TextilesProfileRepository.profile)
+        }
+
         // Bills that have no PDF yet get one a moment after the app opens
         LaunchedEffect(Unit) {
             delay(8000)
-            BillPdfAutoSave.syncMissing(TextilesInvoiceRepository.invoices, TextilesReceiptRepository.receipts)
+            BillPdfAutoSave.syncMissing(TextilesInvoiceRepository.invoices, TextilesReceiptRepository.receipts, billBusiness)
         }
 
         // Writes the PDF of every saved bill to the documents folder
-        BillPdfAutoSaveHost { request ->
+        BillPdfAutoSaveHost(businessOf = billBusiness) { request ->
             val lang = if (LanguageManager.activeLanguageCode.startsWith("ta")) "ta" else "en"
             when (request.kind) {
                 BillPdfAutoSave.Kind.Invoice -> TextilesInvoiceRepository.invoices.find { it.id == request.id }?.let { invoice ->
@@ -238,7 +245,8 @@ fun TextilesHomeScreen() {
                             customer = invoice.customerId?.let { TextilesCustomerRepository.getById(it) },
                             appLanguage = lang
                         ),
-                        invoicePdfName(invoice)
+                        invoicePdfName(invoice),
+                        billBusinessFolder(profile)
                     )
                 }
                 BillPdfAutoSave.Kind.Receipt -> TextilesReceiptRepository.receipts.find { it.id == request.id }?.let { receipt ->
@@ -253,7 +261,8 @@ fun TextilesHomeScreen() {
                             isCoolie = false,
                             appLanguage = lang
                         ),
-                        receiptPdfName(receipt)
+                        receiptPdfName(receipt),
+                        billBusinessFolder(profile)
                     )
                 }
             }
@@ -900,8 +909,10 @@ fun TextilesHomeScreen() {
                         }
                         NavTab.Create -> {
                             if (uruvakkuSegment == 0) {
-                                selectedItemIds.forEach { TextilesInvoiceRepository.delete(it) }
-                                ElvanSnackbar.show("${selectedItemIds.size} $invoicesLabel $erasingLabel")
+                                val deleted = selectedItemIds.count { TextilesInvoiceRepository.delete(it) }
+                                if (deleted > 0) ElvanSnackbar.show("$deleted $invoicesLabel $erasingLabel")
+                                // Bills that have a receipt are paid and stay
+                                if (deleted < selectedItemIds.size) ElvanSnackbar.show(invoiceHasReceiptsMsg)
                             } else {
                                 selectedItemIds.forEach { TextilesReceiptRepository.delete(it) }
                                 ElvanSnackbar.show("${selectedItemIds.size} $receiptsLabel $erasingLabel")

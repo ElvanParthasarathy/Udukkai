@@ -72,14 +72,16 @@ object FactoryInvoiceRepository {
     }
 
     fun getNextVanakkam(companyId: Long?): Int {
+        // Deleted invoices keep their numbers: a number is never used twice
+        val all = invoices + deletedInvoices
         val matching = if (companyId != null) {
-            invoices.filter { it.companyId == companyId }
+            all.filter { it.companyId == companyId }
         } else {
-            invoices.filter { it.companyId == null }
+            all.filter { it.companyId == null }
         }
         val maxVanakkam = matching.maxOfOrNull { it.vanakkam } ?: 0
         val parsedMax = matching.mapNotNull { inv ->
-            inv.invoiceNumber.substringAfterLast('-', "").toIntOrNull()
+            Regex("(\\d+)$").find(inv.invoiceNumber.trim())?.groupValues?.get(1)?.toIntOrNull()
         }.maxOfOrNull { it } ?: 0
         return maxOf(maxVanakkam, parsedMax) + 1
     }
@@ -101,7 +103,7 @@ object FactoryInvoiceRepository {
     ): Boolean {
         val target = invoiceNumber.trim().uppercase()
         if (target.isBlank()) return false
-        return invoices.any { inv ->
+        return (invoices + deletedInvoices).any { inv ->
             (excludeId == null || inv.id != excludeId) &&
             (companyId == null || inv.companyId == companyId) &&
             inv.invoiceNumber.trim().uppercase() == target
@@ -146,7 +148,9 @@ object FactoryInvoiceRepository {
         return id
     }
 
+    /** A bill that has a receipt is paid: it cannot be deleted (delete the receipt first). */
     fun delete(id: Long): Boolean {
+        if (hasLinkedReceipts(id)) return false
         val success = getFactoryDatabaseHelper().deleteInvoice(id)
         if (success) {
             loadAll()
@@ -156,7 +160,15 @@ object FactoryInvoiceRepository {
         return success
     }
 
+    /** True when another invoice of the same business already has this deleted invoice's number. */
+    fun restoreBlocked(id: Long): Boolean {
+        val inv = deletedInvoices.find { it.id == id } ?: return false
+        val target = inv.invoiceNumber.trim().uppercase()
+        return invoices.any { it.companyId == inv.companyId && it.invoiceNumber.trim().uppercase() == target }
+    }
+
     fun restore(id: Long): Boolean {
+        if (restoreBlocked(id)) return false
         val success = getFactoryDatabaseHelper().restoreInvoice(id)
         if (success) {
             loadAll()

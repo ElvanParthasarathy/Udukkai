@@ -1,5 +1,7 @@
 package com.elvan.udukkai.textiles.ui.screens.editor
 
+import com.elvan.udukkai.core.utils.DateUtils
+import com.elvan.udukkai.core.utils.BillRules
 import com.elvan.udukkai.core.print.PrintPayload
 import com.elvan.udukkai.localization.LanguageManager
 import com.elvan.udukkai.ui.screens.preview.DraftBillPreview
@@ -167,9 +169,6 @@ fun TextilesInvoiceEditorScreen(
         InvoiceDisplayOptions.fromJson(invoice?.customPreferencesJson)
     }
     var displayOptions by remember { mutableStateOf(initialDisplayOptions) }
-    var selectedAccountId by remember {
-        mutableStateOf(displayOptions.selectedAccountId ?: selectedProfile.getDefaultPaymentAccount()?.id)
-    }
 
     // Metadata
     var invoiceType by remember { mutableStateOf(invoice?.invoiceType?.ifEmpty { "tax-invoice" } ?: "tax-invoice") }
@@ -241,7 +240,6 @@ fun TextilesInvoiceEditorScreen(
             globalDiscountValue != initialDiscount ||
             globalDiscountType != (invoice?.globalDiscountType ?: initialDisplayOptions.globalDiscountType) ||
             placeOfSupplyEn != initialPlaceOfSupply ||
-            selectedAccountId != initialDisplayOptions.selectedAccountId ||
             itemsChanged
         )
     } else {
@@ -399,6 +397,7 @@ fun TextilesInvoiceEditorScreen(
     val customerRequiredMsg = K.selectCustomer.tr()
     val itemRequiredMsg = K.addAtLeastOneItem.tr()
     val invoiceNumberRequiredMsg = K.invoiceNumber.tr()
+    val invoiceNumberFormatMsg = K.invoiceNumberFormat.tr()
     val invoiceSavedMsg = K.invoiceSaved.tr()
     val invoiceNumberDuplicateMsg = K.invoiceNumberAlreadyExists.tr()
     val saveBtnLabel = K.draft.tr()
@@ -406,11 +405,10 @@ fun TextilesInvoiceEditorScreen(
     // The bill as the form stands now: used by Save and by the draft preview
     val buildInvoice: (Int) -> InvoiceModel = { nextVanakkam ->
         val validItems = activeItems.filter { it.quantity > 0 && it.price > 0 }
-        val selectedAcc = selectedProfile.getPaymentAccounts().find { it.id == selectedAccountId }
-            ?: selectedProfile.getDefaultPaymentAccount()
         InvoiceModel(
             id = invoice?.id ?: 0L,
             companyId = selectedCompanyId,
+            finYear = DateUtils.financialYearStart(invoiceDate),
             invoiceNumber = invoiceNumber,
             vanakkam = if (invoice != null && invoice.vanakkam > 0) invoice.vanakkam else nextVanakkam,
             invoiceType = invoiceType,
@@ -427,11 +425,9 @@ fun TextilesInvoiceEditorScreen(
             taxAmount = totals.totalTax,
             taxDataJson = TextilesCalculation.taxToJson(totals),
             customPreferencesJson = displayOptions.copy(
-                selectedAccountId = selectedAccountId,
                 placeOfSupply = placeOfSupplyEn,
                 placeOfSupplyTa = placeOfSupplyTa
             ).toJson(),
-            bankDetailsJson = selectedAcc?.toJson() ?: "{}",
             updatedAt = System.currentTimeMillis()
         )
     }
@@ -456,6 +452,8 @@ fun TextilesInvoiceEditorScreen(
             ElvanSnackbar.show(customerRequiredMsg)
         } else if (invoiceNumber.isBlank()) {
             ElvanSnackbar.show(invoiceNumberRequiredMsg)
+        } else if (!BillRules.isValidInvoiceNumber(invoiceNumber)) {
+            ElvanSnackbar.show(invoiceNumberFormatMsg)
         } else if (TextilesInvoiceRepository.isInvoiceNumberDuplicate(invoiceNumber, selectedCompanyId, invoice?.id)) {
             val dupMsg = "$invoiceNumber - $invoiceNumberDuplicateMsg"
             ElvanSnackbar.show(dupMsg)
@@ -470,7 +468,7 @@ fun TextilesInvoiceEditorScreen(
                 val nextVanakkam = TextilesInvoiceRepository.getNextVanakkam(selectedCompanyId)
                 val newInvoice = buildInvoice(nextVanakkam)
                 val savedId = TextilesInvoiceRepository.save(newInvoice)
-                BillPdfAutoSave.request(BillPdfAutoSave.Kind.Invoice, savedId, invoice?.takeIf { it.id > 0L }?.let(::invoicePdfName))
+                BillPdfAutoSave.request(BillPdfAutoSave.Kind.Invoice, savedId, invoice?.takeIf { it.id > 0L }?.let(::invoicePdfName), invoice?.takeIf { it.id > 0L }?.companyId)
                 prefs.setString(draftKey, null)
                 isExiting = true
                 hasUnsavedChanges = false
@@ -794,35 +792,6 @@ fun TextilesInvoiceEditorScreen(
                         }
                     }
                 }
-
-                // ── Section 5: Bill Options (பட்டியல் விருப்பங்கள்) ──
-                item(key = "bill_options_section") {
-                    ElvanEditorDisabledOverlay(disabled = !isCustomerSelected) {
-                        InvoiceBillOptionsSection(
-                            options = displayOptions,
-                            onOptionsChanged = {
-                                displayOptions = it
-                                hasUnsavedChanges = true
-                            },
-                            showTaxInclusiveOption = true
-                        )
-                    }
-                }
-
-                // ── Section 6: Bank Account (வங்கிக் கணக்கு) ──
-                item(key = "bank_account_section") {
-                    ElvanEditorDisabledOverlay(disabled = !isCustomerSelected) {
-                        InvoiceBankAccountPicker(
-                            accounts = selectedProfile.getPaymentAccounts(),
-                            selectedAccountId = selectedAccountId,
-                            onAccountSelected = { acc ->
-                                selectedAccountId = acc.id
-                                displayOptions = displayOptions.copy(selectedAccountId = acc.id)
-                                hasUnsavedChanges = true
-                            }
-                        )
-                    }
-                }
             }
         }
     }
@@ -927,11 +896,3 @@ fun TextilesInvoiceEditorScreen(
     }
 }
 
-@Deprecated("Use TextilesInvoiceEditorScreen", ReplaceWith("TextilesInvoiceEditorScreen(invoice, onBack, onRequestAddNewCustomer, onRequestAddNewItem)"))
-@Composable
-fun SilkInvoiceEditorScreen(
-    invoice: InvoiceModel? = null,
-    onBack: () -> Unit,
-    onRequestAddNewCustomer: () -> Unit = {},
-    onRequestAddNewItem: () -> Unit = {}
-) = TextilesInvoiceEditorScreen(invoice, onBack, onRequestAddNewCustomer, onRequestAddNewItem)

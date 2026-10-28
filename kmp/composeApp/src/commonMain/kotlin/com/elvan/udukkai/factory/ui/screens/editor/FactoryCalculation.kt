@@ -1,5 +1,6 @@
 package com.elvan.udukkai.factory.ui.screens.editor
 
+import com.elvan.udukkai.core.utils.BillRules
 import com.elvan.udukkai.data.settings.LanguageJsonConverter
 import kotlin.math.floor
 import kotlin.math.round
@@ -7,8 +8,6 @@ import kotlin.math.round
 private var nextFactoryId = 0L
 fun generateFactoryId(): String = "${System.currentTimeMillis()}_${++nextFactoryId}"
 
-@Deprecated("Use generateFactoryId", ReplaceWith("generateFactoryId()"))
-fun generateKooliId(): String = generateFactoryId()
 
 /**
  * Single line item for Factory (ஆலை) mode invoices.
@@ -113,10 +112,10 @@ object FactoryCalculation {
             sb.append("\"itemId\":").append(if (pId != null) "\"${escapeJson(pId)}\"" else "null").append(",")
             sb.append("\"itemName\":\"${escapeJson(item.name)}\",")
             sb.append("\"itemNameEn\":\"${escapeJson(item.itemNameEn)}\",")
-            sb.append("\"weight\":${item.weight},")
-            sb.append("\"edai\":${item.weight},")
-            sb.append("\"price\":${item.price},")
-            sb.append("\"vilai\":${item.price},")
+            sb.append("\"weight\":${BillRules.plainNumber(item.weight)},")
+            sb.append("\"edai\":${BillRules.plainNumber(item.weight)},")
+            sb.append("\"price\":${BillRules.plainNumber(item.price)},")
+            sb.append("\"vilai\":${BillRules.plainNumber(item.price)},")
             sb.append("\"languageMap\":${LanguageJsonConverter.stringify(item.languageMap)}")
             sb.append("}")
         }
@@ -136,8 +135,8 @@ object FactoryCalculation {
                     ?.replace("\\\"", "\"")?.replace("\\\\", "\\") ?: ""
                 val pNameEn = Regex(""""(?:itemNameEn|productNameEn|porulPeyarEn)"\s*:\s*"((?:\\.|[^"\\])*)"""").find(body)?.groupValues?.get(1)
                     ?.replace("\\\"", "\"")?.replace("\\\\", "\\") ?: ""
-                val weight = Regex(""""(?:weight|edai)"\s*:\s*([0-9.]+)""").find(body)?.groupValues?.get(1)?.toDoubleOrNull() ?: 0.0
-                val price = Regex(""""(?:price|vilai)"\s*:\s*([0-9.]+)""").find(body)?.groupValues?.get(1)?.toDoubleOrNull() ?: 0.0
+                val weight = Regex(""""(?:weight|edai)"\s*:\s*([-+0-9.eE]+)""").find(body)?.groupValues?.get(1)?.toDoubleOrNull() ?: 0.0
+                val price = Regex(""""(?:price|vilai)"\s*:\s*([-+0-9.eE]+)""").find(body)?.groupValues?.get(1)?.toDoubleOrNull() ?: 0.0
 
                 val langMapMatch = Regex(""""(?:languageMap|mozhiMap)"\s*:\s*(\{[^}]*\})""").find(body)?.groupValues?.get(1)
                 val langMap = LanguageJsonConverter.parse(langMapMatch)
@@ -166,8 +165,8 @@ object FactoryCalculation {
             sb.append("\"name\":\"${escapeJson(charge.name)}\",")
             sb.append("\"nameSecondary\":\"${escapeJson(charge.nameSecondary)}\",")
             sb.append("\"peyar\":\"${escapeJson(charge.name)}\",")
-            sb.append("\"amount\":${charge.amount},")
-            sb.append("\"thogai\":${charge.amount}")
+            sb.append("\"amount\":${BillRules.plainNumber(charge.amount)},")
+            sb.append("\"thogai\":${BillRules.plainNumber(charge.amount)}")
             sb.append("}")
         }
         sb.append("]")
@@ -183,7 +182,7 @@ object FactoryCalculation {
                     ?.replace("\\\"", "\"")?.replace("\\\\", "\\") ?: ""
                 val name = Regex(""""(?:name|peyar)"\s*:\s*"((?:\\.|[^"\\])*)"""").find(body)?.groupValues?.get(1)
                     ?.replace("\\\"", "\"")?.replace("\\\\", "\\") ?: ""
-                val amount = Regex(""""(?:amount|thogai)"\s*:\s*([0-9.]+)""").find(body)?.groupValues?.get(1)?.toDoubleOrNull() ?: 0.0
+                val amount = Regex(""""(?:amount|thogai)"\s*:\s*([-+0-9.eE]+)""").find(body)?.groupValues?.get(1)?.toDoubleOrNull() ?: 0.0
 
                 FactoryAdditionalCharge(
                     id = id,

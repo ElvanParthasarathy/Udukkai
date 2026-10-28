@@ -203,6 +203,7 @@ object PrintPayload {
         field("phone2", p.phone2)
         field("email", p.email)
         field("gstin", p.gstin)
+        field("pan", p.pan)
         field("logo", imageSource(p.logo))
         field("wideLogo", imageSource(p.wideLogo))
         field("headerLayout", p.headerLayout)

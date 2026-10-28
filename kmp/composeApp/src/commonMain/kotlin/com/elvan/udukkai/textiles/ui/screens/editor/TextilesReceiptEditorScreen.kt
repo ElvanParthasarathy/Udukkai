@@ -155,6 +155,8 @@ fun TextilesReceiptEditorScreen(
     val settingsStr = K.settings.tr()
     val selectInvoiceMsg = K.selectInvoice.tr()
     val customerNameRequiredMsg = K.customerNameRequired.tr()
+    val referenceRequiredMsg = K.referenceRequired.tr()
+    val receiptBeforeInvoiceMsg = K.receiptBeforeInvoice.tr()
     val thogaiInvalidMsg = K.amountMustBeGreaterThanZero.tr()
     val duplicateMsg = K.receiptNumberAlreadyExists.tr()
     val savedMsg = K.receiptSaved.tr()
@@ -208,12 +210,12 @@ fun TextilesReceiptEditorScreen(
     // The receipt as the form stands now: used by Save and by the draft preview
     val buildEntry: (Double) -> ReceiptModel = { amount ->
     val now = System.currentTimeMillis()
-    val defaultFinYear = DateUtils.formatEpochMillis(now).split("/").last()
+    val defaultFinYear = DateUtils.financialYearLabel(receiptDate)
     ReceiptModel(
         id = receipt?.id ?: 0L,
         companyId = selectedCompanyId,
         receiptNumber = receiptNumber.trim(),
-        finYear = receipt?.finYear ?: defaultFinYear,
+        finYear = defaultFinYear,
         vanakkam = vanakkam,
         customerId = selectedCustomerId,
         customerName = selectedCustomerNameMap,
@@ -277,6 +279,18 @@ fun TextilesReceiptEditorScreen(
             return
         }
 
+        // Bank transfer, UPI and cheque need their reference
+        if (paymentType.needsReference && suttruEn.trim().isEmpty()) {
+            ElvanSnackbar.show(referenceRequiredMsg)
+            return
+        }
+
+        // A receipt cannot be dated before the invoice it pays
+        if (selectedInvoices.any { DateUtils.dayOf(receiptDate) < DateUtils.dayOf(it.invoiceDate) }) {
+            ElvanSnackbar.show(receiptBeforeInvoiceMsg)
+            return
+        }
+
         // Duplicate check
         val isDuplicate = com.elvan.udukkai.textiles.data.TextilesReceiptRepository.isReceiptNumberDuplicate(receiptNumber, selectedCompanyId, receipt?.id)
         if (isDuplicate) {
@@ -316,7 +330,7 @@ fun TextilesReceiptEditorScreen(
             val entryToSave = buildEntry(amount)
 
             val savedId = com.elvan.udukkai.textiles.data.TextilesReceiptRepository.saveWithLinks(entryToSave, links)
-            BillPdfAutoSave.request(BillPdfAutoSave.Kind.Receipt, savedId, receipt?.takeIf { it.id > 0L }?.let(::receiptPdfName))
+            BillPdfAutoSave.request(BillPdfAutoSave.Kind.Receipt, savedId, receipt?.takeIf { it.id > 0L }?.let(::receiptPdfName), receipt?.takeIf { it.id > 0L }?.companyId)
             if (savedId > 0L) {
                 isExiting = true
                 ElvanSnackbar.show(savedMsg)
@@ -725,10 +739,12 @@ fun TextilesReceiptEditorScreen(
 
     // Modal: Invoice Picker Bottom Sheet (Multi-select)
     if (isInvoicePickerOpen) {
+        // A proforma is only an estimate: it is never paid, so receipts attach to tax invoices only
+        val taxInvoices = allInvoices.filter { it.invoiceType != "proforma" }
         val selectableInvoices = if (selectedCompanyId != null) {
-            allInvoices.filter { it.companyId == selectedCompanyId }
+            taxInvoices.filter { it.companyId == selectedCompanyId }
         } else {
-            allInvoices
+            taxInvoices
         }
 
         ReceiptInvoiceSelectionSheet(

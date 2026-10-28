@@ -34,7 +34,6 @@ fun DraftBillPreview(payload: String?, title: String, fileName: String, onClose:
             PreviewScreen(
                 title = title,
                 onBack = onClose,
-                onEdit = onClose,
                 isDraft = true,
                 printPayload = current,
                 printFileName = fileName

@@ -76,6 +76,7 @@ fun PreviewScreen(
     onEdit: (() -> Unit)? = null,
     menuItems: List<ElvanPopupMenuItem> = emptyList(),
     isDraft: Boolean = false,
+    businessFolder: String = "",
     printPayload: String? = null,
     printFileName: String = subtitle ?: title,
     printController: DocumentPrintController? = null,
@@ -89,6 +90,7 @@ fun PreviewScreen(
             onEdit = onEdit,
             menuItems = menuItems,
             isDraft = isDraft,
+            businessFolder = businessFolder,
             payloadJson = printPayload,
             fileName = printFileName,
             controller = controller,
@@ -106,6 +108,7 @@ private fun DocumentPreview(
     onEdit: (() -> Unit)?,
     menuItems: List<ElvanPopupMenuItem>,
     isDraft: Boolean,
+    businessFolder: String,
     payloadJson: String,
     fileName: String,
     controller: DocumentPrintController,
@@ -115,6 +118,7 @@ private fun DocumentPreview(
 
     LaunchedEffect(Unit) {
         if (controller.fileName.isBlank()) controller.fileName = fileName
+        controller.folder = businessFolder
     }
 
     HideSystemBars(hidden = controller.immersive)
@@ -126,7 +130,8 @@ private fun DocumentPreview(
         onBack = onBack,
         hideChrome = controller.immersive,
         actions = { if (menuItems.isNotEmpty()) PreviewMenuButton(menuItems) },
-        floatingBar = { PreviewBottomArea(controller, onEdit, isDraft) }
+        // An unsaved bill is only looked at: no Print, Share or Open (Back returns to the form)
+        floatingBar = { if (!isDraft) PreviewBottomArea(controller, onEdit) }
     ) {
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             // The web page only prepares the PDF; it stays hidden (unless the caller already hosts it)
@@ -181,7 +186,7 @@ private fun PreviewMenuButton(items: List<ElvanPopupMenuItem>) {
 
 /** Status pill and the action pill, stacked above the system navigation bar. */
 @Composable
-private fun PreviewBottomArea(controller: DocumentPrintController, onEdit: (() -> Unit)?, isDraft: Boolean) {
+private fun PreviewBottomArea(controller: DocumentPrintController, onEdit: (() -> Unit)?) {
     val colors = rememberShellColors()
     Column(
         modifier = Modifier.fillMaxWidth(),
@@ -235,8 +240,7 @@ private fun PreviewBottomArea(controller: DocumentPrintController, onEdit: (() -
                             onClick = it
                         )
                     },
-                    // An unsaved bill has no stored PDF to open
-                    if (isDraft) null else ElvanFloatingAction(
+                    ElvanFloatingAction(
                         label = K.openBtn.tr(),
                         icon = MaterialSymbols.Rounded.Description,
                         onClick = { controller.open() }

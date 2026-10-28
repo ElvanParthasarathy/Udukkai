@@ -192,12 +192,3 @@ fun TextilesPlaceOfSupplyField(
     }
 }
 
-@Deprecated("Use TextilesPlaceOfSupplyField", ReplaceWith("TextilesPlaceOfSupplyField(placeOfSupplyEn, placeOfSupplyTa, onSelected, onCleared, modifier = modifier)"))
-@Composable
-fun PattuVilippiIdam(
-    placeOfSupplyEn: String,
-    placeOfSupplyTa: String,
-    onSelected: (en: String, ta: String) -> Unit,
-    onCleared: () -> Unit,
-    modifier: Modifier = Modifier
-) = TextilesPlaceOfSupplyField(placeOfSupplyEn, placeOfSupplyTa, onSelected, onCleared, modifier = modifier)
