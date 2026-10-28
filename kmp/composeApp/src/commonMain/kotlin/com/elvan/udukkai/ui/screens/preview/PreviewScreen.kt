@@ -24,13 +24,13 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
-import com.elvan.udukkai.ui.components.shell.ElvanZoomableImage
 import com.elvan.udukkai.ui.components.shell.ElvanFloatingAction
 import com.elvan.udukkai.ui.components.shell.ElvanFloatingActionBar
 import com.elvan.udukkai.ui.components.shell.ElvanStandardTopBar
 import com.elvan.udukkai.ui.components.shell.elvanStandardTopBarInset
 import com.elvan.udukkai.core.print.DocumentPrintController
 import com.elvan.udukkai.core.print.DocumentPrintView
+import com.elvan.udukkai.core.print.DocumentPdfViewer
 import com.elvan.udukkai.core.print.isDocumentPrintSupported
 import com.elvan.udukkai.ui.components.shell.ElvanActionButton
 import androidx.compose.ui.Alignment
@@ -104,7 +104,6 @@ private fun DocumentPreview(
 
     val topInset = elvanStandardTopBarInset()
     val navBarsBottom = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
-    val sheet = controller.sheet
 
     var showOptions by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) {
@@ -132,25 +131,21 @@ private fun DocumentPreview(
             )
         }
 
-        // Only the sheet is shown, on the theme background (black in dark mode, white in light)
+        // The PDF itself, in Google's PDF viewer, on the theme background
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(colors.background)
-                .pointerInput(Unit) { },
+                .background(colors.background),
             contentAlignment = Alignment.Center
         ) {
-            if (sheet != null) {
-                ElvanZoomableImage(
-                    bitmap = sheet,
+            if (controller.pdfPath != null) {
+                DocumentPdfViewer(
+                    controller = controller,
                     modifier = Modifier.fillMaxSize().graphicsLayer { alpha = documentAlpha },
                     contentPadding = PaddingValues(
-                        start = 16.dp,
-                        end = 16.dp,
                         top = topInset + 8.dp,
                         bottom = 96.dp + navBarsBottom
-                    ),
-                    onZoomChanged = { controller.zoomScale = it }
+                    )
                 )
             } else {
                 CircularProgressIndicator(color = colors.textPrimary)

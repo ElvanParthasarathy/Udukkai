@@ -32,6 +32,9 @@ kotlin {
             implementation(libs.firebase.analytics)
             // SVG logos (data:image/svg+xml) in ElvanImageViewer
             implementation("com.caverock:androidsvg-aar:1.4")
+            // Google's Jetpack PDF viewer (document preview)
+            implementation("androidx.pdf:pdf-viewer:1.0.0-alpha19")
+            implementation("androidx.pdf:pdf-document-service:1.0.0-alpha19")
         }
         commonMain.dependencies {
             implementation(compose.runtime)
@@ -57,6 +60,8 @@ kotlin {
 android {
     namespace = "com.elvan.udukkai"
     compileSdk = libs.versions.android.compileSdk.get().toInt()
+    // androidx.pdf (document preview) needs SDK extension 19
+    compileSdkExtension = 19
 
     buildFeatures {
         buildConfig = true

@@ -16,3 +16,11 @@ actual fun DocumentPrintView(
     topInset: androidx.compose.ui.unit.Dp
 ) {
 }
+
+@Composable
+actual fun DocumentPdfViewer(
+    controller: DocumentPrintController,
+    modifier: Modifier,
+    contentPadding: androidx.compose.foundation.layout.PaddingValues
+) {
+}

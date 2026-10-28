@@ -4,6 +4,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.unit.Dp
@@ -31,6 +32,10 @@ class DocumentPrintController {
 
     /** Current zoom level of the shown sheet (1 = fitted to the screen). */
     var zoomScale by mutableStateOf(1f)
+
+    /** Local path of the finished PDF (changes when the document or the options change). */
+    var pdfPath by mutableStateOf<String?>(null)
+        internal set
 
     /** The sheet (paper only) rendered to a sharp image once the document is ready. */
     var sheet by mutableStateOf<ImageBitmap?>(null)
@@ -82,4 +87,15 @@ expect fun DocumentPrintView(
     controller: DocumentPrintController,
     modifier: Modifier = Modifier,
     topInset: Dp = 0.dp
+)
+
+/**
+ * Shows [DocumentPrintController.pdfPath] in the platform PDF viewer (Android: Google's
+ * androidx.pdf viewer). [contentPadding] keeps the pages clear of the top bar / bottom pill.
+ */
+@Composable
+expect fun DocumentPdfViewer(
+    controller: DocumentPrintController,
+    modifier: Modifier = Modifier,
+    contentPadding: PaddingValues = PaddingValues()
 )

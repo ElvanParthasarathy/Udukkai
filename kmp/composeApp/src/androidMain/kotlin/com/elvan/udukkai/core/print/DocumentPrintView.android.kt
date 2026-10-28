@@ -1,11 +1,11 @@
 package com.elvan.udukkai.core.print
 
 import android.annotation.SuppressLint
+import android.app.Activity
+import android.content.ContextWrapper
 import android.content.ContentValues
 import android.content.Context
 import android.content.Intent
-import android.graphics.Bitmap
-import android.graphics.Canvas
 import android.graphics.pdf.PdfRenderer
 import android.os.Build
 import android.os.Bundle
@@ -42,7 +42,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.viewinterop.AndroidView
@@ -83,6 +82,7 @@ actual fun DocumentPrintView(
     bridge.payloadJson = payloadJson
     bridge.fileName = fileName
     bridge.requestWeb = { webNeeded = true }
+    bridge.uiContext = context
 
     DisposableEffect(controller) {
         controller.handler = { action -> bridge.run(action) }
@@ -187,42 +187,24 @@ private fun pruneCache(context: Context) {
     files.drop(CACHE_LIMIT).forEach { it.delete() }
 }
 
-/** Stacks the PDF's pages (up to 4) into one tall image for the zoom viewer. Null when it cannot be read. */
-private fun renderPdfSheet(file: File): Pair<Bitmap, Int>? {
-    return try {
-        ParcelFileDescriptor.open(file, ParcelFileDescriptor.MODE_READ_ONLY).use { pfd ->
-            PdfRenderer(pfd).use { renderer ->
-                val count = renderer.pageCount
-                if (count < 1) return null
-                val shown = minOf(count, 4)
-                val gap = 24
-                val targetW = 2400f
-                val heights = (0 until shown).map { i ->
-                    renderer.openPage(i).use { it.height * targetW / it.width }
-                }
-                var total = heights.sum() + gap * (shown - 1)
-                val factor = if (total > 7000f) 7000f / total else 1f
-                total *= factor
-                val width = (targetW * factor).toInt().coerceAtLeast(1)
-                val out = Bitmap.createBitmap(width, total.toInt().coerceAtLeast(1), Bitmap.Config.ARGB_8888)
-                val canvas = Canvas(out)
-                var y = 0f
-                for (i in 0 until shown) {
-                    val h = (heights[i] * factor).toInt().coerceAtLeast(1)
-                    val page = Bitmap.createBitmap(width, h, Bitmap.Config.ARGB_8888)
-                    page.eraseColor(android.graphics.Color.WHITE)
-                    renderer.openPage(i).use { it.render(page, null, null, PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY) }
-                    canvas.drawBitmap(page, 0f, y, null)
-                    page.recycle()
-                    y += h + gap * factor
-                }
-                out to count
-            }
-        }
-    } catch (e: Exception) {
-        Log.e(TAG, "Rendering PDF sheet failed: ${e.message}", e)
-        null
+/** Number of pages in the PDF, or -1 when it cannot be read. */
+private fun pdfPageCount(file: File): Int = try {
+    ParcelFileDescriptor.open(file, ParcelFileDescriptor.MODE_READ_ONLY).use { pfd ->
+        PdfRenderer(pfd).use { it.pageCount }
     }
+} catch (e: Exception) {
+    Log.e(TAG, "Reading PDF failed: ${e.message}", e)
+    -1
+}
+
+/** PrintManager only works from an Activity; Compose dialogs wrap it in other contexts. */
+private fun Context.findActivity(): Activity? {
+    var c: Context? = this
+    while (c is ContextWrapper) {
+        if (c is Activity) return c
+        c = c.baseContext
+    }
+    return null
 }
 
 /** JS bridge: methods are called by react/print/main.tsx on a background thread. */
@@ -236,6 +218,7 @@ private class PrintBridge(
     var fileName: String = "document"
     var topInsetDp: Float = 0f
     var requestWeb: () -> Unit = {}
+    var uiContext: Context? = null
 
     private var released = false
     private var webStarted = false
@@ -398,18 +381,18 @@ private class PrintBridge(
             return
         }
         Thread {
-            val rendered = renderPdfSheet(file)
+            val pages = pdfPageCount(file)
             main.post {
                 if (released) return@post
-                if (rendered == null) {
+                if (pages < 1) {
                     file.delete()
                     failExport()
                     return@post
                 }
                 currentKey = key
                 currentFile = file
-                currentPages = rendered.second
-                controller.sheet = rendered.first.asImageBitmap()
+                currentPages = pages
+                controller.pdfPath = file.absolutePath
                 controller.markReady()
                 pruneCache(context)
                 runPending()
@@ -458,13 +441,16 @@ private class PrintBridge(
         controller.fileName.ifBlank { fileName }
             .replace(Regex("[\\\\/:*?\"<>|]"), "-").trim().ifEmpty { "document" }
 
+    private fun mediaSize(o: PrintOptions): PrintAttributes.MediaSize = when (o.paper) {
+        PaperSize.A4 -> PrintAttributes.MediaSize.ISO_A4
+        PaperSize.A5 -> PrintAttributes.MediaSize.ISO_A5
+        PaperSize.LETTER -> PrintAttributes.MediaSize.NA_LETTER
+        PaperSize.LEGAL -> PrintAttributes.MediaSize.NA_LEGAL
+    }
+
+    // Attributes for the PDF export itself (exact page size, no printer margins)
     private fun printAttributes(o: PrintOptions): PrintAttributes {
-        val size = when (o.paper) {
-            PaperSize.A4 -> PrintAttributes.MediaSize.ISO_A4
-            PaperSize.A5 -> PrintAttributes.MediaSize.ISO_A5
-            PaperSize.LETTER -> PrintAttributes.MediaSize.NA_LETTER
-            PaperSize.LEGAL -> PrintAttributes.MediaSize.NA_LEGAL
-        }
+        val size = mediaSize(o)
         return PrintAttributes.Builder()
             .setMediaSize(if (o.orientation == PageOrientation.LANDSCAPE) size.asLandscape() else size)
             .setResolution(PrintAttributes.Resolution("pdf", "pdf", 300, 300))
@@ -522,8 +508,15 @@ private class PrintBridge(
                 }
             }
         }
-        val manager = context.getSystemService(Context.PRINT_SERVICE) as PrintManager
-        manager.print(name, adapter, printAttributes(controller.options))
+        val activity = uiContext?.findActivity() ?: throw IllegalStateException("No activity to print from")
+        val o = controller.options
+        val size = mediaSize(o)
+        val attributes = PrintAttributes.Builder()
+            .setMediaSize(if (o.orientation == PageOrientation.LANDSCAPE) size.asLandscape() else size)
+            .setColorMode(if (o.color) PrintAttributes.COLOR_MODE_COLOR else PrintAttributes.COLOR_MODE_MONOCHROME)
+            .build()
+        val manager = activity.getSystemService(Context.PRINT_SERVICE) as PrintManager
+        manager.print(name, adapter, attributes)
     }
 
     private fun sharePdf(bytes: ByteArray) {
@@ -539,7 +532,9 @@ private class PrintBridge(
             putExtra(Intent.EXTRA_SUBJECT, name)
             addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
         }
-        context.startActivity(Intent.createChooser(intent, name).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+        val launcher = uiContext?.findActivity()
+        if (launcher != null) launcher.startActivity(Intent.createChooser(intent, name))
+        else context.startActivity(Intent.createChooser(intent, name).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
     }
 
     // Saves to Documents/Udukkai (visible in Files). Before Android 10 that needs a storage
