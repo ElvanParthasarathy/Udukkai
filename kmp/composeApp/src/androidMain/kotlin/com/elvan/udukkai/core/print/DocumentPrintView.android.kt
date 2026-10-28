@@ -194,10 +194,11 @@ private fun cacheDir(context: Context): File = File(context.cacheDir, CACHE_DIR)
 
 /** Identifies one PDF: the document data (incl. paid amounts, business + print settings), the options and the app build. */
 private fun cacheKey(context: Context, payloadJson: String, options: PrintOptions): String {
+    // The print bundle's own file names carry a content hash: a PDF stays valid across app updates until the template changes
     val build = try {
-        context.packageManager.getPackageInfo(context.packageName, 0).lastUpdateTime
+        context.assets.list("print/assets")?.filter { it.startsWith("index-") }?.sorted()?.joinToString(",").orEmpty()
     } catch (e: Exception) {
-        0L
+        ""
     }
     // Item ids are made from the clock each time a document is loaded; they do not affect the print
     val stable = payloadJson.replace(Regex("\"id\":\"[0-9]{10,}_[0-9]+\""), "\"id\":\"\"")
@@ -280,6 +281,31 @@ private class PrintBridge(
             return
         }
         if (key == currentKey) return
+        // A saved bill has its PDF in Documents/Udukkai: use that while it still matches the bill
+        val business = controller.folder
+        if (business.isNotBlank() && lookupKey != key) {
+            lookupKey = key
+            val name = safeName()
+            Thread {
+                val found = readStoredBillPdf(name, business, key, file)
+                main.post {
+                    if (released) return@post
+                    when {
+                        found && key == wantKey -> publish(key, file)
+                        key != wantKey -> ensure()
+                        else -> startBuild()
+                    }
+                }
+            }.start()
+            return
+        }
+        startBuild()
+    }
+
+    private var lookupKey = ""
+
+    // No usable PDF yet: render the React document and export it
+    private fun startBuild() {
         when {
             !webStarted -> {
                 webStarted = true

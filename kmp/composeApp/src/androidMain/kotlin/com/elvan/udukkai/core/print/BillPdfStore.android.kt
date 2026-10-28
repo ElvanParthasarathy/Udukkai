@@ -35,6 +35,38 @@ private fun findBillPdf(folder: String, name: String): Uri? {
     return null
 }
 
+/**
+ * Next to each stored PDF the app remembers which document it was made from (the cache key of the PDF),
+ * so a stored file is only reused when it still matches the bill; the index lives in app storage.
+ */
+private fun keyFile(fileName: String, business: String): File {
+    val dir = File(AppContext.context.filesDir, "bill_pdf_keys").apply { mkdirs() }
+    return File(dir, "$business|$fileName".replace(Regex("[\\/:*?\"<>]"), "-") + ".key")
+}
+
+/**
+ * Copies the stored PDF of this bill into [dest] when it was made from the document with [key];
+ * false when it is missing (cleared, deleted) or out of date, and the PDF has to be made again.
+ */
+internal fun readStoredBillPdf(fileName: String, business: String, key: String, dest: File): Boolean {
+    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) return false
+    return try {
+        val index = keyFile(fileName, business)
+        if (!index.exists() || index.readText().trim() != key) return false
+        val uri = findBillPdf(billFolder(fileName, business), "$fileName.pdf") ?: return false
+        val tmp = File(dest.parentFile, "${dest.name}.tmp")
+        AppContext.context.contentResolver.openInputStream(uri)?.use { input ->
+            tmp.outputStream().use { input.copyTo(it) }
+        } ?: return false
+        if (tmp.length() <= 0L) { tmp.delete(); return false }
+        dest.delete()
+        tmp.renameTo(dest)
+    } catch (e: Exception) {
+        Log.e(TAG, "Reading stored $fileName failed: ${e.message}", e)
+        false
+    }
+}
+
 actual fun storeBillPdf(pdfPath: String, fileName: String, business: String): String? {
     // Public Documents without a storage permission needs MediaStore (Android 10+)
     if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) return null
@@ -54,6 +86,11 @@ actual fun storeBillPdf(pdfPath: String, fileName: String, business: String): St
         resolver.openOutputStream(uri, "wt")?.use { out ->
             File(pdfPath).inputStream().use { it.copyTo(out) }
         } ?: return null
+        // The PDF's name in the print cache is its key: remember which document this stored file shows
+        val source = File(pdfPath)
+        if (source.parentFile?.name == "print_pdfs") {
+            try { keyFile(fileName, business).writeText(source.nameWithoutExtension) } catch (_: Exception) {}
+        }
         "$folder/$name"
     } catch (e: Exception) {
         Log.e(TAG, "Storing $fileName failed: ${e.message}", e)
@@ -64,6 +101,7 @@ actual fun storeBillPdf(pdfPath: String, fileName: String, business: String): St
 actual fun deleteBillPdf(fileName: String, business: String) {
     if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) return
     try {
+        keyFile(fileName, business).delete()
         findBillPdf(billFolder(fileName, business), "$fileName.pdf")?.let {
             AppContext.context.contentResolver.delete(it, null, null)
         }
@@ -75,7 +113,8 @@ actual fun deleteBillPdf(fileName: String, business: String) {
 actual fun billPdfExists(fileName: String, business: String): Boolean {
     if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) return true
     return try {
-        findBillPdf(billFolder(fileName, business), "$fileName.pdf") != null
+        // A file without a remembered document key is made again once, so it can be trusted from then on
+        keyFile(fileName, business).exists() && findBillPdf(billFolder(fileName, business), "$fileName.pdf") != null
     } catch (e: Exception) {
         true
     }
