@@ -170,7 +170,7 @@ fun TextilesCustomerScreen(
                                 .padding(vertical = 20.dp),
                             contentAlignment = Alignment.Center
                         ) {
-                            ExpressiveContainedLoader(modifier = Modifier.size(34.dp), containerColor = colors.customerColor.copy(alpha = 0.12f), indicatorColor = colors.customerColor)
+                            ExpressiveContainedLoader(modifier = Modifier.size(48.dp), containerColor = colors.surface, indicatorColor = colors.textSecondary)
                             LaunchedEffect(Unit) {
                                 delay(400)
                                 visibleCustomerCount += pageSize

@@ -1,5 +1,6 @@
 package com.elvan.udukkai.ui.screens.preview
 
+import com.elvan.udukkai.ui.components.ExpressiveLoadingIndicator
 import com.elvan.udukkai.ui.components.ExpressiveContainedLoader
 import com.elvan.udukkai.ui.components.ExpressiveDotsLoader
 import com.elvan.udukkai.ui.components.shell.ElvanTopBarIconButton
@@ -155,7 +156,7 @@ private fun DocumentPreview(
                     contentPadding = PaddingValues()
                 )
             } else {
-                ExpressiveContainedLoader(modifier = Modifier.size(44.dp), containerColor = colors.textPrimary.copy(alpha = 0.12f), indicatorColor = colors.textPrimary)
+                ExpressiveContainedLoader(modifier = Modifier.size(48.dp), containerColor = colors.surface, indicatorColor = colors.textSecondary)
             }
         }
     }
@@ -218,7 +219,7 @@ private fun PreviewBottomArea(controller: DocumentPrintController, onEdit: (() -
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 if (controller.isBusy) {
-                    ExpressiveDotsLoader(modifier = Modifier.size(22.dp), color = colors.background)
+                    ExpressiveLoadingIndicator(modifier = Modifier.size(16.dp), color = colors.background, strokeWidth = 2.dp)
                 }
                 Text(
                     text = text.preventBrokenLigatures(),

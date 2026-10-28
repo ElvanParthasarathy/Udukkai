@@ -1,5 +1,6 @@
 package com.elvan.udukkai.ui.screens.onboarding.screens.steps
 
+import com.elvan.udukkai.theme.rememberShellColors
 import com.elvan.udukkai.ui.components.ExpressiveContainedLoader
 import com.elvan.udukkai.ui.components.ExpressiveDotsLoader
 import androidx.compose.animation.AnimatedContent
@@ -75,7 +76,7 @@ fun BackupCheckStep(
         verticalArrangement = Arrangement.Center
     ) {
         if (status == BackupStatus.CHECKING) {
-            ExpressiveContainedLoader(modifier = Modifier.size(44.dp), containerColor = textColor.copy(alpha = 0.12f), indicatorColor = textColor)
+            ExpressiveContainedLoader(modifier = Modifier.size(48.dp), containerColor = rememberShellColors().surface, indicatorColor = rememberShellColors().textSecondary)
             Spacer(modifier = Modifier.height(24.dp))
         } else {
             Icon(

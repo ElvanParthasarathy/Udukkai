@@ -165,7 +165,7 @@ fun FactoryItemScreen(
                                 .padding(vertical = 20.dp),
                             contentAlignment = Alignment.Center
                         ) {
-                            ExpressiveContainedLoader(modifier = Modifier.size(34.dp), containerColor = colors.itemColor.copy(alpha = 0.12f), indicatorColor = colors.itemColor)
+                            ExpressiveContainedLoader(modifier = Modifier.size(48.dp), containerColor = colors.surface, indicatorColor = colors.textSecondary)
                             LaunchedEffect(Unit) {
                                 visibleItemCount += pageSize
                             }

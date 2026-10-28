@@ -49,9 +49,9 @@ fun RestoreBanner(modifier: Modifier = Modifier) {
         verticalAlignment = Alignment.CenterVertically
     ) {
         ExpressiveContainedLoader(
-            modifier = Modifier.size(38.dp),
-            containerColor = colors.textPrimary.copy(alpha = 0.08f),
-            indicatorColor = colors.textPrimary
+            modifier = Modifier.size(48.dp),
+            containerColor = colors.background,
+            indicatorColor = colors.textSecondary
         )
         Spacer(Modifier.width(14.dp))
         Column {

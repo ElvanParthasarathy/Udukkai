@@ -1,5 +1,6 @@
 package com.elvan.udukkai.ui.screens.onboarding.components
 
+import com.elvan.udukkai.ui.components.ExpressiveLoadingIndicator
 import com.elvan.udukkai.ui.components.ExpressiveDotsLoader
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
@@ -492,7 +493,7 @@ fun AuthButton(
             contentAlignment = Alignment.Center
         ) {
             if (loading) {
-                ExpressiveDotsLoader(modifier = Modifier.size(30.dp), color = btnText.copy(alpha = 0.5f))
+                ExpressiveLoadingIndicator(modifier = Modifier.size(24.dp), color = btnText.copy(alpha = 0.5f))
             } else {
                 Text(
                     text = text,
