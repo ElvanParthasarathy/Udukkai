@@ -12,6 +12,7 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
+import androidx.compose.material3.ripple
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.*
@@ -254,7 +255,7 @@ private fun GoogleButton(text: String, loading: Boolean, enabled: Boolean, onCli
             .clickable(
                 enabled = enabled,
                 interactionSource = remember { MutableInteractionSource() },
-                indication = null,
+                indication = ripple(color = NeramColors.textPrimary(), bounded = true),
                 onClick = onClick
             ),
         contentAlignment = Alignment.Center

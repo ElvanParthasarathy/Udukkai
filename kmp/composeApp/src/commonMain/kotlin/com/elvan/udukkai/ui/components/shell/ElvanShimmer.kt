@@ -13,12 +13,21 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.unit.dp
 import com.elvan.udukkai.theme.Dimens
 import com.elvan.udukkai.theme.rememberShellColors
 
+/** True for a moment after signing in: the home page then shows its placeholder blocks while the data arrives. */
+object LoginShimmer {
+    var active by mutableStateOf(false)
+}
+
 /**
- * Animated sweep shimmer brush that moves horizontally with a subtle ~24° skew across skeleton placeholders.
+ * The placeholder fill, as in Neram: a soft grey that gently pulses (alpha 0.3 to 0.7, one second each way)
+ * instead of a sweeping highlight.
  */
 @Composable
 fun rememberShimmerBrush(
@@ -26,38 +35,14 @@ fun rememberShimmerBrush(
     durationMillis: Int = 1100
 ): Brush {
     val colors = rememberShellColors()
-    val isDark = colors.isDark
-
-    val shimmerColors = if (isDark) {
-        listOf(
-            Color(0xFF222222),
-            Color(0xFF333333),
-            Color(0xFF222222)
-        )
-    } else {
-        listOf(
-            Color(0xFFE8E8E8),
-            Color(0xFFF6F6F6),
-            Color(0xFFE8E8E8)
-        )
-    }
-
-    val transition = rememberInfiniteTransition(label = "shimmer_transition")
-    val translateAnim by transition.animateFloat(
-        initialValue = 0f,
-        targetValue = targetValue,
-        animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = durationMillis, easing = FastOutSlowInEasing),
-            repeatMode = RepeatMode.Restart
-        ),
-        label = "shimmer_translate"
+    val transition = rememberInfiniteTransition(label = "skeleton")
+    val pulse by transition.animateFloat(
+        initialValue = 0.3f,
+        targetValue = 0.7f,
+        animationSpec = infiniteRepeatable(animation = tween(1000), repeatMode = RepeatMode.Reverse),
+        label = "alpha"
     )
-
-    return Brush.linearGradient(
-        colors = shimmerColors,
-        start = Offset(translateAnim - 450f, 0f),
-        end = Offset(translateAnim, 200f)
-    )
+    return SolidColor(colors.textSecondary.copy(alpha = 0.2f * pulse))
 }
 
 /**

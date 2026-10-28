@@ -7,6 +7,7 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
+import androidx.compose.material3.ripple
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -97,7 +98,7 @@ internal fun NeramButton(
             .clickable(
                 enabled = active,
                 interactionSource = remember { MutableInteractionSource() },
-                indication = null,
+                indication = ripple(color = NeramColors.onAccent().copy(alpha = 0.35f), bounded = true),
                 onClick = onClick
             ),
         contentAlignment = Alignment.Center

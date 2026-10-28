@@ -9,6 +9,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.ripple
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -27,7 +28,7 @@ import com.elvan.udukkai.core.platform.getSystemLanguageCode
 import com.elvan.udukkai.theme.ThemeManager
 import com.elvan.udukkai.ui.navigation.MaterialSymbols
 
-private data class LanguageChoice(val code: String, val title: String)
+private data class LanguageChoice(val code: String, val title: String, val subtitle: String?)
 
 /**
  * The first page of the logged-out flow, laid out and animated like Neram's LanguageSelectionScreen:
@@ -40,20 +41,24 @@ fun LanguageSelectScreen(onContinue: () -> Unit) {
     val dark = ThemeManager.isDark()
     val cardShape = RoundedCornerShape(24.dp)
     val choices = listOf(
-        LanguageChoice("system", K.deviceLanguage.trWithLang(preview)),
-        LanguageChoice("ta", "தமிழ்"),
-        LanguageChoice("ta-Latn", "Thamizh"),
-        LanguageChoice("en", "English")
+        LanguageChoice("system", K.deviceLanguage.trWithLang(preview), null),
+        LanguageChoice("ta", "தமிழ்", K.langTamil.trWithLang(preview)),
+        LanguageChoice("ta-Latn", "Thamizh", K.langTamilLatin.trWithLang(preview)),
+        LanguageChoice("en", "English", K.langEnglish.trWithLang(preview))
     )
 
+    // Centred on the screen; only a screen too small for all of it scrolls, top to bottom
+    Column(modifier = Modifier.fillMaxSize().windowInsetsPadding(WindowInsets.safeDrawing)) {
+    BoxWithConstraints(modifier = Modifier.weight(1f).fillMaxWidth()) {
     Column(
         modifier = Modifier
-            .fillMaxSize()
-            .windowInsetsPadding(WindowInsets.safeDrawing)
-            .padding(horizontal = 16.dp),
+            .fillMaxWidth()
+            .heightIn(min = maxHeight)
+            .verticalScroll(rememberScrollState())
+            .padding(horizontal = 16.dp, vertical = 24.dp),
+        verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Spacer(Modifier.height(32.dp))
 
         NeramElement(delayIndex = 0) {
             Icon(
@@ -82,7 +87,7 @@ fun LanguageSelectScreen(onContinue: () -> Unit) {
 
         Spacer(Modifier.height(16.dp))
 
-        NeramElement(delayIndex = 2, modifier = Modifier.fillMaxWidth().weight(1f, fill = false)) {
+        NeramElement(delayIndex = 2, modifier = Modifier.fillMaxWidth()) {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -92,7 +97,6 @@ fun LanguageSelectScreen(onContinue: () -> Unit) {
                     )
                     .clip(cardShape)
                     .background(NeramColors.inputBackground())
-                    .verticalScroll(rememberScrollState())
                     .padding(vertical = 4.dp)
             ) {
                 choices.forEachIndexed { index, choice ->
@@ -102,21 +106,31 @@ fun LanguageSelectScreen(onContinue: () -> Unit) {
                             .fillMaxWidth()
                             .clickable(
                                 interactionSource = remember { MutableInteractionSource() },
-                                indication = null
+                                indication = ripple(color = if (dark) Color.White else Color.Black, bounded = true)
                             ) { selected = choice.code }
                             .padding(horizontal = 18.dp, vertical = 14.dp),
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
-                        Text(
-                            text = choice.title,
-                            style = TextStyle(
-                                fontSize = 16.sp,
-                                fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
-                                lineHeight = 21.sp
-                            ),
-                            color = if (isSelected) NeramColors.textPrimary() else NeramColors.textPrimary().copy(alpha = 0.75f)
-                        )
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = choice.title,
+                                style = TextStyle(
+                                    fontSize = 16.sp,
+                                    fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
+                                    lineHeight = 21.sp
+                                ),
+                                color = if (isSelected) NeramColors.textPrimary() else NeramColors.textPrimary().copy(alpha = 0.75f)
+                            )
+                            if (!choice.subtitle.isNullOrBlank()) {
+                                Spacer(Modifier.height(2.dp))
+                                Text(
+                                    text = choice.subtitle,
+                                    style = TextStyle(fontSize = 12.sp, lineHeight = 16.sp),
+                                    color = NeramColors.textSecondary()
+                                )
+                            }
+                        }
                         if (isSelected) {
                             Icon(
                                 imageVector = MaterialSymbols.Rounded.CheckCircleFill,
@@ -136,20 +150,18 @@ fun LanguageSelectScreen(onContinue: () -> Unit) {
                 }
             }
         }
+    }
+    }
 
-        Spacer(Modifier.weight(1f))
-
-        NeramElement(delayIndex = 3, modifier = Modifier.fillMaxWidth()) {
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                NeramButton(
-                    text = K.continueText.trWithLang(preview),
-                    onClick = {
-                        LanguageManager.setLanguageByCode(selected)
-                        onContinue()
-                    }
-                )
-                Spacer(Modifier.height(20.dp))
+    // The button stays where it is; only the part above it resizes or scrolls
+    NeramElement(delayIndex = 3, modifier = Modifier.fillMaxWidth().padding(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 20.dp)) {
+        NeramButton(
+            text = K.continueText.trWithLang(preview),
+            onClick = {
+                LanguageManager.setLanguageByCode(selected)
+                onContinue()
             }
-        }
+        )
+    }
     }
 }

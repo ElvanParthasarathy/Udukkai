@@ -44,7 +44,8 @@ fun FactoryDashboardScreen(
     val scope = rememberCoroutineScope()
     // Grey shimmer blocks also stand in while the cloud data is still arriving on a fresh sign-in
     val restoringEmpty = com.elvan.udukkai.core.sync.getFirebaseSyncManager().restoreProgress.value != null && FactoryInvoiceRepository.activeCompanyInvoices.isEmpty()
-    val showSkeleton = isRefreshing || isSwitchingCompany || restoringEmpty
+    val showSkeleton = isRefreshing || isSwitchingCompany || restoringEmpty ||
+        com.elvan.udukkai.ui.components.shell.LoginShimmer.active
 
     val recentBills = FactoryInvoiceRepository.recentInvoices
     val overallTotal = FactoryInvoiceRepository.overallTotal

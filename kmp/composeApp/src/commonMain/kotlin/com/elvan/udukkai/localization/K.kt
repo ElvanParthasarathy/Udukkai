@@ -6,6 +6,9 @@ package com.elvan.udukkai.localization
  * Total keys: 422
  */
 object K {
+    const val langTamil = "langTamil"
+    const val langTamilLatin = "langTamilLatin"
+    const val langEnglish = "langEnglish"
     const val typeNameToDelete = "typeNameToDelete"
     const val businessNameMismatch = "businessNameMismatch"
     const val lastBusinessCannotBeDeleted = "lastBusinessCannotBeDeleted"

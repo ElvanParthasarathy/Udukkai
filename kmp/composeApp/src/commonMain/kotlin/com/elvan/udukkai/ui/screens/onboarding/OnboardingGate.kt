@@ -21,11 +21,14 @@ import androidx.compose.ui.unit.dp
 import com.elvan.udukkai.theme.Dimens
 import com.elvan.udukkai.theme.rememberShellColors
 import com.elvan.udukkai.ui.components.shell.HomeStatsSkeleton
+import com.elvan.udukkai.ui.components.shell.LoginShimmer
 import com.elvan.udukkai.ui.components.shell.UruvakkuCardSkeleton
 import com.elvan.udukkai.ui.components.shell.rememberShimmerBrush
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.*
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.first
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import com.elvan.udukkai.core.auth.AppScope
@@ -64,6 +67,20 @@ fun OnboardingGate(
 
     // Every logged-out visit starts at the language page, as in Neram; signing out brings it back
     var page by remember(AuthManager.isLoggedIn) { mutableStateOf(AuthPage.LANGUAGE) }
+
+    // Right after signing in the real home page opens with placeholder blocks, which fill in as the data arrives
+    var freshLogin by remember { mutableStateOf(false) }
+    LaunchedEffect(AuthManager.isLoggedIn) {
+        if (!AuthManager.isLoggedIn) { freshLogin = false; LoginShimmer.active = false }
+    }
+    LaunchedEffect(freshLogin) {
+        if (freshLogin) {
+            LoginShimmer.active = true
+            delay(1500)
+            snapshotFlow { getFirebaseSyncManager().restoreProgress.value }.first { it == null }
+            LoginShimmer.active = false
+        }
+    }
 
     val stage = when {
         !AuthManager.isLoggedIn -> GateStage.AUTH
@@ -104,7 +121,11 @@ fun OnboardingGate(
                             AuthPage.WELCOME -> WelcomeScreen(onNavigateToLogin = { page = AuthPage.LOGIN })
                             AuthPage.LOGIN -> UllnuzhaivuThirai(
                                 onBack = { page = AuthPage.WELCOME },
-                                onLoginSuccess = { AuthManager.refreshProfileStatus() }
+                                onLoginSuccess = {
+                                    LoginShimmer.active = true
+                                    freshLogin = true
+                                    AuthManager.refreshProfileStatus()
+                                }
                             )
                         }
                     }
