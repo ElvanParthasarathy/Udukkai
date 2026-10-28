@@ -566,7 +566,7 @@ object K {
     const val taxRate = "taxRate"
     const val printOptions = "printOptions"
     const val optionsBtn = "optionsBtn"
-    const val savePdfBtn = "savePdfBtn"
+    const val openBtn = "openBtn"
     const val paperSize = "paperSize"
     const val paperOrientation = "paperOrientation"
     const val orientPortrait = "orientPortrait"

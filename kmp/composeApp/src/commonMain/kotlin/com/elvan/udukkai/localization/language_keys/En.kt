@@ -546,7 +546,7 @@ val en: Map<String, String> = mapOf(
     K.taxRate to "Tax Rate",
     K.printOptions to "Print options",
     K.optionsBtn to "Options",
-    K.savePdfBtn to "Save PDF",
+    K.openBtn to "Open",
     K.paperSize to "Paper size",
     K.paperOrientation to "Orientation",
     K.orientPortrait to "Portrait",

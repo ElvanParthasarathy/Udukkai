@@ -1,10 +1,13 @@
 package com.elvan.udukkai.core.platform
 
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.navigationBarsIgnoringVisibility
 import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.statusBarsIgnoringVisibility
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -14,6 +17,16 @@ import androidx.compose.ui.unit.dp
 @Composable
 actual fun getStatusBarTopPadding(): Dp =
     WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+actual fun getStatusBarHeightIgnoringVisibility(): Dp =
+    WindowInsets.statusBarsIgnoringVisibility.asPaddingValues().calculateTopPadding()
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+actual fun getNavBarHeightIgnoringVisibility(): Dp =
+    WindowInsets.navigationBarsIgnoringVisibility.asPaddingValues().calculateBottomPadding()
 
 @Composable
 actual fun getNavBarBottomPadding(): Dp {

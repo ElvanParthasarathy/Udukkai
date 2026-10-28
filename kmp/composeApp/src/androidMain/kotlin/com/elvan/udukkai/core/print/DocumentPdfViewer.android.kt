@@ -4,6 +4,9 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.DisposableEffect
+import kotlinx.coroutines.delay
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.mutableStateOf
@@ -31,15 +34,35 @@ actual fun DocumentPdfViewer(
     val background = MaterialTheme.colorScheme.background.toArgb()
     var loaded by remember { mutableStateOf<String?>(null) }
 
+    var pdfView by remember { mutableStateOf<PDFView?>(null) }
+    var zoomFlag by remember { mutableStateOf(false) }
+    // Zooming in goes full screen like a photo gallery; back at fit-to-width the bars return
+    LaunchedEffect(pdfView) {
+        val view = pdfView ?: return@LaunchedEffect
+        while (true) {
+            delay(100)
+            val zoomed = view.zoom > 1.05f
+            if (zoomed != zoomFlag) {
+                zoomFlag = zoomed
+                controller.immersive = zoomed
+            }
+        }
+    }
+    DisposableEffect(Unit) {
+        onDispose { controller.immersive = false }
+    }
+
     AndroidView(
         modifier = modifier.fillMaxSize().padding(contentPadding).clipToBounds(),
-        factory = { ctx -> PDFView(ctx, null).apply { setBackgroundColor(background) } },
+        factory = { ctx -> PDFView(ctx, null).apply { setBackgroundColor(background); pdfView = this } },
         update = { view ->
             if (loaded != path) {
                 loaded = path
                 view.fromFile(File(path))
                     .enableSwipe(true)
                     .enableDoubletap(true)
+                    .onRender { view.resetZoom() }
+                    .onTap { controller.immersive = !controller.immersive; true }
                     .swipeHorizontal(false)
                     .pageFitPolicy(FitPolicy.WIDTH)
                     .spacing(8)

@@ -1,5 +1,9 @@
 package com.elvan.udukkai.ui.screens.view
 
+import androidx.compose.ui.unit.IntOffset
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.*
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
@@ -10,8 +14,6 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.window.Dialog
-import androidx.compose.ui.window.DialogProperties
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
@@ -151,88 +153,64 @@ fun ViewTile(
             modifier = Modifier.size(1.dp).graphicsLayer { alpha = 0f }
         )
     }
+    val preparingMsg = K.preparingPdf.tr()
+    // Print and Share go straight to the system dialog / share sheet; only Preview shows the page
     val openDocument: (DocumentPrintAction?) -> Unit = { action ->
+        if (action != null && !printController.isReady) ElvanSnackbar.show(preparingMsg)
         when (action) {
             DocumentPrintAction.Print -> printController.print()
             DocumentPrintAction.Share -> printController.share()
-            DocumentPrintAction.Save -> printController.save()
-            null -> Unit
+            DocumentPrintAction.Open -> printController.open()
+            null -> showPreview = true
         }
-        showPreview = true
     }
 
-    if (isDocument) {
-        // Document views use a plain fixed top bar instead of the collapsing One UI header.
-        SideEffect { ElvanSnackbar.isBottomBarVisible = true }
-        val navBarsPadding = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(colors.background)
-        ) {
-            Box(modifier = modifier.fillMaxSize()) {
-                CompositionLocalProvider(LocalElvanTopSpacerHeight provides elvanStandardTopBarInset()) {
-                    content()
-                }
-            }
-            val scrolled by remember(scrollState) {
-                derivedStateOf { scrollState.firstVisibleItemIndex > 0 || scrollState.firstVisibleItemScrollOffset > 8 }
-            }
-            ElvanStandardTopBar(
-                title = title,
-                onBack = onBack,
-                scrolled = scrolled,
-                modifier = Modifier.align(Alignment.TopCenter).zIndex(100f)
-            )
-            // Soft fade above the system navigation bar, then the floating action pill
+    Box(modifier = Modifier.fillMaxSize()) {
+        if (isDocument) {
+            // Document views use a plain fixed top bar instead of the collapsing One UI header.
+            SideEffect { ElvanSnackbar.isBottomBarVisible = true }
+            val navBarsPadding = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
             Box(
                 modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .fillMaxWidth()
-                    .height(72.dp + navBarsPadding)
-                    .background(
-                        Brush.verticalGradient(
-                            0.0f to Color.Transparent,
-                            0.3f to colors.background.copy(alpha = 0.16f),
-                            0.65f to colors.background.copy(alpha = 0.55f),
-                            1.0f to colors.background
-                        )
-                    )
-            )
-            Box(
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .fillMaxWidth()
-                    .zIndex(100f),
-                contentAlignment = Alignment.BottomCenter
+                    .fillMaxSize()
+                    .background(colors.background)
             ) {
-                ElvanViewActionBar(
-                    onEdit = onEdit,
-                    onPreview = onPreview ?: { openDocument(null) },
-                    onPrint = onPrint ?: if (canRender) ({ openDocument(DocumentPrintAction.Print) }) else null,
-                    onShare = onShare ?: if (canRender) ({ openDocument(DocumentPrintAction.Share) }) else null,
-                    onCopy = onCopy,
-                    isDocument = true
-                )
-            }
-        }
-    } else {
-        ElvanSubShell(
-            title = title,
-            onBack = onBack,
-            scrollState = scrollState,
-            hasActions = !isDocument && onEdit != null,
-            actions = {
-                if (!isDocument && onEdit != null) {
-                    ElvanActionButton(
-                        label = K.editRecord.tr(),
-                        onClick = onEdit
-                    )
+                Box(modifier = modifier.fillMaxSize()) {
+                    CompositionLocalProvider(LocalElvanTopSpacerHeight provides elvanStandardTopBarInset()) {
+                        content()
+                    }
                 }
-            },
-            showBottomFade = isDocument,
-            floatingBar = {
-                if (isDocument) {
+                val scrolled by remember(scrollState) {
+                    derivedStateOf { scrollState.firstVisibleItemIndex > 0 || scrollState.firstVisibleItemScrollOffset > 8 }
+                }
+                ElvanStandardTopBar(
+                    title = title,
+                    onBack = onBack,
+                    scrolled = scrolled,
+                    modifier = Modifier.align(Alignment.TopCenter).zIndex(100f)
+                )
+                // Soft fade above the system navigation bar, then the floating action pill
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.BottomCenter)
+                        .fillMaxWidth()
+                        .height(72.dp + navBarsPadding)
+                        .background(
+                            Brush.verticalGradient(
+                                0.0f to Color.Transparent,
+                                0.3f to colors.background.copy(alpha = 0.16f),
+                                0.65f to colors.background.copy(alpha = 0.55f),
+                                1.0f to colors.background
+                            )
+                        )
+                )
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.BottomCenter)
+                        .fillMaxWidth()
+                        .zIndex(100f),
+                    contentAlignment = Alignment.BottomCenter
+                ) {
                     ElvanViewActionBar(
                         onEdit = onEdit,
                         onPreview = onPreview ?: { openDocument(null) },
@@ -242,24 +220,56 @@ fun ViewTile(
                         isDocument = true
                     )
                 }
-            },
-            content = {
-                Box(modifier = modifier.fillMaxSize()) {
-                    content()
-                }
             }
-        )
-    }
-
-    if (showPreview) {
-        Dialog(
-            onDismissRequest = { showPreview = false },
-            properties = DialogProperties(usePlatformDefaultWidth = false)
+        } else {
+            ElvanSubShell(
+                title = title,
+                onBack = onBack,
+                scrollState = scrollState,
+                hasActions = !isDocument && onEdit != null,
+                actions = {
+                    if (!isDocument && onEdit != null) {
+                        ElvanActionButton(
+                            label = K.editRecord.tr(),
+                            onClick = onEdit
+                        )
+                    }
+                },
+                showBottomFade = isDocument,
+                floatingBar = {
+                    if (isDocument) {
+                        ElvanViewActionBar(
+                            onEdit = onEdit,
+                            onPreview = onPreview ?: { openDocument(null) },
+                            onPrint = onPrint ?: if (canRender) ({ openDocument(DocumentPrintAction.Print) }) else null,
+                            onShare = onShare ?: if (canRender) ({ openDocument(DocumentPrintAction.Share) }) else null,
+                            onCopy = onCopy,
+                            isDocument = true
+                        )
+                    }
+                },
+                content = {
+                    Box(modifier = modifier.fillMaxSize()) {
+                        content()
+                    }
+                }
+            )
+        }
+        // Slides in from the right and back out, like the other sub-pages
+        val slide = spring<IntOffset>(stiffness = Spring.StiffnessLow, dampingRatio = Spring.DampingRatioNoBouncy)
+        AnimatedVisibility(
+            visible = showPreview,
+            enter = slideInHorizontally(slide) { it },
+            exit = slideOutHorizontally(slide) { it }
         ) {
+            // A layer of the main window (not a Dialog), so the system bars hide and show over a
+            // window that never changes size, like every other screen
+            AppBackHandler(enabled = showPreview) { showPreview = false }
             PreviewScreen(
                 title = K.previewBtn.tr(),
                 subtitle = title,
                 onBack = { showPreview = false },
+                onEdit = onEdit?.let { edit -> { showPreview = false; edit() } },
                 printPayload = payload,
                 printFileName = printFileName,
                 printController = printController,

@@ -1,5 +1,6 @@
 package com.elvan.udukkai.ui.screens.view
 
+import com.elvan.udukkai.core.print.receiptPdfName
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
@@ -73,7 +74,7 @@ fun ReceiptViewScreen(
         onEdit = onEdit,
         onPrint = onPrint,
         printPayload = printPayload?.let { build -> { build(activeProfile) } },
-        printFileName = "RCPT_" + receipt.receiptNumber.replace('/', '-')
+        printFileName = receiptPdfName(receipt)
     ) {
         LazyColumn(
             state = scrollState,

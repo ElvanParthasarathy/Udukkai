@@ -1,5 +1,7 @@
 package com.elvan.udukkai.factory.ui.screens.editor
 
+import com.elvan.udukkai.core.print.BillPdfAutoSave
+import com.elvan.udukkai.core.print.invoicePdfName
 import androidx.compose.ui.Alignment
 import com.elvan.udukkai.ui.screens.editor.ElvanEditorBottomBar
 import com.elvan.udukkai.ui.components.shell.ElvanSnackbar
@@ -475,6 +477,7 @@ fun FactoryInvoiceEditorScreen(
                     updatedAt = System.currentTimeMillis()
                 )
                 val savedId = FactoryInvoiceRepository.save(newInvoice)
+                BillPdfAutoSave.request(BillPdfAutoSave.Kind.Invoice, savedId, invoice?.takeIf { it.id > 0L }?.let(::invoicePdfName))
                 prefs.setString(draftKey, null)
                 isExiting = true
                 hasUnsavedChanges = false

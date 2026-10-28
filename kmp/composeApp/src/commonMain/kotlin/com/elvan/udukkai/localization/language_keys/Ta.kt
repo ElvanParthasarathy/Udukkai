@@ -547,7 +547,7 @@ val ta: Map<String, String> = mapOf(
     K.taxRate to "வரி வீதம்",
     K.printOptions to "அச்சு அமைப்புகள்",
     K.optionsBtn to "அமைப்புகள்",
-    K.savePdfBtn to "PDF சேமி",
+    K.openBtn to "திற",
     K.paperSize to "தாள் அளவு",
     K.paperOrientation to "தாள் திசை",
     K.orientPortrait to "நிலைக்குத்து",

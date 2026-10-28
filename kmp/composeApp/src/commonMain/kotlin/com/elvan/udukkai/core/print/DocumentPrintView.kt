@@ -13,7 +13,7 @@ import androidx.compose.ui.unit.dp
 /** Whether this platform can render the React print templates. */
 expect val isDocumentPrintSupported: Boolean
 
-enum class DocumentPrintAction { Print, Share, Save }
+enum class DocumentPrintAction { Print, Share, Open }
 
 enum class PrintNoticeKind { Saved, Failed }
 
@@ -32,6 +32,9 @@ class DocumentPrintController {
 
     /** Current zoom level of the shown sheet (1 = fitted to the screen). */
     var zoomScale by mutableStateOf(1f)
+
+    /** True while the preview hides its bars so the page fills the screen (zoomed in, or tapped). */
+    var immersive by mutableStateOf(false)
 
     /** Local path of the finished PDF (changes when the document or the options change). */
     var pdfPath by mutableStateOf<String?>(null)
@@ -61,7 +64,7 @@ class DocumentPrintController {
 
     fun print() = request(DocumentPrintAction.Print)
     fun share() = request(DocumentPrintAction.Share)
-    fun save() = request(DocumentPrintAction.Save)
+    fun open() = request(DocumentPrintAction.Open)
 
     private fun request(action: DocumentPrintAction) {
         val h = handler

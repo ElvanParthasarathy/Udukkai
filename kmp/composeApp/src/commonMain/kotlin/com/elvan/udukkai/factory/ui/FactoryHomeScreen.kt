@@ -1,5 +1,11 @@
 package com.elvan.udukkai.factory.ui
 
+import androidx.compose.runtime.LaunchedEffect
+import com.elvan.udukkai.core.print.BillPdfAutoSave
+import com.elvan.udukkai.core.print.BillPdfAutoSaveHost
+import com.elvan.udukkai.core.print.BillPdfJob
+import com.elvan.udukkai.core.print.invoicePdfName
+import com.elvan.udukkai.core.print.receiptPdfName
 import androidx.compose.animation.*
 import androidx.compose.animation.core.CubicBezierEasing
 import androidx.compose.animation.core.tween
@@ -213,6 +219,46 @@ fun FactoryHomeScreen() {
             .fillMaxSize()
             .background(colors.background)
     ) {
+        // Bills that have no PDF yet get one a moment after the app opens
+        LaunchedEffect(Unit) {
+            delay(8000)
+            BillPdfAutoSave.syncMissing(FactoryInvoiceRepository.invoices, FactoryReceiptRepository.receipts)
+        }
+
+        // Writes the PDF of every saved bill to the documents folder
+        BillPdfAutoSaveHost { request ->
+            val lang = if (LanguageManager.activeLanguageCode.startsWith("ta")) "ta" else "en"
+            when (request.kind) {
+                BillPdfAutoSave.Kind.Invoice -> FactoryInvoiceRepository.invoices.find { it.id == request.id }?.let { invoice ->
+                    val profile = FactoryProfileRepository.profiles.find { it.id == invoice.companyId } ?: FactoryProfileRepository.profile
+                    BillPdfJob(
+                        PrintPayload.forFactoryInvoice(
+                            invoice = invoice,
+                            profile = profile,
+                            customer = invoice.customerId?.let { FactoryCustomerRepository.getById(it) },
+                            appLanguage = lang
+                        ),
+                        invoicePdfName(invoice)
+                    )
+                }
+                BillPdfAutoSave.Kind.Receipt -> FactoryReceiptRepository.receipts.find { it.id == request.id }?.let { receipt ->
+                    val profile = FactoryProfileRepository.profiles.find { it.id == receipt.companyId } ?: FactoryProfileRepository.profile
+                    BillPdfJob(
+                        PrintPayload.forReceipt(
+                            receipt = receipt,
+                            profile = profile,
+                            invoiceNumbers = FactoryReceiptRepository.getLinksForReceipt(receipt.id).mapNotNull { link ->
+                                FactoryInvoiceRepository.invoices.find { it.id == link.invoiceId }?.invoiceNumber
+                            },
+                            isCoolie = true,
+                            appLanguage = lang
+                        ),
+                        receiptPdfName(receipt)
+                    )
+                }
+            }
+        }
+
         val isWideScreen = isDesktop && maxWidth >= 768.dp
 
         val shouldShowBottomBarForSnackbar = (activeSubpage !is ActiveSubpage.Settings) && !isWideScreen

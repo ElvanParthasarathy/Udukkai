@@ -17,3 +17,8 @@ actual fun ConfigureDialogWindow(
 actual fun DisableOverscroll(content: @androidx.compose.runtime.Composable () -> Unit) {
     content()
 }
+
+@androidx.compose.runtime.Composable
+actual fun HideSystemBars(hidden: Boolean) {
+    // No system bars on desktop
+}

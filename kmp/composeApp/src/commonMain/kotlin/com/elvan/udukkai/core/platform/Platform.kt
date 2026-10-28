@@ -15,3 +15,7 @@ expect fun ConfigureDialogWindow(
 
 @androidx.compose.runtime.Composable
 expect fun DisableOverscroll(content: @androidx.compose.runtime.Composable () -> Unit)
+
+/** Hides the status and navigation bars of the current (dialog) window while [hidden], like a photo gallery. */
+@androidx.compose.runtime.Composable
+expect fun HideSystemBars(hidden: Boolean)

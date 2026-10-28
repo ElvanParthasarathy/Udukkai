@@ -14,6 +14,7 @@ import android.view.WindowManager
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.SideEffect
+import androidx.compose.runtime.remember
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.window.DialogWindowProvider
@@ -189,3 +190,42 @@ actual fun DisableOverscroll(content: @Composable () -> Unit) {
     }
 }
 
+
+@Composable
+actual fun HideSystemBars(hidden: Boolean) {
+    val view = LocalView.current
+    val window = remember(view) {
+        var ctx = view.context
+        var found: Window? = null
+        while (ctx is ContextWrapper && found == null) {
+            if (ctx is Activity) found = ctx.window
+            ctx = ctx.baseContext
+        }
+        found
+    }
+    DisposableEffect(window) {
+        // Draw into the camera cutout, like the rest of the app, so hiding the bars moves nothing
+        val previous = if (window != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            window.attributes.layoutInDisplayCutoutMode.also {
+                window.attributes = window.attributes.apply {
+                    layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
+                }
+            }
+        } else null
+        onDispose {
+            if (window != null && previous != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                window.attributes = window.attributes.apply { layoutInDisplayCutoutMode = previous }
+            }
+        }
+    }
+    DisposableEffect(window, hidden) {
+        val controller = window?.let { WindowCompat.getInsetsController(it, it.decorView) }
+        controller?.systemBarsBehavior = androidx.core.view.WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+        if (hidden) {
+            controller?.hide(androidx.core.view.WindowInsetsCompat.Type.systemBars())
+        } else {
+            controller?.show(androidx.core.view.WindowInsetsCompat.Type.systemBars())
+        }
+        onDispose { controller?.show(androidx.core.view.WindowInsetsCompat.Type.systemBars()) }
+    }
+}

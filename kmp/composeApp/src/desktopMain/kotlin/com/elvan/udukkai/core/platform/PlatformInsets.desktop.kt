@@ -12,6 +12,12 @@ actual fun getStatusBarTopPadding(): Dp = 0.dp
 actual fun getNavBarBottomPadding(): Dp = 0.dp
 
 @Composable
+actual fun getStatusBarHeightIgnoringVisibility(): Dp = 0.dp
+
+@Composable
+actual fun getNavBarHeightIgnoringVisibility(): Dp = 0.dp
+
+@Composable
 actual fun getImeBottomPadding(): Dp = 0.dp
 
 @Composable

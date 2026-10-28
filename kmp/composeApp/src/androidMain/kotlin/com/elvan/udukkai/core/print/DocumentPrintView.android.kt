@@ -1,5 +1,8 @@
 package com.elvan.udukkai.core.print
 
+import com.elvan.udukkai.R
+import com.elvan.udukkai.theme.AppFont
+import com.elvan.udukkai.theme.FontManager
 import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.ContextWrapper
@@ -7,6 +10,7 @@ import android.content.ContentValues
 import android.content.Context
 import android.content.Intent
 import android.graphics.pdf.PdfRenderer
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.os.CancellationSignal
@@ -154,6 +158,13 @@ private open class AssetPrintClient(private val context: Context) : WebViewClien
                 "html" -> "text/html"
                 else -> MimeTypeMap.getSingleton().getMimeTypeFromExtension(ext) ?: "application/octet-stream"
             }
+            // The template names "Elvan Sans" everywhere; with Navil Sans selected in the app the
+            // same font requests are answered with the Navil Sans files
+            navilSansFont(path)?.let { resource ->
+                return WebResourceResponse("font/ttf", null, context.resources.openRawResource(resource)).apply {
+                    responseHeaders = mapOf("Access-Control-Allow-Origin" to "*")
+                }
+            }
             WebResourceResponse(mime, "utf-8", context.assets.open("print/$path")).apply {
                 responseHeaders = mapOf("Access-Control-Allow-Origin" to "*")
             }
@@ -164,6 +175,19 @@ private open class AssetPrintClient(private val context: Context) : WebViewClien
     }
 
     override fun shouldOverrideUrlLoading(view: WebView, request: WebResourceRequest): Boolean = true
+}
+
+/** The Navil Sans file standing in for a requested Elvan Sans file, or null to serve it as it is. */
+private fun navilSansFont(path: String): Int? {
+    if (FontManager.currentFont != AppFont.NAVIL_SANS) return null
+    if (!path.startsWith("fonts/ElvanSans-")) return null
+    val style = path.removePrefix("fonts/ElvanSans-").substringBeforeLast('.').removeSuffix("Italic")
+    return when (style) {
+        "Medium" -> R.font.navil_sans_medium
+        "SemiBold" -> R.font.navil_sans_semibold
+        "Bold" -> R.font.navil_sans_bold
+        else -> R.font.navil_sans_regular
+    }
 }
 
 private fun cacheDir(context: Context): File = File(context.cacheDir, CACHE_DIR).apply { mkdirs() }
@@ -178,7 +202,7 @@ private fun cacheKey(context: Context, payloadJson: String, options: PrintOption
     // Item ids are made from the clock each time a document is loaded; they do not affect the print
     val stable = payloadJson.replace(Regex("\"id\":\"[0-9]{10,}_[0-9]+\""), "\"id\":\"\"")
     val digest = MessageDigest.getInstance("SHA-256")
-        .digest("$stable|${options.toJson()}|$build|v1".toByteArray())
+        .digest("$stable|${options.toJson()}|$build|${FontManager.currentFont.id}|v1".toByteArray())
     return digest.joinToString("") { "%02x".format(it) }.take(32)
 }
 
@@ -466,7 +490,7 @@ private class PrintBridge(
             when (action) {
                 DocumentPrintAction.Print -> printPdf(bytes, pages)
                 DocumentPrintAction.Share -> sharePdf(bytes)
-                DocumentPrintAction.Save -> savePdf(bytes)
+                DocumentPrintAction.Open -> openPdf(file, bytes)
             }
             controller.isBusy = false
         } catch (e: Exception) {
@@ -519,16 +543,20 @@ private class PrintBridge(
         manager.print(name, adapter, attributes)
     }
 
-    private fun sharePdf(bytes: ByteArray) {
+    // The PDF in app storage that the share and open intents can hand to other apps
+    private fun stagePdf(bytes: ByteArray, name: String): Uri {
         val dir = File(context.filesDir, "shared_pdfs").apply { mkdirs() }
         dir.listFiles()?.forEach { it.delete() }
-        val name = safeName()
         val file = File(dir, "$name.pdf")
         file.writeBytes(bytes)
-        val uri = FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", file)
+        return FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", file)
+    }
+
+    private fun sharePdf(bytes: ByteArray) {
+        val name = safeName()
         val intent = Intent(Intent.ACTION_SEND).apply {
             type = "application/pdf"
-            putExtra(Intent.EXTRA_STREAM, uri)
+            putExtra(Intent.EXTRA_STREAM, stagePdf(bytes, name))
             putExtra(Intent.EXTRA_SUBJECT, name)
             addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
         }
@@ -537,20 +565,21 @@ private class PrintBridge(
         else context.startActivity(Intent.createChooser(intent, name).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
     }
 
-    // Saves to Documents/Udukkai (visible in Files). Before Android 10 that needs a storage
-    // permission the app does not ask for, so the share sheet is used instead.
-    private fun savePdf(bytes: ByteArray) {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) return sharePdf(bytes)
+    // Opens the bill's PDF in the phone's PDF viewer. The copy in Documents/Udukkai is refreshed
+    // first, so what opens always matches what is stored.
+    private fun openPdf(file: File, bytes: ByteArray) {
         val name = safeName()
-        val resolver = context.contentResolver
-        val values = ContentValues().apply {
-            put(MediaStore.MediaColumns.DISPLAY_NAME, "$name.pdf")
-            put(MediaStore.MediaColumns.MIME_TYPE, "application/pdf")
-            put(MediaStore.MediaColumns.RELATIVE_PATH, "${Environment.DIRECTORY_DOCUMENTS}/Udukkai")
+        storeBillPdf(file.absolutePath, name)
+        val intent = Intent(Intent.ACTION_VIEW).apply {
+            setDataAndType(stagePdf(bytes, name), "application/pdf")
+            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
         }
-        val uri = resolver.insert(MediaStore.Files.getContentUri("external"), values)
-            ?: throw IllegalStateException("MediaStore insert failed")
-        resolver.openOutputStream(uri)?.use { it.write(bytes) } ?: throw IllegalStateException("No output stream")
-        controller.notice = PrintNotice(PrintNoticeKind.Saved, "Documents/Udukkai/$name.pdf")
+        val launcher = uiContext?.findActivity()
+        try {
+            if (launcher != null) launcher.startActivity(intent)
+            else context.startActivity(intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+        } catch (e: android.content.ActivityNotFoundException) {
+            controller.notice = PrintNotice(PrintNoticeKind.Failed)
+        }
     }
 }

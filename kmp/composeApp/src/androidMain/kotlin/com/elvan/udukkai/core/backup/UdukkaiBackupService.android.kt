@@ -39,12 +39,31 @@ class AndroidUdukkaiBackupService : UdukkaiBackupService {
      */
     private fun getExternalBackupDir(): File? {
         return try {
-            val dir = File("/storage/emulated/0/Documents/Udukkai/backup")
+            // A dot folder: hidden from file managers and the gallery, but still outside the app so it
+            // survives an uninstall
+            val dir = File("/storage/emulated/0/Documents/.Udukkai/backup")
             if (!dir.exists()) dir.mkdirs()
+            File(dir, ".nomedia").let { if (!it.exists()) it.createNewFile() }
+            moveVisibleBackups(dir)
             dir
         } catch (_: Exception) {
             null
         }
+    }
+
+    /** Backups used to sit in the visible Documents/Udukkai/backup: moved here once, never lost. */
+    private fun moveVisibleBackups(hidden: File) {
+        val old = File("/storage/emulated/0/Documents/Udukkai/backup")
+        if (!old.isDirectory) return
+        old.listFiles()?.filter { it.isFile }?.forEach { file ->
+            val target = File(hidden, file.name)
+            try {
+                if (!target.exists() || target.length() < file.length()) file.copyTo(target, overwrite = true)
+                // The original goes only after the copy is complete
+                if (target.length() == file.length()) file.delete()
+            } catch (_: Exception) {}
+        }
+        if (old.listFiles().isNullOrEmpty()) old.delete()
     }
 
     private fun modePrefix(mode: String?): String {

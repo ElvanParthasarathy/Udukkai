@@ -48,7 +48,8 @@ fun ElvanStandardTopBar(
     title: String,
     onBack: () -> Unit,
     scrolled: Boolean,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    statusTop: Dp = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
 ) {
     val colors = rememberShellColors()
     val lift by animateFloatAsState(
@@ -56,7 +57,6 @@ fun ElvanStandardTopBar(
         animationSpec = tween(200),
         label = "top_bar_lift"
     )
-    val statusTop = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
 
     Box(modifier = modifier.fillMaxWidth()) {
         // Same top fade mask as the normal screens

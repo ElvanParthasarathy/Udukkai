@@ -12,6 +12,9 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.LaunchedEffect
@@ -26,8 +29,8 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import com.elvan.udukkai.ui.components.shell.ElvanFloatingAction
 import com.elvan.udukkai.ui.components.shell.ElvanFloatingActionBar
-import com.elvan.udukkai.ui.components.shell.LocalGlobalHeaderExpanded
-import com.elvan.udukkai.core.platform.getStatusBarTopPadding
+import com.elvan.udukkai.ui.components.shell.ElvanSubShell2
+import com.elvan.udukkai.core.platform.HideSystemBars
 import com.elvan.udukkai.core.print.DocumentPrintController
 import com.elvan.udukkai.core.print.DocumentPrintView
 import com.elvan.udukkai.core.print.DocumentPdfViewer
@@ -64,6 +67,7 @@ fun PreviewScreen(
     title: String = K.previewBtn.tr(),
     subtitle: String? = null,
     onBack: () -> Unit,
+    onEdit: (() -> Unit)? = null,
     printPayload: String? = null,
     printFileName: String = subtitle ?: title,
     printController: DocumentPrintController? = null,
@@ -74,6 +78,7 @@ fun PreviewScreen(
         DocumentPreview(
             title = title,
             onBack = onBack,
+            onEdit = onEdit,
             payloadJson = printPayload,
             fileName = printFileName,
             controller = controller,
@@ -88,35 +93,25 @@ fun PreviewScreen(
 private fun DocumentPreview(
     title: String,
     onBack: () -> Unit,
+    onEdit: (() -> Unit)?,
     payloadJson: String,
     fileName: String,
     controller: DocumentPrintController,
     externalPrintView: Boolean
 ) {
     val colors = rememberShellColors()
-    val navBarsBottom = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
-    // Room for the shell header (back button and shrunk title) under the status bar
-    val topInset = getStatusBarTopPadding() + 76.dp
 
-    var showOptions by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) {
         if (controller.fileName.isBlank()) controller.fileName = fileName
     }
 
-    // A PDF has no list to collapse the title with, so the shell starts in its compact state
-    val headerExpanded = LocalGlobalHeaderExpanded.current
-    remember { headerExpanded.value = false }
+    HideSystemBars(hidden = controller.immersive)
 
-    ElvanSubShell(
+    ElvanSubShell2(
         title = title,
         onBack = onBack,
-        scrollState = rememberLazyListState(),
-        showBottomFade = false,
-        floatingBar = {
-            BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
-                PreviewBottomArea(controller, showOptions, { showOptions = it }, maxHeight * 0.75f)
-            }
-        }
+        hideChrome = controller.immersive,
+        floatingBar = { PreviewBottomArea(controller, onEdit) }
     ) {
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             // The web page only prepares the PDF; it stays hidden (unless the caller already hosts it)
@@ -135,7 +130,7 @@ private fun DocumentPreview(
                 DocumentPdfViewer(
                     controller = controller,
                     modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(top = topInset, bottom = 96.dp + navBarsBottom)
+                    contentPadding = PaddingValues()
                 )
             } else {
                 CircularProgressIndicator(color = colors.textPrimary)
@@ -144,17 +139,12 @@ private fun DocumentPreview(
     }
 }
 
-/** Status pill, options panel and the action pill, stacked above the system navigation bar. */
+/** Status pill and the action pill, stacked above the system navigation bar. */
 @Composable
-private fun PreviewBottomArea(
-    controller: DocumentPrintController,
-    showOptions: Boolean,
-    setShowOptions: (Boolean) -> Unit,
-    maxHeight: androidx.compose.ui.unit.Dp
-) {
+private fun PreviewBottomArea(controller: DocumentPrintController, onEdit: (() -> Unit)?) {
     val colors = rememberShellColors()
     Column(
-        modifier = Modifier.fillMaxWidth().heightIn(max = maxHeight),
+        modifier = Modifier.fillMaxWidth(),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Bottom
     ) {
@@ -194,31 +184,31 @@ private fun PreviewBottomArea(
                 )
             }
         }
-        if (showOptions && controller.isReady) {
-            PrintOptionsPanel(controller, modifier = Modifier.weight(1f, fill = false))
-        }
         if (controller.isReady) {
+            // Same slots as the view page's bar: Edit, then Open where Preview was, Print, Share
             ElvanFloatingActionBar(
-                actions = listOf(
+                actions = listOfNotNull(
+                    onEdit?.let {
+                        ElvanFloatingAction(
+                            label = K.editToolbarBtn.tr(),
+                            icon = MaterialSymbols.Rounded.Edit,
+                            onClick = it
+                        )
+                    },
                     ElvanFloatingAction(
-                        label = K.optionsBtn.tr(),
-                        icon = MaterialSymbols.Rounded.Tune,
-                        onClick = { setShowOptions(!showOptions) }
+                        label = K.openBtn.tr(),
+                        icon = MaterialSymbols.Rounded.Description,
+                        onClick = { controller.open() }
                     ),
                     ElvanFloatingAction(
                         label = K.printBtn.tr(),
                         icon = MaterialSymbols.Rounded.Print,
-                        onClick = { setShowOptions(false); controller.print() }
-                    ),
-                    ElvanFloatingAction(
-                        label = K.savePdfBtn.tr(),
-                        icon = MaterialSymbols.Rounded.Download,
-                        onClick = { setShowOptions(false); controller.save() }
+                        onClick = { controller.print() }
                     ),
                     ElvanFloatingAction(
                         label = K.shareBtn.tr(),
                         icon = MaterialSymbols.Rounded.Share,
-                        onClick = { setShowOptions(false); controller.share() }
+                        onClick = { controller.share() }
                     )
                 )
             )

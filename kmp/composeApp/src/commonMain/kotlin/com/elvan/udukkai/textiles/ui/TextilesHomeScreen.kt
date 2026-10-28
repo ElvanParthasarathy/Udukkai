@@ -1,5 +1,11 @@
 package com.elvan.udukkai.textiles.ui
 
+import androidx.compose.runtime.LaunchedEffect
+import com.elvan.udukkai.core.print.BillPdfAutoSave
+import com.elvan.udukkai.core.print.BillPdfAutoSaveHost
+import com.elvan.udukkai.core.print.BillPdfJob
+import com.elvan.udukkai.core.print.invoicePdfName
+import com.elvan.udukkai.core.print.receiptPdfName
 import androidx.compose.animation.*
 import androidx.compose.animation.core.CubicBezierEasing
 import androidx.compose.animation.core.tween
@@ -213,6 +219,46 @@ fun TextilesHomeScreen() {
             .fillMaxSize()
             .background(colors.background)
     ) {
+        // Bills that have no PDF yet get one a moment after the app opens
+        LaunchedEffect(Unit) {
+            delay(8000)
+            BillPdfAutoSave.syncMissing(TextilesInvoiceRepository.invoices, TextilesReceiptRepository.receipts)
+        }
+
+        // Writes the PDF of every saved bill to the documents folder
+        BillPdfAutoSaveHost { request ->
+            val lang = if (LanguageManager.activeLanguageCode.startsWith("ta")) "ta" else "en"
+            when (request.kind) {
+                BillPdfAutoSave.Kind.Invoice -> TextilesInvoiceRepository.invoices.find { it.id == request.id }?.let { invoice ->
+                    val profile = TextilesProfileRepository.profiles.find { it.id == invoice.companyId } ?: TextilesProfileRepository.profile
+                    BillPdfJob(
+                        PrintPayload.forTextilesInvoice(
+                            invoice = invoice,
+                            profile = profile,
+                            customer = invoice.customerId?.let { TextilesCustomerRepository.getById(it) },
+                            appLanguage = lang
+                        ),
+                        invoicePdfName(invoice)
+                    )
+                }
+                BillPdfAutoSave.Kind.Receipt -> TextilesReceiptRepository.receipts.find { it.id == request.id }?.let { receipt ->
+                    val profile = TextilesProfileRepository.profiles.find { it.id == receipt.companyId } ?: TextilesProfileRepository.profile
+                    BillPdfJob(
+                        PrintPayload.forReceipt(
+                            receipt = receipt,
+                            profile = profile,
+                            invoiceNumbers = TextilesReceiptRepository.getLinksForReceipt(receipt.id).mapNotNull { link ->
+                                TextilesInvoiceRepository.invoices.find { it.id == link.invoiceId }?.invoiceNumber
+                            },
+                            isCoolie = false,
+                            appLanguage = lang
+                        ),
+                        receiptPdfName(receipt)
+                    )
+                }
+            }
+        }
+
         val isWideScreen = isDesktop && maxWidth >= 768.dp
 
         val shouldShowBottomBarForSnackbar = (activeSubpage !is ActiveSubpage.Settings) && !isWideScreen

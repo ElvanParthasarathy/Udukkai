@@ -1,5 +1,6 @@
 package com.elvan.udukkai.ui.screens.view
 
+import com.elvan.udukkai.core.print.invoicePdfName
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
@@ -105,7 +106,7 @@ fun InvoiceViewScreen(
         onPrint = onPrint,
         onCopy = onCopy,
         printPayload = printPayload?.let { build -> { build(activeProfile) } },
-        printFileName = (if (isProforma) "EST_" else "INV_") + invoice.invoiceNumber.replace('/', '-')
+        printFileName = invoicePdfName(invoice)
     ) {
         LazyColumn(
             state = scrollState,

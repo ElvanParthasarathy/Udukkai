@@ -10,6 +10,14 @@ expect fun getStatusBarTopPadding(): Dp
 @Composable
 expect fun getNavBarBottomPadding(): Dp
 
+/** Height of the status bar even while it is hidden, so layouts do not move when the bars come and go. */
+@Composable
+expect fun getStatusBarHeightIgnoringVisibility(): Dp
+
+/** Height of the navigation bar even while it is hidden. */
+@Composable
+expect fun getNavBarHeightIgnoringVisibility(): Dp
+
 @Composable
 expect fun getImeBottomPadding(): Dp
 
