@@ -26,8 +26,8 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import com.elvan.udukkai.ui.components.shell.ElvanFloatingAction
 import com.elvan.udukkai.ui.components.shell.ElvanFloatingActionBar
-import com.elvan.udukkai.ui.components.shell.ElvanStandardTopBar
-import com.elvan.udukkai.ui.components.shell.elvanStandardTopBarInset
+import com.elvan.udukkai.ui.components.shell.LocalGlobalHeaderExpanded
+import com.elvan.udukkai.core.platform.getStatusBarTopPadding
 import com.elvan.udukkai.core.print.DocumentPrintController
 import com.elvan.udukkai.core.print.DocumentPrintView
 import com.elvan.udukkai.core.print.DocumentPdfViewer
@@ -94,164 +94,135 @@ private fun DocumentPreview(
     externalPrintView: Boolean
 ) {
     val colors = rememberShellColors()
-    // The document stays invisible until it is fully laid out, then fades in once:
-    // no dark loading screen and no visible reflow.
-    val documentAlpha by animateFloatAsState(
-        targetValue = if (controller.isReady) 1f else 0f,
-        animationSpec = tween(250),
-        label = "document_fade"
-    )
-
-    val topInset = elvanStandardTopBarInset()
     val navBarsBottom = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
+    // Room for the shell header (back button and shrunk title) under the status bar
+    val topInset = getStatusBarTopPadding() + 76.dp
 
     var showOptions by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) {
         if (controller.fileName.isBlank()) controller.fileName = fileName
     }
 
-    BoxWithConstraints(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(colors.background)
-    ) {
-        val maxHeight = this.maxHeight
-        Box(modifier = Modifier.fillMaxSize()) {
-        // The web page only prepares the document (print / share / sheet image); it stays hidden.
-        // Unless the caller already hosts it (view page), this prepares the PDF.
-        if (!externalPrintView) {
-            DocumentPrintView(
-                payloadJson = payloadJson,
-                fileName = fileName,
-                controller = controller,
-                topInset = 0.dp,
-                modifier = Modifier
-                    .size(1.dp)
-                    .graphicsLayer { alpha = 0f }
-            )
-        }
+    // A PDF has no list to collapse the title with, so the shell starts in its compact state
+    val headerExpanded = LocalGlobalHeaderExpanded.current
+    remember { headerExpanded.value = false }
 
-        // The PDF itself, in Google's PDF viewer, on the theme background
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(colors.background),
-            contentAlignment = Alignment.Center
-        ) {
+    ElvanSubShell(
+        title = title,
+        onBack = onBack,
+        scrollState = rememberLazyListState(),
+        showBottomFade = false,
+        floatingBar = {
+            BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
+                PreviewBottomArea(controller, showOptions, { showOptions = it }, maxHeight * 0.75f)
+            }
+        }
+    ) {
+        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            // The web page only prepares the PDF; it stays hidden (unless the caller already hosts it)
+            if (!externalPrintView) {
+                DocumentPrintView(
+                    payloadJson = payloadJson,
+                    fileName = fileName,
+                    controller = controller,
+                    topInset = 0.dp,
+                    modifier = Modifier
+                        .size(1.dp)
+                        .graphicsLayer { alpha = 0f }
+                )
+            }
             if (controller.pdfPath != null) {
                 DocumentPdfViewer(
                     controller = controller,
-                    modifier = Modifier.fillMaxSize().graphicsLayer { alpha = documentAlpha },
-                    contentPadding = PaddingValues(
-                        top = topInset + 8.dp,
-                        bottom = 96.dp + navBarsBottom
-                    )
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = PaddingValues(top = topInset, bottom = 96.dp + navBarsBottom)
                 )
             } else {
                 CircularProgressIndicator(color = colors.textPrimary)
             }
         }
+    }
+}
 
-        // Soft fade above the system navigation bar, like the other screens
-        Box(
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .fillMaxWidth()
-                .height(72.dp + navBarsBottom)
-                .background(
-                    Brush.verticalGradient(
-                        0.0f to Color.Transparent,
-                        0.3f to colors.background.copy(alpha = 0.16f),
-                        0.65f to colors.background.copy(alpha = 0.55f),
-                        1.0f to colors.background
-                    )
-                )
-        )
-
-        // Standard bar: back circle + title; the title hides once the sheet is zoomed in
-        ElvanStandardTopBar(
-            title = title,
-            onBack = onBack,
-            scrolled = controller.zoomScale > 1.05f,
-            modifier = Modifier.align(Alignment.TopCenter)
-        )
-
-        // Bottom area: status, options panel and the same pill as the view page
-        Column(
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .fillMaxWidth()
-                .heightIn(max = maxHeight * 0.75f),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Bottom
-        ) {
-            val notice = controller.notice
-            LaunchedEffect(notice) {
-                if (notice != null) {
-                    delay(3500)
-                    controller.notice = null
-                }
+/** Status pill, options panel and the action pill, stacked above the system navigation bar. */
+@Composable
+private fun PreviewBottomArea(
+    controller: DocumentPrintController,
+    showOptions: Boolean,
+    setShowOptions: (Boolean) -> Unit,
+    maxHeight: androidx.compose.ui.unit.Dp
+) {
+    val colors = rememberShellColors()
+    Column(
+        modifier = Modifier.fillMaxWidth().heightIn(max = maxHeight),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Bottom
+    ) {
+        val notice = controller.notice
+        LaunchedEffect(notice) {
+            if (notice != null) {
+                delay(3500)
+                controller.notice = null
             }
-            if (controller.isBusy || notice != null) {
-                val text = when {
-                    controller.isBusy -> K.preparingPdf.tr()
-                    notice?.kind == PrintNoticeKind.Saved -> "${K.pdfSavedTo.tr()}: ${notice.detail}"
-                    else -> K.pdfFailed.tr()
-                }
-                Row(
-                    modifier = Modifier
-                        .padding(horizontal = 16.dp, vertical = 8.dp)
-                        .clip(RoundedCornerShape(50))
-                        .background(colors.textPrimary)
-                        .padding(horizontal = 16.dp, vertical = 10.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    if (controller.isBusy) {
-                        CircularProgressIndicator(color = colors.background, strokeWidth = 2.dp, modifier = Modifier.size(14.dp))
-                    }
-                    Text(
-                        text = text.preventBrokenLigatures(),
-                        style = TextStyle(
-                            fontFamily = LocalAppFontFamily.current,
-                            fontSize = 13.sp,
-                            fontWeight = FontWeight.Medium,
-                            color = colors.background
-                        )
-                    )
-                }
+        }
+        if (controller.isBusy || notice != null) {
+            val text = when {
+                controller.isBusy -> K.preparingPdf.tr()
+                notice?.kind == PrintNoticeKind.Saved -> "${K.pdfSavedTo.tr()}: ${notice.detail}"
+                else -> K.pdfFailed.tr()
             }
-            if (showOptions && controller.isReady) {
-                PrintOptionsPanel(controller, modifier = Modifier.weight(1f, fill = false))
-            }
-            if (controller.isReady) {
-                ElvanFloatingActionBar(
-                    actions = listOf(
-                        ElvanFloatingAction(
-                            label = K.optionsBtn.tr(),
-                            icon = MaterialSymbols.Rounded.Tune,
-                            onClick = { showOptions = !showOptions }
-                        ),
-                        ElvanFloatingAction(
-                            label = K.printBtn.tr(),
-                            icon = MaterialSymbols.Rounded.Print,
-                            onClick = { showOptions = false; controller.print() }
-                        ),
-                        ElvanFloatingAction(
-                            label = K.savePdfBtn.tr(),
-                            icon = MaterialSymbols.Rounded.Download,
-                            onClick = { showOptions = false; controller.save() }
-                        ),
-                        ElvanFloatingAction(
-                            label = K.shareBtn.tr(),
-                            icon = MaterialSymbols.Rounded.Share,
-                            onClick = { showOptions = false; controller.share() }
-                        )
+            Row(
+                modifier = Modifier
+                    .padding(horizontal = 16.dp, vertical = 8.dp)
+                    .clip(RoundedCornerShape(50))
+                    .background(colors.textPrimary)
+                    .padding(horizontal = 16.dp, vertical = 10.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                if (controller.isBusy) {
+                    CircularProgressIndicator(color = colors.background, strokeWidth = 2.dp, modifier = Modifier.size(14.dp))
+                }
+                Text(
+                    text = text.preventBrokenLigatures(),
+                    style = TextStyle(
+                        fontFamily = LocalAppFontFamily.current,
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = colors.background
                     )
                 )
             }
         }
-    }
+        if (showOptions && controller.isReady) {
+            PrintOptionsPanel(controller, modifier = Modifier.weight(1f, fill = false))
+        }
+        if (controller.isReady) {
+            ElvanFloatingActionBar(
+                actions = listOf(
+                    ElvanFloatingAction(
+                        label = K.optionsBtn.tr(),
+                        icon = MaterialSymbols.Rounded.Tune,
+                        onClick = { setShowOptions(!showOptions) }
+                    ),
+                    ElvanFloatingAction(
+                        label = K.printBtn.tr(),
+                        icon = MaterialSymbols.Rounded.Print,
+                        onClick = { setShowOptions(false); controller.print() }
+                    ),
+                    ElvanFloatingAction(
+                        label = K.savePdfBtn.tr(),
+                        icon = MaterialSymbols.Rounded.Download,
+                        onClick = { setShowOptions(false); controller.save() }
+                    ),
+                    ElvanFloatingAction(
+                        label = K.shareBtn.tr(),
+                        icon = MaterialSymbols.Rounded.Share,
+                        onClick = { setShowOptions(false); controller.share() }
+                    )
+                )
+            )
+        }
     }
 }
 
