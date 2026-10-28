@@ -155,7 +155,7 @@ private fun DocumentPreview(
                     contentPadding = PaddingValues()
                 )
             } else {
-                ExpressiveContainedLoader(modifier = Modifier.size(64.dp), containerColor = colors.textPrimary.copy(alpha = 0.12f), indicatorColor = colors.textPrimary)
+                ExpressiveContainedLoader(modifier = Modifier.size(44.dp), containerColor = colors.textPrimary.copy(alpha = 0.12f), indicatorColor = colors.textPrimary)
             }
         }
     }

@@ -75,7 +75,7 @@ fun BackupCheckStep(
         verticalArrangement = Arrangement.Center
     ) {
         if (status == BackupStatus.CHECKING) {
-            ExpressiveContainedLoader(modifier = Modifier.size(64.dp), containerColor = textColor.copy(alpha = 0.12f), indicatorColor = textColor)
+            ExpressiveContainedLoader(modifier = Modifier.size(44.dp), containerColor = textColor.copy(alpha = 0.12f), indicatorColor = textColor)
             Spacer(modifier = Modifier.height(24.dp))
         } else {
             Icon(

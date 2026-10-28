@@ -58,7 +58,7 @@ fun AccountAvatar(fallback: @Composable () -> Unit) {
     } else if (loading) {
         Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
             ExpressiveDotsLoader(
-                modifier = Modifier.fillMaxSize().padding(10.dp),
+                modifier = Modifier.fillMaxSize().padding(19.dp),
                 color = rememberShellColors().accent
             )
         }

@@ -351,7 +351,7 @@ fun FactoryCreateScreen(
                                     .padding(vertical = 20.dp),
                                 contentAlignment = Alignment.Center
                             ) {
-                                ExpressiveContainedLoader(modifier = Modifier.size(48.dp), containerColor = colors.accent.copy(alpha = 0.12f), indicatorColor = colors.accent)
+                                ExpressiveContainedLoader(modifier = Modifier.size(34.dp), containerColor = colors.accent.copy(alpha = 0.12f), indicatorColor = colors.accent)
                                 LaunchedEffect(Unit) {
                                     delay(350)
                                     visibleInvoiceCount += pageSize
@@ -451,7 +451,7 @@ fun FactoryCreateScreen(
                                     .padding(vertical = 20.dp),
                                 contentAlignment = Alignment.Center
                             ) {
-                                ExpressiveContainedLoader(modifier = Modifier.size(48.dp), containerColor = colors.accent.copy(alpha = 0.12f), indicatorColor = colors.accent)
+                                ExpressiveContainedLoader(modifier = Modifier.size(34.dp), containerColor = colors.accent.copy(alpha = 0.12f), indicatorColor = colors.accent)
                                 LaunchedEffect(Unit) {
                                     delay(350)
                                     visibleReceiptCount += pageSize

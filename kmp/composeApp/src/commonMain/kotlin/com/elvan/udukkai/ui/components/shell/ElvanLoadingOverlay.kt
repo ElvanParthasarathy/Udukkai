@@ -69,7 +69,7 @@ fun ElvanLoadingOverlay(
             Spacer(modifier = Modifier.height(24.dp))
 
             ExpressiveContainedLoader(
-                modifier = Modifier.size(64.dp),
+                modifier = Modifier.size(46.dp),
                 containerColor = colors.textPrimary.copy(alpha = 0.08f),
                 indicatorColor = colors.textPrimary
             )
