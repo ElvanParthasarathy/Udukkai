@@ -129,7 +129,7 @@ fun ExpressiveRefreshIndicator(
             modifier = Modifier.size(REFRESH_INDICATOR_SIZE),
             progress = if (isRefreshing) null else { { fraction.coerceIn(0f, 1f) } },
             containerColor = colors.surface,
-            indicatorColor = colors.accent
+            indicatorColor = colors.textSecondary
         )
     }
 }
