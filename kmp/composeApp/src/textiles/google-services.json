@@ -13,7 +13,28 @@
           "package_name": "com.elvan.udukkai.textiles"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "316200042939-sscl59c12a85h6c7i69h6phsgtqdprbs.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.elvan.udukkai.textiles",
+            "certificate_hash": "ebdbb740e70a5d0268a463897618f50b4e13f832"
+          }
+        },
+        {
+          "client_id": "316200042939-vpr7erkr1ls3kandfnv9kp98i5u9tq38.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.elvan.udukkai.textiles",
+            "certificate_hash": "4c678a88d9873506fbca0b48dd673022bcd2c8e1"
+          }
+        },
+        {
+          "client_id": "316200042939-lv760po3oekonpmaussnnj8nqkobrfu3.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyAJ4boBFHVh6SVnTjC_f4-tUGB0Z5ZiqfA"
@@ -21,7 +42,12 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "316200042939-lv760po3oekonpmaussnnj8nqkobrfu3.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
         }
       }
     }
