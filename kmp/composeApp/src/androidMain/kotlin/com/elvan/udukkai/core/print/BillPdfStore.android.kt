@@ -40,7 +40,7 @@ private fun findBillPdf(folder: String, name: String): Uri? {
  * so a stored file is only reused when it still matches the bill; the index lives in app storage.
  */
 private fun keyFile(fileName: String, business: String): File {
-    val dir = File(AppContext.context.filesDir, "bill_pdf_keys").apply { mkdirs() }
+    val dir = File(AppContext.context.filesDir, "bill_pdf_keys2").apply { mkdirs() }
     return File(dir, "$business|$fileName".replace(Regex("[\\/:*?\"<>]"), "-") + ".key")
 }
 

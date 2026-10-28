@@ -158,13 +158,6 @@ private open class AssetPrintClient(private val context: Context) : WebViewClien
                 "html" -> "text/html"
                 else -> MimeTypeMap.getSingleton().getMimeTypeFromExtension(ext) ?: "application/octet-stream"
             }
-            // The template names "Elvan Sans" everywhere; with Navil Sans selected in the app the
-            // same font requests are answered with the Navil Sans files
-            navilSansFont(path)?.let { resource ->
-                return WebResourceResponse("font/ttf", null, context.resources.openRawResource(resource)).apply {
-                    responseHeaders = mapOf("Access-Control-Allow-Origin" to "*")
-                }
-            }
             WebResourceResponse(mime, "utf-8", context.assets.open("print/$path")).apply {
                 responseHeaders = mapOf("Access-Control-Allow-Origin" to "*")
             }
@@ -175,19 +168,6 @@ private open class AssetPrintClient(private val context: Context) : WebViewClien
     }
 
     override fun shouldOverrideUrlLoading(view: WebView, request: WebResourceRequest): Boolean = true
-}
-
-/** The Navil Sans file standing in for a requested Elvan Sans file, or null to serve it as it is. */
-private fun navilSansFont(path: String): Int? {
-    if (FontManager.currentFont != AppFont.NAVIL_SANS) return null
-    if (!path.startsWith("fonts/ElvanSans-")) return null
-    val style = path.removePrefix("fonts/ElvanSans-").substringBeforeLast('.').removeSuffix("Italic")
-    return when (style) {
-        "Medium" -> R.font.navil_sans_medium
-        "SemiBold" -> R.font.navil_sans_semibold
-        "Bold" -> R.font.navil_sans_bold
-        else -> R.font.navil_sans_regular
-    }
 }
 
 private fun cacheDir(context: Context): File = File(context.cacheDir, CACHE_DIR).apply { mkdirs() }
@@ -203,7 +183,7 @@ private fun cacheKey(context: Context, payloadJson: String, options: PrintOption
     // Item ids are made from the clock each time a document is loaded; they do not affect the print
     val stable = payloadJson.replace(Regex("\"id\":\"[0-9]{10,}_[0-9]+\""), "\"id\":\"\"")
     val digest = MessageDigest.getInstance("SHA-256")
-        .digest("$stable|${options.toJson()}|$build|${FontManager.currentFont.id}|v1".toByteArray())
+        .digest("$stable|${options.toJson()}|$build|v2".toByteArray())
     return digest.joinToString("") { "%02x".format(it) }.take(32)
 }
 
