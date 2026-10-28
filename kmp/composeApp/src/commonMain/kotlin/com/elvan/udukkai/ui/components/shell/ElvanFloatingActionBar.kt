@@ -1,5 +1,6 @@
 package com.elvan.udukkai.ui.components.shell
 
+import com.elvan.udukkai.ui.components.ExpressiveDotsLoader
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -140,11 +141,7 @@ fun ElvanFloatingActionBar(
                             verticalArrangement = Arrangement.Center
                         ) {
                             if (action.isLoading) {
-                                CircularProgressIndicator(
-                                    modifier = Modifier.size(18.dp),
-                                    color = itemColor,
-                                    strokeWidth = 2.dp
-                                )
+                                ExpressiveDotsLoader(modifier = Modifier.size(28.dp), color = itemColor)
                                 Spacer(modifier = Modifier.height(2.dp))
                             } else {
                                 Icon(

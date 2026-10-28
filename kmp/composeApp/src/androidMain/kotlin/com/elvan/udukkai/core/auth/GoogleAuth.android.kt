@@ -76,6 +76,9 @@ actual fun platformSignOut() {
     try {
         FirebaseAuth.getInstance().signOut()
     } catch (_: Exception) {}
+    try {
+        java.io.File(AppContext.context.cacheDir, "account_photo.jpg").delete()
+    } catch (_: Exception) {}
     val activity = CurrentActivity.activity ?: return
     // Forget the chosen Google account so the next sign-in shows the chooser again
     CoroutineScope(SupervisorJob() + Dispatchers.Main).launch {

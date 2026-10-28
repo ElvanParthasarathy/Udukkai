@@ -3,10 +3,10 @@ package com.elvan.udukkai.ui.screens.settings
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.TextStyle
@@ -20,6 +20,7 @@ import com.elvan.udukkai.localization.tr
 import com.elvan.udukkai.theme.Dimens
 import com.elvan.udukkai.theme.LocalAppFontFamily
 import com.elvan.udukkai.theme.rememberShellColors
+import com.elvan.udukkai.ui.components.ExpressiveContainedLoader
 
 /** Shown while the data is being restored from the cloud; the app stays usable and fills up as it goes. */
 @Composable
@@ -38,38 +39,32 @@ fun RestoreBanner(modifier: Modifier = Modifier) {
     }
     val count = if (current.total > 0) "  ${current.done}/${current.total}" else ""
 
-    Column(
+    Row(
         modifier = modifier
             .fillMaxWidth()
             .padding(horizontal = Dimens.ContentPadding)
             .clip(RoundedCornerShape(20.dp))
             .background(colors.surface)
-            .padding(horizontal = 18.dp, vertical = 14.dp)
+            .padding(horizontal = 18.dp, vertical = 14.dp),
+        verticalAlignment = Alignment.CenterVertically
     ) {
-        Text(
-            text = K.restoreCloudTitle.tr(),
-            style = TextStyle(fontFamily = ff, fontSize = 13.sp, fontWeight = FontWeight.SemiBold),
-            color = colors.textPrimary
+        ExpressiveContainedLoader(
+            modifier = Modifier.size(46.dp),
+            containerColor = colors.textPrimary.copy(alpha = 0.08f),
+            indicatorColor = colors.textPrimary
         )
-        Spacer(Modifier.height(4.dp))
-        Text(
-            text = phaseName + count,
-            style = TextStyle(fontFamily = ff, fontSize = 12.sp),
-            color = colors.textSecondary
-        )
-        Spacer(Modifier.height(10.dp))
-        if (current.total > 0) {
-            LinearProgressIndicator(
-                progress = { (current.done.toFloat() / current.total).coerceIn(0f, 1f) },
-                modifier = Modifier.fillMaxWidth().height(4.dp).clip(RoundedCornerShape(2.dp)),
-                color = colors.textPrimary,
-                trackColor = colors.textPrimary.copy(alpha = 0.12f)
+        Spacer(Modifier.width(14.dp))
+        Column {
+            Text(
+                text = K.restoreCloudTitle.tr(),
+                style = TextStyle(fontFamily = ff, fontSize = 13.sp, fontWeight = FontWeight.SemiBold),
+                color = colors.textPrimary
             )
-        } else {
-            LinearProgressIndicator(
-                modifier = Modifier.fillMaxWidth().height(4.dp).clip(RoundedCornerShape(2.dp)),
-                color = colors.textPrimary,
-                trackColor = colors.textPrimary.copy(alpha = 0.12f)
+            Spacer(Modifier.height(4.dp))
+            Text(
+                text = phaseName + count,
+                style = TextStyle(fontFamily = ff, fontSize = 12.sp),
+                color = colors.textSecondary
             )
         }
     }

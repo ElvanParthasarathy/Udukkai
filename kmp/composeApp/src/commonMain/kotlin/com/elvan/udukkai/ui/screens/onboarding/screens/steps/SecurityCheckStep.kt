@@ -1,5 +1,7 @@
 package com.elvan.udukkai.ui.screens.onboarding.screens.steps
 
+import com.elvan.udukkai.ui.components.ExpressiveContainedLoader
+import com.elvan.udukkai.ui.components.ExpressiveDotsLoader
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -73,7 +75,7 @@ fun BackupCheckStep(
         verticalArrangement = Arrangement.Center
     ) {
         if (status == BackupStatus.CHECKING) {
-            CircularProgressIndicator(color = textColor, strokeWidth = 4.dp)
+            ExpressiveContainedLoader(modifier = Modifier.size(64.dp), containerColor = textColor.copy(alpha = 0.12f), indicatorColor = textColor)
             Spacer(modifier = Modifier.height(24.dp))
         } else {
             Icon(

@@ -1,5 +1,6 @@
 package com.elvan.udukkai.ui.screens.onboarding.components
 
+import com.elvan.udukkai.ui.components.ExpressiveDotsLoader
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -491,11 +492,7 @@ fun AuthButton(
             contentAlignment = Alignment.Center
         ) {
             if (loading) {
-                CircularProgressIndicator(
-                    modifier = Modifier.size(24.dp),
-                    color = btnText.copy(alpha = 0.5f),
-                    strokeWidth = 3.dp
-                )
+                ExpressiveDotsLoader(modifier = Modifier.size(30.dp), color = btnText.copy(alpha = 0.5f))
             } else {
                 Text(
                     text = text,

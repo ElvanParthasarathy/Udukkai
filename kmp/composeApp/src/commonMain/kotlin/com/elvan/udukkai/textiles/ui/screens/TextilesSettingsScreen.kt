@@ -207,6 +207,7 @@ private fun TextilesSettingsHubContent(
                                 .background(colors.iconBg),
                             contentAlignment = Alignment.Center
                         ) {
+                            com.elvan.udukkai.ui.screens.settings.AccountAvatar {
                             Text(
                                 text = profileName.take(1).uppercase(),
                                 style = TextStyle(
@@ -216,6 +217,7 @@ private fun TextilesSettingsHubContent(
                                     color = colors.textPrimary
                                 )
                             )
+                            }
                         }
 
                         Spacer(modifier = Modifier.width(16.dp))

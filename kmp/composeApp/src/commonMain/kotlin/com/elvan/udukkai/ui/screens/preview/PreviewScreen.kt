@@ -1,5 +1,7 @@
 package com.elvan.udukkai.ui.screens.preview
 
+import com.elvan.udukkai.ui.components.ExpressiveContainedLoader
+import com.elvan.udukkai.ui.components.ExpressiveDotsLoader
 import com.elvan.udukkai.ui.components.shell.ElvanTopBarIconButton
 import com.elvan.udukkai.ui.components.shell.ElvanPill
 import com.elvan.udukkai.ui.components.shell.ElvanPopupMenuItem
@@ -153,7 +155,7 @@ private fun DocumentPreview(
                     contentPadding = PaddingValues()
                 )
             } else {
-                CircularProgressIndicator(color = colors.textPrimary)
+                ExpressiveContainedLoader(modifier = Modifier.size(64.dp), containerColor = colors.textPrimary.copy(alpha = 0.12f), indicatorColor = colors.textPrimary)
             }
         }
     }
@@ -216,7 +218,7 @@ private fun PreviewBottomArea(controller: DocumentPrintController, onEdit: (() -
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 if (controller.isBusy) {
-                    CircularProgressIndicator(color = colors.background, strokeWidth = 2.dp, modifier = Modifier.size(14.dp))
+                    ExpressiveDotsLoader(modifier = Modifier.size(22.dp), color = colors.background)
                 }
                 Text(
                     text = text.preventBrokenLigatures(),

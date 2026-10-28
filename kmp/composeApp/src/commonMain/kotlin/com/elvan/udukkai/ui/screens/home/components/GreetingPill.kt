@@ -185,6 +185,7 @@ fun GreetingPill(
                             color = colors.iconBg,
                             modifier = Modifier.size(62.dp)
                         ) {
+                            com.elvan.udukkai.ui.screens.settings.AccountAvatar {
                             Box(contentAlignment = Alignment.Center) {
                                 Text(
                                     text = fullLegalBusinessName.take(1).uppercase(),
@@ -195,6 +196,7 @@ fun GreetingPill(
                                         color = colors.textPrimary
                                     )
                                 )
+                            }
                             }
                         }
 

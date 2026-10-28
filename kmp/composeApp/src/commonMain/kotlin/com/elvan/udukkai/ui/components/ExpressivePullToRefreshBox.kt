@@ -125,35 +125,12 @@ fun ExpressiveRefreshIndicator(
             },
         contentAlignment = Alignment.Center
     ) {
-        Surface(
+        ExpressiveContainedLoader(
             modifier = Modifier.size(REFRESH_INDICATOR_SIZE),
-            shape = CircleShape,
-            color = colors.surface,
-            shadowElevation = 6.dp,
-            tonalElevation = 2.dp
-        ) {
-            Box(
-                modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center
-            ) {
-                if (isRefreshing) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(24.dp),
-                        color = colors.accent,
-                        strokeWidth = 2.5.dp,
-                        trackColor = colors.accent.copy(alpha = 0.2f)
-                    )
-                } else {
-                    CircularProgressIndicator(
-                        progress = { fraction.coerceIn(0f, 1f) },
-                        modifier = Modifier.size(24.dp),
-                        color = colors.accent,
-                        strokeWidth = 2.5.dp,
-                        trackColor = colors.border
-                    )
-                }
-            }
-        }
+            progress = if (isRefreshing) null else { { fraction.coerceIn(0f, 1f) } },
+            containerColor = colors.surface,
+            indicatorColor = colors.accent
+        )
     }
 }
 

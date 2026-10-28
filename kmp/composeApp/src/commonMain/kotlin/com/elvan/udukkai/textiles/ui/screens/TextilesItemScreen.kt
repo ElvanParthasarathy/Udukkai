@@ -1,5 +1,7 @@
 package com.elvan.udukkai.textiles.ui.screens
 
+import com.elvan.udukkai.ui.components.ExpressiveContainedLoader
+import com.elvan.udukkai.ui.components.ExpressiveDotsLoader
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
@@ -220,11 +222,7 @@ fun TextilesItemScreen(
                                 .padding(vertical = 20.dp),
                             contentAlignment = Alignment.Center
                         ) {
-                            CircularProgressIndicator(
-                                color = colors.itemColor,
-                                modifier = Modifier.size(24.dp),
-                                strokeWidth = 2.dp
-                            )
+                            ExpressiveContainedLoader(modifier = Modifier.size(46.dp), containerColor = colors.itemColor.copy(alpha = 0.12f), indicatorColor = colors.itemColor)
                             LaunchedEffect(Unit) {
                                 visibleItemCount += pageSize
                             }

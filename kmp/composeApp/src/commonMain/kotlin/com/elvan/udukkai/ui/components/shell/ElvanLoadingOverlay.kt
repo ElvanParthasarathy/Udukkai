@@ -1,5 +1,6 @@
 package com.elvan.udukkai.ui.components.shell
 
+import com.elvan.udukkai.ui.components.ExpressiveContainedLoader
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
@@ -67,13 +68,10 @@ fun ElvanLoadingOverlay(
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            LinearProgressIndicator(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(6.dp)
-                    .clip(RoundedCornerShape(100)),
-                color = colors.textPrimary,
-                trackColor = colors.textPrimary.copy(alpha = 0.10f)
+            ExpressiveContainedLoader(
+                modifier = Modifier.size(64.dp),
+                containerColor = colors.textPrimary.copy(alpha = 0.08f),
+                indicatorColor = colors.textPrimary
             )
         }
     }

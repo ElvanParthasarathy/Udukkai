@@ -1,5 +1,7 @@
 package com.elvan.udukkai.factory.ui.screens
 
+import com.elvan.udukkai.ui.components.ExpressiveContainedLoader
+import com.elvan.udukkai.ui.components.ExpressiveDotsLoader
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.clickable
@@ -349,11 +351,7 @@ fun FactoryCreateScreen(
                                     .padding(vertical = 20.dp),
                                 contentAlignment = Alignment.Center
                             ) {
-                                CircularProgressIndicator(
-                                    modifier = Modifier.size(26.dp),
-                                    strokeWidth = 2.5.dp,
-                                    color = colors.accent
-                                )
+                                ExpressiveContainedLoader(modifier = Modifier.size(48.dp), containerColor = colors.accent.copy(alpha = 0.12f), indicatorColor = colors.accent)
                                 LaunchedEffect(Unit) {
                                     delay(350)
                                     visibleInvoiceCount += pageSize
@@ -453,11 +451,7 @@ fun FactoryCreateScreen(
                                     .padding(vertical = 20.dp),
                                 contentAlignment = Alignment.Center
                             ) {
-                                CircularProgressIndicator(
-                                    modifier = Modifier.size(26.dp),
-                                    strokeWidth = 2.5.dp,
-                                    color = colors.accent
-                                )
+                                ExpressiveContainedLoader(modifier = Modifier.size(48.dp), containerColor = colors.accent.copy(alpha = 0.12f), indicatorColor = colors.accent)
                                 LaunchedEffect(Unit) {
                                     delay(350)
                                     visibleReceiptCount += pageSize

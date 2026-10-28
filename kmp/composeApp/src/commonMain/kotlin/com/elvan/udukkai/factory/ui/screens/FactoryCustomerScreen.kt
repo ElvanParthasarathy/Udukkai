@@ -1,5 +1,7 @@
 package com.elvan.udukkai.factory.ui.screens
 
+import com.elvan.udukkai.ui.components.ExpressiveContainedLoader
+import com.elvan.udukkai.ui.components.ExpressiveDotsLoader
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
@@ -164,11 +166,7 @@ fun FactoryCustomerScreen(
                                 .padding(vertical = 20.dp),
                             contentAlignment = Alignment.Center
                         ) {
-                            CircularProgressIndicator(
-                                color = colors.customerColor,
-                                modifier = Modifier.size(24.dp),
-                                strokeWidth = 2.dp
-                            )
+                            ExpressiveContainedLoader(modifier = Modifier.size(46.dp), containerColor = colors.customerColor.copy(alpha = 0.12f), indicatorColor = colors.customerColor)
                             LaunchedEffect(Unit) {
                                 delay(400)
                                 visibleCustomerCount += pageSize
