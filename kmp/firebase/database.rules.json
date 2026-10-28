@@ -1,0 +1,6 @@
+{
+  "rules": {
+    ".read": "auth != null && auth.token.email_verified === true && (auth.token.email === 'srijaipriyasilks@gmail.com' || auth.token.email === 'vrmshreesarathy@gmail.com' || auth.token.email === 'elvanparthasarathy@gmail.com' || auth.token.email === 'jaiprakashvp2006@gmail.com')",
+    ".write": "auth != null && auth.token.email_verified === true && (auth.token.email === 'srijaipriyasilks@gmail.com' || auth.token.email === 'vrmshreesarathy@gmail.com' || auth.token.email === 'elvanparthasarathy@gmail.com' || auth.token.email === 'jaiprakashvp2006@gmail.com')"
+  }
+}

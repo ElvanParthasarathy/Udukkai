@@ -179,6 +179,10 @@ fun FactoryStorageBackupScreen(
             }
         }
 
+        item(key = "cloud_sync") {
+            com.elvan.udukkai.ui.screens.settings.CloudSyncSection(colors = colors)
+        }
+
         // ── 2. Storage Actions Section ──
         item {
             ElvanSettingsSection(colors = colors) {

@@ -52,6 +52,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         requestedOrientation = android.content.pm.ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
         com.elvan.udukkai.core.platform.AppContext.context = applicationContext
+        com.elvan.udukkai.core.platform.CurrentActivity.activity = this
         com.elvan.udukkai.localization.LanguageManager.init()
         com.elvan.udukkai.theme.ThemeManager.init()
         com.elvan.udukkai.theme.FontManager.init()

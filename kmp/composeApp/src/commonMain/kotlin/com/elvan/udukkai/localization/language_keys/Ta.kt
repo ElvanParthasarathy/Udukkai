@@ -420,6 +420,18 @@ val ta: Map<String, String> = mapOf(
     K.sgstLabel to "SGST",
     K.igstLabel to "IGST",
     K.firstToLast to "பட்டியல் எண்கள்",
+    K.signInWithGoogle to "Google மூலம் உள்நுழை",
+    K.accountNotAllowed to "இந்த Google கணக்குக்கு இந்தச் செயலியைப் பயன்படுத்த அனுமதி இல்லை.",
+    K.signInFailedTryAgain to "உள்நுழைய இயலவில்லை. இணையத்தைச் சரிபார்த்து மீண்டும் முயலவும்.",
+    K.cloudSync to "மேகக் கணினி ஒத்திசைவு",
+    K.signedInAs to "உள்நுழைந்த கணக்கு",
+    K.syncStatusSynced to "புதுப்பிக்கப்பட்டுள்ளது",
+    K.syncStatusSyncing to "ஒத்திசைக்கிறது...",
+    K.syncStatusOffline to "இணையம் இல்லை, இணைந்ததும் ஒத்திசையும்",
+    K.syncStatusError to "ஒத்திசைவில் சிக்கல், மீண்டும் முயல தட்டவும்",
+    K.syncStatusIdle to "ஒத்திசைக்கவில்லை, தொடங்க தட்டவும்",
+    K.lastSyncedAt to "கடைசி ஒத்திசைவு",
+    K.eraseConfirmFinal to "இந்தத் தொலைபேசியின் அனைத்துத் தரவும் அழிக்கப்படும். முதலில் பாதுகாப்பு நகல் எடுக்கப்படும்.",
 )
 
 /**

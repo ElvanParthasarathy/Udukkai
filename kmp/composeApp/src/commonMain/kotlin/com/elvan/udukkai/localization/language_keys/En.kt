@@ -419,6 +419,18 @@ val en: Map<String, String> = mapOf(
     K.sgstLabel to "SGST",
     K.igstLabel to "IGST",
     K.firstToLast to "Bill numbers",
+    K.signInWithGoogle to "Sign in with Google",
+    K.accountNotAllowed to "This Google account is not allowed to use this app.",
+    K.signInFailedTryAgain to "Could not sign in. Check the internet and try again.",
+    K.cloudSync to "Cloud Sync",
+    K.signedInAs to "Signed in as",
+    K.syncStatusSynced to "Up to date",
+    K.syncStatusSyncing to "Syncing...",
+    K.syncStatusOffline to "Offline, will sync when online",
+    K.syncStatusError to "Sync problem, tap to retry",
+    K.syncStatusIdle to "Not syncing, tap to start",
+    K.lastSyncedAt to "Last synced",
+    K.eraseConfirmFinal to "All data on this phone will be erased. A safety copy is kept first.",
 )
 
 

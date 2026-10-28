@@ -4,6 +4,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.elvan.udukkai.core.platform.getPreferencesHelper
+import com.elvan.udukkai.core.sync.getFirebaseSyncManager
 import com.elvan.udukkai.factory.data.FactoryProfileRepository
 import com.elvan.udukkai.textiles.data.TextilesProfileRepository
 
@@ -16,13 +17,19 @@ enum class AppScope { TEXTILES, FACTORY }
  */
 object AuthManager {
 
-    private const val PREF_KEY_LOGGED_IN = "is_logged_in"
     private const val PREF_KEY_BILLING_LANG = "udukkai_setup_billingLang"
     private const val LEGACY_PREF_KEY_BILLING_LANG = "elvanniril_setup_billingLang"
     private const val PREF_KEY_SKIP_RESTORE = "skip_restore"
 
     var isLoggedIn by mutableStateOf(false)
         private set
+
+    /** Google account that is signed in, shown in settings. */
+    var signedInEmail by mutableStateOf<String?>(null)
+        private set
+
+    /** Set by the onboarding gate; decides which database branch is synced. */
+    var appScope: AppScope = AppScope.TEXTILES
 
     var isProfilesLoading by mutableStateOf(true)
         private set
@@ -32,18 +39,14 @@ object AuthManager {
 
     fun init() {
         try {
-            val prefs = getPreferencesHelper()
-            isLoggedIn = prefs.getBoolean(PREF_KEY_LOGGED_IN, false)
-            skipRestore = prefs.getBoolean(PREF_KEY_SKIP_RESTORE, false)
-        } catch (_: Exception) {
-            isLoggedIn = false
-        }
+            skipRestore = getPreferencesHelper().getBoolean(PREF_KEY_SKIP_RESTORE, false)
+        } catch (_: Exception) {}
+        // Signed in only while Firebase still holds an allowed Google account
+        val email = platformSignedInEmail()
+        if (email != null && !AllowedAccounts.isAllowed(email)) platformSignOut()
+        isLoggedIn = AllowedAccounts.isAllowed(email)
+        signedInEmail = if (isLoggedIn) email else null
         refreshProfileStatus()
-        // Installs from before the login flow existed already have a business set up:
-        // keep them signed in instead of sending them back to the welcome page.
-        if (!isLoggedIn && (FactoryProfileRepository.allProfiles.isNotEmpty() || TextilesProfileRepository.allProfiles.isNotEmpty())) {
-            login("", "")
-        }
     }
 
     /** Flutter's isSetupComplete, for one standalone app. */
@@ -52,20 +55,26 @@ object AuthManager {
         AppScope.FACTORY -> FactoryProfileRepository.allProfiles.isNotEmpty()
     }
 
-    fun login(email: String, password: String): Boolean {
-        // Mock authentication — any credentials work
-        isLoggedIn = true
-        try {
-            getPreferencesHelper().setBoolean(PREF_KEY_LOGGED_IN, true)
-        } catch (_: Exception) {}
-        return true
+    /** Google sign-in for the allowed accounts; starts the cloud sync once signed in. */
+    suspend fun signInWithGoogle(): GoogleSignInResult {
+        val result = platformGoogleSignIn()
+        if (result is GoogleSignInResult.Success) {
+            isLoggedIn = true
+            signedInEmail = result.email
+            try {
+                getFirebaseSyncManager().startSync(if (appScope == AppScope.FACTORY) "factory" else "textiles")
+            } catch (_: Exception) {}
+        }
+        return result
     }
 
     fun logout() {
         isLoggedIn = false
+        signedInEmail = null
         try {
-            getPreferencesHelper().setBoolean(PREF_KEY_LOGGED_IN, false)
+            getFirebaseSyncManager().stopSync()
         } catch (_: Exception) {}
+        platformSignOut()
     }
 
     fun updateSkipRestore(skip: Boolean) {

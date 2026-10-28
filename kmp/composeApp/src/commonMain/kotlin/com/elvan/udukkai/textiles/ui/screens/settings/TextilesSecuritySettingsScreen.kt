@@ -51,7 +51,7 @@ fun TextilesSecuritySettingsScreen(
     val passwordRequiredMsg = K.passwordRequired.tr()
 
     val currentProfile = TextilesProfileRepository.profile
-    val registeredEmail = currentProfile.email.trim()
+    val registeredEmail = AuthManager.signedInEmail.orEmpty()
     val confirmEmailPlaceholder = if (registeredEmail.isNotBlank()) registeredEmail else K.confirmEmail.tr()
 
     LazyColumn(
@@ -80,6 +80,9 @@ fun TextilesSecuritySettingsScreen(
                         scope.launch {
                             try {
                                 reloadTextilesRepositories()
+                            } catch (_: Exception) {}
+                            try {
+                                com.elvan.udukkai.core.sync.getFirebaseSyncManager().triggerManualSync()
                             } catch (_: Exception) {}
                             delay(600)
                             showSyncLoading = false
@@ -159,8 +162,7 @@ fun TextilesSecuritySettingsScreen(
             onDismissRequest = { showEraseStep1 = false },
             onConfirm = {
                 val input = emailInput.trim()
-                val target = registeredEmail.ifBlank { "admin@elvan.com" }
-                if (input.equals(target, ignoreCase = true)) {
+                if (registeredEmail.isNotBlank() && input.equals(registeredEmail, ignoreCase = true)) {
                     showEraseStep1 = false
                     showEraseStep2 = true
                 } else {
@@ -174,25 +176,19 @@ fun TextilesSecuritySettingsScreen(
     // Erase Data Step 2: Password Confirmation
     if (showEraseStep2) {
         ElvanActionSheet(
-            title = K.enterPassword.tr(),
+            title = K.eraseAppData.tr(),
             cancelText = K.cancelBtn.tr(),
             confirmText = K.eraseDataBtn.tr(),
             confirmColor = Color(0xFFBA1A1A),
             customContent = {
-                ElvanSettingsTextField(
-                    label = K.password.tr(),
-                    value = passwordInput,
-                    onValueChange = { passwordInput = it },
-                    placeholder = K.password.tr(),
-                    colors = colors
+                androidx.compose.material3.Text(
+                    text = K.eraseConfirmFinal.tr(),
+                    color = colors.textSecondary
                 )
             },
             onDismissRequest = { showEraseStep2 = false },
             onConfirm = {
-                val pwd = passwordInput.trim()
-                if (pwd.isBlank()) {
-                    ElvanSnackbar.show(passwordRequiredMsg)
-                } else {
+                run {
                     showEraseStep2 = false
                     showEraseLoading = true
                     scope.launch {

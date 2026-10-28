@@ -36,7 +36,10 @@ fun OnboardingGate(
     content: @Composable () -> Unit
 ) {
     // Synchronous so the first frame already knows the login state (no welcome-page flash)
-    remember { AuthManager.init() }
+    remember {
+        AuthManager.appScope = scope
+        AuthManager.init()
+    }
 
     var showLogin by remember { mutableStateOf(false) }
 

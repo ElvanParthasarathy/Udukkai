@@ -1,90 +1,73 @@
 package com.elvan.udukkai.ui.screens.onboarding.screens
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.material3.Text
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.elvan.udukkai.core.auth.AuthManager
+import com.elvan.udukkai.core.auth.GoogleSignInResult
 import com.elvan.udukkai.localization.K
 import com.elvan.udukkai.localization.tr
 import com.elvan.udukkai.ui.screens.onboarding.components.*
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 /**
- * Login Page matching Flutter's LoginPage (ullnuzhaivu_thirai.dart) 1:1.
+ * Login page: only the approved Google accounts get in; there is no sign-up.
  */
 @Composable
 fun UllnuzhaivuThirai(
     onBack: () -> Unit,
     onLoginSuccess: () -> Unit
 ) {
-    var email by remember { mutableStateOf("") }
-    var password by remember { mutableStateOf("") }
     var errorText by remember { mutableStateOf<String?>(null) }
     var loading by remember { mutableStateOf(false) }
-    val emptyFieldsError = K.fillAllFields.tr()
+    val notAllowedMsg = K.accountNotAllowed.tr()
+    val failedMsg = K.signInFailedTryAgain.tr()
     val scope = rememberCoroutineScope()
 
     AuthLayout {
-        // Back Button
         AuthAnimatedElement(delayIndex = 0) {
             AuthBackButton(onClick = onBack)
         }
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Header: Brand Name + Subtitle
         AuthHeader(
             title = K.udukkai.tr(),
             subtitle = K.loginToAccessApp.tr()
         )
 
-        Spacer(modifier = Modifier.height(32.dp))
+        Spacer(modifier = Modifier.height(40.dp))
 
-        // Email Input with proper label & placeholder
-        AuthInput(
-            value = email,
-            onValueChange = { 
-                email = it
-                if (errorText != null) errorText = null 
-            },
-            label = K.emailAddress.tr(),
-            placeholder = K.enterEmail.tr()
-        )
+        errorText?.let {
+            Text(
+                text = it,
+                color = Color(0xFFBA1A1A),
+                fontSize = 13.sp,
+                lineHeight = 19.sp,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.fillMaxWidth().padding(bottom = 20.dp)
+            )
+        }
 
-        // Password Input with proper label, placeholder, eye toggle, and error text
-        AuthInput(
-            value = password,
-            onValueChange = { 
-                password = it
-                if (errorText != null) errorText = null 
-            },
-            label = K.password.tr(),
-            placeholder = K.enterPassword.tr(),
-            isPassword = true,
-            errorText = errorText
-        )
-
-        Spacer(modifier = Modifier.height(32.dp))
-
-        // Login Action Button
         AuthButton(
-            text = K.signIn.tr(),
+            text = K.signInWithGoogle.tr(),
             loading = loading,
             onClick = {
-                if (email.isBlank() || password.isBlank()) {
-                    errorText = emptyFieldsError
-                    return@AuthButton
-                }
                 loading = true
                 errorText = null
                 scope.launch {
-                    delay(1000)
-                    AuthManager.login(email, password)
+                    when (AuthManager.signInWithGoogle()) {
+                        is GoogleSignInResult.Success -> onLoginSuccess()
+                        is GoogleSignInResult.NotAllowed -> errorText = notAllowedMsg
+                        GoogleSignInResult.Cancelled -> {}
+                        GoogleSignInResult.Failed -> errorText = failedMsg
+                    }
                     loading = false
-                    onLoginSuccess()
                 }
             }
         )

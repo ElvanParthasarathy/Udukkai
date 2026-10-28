@@ -31,6 +31,11 @@ kotlin {
             implementation(libs.androidx.activity.compose)
             implementation(project.dependencies.platform(libs.firebase.bom))
             implementation(libs.firebase.database)
+            implementation(libs.firebase.auth)
+            // Sign in with Google (Credential Manager)
+            implementation("androidx.credentials:credentials:1.3.0")
+            implementation("androidx.credentials:credentials-play-services-auth:1.3.0")
+            implementation("com.google.android.libraries.identity.googleid:googleid:1.1.1")
             implementation(libs.firebase.analytics)
             // SVG logos (data:image/svg+xml) in ElvanImageViewer
             implementation("com.caverock:androidsvg-aar:1.4")

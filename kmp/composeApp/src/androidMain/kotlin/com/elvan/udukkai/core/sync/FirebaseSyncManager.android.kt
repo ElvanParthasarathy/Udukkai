@@ -38,6 +38,11 @@ class AndroidFirebaseSyncManager : FirebaseSyncManager {
     private val _isOnline = mutableStateOf(true)
     override val isOnline: State<Boolean> = _isOnline
 
+    private companion object {
+        const val TEXTILES_DB_URL = "https://udukkai-textiles-default-rtdb.asia-southeast1.firebasedatabase.app"
+        const val FACTORY_DB_URL = "https://udukkai-factory-default-rtdb.asia-southeast1.firebasedatabase.app"
+    }
+
     private var databaseInstance: FirebaseDatabase? = null
     private var isPersistenceSet = false
     private val activeListeners = mutableMapOf<DatabaseReference, ValueEventListener>()
@@ -55,7 +60,14 @@ class AndroidFirebaseSyncManager : FirebaseSyncManager {
                 Log.i(tag, "FirebaseApp initialized.")
             }
 
-            val db = FirebaseDatabase.getInstance()
+            // A config downloaded before the database existed has no address: use the known one
+            val db = if (FirebaseApp.getInstance().options.databaseUrl.isNullOrBlank()) {
+                FirebaseDatabase.getInstance(
+                    if (com.elvan.udukkai.BuildConfig.FLAVOR == "factory") FACTORY_DB_URL else TEXTILES_DB_URL
+                )
+            } else {
+                FirebaseDatabase.getInstance()
+            }
             if (!isPersistenceSet) {
                 try {
                     db.setPersistenceEnabled(true)
@@ -81,6 +93,11 @@ class AndroidFirebaseSyncManager : FirebaseSyncManager {
 
     override fun startSync(scope: String) {
         stopSync()
+        // Nothing is read or written until an approved Google account is signed in
+        if (!com.elvan.udukkai.core.auth.AllowedAccounts.isAllowed(com.elvan.udukkai.core.auth.platformSignedInEmail())) {
+            _syncStatus.value = SyncStatus.IDLE
+            return
+        }
         val db = getDatabase() ?: return
 
         // Take automatic Copy 2 Safety Snapshot before sync session
