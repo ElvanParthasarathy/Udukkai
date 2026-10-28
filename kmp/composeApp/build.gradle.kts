@@ -32,6 +32,8 @@ kotlin {
             implementation(project.dependencies.platform(libs.firebase.bom))
             implementation(libs.firebase.database)
             implementation(libs.firebase.auth)
+            // The real Material 3 expressive loaders (as in Neram)
+            implementation("androidx.compose.material3:material3:1.5.0-alpha12")
             // Sign in with Google (Credential Manager)
             implementation("androidx.credentials:credentials:1.3.0")
             implementation("androidx.credentials:credentials-play-services-auth:1.3.0")
