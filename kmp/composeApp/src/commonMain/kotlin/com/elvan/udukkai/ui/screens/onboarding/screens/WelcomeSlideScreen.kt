@@ -42,14 +42,8 @@ fun WelcomeSlideScreen(
     var billingLang by remember { mutableStateOf(AuthManager.getBillingLanguage()) }
 
     // Flutter PopScope: system back steps back through the flow
-    AppBackHandler(
-        enabled = currentPhase == WelcomePhase.LANGUAGE ||
-            currentPhase == WelcomePhase.BILLING_LANGUAGE ||
-            currentPhase == WelcomePhase.BUSINESS_NAME
-    ) {
+    AppBackHandler(enabled = currentPhase == WelcomePhase.BUSINESS_NAME) {
         currentPhase = when (currentPhase) {
-            WelcomePhase.LANGUAGE -> WelcomePhase.CHECKING_BACKUP
-            WelcomePhase.BILLING_LANGUAGE -> WelcomePhase.CHECKING_BACKUP
             WelcomePhase.BUSINESS_NAME -> WelcomePhase.BILLING_LANGUAGE
             else -> currentPhase
         }
@@ -65,8 +59,9 @@ fun WelcomeSlideScreen(
         ) { phase ->
             when (phase) {
                 WelcomePhase.GREETING -> GreetingStep(
-                    onComplete = { currentPhase = WelcomePhase.CHECKING_BACKUP }
+                    onComplete = { currentPhase = WelcomePhase.BILLING_LANGUAGE }
                 )
+                // The cloud restores by itself right after sign-in, so there is no backup to look for here
                 WelcomePhase.CHECKING_BACKUP -> BackupCheckStep(
                     onBackupFound = { currentPhase = WelcomePhase.RESTORE },
                     onNoBackupFound = { currentPhase = WelcomePhase.BILLING_LANGUAGE }
@@ -84,7 +79,6 @@ fun WelcomeSlideScreen(
                 )
                 WelcomePhase.BILLING_LANGUAGE -> BillingLanguageStep(
                     billingLanguage = billingLang,
-                    onBack = { currentPhase = WelcomePhase.CHECKING_BACKUP },
                     onLanguageSelected = { billingLang = it },
                     onContinue = {
                         AuthManager.saveBillingLanguage(billingLang)

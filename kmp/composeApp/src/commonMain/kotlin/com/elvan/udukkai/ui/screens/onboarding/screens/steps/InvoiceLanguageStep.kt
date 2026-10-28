@@ -22,7 +22,7 @@ import com.elvan.udukkai.ui.screens.onboarding.components.*
 @Composable
 fun BillingLanguageStep(
     billingLanguage: String,
-    onBack: () -> Unit,
+    onBack: (() -> Unit)? = null,
     onLanguageSelected: (String) -> Unit,
     onContinue: () -> Unit
 ) {
@@ -36,7 +36,7 @@ fun BillingLanguageStep(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        AuthBackButton(onClick = onBack)
+        if (onBack != null) AuthBackButton(onClick = onBack)
 
         Icon(
             imageVector = MaterialSymbols.Rounded.DescriptionFill,

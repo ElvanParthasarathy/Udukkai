@@ -77,7 +77,10 @@ fun OnboardingGate(
         if (freshLogin) {
             LoginShimmer.active = true
             delay(1500)
-            snapshotFlow { getFirebaseSyncManager().restoreProgress.value }.first { it == null }
+            // Never hold the page for more than 20 seconds, even if the connection stalls halfway
+            kotlinx.coroutines.withTimeoutOrNull(20_000) {
+                snapshotFlow { getFirebaseSyncManager().restoreProgress.value }.first { it == null }
+            }
             LoginShimmer.active = false
         }
     }
