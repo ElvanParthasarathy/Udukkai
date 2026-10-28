@@ -406,6 +406,19 @@ val en: Map<String, String> = mapOf(
     K.preparingPdf to "Preparing PDF…",
     K.pdfSavedTo to "Saved to",
     K.pdfFailed to "Could not create the PDF",
+    K.thisFinYear to "Financial Year",
+    K.taxableValue to "Taxable Value",
+    K.totalTax to "Total Tax",
+    K.b2bSales to "B2B (with GSTIN)",
+    K.b2cSales to "B2C (without GSTIN)",
+    K.taxBreakup to "Tax Breakup",
+    K.salesSummary to "Sales Summary",
+    K.estimatesNotCounted to "Proformas are estimates and are not counted here.",
+    K.noInvoicesInPeriod to "No tax invoices in this period.",
+    K.cgstLabel to "CGST",
+    K.sgstLabel to "SGST",
+    K.igstLabel to "IGST",
+    K.firstToLast to "Bill numbers",
 )
 
 

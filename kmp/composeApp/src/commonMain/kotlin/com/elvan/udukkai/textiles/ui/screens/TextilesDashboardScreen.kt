@@ -36,7 +36,8 @@ fun TextilesDashboardScreen(
     onSeeAllReceipts: (() -> Unit)? = null,
     isRefreshing: Boolean = false,
     onInvoiceClick: (InvoiceModel) -> Unit = {},
-    onManageProfiles: (() -> Unit)? = null
+    onManageProfiles: (() -> Unit)? = null,
+    onOpenReports: (() -> Unit)? = null
 ) {
     val colors = rememberShellColors()
 
@@ -131,7 +132,8 @@ fun TextilesDashboardScreen(
                             value = CurrencyUtils.formatInr(overallTotal),
                             colors = colors,
                             modifier = Modifier.weight(1f),
-                            isFullWidth = false
+                            isFullWidth = false,
+                            onClick = onOpenReports
                         )
                     }
                 }

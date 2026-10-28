@@ -8,6 +8,7 @@ import com.elvan.udukkai.data.model.CustomerModel
 sealed class ActiveSubpage {
     data object Settings : ActiveSubpage()
     data object RecycleBin : ActiveSubpage()
+    data object Reports : ActiveSubpage()
     data class ItemEditor(val item: ItemModel? = null) : ActiveSubpage()
     data class MerchantEditor(val merchant: CustomerModel? = null) : ActiveSubpage()
     data class InvoiceEditor(val invoice: InvoiceModel? = null) : ActiveSubpage()

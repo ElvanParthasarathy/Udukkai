@@ -58,6 +58,7 @@ import com.elvan.udukkai.ui.navigation.NavTab
 import com.elvan.udukkai.ui.screens.home.desktop.DesktopSideBar
 import com.elvan.udukkai.ui.screens.create.components.CreateDateFilterSheet
 import com.elvan.udukkai.textiles.ui.screens.TextilesRecycleBinScreen
+import com.elvan.udukkai.textiles.ui.screens.TextilesReportsScreen
 import com.elvan.udukkai.textiles.ui.screens.editor.TextilesReceiptEditorScreen
 import com.elvan.udukkai.ui.screens.view.CustomerViewScreen
 import com.elvan.udukkai.ui.screens.view.InvoiceViewScreen
@@ -283,6 +284,9 @@ fun TextilesHomeScreen() {
                     TextilesSettingsScreen(
                         onBack = popSubpage
                     )
+                }
+                is ActiveSubpage.Reports -> {
+                    TextilesReportsScreen(onBack = popSubpage)
                 }
                 is ActiveSubpage.RecycleBin -> {
                     TextilesRecycleBinScreen(
@@ -710,6 +714,7 @@ fun TextilesHomeScreen() {
                                             uruvakkuSegment = 1
                                         },
                                         isRefreshing = isRefreshing,
+                                        onOpenReports = { navigateToSubpage(ActiveSubpage.Reports) },
                                         onInvoiceClick = { invoice ->
                                             navigateToSubpage(ActiveSubpage.InvoiceView(invoice))
                                         },

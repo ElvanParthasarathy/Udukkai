@@ -6,3 +6,6 @@ local.properties
 .idea/
 *.hprof
 *.db
+keystore.properties
+*.jks
+*.keystore

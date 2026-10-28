@@ -407,6 +407,19 @@ val ta: Map<String, String> = mapOf(
     K.preparingPdf to "PDF தயாராகிறது…",
     K.pdfSavedTo to "சேமிக்கப்பட்ட இடம்",
     K.pdfFailed to "PDF உருவாக்க இயலவில்லை",
+    K.thisFinYear to "நிதியாண்டு",
+    K.taxableValue to "வரிக்குட்பட்ட மதிப்பு",
+    K.totalTax to "மொத்த வரி",
+    K.b2bSales to "நிறுவன விற்பனை (GSTIN உடன்)",
+    K.b2cSales to "தனிநபர் விற்பனை (GSTIN இல்லாமல்)",
+    K.taxBreakup to "வரி விவரம்",
+    K.salesSummary to "விற்பனை சுருக்கம்",
+    K.estimatesNotCounted to "முன்வரைவுகள் மதிப்பீடுகள் மட்டுமே; அவை இங்கு கணக்கில் சேராது.",
+    K.noInvoicesInPeriod to "இந்தக் காலத்தில் வரிப் பட்டியல்கள் இல்லை.",
+    K.cgstLabel to "CGST",
+    K.sgstLabel to "SGST",
+    K.igstLabel to "IGST",
+    K.firstToLast to "பட்டியல் எண்கள்",
 )
 
 /**

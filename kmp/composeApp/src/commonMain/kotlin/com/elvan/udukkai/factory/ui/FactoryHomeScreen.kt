@@ -284,6 +284,8 @@ fun FactoryHomeScreen() {
                         onBack = popSubpage
                     )
                 }
+                // GST reports belong to Textiles; Coolie bills carry no tax
+                is ActiveSubpage.Reports -> Unit
                 is ActiveSubpage.RecycleBin -> {
                     FactoryRecycleBinScreen(
                         onBack = popSubpage
