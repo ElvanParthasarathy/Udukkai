@@ -43,7 +43,9 @@ fun TextilesDashboardScreen(
 
     var isSwitchingCompany by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
-    val showSkeleton = isRefreshing || isSwitchingCompany
+    // Grey shimmer blocks also stand in while the cloud data is still arriving on a fresh sign-in
+    val restoringEmpty = com.elvan.udukkai.core.sync.getFirebaseSyncManager().restoreProgress.value != null && TextilesInvoiceRepository.activeCompanyInvoices.isEmpty()
+    val showSkeleton = isRefreshing || isSwitchingCompany || restoringEmpty
 
     val recentBills = TextilesInvoiceRepository.recentInvoices
     val overallTotal = TextilesInvoiceRepository.overallTotal

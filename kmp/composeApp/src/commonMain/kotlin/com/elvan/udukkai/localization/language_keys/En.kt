@@ -437,6 +437,14 @@ val en: Map<String, String> = mapOf(
     K.restorePhaseItems to "Items",
     K.restorePhaseInvoices to "Bills",
     K.restorePhaseReceipts to "Receipts",
+    K.logIn to "Log in",
+    K.orDivider to "or",
+    K.forgotPassword to "Forgot password?",
+    K.deviceLanguage to "Device language",
+    K.wrongEmailOrPassword to "Wrong email or password.",
+    K.enterEmailFirst to "Enter your email first.",
+    K.resetMailSent to "Password reset mail sent.",
+    K.selectPreferredLanguage to "Select your preferred language",
 )
 
 

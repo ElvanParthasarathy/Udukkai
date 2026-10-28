@@ -13,3 +13,7 @@ actual fun platformSignedInEmail(): String? = devEmail
 actual fun platformSignOut() {
     devEmail = null
 }
+
+actual suspend fun platformEmailSignIn(email: String, password: String): GoogleSignInResult = platformGoogleSignIn()
+
+actual suspend fun platformSendPasswordReset(email: String): Boolean = true

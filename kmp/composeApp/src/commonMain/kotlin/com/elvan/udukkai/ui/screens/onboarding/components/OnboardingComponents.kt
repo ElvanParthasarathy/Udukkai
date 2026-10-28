@@ -103,8 +103,43 @@ fun AuthAnimatedElement(
  * Renders the 4 animated floating and rotating background geometric shapes
  * with responsive screen-percentage sizes and positions.
  */
+/** True while a parent already draws the animated shapes (the logged-out flow draws them once, for every page). */
+val LocalHasAuthBackdrop = compositionLocalOf { false }
+
+/** The animated background alone, drawn once and kept steady while the pages change on top of it. */
+@Composable
+fun AuthBackdrop() = AuthLayoutFull { }
+
 @Composable
 fun AuthLayout(
+    showBranding: Boolean = false,
+    floatingActionButton: @Composable () -> Unit = {},
+    content: @Composable ColumnScope.() -> Unit
+) {
+    if (LocalHasAuthBackdrop.current) {
+        Box(
+            modifier = Modifier.fillMaxSize().windowInsetsPadding(WindowInsets.safeDrawing),
+            contentAlignment = Alignment.Center
+        ) {
+            Column(
+                modifier = Modifier
+                    .verticalScroll(rememberScrollState())
+                    .widthIn(max = 480.dp)
+                    .fillMaxWidth()
+                    .padding(horizontal = 24.dp, vertical = 32.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
+            ) {
+                content()
+            }
+        }
+    } else {
+        AuthLayoutFull(showBranding, floatingActionButton, content)
+    }
+}
+
+@Composable
+private fun AuthLayoutFull(
     showBranding: Boolean = false,
     floatingActionButton: @Composable () -> Unit = {},
     content: @Composable ColumnScope.() -> Unit

@@ -87,3 +87,31 @@ actual fun platformSignOut() {
         } catch (_: Exception) {}
     }
 }
+
+actual suspend fun platformEmailSignIn(email: String, password: String): GoogleSignInResult {
+    val clean = email.trim().lowercase()
+    if (!AllowedAccounts.isAllowed(clean)) return GoogleSignInResult.NotAllowed(clean)
+    return try {
+        val user = FirebaseAuth.getInstance().signInWithEmailAndPassword(clean, password).await().user
+        val signedIn = user?.email
+        if (!AllowedAccounts.isAllowed(signedIn)) {
+            FirebaseAuth.getInstance().signOut()
+            GoogleSignInResult.NotAllowed(signedIn ?: clean)
+        } else {
+            GoogleSignInResult.Success(signedIn!!)
+        }
+    } catch (_: Exception) {
+        GoogleSignInResult.Failed
+    }
+}
+
+actual suspend fun platformSendPasswordReset(email: String): Boolean {
+    val clean = email.trim().lowercase()
+    if (!AllowedAccounts.isAllowed(clean)) return false
+    return try {
+        FirebaseAuth.getInstance().sendPasswordResetEmail(clean).await()
+        true
+    } catch (_: Exception) {
+        false
+    }
+}

@@ -6,6 +6,14 @@ package com.elvan.udukkai.localization
  * Total keys: 422
  */
 object K {
+    const val logIn = "logIn"
+    const val orDivider = "orDivider"
+    const val forgotPassword = "forgotPassword"
+    const val deviceLanguage = "deviceLanguage"
+    const val wrongEmailOrPassword = "wrongEmailOrPassword"
+    const val enterEmailFirst = "enterEmailFirst"
+    const val resetMailSent = "resetMailSent"
+    const val selectPreferredLanguage = "selectPreferredLanguage"
     const val make = "make"
     const val enCode = "enCode"
     const val identifier = "identifier"

@@ -27,3 +27,9 @@ expect suspend fun platformGoogleSignIn(): GoogleSignInResult
 expect fun platformSignedInEmail(): String?
 
 expect fun platformSignOut()
+
+/** Signs in to Firebase with an allowed email and its password. */
+expect suspend fun platformEmailSignIn(email: String, password: String): GoogleSignInResult
+
+/** Sends the password reset mail for an allowed email; true when it was sent. */
+expect suspend fun platformSendPasswordReset(email: String): Boolean

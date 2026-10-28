@@ -8,11 +8,12 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.ui.draw.scale
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -21,84 +22,76 @@ import com.elvan.udukkai.localization.K
 import com.elvan.udukkai.localization.tr
 import com.elvan.udukkai.theme.ThemeManager
 import com.elvan.udukkai.ui.navigation.MaterialSymbols
-import com.elvan.udukkai.ui.screens.onboarding.components.*
-import com.elvan.udukkai.theme.LocalShellColors
 
-/**
- * Welcome Landing Page matching Flutter's WelcomePage (nalvaravu_thirai.dart) 1:1.
- */
+/** Welcome page laid out like Neram's: the logo floating in the middle, the Get Started button at the bottom. */
 @Composable
 fun WelcomeScreen(
     onNavigateToLogin: () -> Unit
 ) {
-    val isDark = ThemeManager.isDark()
-    val logoBg = if (isDark) Color.White else Color(0xFF111111)
-    val logoTint = if (isDark) Color.Black else Color.White
-    val textSecondary = if (isDark) Color.White.copy(alpha = 0.4f) else Color(0xFF999999)
+    val dark = ThemeManager.isDark()
+    val logoBg = if (dark) Color.White else Color(0xFF111111)
+    val logoTint = if (dark) Color.Black else Color.White
 
-    AuthLayout {
-        // 1. LOGO SECTION matching Flutter 1:1 (96x96, radius 28dp, soft shadow, storage/database icon)
-        val floating = rememberInfiniteTransition(label = "logo_float")
-        val floatOffset by floating.animateFloat(
-            initialValue = -4f, targetValue = 4f,
-            animationSpec = infiniteRepeatable(tween(4500, easing = FastOutSlowInEasing), RepeatMode.Reverse),
-            label = "float_offset"
-        )
-        val pulse by floating.animateFloat(
-            initialValue = 0.97f, targetValue = 1.03f,
-            animationSpec = infiniteRepeatable(tween(5000, easing = FastOutSlowInEasing), RepeatMode.Reverse),
-            label = "logo_pulse"
-        )
-        AuthAnimatedElement(delayIndex = 0) {
+    val infinite = rememberInfiniteTransition(label = "logo_float")
+    val floatOffset by infinite.animateFloat(
+        initialValue = -3f, targetValue = 3f,
+        animationSpec = infiniteRepeatable(tween(4500, easing = FastOutSlowInEasing), RepeatMode.Reverse),
+        label = "float_offset"
+    )
+    val pulse by infinite.animateFloat(
+        initialValue = 0.985f, targetValue = 1.015f,
+        animationSpec = infiniteRepeatable(tween(5000, easing = FastOutSlowInEasing), RepeatMode.Reverse),
+        label = "logo_pulse"
+    )
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .windowInsetsPadding(WindowInsets.safeDrawing)
+            .padding(horizontal = 16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Spacer(Modifier.weight(1f))
+
+        NeramElement(delayIndex = 0) {
             Box(
                 modifier = Modifier
                     .offset(y = floatOffset.dp)
                     .scale(pulse)
-                    .size(96.dp)
-                    .cssShadow(
-                        color = LocalShellColors.current.textPrimary,
-                        alpha = if (isDark) 0.15f else 0.08f,
-                        blurRadius = 40.dp,
-                        offsetY = 20.dp
-                    )
-                    .clip(RoundedCornerShape(28.dp))
-                    .background(logoBg, RoundedCornerShape(28.dp)),
+                    .size(140.dp)
+                    .cssShadow(color = NeramColors.textPrimary(), alpha = if (dark) 0.15f else 0.10f, blurRadius = 40.dp, offsetY = 20.dp)
+                    .clip(RoundedCornerShape(40.dp))
+                    .background(logoBg, RoundedCornerShape(40.dp)),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
                     imageVector = MaterialSymbols.Rounded.DatabaseFill,
-                    contentDescription = "Udukkai Database",
+                    contentDescription = null,
                     tint = logoTint,
-                    modifier = Modifier.size(48.dp)
+                    modifier = Modifier.size(72.dp)
                 )
             }
         }
 
-        Spacer(modifier = Modifier.height(40.dp))
+        Spacer(Modifier.height(24.dp))
 
-        // 2. TEXT SECTION (Title: "நிறிளிற்கு நல்வரவு", Subtitle: "உங்கள் பட்டியல்கள் & GST, எளிதாக்கப்பட்டது.")
-        AuthHeader(
-            title = K.welcomeToUdukkai.tr(),
-            subtitle = K.billingGstSorted.tr()
-        )
-
-        Spacer(modifier = Modifier.height(40.dp))
-
-        // 3. INTRO SUBTEXT matching Flutter
-        AuthAnimatedElement(delayIndex = 2) {
-            Text(
-                text = K.tapGetStarted.tr(),
-                textAlign = TextAlign.Center,
-                fontSize = 12.sp,
-                lineHeight = 18.sp,
-                color = textSecondary
-            )
+        NeramElement(delayIndex = 1) {
+            NeramHeader(title = K.welcomeToUdukkai.tr(), subtitle = K.billingGstSorted.tr())
         }
 
-        // 4. ACTION BUTTON matching Flutter (K.getStartedBtn -> "தொடங்குக" / "Get Started")
-        AuthButton(
-            text = K.getStartedBtn.tr(),
-            onClick = onNavigateToLogin
-        )
+        Spacer(Modifier.weight(1f))
+
+        NeramElement(delayIndex = 2, modifier = Modifier.fillMaxWidth()) {
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Text(
+                    text = K.tapGetStarted.tr(),
+                    style = TextStyle(fontSize = 11.sp, color = NeramColors.textMuted(), lineHeight = 16.sp),
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.padding(bottom = 20.dp, start = 16.dp, end = 16.dp)
+                )
+                NeramButton(text = K.getStartedBtn.tr(), onClick = onNavigateToLogin)
+                Spacer(Modifier.height(40.dp))
+            }
+        }
     }
 }

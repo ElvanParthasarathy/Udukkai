@@ -73,6 +73,19 @@ object AuthManager {
         return result
     }
 
+    /** Email and password sign-in for the allowed accounts; same follow-up as the Google one. */
+    suspend fun signInWithEmail(email: String, password: String): GoogleSignInResult {
+        val result = platformEmailSignIn(email, password)
+        if (result is GoogleSignInResult.Success) {
+            isLoggedIn = true
+            signedInEmail = result.email
+            try {
+                getFirebaseSyncManager().startSync(if (appScope == AppScope.FACTORY) "factory" else "textiles")
+            } catch (_: Exception) {}
+        }
+        return result
+    }
+
     fun logout() {
         isLoggedIn = false
         signedInEmail = null

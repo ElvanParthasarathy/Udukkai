@@ -438,6 +438,14 @@ val ta: Map<String, String> = mapOf(
     K.restorePhaseItems to "உருப்படிகள்",
     K.restorePhaseInvoices to "பட்டியல்கள்",
     K.restorePhaseReceipts to "பற்றுச்சீட்டுகள்",
+    K.logIn to "உள்நுழை",
+    K.orDivider to "அல்லது",
+    K.forgotPassword to "கடவுச்சொல் மறந்ததா?",
+    K.deviceLanguage to "சாதன மொழி",
+    K.wrongEmailOrPassword to "மின்னஞ்சல் அல்லது கடவுச்சொல் தவறு.",
+    K.enterEmailFirst to "முதலில் மின்னஞ்சலை உள்ளிடவும்.",
+    K.resetMailSent to "கடவுச்சொல் மாற்ற மின்னஞ்சல் அனுப்பப்பட்டது.",
+    K.selectPreferredLanguage to "விருப்பமான மொழியைத் தேர்ந்தெடுக்கவும்",
 )
 
 /**
