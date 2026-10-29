@@ -1,9 +1,20 @@
 package com.elvan.udukkai.ui.screens.onboarding.screens
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Icon
+import androidx.compose.material3.Switch
+import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -11,19 +22,28 @@ import androidx.compose.ui.unit.sp
 import com.elvan.udukkai.core.auth.AppScope
 import com.elvan.udukkai.core.auth.AuthManager
 import com.elvan.udukkai.core.backup.getUdukkaiBackupService
+import com.elvan.udukkai.core.extensions.cssShadow
+import com.elvan.udukkai.core.navil.NavilMozhimaatri
 import com.elvan.udukkai.data.settings.BusinessProfile
 import com.elvan.udukkai.factory.data.FactoryProfileRepository
 import com.elvan.udukkai.localization.K
 import com.elvan.udukkai.localization.tr
 import com.elvan.udukkai.textiles.data.TextilesProfileRepository
+import com.elvan.udukkai.theme.ElvanSansFontFamily
+import com.elvan.udukkai.theme.ThemeManager
 import com.elvan.udukkai.ui.components.shell.ElvanSnackbar
+import com.elvan.udukkai.ui.navigation.MaterialSymbols
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 /**
- * Business name page of the first-run setup, built like the language page: title, one pill field, and Continue
- * pinned at the bottom. Textiles asks for the GST business name, Factory for the Coolie business name.
+ * Business setup page of the first-run setup:
+ * 1. Asks whether Bilingual mode (இருமொழி முறை) is needed or not.
+ * 2. If Bilingual is ON: offers two business name inputs (Primary language + Secondary language,
+ *    with automatic Navil transliteration from Tamil to English).
+ * 3. If Bilingual is OFF: offers a single business name input in the primary language.
+ * Works for both Textiles (GST bills) and Factory (Coolie bills).
  */
 @Composable
 fun GreetingScreen(
@@ -34,13 +54,21 @@ fun GreetingScreen(
     val coroutineScope = rememberCoroutineScope()
     val needsSilk = scope == AppScope.TEXTILES
     val needsCoolie = scope == AppScope.FACTORY
+    val dark = ThemeManager.isDark()
 
-    var businessName by remember { mutableStateOf("") }
+    val primaryLang = billingLanguage
+    val secondaryLang = if (billingLanguage == "en") "ta" else "en"
+    val isPrimaryTamil = primaryLang.lowercase().startsWith("ta")
+
+    var isBilingual by remember { mutableStateOf(true) }
+    var primaryName by remember { mutableStateOf("") }
+    var secondaryName by remember { mutableStateOf("") }
+    var hasUserEditedSecondary by remember { mutableStateOf(false) }
     var isSaving by remember { mutableStateOf(false) }
 
     val enterNameMsg = K.enterName.tr()
     val couldNotSaveMsg = K.couldNotSavePrefix.tr()
-    val disabled = businessName.trim().isEmpty()
+    val disabled = primaryName.trim().isEmpty() || (isBilingual && secondaryName.trim().isEmpty())
 
     fun save() {
         if (disabled) {
@@ -50,26 +78,34 @@ fun GreetingScreen(
         isSaving = true
         coroutineScope.launch {
             try {
-                val secondary = if (billingLanguage == "en") "ta" else "en"
+                val names = mutableMapOf<String, String>()
+                names[primaryLang] = primaryName.trim()
+                if (isBilingual) {
+                    val sec = secondaryName.trim().ifEmpty {
+                        if (isPrimaryTamil) NavilMozhimaatri.transliterate(primaryName.trim()) else primaryName.trim()
+                    }
+                    names[secondaryLang] = sec
+                }
+
                 var created = true
                 withContext(Dispatchers.Default) {
                     if (needsSilk) {
                         created = created && TextilesProfileRepository.createProfile(
                             BusinessProfile(
-                                primaryLanguage = billingLanguage,
-                                secondaryLanguage = secondary,
-                                isBilingual = true,
-                                businessName = mutableMapOf(billingLanguage to businessName.trim())
+                                primaryLanguage = primaryLang,
+                                secondaryLanguage = secondaryLang,
+                                isBilingual = isBilingual,
+                                businessName = names
                             )
                         )
                     }
                     if (needsCoolie) {
                         created = created && FactoryProfileRepository.createProfile(
                             BusinessProfile(
-                                primaryLanguage = billingLanguage,
-                                secondaryLanguage = secondary,
-                                isBilingual = false,
-                                businessName = mutableMapOf(billingLanguage to businessName.trim())
+                                primaryLanguage = primaryLang,
+                                secondaryLanguage = secondaryLang,
+                                isBilingual = isBilingual,
+                                businessName = names
                             )
                         )
                     }
@@ -77,7 +113,6 @@ fun GreetingScreen(
                     if (created) getUdukkaiBackupService().createBackup()
                 }
                 if (!created) {
-                    // Never leave the button spinning when the business could not be stored
                     isSaving = false
                     ElvanSnackbar.show(couldNotSaveMsg)
                     return@launch
@@ -102,30 +137,149 @@ fun GreetingScreen(
         }
     ) {
         NeramElement(delayIndex = 0) {
-            NeramHeader(title = K.enterCompanyDetails.tr(), subtitle = "")
+            Icon(
+                imageVector = MaterialSymbols.Rounded.Apartment,
+                contentDescription = null,
+                modifier = Modifier.size(56.dp),
+                tint = NeramColors.textPrimary()
+            )
         }
 
-        Spacer(Modifier.height(16.dp))
+        Spacer(Modifier.height(14.dp))
 
-        NeramElement(delayIndex = 1, modifier = Modifier.fillMaxWidth()) {
+        NeramElement(delayIndex = 1) {
+            NeramHeader(
+                title = K.enterCompanyDetails.tr(),
+                subtitle = if (needsCoolie) K.usedForCoolieBillsReceipts.tr() else K.forGstInvoice.tr()
+            )
+        }
+
+        Spacer(Modifier.height(8.dp))
+
+        // Bilingual Mode Choice Card (Match React bank/bilingual preference)
+        NeramElement(delayIndex = 2, modifier = Modifier.fillMaxWidth()) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .then(
+                        if (dark) Modifier
+                        else Modifier.cssShadow(color = Color.Black, alpha = 0.12f, blurRadius = 14.dp, offsetY = 4.dp)
+                    )
+                    .clip(RoundedCornerShape(20.dp))
+                    .background(NeramColors.inputBackground())
+                    .clickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = null
+                    ) { isBilingual = !isBilingual }
+                    .padding(horizontal = 18.dp, vertical = 14.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Row(
+                    modifier = Modifier.weight(1f),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        imageVector = MaterialSymbols.Rounded.Translate,
+                        contentDescription = null,
+                        tint = NeramColors.textPrimary(),
+                        modifier = Modifier.size(24.dp)
+                    )
+                    Spacer(Modifier.width(14.dp))
+                    Column {
+                        Text(
+                            text = K.bilingualMode.tr(),
+                            style = TextStyle(
+                                fontFamily = ElvanSansFontFamily,
+                                fontSize = 15.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = NeramColors.textPrimary(),
+                                lineHeight = 20.sp
+                            )
+                        )
+                        Spacer(Modifier.height(2.dp))
+                        Text(
+                            text = if (isPrimaryTamil) "தமிழ் + English" else "English + தமிழ்",
+                            style = TextStyle(
+                                fontFamily = ElvanSansFontFamily,
+                                fontSize = 12.sp,
+                                color = NeramColors.textSecondary(),
+                                lineHeight = 16.sp
+                            )
+                        )
+                    }
+                }
+                Switch(
+                    checked = isBilingual,
+                    onCheckedChange = { isBilingual = it },
+                    colors = SwitchDefaults.colors(
+                        checkedThumbColor = if (dark) Color.Black else Color.White,
+                        checkedTrackColor = if (dark) Color.White else Color.Black,
+                        uncheckedThumbColor = NeramColors.textSecondary(),
+                        uncheckedTrackColor = NeramColors.divider()
+                    )
+                )
+            }
+        }
+
+        Spacer(Modifier.height(14.dp))
+
+        // Business Name Field(s)
+        NeramElement(delayIndex = 3, modifier = Modifier.fillMaxWidth()) {
             Column(modifier = Modifier.fillMaxWidth()) {
+                val primaryLabel = when {
+                    isBilingual && isPrimaryTamil -> if (needsCoolie) "கூலி ஆலை வணிகப் பெயர் (தமிழ்)" else "நிறுவனப் பெயர் (தமிழ்)"
+                    isBilingual -> if (needsCoolie) "Coolie Factory Name (English)" else "Company Name (English)"
+                    needsCoolie -> if (isPrimaryTamil) "கூலி ஆலை வணிகப் பெயர்" else "Coolie Factory Name"
+                    else -> if (isPrimaryTamil) "நிறுவனப் பெயர்" else "Company Name"
+                }
                 Text(
-                    text = (if (needsCoolie) K.coolieCompanyName.tr() else K.companyName.tr().ifEmpty { "GST Business Name" }).uppercase(),
-                    style = TextStyle(fontSize = 11.sp, fontWeight = FontWeight.Bold, letterSpacing = 0.8.sp),
-                    color = NeramColors.textSecondary(),
-                    modifier = Modifier.padding(start = 28.dp, bottom = 8.dp)
+                    text = primaryLabel,
+                    style = TextStyle(
+                        fontFamily = ElvanSansFontFamily,
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = NeramColors.textSecondary()
+                    ),
+                    modifier = Modifier.padding(start = 16.dp, bottom = 6.dp)
                 )
                 NeramField(
-                    value = businessName,
-                    onValueChange = { businessName = it },
-                    placeholder = K.enterName.tr()
+                    value = primaryName,
+                    onValueChange = {
+                        primaryName = it
+                        if (isBilingual && !hasUserEditedSecondary && isPrimaryTamil) {
+                            secondaryName = NavilMozhimaatri.transliterate(it)
+                        }
+                    },
+                    placeholder = if (isPrimaryTamil) "பெயரை உள்ளிடுக" else "Enter company name"
                 )
-                Text(
-                    text = if (needsCoolie) K.usedForCoolieBillsReceipts.tr() else K.forGstInvoice.tr(),
-                    style = TextStyle(fontSize = 12.sp, lineHeight = 16.sp),
-                    color = NeramColors.textMuted(),
-                    modifier = Modifier.padding(start = 28.dp, top = 8.dp)
-                )
+
+                if (isBilingual) {
+                    Spacer(Modifier.height(14.dp))
+                    val secondaryLabel = if (isPrimaryTamil) {
+                        if (needsCoolie) "Coolie Factory Name (English)" else "Company Name (English)"
+                    } else {
+                        if (needsCoolie) "கூலி ஆலை வணிகப் பெயர் (தமிழ்)" else "நிறுவனப் பெயர் (தமிழ்)"
+                    }
+                    Text(
+                        text = secondaryLabel,
+                        style = TextStyle(
+                            fontFamily = ElvanSansFontFamily,
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = NeramColors.textSecondary()
+                        ),
+                        modifier = Modifier.padding(start = 16.dp, bottom = 6.dp)
+                    )
+                    NeramField(
+                        value = secondaryName,
+                        onValueChange = {
+                            hasUserEditedSecondary = true
+                            secondaryName = it
+                        },
+                        placeholder = if (isPrimaryTamil) "Enter name in English" else "பெயரை உள்ளிடுக"
+                    )
+                }
             }
         }
     }

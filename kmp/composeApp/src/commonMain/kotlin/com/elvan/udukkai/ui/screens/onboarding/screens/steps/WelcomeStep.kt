@@ -11,6 +11,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
+import com.elvan.udukkai.theme.ElvanSansFontFamily
 import com.elvan.udukkai.ui.screens.onboarding.screens.NeramColors
 import kotlinx.coroutines.delay
 
@@ -46,6 +47,7 @@ fun GreetingStep(
     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
         Text(
             text = greetings[greetingIndex],
+            fontFamily = ElvanSansFontFamily,
             fontSize = 48.sp,
             fontWeight = FontWeight.Light,
             letterSpacing = (-1).sp,

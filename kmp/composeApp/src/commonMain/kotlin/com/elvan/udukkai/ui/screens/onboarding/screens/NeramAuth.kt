@@ -24,6 +24,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.elvan.udukkai.core.extensions.cssShadow
+import com.elvan.udukkai.theme.ElvanSansFontFamily
 import com.elvan.udukkai.theme.ThemeManager
 import com.elvan.udukkai.ui.components.ExpressiveLoadingIndicator
 import com.elvan.udukkai.ui.navigation.MaterialSymbols
@@ -72,13 +73,13 @@ internal fun NeramHeader(title: String, subtitle: String) {
     ) {
         Text(
             text = title,
-            style = TextStyle(fontSize = 26.sp, fontWeight = FontWeight.Bold, color = NeramColors.textPrimary(), lineHeight = 32.sp),
+            style = TextStyle(fontFamily = ElvanSansFontFamily, fontSize = 23.sp, fontWeight = FontWeight.Bold, color = NeramColors.textPrimary(), lineHeight = 29.sp),
             textAlign = TextAlign.Center
         )
         Spacer(Modifier.height(6.dp))
         Text(
             text = subtitle,
-            style = TextStyle(fontSize = 14.sp, color = NeramColors.textSecondary(), lineHeight = 20.sp),
+            style = TextStyle(fontFamily = ElvanSansFontFamily, fontSize = 13.sp, color = NeramColors.textSecondary(), lineHeight = 18.sp),
             textAlign = TextAlign.Center
         )
     }
@@ -113,7 +114,7 @@ internal fun NeramButton(
         } else {
             Text(
                 text = text,
-                style = TextStyle(fontSize = 16.sp, fontWeight = FontWeight.Bold, letterSpacing = 0.5.sp),
+                style = TextStyle(fontFamily = ElvanSansFontFamily, fontSize = 16.sp, fontWeight = FontWeight.Bold, letterSpacing = 0.5.sp),
                 color = NeramColors.onAccent()
             )
         }
@@ -142,8 +143,16 @@ internal fun NeramPage(
     bottom: @Composable () -> Unit,
     content: @Composable ColumnScope.() -> Unit
 ) {
-    Column(modifier = Modifier.fillMaxSize().windowInsetsPadding(WindowInsets.safeDrawing)) {
-        BoxWithConstraints(modifier = Modifier.weight(1f).fillMaxWidth()) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .windowInsetsPadding(WindowInsets.safeDrawing)
+    ) {
+        BoxWithConstraints(
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxWidth()
+        ) {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -158,8 +167,13 @@ internal fun NeramPage(
         }
         NeramElement(
             delayIndex = 3,
-            modifier = Modifier.fillMaxWidth().padding(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 20.dp)
-        ) { bottom() }
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp)
+                .padding(bottom = 40.dp)
+        ) {
+            bottom()
+        }
     }
 }
 
@@ -201,6 +215,7 @@ internal fun NeramChoiceCard(
                     Text(
                         text = choice.title,
                         style = TextStyle(
+                            fontFamily = ElvanSansFontFamily,
                             fontSize = 16.sp,
                             fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
                             lineHeight = 21.sp
@@ -211,7 +226,7 @@ internal fun NeramChoiceCard(
                         Spacer(Modifier.height(2.dp))
                         Text(
                             text = choice.subtitle,
-                            style = TextStyle(fontSize = 12.sp, lineHeight = 16.sp),
+                            style = TextStyle(fontFamily = ElvanSansFontFamily, fontSize = 12.sp, lineHeight = 16.sp),
                             color = NeramColors.textSecondary()
                         )
                     }

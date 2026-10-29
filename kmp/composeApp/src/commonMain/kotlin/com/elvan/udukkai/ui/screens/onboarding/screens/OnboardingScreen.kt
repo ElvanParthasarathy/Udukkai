@@ -27,6 +27,7 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.elvan.udukkai.theme.ElvanSansFontFamily
 import com.elvan.udukkai.core.auth.AuthManager
 import com.elvan.udukkai.core.auth.GoogleSignInResult
 import com.elvan.udukkai.core.auth.platformSendPasswordReset
@@ -123,7 +124,7 @@ fun UllnuzhaivuThirai(
                         Text(
                             text = it,
                             color = if (isError) ErrorRed else NeramColors.textSecondary(),
-                            style = TextStyle(fontSize = 13.sp, lineHeight = 18.sp),
+                            style = TextStyle(fontFamily = ElvanSansFontFamily, fontSize = 13.sp, lineHeight = 18.sp),
                             modifier = Modifier.padding(start = 16.dp)
                         )
                     }
@@ -140,7 +141,7 @@ fun UllnuzhaivuThirai(
 
                     Text(
                         text = K.forgotPassword.tr(),
-                        style = TextStyle(fontSize = 14.sp, fontWeight = FontWeight.Bold),
+                        style = TextStyle(fontFamily = ElvanSansFontFamily, fontSize = 14.sp, fontWeight = FontWeight.Bold),
                         color = NeramColors.textSecondary(),
                         modifier = Modifier
                             .clickable(
@@ -172,7 +173,7 @@ fun UllnuzhaivuThirai(
                         HorizontalDivider(modifier = Modifier.weight(1f), thickness = 0.5.dp, color = NeramColors.divider())
                         Text(
                             text = K.orDivider.tr(),
-                            style = TextStyle(fontSize = 12.sp),
+                            style = TextStyle(fontFamily = ElvanSansFontFamily, fontSize = 12.sp),
                             color = NeramColors.textMuted(),
                             modifier = Modifier.padding(horizontal = 14.dp)
                         )
@@ -215,7 +216,7 @@ internal fun NeramField(
     TextField(
         value = value,
         onValueChange = onValueChange,
-        placeholder = { Text(placeholder, color = secondary) },
+        placeholder = { Text(placeholder, color = secondary, style = TextStyle(fontFamily = ElvanSansFontFamily, fontSize = 16.sp, color = secondary)) },
         trailingIcon = if (isPassword) {
             {
                 IconButton(onClick = { visible = !visible }) {
@@ -238,6 +239,7 @@ internal fun NeramField(
             focusedIndicatorColor = Color.Transparent,
             unfocusedIndicatorColor = Color.Transparent
         ),
+        textStyle = TextStyle(fontFamily = ElvanSansFontFamily, fontSize = 16.sp, color = primary),
         singleLine = true,
         keyboardOptions = keyboardOptions,
         keyboardActions = keyboardActions,
@@ -264,8 +266,8 @@ private fun GoogleButton(text: String, loading: Boolean, enabled: Boolean, onCli
             ExpressiveLoadingIndicator(modifier = Modifier.size(24.dp), color = NeramColors.textPrimary())
         } else {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Text("G", style = TextStyle(fontSize = 22.sp, fontWeight = FontWeight.Bold), color = Color(0xFFDB4437), modifier = Modifier.padding(end = 12.dp))
-                Text(text, style = TextStyle(fontSize = 16.sp, fontWeight = FontWeight.Medium), color = NeramColors.textPrimary())
+                Text("G", style = TextStyle(fontFamily = ElvanSansFontFamily, fontSize = 22.sp, fontWeight = FontWeight.Bold), color = Color(0xFFDB4437), modifier = Modifier.padding(end = 12.dp))
+                Text(text, style = TextStyle(fontFamily = ElvanSansFontFamily, fontSize = 16.sp, fontWeight = FontWeight.Medium), color = NeramColors.textPrimary())
             }
         }
     }

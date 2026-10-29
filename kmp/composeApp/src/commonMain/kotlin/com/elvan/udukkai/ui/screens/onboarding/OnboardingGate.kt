@@ -38,6 +38,9 @@ import com.elvan.udukkai.core.auth.AppScope
 import com.elvan.udukkai.core.auth.AuthManager
 import com.elvan.udukkai.core.platform.AppBackHandler
 import com.elvan.udukkai.core.sync.getFirebaseSyncManager
+import androidx.compose.ui.Alignment
+import com.elvan.udukkai.ui.components.ExpressiveLoadingIndicator
+import com.elvan.udukkai.ui.screens.onboarding.screens.NeramColors
 import com.elvan.udukkai.ui.screens.onboarding.screens.LanguageSelectScreen
 import com.elvan.udukkai.ui.screens.onboarding.components.AuthBackdrop
 import com.elvan.udukkai.ui.screens.onboarding.components.LocalHasAuthBackdrop
@@ -74,17 +77,15 @@ fun OnboardingGate(
     // Right after signing in the real home page opens with placeholder blocks, which fill in as the data arrives
     var freshLogin by remember { mutableStateOf(false) }
     LaunchedEffect(AuthManager.isLoggedIn) {
-        if (!AuthManager.isLoggedIn) { freshLogin = false; LoginShimmer.active = false }
+        if (!AuthManager.isLoggedIn) { freshLogin = false }
     }
     LaunchedEffect(freshLogin) {
         if (freshLogin) {
-            LoginShimmer.active = true
-            delay(1500)
+            delay(500)
             // Never hold the page for more than 20 seconds, even if the connection stalls halfway
             kotlinx.coroutines.withTimeoutOrNull(20_000) {
                 snapshotFlow { getFirebaseSyncManager().restoreProgress.value }.first { it == null }
             }
-            LoginShimmer.active = false
         }
     }
 
@@ -132,7 +133,6 @@ fun OnboardingGate(
                             AuthPage.LOGIN -> UllnuzhaivuThirai(
                                 onBack = { page = AuthPage.WELCOME },
                                 onLoginSuccess = {
-                                    LoginShimmer.active = true
                                     freshLogin = true
                                     AuthManager.refreshProfileStatus()
                                 }
@@ -142,7 +142,15 @@ fun OnboardingGate(
                 }
             }
             // The home page while the business data is still arriving: grey blocks that shimmer
-            GateStage.LOADING -> HomeLoadingSkeleton()
+            GateStage.LOADING -> Box(Modifier.fillMaxSize()) {
+                AuthBackdrop()
+                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    ExpressiveLoadingIndicator(
+                        modifier = Modifier.size(36.dp),
+                        color = NeramColors.textPrimary()
+                    )
+                }
+            }
             GateStage.SETUP -> WelcomeSlideScreen(
                 scope = scope,
                 onSetupComplete = { AuthManager.refreshProfileStatus() }

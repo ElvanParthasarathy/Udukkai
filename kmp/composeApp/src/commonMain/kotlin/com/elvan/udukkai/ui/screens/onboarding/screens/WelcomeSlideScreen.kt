@@ -15,17 +15,16 @@ import com.elvan.udukkai.core.auth.AuthManager
 import com.elvan.udukkai.core.platform.AppBackHandler
 import com.elvan.udukkai.ui.screens.onboarding.components.AuthBackdrop
 import com.elvan.udukkai.ui.screens.onboarding.screens.steps.BillingLanguageStep
-import com.elvan.udukkai.ui.screens.onboarding.screens.steps.GreetingStep
 
 enum class WelcomePhase {
-    GREETING, BILLING_LANGUAGE, BUSINESS_NAME
+    BILLING_LANGUAGE, BUSINESS_NAME
 }
 
 private val EaseOutCubic = CubicBezierEasing(0.215f, 0.61f, 0.355f, 1.0f)
 private val EaseInCubic = CubicBezierEasing(0.55f, 0.055f, 0.675f, 0.19f)
 
 /**
- * First-run setup of a new account, in the same look as the sign-in pages: the greeting, the billing language,
+ * First-run setup of a new account, in the same look as the sign-in pages: the billing language,
  * then the business name. The app language was already chosen on the first page, and the cloud restores an
  * existing account by itself, so there is nothing else to ask.
  */
@@ -34,7 +33,7 @@ fun WelcomeSlideScreen(
     scope: AppScope,
     onSetupComplete: () -> Unit
 ) {
-    var currentPhase by remember { mutableStateOf(WelcomePhase.GREETING) }
+    var currentPhase by remember { mutableStateOf(WelcomePhase.BILLING_LANGUAGE) }
     var billingLang by remember { mutableStateOf(AuthManager.getBillingLanguage()) }
 
     // System back steps back from the business name to the billing language
@@ -53,9 +52,6 @@ fun WelcomeSlideScreen(
             label = "setup_phase"
         ) { phase ->
             when (phase) {
-                WelcomePhase.GREETING -> GreetingStep(
-                    onComplete = { currentPhase = WelcomePhase.BILLING_LANGUAGE }
-                )
                 WelcomePhase.BILLING_LANGUAGE -> BillingLanguageStep(
                     billingLanguage = billingLang,
                     onLanguageSelected = { billingLang = it },

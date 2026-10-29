@@ -20,6 +20,7 @@ import androidx.compose.ui.unit.sp
 import com.elvan.udukkai.core.extensions.cssShadow
 import com.elvan.udukkai.localization.K
 import com.elvan.udukkai.localization.tr
+import com.elvan.udukkai.theme.ElvanSansFontFamily
 import com.elvan.udukkai.theme.ThemeManager
 import com.elvan.udukkai.ui.navigation.MaterialSymbols
 
@@ -85,7 +86,7 @@ fun WelcomeScreen(
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Text(
                     text = K.tapGetStarted.tr(),
-                    style = TextStyle(fontSize = 11.sp, color = NeramColors.textMuted(), lineHeight = 16.sp),
+                    style = TextStyle(fontFamily = ElvanSansFontFamily, fontSize = 11.sp, color = NeramColors.textMuted(), lineHeight = 16.sp),
                     textAlign = TextAlign.Center,
                     modifier = Modifier.padding(bottom = 20.dp, start = 16.dp, end = 16.dp)
                 )

@@ -51,7 +51,7 @@ fun BillingLanguageStep(
 
         NeramElement(delayIndex = 2, modifier = Modifier.fillMaxWidth()) {
             NeramChoiceCard(
-                choices = listOf(NeramChoice("ta", "தமிழ்"), NeramChoice("en", "English")),
+                choices = listOf(NeramChoice("ta", "தமிழ்", "Tamil"), NeramChoice("en", "English", "ஆங்கிலம்")),
                 selected = billingLanguage,
                 onSelect = onLanguageSelected
             )
