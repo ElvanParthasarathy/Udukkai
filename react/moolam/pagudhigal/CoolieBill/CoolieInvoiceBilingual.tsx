@@ -191,7 +191,9 @@ export default function CoolieInvoiceBilingual({ bill }) {
                 <td className="text-center">{item.coolie || ''}</td>
                 <td className="text-left">
                   <div>{isEng && item.name_english ? item.name_english : item.porul}</div>
-                  {bi && <div>{item.name_english || ''}</div>}
+                  {bi && item.name_english && item.name_english.trim().toLowerCase() !== (item.porul || '').trim().toLowerCase() && (
+                    <div>{item.name_english}</div>
+                  )}
                 </td>
                 <td className="text-center">{item.kg ? `${formatWeight(item.kg)} Kg` : ''}</td>
                 <td className="text-right" style={{ fontVariantNumeric: 'tabular-nums', paddingRight: '16px' }}>{item.kg ? `₹${formatCurrency(calcItemAmount(item.coolie, item.kg))}` : ''}</td>
@@ -202,7 +204,9 @@ export default function CoolieInvoiceBilingual({ bill }) {
                 <td className="text-center">-</td>
                 <td className="text-left">
                   <div>{isEng && row.en ? row.en : row.ta}</div>
-                  {bi && <div>{row.en || ''}</div>}
+                  {bi && row.en && row.en.trim().toLowerCase() !== (row.ta || '').trim().toLowerCase() && (
+                    <div>{row.en}</div>
+                  )}
                 </td>
                 <td className="text-center">{row.weight ? `${formatWeight(row.weight)} Kg` : '-'}</td>
                 <td className="text-right" style={{ fontVariantNumeric: 'tabular-nums', paddingRight: '16px' }}>{row.amount ? `₹${formatCurrency(row.amount)}` : '-'}</td>
@@ -216,7 +220,7 @@ export default function CoolieInvoiceBilingual({ bill }) {
                 <td colSpan={2} style={{ textAlign: 'right', paddingRight: '20px', borderBottom: '1px solid #ddd', verticalAlign: 'middle' }}>
                   <div style={{ display: 'inline-flex', flexDirection: 'column', alignItems: 'flex-end', gap: '4px' }}>
                     <span style={{ fontSize: '13.5px', fontWeight: 700, color: accent, lineHeight: 1.25 }}>{lbl('மொத்தம்', 'Grand Total')}</span>
-                    {bi && <span style={{ fontSize: '10.5px', fontWeight: 500, color: accent, opacity: 0.85, lineHeight: 1.2 }}>{primaryEng ? 'மொத்தம்' : 'Grand Total'}</span>}
+                    {bi && <span style={{ fontSize: '10.5px', fontWeight: 600, color: accent, lineHeight: 1.2 }}>{primaryEng ? 'மொத்தம்' : 'Grand Total'}</span>}
                   </div>
                 </td>
                 <td className="text-center" style={{ fontWeight: 700, fontSize: '13.5px', color: '#1e293b', fontVariantNumeric: 'tabular-nums', borderBottom: '1px solid #ddd', verticalAlign: 'middle' }}>
@@ -247,7 +251,7 @@ export default function CoolieInvoiceBilingual({ bill }) {
                           {lbl('மொத்த உருப்படிகள்', 'Total Items')}
                         </span>
                         {bi && (
-                          <span style={{ fontSize: '9.5px', fontWeight: 500, color: '#94a3b8' }}>
+                          <span style={{ fontSize: '9.5px', fontWeight: 500, color: '#64748b' }}>
                             {primaryEng ? 'மொத்த உருப்படிகள்' : 'Total Items'}
                           </span>
                         )}
@@ -319,7 +323,7 @@ export default function CoolieInvoiceBilingual({ bill }) {
             {bi && <span style={{ marginLeft: '6px' }}>• {primaryEng ? 'நன்றி' : 'Thank You'}</span>}
           </div>
           <div style={{ minWidth: '220px', textAlign: 'right' }}>
-            <div style={{ position: 'relative', zIndex: 10, fontSize: '0.75rem', fontWeight: 600, color: '#555', lineHeight: 1 }}>
+            <div style={{ position: 'relative', zIndex: 10, fontSize: '0.75rem', fontWeight: 600, color: '#333', lineHeight: 1 }}>
               {p.authorizedSignatoryName ? `(${p.authorizedSignatoryName})` : lbl('(கையொப்பம்)', '(Authorized Signature)')}
             </div>
           </div>
@@ -353,7 +357,7 @@ export default function CoolieInvoiceBilingual({ bill }) {
               </div>
             ))}
             {p.email && (
-              <div className="phone-item-new" style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '8px', fontSize: '0.82rem', color: '#444', height: '20px', lineHeight: 1.2 }}>
+              <div className="phone-item-new" style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '8px', fontSize: '0.82rem', fontWeight: 600, color: '#444', height: '20px', lineHeight: 1.2 }}>
                 <div style={{ color: accent, display: 'flex' }}><IconMail size={14} /></div>
                 <span>{p.email}</span>
               </div>
