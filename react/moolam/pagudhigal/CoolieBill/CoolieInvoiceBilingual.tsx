@@ -179,7 +179,7 @@ export default function CoolieInvoiceBilingual({ bill }) {
               <th style={{ width: '15%' }}>{lines('கூலி', 'Coolie')}</th>
               <th style={{ width: '45%', textAlign: 'left', paddingLeft: '15px' }}>{lines('உருப்படி', 'Item')}</th>
               <th style={{ width: '15%' }}>{lines('எடை', 'Weight')}</th>
-              <th style={{ width: '25%' }}>{lines('தொகை', 'Amount')}</th>
+              <th style={{ width: '25%', textAlign: 'right', paddingRight: '16px' }}>{lines('தொகை', 'Amount')}</th>
             </tr>
           </thead>
           <tbody>
@@ -191,7 +191,7 @@ export default function CoolieInvoiceBilingual({ bill }) {
                   {bi && <div>{item.name_english || ''}</div>}
                 </td>
                 <td className="text-center">{item.kg ? `${formatWeight(item.kg)} Kg` : ''}</td>
-                <td className="text-center">{item.kg ? formatCurrency(calcItemAmount(item.coolie, item.kg)) : ''}</td>
+                <td className="text-right" style={{ fontVariantNumeric: 'tabular-nums' }}>{item.kg ? `₹${formatCurrency(calcItemAmount(item.coolie, item.kg))}` : ''}</td>
               </tr>
             ))}
             {extraRows.map((row, i) => (
@@ -202,7 +202,7 @@ export default function CoolieInvoiceBilingual({ bill }) {
                   {bi && <div>{row.en || ''}</div>}
                 </td>
                 <td className="text-center">{row.weight ? `${formatWeight(row.weight)} Kg` : '-'}</td>
-                <td className="text-center">{row.amount ? formatCurrency(row.amount) : '-'}</td>
+                <td className="text-right" style={{ fontVariantNumeric: 'tabular-nums' }}>{row.amount ? `₹${formatCurrency(row.amount)}` : '-'}</td>
               </tr>
             ))}
           </tbody>
@@ -219,13 +219,13 @@ export default function CoolieInvoiceBilingual({ bill }) {
                 {wordsSecondary && <span style={{ fontWeight: 400, fontSize: '0.7rem', color: '#64748b' }}>{wordsSecondary}</span>}
               </div>
             </div>
-            <div style={{ padding: '0.45rem 1rem', alignSelf: 'center', minWidth: '200px', width: 'auto', whiteSpace: 'nowrap' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1.25rem', fontWeight: 700 }}>
+            <div style={{ padding: '0.45rem 16px', alignSelf: 'center', minWidth: '220px', width: 'auto', whiteSpace: 'nowrap' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem', fontWeight: 700 }}>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1px' }}>
-                  <span style={{ fontSize: '1.05rem', color: accent, lineHeight: 1, fontWeight: 700 }}>{lbl('மொத்தம்', 'Total')}</span>
+                  <span style={{ fontSize: '1rem', color: accent, lineHeight: 1, fontWeight: 700 }}>{lbl('மொத்தம்', 'Total')}</span>
                   {bi && <span style={{ fontSize: '0.65rem', color: accent, opacity: 0.8, fontWeight: 500 }}>{primaryEng ? 'மொத்தம்' : 'Total'}</span>}
                 </div>
-                <span style={{ color: accent, fontSize: '1.45rem', fontWeight: 800 }}>₹{formatCurrency(totalRs)}</span>
+                <span style={{ color: accent, fontSize: '1.22rem', fontWeight: 800, fontVariantNumeric: 'tabular-nums' }}>₹{formatCurrency(totalRs)}</span>
               </div>
             </div>
           </div>

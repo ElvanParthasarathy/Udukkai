@@ -315,6 +315,12 @@
     font-weight: 600;
 }
 
+.bill-table-new .text-right {
+    text-align: right;
+    padding-right: 16px;
+    font-weight: 600;
+}
+
 /* ========== TOTAL ROW ========== */
 .total-footer-row td {
     background: var(--bill-primary-light);
