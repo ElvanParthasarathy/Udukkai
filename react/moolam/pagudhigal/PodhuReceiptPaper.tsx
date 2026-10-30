@@ -98,12 +98,20 @@ export function normalizeReceiptProfile(p: any = {}) {
 
   const contact = addrLines(useEn);
 
-  // Phone numbers
+  // Phone numbers: deduplicate across phone, tholaipesi, and mobileNumber, keeping up to 2 unique contact numbers
   const phoneArr: string[] = [];
-  if (p.tholaipesi) phoneArr.push(...(Array.isArray(p.tholaipesi) ? p.tholaipesi : String(p.tholaipesi).split(',')));
-  if (p.phone) phoneArr.push(...(Array.isArray(p.phone) ? p.phone : String(p.phone).split(',')));
-  if (p.mobileNumber) phoneArr.push(...(Array.isArray(p.mobileNumber) ? p.mobileNumber : String(p.mobileNumber).split(',')));
-  const phones = phoneArr.map(n => n.trim()).filter(Boolean);
+  const rawList = [p.phone, p.tholaipesi, p.mobileNumber];
+  for (const item of rawList) {
+    if (!item) continue;
+    const parts = Array.isArray(item) ? item : String(item).split(',');
+    for (const raw of parts) {
+      const clean = String(raw).trim();
+      if (clean && !phoneArr.includes(clean)) {
+        phoneArr.push(clean);
+      }
+    }
+  }
+  const phones = phoneArr.slice(0, 2);
 
   // Email
   const email = (p.email || p.minnanjal || '').trim();
