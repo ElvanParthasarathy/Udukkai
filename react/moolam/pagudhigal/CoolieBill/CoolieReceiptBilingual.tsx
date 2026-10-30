@@ -250,12 +250,8 @@ export default function CoolieReceiptBilingual({ receipt }) {
             </div>
           </div>
 
-          {/* Bottom Row: Nandri & Signatory Text baseline aligned */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', width: '100%', paddingTop: '12px' }}>
-            <div style={{ fontSize: '0.85rem', fontWeight: 700, color: accent, lineHeight: 1 }}>
-              {(!isBilingual && primaryLang === 'English') ? 'Thank You' : 'நன்றி'}
-              {isBilingual && <span style={{ marginLeft: '6px' }}>• {primaryLang === 'English' ? 'நன்றி' : 'Thank You'}</span>}
-            </div>
+          {/* Bottom Row: Signatory Text */}
+          <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'flex-end', width: '100%', paddingTop: '12px' }}>
             <div style={{ minWidth: '220px', textAlign: 'right' }}>
               <div style={{ position: 'relative', zIndex: 10, fontSize: '0.75rem', fontWeight: 600, color: '#333', lineHeight: 1 }}>
                 {profile?.authorizedSignatoryName ? `(${profile.authorizedSignatoryName})` : renderKey('authorizedSignatory', '(Authorized Signature)', '(கையொப்பம்)')}
