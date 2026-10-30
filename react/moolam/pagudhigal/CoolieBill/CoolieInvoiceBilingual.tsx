@@ -132,11 +132,6 @@ export default function CoolieInvoiceBilingual({ bill }) {
 
   return (
     <div className={`a4-paper font-tamil${bi ? ' bilingual' : ''}`} style={{ margin: '0 auto', background: 'white', ...themeStyles(p.themeColor) }}>
-      <style>{`
-        .a4-paper .grand-total-row span {
-          color: ${accent} !important;
-        }
-      `}</style>
       {/* Top Greeting Row */}
       <div className="top-greeting-row">
         <span className="greeting-left">{isEng ? 'Vaazhga Vaiyagam' : 'வாழ்க வையகம்'}</span>
@@ -224,10 +219,10 @@ export default function CoolieInvoiceBilingual({ bill }) {
                 {wordsSecondary && <span style={{ fontWeight: 400, fontSize: '0.7rem', color: '#64748b' }}>{wordsSecondary}</span>}
               </div>
             </div>
-            <div className="inv-totals" style={{ padding: '0.75rem 0.75rem', alignSelf: 'center', minWidth: '220px', width: 'auto', whiteSpace: 'nowrap' }}>
-              <div className="inv-total-row grand-total-row inv-total-modern" style={{ fontWeight: 700, color: accent, alignItems: 'center' }}>
+            <div style={{ padding: '0.75rem 1rem', alignSelf: 'center', minWidth: '220px', width: 'auto', whiteSpace: 'nowrap' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1.5rem', fontWeight: 700 }}>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1px' }}>
-                  <span style={{ fontSize: '1.05rem', color: accent, lineHeight: 1 }}>{lbl('மொத்தம்', 'Total')}</span>
+                  <span style={{ fontSize: '1.05rem', color: accent, lineHeight: 1, fontWeight: 700 }}>{lbl('மொத்தம்', 'Total')}</span>
                   {bi && <span style={{ fontSize: '0.65rem', color: accent, opacity: 0.8, fontWeight: 500 }}>{primaryEng ? 'மொத்தம்' : 'Total'}</span>}
                 </div>
                 <span style={{ color: accent, fontSize: '1.45rem', fontWeight: 800 }}>₹{formatCurrency(totalRs)}</span>
