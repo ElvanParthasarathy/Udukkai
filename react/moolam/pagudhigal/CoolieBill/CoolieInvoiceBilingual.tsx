@@ -218,23 +218,33 @@ export default function CoolieInvoiceBilingual({ bill }) {
                 <td className="text-center" style={{ fontWeight: 800, fontSize: '14px', color: '#1e293b', fontVariantNumeric: 'tabular-nums', borderBottom: '1px solid #ddd' }}>
                   {formatWeight(totalKg)} Kg
                 </td>
-                <td className="text-right" style={{ textAlign: 'right', paddingRight: '16px', fontWeight: 800, fontSize: '1.25rem', color: accent, fontVariantNumeric: 'tabular-nums', borderBottom: '1px solid #ddd' }}>
+                <td className="text-right" style={{ textAlign: 'right', paddingRight: '16px', fontWeight: 800, fontSize: '15px', color: accent, fontVariantNumeric: 'tabular-nums', borderBottom: '1px solid #ddd' }}>
                   ₹{formatCurrency(totalRs)}
                 </td>
               </tr>
 
-              {/* Row 2: Full-width Amount in Words */}
+              {/* Row 2: Full-width Amount in Words with Total Items on Right */}
               <tr style={{ background: '#fff' }}>
                 <td colSpan={4} style={{ padding: '8px 16px', textAlign: 'left', borderBottom: 'none' }}>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                    <span style={{ fontSize: '13px', fontWeight: 700, color: '#0f172a', lineHeight: 1.35 }}>
-                      {wordsPrimary}
-                    </span>
-                    {wordsSecondary && (
-                      <span style={{ fontSize: '11.5px', fontWeight: 500, color: '#64748b', lineHeight: 1.3 }}>
-                        {wordsSecondary}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                      <span style={{ fontSize: '13px', fontWeight: 700, color: '#0f172a', lineHeight: 1.35 }}>
+                        {wordsPrimary}
                       </span>
-                    )}
+                      {wordsSecondary && (
+                        <span style={{ fontSize: '11.5px', fontWeight: 500, color: '#64748b', lineHeight: 1.3 }}>
+                          {wordsSecondary}
+                        </span>
+                      )}
+                    </div>
+                    <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', whiteSpace: 'nowrap', padding: '3px 10px', background: 'var(--bill-primary-light, #f8fafc)', borderRadius: '6px', border: '1px solid rgba(0,0,0,0.06)' }}>
+                      <span style={{ fontSize: '11px', fontWeight: 600, color: '#475569' }}>
+                        {bi ? 'மொத்த உருப்படிகள் • Total Items' : (isEng ? 'Total Items' : 'மொத்த உருப்படிகள்')} :
+                      </span>
+                      <strong style={{ fontSize: '12px', fontWeight: 800, color: accent, fontVariantNumeric: 'tabular-nums' }}>
+                        {items.length}
+                      </strong>
+                    </div>
                   </div>
                 </td>
               </tr>
