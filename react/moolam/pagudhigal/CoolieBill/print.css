@@ -900,50 +900,6 @@
     padding-bottom: 1rem;
     margin-top: auto;
 }
-.receipt-content .contact-section {
-    margin-top: auto;
-}
-.rcpt-contact-section {
-    padding: 1rem 12mm;
-    box-sizing: border-box;
-    width: 100%;
-}
-.rcpt-contact-title {
-    font-size: 0.95rem;
-    font-weight: 700;
-    margin-bottom: 0.4rem;
-}
-.rcpt-contact-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    width: 100%;
-}
-.rcpt-contact-left {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-}
-.rcpt-contact-address {
-    font-size: 0.85rem;
-    color: #334155;
-    font-weight: 500;
-}
-.rcpt-contact-email,
-.rcpt-phone-item-new {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    font-size: 0.85rem;
-    font-weight: 500;
-    color: #334155;
-}
-.rcpt-contact-phones {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-    align-items: flex-end;
-}
 
 @media print {
     .receipt-box {

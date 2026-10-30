@@ -16,21 +16,29 @@ const IconMail = ({ size = 14, className = '', style = {} }) => (
   </svg>
 );
 
-const themeStyles = (hex) => {
-  if (!hex || (hex.length !== 4 && hex.length !== 7)) return {};
-  const full = hex.length === 4 ? `#${hex[1]}${hex[1]}${hex[2]}${hex[2]}${hex[3]}${hex[3]}` : hex;
-  const r = parseInt(full.slice(1, 3), 16);
-  const g = parseInt(full.slice(3, 5), 16);
-  const b = parseInt(full.slice(5, 7), 16);
+const getThemeStyles = (hexColor) => {
+  if (!hexColor) return {};
+  let r = 0, g = 0, b = 0;
+  if (hexColor.length === 4) {
+    r = parseInt(hexColor[1] + hexColor[1], 16);
+    g = parseInt(hexColor[2] + hexColor[2], 16);
+    b = parseInt(hexColor[3] + hexColor[3], 16);
+  } else if (hexColor.length === 7) {
+    r = parseInt(hexColor.slice(1, 3), 16);
+    g = parseInt(hexColor.slice(3, 5), 16);
+    b = parseInt(hexColor.slice(5, 7), 16);
+  } else {
+    return {};
+  }
   return {
-    '--bill-primary': hex,
+    '--bill-primary': hexColor,
     '--bill-primary-light': `rgba(${r}, ${g}, ${b}, 0.1)`,
-    '--bill-primary-dark': hex,
-    '--bill-accent': hex,
-    '--bill-border': hex,
-    '--bill-text': hex,
+    '--bill-primary-dark': hexColor,
+    '--bill-accent': hexColor,
+    '--bill-border': hexColor,
+    '--bill-text': hexColor,
     '--bill-text-dark': `rgba(${Math.max(0, r - 30)}, ${Math.max(0, g - 30)}, ${Math.max(0, b - 30)}, 1)`,
-    '--bill-row-alt': `rgba(${r}, ${g}, ${b}, 0.03)`,
+    '--bill-row-alt': `rgba(${r}, ${g}, ${b}, 0.03)`
   };
 };
 
@@ -115,10 +123,10 @@ export default function CoolieReceiptBilingual({ receipt }) {
   const addr2 = dist ? `${dist}${profile?.pincode ? ` - ${profile.pincode}` : ''}` : (profile?.pincode ? `PIN: ${profile.pincode}` : '');
   
   const email = (profile?.email || profile?.minnanjal || '').trim();
-  const phone = profile?.phone ? (Array.isArray(profile.phone) ? profile.phone : String(profile.phone).split(',').map(s => s.trim()).filter(Boolean)) : (profile?.mobile ? [profile.mobile] : []);
+  const phone = profile?.phone ? (Array.isArray(profile.phone) ? profile.phone : String(profile.phone).split(',')) : [];
 
   return (
-    <div className="receipt-box" style={{ ...themeStyles(accent) }}>
+    <div className="receipt-box" style={{ ...getThemeStyles(accent) }}>
       <div className="receipt-content">
         {/* Top Greeting Row */}
         <div className="top-greeting-row">
@@ -224,60 +232,69 @@ export default function CoolieReceiptBilingual({ receipt }) {
           </p>
         )}
 
-        {/* Footer */}
-        <div className="receipt-footer">
-          <div className="preview-footer-right">
-            <div className="sign-company font-display" style={{ color: accent, position: 'relative', zIndex: 10, fontSize: '14px', fontWeight: 700, marginBottom: '5px' }}>
-              {profile?.nameEn || profile?.name}
+        {/* Footer: Clean stationery layout matching invoice */}
+        <div style={{ display: 'flex', flexDirection: 'column', marginTop: 'auto', marginBottom: '16px', paddingLeft: '8px', paddingRight: '8px' }}>
+          {/* Top Row: Business Name & Signature */}
+          <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'flex-start', width: '100%' }}>
+            <div style={{ textAlign: 'right', display: 'flex', flexDirection: 'column', alignItems: 'flex-end', minWidth: '220px' }}>
+              <div className="sign-company font-display" style={{ color: accent, position: 'relative', zIndex: 10, fontSize: '14px', fontWeight: 700, marginBottom: '5px', lineHeight: 1.2 }}>
+                {profile?.nameEn || profile?.name}
+              </div>
+              <div style={{ position: 'relative', height: '55px', width: '100%', display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
+                {(profile?.signature || receipt?.signature) && (
+                  <img src={profile?.signature || receipt?.signature} alt="Signature" style={{ position: 'absolute', top: '50%', transform: 'translateY(-50%)', right: '-10px', maxHeight: '95px', maxWidth: '200px', objectFit: 'contain', pointerEvents: 'none' }} />
+                )}
+              </div>
             </div>
-            <div className="sign-space" style={{ position: 'relative', height: '55px', display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
-              {(profile?.signature || receipt?.signature) && (
-                <img src={profile?.signature || receipt?.signature} alt="Signature" style={{ position: 'absolute', top: '50%', transform: 'translateY(-50%)', right: '-10px', maxHeight: '95px', maxWidth: '200px', objectFit: 'contain', pointerEvents: 'none' }} />
-              )}
+          </div>
+
+          {/* Bottom Row: Nandri & Signatory Text baseline aligned */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', width: '100%', paddingTop: '12px' }}>
+            <div style={{ fontSize: '0.85rem', fontWeight: 700, color: accent, lineHeight: 1 }}>
+              {(!isBilingual && primaryLang === 'English') ? 'Thank You' : 'நன்றி'}
+              {isBilingual && <span style={{ marginLeft: '6px' }}>• {primaryLang === 'English' ? 'நன்றி' : 'Thank You'}</span>}
             </div>
-            <div className="sign-label" style={{ position: 'relative', zIndex: 10, fontSize: '0.75rem', fontWeight: 600, color: '#333' }}>
-              {profile?.authorizedSignatoryName ? `(${profile.authorizedSignatoryName})` : renderKey('authorizedSignatory', '(Authorized Signature)', '(கையொப்பம்)')}
+            <div style={{ minWidth: '220px', textAlign: 'right' }}>
+              <div style={{ position: 'relative', zIndex: 10, fontSize: '0.75rem', fontWeight: 600, color: '#333', lineHeight: 1 }}>
+                {profile?.authorizedSignatoryName ? `(${profile.authorizedSignatoryName})` : renderKey('authorizedSignatory', '(Authorized Signature)', '(கையொப்பம்)')}
+              </div>
             </div>
           </div>
         </div>
 
-        {/* Contact Section - exactly matching invoice */}
+        {/* Contact Section: 1:1 match with invoice */}
         <div className="contact-section">
-          <div className="contact-title" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
-            <span>{primaryLang === 'English' ? 'Contact Us' : 'தொடர்பு கொள்ள'}</span>
-            {isBilingual && (
-              <span style={{ fontSize: '10px', fontWeight: 500, color: accent, opacity: 0.85, marginTop: '-2px' }}>
-                {primaryLang === 'English' ? 'தொடர்பு கொள்ள' : 'Contact Us'}
-              </span>
-            )}
-          </div>
           <div className="contact-row">
             <div className="contact-left">
+              <div className="contact-title" style={{ display: 'flex', flexDirection: 'column', gap: '2px', marginBottom: '8px' }}>
+                <span style={{ fontSize: '13px', fontWeight: 700, color: accent }}>{(!isBilingual && primaryLang === 'English') ? 'Contact Us' : 'தொடர்பு கொள்ள'}</span>
+                {isBilingual && (
+                  <span style={{ fontSize: '10px', fontWeight: 500, color: accent, opacity: 0.85 }}>{primaryLang === 'English' ? 'தொடர்பு கொள்ள' : 'Contact Us'}</span>
+                )}
+              </div>
               <div className="contact-address">
                 <div>{addr1}</div>
                 {addr2 && <div>{addr2}</div>}
               </div>
               {email && (
-                <div className="contact-email">
-                  <div style={{ display: 'flex', alignItems: 'center' }}>
+                <div className="contact-email" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', marginTop: '-2px', color: accent }}>
                     <IconMail size={14} />
                   </div>
                   <span>{email}</span>
                 </div>
               )}
             </div>
-            {phone.length > 0 && (
-              <div className="contact-phones">
-                {phone.map((num, i) => (
-                  <div key={i} className="phone-item-new">
-                    <div style={{ display: 'flex', alignItems: 'center' }}>
-                      <IconPhone size={14} />
-                    </div>
-                    <span>{num}</span>
+            <div className="contact-phones">
+              {phone.map((num, i) => (
+                <div key={i} className="phone-item-new" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', marginTop: '-2px', color: accent }}>
+                    <IconPhone size={14} />
                   </div>
-                ))}
-              </div>
-            )}
+                  <span style={{ fontVariantNumeric: 'tabular-nums', letterSpacing: '0.02em' }}>{num}</span>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </div>
