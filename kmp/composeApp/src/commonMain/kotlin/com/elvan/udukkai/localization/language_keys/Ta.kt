@@ -433,7 +433,7 @@ val ta: Map<String, String> = mapOf(
     K.lastSyncedAt to "கடைசி ஒத்திசைவு",
     K.eraseConfirmFinal to "இந்தத் தொலைபேசியின் அனைத்துத் தரவும் அழிக்கப்படும். முதலில் பாதுகாப்பு நகல் எடுக்கப்படும்.",
     K.restoreCloudTitle to "மேகத்திலிருந்து உங்கள் தரவு மீட்கப்படுகிறது",
-    K.restorePhaseProfiles to "நிறுவன விவரங்கள்",
+    K.restorePhaseProfiles to "நிறுவனத் தரவுகள்",
     K.restorePhaseCustomers to "வாங்குநர்கள்",
     K.restorePhaseItems to "உருப்படிகள்",
     K.restorePhaseInvoices to "பட்டியல்கள்",

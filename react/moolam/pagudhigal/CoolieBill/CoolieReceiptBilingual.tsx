@@ -96,7 +96,7 @@ export default function CoolieReceiptBilingual({ receipt }) {
   const dist = isTa ? (profile?.district || profile?.districtEn) : (profile?.districtEn || profile?.district);
   const addr2 = dist ? `${dist}${profile?.pincode ? ` - ${profile.pincode}` : ''}` : (profile?.pincode ? `PIN: ${profile.pincode}` : '');
   
-  const email = profile?.email || '';
+  const email = (profile?.email || profile?.minnanjal || '').trim();
   const phone = profile?.phone ? (Array.isArray(profile.phone) ? profile.phone : String(profile.phone).split(',')) : [];
 
   return (

@@ -402,42 +402,9 @@ export default function CoolieReceiptView({ receipt: receiptProp, onBack, onEdit
             {themeVariant === 'bilingual' ? (
               <CoolieReceiptBilingual receipt={{ ...receipt, _companyProfile: profile }} />
             ) : (
-              <>
-          <style>{`
-          .receipt-box { width: 210mm; height: 297mm; max-height: 297mm; box-sizing: border-box; margin: 0 auto; border: 2px solid #e2e8f0; border-radius: 8px; background: white; display: flex; flex-direction: column; overflow: hidden; }
-          .receipt-content { padding: 8mm 12mm; flex: 1; display: flex; flex-direction: column; }
-          .receipt-header { text-align: center; margin-bottom: 2.5rem; border-bottom: 2px solid #e2e8f0; padding-bottom: 1.5rem; }
-          .receipt-title { font-size: 2rem; font-weight: 800; color: #0f172a; margin: 0; }
-          .receipt-row { display: flex; justify-content: space-between; padding: 0.85rem 0; font-size: 1.1rem; border-bottom: 1px solid #f1f5f9; }
-          .receipt-label { color: #64748b; font-weight: 600; }
-          .receipt-value { color: #1e293b; font-weight: 700; text-align: right; }
-          .receipt-amount { font-size: 2rem; font-weight: 800; color: #1e40af; text-align: center; margin: 2rem 0; padding: 1.25rem; background: #eff6ff; border-radius: 8px; }
-          .receipt-words { font-size: 1.05rem; color: #334155; text-align: center; margin-bottom: 2rem; }
-          .receipt-footer { display: flex; justify-content: flex-end; padding-top: 2rem; padding-bottom: 1.5rem; }
-          .receipt-sig { text-align: center; }
-          .receipt-sig-line { width: 220px; border-bottom: 1.5px solid #1e293b; margin-bottom: 0.35rem; }
-          .receipt-sig-label { font-size: 0.95rem; color: #64748b; }
-          .business-name { font-size: 1.35rem; font-weight: 700; margin-bottom: 0.35rem; color: #000; }
-          .rcpt-contact-section { padding: 1rem 12mm; }
-          .rcpt-contact-title { font-size: 0.95rem; font-weight: 700; margin-bottom: 0.4rem; }
-          .rcpt-contact-row { display: flex; justify-content: space-between; align-items: flex-start; }
-          .rcpt-contact-left { display: flex; flex-direction: column; gap: 4px; }
-          .rcpt-contact-address { font-size: 0.85rem; color: #334155; font-weight: 500; }
-          .rcpt-contact-email, .rcpt-phone-item-new { display: flex; align-items: center; gap: 6px; font-size: 0.85rem; font-weight: 500; color: #334155; }
-          @media print {
-            .receipt-box {
-              border: none !important;
-              border-radius: 0 !important;
-              box-shadow: none !important;
-              width: 100% !important;
-              height: 297mm !important;
-              margin: 0 !important;
-            }
-          }
-        `}</style>
-            <div className="receipt-box">
-              <div className="receipt-content">
-                <div className="top-greeting-row">
+              <div className="receipt-box">
+                <div className="receipt-content">
+                  <div className="top-greeting-row">
                     <span className="greeting-left" style={{ color: profile.themeColor || '#1e3a8a' }}>{(!isBilingual && primaryLang === 'English') ? 'Vaazhga Vaiyagam' : 'வாழ்க வையகம்'}</span>
                     <span className="greeting-center" style={{ color: profile.themeColor || '#1e3a8a' }}>உ</span>
                     <span className="greeting-right" style={{ color: profile.themeColor || '#1e3a8a' }}>{(!isBilingual && primaryLang === 'English') ? 'Vaazhga Valamudan' : 'வாழ்க வளமுடன்'}</span>
@@ -525,7 +492,7 @@ export default function CoolieReceiptView({ receipt: receiptProp, onBack, onEdit
                 const dist = isTa ? (profile?.district || profile?.districtEn) : (profile?.districtEn || profile?.district);
                 const addr2 = dist ? `${dist}${profile?.pincode ? ` - ${profile.pincode}` : ''}` : (profile?.pincode ? `PIN: ${profile.pincode}` : '');
                 
-                const email = profile?.email || '';
+                const email = (profile?.email || profile?.minnanjal || '').trim();
                 const phone = profile?.phone ? (Array.isArray(profile.phone) ? profile.phone : String(profile.phone).split(',')) : [];
 
                 return (
@@ -563,7 +530,7 @@ export default function CoolieReceiptView({ receipt: receiptProp, onBack, onEdit
                 );
               })()}
             </div>
-            </>
+
           )}
           </div>
             </Paper>

@@ -769,7 +769,7 @@ const SjsTheme = React.forwardRef(({ profile = {}, client = {}, details = {}, it
                   </div>
                 )}
                 <div style={{ display: 'flex', gap: '4px' }}>
-                  <div style={{ fontWeight: 700, whiteSpace: 'nowrap', fontSize: '0.82rem', color: accent }}>{profile?.primaryDataLanguage === 'English' ? 'Bank Details' : 'வங்கி விவரம்'} :</div>
+                  <div style={{ fontWeight: 700, whiteSpace: 'nowrap', fontSize: '0.82rem', color: accent }}>{profile?.primaryDataLanguage === 'English' ? 'Bank Name' : 'வங்கிப் பெயர்'} :</div>
                   <div style={{ color: '#334155', fontWeight: 600 }}>
                     {bankName}
                     {branch ? `, ${branch}` : ''}
