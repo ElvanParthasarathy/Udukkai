@@ -152,7 +152,7 @@ export default function CoolieInvoiceBilingual({ bill }) {
             {isEng ? 'Coolie Bill' : 'கூலி பில்'}
           </div>
           {bi && (
-            <div style={{ fontSize: '11px', fontWeight: 600, color: accent, marginTop: '3px', lineHeight: 1 }}>
+            <div style={{ fontSize: '11px', fontWeight: 500, color: accent, opacity: 0.85, marginTop: '3px', lineHeight: 1 }}>
               Coolie Bill
             </div>
           )}
@@ -220,7 +220,7 @@ export default function CoolieInvoiceBilingual({ bill }) {
                 <td colSpan={2} style={{ textAlign: 'right', paddingRight: '20px', borderBottom: '1px solid #ddd', verticalAlign: 'middle' }}>
                   <div style={{ display: 'inline-flex', flexDirection: 'column', alignItems: 'flex-end', gap: '4px' }}>
                     <span style={{ fontSize: '13.5px', fontWeight: 700, color: accent, lineHeight: 1.25 }}>{lbl('மொத்தம்', 'Grand Total')}</span>
-                    {bi && <span style={{ fontSize: '10.5px', fontWeight: 600, color: accent, lineHeight: 1.2 }}>{primaryEng ? 'மொத்தம்' : 'Grand Total'}</span>}
+                    {bi && <span style={{ fontSize: '10.5px', fontWeight: 500, color: accent, opacity: 0.85, lineHeight: 1.2 }}>{primaryEng ? 'மொத்தம்' : 'Grand Total'}</span>}
                   </div>
                 </td>
                 <td className="text-center" style={{ fontWeight: 700, fontSize: '13.5px', color: '#1e293b', fontVariantNumeric: 'tabular-nums', borderBottom: '1px solid #ddd', verticalAlign: 'middle' }}>
@@ -247,11 +247,11 @@ export default function CoolieInvoiceBilingual({ bill }) {
                     </div>
                     <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', whiteSpace: 'nowrap' }}>
                       <div style={{ display: 'inline-flex', flexDirection: 'column', alignItems: 'flex-end', gap: '3px' }}>
-                        <span style={{ fontSize: '11.5px', fontWeight: 600, color: '#64748b', lineHeight: 1.25 }}>
+                        <span style={{ fontSize: '11.5px', fontWeight: 600, color: '#475569', lineHeight: 1.25 }}>
                           {lbl('மொத்த உருப்படிகள்', 'Total Items')}
                         </span>
                         {bi && (
-                          <span style={{ fontSize: '9.5px', fontWeight: 500, color: '#64748b' }}>
+                          <span style={{ fontSize: '9.5px', fontWeight: 500, color: '#475569', opacity: 0.85 }}>
                             {primaryEng ? 'மொத்த உருப்படிகள்' : 'Total Items'}
                           </span>
                         )}
