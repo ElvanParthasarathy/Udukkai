@@ -73,23 +73,30 @@ export function normalizeReceiptProfile(p: any = {}) {
   const namePrimary = getDynamicField(p, 'niruvanathinPeyar', p, true) || p.name || p.businessName || 'Your Business';
   const nameSecondary = getDynamicField(p, 'niruvanathinPeyar', p, false) || p.nameEn || p.businessNameEn || '';
 
-  // Address Line 1
-  const addr1_eng = [getDynamicField(p, 'mugavari', p, false) || p.addressEn, getDynamicField(p, 'oor', p, false) || p.cityEn].filter(Boolean).join(', ');
-  const addr1_tam = [getDynamicField(p, 'mugavari', p, true) || p.address, getDynamicField(p, 'oor', p, true) || p.city].filter(Boolean).join(', ');
-  const pin = p.pin || p.pincode ? ` - ${p.pin || p.pincode}` : '';
-  const addr1 = (isTamilPrimary ? (addr1_tam || addr1_eng) : (addr1_eng || addr1_tam)) + pin;
+  // Address lines matching invoice contact lines:
+  // Line 1: Street, City - PIN
+  // Line 2: District
+  const useEn = isBilingual || !isTamilPrimary;
+  const line1_en = p.addressEn || getDynamicField(p, 'mugavari', p, false);
+  const line1_ta = p.address || getDynamicField(p, 'mugavari', p, true);
+  const city_en = p.cityEn || getDynamicField(p, 'oor', p, false);
+  const city_ta = p.city || getDynamicField(p, 'oor', p, true);
+  const dist_en = p.districtEn || getDynamicField(p, 'maavattam', p, false);
+  const dist_ta = p.district || getDynamicField(p, 'maavattam', p, true);
+  const pin = p.pin || p.pincode;
 
-  // District / State / Country
-  const rawCountry = p.country || 'India';
-  const country_eng = !isBilingual ? '' : (getBilingualCountryName(rawCountry, { ...p, returnOnlySecondary: true, fallbackEnglishName: p.country_English }) || p.country_English || rawCountry);
-  const country_tam = getBilingualCountryName(rawCountry, { ...p, returnOnlyPrimary: true }) || (rawCountry === 'India' ? (isTamilPrimary ? 'இந்தியா' : 'India') : rawCountry);
+  const addrLines = (en: boolean) => {
+    const l1_str = en ? (line1_en || line1_ta) : (line1_ta || line1_en);
+    const c_str = en ? (city_en || city_ta) : (city_ta || city_en);
+    const d_str = en ? (dist_en || dist_ta) : (dist_ta || dist_en);
+    const cityPin = [c_str, pin].filter(Boolean).join(' - ');
+    return {
+      l1: [l1_str, cityPin].filter(Boolean).join(', ') || [l1_str, pin].filter(Boolean).join(', '),
+      l2: d_str || ''
+    };
+  };
 
-  const state_eng = p.maanilam ? getBilingualStateName(p.maanilam, { ...p, returnOnlySecondary: true, fallbackEnglishName: p.maanilamEn }) : '';
-  const state_tam = p.maanilam ? getBilingualStateName(p.maanilam, { ...p, returnOnlyPrimary: true }) : '';
-
-  const dist_eng = [getDynamicField(p, 'maavattam', p, false) || p.districtEn, state_eng, country_eng].filter(Boolean).join(', ');
-  const dist_tam = [getDynamicField(p, 'maavattam', p, true) || p.district, state_tam, country_tam].filter(Boolean).join(', ');
-  const addr2 = isTamilPrimary ? (dist_tam || dist_eng) : (dist_eng || dist_tam);
+  const contact = addrLines(useEn);
 
   // Phone numbers
   const phoneArr: string[] = [];
@@ -118,11 +125,11 @@ export function normalizeReceiptProfile(p: any = {}) {
     billHeaderStyle: p.billHeaderStyle,
     signature: p.signature,
     authorizedSignatoryName: p.authorizedSignatoryName || p.signatoryName,
-    addr1,
-    addr2,
+    addr1: contact.l1,
+    addr2: contact.l2,
     phones,
     email,
-    country: rawCountry
+    country: p.country || 'India'
   };
 }
 
@@ -469,16 +476,16 @@ export default function PodhuReceiptPaper({
             }}>
           <div ref={printRef} className="print-area">
           <style>{`
-          .receipt-box { width: 210mm; height: 297mm; max-height: 297mm; box-sizing: border-box; margin: 0 auto; border: 2px solid #e2e8f0; border-radius: 8px; background: white; display: flex; flex-direction: column; overflow: hidden; position: relative; text-align: left; }
+          .receipt-box { width: 210mm; min-height: 297mm; box-sizing: border-box; margin: 0 auto; border: 2px solid #e2e8f0; border-radius: 8px; background: white; display: flex; flex-direction: column; position: relative; text-align: left; }
           .receipt-content { padding: 8mm 12mm; flex: 1; display: flex; flex-direction: column; box-sizing: border-box; }
           .print-header-new { display: flex; justify-content: space-between; align-items: flex-start; position: relative; min-height: 70px; }
           .header-left { display: flex; align-items: center; justify-content: flex-start; gap: 1rem; position: relative; }
           .header-right { text-align: right; z-index: 5; position: relative; }
-          .receipt-row { display: flex; justify-content: space-between; align-items: flex-start; padding: 0.85rem 0; font-size: 1.1rem; border-bottom: 1px solid #f1f5f9; }
+          .receipt-row { display: flex; justify-content: space-between; align-items: flex-start; padding: 0.65rem 8px; font-size: 1.05rem; border-bottom: 1px solid #f1f5f9; }
           .receipt-label { color: var(--bill-primary, #1e3a8a); font-weight: 600; }
           .receipt-value { color: #242f3d; font-weight: 600; text-align: right; }
-          .receipt-amount { font-size: 2rem; font-weight: 800; color: var(--bill-primary, #1e3a8a); text-align: center; margin: 1.5rem 0 1rem 0; padding: 1.25rem; background: var(--bill-primary-light, #eff6ff); border-radius: 8px; }
-          .receipt-words { font-size: 1.05rem; color: #242f3d; text-align: center; margin-bottom: 1.5rem; }
+          .receipt-amount { font-size: 2rem; font-weight: 800; color: var(--bill-primary, #1e3a8a); text-align: center; margin: 1.25rem 0 0.75rem 0; padding: 1.1rem; background: var(--bill-primary-light, #eff6ff); border-radius: 8px; }
+          .receipt-words { font-size: 1.05rem; color: #242f3d; text-align: center; margin-bottom: 1.25rem; }
           @media print {
             .receipt-box {
               border: none !important;
@@ -493,14 +500,14 @@ export default function PodhuReceiptPaper({
             <div className="receipt-box" style={{ ...getThemeStyles(norm.themeColor) }}>
               <div className="receipt-content">
                 {/* Top Greeting Row */}
-                <div className="top-greeting-row">
+                <div className="top-greeting-row" style={{ paddingLeft: '8px', paddingRight: '8px' }}>
                   <span className="greeting-left" style={{ color: norm.themeColor }}>{(!norm.isBilingual && norm.primaryLang === 'English') ? 'Vaazhga Vaiyagam' : 'வாழ்க வையகம்'}</span>
                   <span className="greeting-center" style={{ color: norm.themeColor }}>உ</span>
                   <span className="greeting-right" style={{ color: norm.themeColor }}>{(!norm.isBilingual && norm.primaryLang === 'English') ? 'Vaazhga Valamudan' : 'வாழ்க வளமுடன்'}</span>
                 </div>
 
                 {/* Header matching Invoice layout */}
-                <div className="print-header-new" style={{ borderBottom: '2px solid #e2e8f0', paddingBottom: '1rem', marginBottom: '1.5rem' }}>
+                <div className="print-header-new" style={{ paddingLeft: '8px', paddingRight: '8px', borderBottom: '2px solid #e2e8f0', paddingBottom: '0.85rem', marginBottom: '1.25rem' }}>
                   <div className="header-left">
                     {(norm.billHeaderStyle === 'wide' || (!norm.billHeaderStyle && norm.wideLogo)) && norm.wideLogo ? (
                       <img 
@@ -597,7 +604,7 @@ export default function PodhuReceiptPaper({
                 )}
 
                 {/* Center Amount and Words */}
-                <div style={{ marginTop: 'auto', marginBottom: 'auto' }}>
+                <div style={{ marginTop: 'auto', marginBottom: 'auto', paddingLeft: '8px', paddingRight: '8px' }}>
                   <div className="receipt-amount" style={{ color: norm.themeColor, backgroundColor: norm.themeColor ? `${norm.themeColor}15` : '#e8f5e9' }}>
                     {formatCurrency(receipt.amount, profileCurrency)}
                   </div>
@@ -619,13 +626,13 @@ export default function PodhuReceiptPaper({
                 </div>
 
                 {receipt.note && (
-                  <p style={{ fontSize: '0.85rem', color: '#64748b' }}>
+                  <p style={{ fontSize: '0.85rem', color: '#64748b', paddingLeft: '8px', paddingRight: '8px' }}>
                     {renderKey('noteLabel', 'Note:', 'குறிப்பு:')} {receipt.note}
                   </p>
                 )}
 
                 {/* Footer: Clean stationery layout matching invoice */}
-                <div style={{ display: 'flex', flexDirection: 'column', marginTop: 'auto', marginBottom: '16px', paddingLeft: 0, paddingRight: 0 }}>
+                <div style={{ display: 'flex', flexDirection: 'column', marginTop: 'auto', marginBottom: '14px', paddingLeft: '8px', paddingRight: '8px' }}>
                   {/* Top Row: Business Name & Signature */}
                   <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'flex-start', width: '100%' }}>
                     <div style={{ textAlign: 'right', display: 'flex', flexDirection: 'column', alignItems: 'flex-end', minWidth: '220px' }}>
@@ -651,47 +658,38 @@ export default function PodhuReceiptPaper({
                 </div>
 
                 {/* Contact Section: 1:1 match with invoice */}
-                <div className="contact-section" style={{ padding: '24px 12mm', background: norm.themeColor ? `${norm.themeColor}15` : '#e8f5e9' }}>
+                <div className="contact-section" style={{ padding: '16px calc(12mm + 8px)', background: norm.themeColor ? `${norm.themeColor}15` : '#e8f5e9' }}>
                   <div className="contact-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', width: '100%' }}>
-                    {/* Left Column: Title + Address Lines + Email */}
-                    <div className="contact-left" style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                        <div style={{ fontSize: '0.85rem', fontWeight: 700, color: norm.themeColor, lineHeight: 1.2 }}>
-                          {norm.isTamilPrimary ? 'தொடர்பு கொள்ள' : 'Contact Us'}
-                        </div>
-                        {norm.isBilingual && (
-                          <div style={{ fontSize: '10.5px', fontWeight: 500, color: norm.themeColor, opacity: 0.85, lineHeight: 1 }}>
-                            {norm.isTamilPrimary ? 'Contact Us' : 'தொடர்பு கொள்ள'}
-                          </div>
-                        )}
+                    {/* Left Column: Title + Address Lines */}
+                    <div className="contact-left" style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                      <div style={{ fontSize: '0.85rem', fontWeight: 700, color: norm.themeColor, display: 'flex', alignItems: 'center', height: '20px', lineHeight: 1.2 }}>
+                        {!norm.isTamilPrimary ? 'Contact Us' : 'தொடர்பு கொள்ள'}
                       </div>
-                      <div style={{ fontSize: '0.82rem', color: '#333', fontWeight: 500, display: 'flex', alignItems: 'center', minHeight: '20px', lineHeight: 1.2 }}>
+                      <div style={{ fontSize: '0.82rem', color: '#333', fontWeight: 500, display: 'flex', alignItems: 'center', height: '20px', lineHeight: 1.2 }}>
                         {norm.addr1}
                       </div>
                       {norm.addr2 && (
-                        <div style={{ fontSize: '0.82rem', color: '#333', fontWeight: 500, display: 'flex', alignItems: 'center', minHeight: '20px', lineHeight: 1.2 }}>
+                        <div style={{ fontSize: '0.82rem', color: '#333', fontWeight: 500, display: 'flex', alignItems: 'center', height: '20px', lineHeight: 1.2 }}>
                           {norm.addr2}
                         </div>
                       )}
+                    </div>
+
+                    {/* Right Column: Phones & Email */}
+                    <div className="contact-phones" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '6px' }}>
+                      {norm.phones.map((num: string, i: number) => (
+                        <div key={i} className="phone-item-new" style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '8px', fontSize: '0.82rem', fontWeight: 600, color: '#444', height: '20px', lineHeight: 1.2 }}>
+                          <div style={{ color: norm.themeColor, display: 'flex' }}><IconPhone size={14} /></div>
+                          <span style={{ fontVariantNumeric: 'tabular-nums', letterSpacing: '0.02em' }}>{num}</span>
+                        </div>
+                      ))}
                       {norm.email && (
-                        <div className="phone-item-new" style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.82rem', fontWeight: 600, color: '#444', minHeight: '20px', lineHeight: 1.2 }}>
+                        <div className="phone-item-new" style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '8px', fontSize: '0.82rem', fontWeight: 600, color: '#444', height: '20px', lineHeight: 1.2 }}>
                           <div style={{ color: norm.themeColor, display: 'flex' }}><IconMail size={14} /></div>
                           <span>{norm.email}</span>
                         </div>
                       )}
                     </div>
-
-                    {/* Right Column: Phone numbers */}
-                    {norm.phones.length > 0 && (
-                      <div className="contact-phones" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '4px' }}>
-                        {norm.phones.map((num: string, i: number) => (
-                          <div key={i} className="phone-item-new" style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '8px', fontSize: '0.82rem', fontWeight: 600, color: '#444', minHeight: '20px', lineHeight: 1.2 }}>
-                            <div style={{ color: norm.themeColor, display: 'flex' }}><IconPhone size={14} /></div>
-                            <span style={{ fontVariantNumeric: 'tabular-nums', letterSpacing: '0.02em' }}>{num}</span>
-                          </div>
-                        ))}
-                      </div>
-                    )}
                   </div>
                 </div>
               </div>
