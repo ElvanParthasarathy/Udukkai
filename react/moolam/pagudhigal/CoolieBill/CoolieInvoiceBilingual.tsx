@@ -324,25 +324,32 @@ export default function CoolieInvoiceBilingual({ bill }) {
 
       {/* Contact Section: address on the left, phone numbers and e-mail on the right */}
       <div className="contact-section">
-        <div className="contact-title" style={{ fontSize: '0.85rem', fontWeight: 700, color: accent, marginBottom: '6px' }}>
-          {lbl('தொடர்பு கொள்ள', 'Contact Us')}
-        </div>
         <div className="contact-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', width: '100%' }}>
-          <div className="contact-left" style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
-            <div className="contact-address" style={{ fontSize: '0.82rem', color: '#333', fontWeight: 500, lineHeight: 1.4 }}>
-              <div>{contact.l1}</div>
-              {contact.l2 && <div>{contact.l2}</div>}
+          {/* Left Column: Title + Address Lines */}
+          <div className="contact-left" style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+            <div style={{ fontSize: '0.85rem', fontWeight: 700, color: accent, display: 'flex', alignItems: 'center', height: '20px', lineHeight: 1.2 }}>
+              {lbl('தொடர்பு கொள்ள', 'Contact Us')}
             </div>
+            <div style={{ fontSize: '0.82rem', color: '#333', fontWeight: 500, display: 'flex', alignItems: 'center', height: '20px', lineHeight: 1.2 }}>
+              {contact.l1}
+            </div>
+            {contact.l2 && (
+              <div style={{ fontSize: '0.82rem', color: '#333', fontWeight: 500, display: 'flex', alignItems: 'center', height: '20px', lineHeight: 1.2 }}>
+                {contact.l2}
+              </div>
+            )}
           </div>
+
+          {/* Right Column: Phones & Email */}
           <div className="contact-phones" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '4px' }}>
             {phone.map((num, i) => (
-              <div key={i} className="phone-item-new" style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '8px', fontSize: '0.82rem', fontWeight: 600, color: '#444' }}>
+              <div key={i} className="phone-item-new" style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '8px', fontSize: '0.82rem', fontWeight: 600, color: '#444', height: '20px', lineHeight: 1.2 }}>
                 <div style={{ color: accent, display: 'flex' }}><IconPhone size={14} /></div>
                 <span style={{ fontVariantNumeric: 'tabular-nums', letterSpacing: '0.02em' }}>{num}</span>
               </div>
             ))}
             {p.email && (
-              <div className="phone-item-new" style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '8px', fontSize: '0.82rem', color: '#444' }}>
+              <div className="phone-item-new" style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '8px', fontSize: '0.82rem', color: '#444', height: '20px', lineHeight: 1.2 }}>
                 <div style={{ color: accent, display: 'flex' }}><IconMail size={14} /></div>
                 <span>{p.email}</span>
               </div>
