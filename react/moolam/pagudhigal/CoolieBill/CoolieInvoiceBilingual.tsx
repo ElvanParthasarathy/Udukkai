@@ -149,7 +149,7 @@ export default function CoolieInvoiceBilingual({ bill }) {
         </div>
         <div className="header-right" style={{ textAlign: 'right', display: 'flex', flexDirection: 'column', alignItems: 'flex-end', justifyContent: 'center' }}>
           <div className="font-tamil" style={{ fontSize: '17px', fontWeight: 800, color: accent, lineHeight: 1.25, letterSpacing: '0.2px' }}>
-            {isEng ? 'Coolie Bill' : 'கூலி பில்'}
+            {isEng ? 'Coolie Bill' : 'கூலிப் பட்டியல்'}
           </div>
           {bi && (
             <div style={{ fontSize: '11px', fontWeight: 500, color: accent, opacity: 0.85, marginTop: '3px', lineHeight: 1 }}>
@@ -163,7 +163,7 @@ export default function CoolieInvoiceBilingual({ bill }) {
       {/* Bill Info Section */}
       <div className="bill-info-section">
         <div className="bill-meta-row">
-          <span className="bill-meta"><div style={{ fontSize: 'inherit', fontWeight: 'inherit', color: 'inherit' }}>{slash('பில் எண்', 'Bill No')} : <strong style={{ textTransform: 'uppercase' }}>{displayBillNo}</strong></div></span>
+          <span className="bill-meta"><div style={{ fontSize: 'inherit', fontWeight: 'inherit', color: 'inherit' }}>{slash('பட்டியல் எண்', 'Bill No')} : <strong style={{ textTransform: 'uppercase' }}>{displayBillNo}</strong></div></span>
           <span className="bill-meta"><div style={{ fontSize: 'inherit', fontWeight: 'inherit', color: 'inherit' }}>{slash('நாள்', 'Date')} : <strong>{date}</strong></div></span>
         </div>
         {/* Bill To */}
@@ -281,7 +281,7 @@ export default function CoolieInvoiceBilingual({ bill }) {
               <div style={{ fontSize: '0.9rem', lineHeight: '1.4', display: 'flex', flexDirection: 'column', gap: '6px' }}>
                 {showBankDetails && (
                   <div style={{ display: 'flex', gap: '6px', alignItems: 'baseline' }}>
-                    <div style={{ fontWeight: 700, whiteSpace: 'nowrap', fontSize: '0.9rem', color: accent }}>{lbl('வங்கி விவரம்', 'Bank Details')} :</div>
+                    <div style={{ fontWeight: 700, whiteSpace: 'nowrap', fontSize: '0.9rem', color: accent }}>{lbl('வங்கிப் பெயர்', 'Bank Name')} :</div>
                     <div style={{ color: '#000', fontWeight: 400, fontSize: '0.9rem' }}>
                       {useEn && p.bankNameEn ? `${p.bankNameEn}${p.branchEn ? ', ' + p.branchEn : ''}` : bankDetails}
                     </div>

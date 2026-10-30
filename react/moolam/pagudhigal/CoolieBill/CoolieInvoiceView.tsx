@@ -515,7 +515,7 @@ export default function CoolieInvoiceView({ bill, onClose, onEdit }) {
                         </div>
                     </div>
                     <div className="header-right">
-                        <div className="bill-type-badge font-tamil">{isEng ? 'Coolie Bill' : 'கூலி பில்'}</div>
+                        <div className="bill-type-badge font-tamil">{isEng ? 'Coolie Bill' : 'கூலிப் பட்டியல்'}</div>
                     </div>
                 </div>
 
@@ -525,7 +525,7 @@ export default function CoolieInvoiceView({ bill, onClose, onEdit }) {
                 {/* Bill Info Section */}
                 <div className="bill-info-section">
                     <div className="bill-meta-row">
-                        <span className="bill-meta">{isEng ? 'Bill No:' : 'பில் எண் :'} <strong style={{ textTransform: 'uppercase' }}>{displayBillNo}</strong></span>
+                        <span className="bill-meta">{isEng ? 'Bill No:' : 'பட்டியல் எண் :'} <strong style={{ textTransform: 'uppercase' }}>{displayBillNo}</strong></span>
                         <span className="bill-meta">{isEng ? 'Date:' : 'நாள் :'} <strong>{date}</strong></span>
                     </div>
                     <div className="customer-info">
@@ -628,7 +628,7 @@ export default function CoolieInvoiceView({ bill, onClose, onEdit }) {
                             <div style={{ marginBottom: '10px', color: 'var(--bill-text-dark)', fontSize: '0.9rem', lineHeight: '1.4', display: 'flex', flexDirection: 'column', gap: '6px' }}>
                                 {showBankDetails && (
                                     <div style={{ display: 'flex', gap: '5px' }}>
-                                        <div style={{ fontWeight: 'bold', whiteSpace: 'nowrap' }}>{isEng ? 'Bank Details :' : 'வங்கி விவரம் :'}</div>
+                                        <div style={{ fontWeight: 'bold', whiteSpace: 'nowrap' }}>{isEng ? 'Bank Name :' : 'வங்கிப் பெயர் :'}</div>
                                         <div style={{ color: '#000' }}>
                                             {isEng && p.bankNameEn ? `${p.bankNameEn}${p.branchEn ? ', ' + p.branchEn : ''}` : bankDetails}
                                         </div>
