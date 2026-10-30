@@ -212,9 +212,6 @@ export default function CoolieInvoiceBilingual({ bill }) {
           <div style={{ display: 'flex', alignItems: 'stretch', borderTop: '1px solid #ddd', background: '#fff' }}>
             {/* Left side: Amount in Words */}
             <div style={{ padding: '0.65rem 1rem', borderRight: '1px solid #ddd', flex: '0 0 60%', width: '60%', boxSizing: 'border-box', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-              <span style={{ fontSize: '11px', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '4px' }}>
-                {bi ? 'எழுத்தில் மொத்தத் தொகை / In Words' : (isEng ? 'Amount in Words' : 'எழுத்தில் மொத்தத் தொகை')}
-              </span>
               <span style={{ fontSize: '13px', fontWeight: 700, color: '#0f172a', lineHeight: 1.35 }}>
                 {wordsPrimary}
               </span>
