@@ -316,7 +316,7 @@ export default function CoolieInvoiceBilingual({ bill }) {
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', width: '100%', paddingTop: '12px' }}>
           <div style={{ fontSize: '0.85rem', fontWeight: 700, color: accent, lineHeight: 1 }}>
             {lbl('நன்றி', 'Thank You')}
-            {bi && <span style={{ opacity: 0.8, fontSize: '0.75rem', fontWeight: 500, marginLeft: '6px' }}>• {primaryEng ? 'நன்றி' : 'Thank You'}</span>}
+            {bi && <span style={{ marginLeft: '6px' }}>• {primaryEng ? 'நன்றி' : 'Thank You'}</span>}
           </div>
           <div style={{ minWidth: '220px', textAlign: 'right' }}>
             <div style={{ position: 'relative', zIndex: 10, fontSize: '0.75rem', fontWeight: 600, color: '#555', lineHeight: 1 }}>
