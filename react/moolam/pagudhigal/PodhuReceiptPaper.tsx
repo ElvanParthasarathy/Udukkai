@@ -666,7 +666,7 @@ export default function PodhuReceiptPaper({
                 </div>
 
                 {/* Contact Section: 1:1 match with invoice */}
-                <div className="contact-section" style={{ padding: '16px calc(12mm + 8px)', background: norm.themeColor ? `${norm.themeColor}15` : '#e8f5e9' }}>
+                <div className="contact-section" style={{ padding: '24px calc(12mm + 8px)', background: norm.themeColor ? `${norm.themeColor}15` : '#e8f5e9' }}>
                   <div className="contact-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', width: '100%' }}>
                     {/* Left Column: Title + Address Lines */}
                     <div className="contact-left" style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
