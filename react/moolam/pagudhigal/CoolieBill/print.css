@@ -900,6 +900,9 @@
     padding-bottom: 1rem;
     margin-top: auto;
 }
+.receipt-content .contact-section {
+    margin-top: auto;
+}
 .rcpt-contact-section {
     padding: 1rem 12mm;
     box-sizing: border-box;

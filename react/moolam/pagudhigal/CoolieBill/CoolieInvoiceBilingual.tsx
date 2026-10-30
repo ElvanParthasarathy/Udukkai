@@ -330,25 +330,32 @@ export default function CoolieInvoiceBilingual({ bill }) {
         </div>
       </div>
 
-      {/* Contact Section: address on the left, phone numbers and e-mail on the right */}
+      {/* Contact Section: address and email on the left, phone numbers on the right */}
       <div className="contact-section">
         <div className="contact-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', width: '100%' }}>
-          {/* Left Column: Title + Address Lines */}
+          {/* Left Column: Title + Address Lines + Email */}
           <div className="contact-left" style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-            <div style={{ fontSize: '0.85rem', fontWeight: 700, color: accent, display: 'flex', alignItems: 'center', height: '20px', lineHeight: 1.2 }}>
-              {lbl('தொடர்பு கொள்ள', 'Contact Us')}
+            <div className="contact-title" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', color: accent, marginBottom: 0 }}>
+              <span>{primaryEng ? 'Contact Us' : 'தொடர்பு கொள்ள'}</span>
+              {bi && (
+                <span style={{ fontSize: '10px', fontWeight: 500, color: accent, opacity: 0.85, marginTop: '-2px' }}>
+                  {primaryEng ? 'தொடர்பு கொள்ள' : 'Contact Us'}
+                </span>
+              )}
             </div>
-            <div style={{ fontSize: '0.82rem', color: '#333', fontWeight: 500, display: 'flex', alignItems: 'center', height: '20px', lineHeight: 1.2 }}>
-              {contact.l1}
+            <div className="contact-address">
+              <div>{contact.l1}</div>
+              {contact.l2 && <div>{contact.l2}</div>}
             </div>
-            {contact.l2 && (
-              <div style={{ fontSize: '0.82rem', color: '#333', fontWeight: 500, display: 'flex', alignItems: 'center', height: '20px', lineHeight: 1.2 }}>
-                {contact.l2}
+            {p.email && (
+              <div className="contact-email">
+                <div style={{ color: accent, display: 'flex' }}><IconMail size={14} /></div>
+                <span>{p.email}</span>
               </div>
             )}
           </div>
 
-          {/* Right Column: Phones & Email */}
+          {/* Right Column: Phones */}
           <div className="contact-phones" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '6px' }}>
             {phone.map((num, i) => (
               <div key={i} className="phone-item-new" style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '8px', fontSize: '0.82rem', fontWeight: 600, color: '#444', height: '20px', lineHeight: 1.2 }}>
@@ -356,12 +363,6 @@ export default function CoolieInvoiceBilingual({ bill }) {
                 <span style={{ fontVariantNumeric: 'tabular-nums', letterSpacing: '0.02em' }}>{num}</span>
               </div>
             ))}
-            {p.email && (
-              <div className="phone-item-new" style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '8px', fontSize: '0.82rem', fontWeight: 600, color: '#444', height: '20px', lineHeight: 1.2 }}>
-                <div style={{ color: accent, display: 'flex' }}><IconMail size={14} /></div>
-                <span>{p.email}</span>
-              </div>
-            )}
           </div>
         </div>
       </div>

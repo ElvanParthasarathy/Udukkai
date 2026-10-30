@@ -16,6 +16,24 @@ const IconMail = ({ size = 14, className = '', style = {} }) => (
   </svg>
 );
 
+const themeStyles = (hex) => {
+  if (!hex || (hex.length !== 4 && hex.length !== 7)) return {};
+  const full = hex.length === 4 ? `#${hex[1]}${hex[1]}${hex[2]}${hex[2]}${hex[3]}${hex[3]}` : hex;
+  const r = parseInt(full.slice(1, 3), 16);
+  const g = parseInt(full.slice(3, 5), 16);
+  const b = parseInt(full.slice(5, 7), 16);
+  return {
+    '--bill-primary': hex,
+    '--bill-primary-light': `rgba(${r}, ${g}, ${b}, 0.1)`,
+    '--bill-primary-dark': hex,
+    '--bill-accent': hex,
+    '--bill-border': hex,
+    '--bill-text': hex,
+    '--bill-text-dark': `rgba(${Math.max(0, r - 30)}, ${Math.max(0, g - 30)}, ${Math.max(0, b - 30)}, 1)`,
+    '--bill-row-alt': `rgba(${r}, ${g}, ${b}, 0.03)`,
+  };
+};
+
 export default function CoolieReceiptBilingual({ receipt }) {
   const profile = receipt._companyProfile || receipt.companyProfile || receipt.profile || {};
   const isBilingual = profile?.enableBilingual !== false;
@@ -97,10 +115,10 @@ export default function CoolieReceiptBilingual({ receipt }) {
   const addr2 = dist ? `${dist}${profile?.pincode ? ` - ${profile.pincode}` : ''}` : (profile?.pincode ? `PIN: ${profile.pincode}` : '');
   
   const email = (profile?.email || profile?.minnanjal || '').trim();
-  const phone = profile?.phone ? (Array.isArray(profile.phone) ? profile.phone : String(profile.phone).split(',')) : [];
+  const phone = profile?.phone ? (Array.isArray(profile.phone) ? profile.phone : String(profile.phone).split(',').map(s => s.trim()).filter(Boolean)) : (profile?.mobile ? [profile.mobile] : []);
 
   return (
-    <div className="receipt-box">
+    <div className="receipt-box" style={{ ...themeStyles(accent) }}>
       <div className="receipt-content">
         {/* Top Greeting Row */}
         <div className="top-greeting-row">
@@ -222,38 +240,45 @@ export default function CoolieReceiptBilingual({ receipt }) {
             </div>
           </div>
         </div>
-      </div>
 
-      {/* Contact Section */}
-      <div className="rcpt-contact-section" style={{ background: profile.themeColor ? `${profile.themeColor}15` : '#f8fafc' }}>
-        <div className="rcpt-contact-title" style={{ color: accent }}>{renderKey('contactUsLabel', 'Contact Us', 'தொடர்பு கொள்ள')}</div>
-        <div className="rcpt-contact-row">
-          <div className="rcpt-contact-left">
-            <div className="rcpt-contact-address">
-              <div>{addr1}</div>
-              {addr2 && <div>{addr2}</div>}
-            </div>
-            {email && (
-              <div className="rcpt-contact-email">
-                <div style={{ display: 'flex', alignItems: 'center', color: accent }}>
-                  <IconMail size={14} />
+        {/* Contact Section - exactly matching invoice */}
+        <div className="contact-section">
+          <div className="contact-title" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
+            <span>{primaryLang === 'English' ? 'Contact Us' : 'தொடர்பு கொள்ள'}</span>
+            {isBilingual && (
+              <span style={{ fontSize: '10px', fontWeight: 500, color: accent, opacity: 0.85, marginTop: '-2px' }}>
+                {primaryLang === 'English' ? 'தொடர்பு கொள்ள' : 'Contact Us'}
+              </span>
+            )}
+          </div>
+          <div className="contact-row">
+            <div className="contact-left">
+              <div className="contact-address">
+                <div>{addr1}</div>
+                {addr2 && <div>{addr2}</div>}
+              </div>
+              {email && (
+                <div className="contact-email">
+                  <div style={{ display: 'flex', alignItems: 'center' }}>
+                    <IconMail size={14} />
+                  </div>
+                  <span>{email}</span>
                 </div>
-                <span>{email}</span>
+              )}
+            </div>
+            {phone.length > 0 && (
+              <div className="contact-phones">
+                {phone.map((num, i) => (
+                  <div key={i} className="phone-item-new">
+                    <div style={{ display: 'flex', alignItems: 'center' }}>
+                      <IconPhone size={14} />
+                    </div>
+                    <span>{num}</span>
+                  </div>
+                ))}
               </div>
             )}
           </div>
-          {phone.length > 0 && (
-            <div className="rcpt-contact-phones">
-              {phone.map((num, i) => (
-                <div key={i} className="rcpt-phone-item-new">
-                  <div style={{ display: 'flex', alignItems: 'center', color: accent }}>
-                    <IconPhone size={14} />
-                  </div>
-                  <span>{num}</span>
-                </div>
-              ))}
-            </div>
-          )}
         </div>
       </div>
     </div>
