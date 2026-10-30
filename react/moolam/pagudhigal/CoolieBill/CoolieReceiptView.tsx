@@ -8,12 +8,13 @@ import { useLanguage } from '../../mozhi/LanguageContext';
 import { en } from '../../mozhi/en';
 import { ta } from '../../mozhi/ta';
 import { formatCurrency, numberToWords, getCountryConfig, getDynamicField, getBilingualStateName, getPrintHeadContent } from '../../Payanpadu';
-import { Box, Paper, useTheme, useMediaQuery } from '@mui/material';
+import { Box, Paper, Button, useTheme, useMediaQuery } from '@mui/material';
 import { ViewHeader } from '../ViewHeader';
 import { thagaval } from '../Thagaval';
 import NativeDocument from '../NativeDocument';
 import { Capacitor } from '@capacitor/core';
 import { getAllCoolieProfiles } from '../../Avanam';
+import CoolieReceiptBilingual from './CoolieReceiptBilingual';
 import './print.css';
 
 const IconPhone = ({ size = 14, className = '', style = {} }) => (
@@ -35,8 +36,9 @@ export default function CoolieReceiptView({ receipt: receiptProp, onBack, onEdit
   const printRef = useRef(null);
   const [sharing, setSharing] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [coolieProfile, setCoolieProfile] = useState<any>(null);
-  const [isLoadingProfile, setIsLoadingProfile] = useState(true);
+  const [themeVariant, setThemeVariant] = useState(() => localStorage.getItem('coolie_receipt_theme') || 'bilingual');
+  const [coolieProfile, setCoolieProfile] = useState<any>(receipt._companyProfile || null);
+  const [isLoadingProfile, setIsLoadingProfile] = useState(!receipt._companyProfile);
 
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
@@ -67,7 +69,7 @@ export default function CoolieReceiptView({ receipt: receiptProp, onBack, onEdit
 
   const RECEIPT_LABELS = {
     'English': { hc_paymentReceipt: 'Payment Receipt', receiptNoLabel: 'Receipt No:', dateLabel: 'Date:', receivedFromLabel: 'Received From:', paymentModeLabel: 'Payment Mode:', referenceNoLabel: 'Reference No:', againstInvoiceLabel: 'Against Invoice:', noteLabel: 'Note:', receivedBy: 'Received By:', authorizedSignatory: '(Authorized Signature)', phoneLabel: 'Phone:', mobileLabel: 'Mobile:', contactUsLabel: 'Contact Us' },
-    'Tamil': { hc_paymentReceipt: 'பெறுகைச் சான்று', receiptNoLabel: 'பற்றுச்சீட்டு எண்:', dateLabel: 'நாள்:', receivedFromLabel: 'இவரிடமிருந்து பெறப்பட்டது:', paymentModeLabel: 'கட்டண முறை:', referenceNoLabel: 'குறிப்பு எண்:', againstInvoiceLabel: 'பட்டியல் எண்:', noteLabel: 'குறிப்பு:', receivedBy: 'பெற்றவர்', authorizedSignatory: '(கையொப்பம்)', phoneLabel: 'தொலைப்பேசி:', mobileLabel: 'கைப்பேசி:', contactUsLabel: 'தொடர்பு கொள்ள' },
+    'Tamil': { hc_paymentReceipt: 'பெறுகைச் சான்று', receiptNoLabel: 'சான்று எண்:', dateLabel: 'நாள்:', receivedFromLabel: 'இவரிடமிருந்து பெறப்பட்டது:', paymentModeLabel: 'கட்டண முறை:', referenceNoLabel: 'குறிப்பு எண்:', againstInvoiceLabel: 'பட்டியல் எண்:', noteLabel: 'குறிப்பு:', receivedBy: 'பெற்றவர்', authorizedSignatory: '(கையொப்பம்)', phoneLabel: 'தொலைப்பேசி:', mobileLabel: 'கைப்பேசி:', contactUsLabel: 'தொடர்பு கொள்ள' },
     'Hindi': { hc_paymentReceipt: 'भुगतान रसीद', receiptNoLabel: 'रसीद संख्या:', dateLabel: 'दिनांक:', receivedFromLabel: 'से प्राप्त:', paymentModeLabel: 'भुगतान का प्रकार:', referenceNoLabel: 'संदर्भ संख्या:', againstInvoiceLabel: 'बिल के विरुद्ध:', noteLabel: 'नोट:', receivedBy: 'प्राप्तकर्ता', authorizedSignatory: 'अधिकृत हस्ताक्षरकर्ता', phoneLabel: 'फ़ोन:', mobileLabel: 'मोबाइल:' },
     'Telugu': { hc_paymentReceipt: 'చెల్లింపు రసీదు', receiptNoLabel: 'రసీదు నంబర్:', dateLabel: 'తేదీ:', receivedFromLabel: 'నుండి స్వీకరించబడింది:', paymentModeLabel: 'చెల్లింపు విధానం:', referenceNoLabel: 'సూచన సంఖ్య:', againstInvoiceLabel: 'ఇన్వాయిస్‌కు వ్యతిరేకంగా:', noteLabel: 'గమనిక:', receivedBy: 'స్వీకర్త', authorizedSignatory: 'అధికారిక సంతకం', phoneLabel: 'ఫోన్:', mobileLabel: 'మొబైల్:' },
     'Kannada': { hc_paymentReceipt: 'ಪಾವತಿ ರಶೀದಿ', receiptNoLabel: 'ರಶೀದಿ ಸಂಖ್ಯೆ:', dateLabel: 'ದಿನಾಂಕ:', receivedFromLabel: 'ಇವರಿಂದ ಸ್ವೀಕರಿಸಲಾಗಿದೆ:', paymentModeLabel: 'ಪಾವತಿ ವಿಧಾನ:', referenceNoLabel: 'ಉಲ್ಲೇಖ ಸಂಖ್ಯೆ:', againstInvoiceLabel: 'ಇನ್‌ವಾಯ್ಸ್ ವಿರುದ್ಧ:', noteLabel: 'ಸೂಚನೆ:', receivedBy: 'ಸ್ವೀಕರಿಸುವವರು', authorizedSignatory: 'ಅಧಿಕೃತ ಸಹಿದಾರರು', phoneLabel: 'ಫೋನ್:', mobileLabel: 'ಮೊಬೈಲ್:' },
@@ -143,7 +145,7 @@ export default function CoolieReceiptView({ receipt: receiptProp, onBack, onEdit
           <style>
             @media print {
               body, html { background-color: white !important; margin: 0; padding: 0; }
-              .receipt-box, .invoice-paper { box-shadow: none !important; margin: 0 !important; border: none !important; width: 100% !important; }
+              .receipt-box, .invoice-paper, .a4-paper { box-shadow: none !important; margin: 0 !important; border: none !important; width: 100% !important; }
               .no-print { display: none !important; }
             }
           </style>
@@ -222,7 +224,7 @@ export default function CoolieReceiptView({ receipt: receiptProp, onBack, onEdit
       ...captureOptions(printRef.current),
       onclone: (clonedDoc) => {
         clonedDoc.querySelectorAll('*').forEach(n => { n.style.letterSpacing = '0px'; n.style.wordSpacing = '0px'; });
-        const inv = clonedDoc.querySelector('.receipt-box');
+        const inv = clonedDoc.querySelector('.receipt-box') || clonedDoc.querySelector('.a4-paper');
         if (inv) { inv.style.width = '210mm'; inv.style.overflow = 'visible'; inv.style.minHeight = '297mm'; inv.style.border = 'none'; inv.style.boxShadow = 'none'; inv.style.borderRadius = '0'; }
       }
     });
@@ -345,6 +347,28 @@ export default function CoolieReceiptView({ receipt: receiptProp, onBack, onEdit
         onBack={onBack}
       />
 
+      {/* Theme / Template Shifter */}
+      <Box className="no-print" sx={{ display: 'flex', justifyContent: 'center', mb: 2 }}>
+        <Paper elevation={2} sx={{ p: 0.5, borderRadius: '999px', bgcolor: 'background.paper', display: 'flex', gap: 0.5, border: '1px solid', borderColor: 'divider' }}>
+          <Button 
+            size="small"
+            onClick={() => { setThemeVariant('bilingual'); localStorage.setItem('coolie_receipt_theme', 'bilingual'); }}
+            variant={themeVariant === 'bilingual' ? 'contained' : 'text'}
+            sx={{ borderRadius: '999px', textTransform: 'none', fontWeight: 700, fontSize: '12px', px: 2 }}
+          >
+            ✨ Bilingual Template (KMP)
+          </Button>
+          <Button 
+            size="small"
+            onClick={() => { setThemeVariant('classic'); localStorage.setItem('coolie_receipt_theme', 'classic'); }}
+            variant={themeVariant === 'classic' ? 'contained' : 'text'}
+            sx={{ borderRadius: '999px', textTransform: 'none', fontWeight: 600, fontSize: '12px', px: 2 }}
+          >
+            📜 Classic Receipt
+          </Button>
+        </Paper>
+      </Box>
+
       <Box className="print-wrapper" sx={{ flexGrow: 1, display: 'flex', justifyContent: 'center', alignItems: 'flex-start', overflowX: 'hidden', pb: 4, width: '100%' }}>
         <div ref={isMobile ? wrapperRef : null} style={isMobile ? { width: "100%", overflow: "hidden", touchAction: "none", display: "flex", justifyContent: "center", padding: "0 16px", boxSizing: "border-box" } : { width: '100%', display: 'flex', justifyContent: 'center' }}>
           <div ref={isMobile ? contentRef : null} style={isMobile ? { transformOrigin: "top center", width: "100%" } : {}}>
@@ -375,6 +399,10 @@ export default function CoolieReceiptView({ receipt: receiptProp, onBack, onEdit
               }
             }}>
           <div ref={printRef} className="print-area">
+            {themeVariant === 'bilingual' ? (
+              <CoolieReceiptBilingual receipt={{ ...receipt, _companyProfile: profile }} />
+            ) : (
+              <>
           <style>{`
           .receipt-box { width: 210mm; height: 297mm; max-height: 297mm; box-sizing: border-box; margin: 0 auto; border: 2px solid #e2e8f0; border-radius: 8px; background: white; display: flex; flex-direction: column; overflow: hidden; }
           .receipt-content { padding: 8mm 12mm; flex: 1; display: flex; flex-direction: column; }
@@ -535,6 +563,8 @@ export default function CoolieReceiptView({ receipt: receiptProp, onBack, onEdit
                 );
               })()}
             </div>
+            </>
+          )}
           </div>
             </Paper>
           </div>

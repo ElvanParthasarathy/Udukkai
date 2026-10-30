@@ -344,6 +344,6 @@ export const toCoolieReceiptProps = (payload) => {
   const receipt = toReactReceipt(payload.receipt || {}, { primaryCode: 'ta', secondaryCode: 'en' });
   return {
     coolieProfiles: [profile],
-    receipt: { ...receipt, company_id: profile.id },
+    receipt: { ...receipt, company_id: profile.id, _companyProfile: profile },
   };
 };

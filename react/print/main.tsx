@@ -78,7 +78,7 @@ const COOLIE_INVOICE_PRINT_RULES = `
                   .no-print { display: none !important; }`;
 const RECEIPT_PRINT_RULES = `
               body, html { background-color: white !important; margin: 0; padding: 0; }
-              .receipt-box, .invoice-paper { box-shadow: none !important; margin: 0 !important; border: none !important; width: 100% !important; }
+              .receipt-box, .invoice-paper, .a4-paper { box-shadow: none !important; margin: 0 !important; border: none !important; width: 100% !important; }
               .no-print { display: none !important; }`;
 
 const PAPER_RESET = { width: '210mm', overflow: 'visible', minHeight: '297mm', border: 'none', boxShadow: 'none', borderRadius: '0' };
@@ -102,7 +102,7 @@ const DOC_TYPES = {
     title: (p) => (p?.bill?.bill_no ? `Invoice-${p.bill.bill_no}` : 'Print'),
   },
   'coolie-receipt': {
-    paper: '.print-area', frame: '.invoice-paper', clone: '.receipt-box', cloneStyle: PAPER_RESET,
+    paper: '.print-area', frame: '.invoice-paper', clone: '.receipt-box, .a4-paper', cloneStyle: PAPER_RESET,
     extraPages: false, printRules: RECEIPT_PRINT_RULES,
     title: (p) => (p?.receipt?.receiptNo ? `Receipt-${p.receipt.receiptNo}` : 'Print'),
   },

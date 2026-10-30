@@ -108,7 +108,7 @@ object PrintPayload {
     ): String {
         val json = JsonWriter()
         json.obj {
-            field("docType", if (isCoolie && !profile.isBilingual) "coolie-receipt" else "gst-receipt")
+            field("docType", if (isCoolie) "coolie-receipt" else "gst-receipt")
             field("appLanguage", appLanguage)
             field("profile") { profile(profile) }
             field("receipt") {
