@@ -132,6 +132,11 @@ export default function CoolieInvoiceBilingual({ bill }) {
 
   return (
     <div className={`a4-paper font-tamil${bi ? ' bilingual' : ''}`} style={{ margin: '0 auto', background: 'white', ...themeStyles(p.themeColor) }}>
+      <style>{`
+        .a4-paper .grand-total-row span {
+          color: ${accent} !important;
+        }
+      `}</style>
       {/* Top Greeting Row */}
       <div className="top-greeting-row">
         <span className="greeting-left">{isEng ? 'Vaazhga Vaiyagam' : 'வாழ்க வையகம்'}</span>
@@ -164,7 +169,7 @@ export default function CoolieInvoiceBilingual({ bill }) {
           <span className="bill-meta"><div style={{ fontSize: 'inherit', fontWeight: 'inherit', color: 'inherit' }}>{slash('நாள்', 'Date')} : <strong>{date}</strong></div></span>
         </div>
         {/* Bill To, like the Textiles invoice */}
-        <div className="inv-party" style={{ marginTop: '6px' }}>
+        <div className="inv-party" style={{ marginTop: '6px', paddingLeft: '15px', paddingRight: '15px' }}>
           <h4 className="inv-section-label">{slash('பெறுநர்', 'Bill To')}</h4>
           <p className="inv-party-name">{customerName || '-'}</p>
           {customerPlace && <div className="inv-party-details"><p>{customerPlace}</p></div>}
@@ -220,7 +225,7 @@ export default function CoolieInvoiceBilingual({ bill }) {
               </div>
             </div>
             <div className="inv-totals" style={{ padding: '0.75rem 0.75rem', alignSelf: 'center', minWidth: '220px', width: 'auto', whiteSpace: 'nowrap' }}>
-              <div className="inv-total-row grand-total-row" style={{ fontWeight: 700, color: accent, alignItems: 'center' }}>
+              <div className="inv-total-row grand-total-row inv-total-modern" style={{ fontWeight: 700, color: accent, alignItems: 'center' }}>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1px' }}>
                   <span style={{ fontSize: '1.05rem', color: accent, lineHeight: 1 }}>{lbl('மொத்தம்', 'Total')}</span>
                   {bi && <span style={{ fontSize: '0.65rem', color: accent, opacity: 0.8, fontWeight: 500 }}>{primaryEng ? 'மொத்தம்' : 'Total'}</span>}
