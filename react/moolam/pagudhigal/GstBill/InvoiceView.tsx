@@ -26,8 +26,27 @@ export default function InvoiceView({ bill, profile, onBack, onEdit, onDuplicate
   
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
-    const initialScale = typeof window !== 'undefined' ? Math.min((window.innerWidth - 32) / 793.7, 1) : 0.43;
-    const mbPercent = (1 - initialScale) * 141;
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [containerWidth, setContainerWidth] = useState<number>(() => typeof window !== 'undefined' ? window.innerWidth : 800);
+
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const ro = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        if (entry.contentRect.width > 0) {
+          setContainerWidth(entry.contentRect.width);
+        }
+      }
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
+  const availableWidth = containerWidth > 32 ? containerWidth - 32 : containerWidth;
+  const autoScale = Math.min(availableWidth / 793.7, 1);
+  const shouldScale = autoScale < 0.98;
+  const mbPercent = shouldScale ? (1 - autoScale) * 141 : 0;
 
   const { wrapperRef, contentRef, scale } = usePinchZoom({ minScale: 1, maxScale: 4 });
 
@@ -308,17 +327,24 @@ export default function InvoiceView({ bill, profile, onBack, onEdit, onDuplicate
       </Box>
 
       {/* Centered Preview Container */}
-      <Box className="print-wrapper" sx={{ flexGrow: 1, display: 'flex', justifyContent: 'center', alignItems: 'flex-start', overflowX: 'hidden', pb: 4, width: '100%' }}>
+      <Box ref={containerRef} className="print-wrapper" sx={{ flexGrow: 1, display: 'flex', justifyContent: 'center', alignItems: 'flex-start', overflowX: 'auto', pb: 4, width: '100%' }}>
         {isMobile ? (
           <div ref={wrapperRef} style={{ width: "100%", overflow: "hidden", touchAction: "none", display: "flex", justifyContent: "center", padding: "0 16px", boxSizing: "border-box" }}>
-            <div ref={contentRef} style={{ transformOrigin: "top center", width: "100%" }}>
+            <div ref={contentRef} style={{ transformOrigin: "top center", width: "100%", display: 'flex', justifyContent: 'center' }}>
               <Paper elevation={8} className="invoice-paper print-wrapper" sx={{ 
                                 p: 0, overflow: 'hidden', minWidth: '210mm', width: '210mm', m: '0 auto',
-                                zoom: 'none',
-                                  transformOrigin: 'top left',
+                                transformOrigin: 'top center',
+                                ...(shouldScale ? {
+                                  zoom: 'none',
+                                  transform: `scale(${autoScale})`,
+                                  mb: `-${mbPercent}%`,
+                                  borderRadius: '8px',
+                                } : {
+                                  zoom: 'none',
                                   transform: `scale(${initialScale})`,
                                   mb: `-${mbPercent}%`,
                                   borderRadius: '12px',
+                                }),
                             }}>
                 {(() => {
                   const mergedOptions = { ...displayOptions, ...invoiceOptions };
@@ -338,12 +364,19 @@ export default function InvoiceView({ bill, profile, onBack, onEdit, onDuplicate
         ) : (
           <Paper elevation={3} className="invoice-paper print-wrapper" sx={{ 
             p: 0, overflow: 'hidden', minWidth: '210mm', width: '210mm', m: '0 auto',
-            zoom: { xs: 0.43, sm: 0.7, md: 0.85, lg: 1 },
-            '@supports not (zoom: 1)': {
-              transformOrigin: 'top center',
-              transform: { xs: 'scale(0.43)', sm: 'scale(0.7)', md: 'scale(0.85)', lg: 'none' },
-              mb: { xs: '-55%', sm: '-25%', md: '-10%', lg: 0 }
-            }
+            transformOrigin: 'top center',
+            ...(shouldScale ? {
+              zoom: 'none',
+              transform: `scale(${autoScale})`,
+              mb: `-${mbPercent}%`,
+              borderRadius: '8px',
+            } : {
+              zoom: { xs: 0.43, sm: 0.7, md: 0.85, lg: 1 },
+              '@supports not (zoom: 1)': {
+                transform: { xs: 'scale(0.43)', sm: 'scale(0.7)', md: 'scale(0.85)', lg: 'none' },
+                mb: { xs: '-55%', sm: '-25%', md: '-10%', lg: 0 }
+              }
+            }),
           }}>
             {(() => {
               const mergedOptions = { ...displayOptions, ...invoiceOptions };
