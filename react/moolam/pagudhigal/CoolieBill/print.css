@@ -215,8 +215,14 @@
 /* Bilingual subtitles inside table headers */
 .a4-paper.bilingual .bill-table-new th {
     text-transform: none;
-    padding: 8px 10px;
-    vertical-align: top;
+    padding: 7px 10px;
+    vertical-align: middle;
+}
+
+.a4-paper.bilingual .bill-table-new td {
+    padding: 7px 10px;
+    font-size: 14px;
+    line-height: 1.3;
 }
 
 .a4-paper.bilingual .bill-table-new th>div:first-child {

@@ -210,17 +210,17 @@ export default function CoolieInvoiceBilingual({ bill }) {
 
         {totalRs > 0 && (
           <div className="inv-totals-section" style={{ margin: 0, padding: 0, alignItems: 'stretch', borderTop: '1px solid #ddd', background: '#fff' }}>
-            <div className="inv-words" style={{ padding: '0.75rem 0.75rem', borderRight: '1px solid #ddd', flex: 1, display: 'flex', flexDirection: 'column' }}>
-              <div style={{ marginBottom: '0.2rem', color: '#64748b', fontWeight: 400, fontSize: '0.95rem' }}>
-                {bi ? 'மொத்த எடை • Total Weight' : (isEng ? 'Total Weight' : 'மொத்த எடை')}: <span style={{ fontWeight: 600, color: '#334155' }}>{formatWeight(totalKg)} Kg</span>
+            <div className="inv-words" style={{ padding: '0.45rem 0.75rem', borderRight: '1px solid #ddd', flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+              <div style={{ marginBottom: '0.15rem', color: '#64748b', fontWeight: 500, fontSize: '0.88rem' }}>
+                {bi ? 'மொத்த எடை • Total Weight' : (isEng ? 'Total Weight' : 'மொத்த எடை')}: <span style={{ fontWeight: 700, color: '#334155' }}>{formatWeight(totalKg)} Kg</span>
               </div>
-              <div className="inv-words-text" style={{ fontStyle: 'normal', fontWeight: 600, color: '#0f172a', fontSize: '0.8rem', margin: 0, marginTop: '1rem', display: 'flex', flexDirection: 'column' }}>
+              <div className="inv-words-text" style={{ fontStyle: 'normal', fontWeight: 600, color: '#0f172a', fontSize: '0.78rem', margin: 0, marginTop: '0.3rem', display: 'flex', flexDirection: 'column', gap: '1px' }}>
                 <span>{wordsPrimary}</span>
                 {wordsSecondary && <span style={{ fontWeight: 400, fontSize: '0.7rem', color: '#64748b' }}>{wordsSecondary}</span>}
               </div>
             </div>
-            <div style={{ padding: '0.75rem 1rem', alignSelf: 'center', minWidth: '220px', width: 'auto', whiteSpace: 'nowrap' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1.5rem', fontWeight: 700 }}>
+            <div style={{ padding: '0.45rem 1rem', alignSelf: 'center', minWidth: '200px', width: 'auto', whiteSpace: 'nowrap' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1.25rem', fontWeight: 700 }}>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1px' }}>
                   <span style={{ fontSize: '1.05rem', color: accent, lineHeight: 1, fontWeight: 700 }}>{lbl('மொத்தம்', 'Total')}</span>
                   {bi && <span style={{ fontSize: '0.65rem', color: accent, opacity: 0.8, fontWeight: 500 }}>{primaryEng ? 'மொத்தம்' : 'Total'}</span>}
