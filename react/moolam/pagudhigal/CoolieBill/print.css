@@ -225,6 +225,10 @@
     line-height: 1.3;
 }
 
+.a4-paper.bilingual .total-footer-row td {
+    padding: 8px 10px;
+}
+
 .a4-paper.bilingual .bill-table-new th>div:first-child {
     font-weight: 700;
     margin-bottom: 2px;
