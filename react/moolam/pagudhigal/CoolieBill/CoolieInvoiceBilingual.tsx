@@ -237,13 +237,21 @@ export default function CoolieInvoiceBilingual({ bill }) {
                         </span>
                       )}
                     </div>
-                    <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', whiteSpace: 'nowrap', padding: '3px 10px', background: 'var(--bill-primary-light, #f8fafc)', borderRadius: '6px', border: '1px solid rgba(0,0,0,0.06)' }}>
-                      <span style={{ fontSize: '11px', fontWeight: 600, color: '#475569' }}>
-                        {bi ? 'மொத்த உருப்படிகள் • Total Items' : (isEng ? 'Total Items' : 'மொத்த உருப்படிகள்')} :
-                      </span>
-                      <strong style={{ fontSize: '12px', fontWeight: 800, color: accent, fontVariantNumeric: 'tabular-nums' }}>
+                    <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', whiteSpace: 'nowrap' }}>
+                      <div style={{ display: 'inline-flex', flexDirection: 'column', alignItems: 'flex-end', gap: '1px' }}>
+                        <span style={{ fontSize: '11.5px', fontWeight: 600, color: '#64748b', lineHeight: 1.1 }}>
+                          {lbl('மொத்த உருப்படிகள்', 'Total Items')}
+                        </span>
+                        {bi && (
+                          <span style={{ fontSize: '9.5px', fontWeight: 500, color: '#94a3b8' }}>
+                            {primaryEng ? 'மொத்த உருப்படிகள்' : 'Total Items'}
+                          </span>
+                        )}
+                      </div>
+                      <span style={{ fontSize: '11.5px', fontWeight: 600, color: '#64748b' }}>:</span>
+                      <span style={{ fontSize: '13px', fontWeight: 700, color: '#1e293b', fontVariantNumeric: 'tabular-nums' }}>
                         {items.length}
-                      </strong>
+                      </span>
                     </div>
                   </div>
                 </td>
