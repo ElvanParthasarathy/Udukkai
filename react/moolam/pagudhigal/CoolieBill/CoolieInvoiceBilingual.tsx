@@ -125,9 +125,9 @@ export default function CoolieInvoiceBilingual({ bill }) {
     ...(ahimsaSilkRs ? [{ key: 'ahimsa', ta: 'அகிம்சா பட்டு', en: 'Ahimsa Silk', amount: ahimsaSilkRs }] : []),
     ...otherCharges
       .filter((c) => c.amount && parseFloat(String(c.amount)) !== 0)
-      .map((c, i) => ({ key: `oc-${i}`, ta: c.name || 'பிற விவரம்', en: c.name ? '' : 'Other Charges', amount: c.amount })),
+      .map((c, i) => ({ key: `oc-${i}`, ta: c.name || 'பிற கட்டணம்', en: c.name ? '' : 'Other Charges', amount: c.amount })),
     ...(setharamGrams ? [{ key: 'setharam', ta: 'சேதாரம்', en: 'Wastage', weight: setharamKg }] : []),
-    ...(courierRs ? [{ key: 'courier', ta: 'கொரியர் கட்டணம்', en: 'Courier Charges', amount: courierRs }] : []),
+    ...(courierRs ? [{ key: 'courier', ta: 'விரைவஞ்சல் கட்டணம்', en: 'Courier Charges', amount: courierRs }] : []),
   ];
 
   return (

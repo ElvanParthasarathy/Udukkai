@@ -576,7 +576,7 @@ export default function CoolieInvoiceView({ bill, onClose, onEdit }) {
                             return (
                                 <tr key={`oc-${i}`}>
                                     <td className="text-center">-</td>
-                                    <td className="text-left"><div>{charge.name || (isEng ? 'Custom Charges' : 'பிற விவரம்')}</div></td>
+                                    <td className="text-left"><div>{charge.name || (isEng ? 'Custom Charges' : 'பிற கட்டணம்')}</div></td>
                                     <td className="text-center">-</td>
                                     <td className="text-center">{formatCurrency(charge.amount)}</td>
                                 </tr>
@@ -595,7 +595,7 @@ export default function CoolieInvoiceView({ bill, onClose, onEdit }) {
                         {courierRs && (
                             <tr>
                                 <td className="text-center">-</td>
-                                <td className="text-left"><div>{isEng ? 'Courier Charges' : 'கொரியர் கட்டணம்'}</div></td>
+                                <td className="text-left"><div>{isEng ? 'Courier Charges' : 'விரைவஞ்சல் கட்டணம்'}</div></td>
                                 <td className="text-center">-</td>
                                 <td className="text-center">{formatCurrency(courierRs)}</td>
                             </tr>

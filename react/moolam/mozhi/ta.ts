@@ -1060,7 +1060,7 @@ export const ta = {
   otherCharges: "கூடுதல் கட்டணங்கள்",
   setharam: "சேதாரம்",
   ahimsaSilk: "அகிம்சா பட்டு",
-  courier: "கொரியர்",
+  courier: "விரைவஞ்சல்",
   totalWeight: "மொத்த எடை",
   grams: "கிராம்",
   searchBillsPlaceholder: "தேடுக...",
