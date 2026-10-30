@@ -155,7 +155,6 @@ export default function CoolieInvoiceBilingual({ bill }) {
         </div>
       </div>
 
-      <div className="header-divider"></div>
 
       {/* Bill Info Section */}
       <div className="bill-info-section">
@@ -206,104 +205,83 @@ export default function CoolieInvoiceBilingual({ bill }) {
               </tr>
             ))}
           </tbody>
-        </table>
-
-        {totalRs > 0 && (
-          <div style={{ display: 'flex', alignItems: 'stretch', borderTop: '1px solid #ddd', background: '#fff' }}>
-            {/* Left side: Amount in Words */}
-            <div style={{ padding: '0.65rem 1rem', borderRight: '1px solid #ddd', flex: '0 0 60%', width: '60%', boxSizing: 'border-box', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-              <span style={{ fontSize: '13px', fontWeight: 700, color: '#0f172a', lineHeight: 1.35 }}>
-                {wordsPrimary}
-              </span>
-              {wordsSecondary && (
-                <span style={{ fontSize: '11.5px', fontWeight: 500, color: '#64748b', lineHeight: 1.3, marginTop: '2px' }}>
-                  {wordsSecondary}
-                </span>
-              )}
-            </div>
-
-            {/* Right side: Stacked Totals (Total Weight + Grand Total) */}
-            <div style={{ padding: '0.65rem 16px', flex: '0 0 40%', width: '40%', boxSizing: 'border-box', minWidth: '240px', display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: '6px', background: 'var(--bill-primary-light, #f8fafc)' }}>
-              {/* Row 1: Total Weight */}
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem' }}>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '1px' }}>
-                  <span style={{ fontSize: '12px', fontWeight: 700, color: '#334155' }}>
-                    {lbl('மொத்த எடை', 'Total Weight')}
-                  </span>
-                  {bi && (
-                    <span style={{ fontSize: '10px', fontWeight: 500, color: '#64748b' }}>
-                      {primaryEng ? 'மொத்த எடை' : 'Total Weight'}
-                    </span>
-                  )}
-                </div>
-                <span style={{ fontSize: '13.5px', fontWeight: 700, color: '#1e293b', fontVariantNumeric: 'tabular-nums' }}>
+          {totalRs > 0 && (
+            <tfoot>
+              {/* Row 1: Grand Total Row matching columns */}
+              <tr className="total-footer-row" style={{ background: 'var(--bill-primary-light, #f8fafc)', borderTop: '1px solid #ddd' }}>
+                <td colSpan={2} style={{ textAlign: 'right', paddingRight: '20px', borderBottom: '1px solid #ddd' }}>
+                  <div style={{ display: 'inline-flex', flexDirection: 'column', alignItems: 'flex-end', gap: '1px' }}>
+                    <span style={{ fontSize: '1rem', fontWeight: 800, color: accent, lineHeight: 1.1 }}>{lbl('மொத்தம்', 'Total')}</span>
+                    {bi && <span style={{ fontSize: '0.65rem', fontWeight: 600, color: accent, opacity: 0.85 }}>{primaryEng ? 'மொத்தம்' : 'Grand Total'}</span>}
+                  </div>
+                </td>
+                <td className="text-center" style={{ fontWeight: 800, fontSize: '14px', color: '#1e293b', fontVariantNumeric: 'tabular-nums', borderBottom: '1px solid #ddd' }}>
                   {formatWeight(totalKg)} Kg
-                </span>
-              </div>
-
-              {/* Subtle divider */}
-              <div style={{ borderTop: '1px solid rgba(0, 0, 0, 0.08)', margin: '1px 0' }}></div>
-
-              {/* Row 2: Grand Total */}
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem' }}>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '1px' }}>
-                  <span style={{ fontSize: '14px', fontWeight: 800, color: accent, lineHeight: 1.1 }}>
-                    {lbl('மொத்தம்', 'Total')}
-                  </span>
-                  {bi && (
-                    <span style={{ fontSize: '10px', fontWeight: 600, color: accent, opacity: 0.85 }}>
-                      {primaryEng ? 'மொத்தம்' : 'Grand Total'}
-                    </span>
-                  )}
-                </div>
-                <span style={{ fontSize: '1.25rem', fontWeight: 800, color: accent, fontVariantNumeric: 'tabular-nums' }}>
+                </td>
+                <td className="text-right" style={{ textAlign: 'right', paddingRight: '16px', fontWeight: 800, fontSize: '1.25rem', color: accent, fontVariantNumeric: 'tabular-nums', borderBottom: '1px solid #ddd' }}>
                   ₹{formatCurrency(totalRs)}
-                </span>
-              </div>
-            </div>
-          </div>
-        )}
+                </td>
+              </tr>
+
+              {/* Row 2: Full-width Amount in Words */}
+              <tr style={{ background: '#fff' }}>
+                <td colSpan={4} style={{ padding: '8px 16px', textAlign: 'left', borderBottom: 'none' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                    <span style={{ fontSize: '13px', fontWeight: 700, color: '#0f172a', lineHeight: 1.35 }}>
+                      {wordsPrimary}
+                    </span>
+                    {wordsSecondary && (
+                      <span style={{ fontSize: '11.5px', fontWeight: 500, color: '#64748b', lineHeight: 1.3 }}>
+                        {wordsSecondary}
+                      </span>
+                    )}
+                  </div>
+                </td>
+              </tr>
+            </tfoot>
+          )}
+        </table>
       </div>
 
       <div style={{ flexGrow: 1 }}></div>
 
-      {/* Footer: bank details in the Textiles style (labels in the primary language, values in English when bilingual) */}
+      {/* Footer: bank details in the Textiles style */}
       <div className="bill-footer-new">
         <div className="footer-left">
           {((showBankDetails && (bankDetails || accountNo)) || (showIfsc && ifsc)) && (
-            <div style={{ marginBottom: '10px', color: 'var(--bill-text-dark)', fontSize: '0.9rem', lineHeight: '1.4', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+            <div style={{ marginBottom: '15px', color: '#475569', fontSize: '0.85rem', lineHeight: '1.45', display: 'flex', flexDirection: 'column', gap: '4px' }}>
               {showBankDetails && (
                 <div style={{ display: 'flex', gap: '5px' }}>
-                  <div style={{ fontWeight: 'bold', whiteSpace: 'nowrap' }}>{lbl('வங்கி விவரம்', 'Bank Details')} :</div>
-                  <div style={{ color: '#000' }}>
+                  <div style={{ fontWeight: 700, whiteSpace: 'nowrap', fontSize: '0.82rem', color: accent }}>{lbl('வங்கி விவரம்', 'Bank Details')} :</div>
+                  <div style={{ color: '#334155', fontWeight: 600 }}>
                     {useEn && p.bankNameEn ? `${p.bankNameEn}${p.branchEn ? ', ' + p.branchEn : ''}` : bankDetails}
                   </div>
                 </div>
               )}
               {showBankDetails && accountNo && (
                 <div style={{ display: 'flex', gap: '5px' }}>
-                  <div style={{ fontWeight: 'bold', whiteSpace: 'nowrap' }}>{lbl('கணக்கு எண்', 'A/C No')} :</div>
-                  <div style={{ color: '#000' }}>{accountNo}</div>
+                  <div style={{ fontWeight: 700, whiteSpace: 'nowrap', fontSize: '0.82rem', color: accent }}>{lbl('கணக்கு எண்', 'Account No')} :</div>
+                  <div style={{ color: '#334155', fontWeight: 600 }}>{accountNo}</div>
                 </div>
               )}
               {showIfsc && ifsc && (
                 <div style={{ display: 'flex', gap: '5px' }}>
-                  <div style={{ fontWeight: 'bold', whiteSpace: 'nowrap' }}>IFSC :</div>
-                  <div style={{ color: '#000' }}>{ifsc}</div>
+                  <div style={{ fontWeight: 700, whiteSpace: 'nowrap', fontSize: '0.82rem', color: accent }}>IFSC :</div>
+                  <div style={{ color: '#334155', fontWeight: 600 }}>{ifsc}</div>
                 </div>
               )}
             </div>
           )}
-          <div className="thank-you font-tamil">{lbl('நன்றி', 'Thank You')}</div>
+          <div className="thank-you font-tamil" style={{ color: accent, fontSize: '0.85rem', fontWeight: 700 }}>{lbl('நன்றி', 'Thank You')}</div>
         </div>
-        <div className="preview-footer-right">
-          <div className="sign-company font-display" style={{ position: 'relative', zIndex: 10 }}>{name.english || name.tamil}</div>
-          <div className="sign-space" style={{ position: 'relative' }}>
+        <div className="preview-footer-right" style={{ textAlign: 'right', display: 'flex', flexDirection: 'column', alignItems: 'flex-end', minWidth: '220px' }}>
+          <div className="sign-company font-display" style={{ color: accent, position: 'relative', zIndex: 10, fontSize: '1.05rem', fontWeight: 700, marginBottom: '5px', lineHeight: 1 }}>{name.english || name.tamil}</div>
+          <div className="sign-space" style={{ position: 'relative', height: '55px', width: '100%', display: 'flex', justifyContent: 'flex-end' }}>
             {p.signature && (
               <img src={p.signature} alt="Signature" style={{ position: 'absolute', top: '50%', transform: 'translateY(-50%)', right: '-10px', maxHeight: '95px', maxWidth: '200px', objectFit: 'contain', pointerEvents: 'none' }} />
             )}
           </div>
-          <div className="sign-label" style={{ position: 'relative', zIndex: 10 }}>
+          <div className="sign-label" style={{ position: 'relative', zIndex: 10, fontSize: '0.75rem', fontWeight: 600, color: '#555', lineHeight: 1 }}>
             {p.authorizedSignatoryName ? `(${p.authorizedSignatoryName})` : lbl('(கையொப்பம்)', '(Authorized Signature)')}
           </div>
         </div>

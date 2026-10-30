@@ -40,7 +40,7 @@
     display: flex;
     justify-content: space-between;
     padding: 0;
-    margin-bottom: 15px;
+    margin-bottom: 4px;
 }
 
 .greeting-left,
@@ -57,8 +57,8 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 15px 0;
-    margin-bottom: 41px;
+    padding: 10px 0;
+    margin-bottom: 12px;
 }
 
 .header-left {
@@ -74,17 +74,17 @@
 }
 
 .company-name {
-    font-size: 26px;
-    font-weight: 800;
+    font-size: 1.35rem;
+    font-weight: 700;
     color: var(--bill-primary);
     line-height: 1.2;
 }
 
 .company-subtitle {
-    font-size: 14px;
-    font-weight: 600;
-    color: #333;
-    margin-top: 4px;
+    font-size: 1rem;
+    font-weight: 500;
+    color: #475569;
+    margin-top: 3px;
 }
 
 .header-right {
@@ -378,8 +378,8 @@
     justify-content: space-between;
     align-items: flex-start;
     margin-top: auto;
-    padding-top: 40px;
-    margin-bottom: 30px;
+    padding-top: 15px;
+    margin-bottom: 15px;
 }
 
 .footer-left {
@@ -825,6 +825,11 @@
     }
 
     .bill-footer-new {
-        margin-top: auto;
-    }
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-top: auto;
+    padding-top: 15px;
+    margin-bottom: 15px;
+}
 }
