@@ -152,7 +152,7 @@ export default function CoolieInvoiceBilingual({ bill }) {
             {isEng ? 'Coolie Bill' : 'கூலி பில்'}
           </div>
           {bi && (
-            <div style={{ fontSize: '11px', fontWeight: 600, color: accent, opacity: 0.85, marginTop: '3px', letterSpacing: '0.04em', textTransform: 'uppercase', lineHeight: 1 }}>
+            <div style={{ fontSize: '11px', fontWeight: 600, color: accent, marginTop: '3px', lineHeight: 1 }}>
               Coolie Bill
             </div>
           )}
