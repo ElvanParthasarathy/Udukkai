@@ -147,11 +147,15 @@ export default function CoolieInvoiceBilingual({ bill }) {
             {name.english && name.tamil && <div className="company-subtitle font-tamil">{name.tamil}</div>}
           </div>
         </div>
-        <div className="header-right">
-          <div className="bill-type-badge font-tamil">
+        <div className="header-right" style={{ textAlign: 'right', display: 'flex', flexDirection: 'column', alignItems: 'flex-end', justifyContent: 'center' }}>
+          <div className="font-tamil" style={{ fontSize: '17px', fontWeight: 800, color: accent, lineHeight: 1.25, letterSpacing: '0.2px' }}>
             {isEng ? 'Coolie Bill' : 'கூலி பில்'}
-            {bi && <div style={{ fontSize: '10px', fontWeight: 500, opacity: 0.8 }}>Coolie Bill</div>}
           </div>
+          {bi && (
+            <div style={{ fontSize: '11px', fontWeight: 600, color: accent, opacity: 0.85, marginTop: '3px', letterSpacing: '0.04em', textTransform: 'uppercase', lineHeight: 1 }}>
+              Coolie Bill
+            </div>
+          )}
         </div>
       </div>
 
@@ -270,25 +274,25 @@ export default function CoolieInvoiceBilingual({ bill }) {
           {/* Left: Bank Details */}
           <div style={{ display: 'flex', flexDirection: 'column', paddingTop: '2px' }}>
             {((showBankDetails && (bankDetails || accountNo)) || (showIfsc && ifsc)) && (
-              <div style={{ color: '#475569', fontSize: '0.85rem', lineHeight: '1.45', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+              <div style={{ fontSize: '0.9rem', lineHeight: '1.4', display: 'flex', flexDirection: 'column', gap: '6px' }}>
                 {showBankDetails && (
-                  <div style={{ display: 'flex', gap: '6px' }}>
-                    <div style={{ fontWeight: 700, whiteSpace: 'nowrap', fontSize: '0.82rem', color: accent }}>{lbl('வங்கி விவரம்', 'Bank Details')} :</div>
-                    <div style={{ color: '#334155', fontWeight: 600 }}>
+                  <div style={{ display: 'flex', gap: '6px', alignItems: 'baseline' }}>
+                    <div style={{ fontWeight: 700, whiteSpace: 'nowrap', fontSize: '0.9rem', color: accent }}>{lbl('வங்கி விவரம்', 'Bank Details')} :</div>
+                    <div style={{ color: '#111', fontWeight: 600, fontSize: '0.9rem' }}>
                       {useEn && p.bankNameEn ? `${p.bankNameEn}${p.branchEn ? ', ' + p.branchEn : ''}` : bankDetails}
                     </div>
                   </div>
                 )}
                 {showBankDetails && accountNo && (
-                  <div style={{ display: 'flex', gap: '6px' }}>
-                    <div style={{ fontWeight: 700, whiteSpace: 'nowrap', fontSize: '0.82rem', color: accent }}>{lbl('கணக்கு எண்', 'Account No')} :</div>
-                    <div style={{ color: '#334155', fontWeight: 600, fontVariantNumeric: 'tabular-nums' }}>{accountNo}</div>
+                  <div style={{ display: 'flex', gap: '6px', alignItems: 'baseline' }}>
+                    <div style={{ fontWeight: 700, whiteSpace: 'nowrap', fontSize: '0.9rem', color: accent }}>{lbl('கணக்கு எண்', 'Account No')} :</div>
+                    <div style={{ color: '#111', fontWeight: 600, fontSize: '0.9rem', fontVariantNumeric: 'tabular-nums' }}>{accountNo}</div>
                   </div>
                 )}
                 {showIfsc && ifsc && (
-                  <div style={{ display: 'flex', gap: '6px' }}>
-                    <div style={{ fontWeight: 700, whiteSpace: 'nowrap', fontSize: '0.82rem', color: accent }}>IFSC :</div>
-                    <div style={{ color: '#334155', fontWeight: 600, fontVariantNumeric: 'tabular-nums' }}>{ifsc}</div>
+                  <div style={{ display: 'flex', gap: '6px', alignItems: 'baseline' }}>
+                    <div style={{ fontWeight: 700, whiteSpace: 'nowrap', fontSize: '0.9rem', color: accent }}>IFSC :</div>
+                    <div style={{ color: '#111', fontWeight: 600, fontSize: '0.9rem', fontVariantNumeric: 'tabular-nums' }}>{ifsc}</div>
                   </div>
                 )}
               </div>
