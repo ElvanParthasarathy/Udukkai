@@ -5,7 +5,6 @@ import androidx.compose.animation.core.CubicBezierEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
@@ -40,7 +39,7 @@ import com.elvan.udukkai.core.auth.AuthManager
 import com.elvan.udukkai.core.platform.AppBackHandler
 import com.elvan.udukkai.core.sync.getFirebaseSyncManager
 import androidx.compose.ui.Alignment
-import com.elvan.udukkai.ui.components.ExpressiveLoadingIndicator
+import com.elvan.udukkai.ui.components.ExpressiveDotsLoader
 import com.elvan.udukkai.ui.screens.onboarding.screens.NeramColors
 import com.elvan.udukkai.ui.screens.onboarding.screens.LanguageSelectScreen
 import com.elvan.udukkai.ui.screens.onboarding.components.AuthBackdrop
@@ -112,14 +111,7 @@ fun OnboardingGate(
     AnimatedContent(
         targetState = stage,
         transitionSpec = {
-            if (targetState == GateStage.APP) {
-                (slideInVertically(
-                    initialOffsetY = { it / 8 },
-                    animationSpec = tween(500, easing = EaseOutCubic)
-                ) + fadeIn(tween(400, easing = EaseOutCubic))) togetherWith fadeOut(tween(300, easing = EaseInCubic))
-            } else {
-                fadeIn(tween(400, easing = EaseOutCubic)) togetherWith fadeOut(tween(300, easing = EaseInCubic))
-            }
+            fadeIn(tween(350, easing = EaseOutCubic)) togetherWith fadeOut(tween(250, easing = EaseInCubic))
         },
         modifier = Modifier.fillMaxSize(),
         label = "onboarding_gate"
@@ -155,8 +147,8 @@ fun OnboardingGate(
             GateStage.LOADING -> Box(Modifier.fillMaxSize()) {
                 AuthBackdrop()
                 Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    ExpressiveLoadingIndicator(
-                        modifier = Modifier.size(36.dp),
+                    ExpressiveDotsLoader(
+                        modifier = Modifier.size(40.dp),
                         color = NeramColors.textPrimary()
                     )
                 }
