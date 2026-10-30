@@ -148,7 +148,7 @@ export default function CoolieReceiptView({ receipt: receiptProp, onBack, onEdit
       return (
         <div style={{ display: 'inline-flex', flexDirection: 'column', alignItems: 'flex-end' }}>
           <span>{pStr}</span>
-          <span style={{ fontSize: '0.65em', fontWeight: 500, opacity: 0.85, letterSpacing: '0.02em', marginTop: '-1px' }}>{sStr}</span>
+          <span style={{ fontSize: '0.65em', fontWeight: 500, color: '#64748b', letterSpacing: '0.02em', marginTop: '-1px' }}>{sStr}</span>
         </div>
       );
     }
@@ -468,7 +468,7 @@ export default function CoolieReceiptView({ receipt: receiptProp, onBack, onEdit
                   {isBilingual && receipt.clientNameEn && receipt.clientNameEn !== receipt.clientName ? (
                     <div style={{ display: 'inline-flex', flexDirection: 'column', alignItems: 'flex-end' }}>
                       <span>{receipt.clientName}</span>
-                      <span style={{ fontSize: '0.65em', fontWeight: 500, opacity: 0.85, letterSpacing: '0.02em', marginTop: '-1px' }}>{receipt.clientNameEn}</span>
+                      <span style={{ fontSize: '0.65em', fontWeight: 500, color: '#64748b', letterSpacing: '0.02em', marginTop: '-1px' }}>{receipt.clientNameEn}</span>
                     </div>
                   ) : (receipt.clientName || receipt.clientNameEn || '-')}
                 </span>
@@ -485,12 +485,12 @@ export default function CoolieReceiptView({ receipt: receiptProp, onBack, onEdit
                       const [pStr, sStr] = words.split(' / ');
                       return (
                         <>
-                          <span style={{ fontWeight: 700, color: '#0f172a' }}>{pStr}</span>
+                          <span style={{ fontWeight: 600, color: '#242f3d' }}>{pStr}</span>
                           <span style={{ fontSize: '0.85em', fontWeight: 500, color: '#64748b', opacity: 0.85 }}>{sStr}</span>
                         </>
                       );
                     }
-                    return <span style={{ fontWeight: 600 }}>{words}</span>;
+                    return <span style={{ fontWeight: 600, color: '#242f3d' }}>{words}</span>;
                   })()}
                 </div>
               </div>

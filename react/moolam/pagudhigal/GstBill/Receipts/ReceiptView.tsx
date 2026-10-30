@@ -157,7 +157,7 @@ export default function ReceiptView({ receipt: receiptProp, profile: profileProp
       return (
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
           <span>{pStr}</span>
-          <span style={{ fontSize: '0.6em', fontWeight: 500, opacity: 0.85, letterSpacing: '0.02em', marginTop: '-1px' }}>{sStr}</span>
+          <span style={{ fontSize: '0.65em', fontWeight: 500, color: '#64748b', letterSpacing: '0.02em', marginTop: '-1px' }}>{sStr}</span>
         </div>
       );
     }
@@ -416,9 +416,9 @@ export default function ReceiptView({ receipt: receiptProp, profile: profileProp
           .header-right { text-align: right; z-index: 5; position: relative; }
           .receipt-row { display: flex; justify-content: space-between; align-items: flex-start; padding: 0.85rem 0; font-size: 1.1rem; border-bottom: 1px solid #f1f5f9; }
           .receipt-label { color: var(--bill-primary, #1e3a8a); font-weight: 600; }
-          .receipt-value { color: #1e293b; font-weight: 700; text-align: right; }
+          .receipt-value { color: #242f3d; font-weight: 600; text-align: right; }
           .receipt-amount { font-size: 2rem; font-weight: 800; color: var(--bill-primary, #1e3a8a); text-align: center; margin: 1.5rem 0 1rem 0; padding: 1.25rem; background: var(--bill-primary-light, #eff6ff); border-radius: 8px; }
-          .receipt-words { font-size: 1.05rem; color: #334155; text-align: center; margin-bottom: 1.5rem; }
+          .receipt-words { font-size: 1.05rem; color: #242f3d; text-align: center; margin-bottom: 1.5rem; }
           @media print {
             .receipt-box {
               border: none !important;
@@ -498,7 +498,7 @@ export default function ReceiptView({ receipt: receiptProp, profile: profileProp
                   {profile?.enableBilingual !== false && receipt.clientNameEn && receipt.clientNameEn !== receipt.clientName ? (
                     <div style={{ display: 'inline-flex', flexDirection: 'column', alignItems: 'flex-end' }}>
                       <span>{receipt.clientName}</span>
-                      <span style={{ fontSize: '0.65em', fontWeight: 500, opacity: 0.85, letterSpacing: '0.02em', marginTop: '-1px' }}>{receipt.clientNameEn}</span>
+                      <span style={{ fontSize: '0.65em', fontWeight: 500, color: '#64748b', letterSpacing: '0.02em', marginTop: '-1px' }}>{receipt.clientNameEn}</span>
                     </div>
                   ) : (receipt.clientName || receipt.clientNameEn || '-')}
                 </span>
@@ -520,12 +520,12 @@ export default function ReceiptView({ receipt: receiptProp, profile: profileProp
                       const [pStr, sStr] = words.split(' / ');
                       return (
                         <>
-                          <span style={{ fontWeight: 700, color: '#0f172a' }}>{pStr}</span>
+                          <span style={{ fontWeight: 600, color: '#242f3d' }}>{pStr}</span>
                           <span style={{ fontSize: '0.85em', fontWeight: 500, color: '#64748b', opacity: 0.85 }}>{sStr}</span>
                         </>
                       );
                     }
-                    return <span style={{ fontWeight: 600 }}>{words}</span>;
+                    return <span style={{ fontWeight: 600, color: '#242f3d' }}>{words}</span>;
                   })()}
                 </div>
               </div>

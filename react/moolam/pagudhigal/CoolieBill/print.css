@@ -873,8 +873,8 @@
     font-weight: 600;
 }
 .receipt-value {
-    color: #1e293b;
-    font-weight: 700;
+    color: #242f3d;
+    font-weight: 600;
     text-align: right;
 }
 .receipt-amount {
@@ -889,7 +889,7 @@
 }
 .receipt-words {
     font-size: 1.05rem;
-    color: #334155;
+    color: #242f3d;
     text-align: center;
     margin-bottom: 1.5rem;
 }
