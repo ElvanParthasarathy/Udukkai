@@ -6,7 +6,7 @@ import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
-import com.elvan.udukkai.core.platform.getImeBottomPadding
+import com.elvan.udukkai.core.platform.navigationBarsPaddingIfMobile
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -150,23 +150,23 @@ internal fun NeramPage(
     bottom: @Composable () -> Unit,
     content: @Composable ColumnScope.() -> Unit
 ) {
-    Column(
+    Box(
         modifier = Modifier
             .fillMaxSize()
-            .windowInsetsPadding(WindowInsets.safeDrawing)
-            .imePadding()
+            .statusBarsPadding()
     ) {
         BoxWithConstraints(
             modifier = Modifier
-                .weight(1f)
-                .fillMaxWidth()
+                .fillMaxSize()
+                .imePadding()
         ) {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
                     .heightIn(min = maxHeight)
                     .verticalScroll(rememberScrollState())
-                    .padding(horizontal = 16.dp, vertical = 24.dp),
+                    .padding(horizontal = 16.dp, vertical = 24.dp)
+                    .padding(bottom = 96.dp),
                 verticalArrangement = Arrangement.Center,
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
@@ -176,9 +176,11 @@ internal fun NeramPage(
         NeramElement(
             delayIndex = 3,
             modifier = Modifier
+                .align(Alignment.BottomCenter)
                 .fillMaxWidth()
+                .navigationBarsPaddingIfMobile()
                 .padding(horizontal = 16.dp)
-                .padding(bottom = 40.dp)
+                .padding(bottom = 24.dp)
         ) {
             bottom()
         }

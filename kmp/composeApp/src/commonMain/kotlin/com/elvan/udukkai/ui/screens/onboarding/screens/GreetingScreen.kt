@@ -29,7 +29,6 @@ import com.elvan.udukkai.core.auth.AppScope
 import com.elvan.udukkai.core.auth.AuthManager
 import com.elvan.udukkai.core.backup.getUdukkaiBackupService
 import com.elvan.udukkai.core.extensions.cssShadow
-import com.elvan.udukkai.core.navil.NavilMozhimaatri
 import com.elvan.udukkai.data.settings.BusinessProfile
 import com.elvan.udukkai.factory.data.FactoryProfileRepository
 import com.elvan.udukkai.localization.K
@@ -69,7 +68,6 @@ fun GreetingScreen(
     var isBilingual by remember { mutableStateOf(true) }
     var primaryName by remember { mutableStateOf("") }
     var secondaryName by remember { mutableStateOf("") }
-    var hasUserEditedSecondary by remember { mutableStateOf(false) }
     var isSaving by remember { mutableStateOf(false) }
 
     val enterNameMsg = K.enterName.tr()
@@ -87,10 +85,7 @@ fun GreetingScreen(
                 val names = mutableMapOf<String, String>()
                 names[primaryLang] = primaryName.trim()
                 if (isBilingual) {
-                    val sec = secondaryName.trim().ifEmpty {
-                        if (isPrimaryTamil) NavilMozhimaatri.transliterate(primaryName.trim()) else primaryName.trim()
-                    }
-                    names[secondaryLang] = sec
+                    names[secondaryLang] = secondaryName.trim()
                 }
 
                 var created = true
@@ -234,12 +229,7 @@ fun GreetingScreen(
 
                 NeramField(
                     value = primaryName,
-                    onValueChange = {
-                        primaryName = it
-                        if (isBilingual && !hasUserEditedSecondary && isPrimaryTamil) {
-                            secondaryName = NavilMozhimaatri.transliterate(it)
-                        }
-                    },
+                    onValueChange = { primaryName = it },
                     placeholder = primaryPlaceholder,
                     keyboardOptions = KeyboardOptions(
                         imeAction = if (isBilingual) ImeAction.Next else ImeAction.Done
@@ -263,10 +253,7 @@ fun GreetingScreen(
                     }
                     NeramField(
                         value = secondaryName,
-                        onValueChange = {
-                            hasUserEditedSecondary = true
-                            secondaryName = it
-                        },
+                        onValueChange = { secondaryName = it },
                         placeholder = secondaryPlaceholder,
                         keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
                         keyboardActions = KeyboardActions(
