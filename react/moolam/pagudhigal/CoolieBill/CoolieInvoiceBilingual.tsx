@@ -44,7 +44,7 @@ const themeStyles = (hex) => {
 };
 
 export default function CoolieInvoiceBilingual({ bill }) {
-  const p = bill._companyProfile || {};
+  const p = bill._companyProfile || bill.companyProfile || bill.profile || {};
   const bi = p.enableBilingual !== false;
   // Single-language bills follow the business's primary language
   const primaryEng = p.primaryDataLanguage === 'English';
@@ -301,8 +301,8 @@ export default function CoolieInvoiceBilingual({ bill }) {
               {name.english || name.tamil}
             </div>
             <div style={{ position: 'relative', height: '55px', width: '100%', display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
-              {p.signature && (
-                <img src={p.signature} alt="Signature" style={{ position: 'absolute', top: '50%', transform: 'translateY(-50%)', right: '-10px', maxHeight: '95px', maxWidth: '200px', objectFit: 'contain', pointerEvents: 'none' }} />
+              {(p.signature || bill.signature) && (
+                <img src={p.signature || bill.signature} alt="Signature" style={{ position: 'absolute', top: '50%', transform: 'translateY(-50%)', right: '-10px', maxHeight: '95px', maxWidth: '200px', objectFit: 'contain', pointerEvents: 'none' }} />
               )}
             </div>
           </div>
