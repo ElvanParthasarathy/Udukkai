@@ -13,6 +13,7 @@ dist
 dist-ssr
 dist-electron
 dist-desktop
+dev-dist/
 *.local
 .env
 
