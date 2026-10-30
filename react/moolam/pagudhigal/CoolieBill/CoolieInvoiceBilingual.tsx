@@ -191,7 +191,7 @@ export default function CoolieInvoiceBilingual({ bill }) {
                   {bi && <div>{item.name_english || ''}</div>}
                 </td>
                 <td className="text-center">{item.kg ? `${formatWeight(item.kg)} Kg` : ''}</td>
-                <td className="text-right" style={{ fontVariantNumeric: 'tabular-nums' }}>{item.kg ? `₹${formatCurrency(calcItemAmount(item.coolie, item.kg))}` : ''}</td>
+                <td className="text-right" style={{ fontVariantNumeric: 'tabular-nums', paddingRight: '16px' }}>{item.kg ? `₹${formatCurrency(calcItemAmount(item.coolie, item.kg))}` : ''}</td>
               </tr>
             ))}
             {extraRows.map((row, i) => (
@@ -202,50 +202,71 @@ export default function CoolieInvoiceBilingual({ bill }) {
                   {bi && <div>{row.en || ''}</div>}
                 </td>
                 <td className="text-center">{row.weight ? `${formatWeight(row.weight)} Kg` : '-'}</td>
-                <td className="text-right" style={{ fontVariantNumeric: 'tabular-nums' }}>{row.amount ? `₹${formatCurrency(row.amount)}` : '-'}</td>
+                <td className="text-right" style={{ fontVariantNumeric: 'tabular-nums', paddingRight: '16px' }}>{row.amount ? `₹${formatCurrency(row.amount)}` : '-'}</td>
               </tr>
             ))}
           </tbody>
-          {totalRs > 0 && (
-            <tfoot>
-              <tr className="total-footer-row" style={{ background: 'var(--bill-primary-light)', borderTop: '1px solid #ddd' }}>
-                <td style={{ borderBottom: 'none' }}></td>
-                <td style={{ textAlign: 'right', paddingRight: '20px', borderBottom: 'none' }}>
-                  <div style={{ display: 'inline-flex', flexDirection: 'column', alignItems: 'flex-end', gap: '1px' }}>
-                    <span style={{ fontSize: '1rem', fontWeight: 800, color: accent, lineHeight: 1.1 }}>{lbl('மொத்தம்', 'Total')}</span>
-                    {bi && <span style={{ fontSize: '0.65rem', fontWeight: 600, color: accent, opacity: 0.85 }}>{primaryEng ? 'மொத்தம்' : 'Grand Total'}</span>}
-                  </div>
-                </td>
-                <td className="text-center" style={{ fontWeight: 800, fontSize: '14.5px', color: accent, fontVariantNumeric: 'tabular-nums', borderBottom: 'none' }}>
-                  {formatWeight(totalKg)} Kg
-                </td>
-                <td className="text-right" style={{ textAlign: 'right', paddingRight: '16px', fontWeight: 800, fontSize: '1.2rem', color: accent, fontVariantNumeric: 'tabular-nums', borderBottom: 'none' }}>
-                  ₹{formatCurrency(totalRs)}
-                </td>
-              </tr>
-            </tfoot>
-          )}
         </table>
-      </div>
 
-      {/* Full-width Amount in words pill */}
-      {totalRs > 0 && (
-        <div style={{ marginTop: '4px', marginBottom: '14px', padding: '8px 14px', background: 'var(--bill-primary-light)', borderRadius: '6px', display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
-          <span style={{ fontSize: '12px', fontWeight: 700, color: accent, whiteSpace: 'nowrap', paddingTop: '1px' }}>
-            {bi ? 'எழுத்தில் மொத்தத் தொகை / In Words:' : (isEng ? 'Amount in words:' : 'எழுத்தில் மொத்தத் தொகை:')}
-          </span>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-            <span style={{ fontSize: '13px', fontWeight: 700, color: 'var(--bill-text-dark, #2e7d32)', lineHeight: 1.3 }}>
-              {wordsPrimary}
-            </span>
-            {wordsSecondary && (
-              <span style={{ fontSize: '11px', fontWeight: 500, color: '#555', lineHeight: 1.2 }}>
-                {wordsSecondary}
+        {totalRs > 0 && (
+          <div style={{ display: 'flex', alignItems: 'stretch', borderTop: '1px solid #ddd', background: '#fff' }}>
+            {/* Left side: Amount in Words */}
+            <div style={{ padding: '0.65rem 1rem', borderRight: '1px solid #ddd', flex: '0 0 60%', width: '60%', boxSizing: 'border-box', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+              <span style={{ fontSize: '11px', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '4px' }}>
+                {bi ? 'எழுத்தில் மொத்தத் தொகை / In Words' : (isEng ? 'Amount in Words' : 'எழுத்தில் மொத்தத் தொகை')}
               </span>
-            )}
+              <span style={{ fontSize: '13px', fontWeight: 700, color: '#0f172a', lineHeight: 1.35 }}>
+                {wordsPrimary}
+              </span>
+              {wordsSecondary && (
+                <span style={{ fontSize: '11.5px', fontWeight: 500, color: '#64748b', lineHeight: 1.3, marginTop: '2px' }}>
+                  {wordsSecondary}
+                </span>
+              )}
+            </div>
+
+            {/* Right side: Stacked Totals (Total Weight + Grand Total) */}
+            <div style={{ padding: '0.65rem 16px', flex: '0 0 40%', width: '40%', boxSizing: 'border-box', minWidth: '240px', display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: '6px', background: 'var(--bill-primary-light, #f8fafc)' }}>
+              {/* Row 1: Total Weight */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1px' }}>
+                  <span style={{ fontSize: '12px', fontWeight: 700, color: '#334155' }}>
+                    {lbl('மொத்த எடை', 'Total Weight')}
+                  </span>
+                  {bi && (
+                    <span style={{ fontSize: '10px', fontWeight: 500, color: '#64748b' }}>
+                      {primaryEng ? 'மொத்த எடை' : 'Total Weight'}
+                    </span>
+                  )}
+                </div>
+                <span style={{ fontSize: '13.5px', fontWeight: 700, color: '#1e293b', fontVariantNumeric: 'tabular-nums' }}>
+                  {formatWeight(totalKg)} Kg
+                </span>
+              </div>
+
+              {/* Subtle divider */}
+              <div style={{ borderTop: '1px solid rgba(0, 0, 0, 0.08)', margin: '1px 0' }}></div>
+
+              {/* Row 2: Grand Total */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1px' }}>
+                  <span style={{ fontSize: '14px', fontWeight: 800, color: accent, lineHeight: 1.1 }}>
+                    {lbl('மொத்தம்', 'Total')}
+                  </span>
+                  {bi && (
+                    <span style={{ fontSize: '10px', fontWeight: 600, color: accent, opacity: 0.85 }}>
+                      {primaryEng ? 'மொத்தம்' : 'Grand Total'}
+                    </span>
+                  )}
+                </div>
+                <span style={{ fontSize: '1.25rem', fontWeight: 800, color: accent, fontVariantNumeric: 'tabular-nums' }}>
+                  ₹{formatCurrency(totalRs)}
+                </span>
+              </div>
+            </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
 
       <div style={{ flexGrow: 1 }}></div>
 
