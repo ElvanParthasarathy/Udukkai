@@ -114,13 +114,16 @@ export default function CoolieReceiptBilingual({ receipt }) {
     return String(val);
   };
 
-  const isTa = (profile?.receiptLanguage || 'ta') === 'ta';
-  const addr1 = isTa 
-    ? [profile?.address, profile?.city].filter(Boolean).join(', ') || [profile?.addressEn, profile?.cityEn].filter(Boolean).join(', ')
-    : [profile?.addressEn, profile?.cityEn].filter(Boolean).join(', ') || [profile?.address, profile?.city].filter(Boolean).join(', ');
-  
-  const dist = isTa ? (profile?.district || profile?.districtEn) : (profile?.districtEn || profile?.district);
-  const addr2 = dist ? `${dist}${profile?.pincode ? ` - ${profile.pincode}` : ''}` : (profile?.pincode ? `PIN: ${profile.pincode}` : '');
+  const primaryEng = profile?.primaryDataLanguage === 'English';
+  const useEn = isBilingual || primaryEng;
+  const contactLines = (en) => {
+    const line1 = en ? profile?.addressEn : profile?.address;
+    const city = en ? profile?.cityEn : profile?.city;
+    const district = en ? profile?.districtEn : profile?.district;
+    const cityPin = [city, profile?.pincode].filter(Boolean).join(' - ');
+    return { l1: [line1, cityPin].filter(Boolean).join(', ') || [profile?.address, profile?.pincode].filter(Boolean).join(', '), l2: district || '' };
+  };
+  const contact = contactLines(useEn);
   
   const email = (profile?.email || profile?.minnanjal || '').trim();
   const phone = profile?.phone ? (Array.isArray(profile.phone) ? profile.phone : String(profile.phone).split(',')) : [];
@@ -264,36 +267,36 @@ export default function CoolieReceiptBilingual({ receipt }) {
 
         {/* Contact Section: 1:1 match with invoice */}
         <div className="contact-section">
-          <div className="contact-row">
-            <div className="contact-left">
-              <div className="contact-title" style={{ display: 'flex', flexDirection: 'column', gap: '2px', marginBottom: '8px' }}>
-                <span style={{ fontSize: '13px', fontWeight: 700, color: accent }}>{(!isBilingual && primaryLang === 'English') ? 'Contact Us' : 'தொடர்பு கொள்ள'}</span>
-                {isBilingual && (
-                  <span style={{ fontSize: '10px', fontWeight: 500, color: accent, opacity: 0.85 }}>{primaryLang === 'English' ? 'தொடர்பு கொள்ள' : 'Contact Us'}</span>
-                )}
+          <div className="contact-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', width: '100%' }}>
+            {/* Left Column: Title + Address Lines */}
+            <div className="contact-left" style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+              <div style={{ fontSize: '0.85rem', fontWeight: 700, color: accent, display: 'flex', alignItems: 'center', height: '20px', lineHeight: 1.2 }}>
+                {primaryEng ? 'Contact Us' : 'தொடர்பு கொள்ள'}
               </div>
-              <div className="contact-address">
-                <div>{addr1}</div>
-                {addr2 && <div>{addr2}</div>}
+              <div style={{ fontSize: '0.82rem', color: '#333', fontWeight: 500, display: 'flex', alignItems: 'center', height: '20px', lineHeight: 1.2 }}>
+                {contact.l1}
               </div>
-              {email && (
-                <div className="contact-email" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', marginTop: '-2px', color: accent }}>
-                    <IconMail size={14} />
-                  </div>
-                  <span>{email}</span>
+              {contact.l2 && (
+                <div style={{ fontSize: '0.82rem', color: '#333', fontWeight: 500, display: 'flex', alignItems: 'center', height: '20px', lineHeight: 1.2 }}>
+                  {contact.l2}
                 </div>
               )}
             </div>
-            <div className="contact-phones">
+
+            {/* Right Column: Phones & Email */}
+            <div className="contact-phones" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '6px' }}>
               {phone.map((num, i) => (
-                <div key={i} className="phone-item-new" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', marginTop: '-2px', color: accent }}>
-                    <IconPhone size={14} />
-                  </div>
+                <div key={i} className="phone-item-new" style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '8px', fontSize: '0.82rem', fontWeight: 600, color: '#444', height: '20px', lineHeight: 1.2 }}>
+                  <div style={{ color: accent, display: 'flex' }}><IconPhone size={14} /></div>
                   <span style={{ fontVariantNumeric: 'tabular-nums', letterSpacing: '0.02em' }}>{num}</span>
                 </div>
               ))}
+              {email && (
+                <div className="phone-item-new" style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '8px', fontSize: '0.82rem', fontWeight: 600, color: '#444', height: '20px', lineHeight: 1.2 }}>
+                  <div style={{ color: accent, display: 'flex' }}><IconMail size={14} /></div>
+                  <span>{email}</span>
+                </div>
+              )}
             </div>
           </div>
         </div>
