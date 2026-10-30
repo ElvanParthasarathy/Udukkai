@@ -428,28 +428,29 @@ export default function CoolieReceiptView({ receipt: receiptProp, onBack, onEdit
             {themeVariant === 'bilingual' ? (
               <CoolieReceiptBilingual receipt={{ ...receipt, _companyProfile: profile }} />
             ) : (
-              <div className={`a4-paper font-tamil${isBilingual ? ' bilingual' : ''}`} style={{ margin: '0 auto', background: 'white', minHeight: '297mm', ...getThemeStyles(profile.themeColor || '#1e3a8a') }}>
-                <div className="top-greeting-row" style={{ paddingLeft: '8px', paddingRight: '8px' }}>
-                  <span className="greeting-left">{(!isBilingual && primaryLang === 'English') ? 'Vaazhga Vaiyagam' : 'வாழ்க வையகம்'}</span>
-                  <span className="greeting-center">உ</span>
-                  <span className="greeting-right">{(!isBilingual && primaryLang === 'English') ? 'Vaazhga Valamudan' : 'வாழ்க வளமுடன்'}</span>
-                </div>
-                <div className="print-header-new" style={{ paddingLeft: '8px', paddingRight: '8px' }}>
+              <div className="receipt-box" style={{ ...getThemeStyles(profile.themeColor || '#1e3a8a') }}>
+                <div className="receipt-content">
+                  <div className="top-greeting-row">
+                    <span className="greeting-left" style={{ color: profile.themeColor || '#1e3a8a' }}>{(!isBilingual && primaryLang === 'English') ? 'Vaazhga Vaiyagam' : 'வாழ்க வையகம்'}</span>
+                    <span className="greeting-center" style={{ color: profile.themeColor || '#1e3a8a' }}>உ</span>
+                    <span className="greeting-right" style={{ color: profile.themeColor || '#1e3a8a' }}>{(!isBilingual && primaryLang === 'English') ? 'Vaazhga Valamudan' : 'வாழ்க வளமுடன்'}</span>
+                  </div>
+                <div className="print-header-new" style={{ borderBottom: '2px solid #e2e8f0', paddingBottom: '1rem', marginBottom: '1.5rem' }}>
                   <div className="header-left">
                     {profile.logo && <img src={profile.logo} alt="Logo" style={{ maxHeight: '80px', maxWidth: '120px', objectFit: 'contain' }} />}
                     <div className="header-company-info">
-                      <div className="company-name font-display">
+                      <div className="company-name font-display" style={{ color: profile.themeColor || '#1e3a8a' }}>
                         {profile?.nameEn || profile?.name || 'Your Business'}
                       </div>
                       {profile?.name && profile?.nameEn && profile.name !== profile.nameEn && (
-                        <div className="company-subtitle font-tamil">
+                        <div className="company-subtitle font-tamil" style={{ color: '#475569' }}>
                           {profile.name}
                         </div>
                       )}
                     </div>
                   </div>
                   <div className="header-right" style={{ textAlign: 'right', display: 'flex', flexDirection: 'column', alignItems: 'flex-end', justifyContent: 'center' }}>
-                    <div className="font-tamil" style={{ color: profile.themeColor || '#1e3a8a', fontSize: '17px', fontWeight: 800, lineHeight: 1.25, letterSpacing: '0.2px' }}>
+                    <div className="bill-type-badge font-tamil" style={{ color: profile.themeColor || '#1e3a8a', fontSize: '17px', fontWeight: 800, lineHeight: 1.25 }}>
                       {(!isBilingual && primaryLang === 'English') ? 'Payment Receipt' : 'பெறுகைச் சான்று'}
                     </div>
                     {isBilingual && (
@@ -459,9 +460,9 @@ export default function CoolieReceiptView({ receipt: receiptProp, onBack, onEdit
                     )}
                   </div>
                 </div>
-              <div className="receipt-row" style={{ paddingLeft: '8px', paddingRight: '8px' }}><span className="receipt-label" style={{ color: profile.themeColor || '#1e3a8a' }}>{renderKey('receiptNoLabel', 'Receipt No:', 'சான்று எண்:')}</span><span className="receipt-value">{receipt.receiptNo}</span></div>
-              <div className="receipt-row" style={{ paddingLeft: '8px', paddingRight: '8px' }}><span className="receipt-label" style={{ color: profile.themeColor || '#1e3a8a' }}>{renderKey('dateLabel', 'Date:', 'நாள்:')}</span><span className="receipt-value">{new Date(receipt.date).toLocaleDateString('en-IN')}</span></div>
-              <div className="receipt-row" style={{ paddingLeft: '8px', paddingRight: '8px' }}>
+              <div className="receipt-row"><span className="receipt-label" style={{ color: profile.themeColor || '#1e3a8a' }}>{renderKey('receiptNoLabel', 'Receipt No:', 'சான்று எண்:')}</span><span className="receipt-value">{receipt.receiptNo}</span></div>
+              <div className="receipt-row"><span className="receipt-label" style={{ color: profile.themeColor || '#1e3a8a' }}>{renderKey('dateLabel', 'Date:', 'நாள்:')}</span><span className="receipt-value">{new Date(receipt.date).toLocaleDateString('en-IN')}</span></div>
+              <div className="receipt-row">
                 <span className="receipt-label" style={{ color: profile.themeColor || '#1e3a8a' }}>{renderKey('receivedFromLabel', 'Received From:', 'இவரிடமிருந்து பெறப்பட்டது:')}</span>
                 <span className="receipt-value">
                   {isBilingual && receipt.clientNameEn && receipt.clientNameEn !== receipt.clientName ? (
@@ -472,10 +473,10 @@ export default function CoolieReceiptView({ receipt: receiptProp, onBack, onEdit
                   ) : (receipt.clientName || receipt.clientNameEn || '-')}
                 </span>
               </div>
-              <div className="receipt-row" style={{ paddingLeft: '8px', paddingRight: '8px' }}><span className="receipt-label" style={{ color: profile.themeColor || '#1e3a8a' }}>{renderKey('paymentModeLabel', 'Payment Mode:', 'கட்டண முறை:')}</span><span className="receipt-value">{renderPaymentMode(receipt.paymentMode)}</span></div>
+              <div className="receipt-row"><span className="receipt-label" style={{ color: profile.themeColor || '#1e3a8a' }}>{renderKey('paymentModeLabel', 'Payment Mode:', 'கட்டண முறை:')}</span><span className="receipt-value">{renderPaymentMode(receipt.paymentMode)}</span></div>
 
-              {receipt.againstInvoice && <div className="receipt-row" style={{ paddingLeft: '8px', paddingRight: '8px' }}><span className="receipt-label" style={{ color: profile.themeColor || '#1e3a8a' }}>{renderKey('againstInvoiceLabel', 'Against Invoice:', 'பட்டியல் எண்:')}</span><span className="receipt-value">{receipt.againstInvoice}</span></div>}
-              <div style={{ marginTop: 'auto', marginBottom: 'auto', paddingLeft: '8px', paddingRight: '8px' }}>
+              {receipt.againstInvoice && <div className="receipt-row"><span className="receipt-label" style={{ color: profile.themeColor || '#1e3a8a' }}>{renderKey('againstInvoiceLabel', 'Against Invoice:', 'பட்டியல் எண்:')}</span><span className="receipt-value">{receipt.againstInvoice}</span></div>}
+              <div style={{ marginTop: 'auto', marginBottom: 'auto' }}>
                 <div className="receipt-amount" style={{ color: profile.themeColor || '#1e3a8a', backgroundColor: profile.themeColor ? `${profile.themeColor}15` : '#f0f9ff' }}>{formatCurrency(receipt.amount, profileCurrency)}</div>
                 <div className="receipt-words" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '3px' }}>
                   {(() => {
@@ -493,7 +494,7 @@ export default function CoolieReceiptView({ receipt: receiptProp, onBack, onEdit
                   })()}
                 </div>
               </div>
-              {receipt.note && <p style={{ fontSize: '0.85rem', color: '#64748b', paddingLeft: '8px', paddingRight: '8px' }}>{renderKey('noteLabel', 'Note:', 'குறிப்பு:')} {receipt.note}</p>}
+              {receipt.note && <p style={{ fontSize: '0.85rem', color: '#64748b' }}>{renderKey('noteLabel', 'Note:', 'குறிப்பு:')} {receipt.note}</p>}
               {/* Footer: Clean stationery layout matching invoice */}
               <div style={{ display: 'flex', flexDirection: 'column', marginTop: 'auto', marginBottom: '16px', paddingLeft: '8px', paddingRight: '8px' }}>
                 {/* Top Row: Business Name & Signature */}
@@ -574,6 +575,7 @@ export default function CoolieReceiptView({ receipt: receiptProp, onBack, onEdit
                 );
               })()}
             </div>
+          </div>
 
           )}
           </div>
