@@ -1,6 +1,13 @@
 package com.elvan.udukkai.ui.screens.onboarding.screens
 
 import androidx.compose.animation.core.*
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
+import com.elvan.udukkai.core.platform.getImeBottomPadding
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -143,10 +150,14 @@ internal fun NeramPage(
     bottom: @Composable () -> Unit,
     content: @Composable ColumnScope.() -> Unit
 ) {
+    val imeBottom = getImeBottomPadding()
+    val isKeyboardOpen = imeBottom > 0.dp
+
     Column(
         modifier = Modifier
             .fillMaxSize()
             .windowInsetsPadding(WindowInsets.safeDrawing)
+            .imePadding()
     ) {
         BoxWithConstraints(
             modifier = Modifier
@@ -167,12 +178,22 @@ internal fun NeramPage(
         }
         NeramElement(
             delayIndex = 3,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp)
-                .padding(bottom = 40.dp)
+            modifier = Modifier.fillMaxWidth()
         ) {
-            bottom()
+            AnimatedVisibility(
+                visible = !isKeyboardOpen,
+                enter = fadeIn(tween(200)) + expandVertically(tween(200)),
+                exit = fadeOut(tween(150)) + shrinkVertically(tween(150))
+            ) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp)
+                        .padding(bottom = 40.dp)
+                ) {
+                    bottom()
+                }
+            }
         }
     }
 }

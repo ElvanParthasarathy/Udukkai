@@ -10,6 +10,12 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.focus.FocusDirection
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -137,27 +143,16 @@ fun GreetingScreen(
         }
     ) {
         NeramElement(delayIndex = 0) {
-            Icon(
-                imageVector = MaterialSymbols.Rounded.Apartment,
-                contentDescription = null,
-                modifier = Modifier.size(56.dp),
-                tint = NeramColors.textPrimary()
-            )
-        }
-
-        Spacer(Modifier.height(14.dp))
-
-        NeramElement(delayIndex = 1) {
             NeramHeader(
                 title = K.enterCompanyDetails.tr(),
                 subtitle = if (needsCoolie) K.usedForCoolieBillsReceipts.tr() else K.forGstInvoice.tr()
             )
         }
 
-        Spacer(Modifier.height(8.dp))
+        Spacer(Modifier.height(16.dp))
 
         // Bilingual Mode Choice Card (Match React bank/bilingual preference)
-        NeramElement(delayIndex = 2, modifier = Modifier.fillMaxWidth()) {
+        NeramElement(delayIndex = 1, modifier = Modifier.fillMaxWidth()) {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -222,27 +217,21 @@ fun GreetingScreen(
             }
         }
 
-        Spacer(Modifier.height(14.dp))
+        Spacer(Modifier.height(16.dp))
 
         // Business Name Field(s)
-        NeramElement(delayIndex = 3, modifier = Modifier.fillMaxWidth()) {
+        NeramElement(delayIndex = 2, modifier = Modifier.fillMaxWidth()) {
             Column(modifier = Modifier.fillMaxWidth()) {
-                val primaryLabel = when {
+                val focusManager = LocalFocusManager.current
+                val keyboardController = LocalSoftwareKeyboardController.current
+
+                val primaryPlaceholder = when {
                     isBilingual && isPrimaryTamil -> if (needsCoolie) "கூலி ஆலை வணிகப் பெயர் (தமிழ்)" else "நிறுவனப் பெயர் (தமிழ்)"
                     isBilingual -> if (needsCoolie) "Coolie Factory Name (English)" else "Company Name (English)"
                     needsCoolie -> if (isPrimaryTamil) "கூலி ஆலை வணிகப் பெயர்" else "Coolie Factory Name"
                     else -> if (isPrimaryTamil) "நிறுவனப் பெயர்" else "Company Name"
                 }
-                Text(
-                    text = primaryLabel,
-                    style = TextStyle(
-                        fontFamily = ElvanSansFontFamily,
-                        fontSize = 13.sp,
-                        fontWeight = FontWeight.Medium,
-                        color = NeramColors.textSecondary()
-                    ),
-                    modifier = Modifier.padding(start = 16.dp, bottom = 6.dp)
-                )
+
                 NeramField(
                     value = primaryName,
                     onValueChange = {
@@ -251,33 +240,42 @@ fun GreetingScreen(
                             secondaryName = NavilMozhimaatri.transliterate(it)
                         }
                     },
-                    placeholder = if (isPrimaryTamil) "பெயரை உள்ளிடுக" else "Enter company name"
+                    placeholder = primaryPlaceholder,
+                    keyboardOptions = KeyboardOptions(
+                        imeAction = if (isBilingual) ImeAction.Next else ImeAction.Done
+                    ),
+                    keyboardActions = KeyboardActions(
+                        onNext = { focusManager.moveFocus(FocusDirection.Down) },
+                        onDone = {
+                            keyboardController?.hide()
+                            focusManager.clearFocus()
+                            save()
+                        }
+                    )
                 )
 
                 if (isBilingual) {
-                    Spacer(Modifier.height(14.dp))
-                    val secondaryLabel = if (isPrimaryTamil) {
+                    Spacer(Modifier.height(16.dp))
+                    val secondaryPlaceholder = if (isPrimaryTamil) {
                         if (needsCoolie) "Coolie Factory Name (English)" else "Company Name (English)"
                     } else {
                         if (needsCoolie) "கூலி ஆலை வணிகப் பெயர் (தமிழ்)" else "நிறுவனப் பெயர் (தமிழ்)"
                     }
-                    Text(
-                        text = secondaryLabel,
-                        style = TextStyle(
-                            fontFamily = ElvanSansFontFamily,
-                            fontSize = 13.sp,
-                            fontWeight = FontWeight.Medium,
-                            color = NeramColors.textSecondary()
-                        ),
-                        modifier = Modifier.padding(start = 16.dp, bottom = 6.dp)
-                    )
                     NeramField(
                         value = secondaryName,
                         onValueChange = {
                             hasUserEditedSecondary = true
                             secondaryName = it
                         },
-                        placeholder = if (isPrimaryTamil) "Enter name in English" else "பெயரை உள்ளிடுக"
+                        placeholder = secondaryPlaceholder,
+                        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                        keyboardActions = KeyboardActions(
+                            onDone = {
+                                keyboardController?.hide()
+                                focusManager.clearFocus()
+                                save()
+                            }
+                        )
                     )
                 }
             }
