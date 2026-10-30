@@ -236,7 +236,7 @@ export default function CoolieReceiptBilingual({ receipt }) {
         )}
 
         {/* Footer: Clean stationery layout matching invoice */}
-        <div style={{ display: 'flex', flexDirection: 'column', marginTop: 'auto', marginBottom: '16px', paddingLeft: '8px', paddingRight: '8px' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', marginTop: 'auto', marginBottom: '16px', paddingLeft: 0, paddingRight: 0 }}>
           {/* Top Row: Business Name & Signature */}
           <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'flex-start', width: '100%' }}>
             <div style={{ textAlign: 'right', display: 'flex', flexDirection: 'column', alignItems: 'flex-end', minWidth: '220px' }}>
@@ -262,7 +262,7 @@ export default function CoolieReceiptBilingual({ receipt }) {
         </div>
 
         {/* Contact Section: 1:1 match with invoice */}
-        <div className="contact-section">
+        <div className="contact-section" style={{ padding: '24px 12mm' }}>
           <div className="contact-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', width: '100%' }}>
             {/* Left Column: Title + Address Lines */}
             <div className="contact-left" style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
