@@ -10,7 +10,7 @@ import { thagaval } from '../Thagaval';
 import { useLanguage } from '../../mozhi/LanguageContext';
 import { formatCurrency, INVOICE_TYPES, getDynamicField, numberToWords, getPrintHeadContent } from '../../Payanpadu';
 import { getInvoiceDisplayOptions } from '../../Avanam';
-import { Box, Paper } from '@mui/material';
+import { Box, Paper, Button } from '@mui/material';
 import { usePinchZoom } from '../../hooks/usePinchZoom';
 import { useTheme } from '@mui/material/styles';
 import useMediaQuery from '@mui/material/useMediaQuery';
@@ -22,6 +22,7 @@ export default function InvoiceView({ bill, profile, onBack, onEdit, onDuplicate
   const printRef = useRef(null);
   const [saving, setSaving] = useState(false);
   const [displayOptions, setDisplayOptions] = useState<any>({});
+  const [themeVariant, setThemeVariant] = useState<string>(() => localStorage.getItem('gst_invoice_theme') || profile?.invoiceTheme || 'sjs');
   
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
@@ -284,6 +285,28 @@ export default function InvoiceView({ bill, profile, onBack, onEdit, onDuplicate
         onBack={onBack}
       />
 
+      {/* Theme / Template Shifter */}
+      <Box className="no-print" sx={{ display: 'flex', justifyContent: 'center', mb: 2 }}>
+        <Paper elevation={2} sx={{ p: 0.5, borderRadius: '999px', bgcolor: 'background.paper', display: 'flex', gap: 0.5, border: '1px solid', borderColor: 'divider' }}>
+          <Button 
+            size="small"
+            onClick={() => { setThemeVariant('sjs'); localStorage.setItem('gst_invoice_theme', 'sjs'); }}
+            variant={themeVariant === 'sjs' ? 'contained' : 'text'}
+            sx={{ borderRadius: '999px', textTransform: 'none', fontWeight: 700, fontSize: '12px', px: 2 }}
+          >
+            ✨ SJS Theme (KMP)
+          </Button>
+          <Button 
+            size="small"
+            onClick={() => { setThemeVariant('classic'); localStorage.setItem('gst_invoice_theme', 'classic'); }}
+            variant={themeVariant === 'classic' ? 'contained' : 'text'}
+            sx={{ borderRadius: '999px', textTransform: 'none', fontWeight: 600, fontSize: '12px', px: 2 }}
+          >
+            📜 Classic GST
+          </Button>
+        </Paper>
+      </Box>
+
       {/* Centered Preview Container */}
       <Box className="print-wrapper" sx={{ flexGrow: 1, display: 'flex', justifyContent: 'center', alignItems: 'flex-start', overflowX: 'hidden', pb: 4, width: '100%' }}>
         {isMobile ? (
@@ -299,7 +322,7 @@ export default function InvoiceView({ bill, profile, onBack, onEdit, onDuplicate
                             }}>
                 {(() => {
                   const mergedOptions = { ...displayOptions, ...invoiceOptions };
-                  return profile?.invoiceTheme === 'sjs' ? (
+                  return themeVariant === 'sjs' ? (
                     <SjsTheme ref={printRef} profile={profile} client={client} details={details}
                       items={items} totals={totals} invoiceType={invoiceType} customTerms={customTerms}
                       options={mergedOptions} />
@@ -324,7 +347,7 @@ export default function InvoiceView({ bill, profile, onBack, onEdit, onDuplicate
           }}>
             {(() => {
               const mergedOptions = { ...displayOptions, ...invoiceOptions };
-              return profile?.invoiceTheme === 'sjs' ? (
+              return themeVariant === 'sjs' ? (
                 <SjsTheme ref={printRef} profile={profile} client={client} details={details}
                   items={items} totals={totals} invoiceType={invoiceType} customTerms={customTerms}
                   options={mergedOptions} />

@@ -49,7 +49,6 @@ import Thagaval from './pagudhigal/Thagaval';
 import Pakkapatti from './pagudhigal/Pakkapatti';
 import { useLanguage } from './mozhi/LanguageContext';
 import { Material3Switch } from './pagudhigal/Amaippugal/Material3Switch';
-import TemplateStudio from './TemplateStudio';
 
 
 function ResponsiveDialog({ open, onClose, children, maxWidth = 'sm' }: any) {
@@ -1093,15 +1092,6 @@ function Seyali() {
     }
   }, [firebaseAuthLoading, isProfileLoading]);
 
-  if (location.pathname === '/preview' || location.search.includes('view=preview')) {
-    return (
-      <ThemeProvider theme={muiTheme}>
-        <CssBaseline />
-        <TemplateStudio />
-      </ThemeProvider>
-    );
-  }
-
   if (firebaseAuthLoading || isProfileLoading) {
     return (
       <ThemeProvider theme={muiTheme}>
@@ -2038,19 +2028,6 @@ function Seyali() {
             </Box>
 
             <Stack spacing={3}>
-              <Box>
-                <Button 
-                  fullWidth 
-                  variant="contained" 
-                  onClick={() => { setDevPanelAnchorEl(null); navigate('/preview'); }}
-                  sx={{ textTransform: 'none', fontWeight: 700, bgcolor: '#6366f1', '&:hover': { bgcolor: '#4f46e5' } }}
-                >
-                  🎨 Open Template Studio
-                </Button>
-              </Box>
-
-              <Divider sx={{ borderColor: 'rgba(255,255,255,0.1)' }} />
-
               <Box>
                 <Typography sx={{ fontSize: '12px', fontWeight: 600, color: '#aaa', mb: 1, textTransform: 'uppercase' }}>
                   UI Language

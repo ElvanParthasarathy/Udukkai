@@ -12,6 +12,7 @@ import NativeDocument from '../NativeDocument';
 import { Capacitor } from '@capacitor/core';
 import { useLanguage } from '../../mozhi/LanguageContext';
 import './print.css'; // The exact print.css copied from Kananam
+import CoolieInvoiceBilingual from './CoolieInvoiceBilingual';
 import { getAllCoolieProfiles } from '../../Avanam';
 import { getPrintHeadContent } from '../../Payanpadu';
 import numberToWordsTamil from '../../mozhi/tamilNumbers';
@@ -82,6 +83,7 @@ export default function CoolieInvoiceView({ bill, onClose, onEdit }) {
     const [isLoadingProfile, setIsLoadingProfile] = useState(!bill._companyProfile);
     const [printLang, setPrintLang] = useState('ta');
     const [saving, setSaving] = useState(false);
+    const [themeVariant, setThemeVariant] = useState(() => localStorage.getItem('coolie_invoice_theme') || 'bilingual');
 
     const { wrapperRef, contentRef, scale } = usePinchZoom({ minScale: 1, maxScale: 4 });
 
@@ -418,6 +420,28 @@ export default function CoolieInvoiceView({ bill, onClose, onEdit }) {
                 onBack={onClose}
             />
 
+            {/* Theme / Template Shifter */}
+            <Box className="no-print" sx={{ display: 'flex', justifyContent: 'center', mb: 2 }}>
+              <Paper elevation={2} sx={{ p: 0.5, borderRadius: '999px', bgcolor: 'background.paper', display: 'flex', gap: 0.5, border: '1px solid', borderColor: 'divider' }}>
+                <Button 
+                  size="small"
+                  onClick={() => { setThemeVariant('bilingual'); localStorage.setItem('coolie_invoice_theme', 'bilingual'); }}
+                  variant={themeVariant === 'bilingual' ? 'contained' : 'text'}
+                  sx={{ borderRadius: '999px', textTransform: 'none', fontWeight: 700, fontSize: '12px', px: 2 }}
+                >
+                  ✨ Bilingual Template (KMP)
+                </Button>
+                <Button 
+                  size="small"
+                  onClick={() => { setThemeVariant('classic'); localStorage.setItem('coolie_invoice_theme', 'classic'); }}
+                  variant={themeVariant === 'classic' ? 'contained' : 'text'}
+                  sx={{ borderRadius: '999px', textTransform: 'none', fontWeight: 600, fontSize: '12px', px: 2 }}
+                >
+                  📜 Classic Coolie
+                </Button>
+              </Paper>
+            </Box>
+
             {/* Centered Preview Container */}
             <Box className="print-wrapper" sx={{ flexGrow: 1, display: 'flex', justifyContent: 'center', alignItems: 'flex-start', overflowX: 'hidden', pb: 4, width: '100%' }}>
         <div ref={isMobile ? wrapperRef : null} style={isMobile ? { width: "100%", overflow: "hidden", touchAction: "none", display: "flex", justifyContent: "center", padding: "0 16px", boxSizing: "border-box" } : { width: '100%', display: 'flex', justifyContent: 'center' }}>
@@ -448,6 +472,11 @@ export default function CoolieInvoiceView({ bill, onClose, onEdit }) {
                 borderRadius: '0 !important'
               }
             }}>
+                {themeVariant === 'bilingual' ? (
+                  <div ref={printRef} style={{ background: 'white' }}>
+                    <CoolieInvoiceBilingual bill={{ ...bill, _companyProfile: p }} />
+                  </div>
+                ) : (
                     <div ref={printRef} className="a4-paper font-tamil" style={{ margin: '0 auto', background: 'white', ...themeStyles }}>
                 
                 {/* Top Greeting Row */}
@@ -644,6 +673,7 @@ export default function CoolieInvoiceView({ bill, onClose, onEdit }) {
                 </div>
 
                     </div>
+                )}
             </Paper>
           </div>
         </div>
