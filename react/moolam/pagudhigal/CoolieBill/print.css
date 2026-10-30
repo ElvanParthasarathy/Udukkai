@@ -435,15 +435,17 @@
 
 /* ========== CONTACT SECTION ========== */
 .contact-section {
+    box-sizing: border-box;
+    width: calc(100% + 24mm);
     margin-top: 20px;
     margin-left: -12mm;
     margin-right: -12mm;
     margin-bottom: -8mm;
-    padding: 15px 12mm;
+    padding: 12px calc(12mm + 8px) 14px calc(12mm + 8px);
     background: var(--bill-primary-light);
-    border-radius: 0;
+    border-bottom-left-radius: 8px;
+    border-bottom-right-radius: 8px;
     border: none;
-    width: calc(100% + 24mm);
 }
 
 .contact-title {
@@ -486,17 +488,18 @@
 .contact-phones {
     display: flex;
     flex-direction: column;
+    align-items: flex-end;
     gap: 4px;
 }
 
 .phone-item-new {
     display: flex;
     align-items: center;
+    justify-content: flex-end;
     gap: 8px;
     font-size: 13px;
     font-weight: 600;
     color: #444;
-    font-family: var(--font-numbers);
 }
 
 .phone-item-new svg {
