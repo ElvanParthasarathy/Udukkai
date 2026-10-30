@@ -39,7 +39,8 @@ import com.elvan.udukkai.core.auth.AuthManager
 import com.elvan.udukkai.core.platform.AppBackHandler
 import com.elvan.udukkai.core.sync.getFirebaseSyncManager
 import androidx.compose.ui.Alignment
-import com.elvan.udukkai.ui.components.ExpressiveDotsLoader
+import com.elvan.udukkai.theme.rememberShellColors
+import com.elvan.udukkai.ui.components.ExpressiveContainedLoader
 import com.elvan.udukkai.ui.screens.onboarding.screens.NeramColors
 import com.elvan.udukkai.ui.screens.onboarding.screens.LanguageSelectScreen
 import com.elvan.udukkai.ui.screens.onboarding.components.AuthBackdrop
@@ -147,9 +148,11 @@ fun OnboardingGate(
             GateStage.LOADING -> Box(Modifier.fillMaxSize()) {
                 AuthBackdrop()
                 Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    ExpressiveDotsLoader(
-                        modifier = Modifier.size(40.dp),
-                        color = NeramColors.textPrimary()
+                    val colors = rememberShellColors()
+                    ExpressiveContainedLoader(
+                        modifier = Modifier.size(48.dp),
+                        containerColor = colors.surface,
+                        indicatorColor = colors.textSecondary
                     )
                 }
             }
