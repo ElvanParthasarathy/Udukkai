@@ -209,16 +209,16 @@ export default function CoolieInvoiceBilingual({ bill }) {
             <tfoot>
               {/* Row 1: Grand Total Row matching columns */}
               <tr className="total-footer-row" style={{ background: 'var(--bill-primary-light, #f8fafc)', borderTop: '1px solid #ddd' }}>
-                <td colSpan={2} style={{ textAlign: 'right', paddingRight: '20px', borderBottom: '1px solid #ddd' }}>
-                  <div style={{ display: 'inline-flex', flexDirection: 'column', alignItems: 'flex-end', gap: '1px' }}>
-                    <span style={{ fontSize: '1rem', fontWeight: 800, color: accent, lineHeight: 1.1 }}>{lbl('மொத்தம்', 'Total')}</span>
-                    {bi && <span style={{ fontSize: '0.65rem', fontWeight: 600, color: accent, opacity: 0.85 }}>{primaryEng ? 'மொத்தம்' : 'Grand Total'}</span>}
+                <td colSpan={2} style={{ textAlign: 'right', paddingRight: '20px', borderBottom: '1px solid #ddd', verticalAlign: 'middle' }}>
+                  <div style={{ display: 'inline-flex', flexDirection: 'column', alignItems: 'flex-end', gap: '4px' }}>
+                    <span style={{ fontSize: '13.5px', fontWeight: 700, color: accent, lineHeight: 1.25 }}>{lbl('மொத்தம்', 'Total')}</span>
+                    {bi && <span style={{ fontSize: '10.5px', fontWeight: 500, color: accent, opacity: 0.85, lineHeight: 1.2 }}>{primaryEng ? 'மொத்தம்' : 'Total'}</span>}
                   </div>
                 </td>
-                <td className="text-center" style={{ fontWeight: 800, fontSize: '14px', color: '#1e293b', fontVariantNumeric: 'tabular-nums', borderBottom: '1px solid #ddd' }}>
+                <td className="text-center" style={{ fontWeight: 700, fontSize: '13.5px', color: '#1e293b', fontVariantNumeric: 'tabular-nums', borderBottom: '1px solid #ddd', verticalAlign: 'middle' }}>
                   {formatWeight(totalKg)} Kg
                 </td>
-                <td className="text-right" style={{ textAlign: 'right', paddingRight: '16px', fontWeight: 800, fontSize: '15px', color: accent, fontVariantNumeric: 'tabular-nums', borderBottom: '1px solid #ddd' }}>
+                <td className="text-right" style={{ textAlign: 'right', paddingRight: '16px', fontWeight: 700, fontSize: '14.5px', color: accent, fontVariantNumeric: 'tabular-nums', borderBottom: '1px solid #ddd', verticalAlign: 'middle' }}>
                   ₹{formatCurrency(totalRs)}
                 </td>
               </tr>
@@ -238,8 +238,8 @@ export default function CoolieInvoiceBilingual({ bill }) {
                       )}
                     </div>
                     <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', whiteSpace: 'nowrap' }}>
-                      <div style={{ display: 'inline-flex', flexDirection: 'column', alignItems: 'flex-end', gap: '1px' }}>
-                        <span style={{ fontSize: '11.5px', fontWeight: 600, color: '#64748b', lineHeight: 1.1 }}>
+                      <div style={{ display: 'inline-flex', flexDirection: 'column', alignItems: 'flex-end', gap: '3px' }}>
+                        <span style={{ fontSize: '11.5px', fontWeight: 600, color: '#64748b', lineHeight: 1.25 }}>
                           {lbl('மொத்த உருப்படிகள்', 'Total Items')}
                         </span>
                         {bi && (
