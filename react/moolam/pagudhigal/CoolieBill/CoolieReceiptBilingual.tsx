@@ -129,111 +129,110 @@ export default function CoolieReceiptBilingual({ receipt }) {
   const phone = profile?.phone ? (Array.isArray(profile.phone) ? profile.phone : String(profile.phone).split(',')) : [];
 
   return (
-    <div className="receipt-box" style={{ ...getThemeStyles(accent) }}>
-      <div className="receipt-content">
-        {/* Top Greeting Row */}
-        <div className="top-greeting-row">
-          <span className="greeting-left" style={{ color: accent }}>{(!isBilingual && primaryLang === 'English') ? 'Vaazhga Vaiyagam' : 'வாழ்க வையகம்'}</span>
-          <span className="greeting-center" style={{ color: accent }}>உ</span>
-          <span className="greeting-right" style={{ color: accent }}>{(!isBilingual && primaryLang === 'English') ? 'Vaazhga Valamudan' : 'வாழ்க வளமுடன்'}</span>
-        </div>
+    <div className={`a4-paper font-tamil${isBilingual ? ' bilingual' : ''}`} style={{ margin: '0 auto', background: 'white', minHeight: '297mm', ...getThemeStyles(accent) }}>
+      {/* Top Greeting Row */}
+      <div className="top-greeting-row" style={{ paddingLeft: '8px', paddingRight: '8px' }}>
+        <span className="greeting-left">{(!isBilingual && primaryLang === 'English') ? 'Vaazhga Vaiyagam' : 'வாழ்க வையகம்'}</span>
+        <span className="greeting-center">உ</span>
+        <span className="greeting-right">{(!isBilingual && primaryLang === 'English') ? 'Vaazhga Valamudan' : 'வாழ்க வளமுடன்'}</span>
+      </div>
 
-        {/* Header matching Silk layout */}
-        <div className="print-header-new" style={{ borderBottom: '2px solid #e2e8f0', paddingBottom: '1rem', marginBottom: '1.5rem' }}>
-          <div className="header-left">
-            {profile.logo && <img src={profile.logo} alt="Logo" style={{ maxHeight: '80px', maxWidth: '120px', objectFit: 'contain' }} />}
-            <div className="header-company-info">
-              <div className="company-name font-display" style={{ color: accent }}>
-                {profile?.nameEn || profile?.name || 'Your Business'}
-              </div>
-              {profile?.name && profile?.nameEn && profile.name !== profile.nameEn && (
-                <div className="company-subtitle font-tamil" style={{ color: '#475569' }}>
-                  {profile.name}
-                </div>
-              )}
+      {/* Header matching Invoice layout 1:1 */}
+      <div className="print-header-new" style={{ paddingLeft: '8px', paddingRight: '8px' }}>
+        <div className="header-left">
+          {profile.logo && <img src={profile.logo} alt="Logo" style={{ maxHeight: '80px', maxWidth: '120px', objectFit: 'contain' }} />}
+          <div className="header-company-info">
+            <div className="company-name font-display">
+              {profile?.nameEn || profile?.name || 'Your Business'}
             </div>
-          </div>
-          <div className="header-right" style={{ textAlign: 'right', display: 'flex', flexDirection: 'column', alignItems: 'flex-end', justifyContent: 'center' }}>
-            <div className="font-tamil" style={{ color: accent, fontSize: '17px', fontWeight: 800, lineHeight: 1.25 }}>
-              {getLangStr(primaryLang, 'hc_paymentReceipt', 'Payment Receipt', 'பெறுகைச் சான்று')}
-            </div>
-            {isBilingual && getLangStr(primaryLang, 'hc_paymentReceipt', 'Payment Receipt', 'பெறுகைச் சான்று') !== getLangStr(secondaryLang, 'hc_paymentReceipt', 'Payment Receipt', 'பெறுகைச் சான்று') && (
-              <div style={{ fontSize: '11px', fontWeight: 500, color: accent, opacity: 0.85, marginTop: '3px', lineHeight: 1 }}>
-                {getLangStr(secondaryLang, 'hc_paymentReceipt', 'Payment Receipt', 'பெறுகைச் சான்று')}
+            {profile?.name && profile?.nameEn && profile.name !== profile.nameEn && (
+              <div className="company-subtitle font-tamil">
+                {profile.name}
               </div>
             )}
           </div>
         </div>
-
-        {/* Stacked Receipt Rows - 1:1 with Silk Layout */}
-        <div className="receipt-row">
-          <span className="receipt-label" style={{ color: accent }}>{renderKey('receiptNoLabel', 'Receipt No:', 'சான்று எண்:')}</span>
-          <span className="receipt-value">{receipt.receiptNo}</span>
-        </div>
-
-        <div className="receipt-row">
-          <span className="receipt-label" style={{ color: accent }}>{renderKey('dateLabel', 'Date:', 'நாள்:')}</span>
-          <span className="receipt-value">{formatDate(receipt.date)}</span>
-        </div>
-
-        <div className="receipt-row">
-          <span className="receipt-label" style={{ color: accent }}>{renderKey('receivedFromLabel', 'Received From:', 'இவரிடமிருந்து பெறப்பட்டது:')}</span>
-          <span className="receipt-value">
-            {isBilingual && receipt.clientNameEn && receipt.clientNameEn !== receipt.clientName ? (
-              <div style={{ display: 'inline-flex', flexDirection: 'column', alignItems: 'flex-end' }}>
-                <span>{receipt.clientName}</span>
-                <span style={{ fontSize: '0.65em', fontWeight: 500, opacity: 0.85, letterSpacing: '0.02em', marginTop: '-1px' }}>{receipt.clientNameEn}</span>
-              </div>
-            ) : (receipt.clientName || receipt.clientNameEn || '-')}
-          </span>
-        </div>
-
-        <div className="receipt-row">
-          <span className="receipt-label" style={{ color: accent }}>{renderKey('paymentModeLabel', 'Payment Mode:', 'கட்டண முறை:')}</span>
-          <span className="receipt-value">{renderPaymentMode(receipt.paymentMode)}</span>
-        </div>
-
-        {receipt.againstInvoice && (
-          <div className="receipt-row">
-            <span className="receipt-label" style={{ color: accent }}>{renderKey('againstInvoiceLabel', 'Against Invoice:', 'பட்டியல் எண்:')}</span>
-            <span className="receipt-value">{receipt.againstInvoice}</span>
+        <div className="header-right" style={{ textAlign: 'right', display: 'flex', flexDirection: 'column', alignItems: 'flex-end', justifyContent: 'center' }}>
+          <div className="font-tamil" style={{ fontSize: '17px', fontWeight: 800, color: accent, lineHeight: 1.25, letterSpacing: '0.2px' }}>
+            {(!isBilingual && primaryLang === 'English') ? 'Payment Receipt' : 'பெறுகைச் சான்று'}
           </div>
-        )}
-
-        {receipt.referenceNo && (
-          <div className="receipt-row">
-            <span className="receipt-label" style={{ color: accent }}>{renderKey('referenceNoLabel', 'Reference No:', 'குறிப்பு எண்:')}</span>
-            <span className="receipt-value">{receipt.referenceNo}</span>
-          </div>
-        )}
-
-        {/* Center Amount and Words */}
-        <div style={{ marginTop: 'auto', marginBottom: 'auto' }}>
-          <div className="receipt-amount" style={{ color: accent, backgroundColor: profile.themeColor ? `${profile.themeColor}15` : '#f0f9ff' }}>
-            {formatCurrency(receipt.amount, profileCurrency)}
-          </div>
-          <div className="receipt-words" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '3px' }}>
-            {(() => {
-              const words = numberToWords(receipt.amount, primaryLang, secondaryLang, isBilingual);
-              if (words.includes(' / ')) {
-                const [pStr, sStr] = words.split(' / ');
-                return (
-                  <>
-                    <span style={{ fontWeight: 700, color: '#0f172a' }}>{pStr}</span>
-                    <span style={{ fontSize: '0.85em', fontWeight: 500, color: '#64748b', opacity: 0.85 }}>{sStr}</span>
-                  </>
-                );
-              }
-              return <span style={{ fontWeight: 600 }}>{words}</span>;
-            })()}
-          </div>
+          {isBilingual && (
+            <div style={{ fontSize: '11px', fontWeight: 500, color: accent, opacity: 0.85, marginTop: '3px', lineHeight: 1 }}>
+              Payment Receipt
+            </div>
+          )}
         </div>
+      </div>
 
-        {receipt.note && (
-          <p style={{ fontSize: '0.85rem', color: '#64748b' }}>
-            {renderKey('noteLabel', 'Note:', 'குறிப்பு:')} {receipt.note}
-          </p>
-        )}
+      {/* Stacked Receipt Rows - 1:1 with Silk Layout */}
+      <div className="receipt-row" style={{ paddingLeft: '8px', paddingRight: '8px' }}>
+        <span className="receipt-label" style={{ color: accent }}>{renderKey('receiptNoLabel', 'Receipt No:', 'சான்று எண்:')}</span>
+        <span className="receipt-value">{receipt.receiptNo}</span>
+      </div>
+
+      <div className="receipt-row" style={{ paddingLeft: '8px', paddingRight: '8px' }}>
+        <span className="receipt-label" style={{ color: accent }}>{renderKey('dateLabel', 'Date:', 'நாள்:')}</span>
+        <span className="receipt-value">{formatDate(receipt.date)}</span>
+      </div>
+
+      <div className="receipt-row" style={{ paddingLeft: '8px', paddingRight: '8px' }}>
+        <span className="receipt-label" style={{ color: accent }}>{renderKey('receivedFromLabel', 'Received From:', 'இவரிடமிருந்து பெறப்பட்டது:')}</span>
+        <span className="receipt-value">
+          {isBilingual && receipt.clientNameEn && receipt.clientNameEn !== receipt.clientName ? (
+            <div style={{ display: 'inline-flex', flexDirection: 'column', alignItems: 'flex-end' }}>
+              <span>{receipt.clientName}</span>
+              <span style={{ fontSize: '0.65em', fontWeight: 500, opacity: 0.85, letterSpacing: '0.02em', marginTop: '-1px' }}>{receipt.clientNameEn}</span>
+            </div>
+          ) : (receipt.clientName || receipt.clientNameEn || '-')}
+        </span>
+      </div>
+
+      <div className="receipt-row" style={{ paddingLeft: '8px', paddingRight: '8px' }}>
+        <span className="receipt-label" style={{ color: accent }}>{renderKey('paymentModeLabel', 'Payment Mode:', 'கட்டண முறை:')}</span>
+        <span className="receipt-value">{renderPaymentMode(receipt.paymentMode)}</span>
+      </div>
+
+      {receipt.againstInvoice && (
+        <div className="receipt-row" style={{ paddingLeft: '8px', paddingRight: '8px' }}>
+          <span className="receipt-label" style={{ color: accent }}>{renderKey('againstInvoiceLabel', 'Against Invoice:', 'பட்டியல் எண்:')}</span>
+          <span className="receipt-value">{receipt.againstInvoice}</span>
+        </div>
+      )}
+
+      {receipt.referenceNo && (
+        <div className="receipt-row" style={{ paddingLeft: '8px', paddingRight: '8px' }}>
+          <span className="receipt-label" style={{ color: accent }}>{renderKey('referenceNoLabel', 'Reference No:', 'குறிப்பு எண்:')}</span>
+          <span className="receipt-value">{receipt.referenceNo}</span>
+        </div>
+      )}
+
+      {/* Center Amount and Words */}
+      <div style={{ marginTop: 'auto', marginBottom: 'auto', paddingLeft: '8px', paddingRight: '8px' }}>
+        <div className="receipt-amount" style={{ color: accent, backgroundColor: profile.themeColor ? `${profile.themeColor}15` : '#f0f9ff' }}>
+          {formatCurrency(receipt.amount, profileCurrency)}
+        </div>
+        <div className="receipt-words" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '3px' }}>
+          {(() => {
+            const words = numberToWords(receipt.amount, primaryLang, secondaryLang, isBilingual);
+            if (words.includes(' / ')) {
+              const [pStr, sStr] = words.split(' / ');
+              return (
+                <>
+                  <span style={{ fontWeight: 700, color: '#0f172a' }}>{pStr}</span>
+                  <span style={{ fontSize: '0.85em', fontWeight: 500, color: '#64748b', opacity: 0.85 }}>{sStr}</span>
+                </>
+              );
+            }
+            return <span style={{ fontWeight: 600 }}>{words}</span>;
+          })()}
+        </div>
+      </div>
+
+      {receipt.note && (
+        <p style={{ fontSize: '0.85rem', color: '#64748b', paddingLeft: '8px', paddingRight: '8px' }}>
+          {renderKey('noteLabel', 'Note:', 'குறிப்பு:')} {receipt.note}
+        </p>
+      )}
 
         {/* Footer: Clean stationery layout matching invoice */}
         <div style={{ display: 'flex', flexDirection: 'column', marginTop: 'auto', marginBottom: '16px', paddingLeft: '8px', paddingRight: '8px' }}>
@@ -300,7 +299,6 @@ export default function CoolieReceiptBilingual({ receipt }) {
             </div>
           </div>
         </div>
-      </div>
     </div>
   );
 }
