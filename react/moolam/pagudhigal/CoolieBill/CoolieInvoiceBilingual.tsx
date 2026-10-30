@@ -263,73 +263,61 @@ export default function CoolieInvoiceBilingual({ bill }) {
 
       <div style={{ flexGrow: 1 }}></div>
 
-      {/* Footer: Option 1 Two-Card Layout (Bank & Settlement on left, Authorized Signatory on right) */}
-      <div style={{ display: 'flex', gap: '16px', alignItems: 'stretch', marginTop: 'auto', marginBottom: '15px' }}>
-        {/* Left Card: Bank Details & Nandri */}
-        <div style={{ flex: 1, background: '#fff', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '12px 14px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-          <div>
-            <div style={{ fontSize: '11px', fontWeight: 700, color: accent, textTransform: 'uppercase', letterSpacing: '0.4px', marginBottom: '8px' }}>
-              {slash('வங்கி விவரம்', 'Bank Details')}
-            </div>
-            {((showBankDetails && (bankDetails || accountNo)) || (showIfsc && ifsc)) ? (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', fontSize: '12px' }}>
+      {/* Footer: Clean open stationery layout (Bank & Signature aligned, with baseline Nandri & Signatory) */}
+      <div style={{ display: 'flex', flexDirection: 'column', marginTop: 'auto', marginBottom: '16px', paddingLeft: '8px', paddingRight: '8px' }}>
+        {/* Top Row: Bank Details on Left, Signature on Right */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', width: '100%' }}>
+          {/* Left: Bank Details */}
+          <div style={{ display: 'flex', flexDirection: 'column', paddingTop: '2px' }}>
+            {((showBankDetails && (bankDetails || accountNo)) || (showIfsc && ifsc)) && (
+              <div style={{ color: '#475569', fontSize: '0.85rem', lineHeight: '1.45', display: 'flex', flexDirection: 'column', gap: '4px' }}>
                 {showBankDetails && (
                   <div style={{ display: 'flex', gap: '6px' }}>
-                    <span style={{ color: '#64748b', fontWeight: 600, minWidth: '75px' }}>{lbl('வங்கி', 'Bank')}:</span>
-                    <span style={{ color: '#1e293b', fontWeight: 700 }}>
+                    <div style={{ fontWeight: 700, whiteSpace: 'nowrap', fontSize: '0.82rem', color: accent }}>{lbl('வங்கி விவரம்', 'Bank Details')} :</div>
+                    <div style={{ color: '#334155', fontWeight: 600 }}>
                       {useEn && p.bankNameEn ? `${p.bankNameEn}${p.branchEn ? ', ' + p.branchEn : ''}` : bankDetails}
-                    </span>
+                    </div>
                   </div>
                 )}
                 {showBankDetails && accountNo && (
                   <div style={{ display: 'flex', gap: '6px' }}>
-                    <span style={{ color: '#64748b', fontWeight: 600, minWidth: '75px' }}>{lbl('கணக்கு எண்', 'A/C No')}:</span>
-                    <span style={{ color: '#1e293b', fontWeight: 700, fontVariantNumeric: 'tabular-nums' }}>{accountNo}</span>
+                    <div style={{ fontWeight: 700, whiteSpace: 'nowrap', fontSize: '0.82rem', color: accent }}>{lbl('கணக்கு எண்', 'Account No')} :</div>
+                    <div style={{ color: '#334155', fontWeight: 600, fontVariantNumeric: 'tabular-nums' }}>{accountNo}</div>
                   </div>
                 )}
                 {showIfsc && ifsc && (
                   <div style={{ display: 'flex', gap: '6px' }}>
-                    <span style={{ color: '#64748b', fontWeight: 600, minWidth: '75px' }}>IFSC:</span>
-                    <span style={{ color: '#1e293b', fontWeight: 700, fontVariantNumeric: 'tabular-nums' }}>{ifsc}</span>
+                    <div style={{ fontWeight: 700, whiteSpace: 'nowrap', fontSize: '0.82rem', color: accent }}>IFSC :</div>
+                    <div style={{ color: '#334155', fontWeight: 600, fontVariantNumeric: 'tabular-nums' }}>{ifsc}</div>
                   </div>
                 )}
               </div>
-            ) : (
-              <div style={{ fontSize: '12px', color: '#94a3b8', fontStyle: 'italic' }}>
-                {lbl('வங்கி விவரங்கள் குறிப்பிடப்படவில்லை', 'No bank details specified')}
-              </div>
             )}
           </div>
 
-          <div style={{ marginTop: '10px', paddingTop: '8px', borderTop: '1px solid #f1f5f9', display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <span style={{ fontSize: '12px', fontWeight: 700, color: accent }}>{lbl('நன்றி', 'Thank You')}</span>
-            {bi && <span style={{ fontSize: '10.5px', fontWeight: 500, color: '#64748b' }}>• {primaryEng ? 'நன்றி' : 'Thank You'}</span>}
+          {/* Right: Business Name & Signature space */}
+          <div style={{ textAlign: 'right', display: 'flex', flexDirection: 'column', alignItems: 'flex-end', minWidth: '220px' }}>
+            <div style={{ color: accent, position: 'relative', zIndex: 10, fontSize: '1.05rem', fontWeight: 700, marginBottom: '5px', lineHeight: 1.2 }}>
+              {name.english || name.tamil}
+            </div>
+            <div style={{ position: 'relative', height: '55px', width: '100%', display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
+              {p.signature && (
+                <img src={p.signature} alt="Signature" style={{ position: 'absolute', top: '50%', transform: 'translateY(-50%)', right: '-10px', maxHeight: '95px', maxWidth: '200px', objectFit: 'contain', pointerEvents: 'none' }} />
+              )}
+            </div>
           </div>
         </div>
 
-        {/* Right Card: Authorized Signatory */}
-        <div style={{ width: '250px', background: '#fff', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '12px 14px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-          <div>
-            <div style={{ fontSize: '11px', fontWeight: 600, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.4px', textAlign: 'center', marginBottom: '2px' }}>
-              {bi ? 'நிறுவனம் / For' : (isEng ? 'For' : 'நிறுவனம்')}
-            </div>
-            <div style={{ fontSize: '13px', fontWeight: 700, color: accent, textAlign: 'center', lineHeight: 1.2 }}>
-              {name.english || name.tamil}
-            </div>
+        {/* Bottom Row: Nandri & Signatory Text perfectly baseline aligned */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', width: '100%', paddingTop: '12px' }}>
+          <div style={{ fontSize: '0.85rem', fontWeight: 700, color: accent, lineHeight: 1 }}>
+            {lbl('நன்றி', 'Thank You')}
+            {bi && <span style={{ opacity: 0.8, fontSize: '0.75rem', fontWeight: 500, marginLeft: '6px' }}>• {primaryEng ? 'நன்றி' : 'Thank You'}</span>}
           </div>
-
-          <div style={{ position: 'relative', height: '55px', width: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center', margin: '4px 0' }}>
-            {p.signature ? (
-              <img src={p.signature} alt="Signature" style={{ maxHeight: '55px', maxWidth: '180px', objectFit: 'contain', pointerEvents: 'none' }} />
-            ) : (
-              <div style={{ borderBottom: '1px dashed #cbd5e1', width: '70%', marginTop: '30px' }}></div>
-            )}
-          </div>
-
-          <div style={{ borderTop: '1px solid #f1f5f9', paddingTop: '6px', textAlign: 'center' }}>
-            <span style={{ fontSize: '10.5px', fontWeight: 600, color: '#64748b' }}>
-              {p.authorizedSignatoryName ? `(${p.authorizedSignatoryName})` : lbl('(அங்கீகரிக்கப்பட்ட கையொப்பம்)', '(Authorized Signatory)')}
-            </span>
+          <div style={{ minWidth: '220px', textAlign: 'right' }}>
+            <div style={{ position: 'relative', zIndex: 10, fontSize: '0.75rem', fontWeight: 600, color: '#555', lineHeight: 1 }}>
+              {p.authorizedSignatoryName ? `(${p.authorizedSignatoryName})` : lbl('(கையொப்பம்)', '(Authorized Signature)')}
+            </div>
           </div>
         </div>
       </div>
