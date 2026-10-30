@@ -278,7 +278,7 @@ export default function CoolieInvoiceBilingual({ bill }) {
                 {showBankDetails && (
                   <div style={{ display: 'flex', gap: '6px', alignItems: 'baseline' }}>
                     <div style={{ fontWeight: 700, whiteSpace: 'nowrap', fontSize: '0.9rem', color: accent }}>{lbl('வங்கி விவரம்', 'Bank Details')} :</div>
-                    <div style={{ color: '#111', fontWeight: 600, fontSize: '0.9rem' }}>
+                    <div style={{ color: '#000', fontWeight: 400, fontSize: '0.9rem' }}>
                       {useEn && p.bankNameEn ? `${p.bankNameEn}${p.branchEn ? ', ' + p.branchEn : ''}` : bankDetails}
                     </div>
                   </div>
@@ -286,13 +286,13 @@ export default function CoolieInvoiceBilingual({ bill }) {
                 {showBankDetails && accountNo && (
                   <div style={{ display: 'flex', gap: '6px', alignItems: 'baseline' }}>
                     <div style={{ fontWeight: 700, whiteSpace: 'nowrap', fontSize: '0.9rem', color: accent }}>{lbl('கணக்கு எண்', 'Account No')} :</div>
-                    <div style={{ color: '#111', fontWeight: 600, fontSize: '0.9rem', fontVariantNumeric: 'tabular-nums' }}>{accountNo}</div>
+                    <div style={{ color: '#000', fontWeight: 400, fontSize: '0.9rem', fontVariantNumeric: 'tabular-nums' }}>{accountNo}</div>
                   </div>
                 )}
                 {showIfsc && ifsc && (
                   <div style={{ display: 'flex', gap: '6px', alignItems: 'baseline' }}>
                     <div style={{ fontWeight: 700, whiteSpace: 'nowrap', fontSize: '0.9rem', color: accent }}>IFSC :</div>
-                    <div style={{ color: '#111', fontWeight: 600, fontSize: '0.9rem', fontVariantNumeric: 'tabular-nums' }}>{ifsc}</div>
+                    <div style={{ color: '#000', fontWeight: 400, fontSize: '0.9rem', fontVariantNumeric: 'tabular-nums' }}>{ifsc}</div>
                   </div>
                 )}
               </div>
