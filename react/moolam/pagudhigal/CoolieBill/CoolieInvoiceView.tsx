@@ -547,7 +547,7 @@ export default function CoolieInvoiceView({ bill, onClose, onEdit }) {
                     <thead>
                         <tr>
                             <th style={{ width: '15%' }}><div>{isEng ? 'Coolie' : 'கூலி'}</div></th>
-                            <th style={{ width: '45%', textAlign: 'left', paddingLeft: '15px' }}><div>{isEng ? 'Item Name' : 'பொருள் பெயர்'}</div></th>
+                            <th style={{ width: '45%', textAlign: 'left', paddingLeft: '15px' }}><div>{isEng ? 'Item Name' : 'உருப்படியின் பெயர்'}</div></th>
                             <th style={{ width: '15%' }}><div>{isEng ? 'Weight (Kg)' : 'எடை (Kg)'}</div></th>
                             <th style={{ width: '25%' }}><div>{isEng ? 'Amount' : 'தொகை'}</div></th>
                         </tr>

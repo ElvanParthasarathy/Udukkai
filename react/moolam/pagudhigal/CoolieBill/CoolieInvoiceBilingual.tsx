@@ -176,7 +176,7 @@ export default function CoolieInvoiceBilingual({ bill }) {
           <thead>
             <tr>
               <th style={{ width: '15%' }}>{lines('கூலி', 'Coolie')}</th>
-              <th style={{ width: '45%', textAlign: 'left', paddingLeft: '15px' }}>{lines('உருப்படி', 'Item')}</th>
+              <th style={{ width: '45%', textAlign: 'left', paddingLeft: '15px' }}>{lines('உருப்படியின் பெயர்', 'Item Name')}</th>
               <th style={{ width: '15%' }}>{lines('எடை', 'Weight')}</th>
               <th style={{ width: '25%', textAlign: 'right', paddingRight: '16px' }}>{lines('தொகை', 'Amount')}</th>
             </tr>
@@ -297,7 +297,7 @@ export default function CoolieInvoiceBilingual({ bill }) {
 
           {/* Right: Business Name & Signature space */}
           <div style={{ textAlign: 'right', display: 'flex', flexDirection: 'column', alignItems: 'flex-end', minWidth: '220px' }}>
-            <div style={{ color: accent, position: 'relative', zIndex: 10, fontSize: '1.05rem', fontWeight: 700, marginBottom: '5px', lineHeight: 1.2 }}>
+            <div className="sign-company font-display" style={{ color: accent, position: 'relative', zIndex: 10, fontSize: '14px', fontWeight: 700, marginBottom: '5px', lineHeight: 1.2 }}>
               {name.english || name.tamil}
             </div>
             <div style={{ position: 'relative', height: '55px', width: '100%', display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
