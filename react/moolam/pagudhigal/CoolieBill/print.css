@@ -232,9 +232,11 @@
 
 .a4-paper.bilingual .bill-table-new th>div:last-child {
     font-weight: 500;
-    font-size: 10px;
-    color: #555;
+    font-size: 10.5px;
+    color: inherit;
+    opacity: 0.85;
     text-transform: none;
+    line-height: 1.1;
 }
 
 /* Bilingual table cells with subtitles */

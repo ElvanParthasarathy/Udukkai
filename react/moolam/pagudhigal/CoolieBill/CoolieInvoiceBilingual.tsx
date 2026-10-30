@@ -163,11 +163,11 @@ export default function CoolieInvoiceBilingual({ bill }) {
           <span className="bill-meta"><div style={{ fontSize: 'inherit', fontWeight: 'inherit', color: 'inherit' }}>{slash('பில் எண்', 'Bill No')} : <strong style={{ textTransform: 'uppercase' }}>{displayBillNo}</strong></div></span>
           <span className="bill-meta"><div style={{ fontSize: 'inherit', fontWeight: 'inherit', color: 'inherit' }}>{slash('நாள்', 'Date')} : <strong>{date}</strong></div></span>
         </div>
-        {/* Bill To, like the Textiles invoice */}
+        {/* Bill To */}
         <div className="inv-party" style={{ marginTop: '6px', paddingLeft: '15px', paddingRight: '15px' }}>
-          <h4 className="inv-section-label">{slash('பெறுநர்', 'Bill To')}</h4>
-          <p className="inv-party-name">{customerName || '-'}</p>
-          {customerPlace && <div className="inv-party-details"><p>{customerPlace}</p></div>}
+          <h4 className="inv-section-label" style={{ color: 'var(--bill-primary)', fontWeight: 700, fontSize: '12px', marginBottom: '3px', textTransform: 'none' }}>{slash('பெறுநர்', 'Bill To')}</h4>
+          <p className="inv-party-name" style={{ color: '#000', fontWeight: 700, fontSize: '15px', margin: 0, marginBottom: '2px' }}>{customerName || '-'}</p>
+          {customerPlace && <div className="inv-party-details" style={{ color: '#333', fontSize: '13px' }}><p style={{ color: '#333', margin: 0 }}>{customerPlace}</p></div>}
         </div>
       </div>
 
