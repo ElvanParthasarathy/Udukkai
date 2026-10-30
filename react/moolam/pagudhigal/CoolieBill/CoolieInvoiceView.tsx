@@ -466,7 +466,7 @@ export default function CoolieInvoiceView({ bill, onClose, onEdit }) {
         <div ref={isMobile ? wrapperRef : null} style={isMobile ? { width: "100%", overflow: "hidden", touchAction: "none", display: "flex", justifyContent: "center", padding: "0 16px", boxSizing: "border-box" } : { width: '100%', display: 'flex', justifyContent: 'center' }}>
           <div ref={isMobile ? contentRef : null} style={{ transformOrigin: "top center", width: "100%", display: 'flex', justifyContent: 'center' }}>
             <Paper elevation={isMobile ? 8 : 3} className="invoice-paper print-wrapper" sx={{ 
-              p: 0, overflow: 'hidden', minWidth: '210mm', width: '210mm', m: '0 auto', bgcolor: 'white', color: 'black',
+              p: 0, overflow: 'hidden', minWidth: '210mm', width: '210mm', m: '0 auto', bgcolor: 'white', color: '#242f3d',
               transformOrigin: 'top center',
               ...(shouldScale ? {
                 zoom: 'none',
@@ -486,7 +486,7 @@ export default function CoolieInvoiceView({ bill, onClose, onEdit }) {
                 mb: '0 !important',
                 boxShadow: 'none !important',
                 bgcolor: 'white !important',
-                color: 'black !important',
+                color: '#242f3d !important',
                 borderRadius: '0 !important'
               }
             }}>
@@ -629,7 +629,7 @@ export default function CoolieInvoiceView({ bill, onClose, onEdit }) {
                                 {showBankDetails && (
                                     <div style={{ display: 'flex', gap: '5px' }}>
                                         <div style={{ fontWeight: 'bold', whiteSpace: 'nowrap' }}>{isEng ? 'Bank Name :' : 'வங்கிப் பெயர் :'}</div>
-                                        <div style={{ color: '#000' }}>
+                                        <div style={{ color: '#242f3d', fontWeight: 500 }}>
                                             {isEng && p.bankNameEn ? `${p.bankNameEn}${p.branchEn ? ', ' + p.branchEn : ''}` : bankDetails}
                                         </div>
                                     </div>
@@ -637,13 +637,13 @@ export default function CoolieInvoiceView({ bill, onClose, onEdit }) {
                                 {showBankDetails && accountNo && (
                                     <div style={{ display: 'flex', gap: '5px' }}>
                                         <div style={{ fontWeight: 'bold', whiteSpace: 'nowrap' }}>{isEng ? 'A/C No :' : 'கணக்கு எண் :'}</div>
-                                        <div style={{ color: '#000' }}>{accountNo}</div>
+                                        <div style={{ color: '#242f3d', fontWeight: 500 }}>{accountNo}</div>
                                     </div>
                                 )}
                                 {showIfsc && ifsc && (
                                     <div style={{ display: 'flex', gap: '5px' }}>
                                         <div style={{ fontWeight: 'bold', whiteSpace: 'nowrap' }}>IFSC :</div>
-                                        <div style={{ color: '#000' }}>{ifsc}</div>
+                                        <div style={{ color: '#242f3d', fontWeight: 500 }}>{ifsc}</div>
                                     </div>
                                 )}
                             </div>
@@ -657,7 +657,7 @@ export default function CoolieInvoiceView({ bill, onClose, onEdit }) {
                                 <img src={p.signature} alt="Signature" style={{ position: 'absolute', top: '50%', transform: 'translateY(-50%)', right: '-10px', maxHeight: '95px', maxWidth: '200px', objectFit: 'contain', pointerEvents: 'none' }} />
                             )}
                         </div>
-                        <div className="sign-label" style={{ position: 'relative', zIndex: 10 }}>{p.authorizedSignatoryName ? `(${p.authorizedSignatoryName})` : isEng ? '(Authorized Signature)' : '(கையொப்பம்)'}</div>
+                        <div className="sign-label" style={{ position: 'relative', zIndex: 10, color: '#475569' }}>{p.authorizedSignatoryName ? `(${p.authorizedSignatoryName})` : isEng ? '(Authorized Signature)' : '(கையொப்பம்)'}</div>
                     </div>
                 </div>
 
