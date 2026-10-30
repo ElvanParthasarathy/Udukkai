@@ -442,7 +442,7 @@ export default function CoolieReceiptView({ receipt: receiptProp, onBack, onEdit
                     <span className="greeting-center" style={{ color: profile.themeColor || '#1e3a8a' }}>உ</span>
                     <span className="greeting-right" style={{ color: profile.themeColor || '#1e3a8a' }}>{(!isBilingual && primaryLang === 'English') ? 'Vaazhga Valamudan' : 'வாழ்க வளமுடன்'}</span>
                 </div>
-                <div className="print-header-new" style={{ borderBottom: '2px solid #e2e8f0', paddingBottom: '1.5rem', marginBottom: '3rem' }}>
+                <div className="print-header-new" style={{ borderBottom: '2px solid #e2e8f0', paddingBottom: '1rem', marginBottom: '1.5rem' }}>
                   <div className="header-left">
                     {profile.logo && <img src={profile.logo} alt="Logo" style={{ maxHeight: '80px' }} />}
                     <div className="header-company-info">
@@ -457,7 +457,7 @@ export default function CoolieReceiptView({ receipt: receiptProp, onBack, onEdit
                     </div>
                   </div>
                   <div className="header-right" style={{ textAlign: 'right', display: 'flex', flexDirection: 'column', alignItems: 'flex-end', justifyContent: 'center' }}>
-                    <div className="bill-type-badge font-tamil" style={{ color: profile.themeColor || '#1e3a8a', fontSize: '18px', fontWeight: 800, lineHeight: 1.25 }}>
+                    <div className="bill-type-badge font-tamil" style={{ color: profile.themeColor || '#1e3a8a', fontSize: '17px', fontWeight: 800, lineHeight: 1.25 }}>
                       {getLangStr(primaryLang, 'hc_paymentReceipt', 'Payment Receipt', 'பெறுகைச் சான்று')}
                     </div>
                     {isBilingual && getLangStr(primaryLang, 'hc_paymentReceipt', 'Payment Receipt', 'பெறுகைச் சான்று') !== getLangStr(secondaryLang, 'hc_paymentReceipt', 'Payment Receipt', 'பெறுகைச் சான்று') && (
@@ -467,7 +467,7 @@ export default function CoolieReceiptView({ receipt: receiptProp, onBack, onEdit
                     )}
                   </div>
                 </div>
-              <div className="receipt-row"><span className="receipt-label" style={{ color: profile.themeColor || '#1e3a8a' }}>{renderKey('receiptNoLabel', 'Receipt No:', 'பற்றுச்சீட்டு எண்:')}</span><span className="receipt-value">{receipt.receiptNo}</span></div>
+              <div className="receipt-row"><span className="receipt-label" style={{ color: profile.themeColor || '#1e3a8a' }}>{renderKey('receiptNoLabel', 'Receipt No:', 'சான்று எண்:')}</span><span className="receipt-value">{receipt.receiptNo}</span></div>
               <div className="receipt-row"><span className="receipt-label" style={{ color: profile.themeColor || '#1e3a8a' }}>{renderKey('dateLabel', 'Date:', 'நாள்:')}</span><span className="receipt-value">{new Date(receipt.date).toLocaleDateString('en-IN')}</span></div>
               <div className="receipt-row">
                 <span className="receipt-label" style={{ color: profile.themeColor || '#1e3a8a' }}>{renderKey('receivedFromLabel', 'Received From:', 'இவரிடமிருந்து பெறப்பட்டது:')}</span>
