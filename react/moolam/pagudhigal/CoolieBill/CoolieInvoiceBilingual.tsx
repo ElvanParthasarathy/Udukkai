@@ -122,7 +122,7 @@ export default function CoolieInvoiceBilingual({ bill }) {
 
   // Rows after the items: Ahimsa silk, other charges, wastage, courier (as on the original bill)
   const extraRows = [
-    ...(ahimsaSilkRs ? [{ key: 'ahimsa', ta: 'அகிம்சா பட்டு', en: 'Ahimsa Silk', amount: ahimsaSilkRs }] : []),
+    ...(ahimsaSilkRs ? [{ key: 'ahimsa', ta: 'அகிம்சைப் பட்டு', en: 'Ahimsa Silk', amount: ahimsaSilkRs }] : []),
     ...otherCharges
       .filter((c) => c.amount && parseFloat(String(c.amount)) !== 0)
       .map((c, i) => ({ key: `oc-${i}`, ta: c.name || 'பிற கட்டணம்', en: c.name ? '' : 'Other Charges', amount: c.amount })),

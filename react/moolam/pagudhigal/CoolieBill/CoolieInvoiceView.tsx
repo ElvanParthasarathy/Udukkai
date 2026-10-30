@@ -565,7 +565,7 @@ export default function CoolieInvoiceView({ bill, onClose, onEdit }) {
                         {ahimsaSilkRs && (
                             <tr>
                                 <td className="text-center">-</td>
-                                <td className="text-left"><div>{isEng ? 'Ahimsa Silk' : 'அகிம்சா பட்டு'}</div></td>
+                                <td className="text-left"><div>{isEng ? 'Ahimsa Silk' : 'அகிம்சைப் பட்டு'}</div></td>
                                 <td className="text-center">-</td>
                                 <td className="text-center">{formatCurrency(ahimsaSilkRs)}</td>
                             </tr>

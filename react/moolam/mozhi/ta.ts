@@ -1059,7 +1059,7 @@ export const ta = {
   chargeName: "கட்டணத்தின் பெயர்",
   otherCharges: "கூடுதல் கட்டணங்கள்",
   setharam: "சேதாரம்",
-  ahimsaSilk: "அகிம்சா பட்டு",
+  ahimsaSilk: "அகிம்சைப் பட்டு",
   courier: "விரைவஞ்சல்",
   totalWeight: "மொத்த எடை",
   grams: "கிராம்",
