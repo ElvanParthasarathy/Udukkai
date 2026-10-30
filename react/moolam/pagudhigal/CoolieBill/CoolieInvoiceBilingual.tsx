@@ -178,7 +178,7 @@ export default function CoolieInvoiceBilingual({ bill }) {
             <tr>
               <th style={{ width: '15%' }}>{lines('கூலி', 'Coolie')}</th>
               <th style={{ width: '45%', textAlign: 'left', paddingLeft: '15px' }}>{lines('உருப்படி', 'Item')}</th>
-              <th style={{ width: '15%' }}>{lines('எடை (Kg)', 'Weight (Kg)')}</th>
+              <th style={{ width: '15%' }}>{lines('எடை', 'Weight')}</th>
               <th style={{ width: '25%' }}>{lines('தொகை', 'Amount')}</th>
             </tr>
           </thead>
@@ -190,7 +190,7 @@ export default function CoolieInvoiceBilingual({ bill }) {
                   <div>{isEng && item.name_english ? item.name_english : item.porul}</div>
                   {bi && <div>{item.name_english || ''}</div>}
                 </td>
-                <td className="text-center">{item.kg ? formatWeight(item.kg) : ''}</td>
+                <td className="text-center">{item.kg ? `${formatWeight(item.kg)} Kg` : ''}</td>
                 <td className="text-center">{item.kg ? formatCurrency(calcItemAmount(item.coolie, item.kg)) : ''}</td>
               </tr>
             ))}
@@ -201,7 +201,7 @@ export default function CoolieInvoiceBilingual({ bill }) {
                   <div>{isEng && row.en ? row.en : row.ta}</div>
                   {bi && <div>{row.en || ''}</div>}
                 </td>
-                <td className="text-center">{row.weight ? formatWeight(row.weight) : '-'}</td>
+                <td className="text-center">{row.weight ? `${formatWeight(row.weight)} Kg` : '-'}</td>
                 <td className="text-center">{row.amount ? formatCurrency(row.amount) : '-'}</td>
               </tr>
             ))}
