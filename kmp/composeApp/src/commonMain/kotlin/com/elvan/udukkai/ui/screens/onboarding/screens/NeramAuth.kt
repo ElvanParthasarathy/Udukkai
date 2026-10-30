@@ -150,9 +150,6 @@ internal fun NeramPage(
     bottom: @Composable () -> Unit,
     content: @Composable ColumnScope.() -> Unit
 ) {
-    val imeBottom = getImeBottomPadding()
-    val isKeyboardOpen = imeBottom > 0.dp
-
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -178,22 +175,12 @@ internal fun NeramPage(
         }
         NeramElement(
             delayIndex = 3,
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp)
+                .padding(bottom = 40.dp)
         ) {
-            AnimatedVisibility(
-                visible = !isKeyboardOpen,
-                enter = fadeIn(tween(200)) + expandVertically(tween(200)),
-                exit = fadeOut(tween(150)) + shrinkVertically(tween(150))
-            ) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp)
-                        .padding(bottom = 40.dp)
-                ) {
-                    bottom()
-                }
-            }
+            bottom()
         }
     }
 }

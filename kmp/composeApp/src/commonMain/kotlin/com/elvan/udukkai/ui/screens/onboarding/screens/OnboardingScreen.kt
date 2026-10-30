@@ -216,7 +216,7 @@ internal fun NeramField(
     TextField(
         value = value,
         onValueChange = onValueChange,
-        placeholder = { Text(placeholder, color = secondary, style = TextStyle(fontFamily = ElvanSansFontFamily, fontSize = 16.sp, color = secondary)) },
+        placeholder = { Text(placeholder, color = secondary, style = TextStyle(fontFamily = ElvanSansFontFamily, fontSize = 14.sp, color = secondary)) },
         trailingIcon = if (isPassword) {
             {
                 IconButton(onClick = { visible = !visible }) {

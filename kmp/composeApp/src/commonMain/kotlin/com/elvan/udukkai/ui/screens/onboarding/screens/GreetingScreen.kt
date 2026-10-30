@@ -226,10 +226,10 @@ fun GreetingScreen(
                 val keyboardController = LocalSoftwareKeyboardController.current
 
                 val primaryPlaceholder = when {
-                    isBilingual && isPrimaryTamil -> if (needsCoolie) "கூலி ஆலை வணிகப் பெயர் (தமிழ்)" else "நிறுவனப் பெயர் (தமிழ்)"
-                    isBilingual -> if (needsCoolie) "Coolie Factory Name (English)" else "Company Name (English)"
-                    needsCoolie -> if (isPrimaryTamil) "கூலி ஆலை வணிகப் பெயர்" else "Coolie Factory Name"
-                    else -> if (isPrimaryTamil) "நிறுவனப் பெயர்" else "Company Name"
+                    isBilingual && isPrimaryTamil -> "நிறுவனப் பெயர் (தமிழ்)"
+                    isBilingual -> "Company Name (English)"
+                    isPrimaryTamil -> "நிறுவனப் பெயர்"
+                    else -> "Company Name"
                 }
 
                 NeramField(
@@ -257,9 +257,9 @@ fun GreetingScreen(
                 if (isBilingual) {
                     Spacer(Modifier.height(16.dp))
                     val secondaryPlaceholder = if (isPrimaryTamil) {
-                        if (needsCoolie) "Coolie Factory Name (English)" else "Company Name (English)"
+                        "Company Name (English)"
                     } else {
-                        if (needsCoolie) "கூலி ஆலை வணிகப் பெயர் (தமிழ்)" else "நிறுவனப் பெயர் (தமிழ்)"
+                        "நிறுவனப் பெயர் (தமிழ்)"
                     }
                     NeramField(
                         value = secondaryName,

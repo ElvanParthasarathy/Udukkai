@@ -5,6 +5,7 @@ import androidx.compose.animation.core.CubicBezierEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
@@ -81,16 +82,18 @@ fun OnboardingGate(
     }
     LaunchedEffect(freshLogin) {
         if (freshLogin) {
-            delay(500)
+            delay(600)
             // Never hold the page for more than 20 seconds, even if the connection stalls halfway
             kotlinx.coroutines.withTimeoutOrNull(20_000) {
                 snapshotFlow { getFirebaseSyncManager().restoreProgress.value }.first { it == null }
             }
+            freshLogin = false
         }
     }
 
     val stage = when {
         !AuthManager.isLoggedIn -> GateStage.AUTH
+        freshLogin -> GateStage.LOADING
         AuthManager.isProfilesLoading -> GateStage.LOADING
         // A new phone: wait for the business profiles that are being restored instead of asking to create one
         !AuthManager.isSetupComplete(scope) && !getFirebaseSyncManager().profilesRestored.value -> GateStage.LOADING
@@ -109,7 +112,14 @@ fun OnboardingGate(
     AnimatedContent(
         targetState = stage,
         transitionSpec = {
-            fadeIn(tween(600, easing = EaseOutCubic)) togetherWith fadeOut(tween(600, easing = EaseInCubic))
+            if (targetState == GateStage.APP) {
+                (slideInVertically(
+                    initialOffsetY = { it / 8 },
+                    animationSpec = tween(500, easing = EaseOutCubic)
+                ) + fadeIn(tween(400, easing = EaseOutCubic))) togetherWith fadeOut(tween(300, easing = EaseInCubic))
+            } else {
+                fadeIn(tween(400, easing = EaseOutCubic)) togetherWith fadeOut(tween(300, easing = EaseInCubic))
+            }
         },
         modifier = Modifier.fillMaxSize(),
         label = "onboarding_gate"
