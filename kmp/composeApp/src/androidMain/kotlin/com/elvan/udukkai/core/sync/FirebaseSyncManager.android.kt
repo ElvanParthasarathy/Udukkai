@@ -241,6 +241,23 @@ class AndroidFirebaseSyncManager : FirebaseSyncManager {
         _syncStatus.value = SyncStatus.IDLE
     }
 
+    override fun wipeScope(scope: String) {
+        val prefix = getPrefix(scope)
+        try {
+            stopSync()
+            _profilesRestored.value = true
+            _restoreProgress.value = null
+            _syncStatus.value = SyncStatus.IDLE
+            if (isSyncAllowed()) {
+                val db = getDatabase()
+                db?.getReference(prefix)?.removeValue()
+                Log.i(tag, "Purged remote Firebase RTDB branch: $prefix")
+            }
+        } catch (e: Exception) {
+            Log.e(tag, "Failed to wipe remote scope $prefix: ${e.message}")
+        }
+    }
+
     override fun triggerManualSync() {
         startSync(if (com.elvan.udukkai.BuildConfig.FLAVOR == "factory") "factory" else "textiles")
     }

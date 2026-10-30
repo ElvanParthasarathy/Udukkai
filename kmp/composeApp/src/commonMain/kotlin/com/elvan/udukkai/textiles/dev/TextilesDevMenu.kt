@@ -126,6 +126,7 @@ fun TextilesDevMenu() {
                         color = Color(0xFF4CAF50),
                         isDark = isDark
                     ) {
+                        isExpanded = false
                         coroutineScope.launch {
                             TextilesMockDataSeeder.seedAllData()
                             ElvanSnackbar.show("Textiles Data Seeded Successfully ✓")
@@ -134,16 +135,17 @@ fun TextilesDevMenu() {
 
                     DevMenuDivider(isDark)
 
-                    // 2. Erase Data
+                    // 2. Clear All Data
                     DevMenuItem(
-                        label = "Erase Data",
+                        label = "Clear All Data",
                         icon = MaterialSymbols.Rounded.DeleteForever,
                         color = Color(0xFFF44336),
                         isDark = isDark
                     ) {
+                        isExpanded = false
                         coroutineScope.launch {
                             TextilesMockDataSeeder.eraseAllData()
-                            ElvanSnackbar.show("Textiles Data Purged ✗")
+                            ElvanSnackbar.show("All Textiles Data & Businesses Cleared ✗")
                         }
                     }
 
@@ -157,6 +159,7 @@ fun TextilesDevMenu() {
                         isDark = isDark
                     ) {
                         coroutineScope.launch {
+                            isExpanded = false
                             val msg = TextilesMockDataSeeder.toggleExtraProfile()
                             ElvanSnackbar.show(msg)
                         }
@@ -171,6 +174,7 @@ fun TextilesDevMenu() {
                         color = Color(0xFF2196F3),
                         isDark = isDark
                     ) {
+                        isExpanded = false
                         val msg = TextilesMockDataSeeder.toggleLanguage()
                         ElvanSnackbar.show(msg)
                     }
@@ -185,6 +189,7 @@ fun TextilesDevMenu() {
                         isDark = isDark
                     ) {
                         coroutineScope.launch {
+                            isExpanded = false
                             val msg = TextilesMockDataSeeder.toggleBilingual()
                             ElvanSnackbar.show(msg)
                         }
@@ -200,6 +205,7 @@ fun TextilesDevMenu() {
                         isDark = isDark
                     ) {
                         coroutineScope.launch {
+                            isExpanded = false
                             val msg = TextilesMockDataSeeder.swapDataLanguages()
                             ElvanSnackbar.show(msg)
                         }

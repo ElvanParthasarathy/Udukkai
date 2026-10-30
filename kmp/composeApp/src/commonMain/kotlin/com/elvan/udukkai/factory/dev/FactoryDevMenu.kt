@@ -126,6 +126,7 @@ fun FactoryDevMenu() {
                         color = Color(0xFF4CAF50),
                         isDark = isDark
                     ) {
+                        isExpanded = false
                         coroutineScope.launch {
                             FactoryMockDataSeeder.seedAllData()
                             ElvanSnackbar.show("Factory Data Seeded Successfully ✓")
@@ -134,16 +135,17 @@ fun FactoryDevMenu() {
 
                     DevMenuDivider(isDark)
 
-                    // 2. Erase Data
+                    // 2. Clear All Data
                     DevMenuItem(
-                        label = "Erase Data",
+                        label = "Clear All Data",
                         icon = MaterialSymbols.Rounded.DeleteForever,
                         color = Color(0xFFF44336),
                         isDark = isDark
                     ) {
+                        isExpanded = false
                         coroutineScope.launch {
                             FactoryMockDataSeeder.eraseAllData()
-                            ElvanSnackbar.show("Factory Data Purged ✗")
+                            ElvanSnackbar.show("All Factory Data & Businesses Cleared ✗")
                         }
                     }
 
@@ -157,6 +159,7 @@ fun FactoryDevMenu() {
                         isDark = isDark
                     ) {
                         coroutineScope.launch {
+                            isExpanded = false
                             val msg = FactoryMockDataSeeder.toggleExtraProfile()
                             ElvanSnackbar.show(msg)
                         }
@@ -171,6 +174,7 @@ fun FactoryDevMenu() {
                         color = Color(0xFF2196F3),
                         isDark = isDark
                     ) {
+                        isExpanded = false
                         val msg = FactoryMockDataSeeder.toggleLanguage()
                         ElvanSnackbar.show(msg)
                     }
@@ -185,6 +189,7 @@ fun FactoryDevMenu() {
                         isDark = isDark
                     ) {
                         coroutineScope.launch {
+                            isExpanded = false
                             val msg = FactoryMockDataSeeder.toggleBilingual()
                             ElvanSnackbar.show(msg)
                         }
@@ -200,6 +205,7 @@ fun FactoryDevMenu() {
                         isDark = isDark
                     ) {
                         coroutineScope.launch {
+                            isExpanded = false
                             val msg = FactoryMockDataSeeder.swapDataLanguages()
                             ElvanSnackbar.show(msg)
                         }

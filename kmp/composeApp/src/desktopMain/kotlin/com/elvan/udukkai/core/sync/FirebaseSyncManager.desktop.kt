@@ -34,6 +34,7 @@ class DesktopFirebaseSyncManager : FirebaseSyncManager {
     override fun dismissGuardAlert() { _guardAlertMessage.value = null }
 
     override fun pushProfile(profile: com.elvan.udukkai.data.settings.BusinessProfile, scope: String) {}
+    override fun wipeScope(scope: String) {}
     override fun pushRemove(collection: String, id: Long, scope: String) {}
     override fun pushMerchant(merchant: CustomerModel, scope: String) {}
     override fun pushItem(item: ItemModel, scope: String) {}

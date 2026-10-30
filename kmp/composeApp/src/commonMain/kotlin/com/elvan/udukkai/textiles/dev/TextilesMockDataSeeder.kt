@@ -10,6 +10,9 @@ import com.elvan.udukkai.data.model.InvoiceModel
 import com.elvan.udukkai.data.model.ReceiptInvoiceLinkModel
 import com.elvan.udukkai.data.model.ReceiptModel
 import com.elvan.udukkai.data.model.ItemModel
+import com.elvan.udukkai.core.auth.AuthManager
+import com.elvan.udukkai.core.platform.getPreferencesHelper
+import com.elvan.udukkai.core.sync.getFirebaseSyncManager
 import com.elvan.udukkai.data.settings.BusinessProfile
 import com.elvan.udukkai.localization.Language
 import com.elvan.udukkai.localization.LanguageManager
@@ -157,10 +160,17 @@ object TextilesMockDataSeeder {
     }
 
     suspend fun seedAllData() = withContext(Dispatchers.IO) {
-        val helper = getTextilesDatabaseHelper()
+        // 0. Wipe remote Firebase RTDB cloud tree & stop sync first to avoid duplicate accumulating profiles
+        try {
+            getFirebaseSyncManager().wipeScope("textiles")
+        } catch (_: Exception) {}
 
-        // 0. Erase existing
+        val helper = getTextilesDatabaseHelper()
         helper.clearAllData()
+
+        try {
+            getPreferencesHelper().setString("active_textiles_niruvanam_id", null)
+        } catch (_: Exception) {}
 
         // 1. Seed Profiles
         for (map in mockTextilesProfiles) {
@@ -310,20 +320,39 @@ object TextilesMockDataSeeder {
             TextilesItemRepository.loadAll()
             TextilesInvoiceRepository.loadAll()
             TextilesReceiptRepository.loadAll()
+            AuthManager.refreshProfileStatus()
         }
+        try {
+            if (AuthManager.isLoggedIn) {
+                getFirebaseSyncManager().startSync("textiles")
+            }
+        } catch (_: Exception) {}
         AutoBackupManager.onDataChanged()
     }
 
     suspend fun eraseAllData() = withContext(Dispatchers.IO) {
+        // 1. Wipe remote Firebase RTDB cloud tree & stop sync so old data doesn't restore
+        try {
+            getFirebaseSyncManager().wipeScope("textiles")
+        } catch (_: Exception) {}
+
+        // 2. Clear local SQLite database
         val helper = getTextilesDatabaseHelper()
         helper.clearAllData()
 
+        // 3. Clear active profile preference
+        try {
+            getPreferencesHelper().setString("active_textiles_niruvanam_id", null)
+        } catch (_: Exception) {}
+
+        // 4. Update memory state & repositories
         withContext(Dispatchers.Main) {
             TextilesProfileRepository.refreshFromDatabase()
             TextilesCustomerRepository.loadAll()
             TextilesItemRepository.loadAll()
             TextilesInvoiceRepository.loadAll()
             TextilesReceiptRepository.loadAll()
+            AuthManager.refreshProfileStatus()
         }
         AutoBackupManager.onDataChanged()
     }

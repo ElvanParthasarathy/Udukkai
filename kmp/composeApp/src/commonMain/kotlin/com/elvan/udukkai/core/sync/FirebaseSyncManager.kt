@@ -48,6 +48,9 @@ interface FirebaseSyncManager {
 
     /** Removes one record from the cloud (a permanent delete); collection is the database node name. */
     fun pushRemove(collection: String, id: Long, scope: String = "factory")
+
+    /** Wipes all cloud data for the given scope (used by dev clear / erase). */
+    fun wipeScope(scope: String = "factory")
 }
 
 expect fun getFirebaseSyncManager(): FirebaseSyncManager
