@@ -133,14 +133,14 @@ export default function CoolieInvoiceBilingual({ bill }) {
   return (
     <div className={`a4-paper font-tamil${bi ? ' bilingual' : ''}`} style={{ margin: '0 auto', background: 'white', ...themeStyles(p.themeColor) }}>
       {/* Top Greeting Row */}
-      <div className="top-greeting-row">
+      <div className="top-greeting-row" style={{ paddingLeft: '8px', paddingRight: '8px' }}>
         <span className="greeting-left">{isEng ? 'Vaazhga Vaiyagam' : 'வாழ்க வையகம்'}</span>
         <span className="greeting-center">உ</span>
         <span className="greeting-right">{isEng ? 'Vaazhga Valamudan' : 'வாழ்க வளமுடன்'}</span>
       </div>
 
       {/* Header */}
-      <div className="print-header-new">
+      <div className="print-header-new" style={{ paddingLeft: '8px', paddingRight: '8px' }}>
         <div className="header-left">
           <div className="header-company-info">
             <div className="company-name font-display">{name.english || name.tamil}</div>
@@ -163,7 +163,7 @@ export default function CoolieInvoiceBilingual({ bill }) {
           <span className="bill-meta"><div style={{ fontSize: 'inherit', fontWeight: 'inherit', color: 'inherit' }}>{slash('நாள்', 'Date')} : <strong>{date}</strong></div></span>
         </div>
         {/* Bill To */}
-        <div className="inv-party" style={{ marginTop: '6px', paddingLeft: '15px', paddingRight: '15px' }}>
+        <div className="inv-party" style={{ marginTop: '6px', paddingLeft: '8px', paddingRight: '8px' }}>
           <h4 className="inv-section-label" style={{ color: 'var(--bill-primary)', fontWeight: 700, fontSize: '12px', marginBottom: '3px', textTransform: 'none' }}>{slash('பெறுநர்', 'Bill To')}</h4>
           <p className="inv-party-name" style={{ color: '#000', fontWeight: 700, fontSize: '15px', margin: 0, marginBottom: '2px' }}>{customerName || '-'}</p>
           {customerPlace && <div className="inv-party-details" style={{ color: '#333', fontSize: '13px' }}><p style={{ color: '#333', margin: 0 }}>{customerPlace}</p></div>}
@@ -264,7 +264,7 @@ export default function CoolieInvoiceBilingual({ bill }) {
       <div style={{ flexGrow: 1 }}></div>
 
       {/* Footer: bank details in the Textiles style */}
-      <div className="bill-footer-new">
+      <div className="bill-footer-new" style={{ paddingLeft: '8px', paddingRight: '8px' }}>
         <div className="footer-left">
           {((showBankDetails && (bankDetails || accountNo)) || (showIfsc && ifsc)) && (
             <div style={{ marginBottom: '15px', color: '#475569', fontSize: '0.85rem', lineHeight: '1.45', display: 'flex', flexDirection: 'column', gap: '4px' }}>
@@ -306,7 +306,7 @@ export default function CoolieInvoiceBilingual({ bill }) {
       </div>
 
       {/* Contact Section: address on the left, phone numbers and e-mail on the right */}
-      <div className="contact-section">
+      <div className="contact-section" style={{ paddingLeft: 'calc(12mm + 8px)', paddingRight: 'calc(12mm + 8px)' }}>
         <div className="contact-title">{lbl('தொடர்பு கொள்ள', 'Contact Us')}</div>
         <div className="contact-row">
           <div className="contact-left">
