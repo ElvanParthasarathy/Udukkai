@@ -166,15 +166,19 @@ fun ElvanExpandedBar(
             for (piece in 0..1) {
                 val text = if (piece == 0) firstPart else secondPart
                 if (text.isEmpty()) continue
-                // The second line first slides sideways to its place beside the first (done by a third of the way), then rises into line, so the two lines never touch
-                val sideT = (t / 0.35f).coerceIn(0f, 1f).let { it * it * (3f - 2f * it) }
-                val leftPx = if (piece == 0) lerp(firstLeftOpen, firstLeftClosed) else secondLeftOpen + (secondLeftClosed - secondLeftOpen) * sideT
-                val bottomPx = if (piece == 0) lerp(firstBottomOpen, bottomClosed) else lerp(secondBottomOpen, bottomClosed)
+                // The first line moves like a plain title. The second follows it like a train: it keeps just behind the first
+                // line's right end as that shrinks, and eases up into the row, so the two lines never run into each other.
+                fun smooth(x: Float) = x.coerceIn(0f, 1f).let { it * it * (3f - 2f * it) }
+                val firstLeftNow = lerp(firstLeftOpen, firstLeftClosed)
+                val hugLeft = if (isSelectionMode) secondLeftOpen else firstLeftNow + (firstW + spaceW) * scale
+                val leftPx = if (piece == 0) firstLeftNow else secondLeftOpen + (hugLeft - secondLeftOpen) * smooth(t / 0.55f)
+                val bottomPx = if (piece == 0) lerp(firstBottomOpen, bottomClosed) else secondBottomOpen + (bottomClosed - secondBottomOpen) * smooth((t - 0.15f) / 0.85f)
                 Text(
                     text = text,
                     maxLines = 1,
                     softWrap = false,
-                    overflow = TextOverflow.Ellipsis,
+                    // While the second line is on its way it is simply cut at the margin; the dots come when it has settled
+                    overflow = if (piece == 1 && t < 0.9f) TextOverflow.Clip else TextOverflow.Ellipsis,
                     style = titleStyle,
                     modifier = Modifier
                         .align(Alignment.TopStart)
