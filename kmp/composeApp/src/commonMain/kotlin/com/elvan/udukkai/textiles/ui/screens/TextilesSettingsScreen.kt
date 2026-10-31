@@ -146,13 +146,10 @@ fun TextilesSettingsScreen(
                         colors = colors
                     )
                     SettingsRoute.Books -> {
-                        val prefix = TextilesProfileRepository.profile.shortName.ifEmpty { "INV" }
                         com.elvan.udukkai.ui.screens.settings.screens.BooksSettingsScreen(
                             settings = com.elvan.udukkai.core.finance.Books.textiles,
                             companyId = TextilesProfileRepository.profile.id,
                             bills = TextilesInvoiceRepository.activeCompanyInvoices,
-                            removed = TextilesInvoiceRepository.deletedInvoices.filter { it.companyId == TextilesProfileRepository.profile.id },
-                            nextNumber = { TextilesInvoiceRepository.getNextInvoiceNumber(TextilesProfileRepository.profile.id, prefix) },
                             scrollState = scrollState,
                             colors = colors
                         )

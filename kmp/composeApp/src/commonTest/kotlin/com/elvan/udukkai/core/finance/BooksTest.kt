@@ -44,32 +44,20 @@ class BooksTest {
         val prefix = BillNumbering.seriesPrefix("VRM", day("31/03/2026"))
         assertEquals("VRM/25-26/", prefix)
         assertEquals("VRM/26-27/", BillNumbering.seriesPrefix("VRM", day("01/04/2026")))
-        assertEquals(1, BillNumbering.nextSerial(listOf("VRM/25-26/0040"), "VRM/26-27/"))
-        assertEquals(41, BillNumbering.nextSerial(listOf("VRM/25-26/0040", "vrm/25-26/0007"), prefix))
-        assertEquals("VRM/26-27/0001", BillNumbering.format("VRM/26-27/", 1))
-        assertTrue(BillRulesCheck.ok(BillNumbering.format("ABCDE/26-27/", 9999)), "16 characters is the limit")
-    }
-
-    @Test
-    fun a_missing_number_is_a_gap_unless_it_sits_in_the_recycle_bin() {
-        val kept = listOf(bill("VRM/26-27/0001", "05/04/2026", id = 1), bill("VRM/26-27/0004", "09/04/2026", id = 4))
-        val bin = listOf(bill("VRM/26-27/0002", "06/04/2026", id = 2))
-        val s = BillNumbering.summaries(kept, bin).single()
-        assertEquals(mapOf("VRM/26-27/" to listOf(3)), s.gaps)
-        assertEquals(2, s.count)
-        assertEquals("VRM/26-27/0001", s.firstNumber)
-        assertEquals("VRM/26-27/0004", s.lastNumber)
+        assertEquals(1, BillNumbering.nextSerial(listOf("VRM/25-26/040"), "VRM/26-27/"))
+        assertEquals(41, BillNumbering.nextSerial(listOf("VRM/25-26/040", "vrm/25-26/007"), prefix))
+        assertEquals("VRM/26-27/001", BillNumbering.format("VRM/26-27/", 1))
+        assertEquals("VRM/26-27/1000", BillNumbering.format("VRM/26-27/", 1000), "past 999 the number just grows")
+        assertTrue(BillRulesCheck.ok(BillNumbering.format("ABCDE/26-27/", 999)), "16 characters is the limit")
     }
 
     @Test
     fun years_are_split_at_april_and_listed_newest_first() {
         val s = BillNumbering.summaries(
             listOf(bill("A-1", "31/03/2026", 10.0, 1), bill("A-2", "01/04/2026", 20.0, 2), bill("A-3", "02/04/2026", 30.0, 3)),
-            emptyList(),
         )
         assertEquals(listOf(2026, 2025), s.map { it.fyStart })
         assertEquals(50.0, s[0].total)
-        assertTrue(s.all { it.gaps.isEmpty() })
     }
 
     private object BillRulesCheck {

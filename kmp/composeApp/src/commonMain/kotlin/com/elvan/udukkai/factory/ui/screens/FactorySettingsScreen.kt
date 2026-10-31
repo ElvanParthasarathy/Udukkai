@@ -146,13 +146,10 @@ fun FactorySettingsScreen(
                         colors = colors
                     )
                     SettingsRoute.Books -> {
-                        val prefix = FactoryProfileRepository.profile.shortName.ifEmpty { "CB" }
                         com.elvan.udukkai.ui.screens.settings.screens.BooksSettingsScreen(
                             settings = com.elvan.udukkai.core.finance.Books.factory,
                             companyId = FactoryProfileRepository.profile.id,
                             bills = FactoryInvoiceRepository.activeCompanyInvoices,
-                            removed = FactoryInvoiceRepository.deletedInvoices.filter { it.companyId == FactoryProfileRepository.profile.id },
-                            nextNumber = { FactoryInvoiceRepository.getNextInvoiceNumber(FactoryProfileRepository.profile.id, prefix) },
                             scrollState = scrollState,
                             colors = colors
                         )

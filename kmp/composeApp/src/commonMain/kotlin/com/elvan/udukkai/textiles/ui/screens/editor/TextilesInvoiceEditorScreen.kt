@@ -3,7 +3,6 @@ package com.elvan.udukkai.textiles.ui.screens.editor
 import com.elvan.udukkai.core.utils.DateUtils
 import com.elvan.udukkai.core.utils.BillRules
 import com.elvan.udukkai.core.finance.BillNumbering
-import com.elvan.udukkai.core.finance.Books
 import com.elvan.udukkai.core.print.PrintPayload
 import com.elvan.udukkai.localization.LanguageManager
 import com.elvan.udukkai.ui.screens.preview.DraftBillPreview
@@ -613,9 +612,9 @@ fun TextilesInvoiceEditorScreen(
                                 "INV-"
                             }
                             val legacyPrefix = if (invoiceType == "proforma") "EST-" else profilePrefix
-                            // One series a year (VRM/26-27/0001): bills already numbered the old way keep their number as it is
+                            // One series a year (VRM/26-27/001): bills already numbered the old way keep their number as it is
                             val seriesPrefix = BillNumbering.seriesPrefix(if (invoiceType == "proforma") "EST" else selectedProfile.shortName.ifEmpty { "INV" }, invoiceDate)
-                            val currentDocPrefix = if (Books.textiles.fySeries(selectedCompanyId) && (!isEditing || invoiceNumber.startsWith(seriesPrefix, ignoreCase = true))) seriesPrefix else legacyPrefix
+                            val currentDocPrefix = if (!isEditing || invoiceNumber.startsWith(seriesPrefix, ignoreCase = true)) seriesPrefix else legacyPrefix
 
                             // Invoice Number with pencil edit pill
                             ElvanDocumentNumberField(

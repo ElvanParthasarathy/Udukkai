@@ -94,14 +94,11 @@ object TextilesInvoiceRepository {
         return "$prefix-$padded"
     }
 
+    /** One series a year, restarting each April: VRM/26-27/001 */
     fun getNextInvoiceNumber(companyId: Long?, prefix: String, date: Long = System.currentTimeMillis()): String {
-        if (Books.textiles.fySeries(companyId)) {
-            val series = BillNumbering.seriesPrefix(prefix, date)
-            val used = (invoices + deletedInvoices).filter { it.companyId == companyId }.map { it.invoiceNumber }
-            return BillNumbering.format(series, BillNumbering.nextSerial(used, series))
-        }
-        val vanakkam = getNextVanakkam(companyId)
-        return formatInvoiceNumber(prefix, vanakkam)
+        val series = BillNumbering.seriesPrefix(prefix, date)
+        val used = (invoices + deletedInvoices).filter { it.companyId == companyId }.map { it.invoiceNumber }
+        return BillNumbering.format(series, BillNumbering.nextSerial(used, series))
     }
 
     /** A bill dated in a locked financial year cannot be added, changed, moved, deleted or brought back. */
