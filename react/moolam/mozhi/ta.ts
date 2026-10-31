@@ -37,7 +37,7 @@ export const ta = {
   invoices: 'பட்டியல்கள்',
   accountingGroup: 'கணக்கியல்',
   reportsGroup: 'அறிக்கைகள்',
-  coolieBill: 'கூலிப் பட்டியல்',
+  coolieBill: 'பட்டுநூல் பணிக்கட்டணம்',
   silksBill: 'மளிகைப் பட்டியல்',
   newBill: 'புதிய பட்டியல்',
   bills: 'பட்டியல்கள்',

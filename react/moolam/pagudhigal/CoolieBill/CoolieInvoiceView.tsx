@@ -515,7 +515,7 @@ export default function CoolieInvoiceView({ bill, onClose, onEdit }) {
                         </div>
                     </div>
                     <div className="header-right">
-                        <div className="bill-type-badge font-tamil">{isEng ? 'Silk Job Work Bill' : 'கூலிப் பட்டியல்'}</div>
+                        <div className="bill-type-badge font-tamil">{isEng ? 'Silk Job Work Bill' : 'பட்டுநூல் பணிக்கட்டணம்'}</div>
                     </div>
                 </div>
 
