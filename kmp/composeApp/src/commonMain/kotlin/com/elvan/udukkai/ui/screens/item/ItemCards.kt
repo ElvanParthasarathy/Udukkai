@@ -303,8 +303,7 @@ fun TextilesItemCard(
                     Spacer(modifier = Modifier.width(8.dp))
 
                     val priceText = if (item.price > 0.0) {
-                        val formatted = if (item.price % 1.0 == 0.0) item.price.toLong().toString() else item.price.toString()
-                        "₹$formatted"
+                        com.elvan.udukkai.core.utils.CurrencyUtils.formatInr(item.price, showDecimals = item.price % 1.0 != 0.0)
                     } else {
                         "-"
                     }

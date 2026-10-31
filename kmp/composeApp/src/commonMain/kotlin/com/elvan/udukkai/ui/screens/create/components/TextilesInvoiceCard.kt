@@ -191,7 +191,7 @@ fun TextilesInvoiceCard(
                                 style = TextStyle(
                                     fontFamily = ff,
                                     fontSize = 11.sp,
-                                    color = LocalShellColors.current.textSecondary.copy(alpha = 0.6f)
+                                    color = LocalShellColors.current.textTertiary
                                 ),
                                 maxLines = 1
                             )

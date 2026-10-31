@@ -225,19 +225,21 @@ fun ElvanStatsCard(
                         overflow = TextOverflow.Ellipsis
                     )
                     Spacer(modifier = Modifier.height(2.dp))
-                    Text(
-                        text = value.preventBrokenLigatures(),
-                        style = TextStyle(
-                            fontFamily = ff,
-                            fontSize = adaptiveFontSize(value, false).sp,
-                            fontWeight = FontWeight.ExtraBold,
-                            color = colors.textPrimary,
-                            lineHeight = 22.sp,
-                            letterSpacing = if (value.length > 10) (-0.3).sp else 0.sp
-                        ),
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
+                    Box(modifier = Modifier.fillMaxWidth().height(28.dp), contentAlignment = Alignment.BottomStart) {
+                        Text(
+                            text = value.preventBrokenLigatures(),
+                            style = TextStyle(
+                                fontFamily = ff,
+                                fontSize = adaptiveFontSize(value, false).sp,
+                                fontWeight = FontWeight.ExtraBold,
+                                color = colors.textPrimary,
+                                lineHeight = 22.sp,
+                                letterSpacing = if (value.length > 10) (-0.3).sp else 0.sp
+                            ),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    }
                 }
             }
         }

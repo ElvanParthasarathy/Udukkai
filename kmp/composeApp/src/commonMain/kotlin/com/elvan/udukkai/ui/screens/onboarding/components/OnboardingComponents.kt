@@ -476,7 +476,7 @@ fun AuthInput(
             if (errorText != null || helperText != null) {
                 Text(
                     text = errorText ?: helperText.orEmpty(),
-                    fontSize = 10.sp,
+                    fontSize = 11.sp,
                     color = if (errorText != null) MaterialTheme.colorScheme.error else labelColor,
                     modifier = Modifier.padding(start = 12.dp, top = 6.dp)
                 )

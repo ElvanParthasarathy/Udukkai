@@ -47,7 +47,7 @@ import com.elvan.udukkai.ui.navigation.MaterialSymbols
 fun ElvanTopBarIconButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
-    size: Dp = 38.dp,
+    size: Dp = 44.dp,
     content: @Composable () -> Unit
 ) {
     Box(

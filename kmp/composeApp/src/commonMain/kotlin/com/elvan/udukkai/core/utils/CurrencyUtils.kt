@@ -10,9 +10,10 @@ object CurrencyUtils {
 
     fun formatInr(amount: Double, showDecimals: Boolean = true): String {
         val isNegative = amount < 0
-        val absVal = abs(amount)
-        val integerPart = absVal.toLong()
-        val decimalPart = ((absVal - integerPart) * 100).toLong()
+        // Whole paise by rounding: 8500.29 is stored as 8500.2899999..., and cutting that off would show .28
+        val paise = kotlin.math.round(abs(amount) * 100).toLong()
+        val integerPart = paise / 100
+        val decimalPart = paise % 100
 
         val intStr = integerPart.toString()
         val result = StringBuilder()
