@@ -21,8 +21,18 @@ object SearchHelper {
      */
     fun stripDelimiters(text: String?): String {
         if (text.isNullOrBlank()) return ""
-        return DELIMS_REGEX.replace(text, "").lowercase()
+        val out = StringBuilder(text.length)
+        for (c in text) if (!isDelimiter(c)) out.append(c)
+        return out.toString().lowercase()
     }
+
+    // The characters of DELIMS_REGEX, as a table for the ASCII range (a regex per field per keystroke was the cost)
+    private val DELIM_TABLE = BooleanArray(128).also { t ->
+        " \t\n\u000B\u000C\r-_./\\#@,;:|()[]{}+*\"'`~^=<>!%&?\$".forEach { t[it.code] = true }
+    }
+
+    private fun isDelimiter(c: Char): Boolean =
+        if (c.code < 128) DELIM_TABLE[c.code] else c == '\u2014' || c == '\u2013'
 
     /**
      * Matches a single target string against a query.
@@ -59,31 +69,35 @@ object SearchHelper {
     fun matchesRecord(targets: Iterable<String?>, query: String): Boolean {
         val qTrim = query.trim()
         if (qTrim.isEmpty()) return true
+        val list = targets as? List<String?> ?: targets.toList()
+        val qStripped = stripDelimiters(qTrim)
+        val stripped = arrayOfNulls<String>(list.size)
+        fun strippedAt(i: Int): String = stripped[i] ?: stripDelimiters(list[i]).also { stripped[i] = it }
 
-        // 1. Check if any single field matches the full query directly or delimiter-stripped
-        for (t in targets) {
-            if (matchesSingle(t, qTrim)) return true
+        // 1. Any single field matches the full query directly or delimiter-stripped
+        for (i in list.indices) {
+            val t = list[i]
+            if (t.isNullOrBlank()) continue
+            if (t.contains(qTrim, ignoreCase = true)) return true
+            if (qStripped.isNotEmpty() && strippedAt(i).contains(qStripped)) return true
         }
 
-        // 2. Delimiter-stripped match across combined target strings
-        val qStripped = stripDelimiters(qTrim)
+        // 2. Delimiter-stripped match across the combined fields
         if (qStripped.isNotEmpty()) {
-            val combinedStripped = buildString {
-                for (t in targets) {
-                    if (!t.isNullOrBlank()) {
-                        append(stripDelimiters(t))
-                    }
-                }
-            }
+            val combinedStripped = buildString { for (i in list.indices) append(strippedAt(i)) }
             if (combinedStripped.contains(qStripped)) return true
         }
 
-        // 3. Multi-token / tokenized search
-        // Split query into tokens (e.g. "pvs 23" -> ["pvs", "23"])
+        // 3. Multi-token search ("pvs 23"): every token must match at least one field
         val tokens = qTrim.split(TOKEN_SPLIT_REGEX).filter { it.isNotBlank() }
         if (tokens.size > 1) {
             val allTokensMatch = tokens.all { token ->
-                targets.any { target -> matchesSingle(target, token) }
+                val tokenStripped = stripDelimiters(token)
+                list.indices.any { i ->
+                    val t = list[i]
+                    !t.isNullOrBlank() && (t.contains(token, ignoreCase = true) ||
+                        (tokenStripped.isNotEmpty() && strippedAt(i).contains(tokenStripped)))
+                }
             }
             if (allTokensMatch) return true
         }
@@ -101,6 +115,15 @@ object SearchHelper {
      * customer locations/addresses, and items content.
      */
     fun matchesInvoice(inv: InvoiceModel, query: String): Boolean {
+        val q = prepared(query) ?: return true
+        // A query made only of delimiters ("-", "/") cannot use the stripped text: the plain path decides it
+        if (q.stripped.isEmpty() || q.strippedTokens.any { it.isEmpty() }) return matchesInvoicePlain(inv, q.text)
+        val text = inv.searchText
+        if (text.contains(q.stripped)) return true
+        return q.strippedTokens.size > 1 && q.strippedTokens.all { text.contains(it) }
+    }
+
+    private fun matchesInvoicePlain(inv: InvoiceModel, query: String): Boolean {
         if (query.isBlank()) return true
         val targetList = ArrayList<String?>(8 + inv.customerName.size + inv.customerAddress.size)
         targetList.add(inv.invoiceNumber)
@@ -110,6 +133,20 @@ object SearchHelper {
             targetList.add(inv.itemsJson)
         }
         return matchesRecord(targetList, query)
+    }
+
+    private class PreparedQuery(val text: String, val stripped: String, val strippedTokens: List<String>)
+
+    private var lastPrepared: PreparedQuery? = null
+
+    // The query is the same for every bill of one search, so it is cleaned and split once, not once per bill
+    private fun prepared(query: String): PreparedQuery? {
+        val q = query.trim()
+        if (q.isEmpty()) return null
+        lastPrepared?.let { if (it.text == q) return it }
+        val tokens = q.split(TOKEN_SPLIT_REGEX).filter { it.isNotBlank() }
+        return PreparedQuery(q, stripDelimiters(q), if (tokens.size > 1) tokens.map { stripDelimiters(it) } else emptyList())
+            .also { lastPrepared = it }
     }
 
     /**

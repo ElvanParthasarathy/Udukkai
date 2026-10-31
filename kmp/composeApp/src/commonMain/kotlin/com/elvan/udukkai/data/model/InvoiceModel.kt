@@ -1,5 +1,7 @@
 package com.elvan.udukkai.data.model
 
+import com.elvan.udukkai.core.utils.SearchHelper
+
 /**
  * Domain model for an Invoice (Pattiyal) in both Coolie and Silk modes.
  * Standardized English property names with backward-compatible Tanglish accessors.
@@ -37,5 +39,17 @@ data class InvoiceModel(
     val isDeleted: Boolean = false,
     val deletedAt: Long? = null
 ) {
+    /**
+     * Number, names, addresses and line items in lower case without delimiters, made on the first search and kept
+     * with the bill, so typing a query is one substring test per bill instead of cleaning every field again.
+     */
+    val searchText: String by lazy(LazyThreadSafetyMode.PUBLICATION) {
+        buildString {
+            append(SearchHelper.stripDelimiters(invoiceNumber))
+            customerName.values.forEach { append(SearchHelper.stripDelimiters(it)) }
+            customerAddress.values.forEach { append(SearchHelper.stripDelimiters(it)) }
+            if (itemsJson.isNotBlank() && itemsJson != "[]") append(SearchHelper.stripDelimiters(itemsJson))
+        }
+    }
 }
 typealias Invoice = InvoiceModel
