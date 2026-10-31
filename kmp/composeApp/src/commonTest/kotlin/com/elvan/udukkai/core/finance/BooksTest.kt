@@ -60,6 +60,19 @@ class BooksTest {
         assertEquals(50.0, s[0].total)
     }
 
+    @Test
+    fun old_bills_get_a_yearly_number_oldest_first_and_new_ones_are_left_alone() {
+        val live = listOf(
+            bill("SJPS-30", "10/04/2026", id = 2),
+            bill("SJPS-29", "05/04/2026", id = 1),
+            bill("SJPS-20", "20/03/2026", id = 3),
+            bill("SJPS/26-27/001", "01/05/2026", id = 4),
+            InvoiceModel(id = 5, invoiceNumber = "EST-1", invoiceType = "proforma", invoiceDate = day("02/05/2026")),
+        )
+        val plan = BillNumbering.renumberPlan(live, listOf("SJPS/26-27/002"), "SJPS").associate { it.first.id to it.second }
+        assertEquals(mapOf(3L to "SJPS/25-26/001", 1L to "SJPS/26-27/003", 2L to "SJPS/26-27/004", 5L to "EST/26-27/001"), plan)
+    }
+
     private object BillRulesCheck {
         fun ok(n: String) = com.elvan.udukkai.core.utils.BillRules.isValidInvoiceNumber(n)
     }

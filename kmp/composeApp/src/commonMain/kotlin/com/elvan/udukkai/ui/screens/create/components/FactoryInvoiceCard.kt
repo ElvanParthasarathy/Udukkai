@@ -160,7 +160,7 @@ fun FactoryInvoiceCard(
                         verticalArrangement = Arrangement.spacedBy(3.dp)
                     ) {
                         Text(
-                            text = "${invoice.invoiceNumber}  •  $dateStr",
+                            text = invoice.invoiceNumber,
                             style = TextStyle(
                                 fontFamily = ff,
                                 fontSize = 13.5.sp,
@@ -170,9 +170,9 @@ fun FactoryInvoiceCard(
                             overflow = TextOverflow.Ellipsis
                         )
 
-                        if (primaryCity.isNotEmpty()) {
+                        run {
                             Text(
-                                text = primaryCity.preventBrokenLigatures(),
+                                text = if (primaryCity.isNotEmpty()) "$dateStr  •  ${primaryCity.preventBrokenLigatures()}" else dateStr,
                                 style = TextStyle(
                                     fontFamily = ff,
                                     fontSize = 13.sp,

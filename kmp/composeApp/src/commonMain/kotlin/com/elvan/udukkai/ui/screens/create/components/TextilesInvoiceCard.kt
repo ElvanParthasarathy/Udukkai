@@ -77,7 +77,8 @@ fun TextilesInvoiceCard(
     val amountStr = CurrencyUtils.formatInr(invoice.totalAmount)
     val dateStr = DateUtils.formatEpochMillis(invoice.invoiceDate)
     val docTypeLabel = if (invoice.invoiceType == "proforma") K.proforma.tr() else K.taxInvoice.tr()
-    val leftDetail = if (primaryCity.isNotBlank()) "$docTypeLabel  •  ${primaryCity.preventBrokenLigatures()}" else docTypeLabel
+    // The type only shows for an estimate: a tax invoice is the usual bill, and its number is long enough already
+    val leftDetail = listOfNotNull(dateStr, docTypeLabel.takeIf { invoice.invoiceType == "proforma" }, primaryCity.takeIf { it.isNotBlank() }?.preventBrokenLigatures()).joinToString("  •  ")
 
     ElvanCommonCard(
         onClick = onClick,
@@ -163,7 +164,7 @@ fun TextilesInvoiceCard(
                         verticalArrangement = Arrangement.spacedBy(3.dp)
                     ) {
                         Text(
-                            text = "${invoice.invoiceNumber}  •  $dateStr",
+                            text = invoice.invoiceNumber,
                             style = TextStyle(
                                 fontFamily = ff,
                                 fontSize = 13.5.sp,

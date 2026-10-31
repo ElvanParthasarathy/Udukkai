@@ -29,4 +29,17 @@ object BillNumbering {
             .groupBy { DateUtils.financialYearStart(it.invoiceDate) }
             .map { (fy, list) -> FinancialYearSummary(fy, list.size, list.sumOf { it.totalAmount }) }
             .sortedByDescending { it.fyStart }
+
+    /**
+     * New numbers for the bills that are not in a yearly series yet: in each financial year, oldest first, continuing
+     * after any number the series already holds ([reserved] are the numbers in the recycle bin). Estimates get their own EST series.
+     */
+    fun renumberPlan(live: List<InvoiceModel>, reserved: List<String>, base: String): List<Pair<InvoiceModel, String>> =
+        live.groupBy { DateUtils.financialYearStart(it.invoiceDate) to (it.invoiceType == "proforma") }.flatMap { (key, bills) ->
+            val prefix = seriesPrefix(if (key.second) "EST" else base, bills.first().invoiceDate)
+            var next = nextSerial(bills.map { it.invoiceNumber } + reserved, prefix)
+            bills.filter { !it.invoiceNumber.startsWith(prefix, ignoreCase = true) }
+                .sortedWith(compareBy({ it.invoiceDate }, { it.id }))
+                .map { it to format(prefix, next++) }
+        }
 }
