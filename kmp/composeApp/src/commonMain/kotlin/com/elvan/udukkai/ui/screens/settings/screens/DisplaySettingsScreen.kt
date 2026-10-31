@@ -1,6 +1,11 @@
 package com.elvan.udukkai.ui.screens.settings.screens
 
-import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Canvas
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.RoundRect
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Path
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.selection.selectable
@@ -164,65 +169,56 @@ private fun ThemeOptionBox(
     val isDark = colors.isDark
     val ff = LocalAppFontFamily.current
 
-    val boxBgColor = if (isDarkModeDesign) Color(0xFF1E1E1E) else Color(0xFFF5F5F5)
-    val borderColor = if (isSelected) {
-        if (isDarkModeDesign) Color(0xFF888888) else Color(0xFF555555)
-    } else {
-        if (isDark) Color.White.copy(alpha = 0.08f) else Color.Black.copy(alpha = 0.08f)
-    }
-
-    val bar1Color = if (isDarkModeDesign) Color.White.copy(alpha = 0.8f) else Color.Black.copy(alpha = 0.7f)
-    val bar2Color = if (isDarkModeDesign) Color(0xFF444444) else Color(0xCFCFCFCF)
+    // The top of a phone, as in Samsung's own Display page, drawn in greys: a frame with a thin rim, one card with two
+    // rows (a dot and a bar), and the next card peeking in at the foot. The pictures look the same in light and dark mode.
+    val rimColor = if (isDarkModeDesign) Color(0xFF2D2D2F) else Color(0xFFD4D4D7)
+    val frameColor = if (isDarkModeDesign) Color(0xFF38383B) else Color(0xFFE2E2E5)
+    val cardColor = if (isDarkModeDesign) Color(0xFF5E5E62) else Color.White
+    val dotColor = if (isDarkModeDesign) Color.White else Color(0xFF1D1D1F)
+    val barColor = if (isDarkModeDesign) Color(0xFF8E8E93) else Color(0xFFD3D3D3)
+    val tileShape = RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp, bottomStart = 4.dp, bottomEnd = 4.dp)
 
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier.padding(horizontal = 4.dp)
     ) {
-        // Preview Box (110dp x 85dp, 24dp rounded corners) with Material 3 Expressive Ripple
         Surface(
             onClick = onClick,
-            shape = RoundedCornerShape(24.dp),
-            color = boxBgColor,
-            border = BorderStroke(1.dp, borderColor),
+            shape = tileShape,
+            color = rimColor,
             modifier = Modifier
-                .width(110.dp)
-                .height(85.dp)
-                .clip(RoundedCornerShape(24.dp))
+                .width(116.dp)
+                .height(82.dp)
+                .clip(tileShape)
                 .clearAndSetSemantics { }
         ) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(16.dp)
-            ) {
-                Column(
-                    horizontalAlignment = Alignment.Start,
-                    verticalArrangement = Arrangement.spacedBy(10.dp)
-                ) {
-                    // Bar 1 (32dp x 8dp)
-                    Box(
-                        modifier = Modifier
-                            .width(32.dp)
-                            .height(8.dp)
-                            .clip(RoundedCornerShape(4.dp))
-                            .background(bar1Color)
-                    )
-                    // Bar 2 (Full width x 6dp)
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(6.dp)
-                            .clip(RoundedCornerShape(4.dp))
-                            .background(bar2Color)
-                    )
-                    // Bar 3 (48dp x 6dp)
-                    Box(
-                        modifier = Modifier
-                            .width(48.dp)
-                            .height(6.dp)
-                            .clip(RoundedCornerShape(4.dp))
-                            .background(bar2Color)
-                    )
+            Canvas(Modifier.fillMaxSize()) {
+                val rim = 3.dp.toPx()
+                val frameRadius = CornerRadius(13.dp.toPx())
+                drawPath(
+                    Path().apply {
+                        addRoundRect(
+                            RoundRect(
+                                left = rim, top = rim, right = size.width - rim, bottom = size.height + frameRadius.x,
+                                topLeftCornerRadius = frameRadius, topRightCornerRadius = frameRadius
+                            )
+                        )
+                    },
+                    frameColor
+                )
+                val side = 9.dp.toPx()
+                val cardWidth = size.width - side * 2
+                val cardTop = 19.dp.toPx()
+                val cardHeight = 50.dp.toPx()
+                val cardRadius = CornerRadius(10.dp.toPx())
+                drawRoundRect(cardColor, Offset(side, cardTop), Size(cardWidth, cardHeight), cardRadius)
+                drawRoundRect(cardColor, Offset(side, cardTop + cardHeight + 7.dp.toPx()), Size(cardWidth, cardHeight), cardRadius)
+                val barLeft = side + 29.dp.toPx()
+                val barSize = Size(side + cardWidth - 11.dp.toPx() - barLeft, 6.dp.toPx())
+                listOf(13.dp, 37.dp).forEachIndexed { row, rowY ->
+                    val y = cardTop + rowY.toPx()
+                    drawCircle(dotColor.copy(alpha = if (row == 0) 0.75f else 1f), 5.5.dp.toPx(), Offset(side + 14.dp.toPx(), y))
+                    drawRect(barColor, Offset(barLeft, y - barSize.height / 2f), barSize)
                 }
             }
         }
