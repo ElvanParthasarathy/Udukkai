@@ -13,6 +13,8 @@ actual fun ConfigureDialogWindow(
     // No-op on desktop
 }
 
+actual fun edgeToEdgeDialogProperties() = androidx.compose.ui.window.DialogProperties(usePlatformDefaultWidth = false)
+
 @androidx.compose.runtime.Composable
 actual fun DisableOverscroll(content: @androidx.compose.runtime.Composable () -> Unit) {
     content()

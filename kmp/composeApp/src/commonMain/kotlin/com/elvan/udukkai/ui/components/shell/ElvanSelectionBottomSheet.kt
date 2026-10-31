@@ -342,11 +342,8 @@ fun <T> ElvanSelectionBottomSheet(
 
     Dialog(
         onDismissRequest = { dismissSheet() },
-        properties = DialogProperties(
-            usePlatformDefaultWidth = false,
-            dismissOnBackPress = true,
-            dismissOnClickOutside = true
-        )
+        // The window reaches under the system navigation bar, so the sheet's colour fills it (the rows keep their padding)
+        properties = com.elvan.udukkai.core.platform.edgeToEdgeDialogProperties()
     ) {
         ConfigureDialogWindow(
             isDark = isDark,

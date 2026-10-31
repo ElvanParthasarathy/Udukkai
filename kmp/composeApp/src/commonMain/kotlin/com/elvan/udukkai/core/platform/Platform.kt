@@ -13,6 +13,9 @@ expect fun ConfigureDialogWindow(
     navBarColor: androidx.compose.ui.graphics.Color? = null
 )
 
+/** Full-width dialog whose window also reaches under the system bars, so a bottom sheet's colour fills the gap at the foot. */
+expect fun edgeToEdgeDialogProperties(): androidx.compose.ui.window.DialogProperties
+
 @androidx.compose.runtime.Composable
 expect fun DisableOverscroll(content: @androidx.compose.runtime.Composable () -> Unit)
 

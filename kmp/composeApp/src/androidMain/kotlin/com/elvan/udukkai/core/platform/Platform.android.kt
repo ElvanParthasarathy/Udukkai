@@ -27,6 +27,9 @@ actual val currentPlatform: PlatformType = PlatformType.ANDROID
 
 actual val isDebugBuild: Boolean = com.elvan.udukkai.BuildConfig.DEBUG
 
+actual fun edgeToEdgeDialogProperties() =
+    androidx.compose.ui.window.DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false)
+
 @Composable
 actual fun ConfigureDialogWindow(
     isDark: Boolean,
