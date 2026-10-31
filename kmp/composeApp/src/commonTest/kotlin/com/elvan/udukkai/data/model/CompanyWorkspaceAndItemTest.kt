@@ -465,4 +465,21 @@ class CompanyWorkspaceAndItemTest {
         TextilesInvoiceRepository.invoices = emptyList()
         assertFalse(TextilesInvoiceRepository.isInvoiceNumberDuplicate("TXT-100", companyAId))
     }
+
+    @Test
+    fun testTextilesNumberCountsPerFinancialYear() {
+        val companyId = 10L
+        val day = { d: String -> com.elvan.udukkai.core.utils.DateUtils.parseToEpochMillis(d)!! }
+        TextilesInvoiceRepository.invoices = listOf(
+            InvoiceModel(id = 301L, invoiceNumber = "TXT-001", companyId = companyId, invoiceDate = day("10/05/2026")),
+            InvoiceModel(id = 302L, invoiceNumber = "TXT-002", companyId = companyId, invoiceDate = day("12/05/2026")),
+        )
+        // The same number is taken in its own year only
+        assertTrue(TextilesInvoiceRepository.isInvoiceNumberDuplicate("TXT-001", companyId, date = day("01/06/2026")))
+        assertFalse(TextilesInvoiceRepository.isInvoiceNumberDuplicate("TXT-001", companyId, date = day("01/04/2027")))
+        // The next number continues in this year and starts again in the next
+        assertEquals("TXT-003", TextilesInvoiceRepository.getNextInvoiceNumber(companyId, "TXT", day("20/03/2027")))
+        assertEquals("TXT-001", TextilesInvoiceRepository.getNextInvoiceNumber(companyId, "TXT", day("01/04/2027")))
+        TextilesInvoiceRepository.invoices = emptyList()
+    }
 }

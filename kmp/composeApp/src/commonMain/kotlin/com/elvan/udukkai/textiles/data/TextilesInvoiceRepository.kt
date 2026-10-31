@@ -6,6 +6,7 @@ import androidx.compose.runtime.setValue
 import com.elvan.udukkai.core.backup.AutoBackupManager
 import com.elvan.udukkai.core.finance.BillNumbering
 import com.elvan.udukkai.core.finance.Books
+import com.elvan.udukkai.core.utils.DateUtils
 import com.elvan.udukkai.data.database.getTextilesDatabaseHelper
 import com.elvan.udukkai.core.utils.SearchHelper
 import com.elvan.udukkai.data.model.InvoiceModel
@@ -94,11 +95,13 @@ object TextilesInvoiceRepository {
         return "$prefix-$padded"
     }
 
-    /** One series a year, restarting each April: VRM/26-27/001 */
+    /** The next short number (VRM-007) of the financial year the bill is dated in: it restarts at 001 each April. */
     fun getNextInvoiceNumber(companyId: Long?, prefix: String, date: Long = System.currentTimeMillis()): String {
-        val series = BillNumbering.seriesPrefix(prefix, date)
-        val used = (invoices + deletedInvoices).filter { it.companyId == companyId }.map { it.invoiceNumber }
-        return BillNumbering.format(series, BillNumbering.nextSerial(used, series))
+        val fy = DateUtils.financialYearStart(date)
+        val used = (invoices + deletedInvoices)
+            .filter { it.companyId == companyId && DateUtils.financialYearStart(it.invoiceDate) == fy }
+            .map { it.invoiceNumber }
+        return BillNumbering.format(prefix, BillNumbering.nextSerial(used, prefix))
     }
 
     /** A bill dated in a locked financial year cannot be added, changed, moved, deleted or brought back. */
@@ -107,13 +110,17 @@ object TextilesInvoiceRepository {
     fun isInvoiceNumberDuplicate(
         invoiceNumber: String,
         companyId: Long?,
-        excludeId: Long? = null
+        excludeId: Long? = null,
+        date: Long? = null
     ): Boolean {
         val target = invoiceNumber.trim().uppercase()
         if (target.isBlank()) return false
+        // A number can come again in another financial year: with a date, only that year is compared
+        val fy = date?.let { DateUtils.financialYearStart(it) }
         return (invoices + deletedInvoices).any { inv ->
             (excludeId == null || inv.id != excludeId) &&
             (companyId == null || inv.companyId == companyId) &&
+            (fy == null || DateUtils.financialYearStart(inv.invoiceDate) == fy) &&
             inv.invoiceNumber.trim().uppercase() == target
         }
     }
@@ -175,7 +182,7 @@ object TextilesInvoiceRepository {
     fun restoreBlocked(id: Long): Boolean {
         val inv = deletedInvoices.find { it.id == id } ?: return false
         val target = inv.invoiceNumber.trim().uppercase()
-        return invoices.any { it.companyId == inv.companyId && it.invoiceNumber.trim().uppercase() == target }
+        return invoices.any { it.companyId == inv.companyId && it.invoiceNumber.trim().uppercase() == target && DateUtils.financialYearStart(it.invoiceDate) == DateUtils.financialYearStart(inv.invoiceDate) }
     }
 
     fun restore(id: Long): Boolean {

@@ -2,6 +2,7 @@
 import React from 'react';
 import '../styles/print.css'; // Same stylesheet as the original Coolie bill: same sizes and positions
 import { numberToWords } from '../lib/Payanpadu';
+import { fyLabel } from '../lib/finYear';
 
 // Coolie (Factory) invoice, print only. The original Coolie bill, made bilingual the way the
 // Textiles invoice is (Tamil line + smaller English line), without the "Motham" table footer: the
@@ -163,7 +164,7 @@ export default function CoolieInvoiceBilingual({ bill }) {
       {/* Bill Info Section */}
       <div className="bill-info-section">
         <div className="bill-meta-row">
-          <span className="bill-meta"><div style={{ fontSize: 'inherit', fontWeight: 'inherit', color: 'inherit' }}>{slash('பட்டியல் எண்', 'Bill No')} : <strong style={{ textTransform: 'uppercase', color: '#242f3d', fontWeight: 600 }}>{displayBillNo}</strong></div></span>
+          <span className="bill-meta"><div style={{ fontSize: 'inherit', fontWeight: 'inherit', color: 'inherit' }}>{slash('பட்டியல் எண்', 'Bill No')} : <strong style={{ textTransform: 'uppercase', color: '#242f3d', fontWeight: 600 }}>{displayBillNo}</strong>{fyLabel(date) && <span style={{ marginLeft: '8px', fontSize: '11px', fontWeight: 400, color: '#64748b' }}>FY {fyLabel(date)}</span>}</div></span>
           <span className="bill-meta"><div style={{ fontSize: 'inherit', fontWeight: 'inherit', color: 'inherit' }}>{slash('நாள்', 'Date')} : <strong style={{ color: '#242f3d', fontWeight: 600 }}>{date}</strong></div></span>
         </div>
         {/* Bill To */}

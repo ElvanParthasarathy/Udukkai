@@ -10,18 +10,16 @@ object BillNumbering {
     /** "26-27" for a date between April 2026 and March 2027. */
     fun fyShort(millis: Long): String = DateUtils.financialYearLabel(millis).let { it.substring(2, 4) + it.substring(4) }
 
-    /** "VRM/26-27/" */
-    fun seriesPrefix(base: String, millis: Long) = "$base/${fyShort(millis)}/"
-
-    fun format(prefix: String, serial: Int) = prefix + serial.toString().padStart(3, '0')
+    /** "VRM-007": the short number every bill shows. The year is kept apart, the pair is what must be unique. */
+    fun format(base: String, serial: Int) = "$base-" + serial.toString().padStart(3, '0')
 
     private val TRAILING_DIGITS = Regex("(\\d+)$")
 
     fun serialOf(number: String): Int? = TRAILING_DIGITS.find(number.trim())?.groupValues?.get(1)?.toIntOrNull()
 
-    /** One more than the highest serial among [numbers] that start with [prefix] (the case does not matter). */
-    fun nextSerial(numbers: List<String>, prefix: String): Int =
-        (numbers.filter { it.trim().startsWith(prefix, ignoreCase = true) }.mapNotNull(::serialOf).maxOrNull() ?: 0) + 1
+    /** One more than the highest serial among [numbers] that start with "[base]-" (the case does not matter). */
+    fun nextSerial(numbers: List<String>, base: String): Int =
+        (numbers.filter { it.trim().startsWith("$base-", ignoreCase = true) }.mapNotNull(::serialOf).maxOrNull() ?: 0) + 1
 
     /** One summary per financial year that has bills, newest first. Proformas are estimates and are left out. */
     fun summaries(bills: List<InvoiceModel>): List<FinancialYearSummary> =
@@ -29,17 +27,4 @@ object BillNumbering {
             .groupBy { DateUtils.financialYearStart(it.invoiceDate) }
             .map { (fy, list) -> FinancialYearSummary(fy, list.size, list.sumOf { it.totalAmount }) }
             .sortedByDescending { it.fyStart }
-
-    /**
-     * New numbers for the bills that are not in a yearly series yet: in each financial year, oldest first, continuing
-     * after any number the series already holds ([reserved] are the numbers in the recycle bin). Estimates get their own EST series.
-     */
-    fun renumberPlan(live: List<InvoiceModel>, reserved: List<String>, base: String): List<Pair<InvoiceModel, String>> =
-        live.groupBy { DateUtils.financialYearStart(it.invoiceDate) to (it.invoiceType == "proforma") }.flatMap { (key, bills) ->
-            val prefix = seriesPrefix(if (key.second) "EST" else base, bills.first().invoiceDate)
-            var next = nextSerial(bills.map { it.invoiceNumber } + reserved, prefix)
-            bills.filter { !it.invoiceNumber.startsWith(prefix, ignoreCase = true) }
-                .sortedWith(compareBy({ it.invoiceDate }, { it.id }))
-                .map { it to format(prefix, next++) }
-        }
 }

@@ -9,6 +9,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.dp
+import com.elvan.udukkai.core.finance.BillNumbering
 import com.elvan.udukkai.data.model.InvoiceModel
 import com.elvan.udukkai.data.settings.BusinessProfile
 import com.elvan.udukkai.data.model.ReceiptModel
@@ -26,13 +27,17 @@ fun billBusinessFolder(profile: BusinessProfile?): String {
     return name.replace(Regex("[\\\\/:*?\"<>|]"), "-").trim().trim('.').ifEmpty { "Business" }
 }
 
-/** PDF file name of an invoice (same names the React app used). */
-fun invoicePdfName(invoice: InvoiceModel): String =
+/** PDF file name of an invoice: the long name, with the financial year, so a number that comes again next year never overwrites. */
+fun invoicePdfName(invoice: InvoiceModel): String = legacyInvoicePdfName(invoice) + "_" + BillNumbering.fyShort(invoice.invoiceDate)
+
+/** PDF file name of a receipt, with the financial year. */
+fun receiptPdfName(receipt: ReceiptModel): String = legacyReceiptPdfName(receipt) + "_" + BillNumbering.fyShort(receipt.receiptDate)
+
+/** The names the React app used (and this app until files got the year), kept to remove the old copies. */
+private fun legacyInvoicePdfName(invoice: InvoiceModel): String =
     (if (invoice.invoiceType == "proforma") "EST_" else "INV_") + invoice.invoiceNumber.replace('/', '-')
 
-/** PDF file name of a receipt (same names the React app used). */
-fun receiptPdfName(receipt: ReceiptModel): String =
-    "RCPT_" + receipt.receiptNumber.replace('/', '-')
+private fun legacyReceiptPdfName(receipt: ReceiptModel): String = "RCPT_" + receipt.receiptNumber.replace('/', '-')
 
 /**
  * Every bill saved in an editor gets its PDF written to the documents folder, where the React app
@@ -59,11 +64,11 @@ object BillPdfAutoSave {
             // Copies in the earlier folder layout are dropped; their bills are written again below
             removeOldBillFolders()
             invoices.filter { !it.isDeleted && it.id > 0L && !billPdfExists(invoicePdfName(it), businessOf(it.companyId)) }
-                .map { Request(Kind.Invoice, it.id, null, null, 0L) } +
+                .map { Request(Kind.Invoice, it.id, legacyInvoicePdfName(it), it.companyId, 0L) } +
                 receipts.filter { !it.isDeleted && it.id > 0L && !billPdfExists(receiptPdfName(it), businessOf(it.companyId)) }
-                    .map { Request(Kind.Receipt, it.id, null, null, 0L) }
+                    .map { Request(Kind.Receipt, it.id, legacyReceiptPdfName(it), it.companyId, 0L) }
         }
-        missing.forEach { request(it.kind, it.id) }
+        missing.forEach { request(it.kind, it.id, it.replaces, it.replacesCompanyId) }
     }
 
     fun request(kind: Kind, id: Long, replaces: String? = null, replacesCompanyId: Long? = null) {

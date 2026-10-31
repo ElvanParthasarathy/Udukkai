@@ -2,7 +2,6 @@ package com.elvan.udukkai.factory.ui.screens.editor
 
 import com.elvan.udukkai.core.utils.DateUtils
 import com.elvan.udukkai.core.utils.BillRules
-import com.elvan.udukkai.core.finance.BillNumbering
 import com.elvan.udukkai.core.print.PrintPayload
 import com.elvan.udukkai.localization.LanguageManager
 import com.elvan.udukkai.ui.screens.preview.DraftBillPreview
@@ -484,7 +483,7 @@ fun FactoryInvoiceEditorScreen(
             ElvanSnackbar.show(customerRequiredMsg)
         } else if (invoiceNumber.isBlank()) {
             ElvanSnackbar.show(invoiceNumberRequiredMsg)
-        } else if (FactoryInvoiceRepository.isInvoiceNumberDuplicate(invoiceNumber, selectedCompanyId, invoice?.id)) {
+        } else if (FactoryInvoiceRepository.isInvoiceNumberDuplicate(invoiceNumber, selectedCompanyId, invoice?.id, invoiceDate)) {
             val dupMsg = "$invoiceNumber - $invoiceNumberDuplicateMsg"
             ElvanSnackbar.show(dupMsg)
         } else if (isPaidLocked) {
@@ -622,16 +621,13 @@ fun FactoryInvoiceEditorScreen(
                     ElvanEditorDisabledOverlay(disabled = !isCustomerSelected) {
                         ElvanEditorSection(index = 1, title = K.invoiceDetails.tr()) {
                             val currentPrefix = computePrefix(selectedProfile)
-                            // One series a year (CB/26-27/001): bills already numbered the old way keep their number as it is
-                            val seriesPrefix = BillNumbering.seriesPrefix(currentPrefix, invoiceDate)
-                            val numberPrefix = if (!isEditing || invoiceNumber.startsWith(seriesPrefix, ignoreCase = true)) seriesPrefix else "$currentPrefix-"
                             Column(
                                 modifier = Modifier.fillMaxWidth(),
                                 verticalArrangement = Arrangement.spacedBy(16.dp)
                             ) {
                                 ElvanDocumentNumberField(
                                     label = K.invoiceNumber.tr(),
-                                    prefix = numberPrefix,
+                                    prefix = "$currentPrefix-",
                                     initialFullNumber = invoiceNumber,
                                     onFullNumberChanged = { newNum ->
                                         invoiceNumber = newNum

@@ -17,6 +17,7 @@ const IconMail = ({ size = 14, className = '', style = {} }) => (
     </svg>
 );
 import { numberToWords, formatCurrency, INVOICE_TYPES, getCountryConfig, CURRENCY_NAMES, formatExchangeRateLine, getAccountById, getBilingualStateName, getBilingualCountryName, getDynamicField } from '../lib/Payanpadu';
+import { fyLabel } from '../lib/finYear';
 import { en } from '../lib/mozhi/en';
 import { ta } from '../lib/mozhi/ta';
 
@@ -300,7 +301,7 @@ const SjsTheme = React.forwardRef(({ profile = {}, client = {}, details = {}, it
 
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: accent + '1A', borderRadius: '8px', padding: '8px 0.5rem', marginBottom: '15px' }}>
         <div style={{ fontSize: '14px', fontWeight: 600, color: accent }}>
-          {showInvoiceNumber && <>{renderLabel('Bill No', 'பில் எண்')} : <strong style={{ color: '#000', fontWeight: 700 }}>{details?.invoiceNumber}</strong></>}
+          {showInvoiceNumber && <>{renderLabel('Bill No', 'பில் எண்')} : <strong style={{ color: '#000', fontWeight: 700 }}>{details?.invoiceNumber}</strong>{fyLabel(details?.invoiceDate) && <span style={{ marginLeft: '8px', fontSize: '11px', fontWeight: 400, color: '#64748b' }}>FY {fyLabel(details?.invoiceDate)}</span>}</>}
         </div>
         <div style={{ fontSize: '14px', fontWeight: 600, color: accent }}>
           {showInvoiceDate && <>{renderLabel('Date', 'நாள்')} : <strong style={{ color: '#000', fontWeight: 700 }}>{details?.invoiceDate ? new Date(details.invoiceDate).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' }) : ''}</strong></>}

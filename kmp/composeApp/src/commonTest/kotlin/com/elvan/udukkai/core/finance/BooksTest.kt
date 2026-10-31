@@ -40,15 +40,12 @@ class BooksTest {
     }
 
     @Test
-    fun the_series_restarts_each_april() {
-        val prefix = BillNumbering.seriesPrefix("VRM", day("31/03/2026"))
-        assertEquals("VRM/25-26/", prefix)
-        assertEquals("VRM/26-27/", BillNumbering.seriesPrefix("VRM", day("01/04/2026")))
-        assertEquals(1, BillNumbering.nextSerial(listOf("VRM/25-26/040"), "VRM/26-27/"))
-        assertEquals(41, BillNumbering.nextSerial(listOf("VRM/25-26/040", "vrm/25-26/007"), prefix))
-        assertEquals("VRM/26-27/001", BillNumbering.format("VRM/26-27/", 1))
-        assertEquals("VRM/26-27/1000", BillNumbering.format("VRM/26-27/", 1000), "past 999 the number just grows")
-        assertTrue(BillRulesCheck.ok(BillNumbering.format("ABCDE/26-27/", 999)), "16 characters is the limit")
+    fun numbers_are_short_and_count_from_001() {
+        assertEquals("VRM-001", BillNumbering.format("VRM", 1))
+        assertEquals("VRM-1000", BillNumbering.format("VRM", 1000), "past 999 the number just grows")
+        assertEquals(1, BillNumbering.nextSerial(emptyList(), "VRM"))
+        assertEquals(41, BillNumbering.nextSerial(listOf("VRM-040", "vrm-007", "PVS-099"), "VRM"))
+        assertTrue(BillRulesCheck.ok(BillNumbering.format("ABCDEFGHIJKL", 999)), "16 characters is the limit")
     }
 
     @Test
@@ -58,19 +55,6 @@ class BooksTest {
         )
         assertEquals(listOf(2026, 2025), s.map { it.fyStart })
         assertEquals(50.0, s[0].total)
-    }
-
-    @Test
-    fun old_bills_get_a_yearly_number_oldest_first_and_new_ones_are_left_alone() {
-        val live = listOf(
-            bill("SJPS-30", "10/04/2026", id = 2),
-            bill("SJPS-29", "05/04/2026", id = 1),
-            bill("SJPS-20", "20/03/2026", id = 3),
-            bill("SJPS/26-27/001", "01/05/2026", id = 4),
-            InvoiceModel(id = 5, invoiceNumber = "EST-1", invoiceType = "proforma", invoiceDate = day("02/05/2026")),
-        )
-        val plan = BillNumbering.renumberPlan(live, listOf("SJPS/26-27/002"), "SJPS").associate { it.first.id to it.second }
-        assertEquals(mapOf(3L to "SJPS/25-26/001", 1L to "SJPS/26-27/003", 2L to "SJPS/26-27/004", 5L to "EST/26-27/001"), plan)
     }
 
     private object BillRulesCheck {
