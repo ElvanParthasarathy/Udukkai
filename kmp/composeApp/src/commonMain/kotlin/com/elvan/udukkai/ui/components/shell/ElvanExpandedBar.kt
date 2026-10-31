@@ -70,8 +70,7 @@ fun ElvanExpandedBar(
         }
         val screenWidthPx = with(density) { screenWidth.toPx() }
         val maxAvailableWidthPx = screenWidthPx - with(density) { 32.dp.toPx() }
-        // A title too wide for one line sits on two centred lines while the bar is open. The two lines are two pieces of
-        // text that glide into one line as the bar closes: the first goes to the closed place, the second slides up beside it.
+        // A title too wide for one line sits on two centred lines while the bar is open (as on Samsung's own pages).
         val wraps = fullLayout.size.width > maxAvailableWidthPx
         val wrappedLayout = remember(safeTitle, ff, maxAvailableWidthPx, wraps) {
             if (!wraps) null else textMeasurer.measure(
@@ -82,13 +81,6 @@ fun ElvanExpandedBar(
                 overflow = TextOverflow.Ellipsis
             )
         }
-        val breakAt = wrappedLayout?.getLineEnd(0, visibleEnd = false) ?: 0
-        val firstPart = if (wraps) safeTitle.substring(0, breakAt).trimEnd() else safeTitle
-        val secondPart = if (wraps) safeTitle.substring(breakAt).trimStart() else ""
-        val firstW = remember(firstPart, ff) { textMeasurer.measure(text = firstPart, style = titleStyle).size.width.toFloat() }
-        val secondW = remember(secondPart, ff) { if (secondPart.isEmpty()) 0f else textMeasurer.measure(text = secondPart, style = titleStyle).size.width.toFloat() }
-        val spaceW = remember(ff) { textMeasurer.measure(text = " ", style = titleStyle).size.width.toFloat().coerceAtLeast(1f) }
-        val lineH = wrappedLayout?.let { (it.getLineBottom(0) - it.getLineTop(0)) } ?: fullLayout.size.height.toFloat()
 
         val rawTextWidthPx = if (wraps) maxAvailableWidthPx else fullLayout.size.width.toFloat()
         val textWidthPx = minOf(rawTextWidthPx, maxAvailableWidthPx)
@@ -129,6 +121,9 @@ fun ElvanExpandedBar(
         val titleOpacity = ((1.0f - liftProgress) * selectionFade).coerceIn(0f, 1f)
 
         val maxAllowedWidthDp = (screenWidth - 32.dp)
+        // The room for a title grows as the bar closes (the text is also smaller then), so a title is not cut sooner than it must be
+        val closedUnscaledPx = closedRoomPx / finalScale
+        val lineCapPx = maxAvailableWidthPx + (maxOf(maxAvailableWidthPx, closedUnscaledPx) - maxAvailableWidthPx) * t
 
         if (titleOpacity > 0f && !wraps) {
             Text(
@@ -140,7 +135,9 @@ fun ElvanExpandedBar(
                 modifier = Modifier
                     .align(Alignment.TopStart)
                     .offset(x = currentLeftDp, y = currentTopDp)
-                    .widthIn(max = maxAllowedWidthDp)
+                    // (unbounded: the page is narrower than the room the shrunken title can use; Start keeps its left edge in place)
+                    .wrapContentWidth(Alignment.Start, unbounded = true)
+                    .widthIn(max = with(density) { lineCapPx.toDp() })
                     .graphicsLayer {
                         scaleX = scale
                         scaleY = scale
@@ -150,49 +147,54 @@ fun ElvanExpandedBar(
             )
         }
         if (titleOpacity > 0f && wraps) {
-            // Open: each line centred on its own, the first above the second. Closed: one line from the closed place.
-            val firstLeftOpen = (screenWidthPx - minOf(firstW, maxAvailableWidthPx)) / 2f
-            val secondLeftOpen = (screenWidthPx - minOf(secondW, maxAvailableWidthPx)) / 2f
-            val firstLeftClosed = if (isSelectionMode) firstLeftOpen else targetLeftPx
-            val secondLeftClosed = if (isSelectionMode) secondLeftOpen else targetLeftPx + (firstW + spaceW) * finalScale
-            fun lerp(a: Float, b: Float) = a + (b - a) * t
-            val firstBottomOpen = startTextBottomPx - lineH
-            val secondBottomOpen = startTextBottomPx
-            val bottomClosed = targetTextBottomPx
-            // The room each line may use, as the page closes: the whole width open, what is left beside the buttons closed
-            val closedUnscaledPx = closedRoomPx / finalScale
-            val firstCapClosed = minOf(maxAvailableWidthPx, closedUnscaledPx)
-            val secondCapClosed = (closedUnscaledPx - firstW - spaceW).coerceIn(0f, maxAvailableWidthPx)
-            for (piece in 0..1) {
-                val text = if (piece == 0) firstPart else secondPart
-                if (text.isEmpty()) continue
-                // The first line moves like a plain title. The second follows it like a train: it keeps just behind the first
-                // line's right end as that shrinks, and eases up into the row, so the two lines never run into each other.
-                fun smooth(x: Float) = x.coerceIn(0f, 1f).let { it * it * (3f - 2f * it) }
-                val firstLeftNow = lerp(firstLeftOpen, firstLeftClosed)
-                val hugLeft = if (isSelectionMode) secondLeftOpen else firstLeftNow + (firstW + spaceW) * scale
-                val leftPx = if (piece == 0) firstLeftNow else secondLeftOpen + (hugLeft - secondLeftOpen) * smooth(t / 0.55f)
-                val bottomPx = if (piece == 0) lerp(firstBottomOpen, bottomClosed) else secondBottomOpen + (bottomClosed - secondBottomOpen) * smooth((t - 0.15f) / 0.85f)
+            fun smooth(x: Float) = x.coerceIn(0f, 1f).let { it * it * (3f - 2f * it) }
+            // As in Samsung's own pages: the two lines are carried up by the scroll, at the same size, and fade away as they go.
+            // They are fully gone before their top reaches the status bar, so they never run into the camera.
+            val blockHeightPx = wrappedLayout?.size?.height?.toFloat() ?: textHeightPx
+            val blockTopAtRestPx = startTextBottomPx - blockHeightPx
+            val goneAtTopPx = statusBarHeightPx + with(density) { 16.dp.toPx() }
+            val goneAtScrollPx = (blockTopAtRestPx - goneAtTopPx).coerceAtLeast(1f)
+            val blockAlpha = 1f - smooth(scrollOffsetPx / goneAtScrollPx)
+            // Then the one line fades in on the back-button row, rising with it until the row docks (never both at once).
+            val lineAlpha = smooth((scrollOffsetPx - goneAtScrollPx) / (handoffShrinkOffsetPx - goneAtScrollPx).coerceAtLeast(1f))
+            val rowTopPx = maxOf(ceilingPx, maxExtentPx - scrollOffsetPx - with(density) { 64.dp.toPx() })
+            val lineBottomPx = rowTopPx + with(density) { 44.dp.toPx() }
+            if (blockAlpha > 0f && wrappedLayout != null) {
                 Text(
-                    text = text,
+                    text = safeTitle,
+                    maxLines = 2,
+                    softWrap = true,
+                    overflow = TextOverflow.Ellipsis,
+                    style = titleStyle.copy(textAlign = androidx.compose.ui.text.style.TextAlign.Center),
+                    modifier = Modifier
+                        .align(Alignment.TopStart)
+                        .offset(
+                            x = with(density) { ((screenWidthPx - maxAvailableWidthPx) / 2f).toDp() },
+                            y = with(density) { (startTextBottomPx - scrollOffsetPx - wrappedLayout.size.height.toFloat()).toDp() }
+                        )
+                        .width(maxAllowedWidthDp)
+                        .graphicsLayer { this.alpha = titleOpacity * blockAlpha }
+                )
+            }
+            if (lineAlpha > 0f) {
+                Text(
+                    text = safeTitle,
                     maxLines = 1,
                     softWrap = false,
-                    // While the second line is on its way it is simply cut at the margin; the dots come when it has settled
-                    overflow = if (piece == 1 && t < 0.9f) TextOverflow.Clip else TextOverflow.Ellipsis,
+                    overflow = TextOverflow.Ellipsis,
                     style = titleStyle,
                     modifier = Modifier
                         .align(Alignment.TopStart)
-                        .offset(x = with(density) { leftPx.toDp() }, y = with(density) { (bottomPx - fullLayout.size.height.toFloat()).toDp() })
-                        .widthIn(max = with(density) {
-                            val byProgress = if (piece == 0) lerp(maxAvailableWidthPx, firstCapClosed) else lerp(maxAvailableWidthPx, secondCapClosed)
-                            // and never past the page's right margin, wherever the line is on its way
-                            val byEdge = ((screenWidthPx - 16.dp.toPx() - leftPx) / scale).coerceAtLeast(0f)
-                            minOf(byProgress, byEdge).toDp()
-                        })
+                        .offset(
+                            x = with(density) { (if (isSelectionMode) centeredLeftPx else targetLeftPx).toDp() },
+                            y = with(density) { (lineBottomPx - textHeightPx).toDp() }
+                        )
+                        .wrapContentWidth(Alignment.Start, unbounded = true)
+                        .widthIn(max = with(density) { closedUnscaledPx.toDp() })
                         .graphicsLayer {
-                            scaleX = scale
-                            scaleY = scale
-                            this.alpha = titleOpacity
+                            scaleX = finalScale
+                            scaleY = finalScale
+                            this.alpha = titleOpacity * lineAlpha
                             transformOrigin = TransformOrigin(0f, 1f)
                         }
                 )
