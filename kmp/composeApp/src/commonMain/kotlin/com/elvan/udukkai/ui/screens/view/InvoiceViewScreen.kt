@@ -260,7 +260,7 @@ private fun InvoiceDetailsScreen(
                                     modifier = Modifier
                                         .clip(CircleShape)
                                         .background(statusBg)
-                                        .padding(horizontal = 9.dp, vertical = 3.5.dp)
+                                        .padding(horizontal = 8.dp, vertical = 4.dp)
                                 ) {
                                     Row(
                                         verticalAlignment = Alignment.CenterVertically,
