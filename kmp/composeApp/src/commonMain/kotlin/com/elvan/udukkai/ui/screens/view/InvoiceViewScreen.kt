@@ -275,7 +275,7 @@ private fun InvoiceDetailsScreen(
                                             )
                                         }
                                         Text(
-                                            text = (if (isPaid) K.statusPaid.tr() else K.draft.tr()).preventBrokenLigatures(),
+                                            text = (if (isPaid) K.statusPaid.tr() else K.statusUnpaid.tr()).preventBrokenLigatures(),
                                             style = TextStyle(
                                                 fontFamily = ff,
                                                 fontSize = 11.5.sp,

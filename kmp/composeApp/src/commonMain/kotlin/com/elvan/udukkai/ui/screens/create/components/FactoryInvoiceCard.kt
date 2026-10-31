@@ -81,7 +81,7 @@ fun FactoryInvoiceCard(
     val dateStr = DateUtils.formatEpochMillis(invoice.invoiceDate)
 
     // A screen reader reads the card as one item; at a larger text size the name and place wrap instead of being cut
-    val statusText = if (isPaid) K.statusPaid.tr() else K.draft.tr()
+    val statusText = if (isPaid) K.statusPaid.tr() else K.statusUnpaid.tr()
     val spoken = listOfNotNull(invoice.invoiceNumber, "FY " + BillNumbering.fyShort(invoice.invoiceDate), primary, secondary.takeIf { showSecondary }, if (primaryCity.isNotEmpty()) "$dateStr, $primaryCity" else dateStr, amountStr, statusText).joinToString(", ")
     val textLines = if (LocalDensity.current.fontScale > 1.15f) 2 else 1
 
@@ -215,7 +215,7 @@ fun FactoryInvoiceCard(
                         verticalArrangement = Arrangement.spacedBy(3.dp)
                     ) {
                         Text(
-                            text = (if (isPaid) K.statusPaid.tr() else K.draft.tr()).preventBrokenLigatures(),
+                            text = (if (isPaid) K.statusPaid.tr() else K.statusUnpaid.tr()).preventBrokenLigatures(),
                             style = TextStyle(
                                 fontFamily = ff,
                                 fontSize = 12.sp,

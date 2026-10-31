@@ -43,7 +43,7 @@ private val EaseOutCubic = CubicBezierEasing(0.215f, 0.61f, 0.355f, 1.0f)
 internal object NeramColors {
     @Composable fun textPrimary() = if (ThemeManager.isDark()) Color.White else Color(0xFF1A1A1A)
     @Composable fun textSecondary() = if (ThemeManager.isDark()) Color.White.copy(alpha = 0.6f) else Color(0xFF666666)
-    @Composable fun textMuted() = if (ThemeManager.isDark()) Color.White.copy(alpha = 0.4f) else Color(0xFF999999)
+    @Composable fun textMuted() = if (ThemeManager.isDark()) Color.White.copy(alpha = 0.52f) else Color(0xFF767676)
     @Composable fun inputBackground() = if (ThemeManager.isDark()) Color(0xFF1E1E1E) else Color.White
     @Composable fun divider() = if (ThemeManager.isDark()) Color.White.copy(alpha = 0.08f) else Color.Black.copy(alpha = 0.06f)
     @Composable fun accent() = if (ThemeManager.isDark()) Color.White else Color.Black

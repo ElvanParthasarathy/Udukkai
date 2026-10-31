@@ -264,6 +264,7 @@ val en: Map<String, String> = mapOf(
     K.invoiceNumberAlreadyExists to "Invoice number already exists!",
     K.invoiceLockedDueToReceipt to "Invoice cannot be edited because a payment receipt is linked",
     K.statusPaid to "Paid",
+    K.statusUnpaid to "Unpaid",
     K.savedReceiptNumberLocked to "Saved receipt number cannot be changed",
     K.receiptSaved to "Receipt saved",
     K.receiptNumber to "Receipt Number",

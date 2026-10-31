@@ -62,7 +62,7 @@ fun ElvanExpandedBar(
             fontWeight = FontWeight.Bold,
             color = colors.textPrimary
         )
-        val textLayoutResult = remember(safeTitle, ff) {
+        val fullLayout = remember(safeTitle, ff) {
             textMeasurer.measure(
                 text = safeTitle,
                 style = titleStyle
@@ -70,6 +70,10 @@ fun ElvanExpandedBar(
         }
         val screenWidthPx = with(density) { screenWidth.toPx() }
         val maxAvailableWidthPx = screenWidthPx - with(density) { 32.dp.toPx() }
+        // A title that is too wide is set smaller (down to 24sp) so it shows whole instead of ending in "..."
+        val fit = if (fullLayout.size.width > maxAvailableWidthPx) (maxAvailableWidthPx / fullLayout.size.width).coerceAtLeast(24f / 34f) else 1f
+        val shownStyle = if (fit < 1f) titleStyle.copy(fontSize = (34f * fit).sp) else titleStyle
+        val textLayoutResult = if (fit < 1f) textMeasurer.measure(text = safeTitle, style = shownStyle) else fullLayout
         val rawTextWidthPx = textLayoutResult.size.width.toFloat()
         val textWidthPx = minOf(rawTextWidthPx, maxAvailableWidthPx)
         val textHeightPx = textLayoutResult.size.height.toFloat()
@@ -117,7 +121,7 @@ fun ElvanExpandedBar(
                 maxLines = 1,
                 softWrap = false,
                 overflow = TextOverflow.Ellipsis,
-                style = titleStyle,
+                style = shownStyle,
                 modifier = Modifier
                     .align(Alignment.TopStart)
                     .offset(x = currentLeftDp, y = currentTopDp)

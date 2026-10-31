@@ -142,7 +142,7 @@ fun UllnuzhaivuThirai(
                 Column(modifier = Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
                     NeramButton(text = K.logIn.tr(), onClick = { logIn() }, loading = emailBusy, enabled = !busy)
 
-                    Spacer(Modifier.height(14.dp))
+                    Spacer(Modifier.height(8.dp))
 
                     Text(
                         text = K.forgotPassword.tr(),
@@ -168,10 +168,10 @@ fun UllnuzhaivuThirai(
                                     }
                                 }
                             }
-                            .padding(horizontal = 8.dp, vertical = 6.dp)
+                            .padding(horizontal = 16.dp, vertical = 12.dp)
                     )
 
-                    Spacer(Modifier.height(10.dp))
+                    Spacer(Modifier.height(4.dp))
 
                     Row(
                         modifier = Modifier.fillMaxWidth().padding(horizontal = 28.dp),

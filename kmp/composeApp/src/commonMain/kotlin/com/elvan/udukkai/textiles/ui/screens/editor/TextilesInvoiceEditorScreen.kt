@@ -402,7 +402,7 @@ fun TextilesInvoiceEditorScreen(
     val booksLockedMsg = K.booksLockedMsg.tr()
     val invoiceSavedMsg = K.invoiceSaved.tr()
     val invoiceNumberDuplicateMsg = K.invoiceNumberAlreadyExists.tr()
-    val saveBtnLabel = K.draft.tr()
+    val saveBtnLabel = K.save.tr()
 
     // The bill as the form stands now: used by Save and by the draft preview
     val buildInvoice: (Int) -> InvoiceModel = { nextVanakkam ->

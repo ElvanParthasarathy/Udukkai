@@ -47,6 +47,8 @@ private val DarkColorScheme = darkColorScheme(
     error = ErrorDark
 )
 
+private const val MAX_FONT_SCALE = 1.0f
+
 @Composable
 fun UdukkaiTheme(
     darkTheme: Boolean = ThemeManager.isDark(),
@@ -60,11 +62,10 @@ fun UdukkaiTheme(
         createTypography(currentFontFamily)
     }
 
-    // Fix for devices with large default font/display scaling
-    // We force the font scale to be at most 1.0f to maintain the intended design
+    // The text size stays as designed: the phone's larger text setting is not applied (the layouts are made for Tamil at this size)
     val currentDensity = LocalDensity.current
-    val density = if (currentDensity.fontScale > 1.0f) {
-        Density(currentDensity.density, fontScale = 1.0f)
+    val density = if (currentDensity.fontScale > MAX_FONT_SCALE) {
+        Density(currentDensity.density, fontScale = MAX_FONT_SCALE)
     } else {
         currentDensity
     }
