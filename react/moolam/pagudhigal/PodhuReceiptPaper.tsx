@@ -69,9 +69,30 @@ export function normalizeReceiptProfile(p: any = {}) {
     : (p.receiptLanguage === 'en' ? 'English' : (p.primaryDataLanguage || 'Tamil'));
   const secondaryLang = isBilingual ? (p.secondaryDataLanguage || 'English') : primaryLang;
 
-  // Business Name
-  const namePrimary = getDynamicField(p, 'niruvanathinPeyar', p, true) || p.name || p.businessName || 'Your Business';
-  const nameSecondary = getDynamicField(p, 'niruvanathinPeyar', p, false) || p.nameEn || p.businessNameEn || '';
+  // Business Name: English is primary, Tamil is subtitle (matching Coolie Bill)
+  const englishName = 
+    p.nameEn || 
+    p.nameEnglish || 
+    p.businessNameEn || 
+    p.niruvanathinPeyarEn || 
+    p.niruvanathinPeyar_English || 
+    (p.businessName && typeof p.businessName === 'object' ? p.businessName.en : '') ||
+    getDynamicField(p, 'niruvanathinPeyar', p, false) || 
+    '';
+
+  const tamilName = 
+    p.name || 
+    p.nameTamil || 
+    p.businessNameTa || 
+    p.niruvanathinPeyar || 
+    p.niruvanathinPeyar_Tamil || 
+    (p.businessName && typeof p.businessName === 'object' ? p.businessName.ta : '') ||
+    getDynamicField(p, 'niruvanathinPeyar', p, true) || 
+    (typeof p.businessName === 'string' ? p.businessName : '') || 
+    '';
+
+  const namePrimary = englishName || tamilName || 'Your Business';
+  const nameSecondary = tamilName;
 
   // Address lines matching invoice contact lines:
   // Line 1: Street, City - PIN
@@ -486,9 +507,10 @@ export default function PodhuReceiptPaper({
           <style>{`
           .receipt-box { width: 210mm; min-height: 297mm; box-sizing: border-box; margin: 0 auto; border: 2px solid #e2e8f0; border-radius: 8px; background: white; display: flex; flex-direction: column; position: relative; text-align: left; }
           .receipt-content { padding: 8mm 12mm; flex: 1; display: flex; flex-direction: column; box-sizing: border-box; }
-          .print-header-new { display: flex; justify-content: space-between; align-items: flex-start; position: relative; min-height: 70px; }
-          .header-left { display: flex; align-items: center; justify-content: flex-start; gap: 1rem; position: relative; }
-          .header-right { text-align: right; z-index: 5; position: relative; }
+          .print-header-new { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; margin-bottom: 12px; }
+          .header-left { display: flex; align-items: center; gap: 15px; }
+          .header-company-info { text-align: left; }
+          .header-right { text-align: right; display: flex; flex-direction: column; align-items: flex-end; justify-content: center; }
           .receipt-row { display: flex; justify-content: space-between; align-items: flex-start; padding: 0.65rem 8px; font-size: 1.05rem; border-bottom: 1px solid #f1f5f9; }
           .receipt-label { color: var(--bill-primary, #1e3a8a); font-weight: 600; }
           .receipt-value { color: #242f3d; font-weight: 600; text-align: right; }
@@ -514,19 +536,16 @@ export default function PodhuReceiptPaper({
                   <span className="greeting-right" style={{ color: norm.themeColor }}>{(!norm.isBilingual && norm.primaryLang === 'English') ? 'Vaazhga Valamudan' : 'வாழ்க வளமுடன்'}</span>
                 </div>
 
-                {/* Header matching Invoice layout */}
-                <div className="print-header-new" style={{ paddingLeft: '8px', paddingRight: '8px', borderBottom: '2px solid #e2e8f0', paddingBottom: '0.85rem', marginBottom: '1.25rem' }}>
+                {/* Header matching Coolie Bill layout */}
+                <div className="print-header-new" style={{ paddingLeft: '8px', paddingRight: '8px', borderBottom: '1px solid #e2e8f0', paddingBottom: '10px', marginBottom: '12px' }}>
                   <div className="header-left">
                     {(norm.billHeaderStyle === 'wide' || (!norm.billHeaderStyle && norm.wideLogo)) && norm.wideLogo ? (
                       <img 
                         src={norm.wideLogo} 
                         alt="Wide Logo" 
                         style={{ 
-                          position: 'absolute',
-                          left: 0,
-                          top: -20,
-                          height: '140px', 
-                          width: '400px', 
+                          height: '60px', 
+                          maxWidth: '360px', 
                           objectFit: 'contain', 
                           objectPosition: 'left center',
                           transform: `translate(${norm.wideLogoX}px, ${norm.wideLogoY}px) scale(${norm.wideLogoScale})`,
@@ -534,16 +553,14 @@ export default function PodhuReceiptPaper({
                         }} 
                       />
                     ) : (
-                      <div style={{
-                        position: 'absolute',
-                        left: 0,
-                        top: -40,
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '1rem',
-                        height: '140px'
-                      }}>
-                        {norm.logo && <img src={norm.logo} alt="Logo" style={{ maxHeight: `${norm.logoHeight || 120}px`, maxWidth: '160px', objectFit: 'contain' }} />}
+                      <>
+                        {norm.logo && (
+                          <img 
+                            src={norm.logo} 
+                            alt="Logo" 
+                            style={{ maxHeight: `${Math.min(norm.logoHeight || 60, 70)}px`, maxWidth: '150px', objectFit: 'contain' }} 
+                          />
+                        )}
                         <div className="header-company-info" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
                           <div className="company-name font-display" style={{ color: norm.themeColor, whiteSpace: 'nowrap' }}>
                             {norm.namePrimary}
@@ -554,7 +571,7 @@ export default function PodhuReceiptPaper({
                             </div>
                           )}
                         </div>
-                      </div>
+                      </>
                     )}
                   </div>
                   <div className="header-right" style={{ textAlign: 'right', display: 'flex', flexDirection: 'column', alignItems: 'flex-end', justifyContent: 'center' }}>
@@ -645,7 +662,7 @@ export default function PodhuReceiptPaper({
                   <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'flex-start', width: '100%' }}>
                     <div style={{ textAlign: 'right', display: 'flex', flexDirection: 'column', alignItems: 'flex-end', minWidth: '220px' }}>
                       <div className="sign-company font-display" style={{ color: norm.themeColor, position: 'relative', zIndex: 10, fontSize: '14px', fontWeight: 700, marginBottom: '5px', lineHeight: 1.2 }}>
-                        {norm.nameSecondary || norm.namePrimary}
+                        {norm.namePrimary}
                       </div>
                       <div style={{ position: 'relative', height: '55px', width: '100%', display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
                         {(norm.signature || receipt?.signature) && (

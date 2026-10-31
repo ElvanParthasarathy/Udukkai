@@ -67,6 +67,10 @@ export const toReactProfile = (p, lang) => {
   };
 
   putBilingual(out, 'niruvanathinPeyar', p.businessName, lang);
+  out.name = str(p.businessName?.ta) || str(p.businessName?.[lang.primaryCode]);
+  out.nameEn = str(p.businessName?.en) || str(p.businessName?.[lang.secondaryCode]);
+  out.businessName = str(p.businessName?.ta) || str(p.businessName?.[lang.primaryCode]);
+  out.businessNameEn = str(p.businessName?.en) || str(p.businessName?.[lang.secondaryCode]);
   putBilingual(out, 'mugavari', p.address, lang);
   putBilingual(out, 'oor', p.city, lang);
   putBilingual(out, 'maavattam', p.district, lang);
