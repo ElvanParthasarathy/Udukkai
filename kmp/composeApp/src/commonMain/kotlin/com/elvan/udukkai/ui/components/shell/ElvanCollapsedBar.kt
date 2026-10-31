@@ -18,6 +18,8 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Icon
+import androidx.compose.foundation.text.BasicText
+import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.material3.Text
 import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
@@ -47,7 +49,7 @@ import com.elvan.udukkai.ui.navigation.MaterialSymbols
 fun ElvanTopBarIconButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
-    size: Dp = 44.dp,
+    size: Dp = 38.dp,
     content: @Composable () -> Unit
 ) {
     Box(
@@ -233,7 +235,7 @@ fun ElvanCollapsedBar(
                                 ElvanPill(liftProgress = liftProgress, colors = colors, modifier = Modifier.size(50.dp)) {
                                     ElvanTopBarIconButton(
                                         onClick = onBack,
-                                        size = 44.dp
+                                        size = 38.dp
                                     ) {
                                         Icon(
                                             imageVector = leadingIcon ?: MaterialSymbols.Rounded.ArrowBack,
@@ -245,10 +247,12 @@ fun ElvanCollapsedBar(
                                 }
                             }
                             if (title != null) {
-                                Text(
+                                // A long title is set a little smaller (down to 16sp) so it shows whole beside the buttons
+                                BasicText(
                                     text = title.preventBrokenLigatures(),
                                     maxLines = 1,
                                     overflow = TextOverflow.Ellipsis,
+                                    autoSize = TextAutoSize.StepBased(minFontSize = 16.sp, maxFontSize = 22.sp, stepSize = 0.5.sp),
                                     style = TextStyle(
                                         fontFamily = LocalAppFontFamily.current,
                                         fontSize = 22.sp,
@@ -283,7 +287,9 @@ fun ElvanCollapsedBar(
                             ElvanPill(liftProgress = liftProgress, colors = colors) {
                                 Row(
                                     verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(1.dp)
+                                    horizontalArrangement = Arrangement.spacedBy(1.dp),
+                                    // The circles sit 6dp from the pill's edge on every side (the pill is 50dp, a circle 38dp)
+                                    modifier = Modifier.padding(horizontal = 6.dp)
                                 ) {
                                     actions()
                                 }

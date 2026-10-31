@@ -70,13 +70,34 @@ fun ElvanExpandedBar(
         }
         val screenWidthPx = with(density) { screenWidth.toPx() }
         val maxAvailableWidthPx = screenWidthPx - with(density) { 32.dp.toPx() }
-        // A title that is too wide is set smaller (down to 24sp) so it shows whole instead of ending in "..."
-        val fit = if (fullLayout.size.width > maxAvailableWidthPx) (maxAvailableWidthPx / fullLayout.size.width).coerceAtLeast(24f / 34f) else 1f
-        val shownStyle = if (fit < 1f) titleStyle.copy(fontSize = (34f * fit).sp) else titleStyle
-        val textLayoutResult = if (fit < 1f) textMeasurer.measure(text = safeTitle, style = shownStyle) else fullLayout
-        val rawTextWidthPx = textLayoutResult.size.width.toFloat()
+        // A title too wide for one line sits on two centred lines while the bar is open. The two lines are two pieces of
+        // text that glide into one line as the bar closes: the first goes to the closed place, the second slides up beside it.
+        val wraps = fullLayout.size.width > maxAvailableWidthPx
+        val wrappedLayout = remember(safeTitle, ff, maxAvailableWidthPx, wraps) {
+            if (!wraps) null else textMeasurer.measure(
+                text = safeTitle,
+                style = titleStyle,
+                constraints = androidx.compose.ui.unit.Constraints(maxWidth = maxAvailableWidthPx.toInt()),
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis
+            )
+        }
+        val breakAt = wrappedLayout?.getLineEnd(0, visibleEnd = false) ?: 0
+        val firstPart = if (wraps) safeTitle.substring(0, breakAt).trimEnd() else safeTitle
+        val secondPart = if (wraps) safeTitle.substring(breakAt).trimStart() else ""
+        val firstW = remember(firstPart, ff) { textMeasurer.measure(text = firstPart, style = titleStyle).size.width.toFloat() }
+        val secondW = remember(secondPart, ff) { if (secondPart.isEmpty()) 0f else textMeasurer.measure(text = secondPart, style = titleStyle).size.width.toFloat() }
+        val spaceW = remember(ff) { textMeasurer.measure(text = " ", style = titleStyle).size.width.toFloat().coerceAtLeast(1f) }
+        val lineH = wrappedLayout?.let { (it.getLineBottom(0) - it.getLineTop(0)) } ?: fullLayout.size.height.toFloat()
+
+        val rawTextWidthPx = if (wraps) maxAvailableWidthPx else fullLayout.size.width.toFloat()
         val textWidthPx = minOf(rawTextWidthPx, maxAvailableWidthPx)
-        val textHeightPx = textLayoutResult.size.height.toFloat()
+        val textHeightPx = fullLayout.size.height.toFloat()
+
+        val targetLeftPx = with(density) { if (hasLeadingWidget || onBack != null) 74.dp.toPx() else 24.dp.toPx() }
+        // Closed, the title is one line of the usual 22sp beside the buttons, ending in "..." where the room runs out
+        val closedRoomPx = screenWidthPx - targetLeftPx - with(density) { (if (hasActions) 78.dp else 16.dp).toPx() }
+        val finalScale = 22f / 34f
 
         // 2. Compute X endpoints (center to target left)
         val centeredLeftPx = if (rawTextWidthPx > maxAvailableWidthPx) {
@@ -84,23 +105,17 @@ fun ElvanExpandedBar(
         } else {
             (screenWidthPx - textWidthPx) / 2f
         }
-        val targetLeftPx = if (isSelectionMode) {
-            centeredLeftPx
-        } else {
-            with(density) { if (hasLeadingWidget || onBack != null) 74.dp.toPx() else 24.dp.toPx() }
-        }
-        val currentLeftPx = centeredLeftPx + (targetLeftPx - centeredLeftPx) * t
+        val endLeftPx = if (isSelectionMode) centeredLeftPx else targetLeftPx
+        val currentLeftPx = centeredLeftPx + (endLeftPx - centeredLeftPx) * t
         val currentLeftDp = with(density) { currentLeftPx.toDp() }
 
         // 3. Compute Y endpoints (bottom of expanded bar to ceiling + 44dp)
         val startTextBottomPx = maxExtentPx - with(density) { 100.dp.toPx() }
         val targetTextBottomPx = ceilingPx + with(density) { 44.dp.toPx() }
-
         val currentTextBottomPx = startTextBottomPx + (targetTextBottomPx - startTextBottomPx) * t
         val currentTopPx = currentTextBottomPx - textHeightPx
         val currentTopDp = with(density) { currentTopPx.toDp() }
 
-        val finalScale = 22f / 34f
         val scale = 1.0f - (1.0f - finalScale) * t
 
         // Lift progress: text fades OUT ONLY when the first card reaches the pill (collision)
@@ -115,13 +130,13 @@ fun ElvanExpandedBar(
 
         val maxAllowedWidthDp = (screenWidth - 32.dp)
 
-        if (titleOpacity > 0f) {
+        if (titleOpacity > 0f && !wraps) {
             Text(
                 text = safeTitle,
                 maxLines = 1,
                 softWrap = false,
                 overflow = TextOverflow.Ellipsis,
-                style = shownStyle,
+                style = titleStyle,
                 modifier = Modifier
                     .align(Alignment.TopStart)
                     .offset(x = currentLeftDp, y = currentTopDp)
@@ -133,6 +148,51 @@ fun ElvanExpandedBar(
                         transformOrigin = TransformOrigin(0f, 1f)
                     }
             )
+        }
+        if (titleOpacity > 0f && wraps) {
+            // Open: each line centred on its own, the first above the second. Closed: one line from the closed place.
+            val firstLeftOpen = (screenWidthPx - minOf(firstW, maxAvailableWidthPx)) / 2f
+            val secondLeftOpen = (screenWidthPx - minOf(secondW, maxAvailableWidthPx)) / 2f
+            val firstLeftClosed = if (isSelectionMode) firstLeftOpen else targetLeftPx
+            val secondLeftClosed = if (isSelectionMode) secondLeftOpen else targetLeftPx + (firstW + spaceW) * finalScale
+            fun lerp(a: Float, b: Float) = a + (b - a) * t
+            val firstBottomOpen = startTextBottomPx - lineH
+            val secondBottomOpen = startTextBottomPx
+            val bottomClosed = targetTextBottomPx
+            // The room each line may use, as the page closes: the whole width open, what is left beside the buttons closed
+            val closedUnscaledPx = closedRoomPx / finalScale
+            val firstCapClosed = minOf(maxAvailableWidthPx, closedUnscaledPx)
+            val secondCapClosed = (closedUnscaledPx - firstW - spaceW).coerceIn(0f, maxAvailableWidthPx)
+            for (piece in 0..1) {
+                val text = if (piece == 0) firstPart else secondPart
+                if (text.isEmpty()) continue
+                // The second line first slides sideways to its place beside the first (done by a third of the way), then rises into line, so the two lines never touch
+                val sideT = (t / 0.35f).coerceIn(0f, 1f).let { it * it * (3f - 2f * it) }
+                val leftPx = if (piece == 0) lerp(firstLeftOpen, firstLeftClosed) else secondLeftOpen + (secondLeftClosed - secondLeftOpen) * sideT
+                val bottomPx = if (piece == 0) lerp(firstBottomOpen, bottomClosed) else lerp(secondBottomOpen, bottomClosed)
+                Text(
+                    text = text,
+                    maxLines = 1,
+                    softWrap = false,
+                    overflow = TextOverflow.Ellipsis,
+                    style = titleStyle,
+                    modifier = Modifier
+                        .align(Alignment.TopStart)
+                        .offset(x = with(density) { leftPx.toDp() }, y = with(density) { (bottomPx - fullLayout.size.height.toFloat()).toDp() })
+                        .widthIn(max = with(density) {
+                            val byProgress = if (piece == 0) lerp(maxAvailableWidthPx, firstCapClosed) else lerp(maxAvailableWidthPx, secondCapClosed)
+                            // and never past the page's right margin, wherever the line is on its way
+                            val byEdge = ((screenWidthPx - 16.dp.toPx() - leftPx) / scale).coerceAtLeast(0f)
+                            minOf(byProgress, byEdge).toDp()
+                        })
+                        .graphicsLayer {
+                            scaleX = scale
+                            scaleY = scale
+                            this.alpha = titleOpacity
+                            transformOrigin = TransformOrigin(0f, 1f)
+                        }
+                )
+            }
         }
     }
 }

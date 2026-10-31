@@ -169,7 +169,7 @@ private fun PreviewMenuButton(items: List<ElvanPopupMenuItem>) {
     var expanded by remember { mutableStateOf(false) }
     Box {
         ElvanPill(liftProgress = 0f, colors = colors, modifier = Modifier.size(50.dp)) {
-            ElvanTopBarIconButton(onClick = { expanded = true }, size = 44.dp) {
+            ElvanTopBarIconButton(onClick = { expanded = true }, size = 38.dp) {
                 Icon(
                     imageVector = MaterialSymbols.Rounded.MoreVert,
                     contentDescription = null,

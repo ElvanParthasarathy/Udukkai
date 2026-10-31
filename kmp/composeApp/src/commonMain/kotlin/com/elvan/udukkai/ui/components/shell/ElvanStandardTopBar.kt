@@ -82,7 +82,7 @@ fun ElvanStandardTopBar(
             verticalAlignment = Alignment.CenterVertically
         ) {
             ElvanPill(liftProgress = lift, colors = colors, modifier = Modifier.size(50.dp)) {
-                ElvanTopBarIconButton(onClick = onBack, size = 44.dp) {
+                ElvanTopBarIconButton(onClick = onBack, size = 38.dp) {
                     Icon(
                         imageVector = MaterialSymbols.Rounded.ArrowBack,
                         contentDescription = K.back.tr(),
