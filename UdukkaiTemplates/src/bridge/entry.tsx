@@ -179,6 +179,92 @@ const grayscaleClone = (orig, clone) => {
 
 const MM_PER_PX = 25.4 / 96;
 
+// The contact band at the foot of each invoice: every page of a longer bill ends with it.
+const CONTACT_BAND = { 'gst-invoice': '.inv-contact-block', 'coolie-invoice': '.contact-section' };
+const PAGE_TOP_MM = 8; // the room above the lines when they carry on at the top of a later page
+const PAGE_SAFE_MM = 4; // kept free above the contact band, in case a page prints a little taller than it measured
+
+// Splits an invoice into pages: every page is the paper again (same look, band pinned at its foot) holding some of the
+// lines. The lines are counted from their measured heights, the first page keeps the header, a later page starts with
+// the table head, and the totals and the footer go with the last lines on the last page.
+const paginate = (root, clone, pageMm) => {
+  const bandSel = CONTACT_BAND[current.docType];
+  const tb = root.querySelector('table tbody');
+  const band = bandSel ? root.querySelector(bandSel) : null;
+  if (!tb || !band || tb.children.length < 2) return null;
+  const table = tb.closest('table');
+  const rows = Array.from(tb.children);
+  const box = (el) => el.getBoundingClientRect();
+
+  root.style.setProperty('min-height', '0px', 'important'); // the natural height, not the page-high paper
+  const rootBox = box(root), tbBox = box(tb), bandBox = box(band);
+  const thead = table.querySelector('thead');
+  const m = {
+    before: tbBox.top - rootBox.top, // the header, the parties and the table head
+    head: thead ? box(thead).height : 0,
+    after: bandBox.top - tbBox.bottom, // the totals and the footer
+    foot: rootBox.height - (bandBox.top - rootBox.top), // the contact band
+    rows: rows.map((r) => box(r).height),
+  };
+  root.style.removeProperty('min-height');
+
+  const pageH = pageMm / MM_PER_PX;
+  const room = (first) => pageH - (first ? m.before : PAGE_TOP_MM / MM_PER_PX + m.head) - m.foot - PAGE_SAFE_MM / MM_PER_PX;
+  const sum = (a, b) => m.rows.slice(a, b).reduce((x, y) => x + y, 0);
+  const pack = (end) => { // the ranges of lines that fill each page, up to line [end)
+    const out = [];
+    let a = 0;
+    while (a < end) {
+      let b = a + 1;
+      while (b < end && sum(a, b + 1) <= room(out.length === 0)) b++;
+      out.push([a, b]);
+      a = b;
+    }
+    return out;
+  };
+  let ranges = pack(rows.length);
+  const last = ranges[ranges.length - 1];
+  if (sum(last[0], last[1]) + m.after > room(ranges.length === 1)) {
+    // The totals and the footer do not fit under the last lines: the last two lines go with them on a page of their own
+    const keep = Math.min(2, rows.length - 1);
+    ranges = [...pack(rows.length - keep), [rows.length - keep, rows.length]];
+  }
+  if (ranges.length < 2) return null;
+
+  return ranges.map(([a, b], i) => {
+    const page = clone.cloneNode(true);
+    const pageBody = page.querySelector('table tbody');
+    const pageTable = pageBody.closest('table');
+    Array.from(pageBody.children).forEach((row, k) => { if (k < a || k >= b) row.remove(); });
+    let holder = pageTable;
+    while (holder.parentElement !== page) holder = holder.parentElement;
+    if (i > 0) {
+      for (const c of Array.from(page.children)) {
+        if (c === holder) break;
+        if (c.tagName !== 'STYLE') c.remove();
+      }
+      const gap = document.createElement('div');
+      gap.style.cssText = `flex: none; height: ${PAGE_TOP_MM}mm`;
+      page.insertBefore(gap, holder);
+    }
+    if (i < ranges.length - 1) {
+      let n = pageTable.nextElementSibling;
+      while (n) { const next = n.nextElementSibling; n.remove(); n = next; }
+      const tfoot = pageTable.querySelector('tfoot');
+      if (tfoot) tfoot.remove();
+      let c = holder.nextElementSibling;
+      while (c) {
+        const next = c.nextElementSibling;
+        const spacer = c.children.length === 0 && !c.textContent.trim();
+        if (!c.matches(bandSel) && !spacer) c.remove();
+        c = next;
+      }
+    }
+    for (const [k, v] of Object.entries({ height: `${pageMm}mm`, 'min-height': `${pageMm}mm`, overflow: 'hidden' })) page.style.setProperty(k, v, 'important');
+    return page.outerHTML;
+  });
+};
+
 // The document the host prints: the page's <head> + print rules + the paper only, laid out for the chosen
 // print options. The host prints it with Chromium itself, so the result is a real vector PDF.
 //  - page size / margins / orientation come from the options (@page),
@@ -207,11 +293,18 @@ const printHtml = (options) => {
   if (o.fit === 'page') zoom = Math.min(zoom, contentH / sheetH);
   // A bill with more lines than one page holds runs on to the next page. A one-page bill keeps the paper as tall as
   // the page (the contact band sits at its foot); a longer one is as tall as its content, and the band follows it.
-  const pages = Math.max(1, Math.ceil((sheetH * zoom) / contentH - 0.03));
+  const pages = Math.max(1, Math.ceil((sheetH * zoom) / contentH - 0.002));
   const paperH = pages === 1 ? contentH / zoom : 0;
 
   const clone = printContent.cloneNode(true);
   if (!o.color) grayscaleClone(printContent, clone);
+
+  // More than one page: the lines are split over pages that each end with the contact band.
+  let paper = clone.outerHTML;
+  if (pages > 1 && o.fit !== 'page') {
+    const split = paginate(printContent, clone, contentH / zoom);
+    if (split) paper = split.join('');
+  }
 
   return `
       <!DOCTYPE html>
@@ -230,16 +323,14 @@ const printHtml = (options) => {
             .udk-sheet { width: ${sheetW}mm; margin: 0 auto; zoom: ${zoom}; }
             .udk-sheet #invoice-preview, .udk-sheet .a4-paper { height: auto !important; min-height: ${paperH}mm !important; }
             .udk-sheet #invoice-preview > *, .udk-sheet .a4-paper > * { flex-shrink: 0 !important; }
+            .udk-sheet > #invoice-preview, .udk-sheet > .a4-paper { break-after: page; page-break-after: always; }
+            .udk-sheet > #invoice-preview:last-child, .udk-sheet > .a4-paper:last-child { break-after: auto; page-break-after: auto; }
             .udk-sheet tr, .udk-sheet .inv-totals-section, .udk-sheet .inv-footer, .udk-sheet .udk-footer, .udk-sheet .inv-contact-block, .udk-sheet .contact-section { break-inside: avoid; page-break-inside: avoid; }
-            .udk-sheet .inv-footer, .udk-sheet .udk-footer { break-after: avoid; page-break-after: avoid; }
-            .udk-sheet tbody tr:nth-last-child(-n+2) { break-after: avoid; page-break-after: avoid; }
-            .udk-sheet thead { display: table-header-group; }
-            .udk-sheet tfoot { display: table-row-group; }
             * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
           </style>
         </head>
         <body style="background-color: white; margin: 0; padding: 0;">
-          <div class="udk-sheet">${clone.outerHTML}</div>
+          <div class="udk-sheet">${paper}</div>
         </body>
       </html>
     `;
