@@ -172,16 +172,16 @@ private fun cacheDir(context: Context): File = File(context.cacheDir, CACHE_DIR)
 
 /** Identifies one PDF: the document data (incl. paid amounts, business + print settings), the options and the app build. */
 private fun cacheKey(context: Context, payloadJson: String, options: PrintOptions): String {
-    // The print bundle's own file names carry a content hash: a PDF stays valid across app updates until the template changes
+    // The template version the bundle declares (assets/print/version.txt): a PDF stays valid across app updates until the look changes
     val build = try {
-        context.assets.list("print/assets")?.filter { it.startsWith("index-") }?.sorted()?.joinToString(",").orEmpty()
+        context.assets.open("print/version.txt").bufferedReader().use { it.readText().trim() }
     } catch (e: Exception) {
         ""
     }
     // Item ids are made from the clock each time a document is loaded; they do not affect the print
     val stable = payloadJson.replace(Regex("\"id\":\"[0-9]{10,}_[0-9]+\""), "\"id\":\"\"")
     val digest = MessageDigest.getInstance("SHA-256")
-        .digest("$stable|${options.toJson()}|$build|v2".toByteArray())
+        .digest("$stable|${options.toJson()}|$build|v3".toByteArray())
     return digest.joinToString("") { "%02x".format(it) }.take(32)
 }
 
