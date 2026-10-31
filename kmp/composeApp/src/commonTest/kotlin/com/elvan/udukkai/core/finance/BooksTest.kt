@@ -1,6 +1,5 @@
 package com.elvan.udukkai.core.finance
 
-import com.elvan.udukkai.core.platform.PreferencesHelper
 import com.elvan.udukkai.core.utils.DateUtils
 import com.elvan.udukkai.data.model.InvoiceModel
 import kotlin.test.Test
@@ -9,34 +8,27 @@ import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 class BooksTest {
-    private class MemoryPrefs : PreferencesHelper {
-        private val map = HashMap<String, Any?>()
-        override fun getString(key: String, defaultValue: String?) = map[key] as String? ?: defaultValue
-        override fun setString(key: String, value: String?) { map[key] = value }
-        override fun getBoolean(key: String, defaultValue: Boolean) = map[key] as Boolean? ?: defaultValue
-        override fun setBoolean(key: String, value: Boolean) { map[key] = value }
-        override fun getInt(key: String, defaultValue: Int) = map[key] as Int? ?: defaultValue
-        override fun setInt(key: String, value: Int) { map[key] = value }
-        override fun clear() = map.clear()
-    }
-
     private fun day(s: String) = DateUtils.parseToEpochMillis(s)!!
 
     private fun bill(number: String, date: String, total: Double = 100.0, id: Long = 1L) =
         InvoiceModel(id = id, invoiceNumber = number, invoiceDate = day(date), totalAmount = total)
 
     @Test
-    fun the_lock_covers_the_whole_financial_year_and_nothing_after() {
-        val prefs = MemoryPrefs()
-        val books = BooksSettings("t") { prefs }
-        assertFalse(books.isLocked(1L, day("15/01/2026")))
-        books.lockThrough(1L, 2025)
-        assertTrue(books.isLocked(1L, day("01/04/2025")))
-        assertTrue(books.isLocked(1L, day("31/03/2026")))
-        assertFalse(books.isLocked(1L, day("01/04/2026")))
-        assertFalse(books.isLocked(2L, day("15/01/2026")), "another business is not locked")
-        books.unlock(1L)
-        assertFalse(books.isLocked(1L, day("15/01/2026")))
+    fun a_financial_year_closes_by_itself_on_the_first_of_december_after_it_ends() {
+        val bill = day("15/01/2026") // financial year 2025-26
+        assertFalse(YearLock.isLocked(bill, now = day("30/11/2026")), "still open until the credit note and return deadline")
+        assertTrue(YearLock.isLocked(bill, now = day("01/12/2026")))
+        assertFalse(YearLock.isLocked(day("01/04/2026"), now = day("15/01/2027")), "the next year is not closed yet")
+        assertTrue(YearLock.isLocked(day("31/03/2026"), now = day("15/01/2027")))
+    }
+
+    @Test
+    fun a_closed_year_can_be_opened_for_the_session() {
+        val bill = day("10/05/2020")
+        assertTrue(YearLock.isLocked(bill, now = day("01/01/2030")))
+        YearLock.openForSession(bill)
+        assertFalse(YearLock.isLocked(bill, now = day("01/01/2030")))
+        assertTrue(YearLock.isLocked(day("10/05/2021"), now = day("01/01/2030")), "only that year is opened")
     }
 
     @Test
@@ -46,15 +38,6 @@ class BooksTest {
         assertEquals(1, BillNumbering.nextSerial(emptyList(), "VRM"))
         assertEquals(41, BillNumbering.nextSerial(listOf("VRM-040", "vrm-007", "PVS-099"), "VRM"))
         assertTrue(BillRulesCheck.ok(BillNumbering.format("ABCDEFGHIJKL", 999)), "16 characters is the limit")
-    }
-
-    @Test
-    fun years_are_split_at_april_and_listed_newest_first() {
-        val s = BillNumbering.summaries(
-            listOf(bill("A-1", "31/03/2026", 10.0, 1), bill("A-2", "01/04/2026", 20.0, 2), bill("A-3", "02/04/2026", 30.0, 3)),
-        )
-        assertEquals(listOf(2026, 2025), s.map { it.fyStart })
-        assertEquals(50.0, s[0].total)
     }
 
     private object BillRulesCheck {

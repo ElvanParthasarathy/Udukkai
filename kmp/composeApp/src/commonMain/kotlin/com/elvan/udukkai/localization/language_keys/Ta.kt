@@ -452,18 +452,10 @@ val ta: Map<String, String> = mapOf(
     K.typeNameToDelete to "நிறுவனத்தை நீக்க அதன் பெயரை உள்ளிடவும்",
     K.businessNameMismatch to "பெயர் பொருந்தவில்லை.",
     K.lastBusinessCannotBeDeleted to "ஒரே நிறுவனத்தை நீக்க முடியாது.",
-    K.booksTitle to "கணக்குகளும் நிதியாண்டும்",
-    K.booksYearRange to "ஏப்ரல் முதல் மார்ச் வரை",
     K.booksNumbering to "பட்டியல் எண்ணிடல்",
-    K.booksLockTitle to "ஆண்டு முடிவுப் பூட்டு",
-    K.booksNothingLocked to "எதுவும் பூட்டப்படவில்லை",
-    K.booksLockedUpTo to "இதுவரை பூட்டப்பட்டது",
-    K.booksUnlock to "திற",
-    K.booksUnlockWarn to "கணக்குகளைத் திறக்கவா? பழைய பட்டியல்களை மீண்டும் மாற்ற முடியும்.",
-    K.booksLockedMsg to "இந்தத் தேதி பூட்டப்பட்ட நிதியாண்டில் உள்ளது. முதலில் அமைப்புகளில் திறக்கவும்.",
-    K.booksYears to "நிதியாண்டுகள்",
-    K.booksNoBills to "இன்னும் பட்டியல்கள் இல்லை",
-    K.booksBills to "பட்டியல்கள்",
+    K.booksLockedMsg to "இந்த நிதியாண்டு முடிந்துவிட்டது. திருத்தத்தை நடப்பு ஆண்டில் செய்யவும்.",
+    K.yearClosedEditTitle to "இந்தப் பட்டியல் முடிந்த நிதியாண்டில் உள்ளது; GST கணக்கில் ஏற்கெனவே தாக்கலாகியிருக்கலாம். இருப்பினும் திருத்தவா?",
+    K.editAnyway to "திருத்து",
 )
 
 /**

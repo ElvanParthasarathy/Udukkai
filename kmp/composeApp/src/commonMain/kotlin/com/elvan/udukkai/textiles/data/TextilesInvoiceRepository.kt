@@ -5,7 +5,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.elvan.udukkai.core.backup.AutoBackupManager
 import com.elvan.udukkai.core.finance.BillNumbering
-import com.elvan.udukkai.core.finance.Books
+import com.elvan.udukkai.core.finance.YearLock
 import com.elvan.udukkai.core.utils.DateUtils
 import com.elvan.udukkai.data.database.getTextilesDatabaseHelper
 import com.elvan.udukkai.core.utils.SearchHelper
@@ -105,7 +105,7 @@ object TextilesInvoiceRepository {
     }
 
     /** A bill dated in a locked financial year cannot be added, changed, moved, deleted or brought back. */
-    fun isLocked(inv: InvoiceModel): Boolean = Books.textiles.isLocked(inv.companyId, inv.invoiceDate)
+    fun isLocked(inv: InvoiceModel): Boolean = YearLock.isLocked(inv.invoiceDate)
 
     fun isInvoiceNumberDuplicate(
         invoiceNumber: String,

@@ -293,7 +293,7 @@ fun FactoryReceiptEditorScreen(
         }
 
         // A receipt in a locked financial year cannot be added, moved or changed
-        if (com.elvan.udukkai.core.finance.Books.factory.isLocked(selectedCompanyId, receiptDate) ||
+        if (com.elvan.udukkai.core.finance.YearLock.isLocked(receiptDate) ||
             (receipt != null && com.elvan.udukkai.factory.data.FactoryReceiptRepository.isLocked(receipt))) {
             ElvanSnackbar.show(booksLockedMsg)
             return

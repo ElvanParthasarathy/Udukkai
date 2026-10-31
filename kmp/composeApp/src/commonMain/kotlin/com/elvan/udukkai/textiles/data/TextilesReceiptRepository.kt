@@ -6,7 +6,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.elvan.udukkai.core.backup.AutoBackupManager
-import com.elvan.udukkai.core.finance.Books
+import com.elvan.udukkai.core.finance.YearLock
 import com.elvan.udukkai.data.database.getTextilesDatabaseHelper
 import com.elvan.udukkai.data.model.ReceiptInvoiceLinkModel
 import com.elvan.udukkai.core.utils.SearchHelper
@@ -127,7 +127,7 @@ object TextilesReceiptRepository {
     }
 
     /** A receipt dated in a locked financial year cannot be added, changed, moved, deleted or brought back. */
-    fun isLocked(r: ReceiptModel): Boolean = Books.textiles.isLocked(r.companyId, r.receiptDate)
+    fun isLocked(r: ReceiptModel): Boolean = YearLock.isLocked(r.receiptDate)
 
     private fun blocked(r: ReceiptModel) = isLocked(r) || (r.id > 0 && receipts.any { it.id == r.id && isLocked(it) })
 

@@ -12,7 +12,6 @@ sealed interface SettingsRoute {
     data object Address : SettingsRoute
     data object Bank : SettingsRoute
     data object InvoiceCreation : SettingsRoute
-    data object Books : SettingsRoute
     data object StorageBackup : SettingsRoute
     data object Security : SettingsRoute
     data object AboutDeveloper : SettingsRoute

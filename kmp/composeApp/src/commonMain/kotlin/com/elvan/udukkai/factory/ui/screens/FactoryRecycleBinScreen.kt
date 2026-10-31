@@ -80,8 +80,6 @@ fun FactoryRecycleBinScreen(
     LaunchedEffect(Unit) {
         com.elvan.udukkai.factory.data.FactoryItemRepository.purgeExpired(days = 30)
         com.elvan.udukkai.factory.data.FactoryCustomerRepository.purgeExpired(days = 30)
-        com.elvan.udukkai.factory.data.FactoryInvoiceRepository.purgeExpired(days = 30)
-        com.elvan.udukkai.factory.data.FactoryReceiptRepository.purgeExpired(days = 30)
 
         com.elvan.udukkai.factory.data.FactoryItemRepository.loadDeleted()
         com.elvan.udukkai.factory.data.FactoryCustomerRepository.loadDeleted()

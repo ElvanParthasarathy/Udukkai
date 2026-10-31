@@ -90,6 +90,7 @@ fun TextilesHomeScreen() {
     var isSelectionMode by remember { mutableStateOf(false) }
     var selectedItemIds by remember { mutableStateOf<Set<Long>>(emptySet()) }
     var showBulkDeleteConfirm by remember { mutableStateOf(false) }
+    var closedYearEdit by remember { mutableStateOf<com.elvan.udukkai.data.model.InvoiceModel?>(null) }
     var showDateFilterSheet by remember { mutableStateOf(false) }
 
     val onToggleItem: (Long) -> Unit = { id ->
@@ -360,6 +361,8 @@ fun TextilesHomeScreen() {
                         onEdit = {
                             if (TextilesInvoiceRepository.hasLinkedReceipts(currentInvoice.id)) {
                                 ElvanSnackbar.show(invoiceLockedMsg)
+                            } else if (TextilesInvoiceRepository.isLocked(currentInvoice)) {
+                                closedYearEdit = currentInvoice
                             } else {
                                 navigateToSubpage(ActiveSubpage.InvoiceEditor(currentInvoice))
                             }
@@ -884,6 +887,20 @@ fun TextilesHomeScreen() {
                     RenderMainShell()
                 }
             }
+
+        closedYearEdit?.let { target ->
+            ElvanActionSheet(
+                title = K.yearClosedEditTitle.tr(),
+                cancelText = K.cancelBtn.tr(),
+                confirmText = K.editAnyway.tr(),
+                onConfirm = {
+                    com.elvan.udukkai.core.finance.YearLock.openForSession(target.invoiceDate)
+                    navigateToSubpage(ActiveSubpage.InvoiceEditor(target))
+                    closedYearEdit = null
+                },
+                onDismissRequest = { closedYearEdit = null }
+            )
+        }
 
         if (showBulkDeleteConfirm && selectedItemIds.isNotEmpty()) {
             val deleteSheetTitle = when (selectedTab) {

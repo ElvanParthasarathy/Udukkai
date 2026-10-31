@@ -80,8 +80,6 @@ fun TextilesRecycleBinScreen(
     LaunchedEffect(Unit) {
         com.elvan.udukkai.textiles.data.TextilesItemRepository.purgeExpired(days = 30)
         com.elvan.udukkai.textiles.data.TextilesCustomerRepository.purgeExpired(days = 30)
-        com.elvan.udukkai.textiles.data.TextilesInvoiceRepository.purgeExpired(days = 30)
-        com.elvan.udukkai.textiles.data.TextilesReceiptRepository.purgeExpired(days = 30)
 
         com.elvan.udukkai.textiles.data.TextilesItemRepository.loadDeleted()
         com.elvan.udukkai.textiles.data.TextilesCustomerRepository.loadDeleted()

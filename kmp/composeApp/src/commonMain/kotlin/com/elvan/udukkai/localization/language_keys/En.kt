@@ -451,18 +451,10 @@ val en: Map<String, String> = mapOf(
     K.typeNameToDelete to "Type the business name to delete it",
     K.businessNameMismatch to "The name doesn't match.",
     K.lastBusinessCannotBeDeleted to "The only business can't be deleted.",
-    K.booksTitle to "Books & financial year",
-    K.booksYearRange to "April to March",
     K.booksNumbering to "Bill numbering",
-    K.booksLockTitle to "Year-end lock",
-    K.booksNothingLocked to "Nothing is locked",
-    K.booksLockedUpTo to "Locked up to",
-    K.booksUnlock to "Unlock",
-    K.booksUnlockWarn to "Unlock the books? Past bills can be changed again.",
-    K.booksLockedMsg to "This date is in a locked financial year. Unlock it in Settings first.",
-    K.booksYears to "Financial years",
-    K.booksNoBills to "No bills yet",
-    K.booksBills to "bills",
+    K.booksLockedMsg to "This financial year is closed. Make the correction in the current year.",
+    K.yearClosedEditTitle to "This bill is in a closed financial year and may already be in your GST return. Edit anyway?",
+    K.editAnyway to "Edit anyway",
 )
 
 
