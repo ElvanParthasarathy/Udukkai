@@ -1,5 +1,7 @@
 package com.elvan.udukkai.ui.screens.editor.invoice.components
 
+import com.elvan.udukkai.localization.K
+import com.elvan.udukkai.localization.tr
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -101,7 +103,7 @@ fun ElvanDocumentNumberField(
                     ) {
                         Icon(
                             imageVector = MaterialSymbols.Rounded.Check,
-                            contentDescription = "Save",
+                            contentDescription = K.save.tr(),
                             tint = colors.accent,
                             modifier = Modifier.size(20.dp)
                         )
@@ -153,7 +155,7 @@ fun ElvanDocumentNumberField(
                         ) {
                             Icon(
                                 imageVector = MaterialSymbols.Rounded.Edit,
-                                contentDescription = "Edit",
+                                contentDescription = K.edit.tr(),
                                 tint = colors.textSecondary,
                                 modifier = Modifier.size(18.dp)
                             )

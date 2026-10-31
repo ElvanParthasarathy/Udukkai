@@ -526,7 +526,7 @@ fun FactoryReceiptEditorScreen(
                                                 ) {
                                                     Icon(
                                                         imageVector = MaterialSymbols.Rounded.Cancel,
-                                                        contentDescription = "Remove",
+                                                        contentDescription = K.a11yRemove.tr(),
                                                         tint = colors.textSecondary,
                                                         modifier = Modifier.size(16.dp)
                                                     )

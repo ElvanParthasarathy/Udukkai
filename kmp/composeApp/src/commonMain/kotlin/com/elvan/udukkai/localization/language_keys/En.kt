@@ -458,6 +458,11 @@ val en: Map<String, String> = mapOf(
     K.editAnyway to "Edit anyway",
     K.showPassword to "Show password",
     K.hidePassword to "Hide password",
+    K.a11yFilter to "Filter",
+    K.a11yInfo to "Information",
+    K.a11yRemove to "Remove",
+    K.a11yNewProfile to "New business",
+    K.a11ySwitchCompany to "Switch business",
 )
 
 

@@ -218,7 +218,7 @@ fun FactoryCreateScreen(
                                     )
                                     Icon(
                                         imageVector = MaterialSymbols.Rounded.Close,
-                                        contentDescription = "Clear",
+                                        contentDescription = K.clear.tr(),
                                         tint = colors.accent,
                                         modifier = Modifier.size(14.dp)
                                     )

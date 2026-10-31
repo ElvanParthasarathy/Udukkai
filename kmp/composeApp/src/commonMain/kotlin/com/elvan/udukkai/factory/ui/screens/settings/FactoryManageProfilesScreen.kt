@@ -130,7 +130,7 @@ fun FactoryManageProfilesScreen(
             ) {
                 Icon(
                     imageVector = MaterialSymbols.Rounded.Add,
-                    contentDescription = "New Profile",
+                    contentDescription = K.a11yNewProfile.tr(),
                     modifier = Modifier.size(24.dp)
                 )
             }

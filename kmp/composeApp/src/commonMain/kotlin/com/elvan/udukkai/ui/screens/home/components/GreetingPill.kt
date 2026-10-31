@@ -248,7 +248,7 @@ fun GreetingPill(
                                 Spacer(modifier = Modifier.width(4.dp))
                                 Icon(
                                     imageVector = MaterialSymbols.Rounded.KeyboardArrowDown,
-                                    contentDescription = "Switch Company",
+                                    contentDescription = K.a11ySwitchCompany.tr(),
                                     tint = colors.textPrimary.copy(alpha = 0.5f),
                                     modifier = Modifier.size(16.dp)
                                 )

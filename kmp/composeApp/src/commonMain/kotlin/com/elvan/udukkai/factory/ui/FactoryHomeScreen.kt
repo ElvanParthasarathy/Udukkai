@@ -472,7 +472,7 @@ fun FactoryHomeScreen() {
                                 ) {
                                     Icon(
                                         imageVector = MaterialSymbols.Rounded.FilterList,
-                                        contentDescription = "Filter",
+                                        contentDescription = K.a11yFilter.tr(),
                                         tint = if (isFilterActive) colors.accent else colors.textPrimary,
                                         modifier = Modifier.size(22.dp)
                                     )

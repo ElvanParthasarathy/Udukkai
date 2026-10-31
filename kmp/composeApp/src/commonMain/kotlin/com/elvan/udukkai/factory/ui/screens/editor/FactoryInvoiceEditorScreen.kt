@@ -568,7 +568,7 @@ fun FactoryInvoiceEditorScreen(
                             ) {
                                 Icon(
                                     imageVector = MaterialSymbols.Rounded.Info,
-                                    contentDescription = "Info",
+                                    contentDescription = K.a11yInfo.tr(),
                                     tint = colors.accent,
                                     modifier = Modifier.size(20.dp)
                                 )

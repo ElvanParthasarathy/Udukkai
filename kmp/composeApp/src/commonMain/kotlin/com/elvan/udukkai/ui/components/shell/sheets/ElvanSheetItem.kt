@@ -1,5 +1,7 @@
 package com.elvan.udukkai.ui.components.shell.sheets
 
+import com.elvan.udukkai.localization.K
+import com.elvan.udukkai.localization.tr
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.clickable
@@ -102,7 +104,7 @@ fun ElvanSheetItem(
             if (checkAlpha > 0f) {
                 Icon(
                     imageVector = MaterialSymbols.Rounded.Check,
-                    contentDescription = "Selected",
+                    contentDescription = K.selected.tr(),
                     tint = colors.textPrimary,
                     modifier = Modifier
                         .size(20.dp)

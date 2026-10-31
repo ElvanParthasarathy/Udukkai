@@ -459,6 +459,11 @@ val ta: Map<String, String> = mapOf(
     K.editAnyway to "திருத்து",
     K.showPassword to "கடவுச்சொல்லைக் காட்டு",
     K.hidePassword to "கடவுச்சொல்லை மறை",
+    K.a11yFilter to "வடிகட்டு",
+    K.a11yInfo to "தகவல்",
+    K.a11yRemove to "நீக்கு",
+    K.a11yNewProfile to "புதிய நிறுவனம்",
+    K.a11ySwitchCompany to "நிறுவனத்தை மாற்று",
 )
 
 /**

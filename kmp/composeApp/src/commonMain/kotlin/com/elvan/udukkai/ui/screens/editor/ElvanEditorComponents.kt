@@ -766,7 +766,7 @@ fun <T> ElvanEditorDropdown(
                     ) {
                         Icon(
                             imageVector = MaterialSymbols.Rounded.Close,
-                            contentDescription = "Clear",
+                            contentDescription = K.clear.tr(),
                             tint = colors.textSecondary,
                             modifier = Modifier.size(18.dp)
                         )

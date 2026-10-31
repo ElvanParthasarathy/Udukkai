@@ -5,6 +5,7 @@ import com.elvan.udukkai.ui.components.ExpressiveDotsLoader
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
@@ -452,9 +453,9 @@ fun AuthInput(
                     if (isPassword) {
                         Box(
                             modifier = Modifier
-                                .size(36.dp)
+                                .size(44.dp)
                                 .clip(CircleShape)
-                                .clickable { passwordVisible = !passwordVisible },
+                                .clickable(role = androidx.compose.ui.semantics.Role.Button) { passwordVisible = !passwordVisible },
                             contentAlignment = Alignment.Center
                         ) {
                             Icon(
@@ -463,7 +464,7 @@ fun AuthInput(
                                 } else {
                                     MaterialSymbols.Rounded.VisibilityOff
                                 },
-                                contentDescription = if (passwordVisible) "Hide" else "Show",
+                                contentDescription = (if (passwordVisible) K.hidePassword else K.showPassword).tr(),
                                 tint = if (isDark) Color.White else Color(0xFF111111),
                                 modifier = Modifier.size(20.dp)
                             )
@@ -574,7 +575,7 @@ fun AuthBackButton(
     ) {
         Icon(
             imageVector = MaterialSymbols.Rounded.ArrowBack,
-            contentDescription = "Back",
+            contentDescription = K.back.tr(),
             tint = iconColor,
             modifier = Modifier
                 .size(24.dp)
@@ -604,7 +605,7 @@ fun LanguageTile(
         modifier = modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(16.dp))
-            .clickable(onClick = onTap)
+            .selectable(selected = isSelected, role = androidx.compose.ui.semantics.Role.RadioButton, onClick = onTap)
             .padding(horizontal = 24.dp, vertical = 20.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
@@ -618,7 +619,7 @@ fun LanguageTile(
         if (isSelected) {
             Icon(
                 imageVector = MaterialSymbols.Rounded.CheckCircleFill,
-                contentDescription = "Selected",
+                contentDescription = null,
                 tint = textColor,
                 modifier = Modifier.size(24.dp)
             )

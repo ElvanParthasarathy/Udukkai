@@ -464,6 +464,11 @@ object K {
     const val booksLockedMsg = "booksLockedMsg"
     const val showPassword = "showPassword"
     const val hidePassword = "hidePassword"
+    const val a11yFilter = "a11yFilter"
+    const val a11yInfo = "a11yInfo"
+    const val a11yRemove = "a11yRemove"
+    const val a11yNewProfile = "a11yNewProfile"
+    const val a11ySwitchCompany = "a11ySwitchCompany"
     const val yearClosedEditTitle = "yearClosedEditTitle"
     const val editAnyway = "editAnyway"
 }

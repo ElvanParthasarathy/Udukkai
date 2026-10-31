@@ -3,6 +3,8 @@ package com.elvan.udukkai.ui.screens.settings.screens
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -16,6 +18,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -98,9 +102,11 @@ fun DisplaySettingsScreen(
                     Surface(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .clickable(
+                            .toggleable(
+                                value = isSystem,
                                 interactionSource = remember { MutableInteractionSource() },
-                                indication = ripple(color = autoRippleColor, bounded = true)
+                                indication = ripple(color = autoRippleColor, bounded = true),
+                                role = Role.Switch
                             ) {
                                 if (isSystem) {
                                     ThemeManager.setThemeMode(if (colors.isDark) ThemeMode.DARK else ThemeMode.LIGHT)
@@ -128,6 +134,7 @@ fun DisplaySettingsScreen(
                                 color = colors.textPrimary
                             )
                             ElvanSettingsSwitch(
+                                modifier = Modifier.clearAndSetSemantics { },
                                 checked = isSystem,
                                 onCheckedChange = { isChecked ->
                                     if (isChecked) {
@@ -181,6 +188,7 @@ private fun ThemeOptionBox(
                 .width(110.dp)
                 .height(85.dp)
                 .clip(RoundedCornerShape(24.dp))
+                .clearAndSetSemantics { }
         ) {
             Box(
                 modifier = Modifier
@@ -228,9 +236,11 @@ private fun ThemeOptionBox(
             horizontalArrangement = Arrangement.Center,
             modifier = Modifier
                 .clip(RoundedCornerShape(999.dp))
-                .clickable(
+                .selectable(
+                    selected = isSelected,
                     interactionSource = remember { MutableInteractionSource() },
                     indication = ripple(color = optionRippleColor, bounded = true),
+                    role = Role.RadioButton,
                     onClick = onClick
                 )
                 .padding(horizontal = 10.dp, vertical = 4.dp)
