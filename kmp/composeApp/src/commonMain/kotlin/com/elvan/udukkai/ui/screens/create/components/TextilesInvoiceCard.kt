@@ -16,6 +16,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -81,11 +84,16 @@ fun TextilesInvoiceCard(
     // The type only shows for an estimate: a tax invoice is the usual bill, and its number is long enough already
     val leftDetail = listOfNotNull(dateStr, docTypeLabel.takeIf { invoice.invoiceType == "proforma" }, primaryCity.takeIf { it.isNotBlank() }?.preventBrokenLigatures()).joinToString("  •  ")
 
+    // A screen reader reads the card as one item; at a larger text size the name and place wrap instead of being cut
+    val statusText = if (isPaid) K.statusPaid.tr() else K.draft.tr()
+    val spoken = listOfNotNull(invoice.invoiceNumber, "FY " + BillNumbering.fyShort(invoice.invoiceDate), primary, secondary.takeIf { showSecondary }, leftDetail, amountStr, statusText).joinToString(", ")
+    val textLines = if (LocalDensity.current.fontScale > 1.15f) 2 else 1
+
     ElvanCommonCard(
         onClick = onClick,
         onLongClick = onLongClick,
         isSelected = isSelected,
-        modifier = modifier,
+        modifier = modifier.semantics(mergeDescendants = true) { contentDescription = spoken },
         padding = PaddingValues(16.dp),
         borderRadius = 24.dp
     ) {
@@ -125,7 +133,7 @@ fun TextilesInvoiceCard(
                                 fontWeight = FontWeight.ExtraBold,
                                 color = colors.textPrimary
                             ),
-                            maxLines = 1,
+                            maxLines = textLines,
                             overflow = TextOverflow.Ellipsis
                         )
                         if (showSecondary) {
@@ -197,7 +205,7 @@ fun TextilesInvoiceCard(
                                     fontSize = 13.sp,
                                     color = LocalShellColors.current.textSecondary
                                 ),
-                                maxLines = 1,
+                                maxLines = textLines,
                                 overflow = TextOverflow.Ellipsis
                             )
                         }
