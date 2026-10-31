@@ -68,6 +68,31 @@ private fun getDynamicField(
     return ""
 }
 
+/** The item's name in the second language, in grey under the main name, as on the bill and receipt cards. */
+@Composable
+private fun ItemSecondaryName(
+    item: ItemModel,
+    primary: String,
+    isBilingual: Boolean,
+    primaryLang: String,
+    secondaryLang: String,
+    colors: ShellColors
+) {
+    val secondary = getDynamicField(item.name, isPrimary = false, isBilingual = isBilingual, primaryLang, secondaryLang)
+    if (secondary.isBlank() || secondary == primary) return
+    Spacer(modifier = Modifier.height(2.dp))
+    Text(
+        text = secondary.preventBrokenLigatures(),
+        style = TextStyle(
+            fontFamily = LocalAppFontFamily.current,
+            fontSize = 13.5.sp,
+            color = colors.textSecondary
+        ),
+        maxLines = 1,
+        overflow = TextOverflow.Ellipsis
+    )
+}
+
 @Composable
 fun FactoryItemCard(
     index: Int,
@@ -136,6 +161,7 @@ fun FactoryItemCard(
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis
                         )
+                        ItemSecondaryName(item, primary, isBilingual, primaryLang, secondaryLang, colors)
 
                         val companyTag = resolveItemCompanyTag(item, profiles, primaryLang)
                         if (companyTag.isNotBlank()) {
@@ -233,6 +259,7 @@ fun TextilesItemCard(
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis
                         )
+                        ItemSecondaryName(item, primary, isBilingual, primaryLang, secondaryLang, colors)
                     }
 
                     Icon(

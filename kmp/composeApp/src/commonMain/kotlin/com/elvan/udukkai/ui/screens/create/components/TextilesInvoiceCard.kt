@@ -190,7 +190,7 @@ fun TextilesInvoiceCard(
                                 modifier = Modifier.padding(start = 8.dp),
                                 style = TextStyle(
                                     fontFamily = ff,
-                                    fontSize = 11.sp,
+                                    fontSize = 12.5.sp,
                                     color = LocalShellColors.current.textTertiary
                                 ),
                                 maxLines = 1

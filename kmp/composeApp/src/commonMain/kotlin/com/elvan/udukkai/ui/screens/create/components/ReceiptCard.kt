@@ -151,30 +151,42 @@ fun ReceiptCard(
                         modifier = Modifier.weight(1f, fill = false),
                         verticalArrangement = Arrangement.spacedBy(3.dp)
                     ) {
-                        Text(
-                            text = "${receipt.receiptNumber}  •  $dateStr",
-                            style = TextStyle(
-                                fontFamily = ff,
-                                fontSize = 13.5.sp,
-                                color = LocalShellColors.current.textSecondary
-                            ),
-                            // The date is never cut: when the line is too long it wraps, and the date moves down whole
-                            maxLines = 2,
-                            overflow = TextOverflow.Ellipsis
-                        )
-
-                        if (linkedInvoicesText.isNotEmpty()) {
+                        // As on the bill cards: the number with the financial year small and quiet beside it,
+                        // then the date with the bills it pays (those end in "..." when long; the date never does)
+                        Row(verticalAlignment = Alignment.CenterVertically) {
                             Text(
-                                text = linkedInvoicesText.preventBrokenLigatures(),
+                                text = receipt.receiptNumber,
+                                modifier = Modifier.weight(1f, fill = false),
                                 style = TextStyle(
                                     fontFamily = ff,
-                                    fontSize = 13.sp,
+                                    fontSize = 13.5.sp,
                                     color = LocalShellColors.current.textSecondary
                                 ),
                                 maxLines = 1,
                                 overflow = TextOverflow.Ellipsis
                             )
+                            Text(
+                                text = "FY ${com.elvan.udukkai.core.finance.BillNumbering.fyShort(receipt.receiptDate)}",
+                                modifier = Modifier.padding(start = 8.dp),
+                                style = TextStyle(
+                                    fontFamily = ff,
+                                    fontSize = 12.5.sp,
+                                    color = LocalShellColors.current.textTertiary
+                                ),
+                                maxLines = 1
+                            )
                         }
+
+                        Text(
+                            text = if (linkedInvoicesText.isNotEmpty()) "$dateStr  •  ${linkedInvoicesText.preventBrokenLigatures()}" else dateStr,
+                            style = TextStyle(
+                                fontFamily = ff,
+                                fontSize = 13.sp,
+                                color = LocalShellColors.current.textSecondary
+                            ),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
                     }
 
                     Spacer(modifier = Modifier.width(8.dp))
