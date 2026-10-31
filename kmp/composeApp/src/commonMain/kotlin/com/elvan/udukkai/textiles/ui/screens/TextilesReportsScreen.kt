@@ -104,9 +104,11 @@ fun TextilesReportsScreen(onBack: () -> Unit) {
     val b2b = lines.filter { it.hasGstin }
     val b2c = lines.filter { !it.hasGstin }
 
-    ElvanSubShell(title = K.reports.tr(), onBack = onBack) {
+    // One scroll state for the list and the shell, so the large title collapses with the page instead of the rows passing under it
+    val listState = rememberLazyListState()
+    ElvanSubShell(title = K.reports.tr(), onBack = onBack, scrollState = listState) {
         LazyColumn(
-            state = rememberLazyListState(),
+            state = listState,
             modifier = Modifier.fillMaxSize(),
             contentPadding = PaddingValues(
                 start = Dimens.ContentPadding,
@@ -127,7 +129,8 @@ fun TextilesReportsScreen(onBack: () -> Unit) {
                     selectedIndex = period,
                     onIndexSelected = { period = it },
                     colors = colors,
-                    isSmall = true
+                    isFullWidth = true,
+                    modifier = Modifier.fillMaxWidth()
                 )
             }
 
@@ -179,8 +182,8 @@ fun TextilesReportsScreen(onBack: () -> Unit) {
                 Text(
                     text = K.estimatesNotCounted.tr(),
                     style = TextStyle(fontFamily = ff, fontSize = 12.sp),
-                    color = colors.textSecondary.copy(alpha = 0.8f),
-                    modifier = Modifier.padding(horizontal = 8.dp)
+                    color = colors.textTertiary,
+                    modifier = Modifier.padding(horizontal = 20.dp)
                 )
             }
         }
