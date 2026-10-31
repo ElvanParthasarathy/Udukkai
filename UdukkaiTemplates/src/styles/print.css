@@ -1,0 +1,914 @@
+/**
+ * Print Styles - A4 Paper Layout
+ * 
+ * Premium professional print-ready invoice styling
+ * New Design - Green theme with modern layout
+ */
+
+/* ========== COLOR VARIABLES FOR BILL ========== */
+:root {
+    --bill-primary: #388e3c;
+    --bill-primary-light: #e8f5e9;
+    --bill-primary-dark: #388e3c;
+    --bill-accent: #4caf50;
+    --bill-border: #388e3c;
+    --bill-text: #388e3c;
+    --bill-text-dark: #2e7d32;
+    --bill-row-alt: #f8faf8;
+}
+
+/* ========== A4 PAPER ========== */
+.a4-paper {
+    background: white;
+    width: 210mm;
+    min-height: 297mm;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    max-height: none;
+    padding: 8mm 12mm;
+    position: relative;
+    color: var(--bill-text);
+    box-shadow: 0 0 30px rgba(0, 0, 0, 0.4);
+    font-family: var(--font-primary);
+    border-radius: 8px;
+    text-align: left;
+}
+
+/* ========== TOP GREETING ROW ========== */
+.top-greeting-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 0;
+    margin-bottom: 4px;
+}
+
+.greeting-left,
+.greeting-right,
+.greeting-center {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--bill-primary);
+    letter-spacing: 0.5px;
+}
+
+/* ========== NEW HEADER ========== */
+.print-header-new {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+    margin-bottom: 12px;
+}
+
+.header-left {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+
+
+.header-company-info {
+    text-align: left;
+}
+
+.company-name {
+    font-size: 1.35rem;
+    font-weight: 700;
+    color: var(--bill-primary);
+    line-height: 1.2;
+}
+
+.company-subtitle {
+    font-size: 1rem;
+    font-weight: 500;
+    color: #475569;
+    margin-top: 3px;
+}
+
+.header-right {
+    text-align: right;
+    display: flex;
+    align-items: center;
+}
+
+/* Address Row - Below Logo */
+.address-row {
+    font-size: 11px;
+    line-height: 1.5;
+    color: #333;
+    font-weight: 500;
+    text-align: left;
+    padding-left: 19px;
+    margin-top: -45px;
+}
+
+.bill-type-badge {
+    display: inline-block;
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--bill-primary);
+    margin: 0;
+    padding: 0;
+    line-height: 1;
+    font-style: normal;
+    font-family: var(--font-primary);
+}
+
+/* ========== BILL INFO SECTION ========== */
+.bill-info-section {
+    margin-bottom: 5px;
+}
+
+.bill-meta-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+    padding: 8px 12px;
+    background: var(--bill-primary-light);
+    border-radius: 8px;
+}
+
+.bill-meta {
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.bill-meta strong {
+    font-weight: 600;
+    color: #242f3d;
+}
+
+.customer-info {
+    padding-left: 15px;
+    padding-right: 15px;
+    margin-top: 15px;
+    margin-bottom: 5px;
+}
+
+.customer-name-simple {
+    display: flex;
+    align-items: flex-start;
+    font-size: 14px;
+    font-weight: 600;
+    color: #242f3d;
+    margin-bottom: 6px;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    word-break: break-word;
+}
+
+.customer-city-simple {
+    display: flex;
+    align-items: flex-start;
+    font-size: 14px;
+    font-weight: 600;
+    color: #242f3d;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    word-break: break-word;
+}
+
+.customer-label {
+    font-weight: 700;
+    color: var(--bill-primary);
+    margin-right: 4px;
+    white-space: nowrap;
+}
+
+.customer-address {
+    font-size: 12px;
+    color: #555;
+    line-height: 1.6;
+}
+
+/* ========== NEW TABLE STYLES ========== */
+.bill-table-new {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    margin-top: 5px;
+    margin-bottom: 10px;
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1px solid #ddd;
+}
+
+.bill-table-new th {
+    background: var(--bill-primary-light);
+    color: var(--bill-text-dark);
+    font-weight: 700;
+    font-size: 14px;
+    text-align: center;
+    padding: 12px 10px;
+    letter-spacing: 0.5px;
+    border-right: 1px solid rgba(0, 0, 0, 0.04);
+}
+
+.bill-table-new th:last-child {
+    border-right: none;
+}
+
+/* ========== BILINGUAL BILL STYLING ========== */
+/* Bilingual subtitles inside table headers */
+.a4-paper.bilingual .bill-table-new th {
+    text-transform: none;
+    padding: 7px 10px;
+    vertical-align: middle;
+}
+
+.a4-paper.bilingual .bill-table-new td {
+    padding: 7px 10px;
+    font-size: 14px;
+    line-height: 1.3;
+}
+
+.a4-paper.bilingual .total-footer-row td {
+    padding: 8px 10px;
+}
+
+.a4-paper.bilingual .bill-table-new th>div:first-child {
+    font-weight: 700;
+    margin-bottom: 2px;
+}
+
+.a4-paper.bilingual .bill-table-new th>div:last-child {
+    font-weight: 500;
+    font-size: 10.5px;
+    color: inherit;
+    opacity: 0.85;
+    text-transform: none;
+    line-height: 1.1;
+}
+
+/* Bilingual table cells with subtitles */
+.a4-paper.bilingual .bill-table-new td.text-left>div:first-child {
+    font-weight: 600;
+}
+
+.a4-paper.bilingual .bill-table-new td.text-left>div:last-child {
+    font-size: 11px;
+    color: #666;
+    margin-top: 2px;
+}
+
+/* Bilingual bill meta row */
+.a4-paper.bilingual .bill-meta {
+    display: flex;
+    flex-direction: column;
+}
+
+.a4-paper.bilingual .bill-meta>div:last-child {
+    font-size: 10px;
+    font-weight: 500;
+    color: #666;
+}
+
+/* Bilingual total row */
+.a4-paper.bilingual .total-label-cell>div:first-child {
+    font-weight: 700;
+}
+
+.a4-paper.bilingual .total-label-cell>div:last-child {
+    font-size: 10px;
+    font-weight: 500;
+}
+
+/* Bilingual words section */
+.a4-paper.bilingual .words-section {
+    margin-bottom: 25px;
+}
+
+.a4-paper.bilingual .words-section>div:last-child {
+    margin-top: 6px;
+    font-size: 12px;
+    color: #555;
+}
+
+.bill-table-new td {
+    padding: 12px 10px;
+    font-size: 15px;
+    color: #1e293b;
+    border-bottom: 1px solid #eee;
+    border-right: 1px solid rgba(0, 0, 0, 0.04);
+    font-family: var(--font-primary);
+}
+
+.bill-table-new td:last-child {
+    border-right: none;
+}
+
+.bill-table-new tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.bill-table-new .row-alt {
+    background: var(--bill-row-alt);
+}
+
+.bill-table-new .text-left {
+    text-align: left;
+    padding-left: 15px;
+    font-weight: 500;
+}
+
+.bill-table-new .text-center {
+    text-align: center;
+    font-weight: 600;
+}
+
+.bill-table-new .text-right {
+    text-align: right;
+    padding-right: 16px;
+    font-weight: 600;
+}
+
+/* ========== TOTAL ROW ========== */
+.total-footer-row td {
+    background: var(--bill-primary-light);
+    padding: 12px 10px;
+    border-top: none;
+    font-weight: 700;
+    color: var(--bill-primary);
+    font-family: var(--font-primary);
+}
+
+.total-label-cell {
+    text-align: right;
+    padding-right: 20px !important;
+    font-size: 14px;
+    color: var(--bill-text-dark) !important;
+}
+
+.total-weight-cell {
+    font-size: 14px;
+    white-space: nowrap;
+}
+
+.total-amount-cell {
+    font-size: 18px;
+    font-weight: 800 !important;
+}
+
+/* ========== WORDS SECTION ========== */
+.words-section {
+    font-size: 12px;
+    color: var(--bill-text);
+    font-weight: 600;
+    margin-bottom: 30px;
+}
+
+.words-line {
+    font-weight: 600;
+    font-size: 14px;
+    color: #0f172a;
+    background: var(--bill-primary-light);
+    padding: 8px 15px;
+    border-radius: 6px;
+    display: inline-block;
+    margin-left: 8px;
+    line-height: 1.4;
+}
+
+/* ========== NEW FOOTER ========== */
+.bill-footer-new {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-top: auto;
+    padding-top: 15px;
+    margin-bottom: 15px;
+}
+
+.footer-left {
+    flex: 1;
+}
+
+.thank-you {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--bill-primary);
+    font-style: normal;
+    font-family: var(--font-primary);
+}
+
+/* Renamed to avoid BillEditor conflict */
+.preview-footer-right {
+    text-align: right;
+    background: none;
+    border: none;
+    padding: 0;
+    width: auto;
+}
+
+.sign-company {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--bill-primary);
+    margin-bottom: 5px;
+}
+
+.customer-simple {
+    display: flex;
+    align-items: flex-start;
+}
+
+.customer-label {
+    font-weight: 700;
+    color: var(--bill-primary);
+    margin-right: 4px;
+    white-space: nowrap;
+}
+
+.sign-space {
+    height: 50px;
+    margin-bottom: 5px;
+}
+
+.sign-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: #555;
+}
+
+/* ========== CONTACT SECTION ========== */
+.contact-section {
+    box-sizing: border-box;
+    width: calc(100% + 24mm);
+    margin-top: 20px;
+    margin-left: -12mm;
+    margin-right: -12mm;
+    margin-bottom: -8mm;
+    padding: 24px calc(12mm + 8px);
+    background: var(--bill-primary-light);
+    border-bottom-left-radius: 8px;
+    border-bottom-right-radius: 8px;
+    border: none;
+}
+
+.contact-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--bill-primary);
+    margin-bottom: 10px;
+}
+
+.contact-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+}
+
+.contact-left {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.contact-address {
+    font-size: 13px;
+    color: #333;
+    font-weight: 500;
+}
+
+.contact-email {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: #444;
+}
+
+.contact-email svg {
+    color: var(--bill-accent);
+}
+
+.contact-phones {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 6px;
+}
+
+.phone-item-new {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #444;
+}
+
+.phone-item-new svg {
+    color: var(--bill-accent);
+}
+
+/* ========== LEGACY STYLES (Keep for compatibility) ========== */
+.print-header {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    margin-bottom: 25px;
+    padding-bottom: 20px;
+    padding-top: 35px;
+    border-bottom: 2px solid var(--bill-primary);
+    position: relative;
+    gap: 20px;
+}
+
+.ph-left-greeting {
+    position: absolute;
+    top: 5px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--bill-primary);
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+}
+
+.ph-left {
+    flex-shrink: 0;
+}
+
+.bill-logo {
+    width: 140px;
+    height: 140px;
+}
+
+.bill-logo img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    filter: sepia(100%) saturate(300%) hue-rotate(85deg);
+}
+
+.ph-center {
+    flex-grow: 1;
+    text-align: left;
+    padding-top: 10px;
+}
+
+.ph-right {
+    flex-shrink: 0;
+    text-align: right;
+    align-self: flex-start;
+    padding-top: 30px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.biz-title {
+    font-size: 26px;
+    font-weight: 800;
+    line-height: 1.2;
+    margin-bottom: 5px;
+    color: var(--bill-primary);
+    letter-spacing: 0.5px;
+}
+
+.biz-sub {
+    font-size: 15px;
+    font-weight: 700;
+    margin-bottom: 8px;
+    color: #242f3d;
+}
+
+.biz-addr {
+    font-size: 11px;
+    line-height: 1.5;
+    color: #334155;
+    font-weight: 500;
+}
+
+.biz-email {
+    font-size: 11px;
+    margin-top: 6px;
+    color: #334155;
+}
+
+.biz-email strong {
+    color: var(--bill-primary);
+}
+
+.bill-badge {
+    display: inline-block;
+    background: var(--bill-primary);
+    color: white;
+    border: none;
+    border-radius: 50px;
+    padding: 6px 20px;
+    font-weight: 700;
+    font-size: 11px;
+    margin-top: 12px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.phone-item {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8px;
+    font-weight: 600;
+    font-size: 12px;
+    color: var(--bill-text);
+}
+
+.phone-item svg {
+    color: var(--bill-accent);
+}
+
+/* ========== CUSTOMER INFO - PRO SPACING ========== */
+.meta-row {
+    display: flex;
+    justify-content: space-between;
+    font-weight: 700;
+    margin-bottom: 15px;
+    font-size: 13px;
+    padding: 8px 12px;
+    background: var(--bill-primary-light);
+    border-radius: 8px;
+    color: var(--bill-text-dark);
+    border: 1px solid var(--bill-primary-light);
+}
+
+.cust-row {
+    display: flex;
+    align-items: baseline;
+    margin-bottom: 12px;
+    font-size: 14px;
+    color: var(--bill-text-dark);
+    font-weight: 600;
+}
+
+.dotted-line {
+    flex: 1;
+    border-bottom: 1px dotted var(--bill-primary);
+    margin-left: 6px;
+    padding-left: 4px;
+    padding-bottom: 2px;
+    font-weight: 600;
+    color: #242f3d;
+}
+
+/* ========== OLD TABLE STYLES (Legacy) ========== */
+.bill-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    margin-top: 20px;
+    margin-bottom: 20px;
+    border: 1px solid var(--bill-primary);
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.bill-table th,
+.bill-table td {
+    padding: 10px 12px;
+    border-right: 1px solid var(--bill-primary);
+    border-bottom: 1px solid var(--bill-primary);
+}
+
+.bill-table tr:last-child td {
+    border-bottom: none;
+}
+
+.bill-table th:last-child,
+.bill-table td:last-child {
+    border-right: none;
+}
+
+.bill-table th {
+    background: var(--bill-primary-light);
+    font-weight: 700;
+    font-size: 13px;
+    text-align: center;
+    color: var(--bill-text-dark);
+}
+
+.bill-table td {
+    font-size: 13px;
+    vertical-align: middle;
+    color: #242f3d;
+}
+
+.bill-table .text-left {
+    text-align: left;
+    padding-left: 10px;
+    font-weight: 500;
+}
+
+.bill-table .text-center {
+    text-align: center;
+    font-weight: 600;
+}
+
+.bill-table tfoot tr {
+    background: var(--bill-primary-light);
+}
+
+.bill-table tfoot td {
+    border: 1px solid var(--bill-primary);
+    padding: 8px;
+    color: var(--bill-primary);
+    font-size: 13px;
+}
+
+/* ========== OLD FOOTER & SIGNATURE ========== */
+.bill-footer {
+    margin-top: 40px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    min-height: 150px;
+}
+
+.bill-footer>div:first-child {
+    font-size: 12px;
+    color: var(--bill-text);
+    font-weight: 600;
+}
+
+.sign-area {
+    text-align: right;
+    margin-top: 60px;
+    padding-right: 20px;
+}
+
+.sign-title {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--bill-primary);
+    padding-bottom: 50px;
+    border-bottom: 1px solid var(--bill-primary);
+    display: inline-block;
+    min-width: 200px;
+    text-align: center;
+}
+
+/* ========== PREVIEW OVERLAY ========== */
+.preview-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: #444;
+    z-index: 2000;
+    overflow: auto;
+    -webkit-overflow-scrolling: touch;
+    padding: 20px;
+}
+
+.preview-overlay .a4-paper {
+    transform-origin: top center;
+    margin: 0 auto;
+    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5);
+}
+
+/* ========== PRINT MEDIA ========== */
+@media print {
+    /* Hide all elements marked as no-print */
+    .no-print, .MuiTooltip-popper, .MuiPopover-root, .MuiSnackbar-root {
+        display: none !important;
+    }
+
+    @page {
+        size: A4;
+        margin: 0;
+    }
+
+    html, body {
+        width: 210mm;
+        height: 297mm;
+        overflow: hidden;
+    }
+
+    body {
+        background: white !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+
+    /* Target the actual printable paper */
+    .a4-paper, #invoice-preview {
+        width: 100% !important;
+        height: 297mm !important;
+        margin: 0 !important;
+        box-shadow: none !important;
+        padding: 8mm 12mm !important;
+        border-radius: 0 !important;
+        display: flex !important;
+        flex-direction: column !important;
+        transform: none !important;
+        background: white !important;
+    }
+
+    /* Strip all layout restrictions from the wrapper so the paper fills the screen */
+    .print-wrapper {
+        position: static !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        display: block !important;
+        background: white !important;
+        width: 100% !important;
+        max-width: none !important;
+        zoom: 1 !important;
+        transform: none !important;
+        box-shadow: none !important;
+        border-radius: 0 !important;
+    }
+
+    .bill-footer-new {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-top: auto;
+    padding-top: 15px;
+    margin-bottom: 15px;
+}
+}
+
+/* ========== RECEIPT SHARED STYLES ========== */
+.receipt-box {
+    width: 210mm;
+    height: 297mm;
+    max-height: 297mm;
+    box-sizing: border-box;
+    margin: 0 auto;
+    border: 2px solid #e2e8f0;
+    border-radius: 8px;
+    background: white;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    position: relative;
+    text-align: left;
+}
+.receipt-content {
+    padding: 8mm 12mm;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    box-sizing: border-box;
+}
+.receipt-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding: 0.85rem 0;
+    font-size: 1.1rem;
+    border-bottom: 1px solid #f1f5f9;
+}
+.receipt-label {
+    color: var(--bill-primary, #1e3a8a);
+    font-weight: 600;
+}
+.receipt-value {
+    color: #242f3d;
+    font-weight: 600;
+    text-align: right;
+}
+.receipt-amount {
+    font-size: 2rem;
+    font-weight: 800;
+    color: var(--bill-primary, #1e3a8a);
+    text-align: center;
+    margin: 1.5rem 0 1rem 0;
+    padding: 1.25rem;
+    background: var(--bill-primary-light, #eff6ff);
+    border-radius: 8px;
+}
+.receipt-words {
+    font-size: 1.05rem;
+    color: #242f3d;
+    text-align: center;
+    margin-bottom: 1.5rem;
+}
+.receipt-footer {
+    display: flex;
+    justify-content: flex-end;
+    padding-top: 1.5rem;
+    padding-bottom: 1rem;
+    margin-top: auto;
+}
+
+@media print {
+    .receipt-box {
+        border: none !important;
+        border-radius: 0 !important;
+        box-shadow: none !important;
+        width: 100% !important;
+        height: 297mm !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+}

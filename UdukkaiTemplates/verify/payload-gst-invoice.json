@@ -1,0 +1,158 @@
+{
+  "docType": "gst-invoice",
+  "appLanguage": "ta",
+  "profile": {
+    "id": "1",
+    "shortName": "SMP",
+    "businessName": {
+      "ta": "ஸ்ரீ மாதிரி பட்டு நிலையம்",
+      "en": "Sri Sample Silks"
+    },
+    "address": {
+      "ta": "12, கோவில் தெரு",
+      "en": "12, Temple Street"
+    },
+    "city": {
+      "ta": "ஆரணி",
+      "en": "Arani"
+    },
+    "district": {
+      "ta": "திருவண்ணாமலை",
+      "en": "Tiruvannamalai"
+    },
+    "state": {
+      "ta": "தமிழ்நாடு",
+      "en": "Tamil Nadu"
+    },
+    "country": {
+      "ta": "இந்தியா",
+      "en": "India"
+    },
+    "tagline": {
+      "ta": "தரமான பட்டு",
+      "en": "Quality silk sarees"
+    },
+    "pinCode": "632301",
+    "phone1": "9876543210",
+    "phone2": "9876500000",
+    "email": "sample@example.com",
+    "gstin": "33ABCDE1234F1Z5",
+    "pan": "ABCDE1234F",
+    "bankName": {
+      "ta": "மாதிரி வங்கி",
+      "en": "Sample Bank"
+    },
+    "branch": {
+      "ta": "ஆரணி",
+      "en": "Arani"
+    },
+    "accountNumber": "123456789012",
+    "ifsc": "SAMP0001234",
+    "upiId": "sample@upi",
+    "signatoryName": "A. Sample",
+    "themeColor": "#388e3c",
+    "isBilingual": true,
+    "primaryLanguage": "ta",
+    "secondaryLanguage": "en",
+    "headerLayout": "small",
+    "printSettings": {
+      "invoiceDisplayOptions": {
+        "showHSN": true,
+        "showDiscountColumn": true
+      }
+    },
+    "paymentAccounts": []
+  },
+  "customer": {
+    "name": {
+      "ta": "ஸ்ரீ வாடிக்கையாளர் ஜவுளி",
+      "en": "Sri Customer Textiles"
+    },
+    "address": {
+      "ta": "45, காந்தி சாலை",
+      "en": "45, Gandhi Road"
+    },
+    "city": {
+      "ta": "சேலம்",
+      "en": "Salem"
+    },
+    "district": {
+      "ta": "சேலம்",
+      "en": "Salem"
+    },
+    "state": {
+      "ta": "தமிழ்நாடு",
+      "en": "Tamil Nadu"
+    },
+    "country": {
+      "ta": "இந்தியா",
+      "en": "India"
+    },
+    "pinCode": "636001",
+    "gstin": "33FGHIJ5678K1Z2",
+    "email": "",
+    "phone": "9000000000"
+  },
+  "invoice": {
+    "invoiceNumber": "SMP-001",
+    "invoiceDate": "2026-10-05",
+    "placeOfSupply": "Tamil Nadu",
+    "invoiceType": "tax-invoice",
+    "items": [
+      {
+        "id": "i1",
+        "name": {
+          "ta": "காஞ்சிபுரம் பட்டுப் புடவை",
+          "en": "Kanchipuram silk saree"
+        },
+        "description": {},
+        "quantity": 10,
+        "price": 1500,
+        "taxRate": 5,
+        "hsnCode": "5007",
+        "unit": "pcs",
+        "discountAmount": 0
+      },
+      {
+        "id": "i2",
+        "name": {
+          "ta": "ஆரணி பட்டு",
+          "en": "Arani silk"
+        },
+        "description": {},
+        "quantity": 5,
+        "price": 2200,
+        "taxRate": 5,
+        "hsnCode": "5007",
+        "unit": "pcs",
+        "discountAmount": 500
+      },
+      {
+        "id": "i3",
+        "name": {
+          "ta": "பட்டு வேட்டி",
+          "en": "Silk dhoti"
+        },
+        "description": {},
+        "quantity": 2,
+        "price": 4800,
+        "taxRate": 5,
+        "hsnCode": "5007",
+        "unit": "pcs",
+        "discountAmount": 0
+      }
+    ],
+    "totals": {
+      "subtotal": 35600,
+      "totalDiscount": 500,
+      "cgst": 877.5,
+      "sgst": 877.5,
+      "igst": 0,
+      "roundOff": 0,
+      "total": 36855
+    },
+    "options": {
+      "taxInclusive": false
+    }
+  }
+}

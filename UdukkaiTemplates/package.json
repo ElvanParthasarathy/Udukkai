@@ -1,0 +1,22 @@
+{
+  "name": "udukkai-templates",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "The Udukkai bill templates (GST invoice, GST receipt, Coolie invoice, Coolie receipt), separate from every app.",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "bundle": "vite build --config vite.bundle.config.js"
+  },
+  "dependencies": {
+    "dompurify": "^3.3.3",
+    "qrcode": "^1.5.4",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^5.1.1",
+    "vite": "^7.3.1"
+  }
+}

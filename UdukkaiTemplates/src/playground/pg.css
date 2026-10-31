@@ -1,0 +1,16 @@
+/* Only the playground chrome; the papers are styled by src/styles. Scoped under .pg so it never touches a paper. */
+.pg { display: flex; height: 100vh; font-family: system-ui, sans-serif; background: #e5e7eb; }
+.pg-side { width: 440px; flex: none; display: flex; flex-direction: column; gap: 8px; padding: 12px; background: #111827; color: #e5e7eb; box-sizing: border-box; }
+.pg-side select, .pg-side button, .pg-side input { font: inherit; padding: 6px 8px; border-radius: 6px; border: 1px solid #374151; background: #1f2937; color: #e5e7eb; }
+.pg-side button { cursor: pointer; }
+.pg-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.pg-side textarea { flex: 1; min-height: 0; resize: none; font: 12px/1.45 ui-monospace, Consolas, monospace; padding: 8px; border-radius: 6px; border: 1px solid #374151; background: #0b1220; color: #d1d5db; }
+.pg-err { color: #fca5a5; font-size: 12px; min-height: 16px; }
+.pg-view { flex: 1; overflow: auto; padding: 24px; }
+.pg-sheet { width: 210mm; margin: 0 auto; background: #fff; color: rgba(0,0,0,.87); box-shadow: 0 8px 24px rgba(0,0,0,.25); overflow: hidden; }
+@media print {
+  .pg { display: block; height: auto; background: #fff; }
+  .pg-side { display: none; }
+  .pg-view { padding: 0; overflow: visible; }
+  .pg-sheet { zoom: 1 !important; box-shadow: none; width: auto; margin: 0; }
+}

@@ -1,0 +1,132 @@
+{
+  "docType": "coolie-invoice",
+  "appLanguage": "ta",
+  "profile": {
+    "id": "1",
+    "shortName": "SMP",
+    "businessName": {
+      "ta": "ஸ்ரீ மாதிரி பட்டு நிலையம்",
+      "en": "Sri Sample Silks"
+    },
+    "address": {
+      "ta": "12, கோவில் தெரு",
+      "en": "12, Temple Street"
+    },
+    "city": {
+      "ta": "ஆரணி",
+      "en": "Arani"
+    },
+    "district": {
+      "ta": "திருவண்ணாமலை",
+      "en": "Tiruvannamalai"
+    },
+    "state": {
+      "ta": "தமிழ்நாடு",
+      "en": "Tamil Nadu"
+    },
+    "country": {
+      "ta": "இந்தியா",
+      "en": "India"
+    },
+    "tagline": {
+      "ta": "தரமான பட்டு",
+      "en": "Quality silk sarees"
+    },
+    "pinCode": "632301",
+    "phone1": "9876543210",
+    "phone2": "9876500000",
+    "email": "sample@example.com",
+    "gstin": "33ABCDE1234F1Z5",
+    "pan": "ABCDE1234F",
+    "bankName": {
+      "ta": "மாதிரி வங்கி",
+      "en": "Sample Bank"
+    },
+    "branch": {
+      "ta": "ஆரணி",
+      "en": "Arani"
+    },
+    "accountNumber": "123456789012",
+    "ifsc": "SAMP0001234",
+    "upiId": "sample@upi",
+    "signatoryName": "A. Sample",
+    "themeColor": "#388e3c",
+    "isBilingual": true,
+    "primaryLanguage": "ta",
+    "secondaryLanguage": "en",
+    "headerLayout": "small",
+    "printSettings": {
+      "invoiceDisplayOptions": {
+        "showHSN": true,
+        "showDiscountColumn": true
+      }
+    },
+    "paymentAccounts": []
+  },
+  "customer": {
+    "name": {
+      "ta": "ஸ்ரீ வாடிக்கையாளர் ஜவுளி",
+      "en": "Sri Customer Textiles"
+    },
+    "address": {
+      "ta": "45, காந்தி சாலை",
+      "en": "45, Gandhi Road"
+    },
+    "city": {
+      "ta": "சேலம்",
+      "en": "Salem"
+    },
+    "district": {
+      "ta": "சேலம்",
+      "en": "Salem"
+    },
+    "state": {
+      "ta": "தமிழ்நாடு",
+      "en": "Tamil Nadu"
+    },
+    "country": {
+      "ta": "இந்தியா",
+      "en": "India"
+    },
+    "pinCode": "636001",
+    "gstin": "33FGHIJ5678K1Z2",
+    "email": "",
+    "phone": "9000000000"
+  },
+  "invoice": {
+    "id": "1",
+    "invoiceNumber": "SMP-001",
+    "invoiceDate": "2026-10-05",
+    "customerName": {
+      "ta": "ஸ்ரீ வாடிக்கையாளர் ஜவுளி",
+      "en": "Sri Customer Textiles"
+    },
+    "customerAddress": {
+      "ta": "சேலம்",
+      "en": "Salem"
+    },
+    "items": [
+      {
+        "name": {
+          "ta": "பட்டு நூல்",
+          "en": "Silk yarn"
+        },
+        "weight": 12.5,
+        "price": 350
+      },
+      {
+        "name": {
+          "ta": "ஜரிகை நூல்",
+          "en": "Zari thread"
+        },
+        "weight": 8,
+        "price": 300
+      }
+    ],
+    "wastageGrams": 40,
+    "postalCharges": 100,
+    "ahimsaSilkAmount": 0,
+    "charges": [],
+    "grandTotal": 6875
+  }
+}
