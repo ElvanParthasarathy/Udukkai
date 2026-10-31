@@ -34,7 +34,7 @@ export const en: Record<TranslationKey, string> = {
   invoices: 'Invoices',
   accountingGroup: 'Accounting',
   reportsGroup: 'Reports & GST',
-  coolieBill: 'Coolie Bill',
+  coolieBill: 'Silk Job Work Bill',
   silksBill: 'Grocery Bill',
   newBill: 'New Bill',
   bills: 'Bills',

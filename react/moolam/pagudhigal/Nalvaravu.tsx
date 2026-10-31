@@ -74,7 +74,7 @@ export default function Nalvaravu({ onComplete }) {
             value={coolieBusinessName}
             onChange={(e) => setCoolieBusinessName(e.target.value)}
             placeholder={language === 'ta' ? 'பெயரை உள்ளிடுக' : 'Enter name'}
-            helperText="Used for Coolie bills and receipts."
+            helperText="Used for Silk Job Work bills and receipts."
           />
 
           <Box sx={{ mt: 2 }}>

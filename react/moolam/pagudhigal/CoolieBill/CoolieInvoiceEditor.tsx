@@ -411,7 +411,7 @@ export default function CoolieInvoiceEditor({ onBack, onSaved, existingBill, onR
 
   return (
     <ElvanEditorLayout
-      title={t('coolieBill') || 'Coolie Bill'}
+      title={t('coolieBill') || 'Silk Job Work Bill'}
       onBack={onBack}
       onSave={handleSave}
       saveButtonText={(!!existingBill ? t('hc_updateBillBtn') : t('hc_saveBillBtn')) as string}
