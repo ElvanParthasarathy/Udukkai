@@ -615,7 +615,7 @@ export default function CoolieInvoiceView({ bill, onClose, onEdit }) {
                         <span className="words-label" style={{ fontSize: '12px', fontWeight: '600', color: 'var(--bill-text)', marginRight: '6px' }}>
                             {isEng ? 'Amount in words:' : 'எழுத்தில் மொத்தத் தொகை:'}
                         </span>
-                        <span className="words-line">
+                        <span className="words-line" style={{ color: '#0f172a', fontWeight: 600 }}>
                             {isEng ? numberToWordsEnglish(totalRs) : numberToWordsTamil(totalRs)}
                         </span>
                     </div>

@@ -290,7 +290,7 @@
 .bill-table-new td {
     padding: 12px 10px;
     font-size: 15px;
-    color: #242f3d;
+    color: #1e293b;
     border-bottom: 1px solid #eee;
     border-right: 1px solid rgba(0, 0, 0, 0.04);
     font-family: var(--font-primary);
@@ -361,9 +361,9 @@
 }
 
 .words-line {
-    font-weight: 700;
+    font-weight: 600;
     font-size: 14px;
-    color: var(--bill-text-dark);
+    color: #0f172a;
     background: var(--bill-primary-light);
     padding: 8px 15px;
     border-radius: 6px;

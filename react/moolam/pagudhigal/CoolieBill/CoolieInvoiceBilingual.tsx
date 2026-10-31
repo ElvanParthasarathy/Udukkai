@@ -188,28 +188,28 @@ export default function CoolieInvoiceBilingual({ bill }) {
           <tbody>
             {items.map((item, i) => (
               <tr key={i} className={i % 2 === 1 ? 'row-alt' : ''}>
-                <td className="text-center">{item.coolie || ''}</td>
-                <td className="text-left">
+                <td className="text-center" style={{ color: '#1e293b' }}>{item.coolie || ''}</td>
+                <td className="text-left" style={{ color: '#1e293b' }}>
                   <div>{isEng && item.name_english ? item.name_english : item.porul}</div>
                   {bi && item.name_english && item.name_english.trim().toLowerCase() !== (item.porul || '').trim().toLowerCase() && (
                     <div style={{ fontSize: '12px', color: '#64748b', fontWeight: 500 }}>{item.name_english}</div>
                   )}
                 </td>
-                <td className="text-center">{item.kg ? `${formatWeight(item.kg)} Kg` : ''}</td>
-                <td className="text-right" style={{ fontVariantNumeric: 'tabular-nums', paddingRight: '16px' }}>{item.kg ? `₹${formatCurrency(calcItemAmount(item.coolie, item.kg))}` : ''}</td>
+                <td className="text-center" style={{ color: '#1e293b' }}>{item.kg ? `${formatWeight(item.kg)} Kg` : ''}</td>
+                <td className="text-right" style={{ fontVariantNumeric: 'tabular-nums', paddingRight: '16px', color: '#0f172a', fontWeight: 600 }}>{item.kg ? `₹${formatCurrency(calcItemAmount(item.coolie, item.kg))}` : ''}</td>
               </tr>
             ))}
             {extraRows.map((row, i) => (
               <tr key={row.key} className={(items.length + i) % 2 === 1 ? 'row-alt' : ''}>
-                <td className="text-center">-</td>
-                <td className="text-left">
+                <td className="text-center" style={{ color: '#1e293b' }}>-</td>
+                <td className="text-left" style={{ color: '#1e293b' }}>
                   <div>{isEng && row.en ? row.en : row.ta}</div>
                   {bi && row.en && row.en.trim().toLowerCase() !== (row.ta || '').trim().toLowerCase() && (
                     <div style={{ fontSize: '12px', color: '#64748b', fontWeight: 500 }}>{row.en}</div>
                   )}
                 </td>
-                <td className="text-center">{row.weight ? `${formatWeight(row.weight)} Kg` : '-'}</td>
-                <td className="text-right" style={{ fontVariantNumeric: 'tabular-nums', paddingRight: '16px' }}>{row.amount ? `₹${formatCurrency(row.amount)}` : '-'}</td>
+                <td className="text-center" style={{ color: '#1e293b' }}>{row.weight ? `${formatWeight(row.weight)} Kg` : '-'}</td>
+                <td className="text-right" style={{ fontVariantNumeric: 'tabular-nums', paddingRight: '16px', color: '#0f172a', fontWeight: 600 }}>{row.amount ? `₹${formatCurrency(row.amount)}` : '-'}</td>
               </tr>
             ))}
           </tbody>
@@ -223,7 +223,7 @@ export default function CoolieInvoiceBilingual({ bill }) {
                     {bi && <span style={{ fontSize: '10.5px', fontWeight: 500, color: accent, opacity: 0.85, lineHeight: 1.2 }}>{primaryEng ? 'மொத்தம்' : 'Grand Total'}</span>}
                   </div>
                 </td>
-                <td className="text-center" style={{ fontWeight: 600, fontSize: '13.5px', color: '#242f3d', fontVariantNumeric: 'tabular-nums', borderBottom: '1px solid #ddd', verticalAlign: 'middle' }}>
+                <td className="text-center" style={{ fontWeight: 600, fontSize: '13.5px', color: '#1e293b', fontVariantNumeric: 'tabular-nums', borderBottom: '1px solid #ddd', verticalAlign: 'middle' }}>
                   {formatWeight(totalKg)} Kg
                 </td>
                 <td className="text-right" style={{ textAlign: 'right', paddingRight: '16px', fontWeight: 700, fontSize: '14.5px', color: accent, fontVariantNumeric: 'tabular-nums', borderBottom: '1px solid #ddd', verticalAlign: 'middle' }}>
@@ -236,7 +236,7 @@ export default function CoolieInvoiceBilingual({ bill }) {
                 <td colSpan={4} style={{ padding: '8px 16px', textAlign: 'left', borderBottom: 'none' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem' }}>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                      <span style={{ fontSize: '13px', fontWeight: 600, color: '#242f3d', lineHeight: 1.35 }}>
+                      <span style={{ fontSize: '13px', fontWeight: 600, color: '#0f172a', lineHeight: 1.35 }}>
                         {wordsPrimary}
                       </span>
                       {wordsSecondary && (
@@ -247,17 +247,17 @@ export default function CoolieInvoiceBilingual({ bill }) {
                     </div>
                     <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', whiteSpace: 'nowrap' }}>
                       <div style={{ display: 'inline-flex', flexDirection: 'column', alignItems: 'flex-end', gap: '3px' }}>
-                        <span style={{ fontSize: '11.5px', fontWeight: 600, color: '#475569', lineHeight: 1.25 }}>
+                        <span style={{ fontSize: '11.5px', fontWeight: 600, color: '#64748b', lineHeight: 1.25 }}>
                           {lbl('மொத்த உருப்படிகள்', 'Total Items')}
                         </span>
                         {bi && (
-                          <span style={{ fontSize: '9.5px', fontWeight: 500, color: '#475569', opacity: 0.85 }}>
+                          <span style={{ fontSize: '9.5px', fontWeight: 500, color: '#64748b', opacity: 0.85 }}>
                             {primaryEng ? 'மொத்த உருப்படிகள்' : 'Total Items'}
                           </span>
                         )}
                       </div>
                       <span style={{ fontSize: '11.5px', fontWeight: 600, color: '#64748b' }}>:</span>
-                      <span style={{ fontSize: '13px', fontWeight: 600, color: '#242f3d', fontVariantNumeric: 'tabular-nums' }}>
+                      <span style={{ fontSize: '13px', fontWeight: 600, color: '#334155', fontVariantNumeric: 'tabular-nums' }}>
                         {items.length}
                       </span>
                     </div>
