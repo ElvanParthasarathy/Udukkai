@@ -194,7 +194,7 @@ export default function PodhuReceiptPaper({
 
   const RECEIPT_LABELS: Record<string, Record<string, string>> = {
     'English': { hc_paymentReceipt: 'Payment Receipt', receiptNoLabel: 'Receipt No:', dateLabel: 'Date:', receivedFromLabel: 'Received From:', paymentModeLabel: 'Payment Mode:', referenceNoLabel: 'Reference No:', againstInvoiceLabel: 'Against Invoice:', noteLabel: 'Note:', receivedBy: 'Received By:', authorizedSignatory: '(Authorized Signatory)', phoneLabel: 'Phone:', mobileLabel: 'Mobile:', contactUsLabel: 'Contact Us' },
-    'Tamil': { hc_paymentReceipt: 'பெறுகைச் சான்று', receiptNoLabel: 'சான்று எண்:', dateLabel: 'நாள்:', receivedFromLabel: 'இவரிடமிருந்து பெறப்பட்டது:', paymentModeLabel: 'கட்டண முறை:', referenceNoLabel: 'குறிப்பு எண்:', againstInvoiceLabel: 'பட்டியல் எண்:', noteLabel: 'குறிப்பு:', receivedBy: 'பெற்றவர்', authorizedSignatory: '(கையொப்பம்)', phoneLabel: 'தொலைப்பேசி:', mobileLabel: 'கைப்பேசி:', contactUsLabel: 'தொடர்பு கொள்ள' },
+    'Tamil': { hc_paymentReceipt: 'பெறுகைச் சான்று', receiptNoLabel: 'சான்று எண்:', dateLabel: 'நாள்:', receivedFromLabel: 'இவரிடமிருந்து பெறப்பட்டது:', paymentModeLabel: 'செலுத்தும் முறை:', referenceNoLabel: 'குறிப்பு எண்:', againstInvoiceLabel: 'பட்டியல் எண்:', noteLabel: 'குறிப்பு:', receivedBy: 'பெற்றவர்', authorizedSignatory: '(கையொப்பம்)', phoneLabel: 'தொலைப்பேசி:', mobileLabel: 'கைப்பேசி:', contactUsLabel: 'தொடர்பு கொள்ள' },
     'Hindi': { hc_paymentReceipt: 'भुगतान रसीद', receiptNoLabel: 'रसीद संख्या:', dateLabel: 'दिनांक:', receivedFromLabel: 'से प्राप्त:', paymentModeLabel: 'भुगतान का प्रकार:', referenceNoLabel: 'संदर्भ संख्या:', againstInvoiceLabel: 'बिल के विरुद्ध:', noteLabel: 'नोट:', receivedBy: 'प्राप्तकर्ता', authorizedSignatory: 'अधिकृत हस्ताक्षरकर्ता', phoneLabel: 'फ़ोन:', mobileLabel: 'मोबाइल:', contactUsLabel: 'संपर्क करें' },
     'Telugu': { hc_paymentReceipt: 'చెల్లింపు రసీదు', receiptNoLabel: 'రసీదు నంబర్:', dateLabel: 'తేదీ:', receivedFromLabel: 'నుండి స్వీకరించబడింది:', paymentModeLabel: 'చెల్లింపు విధానం:', referenceNoLabel: 'సూచన సంఖ్య:', againstInvoiceLabel: 'ఇన్వాయిస్‌కు వ్యతిరేకంగా:', noteLabel: 'గమనిక:', receivedBy: 'స్వీకర్త', authorizedSignatory: 'అధికారిక సంతకం', phoneLabel: 'ఫోన్:', mobileLabel: 'మొబైల్:', contactUsLabel: 'సంప్రదించండి' },
     'Kannada': { hc_paymentReceipt: 'ಪಾವತಿ ರಶೀದಿ', receiptNoLabel: 'ರಶೀದಿ ಸಂಖ್ಯೆ:', dateLabel: 'ದಿನಾಂಕ:', receivedFromLabel: 'ಇವರಿಂದ ಸ್ವೀಕರಿಸಲಾಗಿದೆ:', paymentModeLabel: 'ಪಾವತಿ ವಿಧಾನ:', referenceNoLabel: 'ಉಲ್ಲೇಖ ಸಂಖ್ಯೆ:', againstInvoiceLabel: 'ಇನ್‌ವಾಯ್ಸ್ ವಿರುದ್ಧ:', noteLabel: 'ಸೂಚನೆ:', receivedBy: 'ಸ್ವೀಕರಿಸುವವರು', authorizedSignatory: 'ಅಧಿಕೃತ ಸಹಿದಾರರು', phoneLabel: 'ಫೋನ್:', mobileLabel: 'ಮೊಬೈಲ್:', contactUsLabel: 'ಸಂಪರ್ಕಿಸಿ' },
@@ -230,7 +230,7 @@ export default function PodhuReceiptPaper({
 
   const renderPaymentMode = (mode: string) => {
     const dictionaries: Record<string, Record<string, string>> = {
-      'Tamil': { 'Cash': 'பணம்', 'UPI': 'UPI', 'Bank Transfer': 'வங்கிப் பரிமாற்றம்', 'Cheque': 'காசோலை', 'Card': 'கார்டு', 'Other': 'மற்றவை' },
+      'Tamil': { 'Cash': 'காசு', 'UPI': 'UPI', 'Bank Transfer': 'வங்கிப் பரிமாற்றம்', 'Cheque': 'காசோலை', 'Card': 'அட்டை', 'Other': 'மற்றவை' },
       'English': { 'Cash': 'Cash', 'UPI': 'UPI', 'Bank Transfer': 'Bank Transfer', 'Cheque': 'Cheque', 'Card': 'Card', 'Other': 'Other' },
       'Hindi': { 'Cash': 'नकद', 'UPI': 'UPI', 'Bank Transfer': 'बैंक ट्रांसफर', 'Cheque': 'चेक', 'Card': 'कार्ड', 'Other': 'अन्य' },
       'Telugu': { 'Cash': 'నగదు', 'UPI': 'UPI', 'Bank Transfer': 'బ్యాంక్ బదిలీ', 'Cheque': 'చెక్', 'Card': 'కార్డు', 'Other': 'ఇతర' },
@@ -536,55 +536,74 @@ export default function PodhuReceiptPaper({
                   <span className="greeting-right" style={{ color: norm.themeColor }}>{(!norm.isBilingual && norm.primaryLang === 'English') ? 'Vaazhga Valamudan' : 'வாழ்க வளமுடன்'}</span>
                 </div>
 
-                {/* Header matching Coolie Bill layout */}
-                <div className="print-header-new" style={{ paddingLeft: '8px', paddingRight: '8px', borderBottom: '1px solid #e2e8f0', paddingBottom: '10px', marginBottom: '12px' }}>
-                  <div className="header-left">
-                    {(norm.billHeaderStyle === 'wide' || (!norm.billHeaderStyle && norm.wideLogo)) && norm.wideLogo ? (
+                {/* Header matching Invoice layout: Wide Logo (1:1 with SJS Theme) or Normal Logo & Name */}
+                {((norm.billHeaderStyle === 'wide' || (!norm.billHeaderStyle && norm.wideLogo)) && norm.wideLogo) ? (
+                  <div className="print-header-new" style={{ paddingLeft: '8px', paddingRight: '8px', borderBottom: '1px solid #e2e8f0', minHeight: '75px', position: 'relative', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', paddingBottom: '10px', marginBottom: '12px' }}>
+                    <div style={{ position: 'relative' }}>
                       <img 
+                        crossOrigin={norm.wideLogo?.startsWith('http') ? 'anonymous' : undefined}
                         src={norm.wideLogo} 
                         alt="Wide Logo" 
+                        width={400}
+                        height={140}
                         style={{ 
-                          height: '60px', 
-                          maxWidth: '360px', 
+                          position: 'absolute',
+                          left: 0,
+                          top: -20,
+                          height: '140px', 
+                          width: '400px', 
                           objectFit: 'contain', 
                           objectPosition: 'left center',
                           transform: `translate(${norm.wideLogoX}px, ${norm.wideLogoY}px) scale(${norm.wideLogoScale})`,
                           transformOrigin: 'left center'
                         }} 
                       />
-                    ) : (
-                      <>
-                        {norm.logo && (
-                          <img 
-                            src={norm.logo} 
-                            alt="Logo" 
-                            style={{ maxHeight: `${Math.min(norm.logoHeight || 60, 70)}px`, maxWidth: '150px', objectFit: 'contain' }} 
-                          />
-                        )}
-                        <div className="header-company-info" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-                          <div className="company-name font-display" style={{ color: norm.themeColor, whiteSpace: 'nowrap' }}>
-                            {norm.namePrimary}
-                          </div>
-                          {norm.isBilingual && norm.nameSecondary && norm.nameSecondary !== norm.namePrimary && (
-                            <div className="company-subtitle font-tamil" style={{ color: '#475569', whiteSpace: 'nowrap' }}>
-                              {norm.nameSecondary}
-                            </div>
-                          )}
-                        </div>
-                      </>
-                    )}
-                  </div>
-                  <div className="header-right" style={{ textAlign: 'right', display: 'flex', flexDirection: 'column', alignItems: 'flex-end', justifyContent: 'center' }}>
-                    <div className="bill-type-badge font-tamil" style={{ color: norm.themeColor, fontSize: '17px', fontWeight: 800, lineHeight: 1.25, letterSpacing: '0.2px' }}>
-                      {(!norm.isBilingual && norm.primaryLang === 'English') ? 'Payment Receipt' : 'பெறுகைச் சான்று'}
                     </div>
-                    {norm.isBilingual && (
-                      <div style={{ fontSize: '11px', fontWeight: 500, color: '#475569', marginTop: '3px', lineHeight: 1 }}>
-                        Payment Receipt
+                    <div className="header-right" style={{ textAlign: 'right', zIndex: 5, position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'flex-end', justifyContent: 'center' }}>
+                      <div className="bill-type-badge font-tamil" style={{ color: norm.themeColor, fontSize: '17px', fontWeight: 800, lineHeight: 1.25, letterSpacing: '0.2px' }}>
+                        {(!norm.isBilingual && norm.primaryLang === 'English') ? 'Payment Receipt' : 'பெறுகைச் சான்று'}
                       </div>
-                    )}
+                      {norm.isBilingual && (
+                        <div style={{ fontSize: '11px', fontWeight: 500, color: '#475569', marginTop: '3px', lineHeight: 1 }}>
+                          Payment Receipt
+                        </div>
+                      )}
+                    </div>
                   </div>
-                </div>
+                ) : (
+                  <div className="print-header-new" style={{ paddingLeft: '8px', paddingRight: '8px', borderBottom: '1px solid #e2e8f0', paddingBottom: '10px', marginBottom: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div className="header-left" style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+                      {norm.logo && (
+                        <img 
+                          crossOrigin={norm.logo?.startsWith('http') ? 'anonymous' : undefined}
+                          src={norm.logo} 
+                          alt="Logo" 
+                          style={{ maxHeight: `${Math.min(norm.logoHeight || 60, 70)}px`, maxWidth: '150px', objectFit: 'contain' }} 
+                        />
+                      )}
+                      <div className="header-company-info" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+                        <div className="company-name font-display" style={{ color: norm.themeColor, whiteSpace: 'nowrap' }}>
+                          {norm.namePrimary}
+                        </div>
+                        {norm.isBilingual && norm.nameSecondary && norm.nameSecondary !== norm.namePrimary && (
+                          <div className="company-subtitle font-tamil" style={{ color: '#475569', whiteSpace: 'nowrap' }}>
+                            {norm.nameSecondary}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                    <div className="header-right" style={{ textAlign: 'right', display: 'flex', flexDirection: 'column', alignItems: 'flex-end', justifyContent: 'center' }}>
+                      <div className="bill-type-badge font-tamil" style={{ color: norm.themeColor, fontSize: '17px', fontWeight: 800, lineHeight: 1.25, letterSpacing: '0.2px' }}>
+                        {(!norm.isBilingual && norm.primaryLang === 'English') ? 'Payment Receipt' : 'பெறுகைச் சான்று'}
+                      </div>
+                      {norm.isBilingual && (
+                        <div style={{ fontSize: '11px', fontWeight: 500, color: '#475569', marginTop: '3px', lineHeight: 1 }}>
+                          Payment Receipt
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
 
                 {/* Stacked Receipt Rows */}
                 <div className="receipt-row">
@@ -610,7 +629,7 @@ export default function PodhuReceiptPaper({
                 </div>
 
                 <div className="receipt-row">
-                  <span className="receipt-label" style={{ color: norm.themeColor }}>{renderKey('paymentModeLabel', 'Payment Mode:', 'கட்டண முறை:')}</span>
+                  <span className="receipt-label" style={{ color: norm.themeColor }}>{renderKey('paymentModeLabel', 'Payment Mode:', 'செலுத்தும் முறை:')}</span>
                   <span className="receipt-value">{renderPaymentMode(receipt.paymentMode)}</span>
                 </div>
 

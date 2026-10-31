@@ -59,7 +59,7 @@ fun ReceiptCard(
     val amountStr = CurrencyUtils.formatInr(receipt.amount)
 
     val (taLabel, enLabel) = when (receipt.paymentMode.lowercase()) {
-        "cash" -> "ரொக்கம்" to "Cash"
+        "cash" -> "காசு" to "Cash"
         "upi" -> "UPI" to "UPI"
         "bank_transfer" -> "வங்கி" to "Bank"
         "cheque" -> "காசோலை" to "Cheque"
