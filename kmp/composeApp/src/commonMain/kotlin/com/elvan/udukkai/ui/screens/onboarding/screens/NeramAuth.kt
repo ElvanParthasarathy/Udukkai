@@ -57,13 +57,16 @@ internal fun NeramElement(
     modifier: Modifier = Modifier,
     content: @Composable () -> Unit
 ) {
-    var started by remember { mutableStateOf(false) }
+    // With system animations off the piece is simply there
+    val still = remember { !com.elvan.udukkai.core.platform.systemAnimationsEnabled() }
+    var started by remember { mutableStateOf(still) }
     LaunchedEffect(Unit) {
+        if (still) return@LaunchedEffect
         delay(80L + delayIndex * 90L)
         started = true
     }
-    val alpha by animateFloatAsState(if (started) 1f else 0f, tween(500, easing = EaseOutCubic), label = "elem_alpha")
-    val offset by animateDpAsState(if (started) 0.dp else 20.dp, tween(500, easing = EaseOutCubic), label = "elem_offset")
+    val alpha by animateFloatAsState(if (started) 1f else 0f, tween(if (still) 0 else 500, easing = EaseOutCubic), label = "elem_alpha")
+    val offset by animateDpAsState(if (started) 0.dp else 20.dp, tween(if (still) 0 else 500, easing = EaseOutCubic), label = "elem_offset")
     Box(
         modifier = modifier.graphicsLayer {
             this.alpha = alpha

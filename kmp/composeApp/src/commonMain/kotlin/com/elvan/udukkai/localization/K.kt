@@ -461,6 +461,8 @@ object K {
     const val restorePhaseReceipts = "restorePhaseReceipts"
     const val booksNumbering = "booksNumbering"
     const val booksLockedMsg = "booksLockedMsg"
+    const val showPassword = "showPassword"
+    const val hidePassword = "hidePassword"
     const val yearClosedEditTitle = "yearClosedEditTitle"
     const val editAnyway = "editAnyway"
 }

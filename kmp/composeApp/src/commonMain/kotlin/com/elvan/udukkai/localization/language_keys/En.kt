@@ -455,6 +455,8 @@ val en: Map<String, String> = mapOf(
     K.booksLockedMsg to "This financial year is closed. Make the correction in the current year.",
     K.yearClosedEditTitle to "This bill is in a closed financial year and may already be in your GST return. Edit anyway?",
     K.editAnyway to "Edit anyway",
+    K.showPassword to "Show password",
+    K.hidePassword to "Hide password",
 )
 
 

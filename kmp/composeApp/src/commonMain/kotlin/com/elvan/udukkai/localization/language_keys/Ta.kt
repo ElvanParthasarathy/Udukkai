@@ -456,6 +456,8 @@ val ta: Map<String, String> = mapOf(
     K.booksLockedMsg to "இந்த நிதியாண்டு முடிந்துவிட்டது. திருத்தத்தை நடப்பு ஆண்டில் செய்யவும்.",
     K.yearClosedEditTitle to "இந்தப் பட்டியல் முடிந்த நிதியாண்டில் உள்ளது; GST கணக்கில் ஏற்கெனவே தாக்கலாகியிருக்கலாம். இருப்பினும் திருத்தவா?",
     K.editAnyway to "திருத்து",
+    K.showPassword to "கடவுச்சொல்லைக் காட்டு",
+    K.hidePassword to "கடவுச்சொல்லை மறை",
 )
 
 /**

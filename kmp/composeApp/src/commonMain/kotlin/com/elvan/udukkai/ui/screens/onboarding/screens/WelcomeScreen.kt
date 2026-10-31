@@ -7,6 +7,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -44,6 +45,7 @@ fun WelcomeScreen(
         animationSpec = infiniteRepeatable(tween(5000, easing = FastOutSlowInEasing), RepeatMode.Reverse),
         label = "logo_pulse"
     )
+    val moving = remember { com.elvan.udukkai.core.platform.systemAnimationsEnabled() }
 
     Column(
         modifier = Modifier
@@ -57,8 +59,8 @@ fun WelcomeScreen(
         NeramElement(delayIndex = 0) {
             Box(
                 modifier = Modifier
-                    .offset(y = floatOffset.dp)
-                    .scale(pulse)
+                    .offset(y = (if (moving) floatOffset else 0f).dp)
+                    .scale(if (moving) pulse else 1f)
                     .size(140.dp)
                     .cssShadow(color = NeramColors.textPrimary(), alpha = if (dark) 0.15f else 0.10f, blurRadius = 40.dp, offsetY = 20.dp)
                     .clip(RoundedCornerShape(40.dp))

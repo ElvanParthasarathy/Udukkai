@@ -5,6 +5,7 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.draw.clip
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
@@ -21,6 +22,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.semantics.contentType
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -108,6 +111,7 @@ fun UllnuzhaivuThirai(
                         value = email,
                         onValueChange = { email = it; message = null },
                         placeholder = K.emailAddress.tr(),
+                        contentType = androidx.compose.ui.autofill.ContentType.EmailAddress,
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email, imeAction = ImeAction.Next)
                     )
                     Spacer(Modifier.height(16.dp))
@@ -116,6 +120,7 @@ fun UllnuzhaivuThirai(
                         onValueChange = { password = it; message = null },
                         placeholder = K.password.tr(),
                         isPassword = true,
+                        contentType = androidx.compose.ui.autofill.ContentType.Password,
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, imeAction = ImeAction.Done),
                         keyboardActions = KeyboardActions(onDone = { logIn() })
                     )
@@ -144,9 +149,11 @@ fun UllnuzhaivuThirai(
                         style = TextStyle(fontFamily = ElvanSansFontFamily, fontSize = 14.sp, fontWeight = FontWeight.Bold),
                         color = NeramColors.textSecondary(),
                         modifier = Modifier
+                            .clip(RoundedCornerShape(50))
                             .clickable(
                                 interactionSource = remember { MutableInteractionSource() },
-                                indication = null
+                                indication = ripple(color = NeramColors.textPrimary(), bounded = true),
+                                role = androidx.compose.ui.semantics.Role.Button
                             ) {
                                 if (email.isBlank()) {
                                     fail(enterEmailMsg)
@@ -207,6 +214,7 @@ internal fun NeramField(
     onValueChange: (String) -> Unit,
     placeholder: String,
     isPassword: Boolean = false,
+    contentType: androidx.compose.ui.autofill.ContentType? = null,
     keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
     keyboardActions: KeyboardActions = KeyboardActions.Default
 ) {
@@ -222,7 +230,7 @@ internal fun NeramField(
                 IconButton(onClick = { visible = !visible }) {
                     Icon(
                         imageVector = if (visible) MaterialSymbols.Rounded.VisibilityOff else MaterialSymbols.Rounded.Visibility,
-                        contentDescription = null,
+                        contentDescription = (if (visible) K.hidePassword else K.showPassword).tr(),
                         tint = secondary
                     )
                 }
@@ -243,7 +251,7 @@ internal fun NeramField(
         singleLine = true,
         keyboardOptions = keyboardOptions,
         keyboardActions = keyboardActions,
-        modifier = Modifier.fillMaxWidth().neramShadow()
+        modifier = Modifier.fillMaxWidth().neramShadow().then(if (contentType != null) Modifier.semantics { this.contentType = contentType } else Modifier)
     )
 }
 
