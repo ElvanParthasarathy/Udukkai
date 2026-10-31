@@ -9,3 +9,9 @@ export const fyLabel = (date: unknown): string => {
   const start = month >= 4 ? year : year - 1;
   return `${String(start).slice(2)}-${String(start + 1).slice(2)}`;
 };
+
+/** "2026-27", for the line that names the financial year in full. */
+export const fyFull = (date: unknown): string => {
+  const short = fyLabel(date);
+  return short ? `20${short.slice(0, 2)}-${short.slice(3)}` : '';
+};

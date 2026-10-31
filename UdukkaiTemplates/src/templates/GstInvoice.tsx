@@ -17,7 +17,7 @@ const IconMail = ({ size = 14, className = '', style = {} }) => (
     </svg>
 );
 import { numberToWords, formatCurrency, INVOICE_TYPES, getCountryConfig, CURRENCY_NAMES, formatExchangeRateLine, getAccountById, getBilingualStateName, getBilingualCountryName, getDynamicField } from '../lib/Payanpadu';
-import { fyLabel } from '../lib/finYear';
+import { fyFull } from '../lib/finYear';
 import { en } from '../lib/mozhi/en';
 import { ta } from '../lib/mozhi/ta';
 
@@ -301,7 +301,7 @@ const SjsTheme = React.forwardRef(({ profile = {}, client = {}, details = {}, it
 
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: accent + '1A', borderRadius: '8px', padding: '8px 0.5rem', marginBottom: '15px' }}>
         <div style={{ fontSize: '14px', fontWeight: 600, color: accent }}>
-          {showInvoiceNumber && <>{renderLabel('Bill No', 'பில் எண்')} : <strong style={{ color: '#000', fontWeight: 700 }}>{details?.invoiceNumber}</strong>{fyLabel(details?.invoiceDate) && <span style={{ marginLeft: '8px', fontSize: '11px', fontWeight: 400, color: '#64748b' }}>FY {fyLabel(details?.invoiceDate)}</span>}</>}
+          {showInvoiceNumber && <>{renderLabel('Bill No', 'பில் எண்')} : <strong style={{ color: '#000', fontWeight: 700 }}>{details?.invoiceNumber}</strong></>}
         </div>
         <div style={{ fontSize: '14px', fontWeight: 600, color: accent }}>
           {showInvoiceDate && <>{renderLabel('Date', 'நாள்')} : <strong style={{ color: '#000', fontWeight: 700 }}>{details?.invoiceDate ? new Date(details.invoiceDate).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' }) : ''}</strong></>}
@@ -589,6 +589,11 @@ const SjsTheme = React.forwardRef(({ profile = {}, client = {}, details = {}, it
       {/* Totals section */}
       <div className="inv-totals-section" style={{ margin: 0, padding: 0, alignItems: 'stretch', borderTop: '1px solid #e2e8f0', background: '#fff' }}>
         <div className="inv-words" style={{ padding: '0.75rem 0.5rem', borderRight: '1px solid #e2e8f0', flex: 1, display: 'flex', flexDirection: 'column' }}>
+          {fyFull(details?.invoiceDate) && (
+            <div style={{ marginBottom: '0.2rem', color: '#64748b', fontWeight: 400, fontSize: '0.8rem' }}>
+              {renderLabel('Financial Year', 'நிதியாண்டு').replace(' / ', ' • ')}: <span style={{ fontWeight: 600, color: '#334155' }}>{fyFull(details?.invoiceDate)}</span>
+            </div>
+          )}
           {options?.measureMode !== 'weight' && (
             <div style={{ marginBottom: '0.2rem', color: '#64748b', fontWeight: 400, fontSize: '0.8rem' }}>
               {profile?.enableBilingual !== false ? (profile?.primaryDataLanguage === 'Tamil' || !profile?.primaryDataLanguage ? 'மொத்த அளவு • Total Items' : 'Total Items • மொத்த அளவு') : (profile?.primaryDataLanguage === 'Tamil' || !profile?.primaryDataLanguage ? 'மொத்த அளவு' : 'Total Items')}: <span style={{ fontWeight: 600, color: '#334155' }}>{parseFloat(items.reduce((acc, item) => acc + (Number(item.qty) || Number(item.quantity) || 0), 0).toFixed(2))}</span>
@@ -602,7 +607,7 @@ const SjsTheme = React.forwardRef(({ profile = {}, client = {}, details = {}, it
           
           {showAmountWords && (
             <>
-              <div className="inv-words-text" style={{ fontStyle: 'normal', fontWeight: 600, color: '#0f172a', fontSize: '0.75rem', margin: 0, marginTop: '1.25rem', display: 'flex', flexDirection: 'column', gap: '0' }}>
+              <div className="inv-words-text" style={{ fontStyle: 'normal', fontWeight: 600, color: '#0f172a', fontSize: '0.75rem', margin: 0, marginTop: 'auto', paddingTop: '0.6rem', display: 'flex', flexDirection: 'column', gap: '0' }}>
                 {(() => {
                    const wordsStr = amountInWords(totals.total);
                    if (wordsStr.includes(' / ')) {

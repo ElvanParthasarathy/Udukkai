@@ -2,7 +2,7 @@
 import React from 'react';
 import '../styles/print.css'; // Same stylesheet as the original Coolie bill: same sizes and positions
 import { numberToWords } from '../lib/Payanpadu';
-import { fyLabel } from '../lib/finYear';
+import { fyFull } from '../lib/finYear';
 
 // Coolie (Factory) invoice, print only. The original Coolie bill, made bilingual the way the
 // Textiles invoice is (Tamil line + smaller English line), without the "Motham" table footer: the
@@ -164,7 +164,7 @@ export default function CoolieInvoiceBilingual({ bill }) {
       {/* Bill Info Section */}
       <div className="bill-info-section">
         <div className="bill-meta-row">
-          <span className="bill-meta"><div style={{ fontSize: 'inherit', fontWeight: 'inherit', color: 'inherit' }}>{slash('பட்டியல் எண்', 'Bill No')} : <strong style={{ textTransform: 'uppercase', color: '#242f3d', fontWeight: 600 }}>{displayBillNo}</strong>{fyLabel(date) && <span style={{ marginLeft: '8px', fontSize: '11px', fontWeight: 400, color: '#64748b' }}>FY {fyLabel(date)}</span>}</div></span>
+          <span className="bill-meta"><div style={{ fontSize: 'inherit', fontWeight: 'inherit', color: 'inherit' }}>{slash('பட்டியல் எண்', 'Bill No')} : <strong style={{ textTransform: 'uppercase', color: '#242f3d', fontWeight: 600 }}>{displayBillNo}</strong></div></span>
           <span className="bill-meta"><div style={{ fontSize: 'inherit', fontWeight: 'inherit', color: 'inherit' }}>{slash('நாள்', 'Date')} : <strong style={{ color: '#242f3d', fontWeight: 600 }}>{date}</strong></div></span>
         </div>
         {/* Bill To */}
@@ -250,6 +250,18 @@ export default function CoolieInvoiceBilingual({ bill }) {
                         </span>
                       )}
                     </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '4px' }}>
+                      {fyFull(date) && (
+                    <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', whiteSpace: 'nowrap' }}>
+                      <div style={{ display: 'inline-flex', flexDirection: 'column', alignItems: 'flex-end', gap: '3px' }}>
+                        <span style={{ fontSize: '11.5px', fontWeight: 600, color: '#64748b', lineHeight: 1.25 }}>
+                          {lbl('நிதியாண்டு', 'Financial Year')}
+                        </span>
+                        {bi && (
+                          <span style={{ fontSize: '9.5px', fontWeight: 500, color: '#64748b', opacity: 0.85 }}>
+                            {primaryEng ? 'நிதியாண்டு' : 'Financial Year'}
+                          </span>
+                        )}
                     <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', whiteSpace: 'nowrap' }}>
                       <div style={{ display: 'inline-flex', flexDirection: 'column', alignItems: 'flex-end', gap: '3px' }}>
                         <span style={{ fontSize: '11.5px', fontWeight: 600, color: '#64748b', lineHeight: 1.25 }}>
@@ -265,6 +277,14 @@ export default function CoolieInvoiceBilingual({ bill }) {
                       <span style={{ fontSize: '13px', fontWeight: 600, color: '#334155', fontVariantNumeric: 'tabular-nums' }}>
                         {items.length}
                       </span>
+                    </div>
+                      </div>
+                      <span style={{ fontSize: '11.5px', fontWeight: 600, color: '#64748b' }}>:</span>
+                      <span style={{ fontSize: '13px', fontWeight: 600, color: '#334155', fontVariantNumeric: 'tabular-nums' }}>
+                        {fyFull(date)}
+                      </span>
+                    </div>
+                      )}
                     </div>
                   </div>
                 </td>

@@ -21,6 +21,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.elvan.udukkai.core.finance.BillNumbering
 import com.elvan.udukkai.core.utils.CurrencyUtils
 import com.elvan.udukkai.core.utils.DateUtils
 import com.elvan.udukkai.data.model.InvoiceModel
@@ -159,16 +160,30 @@ fun FactoryInvoiceCard(
                         modifier = Modifier.weight(1f, fill = false),
                         verticalArrangement = Arrangement.spacedBy(3.dp)
                     ) {
-                        Text(
-                            text = invoice.invoiceNumber,
-                            style = TextStyle(
-                                fontFamily = ff,
-                                fontSize = 13.5.sp,
-                                color = LocalShellColors.current.textSecondary
-                            ),
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
-                        )
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text(
+                                text = invoice.invoiceNumber,
+                                modifier = Modifier.weight(1f, fill = false),
+                                style = TextStyle(
+                                    fontFamily = ff,
+                                    fontSize = 13.5.sp,
+                                    color = LocalShellColors.current.textSecondary
+                                ),
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                            // The financial year, small and quiet beside the number
+                            Text(
+                                text = "FY ${BillNumbering.fyShort(invoice.invoiceDate)}",
+                                modifier = Modifier.padding(start = 8.dp),
+                                style = TextStyle(
+                                    fontFamily = ff,
+                                    fontSize = 11.sp,
+                                    color = LocalShellColors.current.textSecondary.copy(alpha = 0.6f)
+                                ),
+                                maxLines = 1
+                            )
+                        }
 
                         run {
                             Text(
