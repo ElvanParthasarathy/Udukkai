@@ -2,7 +2,18 @@ package com.elvan.udukkai.ui.screens.onboarding.screens
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
@@ -11,6 +22,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -18,101 +31,105 @@ import com.elvan.udukkai.ui.navigation.MaterialSymbols
 import com.elvan.udukkai.core.backup.getUdukkaiBackupService
 import com.elvan.udukkai.localization.K
 import com.elvan.udukkai.localization.tr
+import com.elvan.udukkai.theme.ElvanSansFontFamily
 import com.elvan.udukkai.theme.ThemeManager
 import com.elvan.udukkai.ui.components.shell.ElvanLoadingOverlay
 import com.elvan.udukkai.ui.components.shell.ElvanSnackbar
-import com.elvan.udukkai.ui.screens.onboarding.components.AuthAnimatedElement
-import com.elvan.udukkai.ui.screens.onboarding.components.AuthButton
-import com.elvan.udukkai.ui.screens.onboarding.components.AuthHeader
+import com.elvan.udukkai.ui.screens.onboarding.components.AuthBackdrop
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-/**
- * Restore Page matching Flutter's RestorePage (restore_thirai.dart) 1:1.
- */
+/** Offers to bring back an earlier backup, laid out like the Welcome page: the tile and the words in the middle, the buttons at the foot. */
 @Composable
 fun RestorePage(
     onStartFresh: () -> Unit,
     onRestoreComplete: () -> Unit
 ) {
-    val isDark = ThemeManager.isDark()
-    val textColor = if (isDark) Color.White else Color(0xFF1A1A1A)
+    val dark = ThemeManager.isDark()
     val scope = rememberCoroutineScope()
     var restoring by remember { mutableStateOf(false) }
 
     val restoringText = K.restoringData.tr()
     val successText = K.restoreSuccess.tr()
 
-    Column(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
-    ) {
-        AuthAnimatedElement(delayIndex = 0) {
-            Box(
-                modifier = Modifier
-                    .size(96.dp)
-                    .background(
-                        if (isDark) Color.White.copy(alpha = 0.08f) else Color(0xFFF0F0F0),
-                        RoundedCornerShape(28.dp)
-                    ),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    imageVector = MaterialSymbols.Rounded.HistoryFill,
-                    contentDescription = null,
-                    tint = textColor,
-                    modifier = Modifier.size(48.dp)
-                )
-            }
-        }
+    Box(Modifier.fillMaxSize()) {
+        AuthBackdrop()
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .windowInsetsPadding(WindowInsets.safeDrawing)
+                .padding(horizontal = 16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Spacer(Modifier.weight(1f))
 
-        Spacer(modifier = Modifier.height(40.dp))
-
-        AuthHeader(
-            title = K.oldDataAvailable.tr(),
-            subtitle = K.restorePreviousDataPrompt.tr()
-        )
-
-        Spacer(modifier = Modifier.height(40.dp))
-
-        AuthButton(
-            text = K.restoreDataBtn.tr(),
-            loading = restoring,
-            onClick = {
-                if (restoring) return@AuthButton
-                restoring = true
-                scope.launch {
-                    val success = try {
-                        withContext(Dispatchers.Default) { getUdukkaiBackupService().restoreFromBackup() }
-                    } catch (e: Exception) {
-                        false
-                    }
-                    if (success) {
-                        ElvanSnackbar.show(successText)
-                        onRestoreComplete()
-                    } else {
-                        ElvanSnackbar.show("Restore failed. Please try again.")
-                        restoring = false
-                    }
+            NeramElement(delayIndex = 0) {
+                Box(
+                    modifier = Modifier
+                        .size(120.dp)
+                        .clip(RoundedCornerShape(36.dp))
+                        .background(if (dark) Color.White else Color(0xFF111111)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = MaterialSymbols.Rounded.HistoryFill,
+                        contentDescription = null,
+                        tint = if (dark) Color.Black else Color.White,
+                        modifier = Modifier.size(60.dp)
+                    )
                 }
             }
-        )
 
-        Spacer(modifier = Modifier.height(16.dp))
+            Spacer(Modifier.height(24.dp))
 
-        AuthAnimatedElement(delayIndex = 3) {
-            Text(
-                text = K.startFreshBtn.tr(),
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Medium,
-                color = if (isDark) Color.White.copy(alpha = 0.5f) else Color(0xFF999999),
-                modifier = Modifier
-                    .clip(RoundedCornerShape(50))
-                    .clickable(enabled = !restoring, onClick = onStartFresh)
-                    .padding(horizontal = 32.dp, vertical = 16.dp)
-            )
+            NeramElement(delayIndex = 1) {
+                NeramHeader(title = K.oldDataAvailable.tr(), subtitle = K.restorePreviousDataPrompt.tr())
+            }
+
+            Spacer(Modifier.weight(1f))
+
+            NeramElement(delayIndex = 2, modifier = Modifier.fillMaxWidth()) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    NeramButton(
+                        text = K.restoreDataBtn.tr(),
+                        loading = restoring,
+                        onClick = {
+                            if (restoring) return@NeramButton
+                            restoring = true
+                            scope.launch {
+                                val success = try {
+                                    withContext(Dispatchers.Default) { getUdukkaiBackupService().restoreFromBackup() }
+                                } catch (e: Exception) {
+                                    false
+                                }
+                                if (success) {
+                                    ElvanSnackbar.show(successText)
+                                    onRestoreComplete()
+                                } else {
+                                    ElvanSnackbar.show("Restore failed. Please try again.")
+                                    restoring = false
+                                }
+                            }
+                        }
+                    )
+
+                    Spacer(Modifier.height(8.dp))
+
+                    Text(
+                        text = K.startFreshBtn.tr(),
+                        style = TextStyle(fontFamily = ElvanSansFontFamily, fontSize = 14.sp, fontWeight = FontWeight.Bold),
+                        color = NeramColors.textSecondary(),
+                        modifier = Modifier
+                            .heightIn(min = 44.dp)
+                            .clip(RoundedCornerShape(50))
+                            .clickable(enabled = !restoring, role = Role.Button, onClick = onStartFresh)
+                            .padding(horizontal = 24.dp, vertical = 12.dp)
+                    )
+
+                    Spacer(Modifier.height(32.dp))
+                }
+            }
         }
     }
 
