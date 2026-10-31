@@ -205,7 +205,7 @@ export default function CoolieInvoiceBilingual({ bill }) {
                     <div style={{ fontSize: '12px', color: '#64748b', fontWeight: 500 }}>{item.name_english}</div>
                   )}
                 </td>
-                <td className="text-center" style={{ color: '#1e293b' }}>{item.kg ? `${formatWeight(item.kg)} Kg` : '—'}</td>
+                <td className="text-center" style={{ color: '#1e293b', whiteSpace: 'nowrap' }}>{item.kg ? `${formatWeight(item.kg)} Kg` : '—'}</td>
                 <td className="text-center" style={{ color: '#1e293b', fontVariantNumeric: 'tabular-nums' }}>{item.coolie ? `₹${formatCurrency(item.coolie)}` : '—'}</td>
                 <td className="text-right" style={{ fontVariantNumeric: 'tabular-nums', paddingRight: '16px', color: '#0f172a', fontWeight: 600 }}>{item.kg ? `₹${formatCurrency(calcItemAmount(item.coolie, item.kg))}` : '—'}</td>
               </tr>
@@ -219,7 +219,7 @@ export default function CoolieInvoiceBilingual({ bill }) {
                     <div style={{ fontSize: '12px', color: '#64748b', fontWeight: 500 }}>{row.en}</div>
                   )}
                 </td>
-                <td className="text-center" style={{ color: '#1e293b' }}>{row.weight ? `${formatWeight(row.weight)} Kg` : '—'}</td>
+                <td className="text-center" style={{ color: '#1e293b', whiteSpace: 'nowrap' }}>{row.weight ? `${formatWeight(row.weight)} Kg` : '—'}</td>
                 <td className="text-center" style={{ color: '#1e293b' }}>—</td>
                 <td className="text-right" style={{ fontVariantNumeric: 'tabular-nums', paddingRight: '16px', color: '#0f172a', fontWeight: 600 }}>{row.amount ? `₹${formatCurrency(row.amount)}` : '—'}</td>
               </tr>
@@ -235,7 +235,7 @@ export default function CoolieInvoiceBilingual({ bill }) {
                     {bi && <span style={{ fontSize: '10.5px', fontWeight: 500, color: accent, opacity: 0.85, lineHeight: 1.2 }}>{primaryEng ? 'மொத்தம்' : 'Grand Total'}</span>}
                   </div>
                 </td>
-                <td className="text-center" style={{ fontWeight: 600, fontSize: '13.5px', color: '#1e293b', fontVariantNumeric: 'tabular-nums', borderBottom: '1px solid #ddd', verticalAlign: 'middle' }}>
+                <td className="text-center" style={{ fontWeight: 600, fontSize: '13.5px', color: '#1e293b', fontVariantNumeric: 'tabular-nums', borderBottom: '1px solid #ddd', verticalAlign: 'middle', whiteSpace: 'nowrap' }}>
                   {formatWeight(totalKg)} Kg
                 </td>
                 <td style={{ borderBottom: '1px solid #ddd' }}></td>

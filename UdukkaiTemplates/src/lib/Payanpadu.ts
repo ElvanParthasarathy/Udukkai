@@ -63,6 +63,8 @@ export const numberToWords = (num, primaryLang = 'English', secondaryLang = 'Eng
     const b = ['', '', 'Twenty', 'Thirty', 'Forty', 'Fifty', 'Sixty', 'Seventy', 'Eighty', 'Ninety'];
 
     const convertToWords = (n) => {
+      // 100 crore and above: the crore part itself has hundreds ("One Hundred Five Crore")
+      if (n >= 100) return a[Math.floor(n / 100)].trim() + ' Hundred' + (n % 100 !== 0 ? ' ' + convertToWords(n % 100) : '');
       if (n < 20) return a[n];
       return b[Math.floor(n / 10)] + (n % 10 !== 0 ? ' ' + a[n % 10] : '');
     };
