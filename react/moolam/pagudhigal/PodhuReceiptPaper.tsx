@@ -579,7 +579,7 @@ export default function PodhuReceiptPaper({
                       {(!norm.isBilingual && norm.primaryLang === 'English') ? 'Payment Receipt' : 'பெறுகைச் சான்று'}
                     </div>
                     {norm.isBilingual && (
-                      <div style={{ fontSize: '11px', fontWeight: 500, color: norm.themeColor, opacity: 0.85, marginTop: '3px', lineHeight: 1 }}>
+                      <div style={{ fontSize: '11px', fontWeight: 500, color: '#475569', marginTop: '3px', lineHeight: 1 }}>
                         Payment Receipt
                       </div>
                     )}

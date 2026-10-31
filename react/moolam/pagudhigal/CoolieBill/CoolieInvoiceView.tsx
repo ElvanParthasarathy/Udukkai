@@ -546,19 +546,21 @@ export default function CoolieInvoiceView({ bill, onClose, onEdit }) {
                 <table className="bill-table-new">
                     <thead>
                         <tr>
-                            <th style={{ width: '15%' }}><div>{isEng ? 'Coolie' : 'கூலி'}</div></th>
-                            <th style={{ width: '45%', textAlign: 'left', paddingLeft: '15px' }}><div>{isEng ? 'Item Name' : 'உருப்படியின் பெயர்'}</div></th>
-                            <th style={{ width: '15%' }}><div>{isEng ? 'Weight (Kg)' : 'எடை (Kg)'}</div></th>
-                            <th style={{ width: '25%' }}><div>{isEng ? 'Amount' : 'தொகை'}</div></th>
+                            <th style={{ width: '6%', textAlign: 'center' }}>#</th>
+                            <th style={{ width: '44%', textAlign: 'left', paddingLeft: '15px' }}><div>{isEng ? 'Particulars' : 'உருப்படியின் பெயர்'}</div></th>
+                            <th style={{ width: '14%', textAlign: 'center' }}><div>{isEng ? 'Weight' : 'எடை'}</div></th>
+                            <th style={{ width: '16%', textAlign: 'center' }}><div>{isEng ? 'Processing Rate' : 'பணிக்கட்டணம்'}</div></th>
+                            <th style={{ width: '20%', textAlign: 'right', paddingRight: '16px' }}><div>{isEng ? 'Amount' : 'தொகை'}</div></th>
                         </tr>
                     </thead>
                     <tbody>
                         {items.map((item, i) => (
                             <tr key={i} className={i % 2 === 1 ? 'row-alt' : ''}>
-                                <td className="text-center">{item.coolie || ''}</td>
+                                <td className="text-center">{i + 1}</td>
                                 <td className="text-left">{isEng && item.name_english ? item.name_english : pickTamilPart(item.porul)}</td>
-                                <td className="text-center">{item.kg ? formatWeight(item.kg) : ''}</td>
-                                <td className="text-center">{item.kg ? formatCurrency(calcItemAmount(item.coolie, item.kg)) : ''}</td>
+                                <td className="text-center">{item.kg ? `${formatWeight(item.kg)} Kg` : '—'}</td>
+                                <td className="text-center">{item.coolie ? `₹${formatCurrency(item.coolie)}` : '—'}</td>
+                                <td className="text-right" style={{ paddingRight: '16px' }}>{item.kg ? `₹${formatCurrency(calcItemAmount(item.coolie, item.kg))}` : '—'}</td>
                             </tr>
                         ))}
 
@@ -603,9 +605,10 @@ export default function CoolieInvoiceView({ bill, onClose, onEdit }) {
                     </tbody>
                     <tfoot>
                         <tr className="total-footer-row">
-                            <td colSpan="2" className="text-right total-label-cell">{isEng ? 'Total' : 'மொத்தம்'}</td>
+                            <td colSpan={2} className="text-right total-label-cell">{isEng ? 'Total' : 'மொத்தம்'}</td>
                             <td className="text-center total-weight-cell">{formatWeight(totalKg)} Kg</td>
-                            <td className="text-center total-amount-cell">₹ {formatCurrency(totalRs)}</td>
+                            <td></td>
+                            <td className="text-right total-amount-cell" style={{ paddingRight: '16px' }}>₹ {formatCurrency(totalRs)}</td>
                         </tr>
                     </tfoot>
                 </table>
