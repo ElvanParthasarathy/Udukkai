@@ -136,7 +136,7 @@ val ta: Map<String, String> = mapOf(
     K.signedOutSuccessfully to "வெற்றிகரமாக வெளியேற்றப்பட்டது",
     K.fillAllFields to "விடுபட்ட புலங்களை நிரப்பவும்.",
     K.sellingRate to "விற்பனை விலை",
-    K.rate to "வீதம்",
+    K.rate to "பணிக்கட்டணம்",
     K.loginToAccessApp to "செயலியை அணுக உள்நுழையவும்",
     K.password to "கடவுச்சொல்",
     K.enterPassword to "கடவுச்சொல்லை உள்ளிடவும்",

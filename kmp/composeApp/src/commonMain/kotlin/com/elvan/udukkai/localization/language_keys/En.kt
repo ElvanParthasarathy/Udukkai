@@ -135,7 +135,7 @@ val en: Map<String, String> = mapOf(
     K.signedOutSuccessfully to "Signed out successfully",
     K.fillAllFields to "Please fill in all fields.",
     K.sellingRate to "Selling Rate",
-    K.rate to "Rate",
+    K.rate to "Processing Rate",
     K.loginToAccessApp to "Login to access your app",
     K.password to "Password",
     K.enterPassword to "Please enter your password",
