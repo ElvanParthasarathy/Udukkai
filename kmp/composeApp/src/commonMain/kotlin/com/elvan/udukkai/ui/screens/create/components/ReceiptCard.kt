@@ -158,7 +158,8 @@ fun ReceiptCard(
                                 fontSize = 13.5.sp,
                                 color = LocalShellColors.current.textSecondary
                             ),
-                            maxLines = 1,
+                            // The date is never cut: when the line is too long it wraps, and the date moves down whole
+                            maxLines = 2,
                             overflow = TextOverflow.Ellipsis
                         )
 
