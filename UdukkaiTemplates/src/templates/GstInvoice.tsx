@@ -607,7 +607,7 @@ const SjsTheme = React.forwardRef(({ profile = {}, client = {}, details = {}, it
           
           {showAmountWords && (
             <>
-              <div className="inv-words-text" style={{ fontStyle: 'normal', fontWeight: 600, color: '#0f172a', fontSize: '0.75rem', margin: 0, marginTop: 'auto', paddingTop: '0.6rem', display: 'flex', flexDirection: 'column', gap: '0' }}>
+              <div className="inv-words-text" style={{ fontStyle: 'normal', fontWeight: 600, color: '#0f172a', fontSize: '0.75rem', margin: 0, marginTop: '0.6rem', display: 'flex', flexDirection: 'column', gap: '0' }}>
                 {(() => {
                    const wordsStr = amountInWords(totals.total);
                    if (wordsStr.includes(' / ')) {

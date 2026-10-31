@@ -297,7 +297,7 @@ export default function CoolieInvoiceBilingual({ bill }) {
       <div style={{ flexGrow: 1 }}></div>
 
       {/* Footer: Clean open stationery layout (Bank & Signature aligned, with baseline Nandri & Signatory) */}
-      <div style={{ display: 'flex', flexDirection: 'column', marginTop: 'auto', marginBottom: '16px', paddingLeft: '8px', paddingRight: '8px' }}>
+      <div className="udk-footer" style={{ display: 'flex', flexDirection: 'column', marginTop: 'auto', marginBottom: '16px', paddingLeft: '8px', paddingRight: '8px' }}>
         {/* Top Row: Bank Details on Left, Signature on Right */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', width: '100%' }}>
           {/* Left: Bank Details */}

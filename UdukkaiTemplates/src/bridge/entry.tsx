@@ -205,6 +205,10 @@ const printHtml = (options) => {
   const sheetH = Math.max(1, printContent.scrollHeight * MM_PER_PX);
   let zoom = contentW / sheetW;
   if (o.fit === 'page') zoom = Math.min(zoom, contentH / sheetH);
+  // A bill with more lines than one page holds runs on to the next page. A one-page bill keeps the paper as tall as
+  // the page (the contact band sits at its foot); a longer one is as tall as its content, and the band follows it.
+  const pages = Math.max(1, Math.ceil((sheetH * zoom) / contentH - 0.03));
+  const paperH = pages === 1 ? contentH / zoom : 0;
 
   const clone = printContent.cloneNode(true);
   if (!o.color) grayscaleClone(printContent, clone);
@@ -224,6 +228,13 @@ const printHtml = (options) => {
             html, body { position: static !important; width: auto !important; height: auto !important; min-height: 0 !important;
                          overflow: visible !important; margin: 0 !important; padding: 0 !important; background: #fff !important; }
             .udk-sheet { width: ${sheetW}mm; margin: 0 auto; zoom: ${zoom}; }
+            .udk-sheet #invoice-preview, .udk-sheet .a4-paper { height: auto !important; min-height: ${paperH}mm !important; }
+            .udk-sheet #invoice-preview > *, .udk-sheet .a4-paper > * { flex-shrink: 0 !important; }
+            .udk-sheet tr, .udk-sheet .inv-totals-section, .udk-sheet .inv-footer, .udk-sheet .udk-footer, .udk-sheet .inv-contact-block, .udk-sheet .contact-section { break-inside: avoid; page-break-inside: avoid; }
+            .udk-sheet .inv-footer, .udk-sheet .udk-footer { break-after: avoid; page-break-after: avoid; }
+            .udk-sheet tbody tr:nth-last-child(-n+2) { break-after: avoid; page-break-after: avoid; }
+            .udk-sheet thead { display: table-header-group; }
+            .udk-sheet tfoot { display: table-row-group; }
             * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
           </style>
         </head>
