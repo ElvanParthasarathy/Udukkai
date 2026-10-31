@@ -148,11 +148,11 @@ export default function CoolieInvoiceBilingual({ bill }) {
           </div>
         </div>
         <div className="header-right" style={{ textAlign: 'right', display: 'flex', flexDirection: 'column', alignItems: 'flex-end', justifyContent: 'center' }}>
-          <div className="font-tamil" style={{ fontSize: '17px', fontWeight: 800, color: accent, lineHeight: 1.25, letterSpacing: '0.2px' }}>
+          <div className="font-tamil" style={{ fontSize: '14.5px', fontWeight: 700, color: accent, lineHeight: 1.25, letterSpacing: '0.1px' }}>
             {isEng ? 'Silk Job Work Bill' : 'பட்டுநூல் பணிக்கட்டணம்'}
           </div>
           {bi && (
-            <div style={{ fontSize: '11px', fontWeight: 500, color: accent, opacity: 0.85, marginTop: '3px', lineHeight: 1 }}>
+            <div style={{ fontSize: '12.5px', fontWeight: 600, color: accent, opacity: 0.9, marginTop: '2px', lineHeight: 1.1 }}>
               Silk Job Work Bill
             </div>
           )}

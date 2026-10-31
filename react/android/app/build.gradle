@@ -18,8 +18,29 @@ android {
             ignoreAssetsPattern = '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
         }
     }
+    signingConfigs {
+        release {
+            def keystorePropsFile = rootProject.file('../../kmp/keystore.properties')
+            if (keystorePropsFile.exists()) {
+                def props = new Properties()
+                keystorePropsFile.withInputStream { props.load(it) }
+                def keyFile = rootProject.file('../../kmp/' + props.getProperty('storeFile'))
+                if (keyFile.exists()) {
+                    storeFile keyFile
+                    storePassword props.getProperty('storePassword')
+                    keyAlias props.getProperty('keyAlias')
+                    keyPassword props.getProperty('keyPassword')
+                } else {
+                    initWith(signingConfigs.debug)
+                }
+            } else {
+                initWith(signingConfigs.debug)
+            }
+        }
+    }
     buildTypes {
         release {
+            signingConfig signingConfigs.release
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
