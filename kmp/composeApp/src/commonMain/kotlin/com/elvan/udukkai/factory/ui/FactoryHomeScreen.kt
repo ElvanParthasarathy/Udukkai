@@ -149,6 +149,7 @@ fun FactoryHomeScreen() {
     val receiptsLabel = K.receipts.tr()
     val erasingLabel = K.erasing.tr()
     val invoiceHasReceiptsMsg = K.invoiceHasReceipts.tr()
+    val booksLockedMsg = K.booksLockedMsg.tr()
 
 
     // Keep Android Back handling enabled for in-app navigation, but let the single
@@ -916,10 +917,14 @@ fun FactoryHomeScreen() {
                                 val deleted = selectedItemIds.count { FactoryInvoiceRepository.delete(it) }
                                 if (deleted > 0) ElvanSnackbar.show("$deleted $invoicesLabel $erasingLabel")
                                 // Bills that have a receipt are paid and stay
-                                if (deleted < selectedItemIds.size) ElvanSnackbar.show(invoiceHasReceiptsMsg)
+                                if (deleted < selectedItemIds.size) {
+                                    val inLockedYear = FactoryInvoiceRepository.invoices.any { it.id in selectedItemIds && FactoryInvoiceRepository.isLocked(it) }
+                                    ElvanSnackbar.show(if (inLockedYear) booksLockedMsg else invoiceHasReceiptsMsg)
+                                }
                             } else {
-                                selectedItemIds.forEach { FactoryReceiptRepository.delete(it) }
-                                ElvanSnackbar.show("${selectedItemIds.size} $receiptsLabel $erasingLabel")
+                                val deleted = selectedItemIds.count { FactoryReceiptRepository.delete(it) }
+                                if (deleted > 0) ElvanSnackbar.show("$deleted $receiptsLabel $erasingLabel")
+                                if (deleted < selectedItemIds.size) ElvanSnackbar.show(booksLockedMsg)
                             }
                         }
                         else -> {}

@@ -150,6 +150,7 @@ fun TextilesHomeScreen() {
     val receiptsLabel = K.receipts.tr()
     val erasingLabel = K.erasing.tr()
     val invoiceHasReceiptsMsg = K.invoiceHasReceipts.tr()
+    val booksLockedMsg = K.booksLockedMsg.tr()
 
 
     // Keep Android Back handling enabled for in-app navigation, but let the single
@@ -917,10 +918,14 @@ fun TextilesHomeScreen() {
                                 val deleted = selectedItemIds.count { TextilesInvoiceRepository.delete(it) }
                                 if (deleted > 0) ElvanSnackbar.show("$deleted $invoicesLabel $erasingLabel")
                                 // Bills that have a receipt are paid and stay
-                                if (deleted < selectedItemIds.size) ElvanSnackbar.show(invoiceHasReceiptsMsg)
+                                if (deleted < selectedItemIds.size) {
+                                    val inLockedYear = TextilesInvoiceRepository.invoices.any { it.id in selectedItemIds && TextilesInvoiceRepository.isLocked(it) }
+                                    ElvanSnackbar.show(if (inLockedYear) booksLockedMsg else invoiceHasReceiptsMsg)
+                                }
                             } else {
-                                selectedItemIds.forEach { TextilesReceiptRepository.delete(it) }
-                                ElvanSnackbar.show("${selectedItemIds.size} $receiptsLabel $erasingLabel")
+                                val deleted = selectedItemIds.count { TextilesReceiptRepository.delete(it) }
+                                if (deleted > 0) ElvanSnackbar.show("$deleted $receiptsLabel $erasingLabel")
+                                if (deleted < selectedItemIds.size) ElvanSnackbar.show(booksLockedMsg)
                             }
                         }
                         else -> {}

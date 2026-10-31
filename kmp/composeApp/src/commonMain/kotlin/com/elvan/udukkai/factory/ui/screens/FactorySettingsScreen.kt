@@ -23,6 +23,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.elvan.udukkai.core.platform.AppBackHandler
 import com.elvan.udukkai.factory.data.FactoryProfileRepository
+import com.elvan.udukkai.factory.data.FactoryInvoiceRepository
 import com.elvan.udukkai.localization.K
 import com.elvan.udukkai.localization.tr
 import com.elvan.udukkai.theme.Dimens
@@ -98,6 +99,7 @@ fun FactorySettingsScreen(
                 SettingsRoute.Address -> K.address.tr()
                 SettingsRoute.Bank -> K.bank.tr()
                 SettingsRoute.InvoiceCreation -> K.createBtn.tr()
+                SettingsRoute.Books -> K.booksTitle.tr()
                 SettingsRoute.StorageBackup -> K.storageAndBackup.tr()
                 SettingsRoute.Security -> K.security.tr()
                 SettingsRoute.AboutDeveloper -> K.softwareDesigner.tr()
@@ -143,6 +145,18 @@ fun FactorySettingsScreen(
                         scrollState = scrollState,
                         colors = colors
                     )
+                    SettingsRoute.Books -> {
+                        val prefix = FactoryProfileRepository.profile.shortName.ifEmpty { "CB" }
+                        com.elvan.udukkai.ui.screens.settings.screens.BooksSettingsScreen(
+                            settings = com.elvan.udukkai.core.finance.Books.factory,
+                            companyId = FactoryProfileRepository.profile.id,
+                            bills = FactoryInvoiceRepository.activeCompanyInvoices,
+                            removed = FactoryInvoiceRepository.deletedInvoices.filter { it.companyId == FactoryProfileRepository.profile.id },
+                            nextNumber = { FactoryInvoiceRepository.getNextInvoiceNumber(FactoryProfileRepository.profile.id, prefix) },
+                            scrollState = scrollState,
+                            colors = colors
+                        )
+                    }
                     SettingsRoute.StorageBackup -> FactoryStorageBackupScreen(scrollState = scrollState, colors = colors)
                     SettingsRoute.Security -> FactorySecuritySettingsScreen(scrollState = scrollState, colors = colors)
                     SettingsRoute.AboutDeveloper -> AboutDeveloperScreen(scrollState = scrollState, colors = colors)
@@ -304,6 +318,16 @@ private fun FactorySettingsHubContent(
                         title = K.createBtn.tr(),
                         description = K.pdfStylingOptions.tr(),
                         onClick = { onNavigate(SettingsRoute.InvoiceCreation) },
+                        colors = colors
+                    )
+
+                    ElvanSettingsDivider(colors = colors)
+
+                    ElvanSettingsRow(
+                        icon = MaterialSymbols.Rounded.Calendar,
+                        title = K.booksTitle.tr(),
+                        description = K.booksYearRange.tr(),
+                        onClick = { onNavigate(SettingsRoute.Books) },
                         colors = colors
                     )
 

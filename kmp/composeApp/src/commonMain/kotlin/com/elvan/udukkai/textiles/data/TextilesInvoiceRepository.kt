@@ -4,6 +4,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.elvan.udukkai.core.backup.AutoBackupManager
+import com.elvan.udukkai.core.finance.BillNumbering
+import com.elvan.udukkai.core.finance.Books
 import com.elvan.udukkai.data.database.getTextilesDatabaseHelper
 import com.elvan.udukkai.core.utils.SearchHelper
 import com.elvan.udukkai.data.model.InvoiceModel
@@ -92,10 +94,18 @@ object TextilesInvoiceRepository {
         return "$prefix-$padded"
     }
 
-    fun getNextInvoiceNumber(companyId: Long?, prefix: String): String {
+    fun getNextInvoiceNumber(companyId: Long?, prefix: String, date: Long = System.currentTimeMillis()): String {
+        if (Books.textiles.fySeries(companyId)) {
+            val series = BillNumbering.seriesPrefix(prefix, date)
+            val used = (invoices + deletedInvoices).filter { it.companyId == companyId }.map { it.invoiceNumber }
+            return BillNumbering.format(series, BillNumbering.nextSerial(used, series))
+        }
         val vanakkam = getNextVanakkam(companyId)
         return formatInvoiceNumber(prefix, vanakkam)
     }
+
+    /** A bill dated in a locked financial year cannot be added, changed, moved, deleted or brought back. */
+    fun isLocked(inv: InvoiceModel): Boolean = Books.textiles.isLocked(inv.companyId, inv.invoiceDate)
 
     fun isInvoiceNumberDuplicate(
         invoiceNumber: String,
@@ -139,7 +149,9 @@ object TextilesInvoiceRepository {
         }
     }
 
+    /** -1 when the bill (or the date it is moving to) is in a locked year. */
     fun save(invoice: InvoiceModel): Long {
+        if (isLocked(invoice) || (invoice.id > 0 && invoices.any { it.id == invoice.id && isLocked(it) })) return -1L
         val helper = getTextilesDatabaseHelper()
         val id = helper.saveInvoice(invoice)
         if (id > 0) {
@@ -152,6 +164,7 @@ object TextilesInvoiceRepository {
     /** A bill that has a receipt is paid: it cannot be deleted (delete the receipt first). */
     fun delete(id: Long): Boolean {
         if (hasLinkedReceipts(id)) return false
+        if (invoices.any { it.id == id && isLocked(it) }) return false
         val success = getTextilesDatabaseHelper().deleteInvoice(id)
         if (success) {
             loadAll()
@@ -170,6 +183,7 @@ object TextilesInvoiceRepository {
 
     fun restore(id: Long): Boolean {
         if (restoreBlocked(id)) return false
+        if (deletedInvoices.any { it.id == id && isLocked(it) }) return false
         val success = getTextilesDatabaseHelper().restoreInvoice(id)
         if (success) {
             loadAll()

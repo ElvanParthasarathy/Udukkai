@@ -2,6 +2,8 @@ package com.elvan.udukkai.textiles.ui.screens.editor
 
 import com.elvan.udukkai.core.utils.DateUtils
 import com.elvan.udukkai.core.utils.BillRules
+import com.elvan.udukkai.core.finance.BillNumbering
+import com.elvan.udukkai.core.finance.Books
 import com.elvan.udukkai.core.print.PrintPayload
 import com.elvan.udukkai.localization.LanguageManager
 import com.elvan.udukkai.ui.screens.preview.DraftBillPreview
@@ -111,10 +113,11 @@ fun TextilesInvoiceEditorScreen(
     val isDark = colors.isDark
     val ff = LocalAppFontFamily.current
     val isEditing = invoice != null && invoice.id > 0L
+    val isYearLocked = remember(invoice) { invoice != null && invoice.id > 0L && TextilesInvoiceRepository.isLocked(invoice) }
     val isPaidLocked = remember(invoice) {
         invoice != null && invoice.id > 0L && TextilesInvoiceRepository.hasLinkedReceipts(invoice.id)
-    }
-    val invoiceLockedMsg = K.invoiceLockedDueToReceipt.tr()
+    } || isYearLocked
+    val invoiceLockedMsg = if (isYearLocked) K.booksLockedMsg.tr() else K.invoiceLockedDueToReceipt.tr()
 
     LaunchedEffect(isPaidLocked) {
         if (isPaidLocked) {
@@ -398,6 +401,7 @@ fun TextilesInvoiceEditorScreen(
     val itemRequiredMsg = K.addAtLeastOneItem.tr()
     val invoiceNumberRequiredMsg = K.invoiceNumber.tr()
     val invoiceNumberFormatMsg = K.invoiceNumberFormat.tr()
+    val booksLockedMsg = K.booksLockedMsg.tr()
     val invoiceSavedMsg = K.invoiceSaved.tr()
     val invoiceNumberDuplicateMsg = K.invoiceNumberAlreadyExists.tr()
     val saveBtnLabel = K.draft.tr()
@@ -459,6 +463,8 @@ fun TextilesInvoiceEditorScreen(
             ElvanSnackbar.show(dupMsg)
         } else if (isPaidLocked) {
             ElvanSnackbar.show(invoiceLockedMsg)
+        } else if (TextilesInvoiceRepository.isLocked(buildInvoice(0))) {
+            ElvanSnackbar.show(booksLockedMsg)
         } else {
             val validItems = activeItems.filter { it.quantity > 0 && it.price > 0 }
             if (validItems.isEmpty()) {
@@ -542,7 +548,7 @@ fun TextilesInvoiceEditorScreen(
                                     modifier = Modifier.size(20.dp)
                                 )
                                 Text(
-                                    text = K.invoiceLockedDueToReceipt.tr().preventBrokenLigatures(),
+                                    text = invoiceLockedMsg.preventBrokenLigatures(),
                                     color = colors.textPrimary,
                                     style = TextStyle(fontFamily = ff, fontSize = 14.sp, fontWeight = FontWeight.Medium)
                                 )
@@ -606,7 +612,10 @@ fun TextilesInvoiceEditorScreen(
                             } else {
                                 "INV-"
                             }
-                            val currentDocPrefix = if (invoiceType == "proforma") "EST-" else profilePrefix
+                            val legacyPrefix = if (invoiceType == "proforma") "EST-" else profilePrefix
+                            // One series a year (VRM/26-27/0001): bills already numbered the old way keep their number as it is
+                            val seriesPrefix = BillNumbering.seriesPrefix(if (invoiceType == "proforma") "EST" else selectedProfile.shortName.ifEmpty { "INV" }, invoiceDate)
+                            val currentDocPrefix = if (Books.textiles.fySeries(selectedCompanyId) && (!isEditing || invoiceNumber.startsWith(seriesPrefix, ignoreCase = true))) seriesPrefix else legacyPrefix
 
                             // Invoice Number with pencil edit pill
                             ElvanDocumentNumberField(
@@ -629,6 +638,10 @@ fun TextilesInvoiceEditorScreen(
                                 selectedDate = invoiceDate,
                                 onDateChanged = {
                                     invoiceDate = it
+                                    // A new year can mean a new number series
+                                    if (!isInvoiceNumberOverridden) {
+                                        invoiceNumber = TextilesInvoiceRepository.getNextInvoiceNumber(selectedCompanyId, if (invoiceType == "proforma") "EST" else selectedProfile.shortName.ifEmpty { "INV" }, it)
+                                    }
                                     hasUnsavedChanges = true
                                 },
                                 isReadOnly = isPaidLocked,

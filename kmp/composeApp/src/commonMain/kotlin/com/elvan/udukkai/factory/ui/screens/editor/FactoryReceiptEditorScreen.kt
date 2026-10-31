@@ -161,6 +161,7 @@ fun FactoryReceiptEditorScreen(
     val duplicateMsg = K.receiptNumberAlreadyExists.tr()
     val savedMsg = K.receiptSaved.tr()
     val saveFailedMsg = K.couldNotSavePrefix.tr()
+    val booksLockedMsg = K.booksLockedMsg.tr()
     val selectCompanyProfileMsg = K.selectCompanyProfile.tr()
 
     // Helper: auto-calculate receipt number
@@ -288,6 +289,13 @@ fun FactoryReceiptEditorScreen(
         // A receipt cannot be dated before the invoice it pays
         if (selectedInvoices.any { DateUtils.dayOf(receiptDate) < DateUtils.dayOf(it.invoiceDate) }) {
             ElvanSnackbar.show(receiptBeforeInvoiceMsg)
+            return
+        }
+
+        // A receipt in a locked financial year cannot be added, moved or changed
+        if (com.elvan.udukkai.core.finance.Books.factory.isLocked(selectedCompanyId, receiptDate) ||
+            (receipt != null && com.elvan.udukkai.factory.data.FactoryReceiptRepository.isLocked(receipt))) {
+            ElvanSnackbar.show(booksLockedMsg)
             return
         }
 

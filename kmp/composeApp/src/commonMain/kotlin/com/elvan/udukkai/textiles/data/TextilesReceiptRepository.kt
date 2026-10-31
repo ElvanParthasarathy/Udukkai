@@ -6,6 +6,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.elvan.udukkai.core.backup.AutoBackupManager
+import com.elvan.udukkai.core.finance.Books
 import com.elvan.udukkai.data.database.getTextilesDatabaseHelper
 import com.elvan.udukkai.data.model.ReceiptInvoiceLinkModel
 import com.elvan.udukkai.core.utils.SearchHelper
@@ -125,7 +126,14 @@ object TextilesReceiptRepository {
         return count
     }
 
+    /** A receipt dated in a locked financial year cannot be added, changed, moved, deleted or brought back. */
+    fun isLocked(r: ReceiptModel): Boolean = Books.textiles.isLocked(r.companyId, r.receiptDate)
+
+    private fun blocked(r: ReceiptModel) = isLocked(r) || (r.id > 0 && receipts.any { it.id == r.id && isLocked(it) })
+
+    /** -1 when the receipt (or the date it is moving to) is in a locked year. */
     fun save(receipt: ReceiptModel): Long {
+        if (blocked(receipt)) return -1L
         val helper = getTextilesDatabaseHelper()
         val id = helper.saveReceipt(receipt)
         if (id > 0) {
@@ -136,6 +144,7 @@ object TextilesReceiptRepository {
     }
 
     fun saveWithLinks(receipt: ReceiptModel, links: List<ReceiptInvoiceLinkModel>): Long {
+        if (blocked(receipt)) return -1L
         val helper = getTextilesDatabaseHelper()
         val id = helper.saveReceiptWithLinks(receipt, links)
         if (id > 0) {
@@ -147,6 +156,7 @@ object TextilesReceiptRepository {
     }
 
     fun delete(id: Long): Boolean {
+        if (receipts.any { it.id == id && isLocked(it) }) return false
         val success = getTextilesDatabaseHelper().deleteReceipt(id)
         if (success) {
             loadAll()
@@ -170,6 +180,7 @@ object TextilesReceiptRepository {
     }
 
     fun restore(id: Long): Boolean {
+        if (deletedReceipts.any { it.id == id && isLocked(it) }) return false
         if (restoreBlocker(id) != null) return false
         val success = getTextilesDatabaseHelper().restoreReceipt(id)
         if (success) {

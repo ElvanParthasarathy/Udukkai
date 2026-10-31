@@ -2,6 +2,8 @@ package com.elvan.udukkai.factory.ui.screens.editor
 
 import com.elvan.udukkai.core.utils.DateUtils
 import com.elvan.udukkai.core.utils.BillRules
+import com.elvan.udukkai.core.finance.BillNumbering
+import com.elvan.udukkai.core.finance.Books
 import com.elvan.udukkai.core.print.PrintPayload
 import com.elvan.udukkai.localization.LanguageManager
 import com.elvan.udukkai.ui.screens.preview.DraftBillPreview
@@ -115,10 +117,11 @@ fun FactoryInvoiceEditorScreen(
     val isDark = colors.isDark
     val ff = LocalAppFontFamily.current
     val isEditing = invoice != null && invoice.id > 0L
+    val isYearLocked = remember(invoice) { invoice != null && invoice.id > 0L && FactoryInvoiceRepository.isLocked(invoice) }
     val isPaidLocked = remember(invoice) {
         invoice != null && invoice.id > 0L && FactoryInvoiceRepository.hasLinkedReceipts(invoice.id)
-    }
-    val invoiceLockedMsg = K.invoiceLockedDueToReceipt.tr()
+    } || isYearLocked
+    val invoiceLockedMsg = if (isYearLocked) K.booksLockedMsg.tr() else K.invoiceLockedDueToReceipt.tr()
 
     LaunchedEffect(isPaidLocked) {
         if (isPaidLocked) {
@@ -431,6 +434,7 @@ fun FactoryInvoiceEditorScreen(
     val customerRequiredMsg = K.selectCustomer.tr()
     val itemRequiredMsg = K.addAtLeastOneItem.tr()
     val invoiceNumberRequiredMsg = K.invoiceNumber.tr()
+    val booksLockedMsg = K.booksLockedMsg.tr()
     val invoiceSavedMsg = K.invoiceSaved.tr()
     val invoiceNumberDuplicateMsg = K.invoiceNumberAlreadyExists.tr()
     val saveBtnLabel = K.draft.tr()
@@ -486,6 +490,8 @@ fun FactoryInvoiceEditorScreen(
             ElvanSnackbar.show(dupMsg)
         } else if (isPaidLocked) {
             ElvanSnackbar.show(invoiceLockedMsg)
+        } else if (FactoryInvoiceRepository.isLocked(buildInvoice(0))) {
+            ElvanSnackbar.show(booksLockedMsg)
         } else {
             val validItems = activeItems.filter { it.weight > 0 && it.price > 0 }
             if (validItems.isEmpty()) {
@@ -569,7 +575,7 @@ fun FactoryInvoiceEditorScreen(
                                     modifier = Modifier.size(20.dp)
                                 )
                                 Text(
-                                    text = K.invoiceLockedDueToReceipt.tr().preventBrokenLigatures(),
+                                    text = invoiceLockedMsg.preventBrokenLigatures(),
                                     color = colors.textPrimary,
                                     style = TextStyle(fontFamily = ff, fontSize = 14.sp, fontWeight = FontWeight.Medium)
                                 )
@@ -617,13 +623,16 @@ fun FactoryInvoiceEditorScreen(
                     ElvanEditorDisabledOverlay(disabled = !isCustomerSelected) {
                         ElvanEditorSection(index = 1, title = K.invoiceDetails.tr()) {
                             val currentPrefix = computePrefix(selectedProfile)
+                            // One series a year (CB/26-27/0001): bills already numbered the old way keep their number as it is
+                            val seriesPrefix = BillNumbering.seriesPrefix(currentPrefix, invoiceDate)
+                            val numberPrefix = if (Books.factory.fySeries(selectedCompanyId) && (!isEditing || invoiceNumber.startsWith(seriesPrefix, ignoreCase = true))) seriesPrefix else "$currentPrefix-"
                             Column(
                                 modifier = Modifier.fillMaxWidth(),
                                 verticalArrangement = Arrangement.spacedBy(16.dp)
                             ) {
                                 ElvanDocumentNumberField(
                                     label = K.invoiceNumber.tr(),
-                                    prefix = "$currentPrefix-",
+                                    prefix = numberPrefix,
                                     initialFullNumber = invoiceNumber,
                                     onFullNumberChanged = { newNum ->
                                         invoiceNumber = newNum
@@ -640,6 +649,10 @@ fun FactoryInvoiceEditorScreen(
                                     selectedDate = invoiceDate,
                                     onDateChanged = { newDate ->
                                         invoiceDate = newDate
+                                        // A new year can mean a new number series
+                                        if (!isInvoiceNumberOverridden) {
+                                            invoiceNumber = FactoryInvoiceRepository.getNextInvoiceNumber(selectedCompanyId, computePrefix(selectedProfile), newDate)
+                                        }
                                         hasUnsavedChanges = true
                                     },
                                     isReadOnly = isPaidLocked,
