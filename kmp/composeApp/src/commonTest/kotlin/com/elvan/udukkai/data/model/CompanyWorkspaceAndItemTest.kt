@@ -107,8 +107,8 @@ class CompanyWorkspaceAndItemTest {
         val payload = ItemFirebasePayloadConverter.toFirebasePayload(item)
 
         assertEquals(42L, payload["id"])
-        assertEquals(4500.0, payload["vilai"])
-        assertEquals(listOf(101L, 102L), payload["niruvanamIds"])
+        assertEquals(4500.0, payload["price"])
+        assertEquals(listOf(101L, 102L), payload["companyIds"])
         
         @Suppress("UNCHECKED_CAST")
         val prices = payload["companyPrices"] as Map<String, Double>
@@ -261,7 +261,7 @@ class CompanyWorkspaceAndItemTest {
 
         // Verify Firebase payload preserves both
         val payload = ItemFirebasePayloadConverter.toFirebasePayload(editedItem)
-        assertEquals(listOf(101L), payload["niruvanamIds"])
+        assertEquals(listOf(101L), payload["companyIds"])
         @Suppress("UNCHECKED_CAST")
         val prices = payload["companyPrices"] as Map<String, Double>
         assertEquals(1350.0, prices["101"])
