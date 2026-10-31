@@ -302,7 +302,7 @@ fun BottomNavBar(
                             Text(
                                 text = tab.getLocalizedLabel(),
                                 color = color,
-                                fontSize = 11.sp,
+                                fontSize = 9.5.sp,
                                 fontWeight = if (isActive) FontWeight.SemiBold else FontWeight.Normal,
                                 fontFamily = LocalAppFontFamily.current,
                                 maxLines = 1,
