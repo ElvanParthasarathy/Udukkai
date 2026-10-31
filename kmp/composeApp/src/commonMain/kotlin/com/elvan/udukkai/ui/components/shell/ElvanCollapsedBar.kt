@@ -128,12 +128,6 @@ fun ElvanCollapsedBar(
                 val cancelLabel = K.cancelBtn.tr()
                 val isCollapsed = liftProgress >= 0.5f
 
-                val checkboxIcon = if (isAllSelected) {
-                    MaterialSymbols.Rounded.CheckCircleFill
-                } else {
-                    MaterialSymbols.Rounded.RadioButtonUnchecked
-                }
-                val checkTint = if (isAllSelected) colors.modeAccent else colors.textPrimary
                 val pillText = if (selectedCount > 0 && !isAllSelected) "$selectedCount" else selectAllLabel
 
                 Row(
@@ -163,11 +157,11 @@ fun ElvanCollapsedBar(
                                 verticalAlignment = Alignment.CenterVertically,
                                 horizontalArrangement = Arrangement.spacedBy(8.dp)
                             ) {
-                                Icon(
-                                    imageVector = checkboxIcon,
-                                    contentDescription = selectAllLabel,
-                                    tint = checkTint,
-                                    modifier = Modifier.size(20.dp)
+                                com.elvan.udukkai.ui.components.ElvanCheckMark(
+                                    selected = isAllSelected,
+                                    selectedTint = colors.modeAccent,
+                                    idleTint = colors.textPrimary,
+                                    size = 20.dp
                                 )
                                 AnimatedContent(
                                     targetState = pillText,

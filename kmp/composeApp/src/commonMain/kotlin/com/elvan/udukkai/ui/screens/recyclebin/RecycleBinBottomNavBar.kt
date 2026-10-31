@@ -35,6 +35,9 @@ import com.elvan.udukkai.theme.rememberShellColors
 import com.elvan.udukkai.ui.navigation.MaterialSymbols
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import androidx.compose.ui.graphics.lerp
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import kotlin.math.abs
 import kotlin.math.floor
 import kotlin.math.roundToInt
 
@@ -299,8 +302,10 @@ fun RecycleBinBottomNavBar(
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             tabs.forEachIndexed { index, tab ->
-                                val isActive = index == activeVisualIndex
-                                val color = if (isActive) colors.textPrimary else colors.textSecondary
+                                // As in the main bar: colour, icon and weight blend with how far the pill sits over this tab
+                                val pillCenterPx = animatedLeftPx + bgWidthPx / 2f
+                                val near = (1f - abs(pillCenterPx - (index + 0.5f) * layoutWidthPx) / layoutWidthPx).coerceIn(0f, 1f)
+                                val color = lerp(colors.textSecondary, colors.textPrimary, near)
                                 val iconSize = 22.dp
 
                                 Column(
@@ -310,22 +315,25 @@ fun RecycleBinBottomNavBar(
                                     verticalArrangement = Arrangement.Center,
                                     horizontalAlignment = Alignment.CenterHorizontally
                                 ) {
-                                    Icon(
-                                        imageVector = if (isActive) tab.activeIcon else tab.icon,
-                                        contentDescription = tab.getLocalizedLabel(),
-                                        tint = color,
-                                        modifier = Modifier.size(iconSize)
-                                    )
+                                    Box(Modifier.size(iconSize)) {
+                                        Icon(tab.icon, tab.getLocalizedLabel(), tint = color, modifier = Modifier.matchParentSize().graphicsLayer { alpha = 1f - near })
+                                        Icon(tab.activeIcon, null, tint = color, modifier = Modifier.matchParentSize().graphicsLayer { alpha = near })
+                                    }
                                     Spacer(modifier = Modifier.height(1.5.dp))
-                                    Text(
-                                        text = tab.getLocalizedLabel(),
-                                        color = color,
-                                        fontSize = 9.5.sp,
-                                        fontWeight = if (isActive) FontWeight.SemiBold else FontWeight.Normal,
-                                        fontFamily = LocalAppFontFamily.current,
-                                        maxLines = 1,
-                                        lineHeight = 11.sp
-                                    )
+                                    Box(contentAlignment = Alignment.Center) {
+                                        listOf(FontWeight.Normal to 1f - near, FontWeight.SemiBold to near).forEach { (weight, weightAlpha) ->
+                                            Text(
+                                                text = tab.getLocalizedLabel(),
+                                                color = color,
+                                                fontSize = 9.5.sp,
+                                                fontWeight = weight,
+                                                fontFamily = LocalAppFontFamily.current,
+                                                maxLines = 1,
+                                                lineHeight = 11.sp,
+                                                modifier = Modifier.graphicsLayer { alpha = weightAlpha }.clearAndSetSemantics { }
+                                            )
+                                        }
+                                    }
                                 }
                             }
                         }

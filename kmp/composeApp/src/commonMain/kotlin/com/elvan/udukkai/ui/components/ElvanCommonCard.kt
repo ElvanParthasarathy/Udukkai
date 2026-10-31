@@ -146,23 +146,50 @@ fun ElvanCardSelector(
                     .size(24.dp),
                 contentAlignment = Alignment.Center
             ) {
-                Icon(
-                    imageVector = if (isSelected) {
-                        MaterialSymbols.Rounded.CheckCircleFill
-                    } else {
-                        MaterialSymbols.Rounded.RadioButtonUnchecked
-                    },
-                    contentDescription = null,
-                    tint = if (isSelected) {
-                        colors.modeAccent
-                    } else {
-                        if (isDark) Color.White.copy(alpha = 0.38f) else Color.Black.copy(alpha = 0.32f)
-                    },
-                    modifier = Modifier.size(24.dp)
+                ElvanCheckMark(
+                    selected = isSelected,
+                    selectedTint = colors.modeAccent,
+                    idleTint = if (isDark) Color.White.copy(alpha = 0.38f) else Color.Black.copy(alpha = 0.32f),
+                    size = 24.dp
                 )
             }
             Spacer(modifier = Modifier.width(12.dp))
         }
+    }
+}
+
+/**
+ * A round tick that fills smoothly: the empty ring fades into the filled tick with a small pop, and the colour
+ * blends between the two, instead of swapping in one frame.
+ */
+@Composable
+fun ElvanCheckMark(
+    selected: Boolean,
+    selectedTint: Color,
+    idleTint: Color,
+    size: Dp,
+    modifier: Modifier = Modifier
+) {
+    val on by androidx.compose.animation.core.animateFloatAsState(
+        if (selected) 1f else 0f,
+        tween(180, easing = CubicBezierEasing(0.2f, 0f, 0f, 1f)),
+        label = "checkMark"
+    )
+    val tint = androidx.compose.ui.graphics.lerp(idleTint, selectedTint, on)
+    Box(modifier.size(size)) {
+        Icon(
+            MaterialSymbols.Rounded.RadioButtonUnchecked, null, tint = tint,
+            modifier = Modifier.matchParentSize().graphicsLayer { alpha = 1f - on }
+        )
+        Icon(
+            MaterialSymbols.Rounded.CheckCircleFill, null, tint = tint,
+            modifier = Modifier.matchParentSize().graphicsLayer {
+                alpha = on
+                val pop = 0.8f + 0.2f * on
+                scaleX = pop
+                scaleY = pop
+            }
+        )
     }
 }
 

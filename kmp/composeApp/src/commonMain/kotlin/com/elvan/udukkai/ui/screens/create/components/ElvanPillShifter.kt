@@ -33,6 +33,9 @@ import com.elvan.udukkai.theme.preventBrokenLigatures
 import com.elvan.udukkai.theme.rememberShellColors
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import androidx.compose.ui.graphics.lerp
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import kotlin.math.abs
 import kotlin.math.floor
 import kotlin.math.roundToInt
 import com.elvan.udukkai.theme.LocalShellColors
@@ -265,12 +268,14 @@ fun ElvanPillShifter(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     items.forEachIndexed { index, item ->
-                        val isActive = index == activeVisualIndex
-                        val itemColor = if (isActive) {
-                            LocalShellColors.current.textPrimary
-                        } else {
-                            if (isDark) Color(0xFF9E9E9E) else Color(0xFF7C7C80)
-                        }
+                        // How far the pill sits over this tab (0 to 1): colour, icon and weight blend with it while dragging
+                        val pillCenterPx = animatedLeftPx + bgWidthPx / 2f
+                        val near = (1f - abs(pillCenterPx - (index + 0.5f) * layoutWidthPx) / layoutWidthPx).coerceIn(0f, 1f)
+                        val itemColor = lerp(
+                            if (isDark) Color(0xFF9E9E9E) else Color(0xFF7C7C80),
+                            LocalShellColors.current.textPrimary,
+                            near
+                        )
 
                         Box(
                             modifier = Modifier
@@ -283,25 +288,30 @@ fun ElvanPillShifter(
                                 horizontalArrangement = Arrangement.Center
                             ) {
                                 if (item.icon != null) {
-                                    Icon(
-                                        imageVector = if (isActive) (item.activeIcon ?: item.icon) else item.icon,
-                                        contentDescription = item.label,
-                                        tint = itemColor,
-                                        modifier = Modifier.size(if (itemCount > 2) 16.dp else 18.dp)
-                                    )
+                                    Box(Modifier.size(if (itemCount > 2) 16.dp else 18.dp)) {
+                                        Icon(item.icon, null, tint = itemColor, modifier = Modifier.matchParentSize().graphicsLayer { alpha = 1f - near })
+                                        Icon(item.activeIcon ?: item.icon, null, tint = itemColor, modifier = Modifier.matchParentSize().graphicsLayer { alpha = near })
+                                    }
                                     Spacer(modifier = Modifier.width(if (itemCount > 2) 6.dp else 8.dp))
                                 }
-                                Text(
-                                    text = item.label.preventBrokenLigatures(),
-                                    style = TextStyle(
-                                        fontFamily = ff,
-                                        fontSize = if (isFullWidth) 13.sp else (if (itemCount > 2) 13.sp else 14.sp),
-                                        fontWeight = if (isActive) FontWeight.SemiBold else FontWeight.Medium
-                                    ),
-                                    color = itemColor,
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis
-                                )
+                                // The bold label lies over the regular one and takes over as the pill arrives (the regular one sets the width)
+                                Box(contentAlignment = Alignment.CenterStart) {
+                                    listOf(FontWeight.Medium to 1f - near, FontWeight.SemiBold to near).forEach { (weight, weightAlpha) ->
+                                        Text(
+                                            text = item.label.preventBrokenLigatures(),
+                                            style = TextStyle(
+                                                fontFamily = ff,
+                                                fontSize = if (isFullWidth) 13.sp else (if (itemCount > 2) 13.sp else 14.sp),
+                                                fontWeight = weight
+                                            ),
+                                            color = itemColor,
+                                            maxLines = 1,
+                                            overflow = TextOverflow.Ellipsis,
+                                            modifier = Modifier.graphicsLayer { alpha = weightAlpha }
+                                                .then(if (weight == FontWeight.SemiBold) Modifier.clearAndSetSemantics { } else Modifier)
+                                        )
+                                    }
+                                }
                             }
                         }
                     }

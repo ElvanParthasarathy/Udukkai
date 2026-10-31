@@ -6,6 +6,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.RoundRect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.selection.selectable
@@ -241,26 +242,26 @@ private fun ThemeOptionBox(
                 )
                 .padding(horizontal = 10.dp, vertical = 4.dp)
         ) {
-            Icon(
-                imageVector = if (isSelected) MaterialSymbols.Rounded.CheckCircleFill else MaterialSymbols.Rounded.RadioButtonUnchecked,
-                contentDescription = null,
-                tint = if (isSelected) {
-                    LocalShellColors.current.textPrimary
-                } else {
-                    Color(0xFF888888)
-                },
-                modifier = Modifier.size(20.dp)
+            com.elvan.udukkai.ui.components.ElvanCheckMark(
+                selected = isSelected,
+                selectedTint = LocalShellColors.current.textPrimary,
+                idleTint = Color(0xFF888888),
+                size = 20.dp
             )
             Spacer(modifier = Modifier.width(6.dp))
-            Text(
-                text = title,
-                style = TextStyle(
-                    fontFamily = ff,
-                    fontSize = 14.sp,
-                    fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Medium
-                ),
-                color = if (isSelected) colors.textPrimary else colors.textPrimary.copy(alpha = 0.5f)
-            )
+            // The label's colour and weight blend with the tick (the bold copy lies over the regular one)
+            val on by androidx.compose.animation.core.animateFloatAsState(if (isSelected) 1f else 0f, androidx.compose.animation.core.tween(180), label = "themeLabel")
+            Box(contentAlignment = Alignment.CenterStart) {
+                listOf(FontWeight.Medium to 1f - on, FontWeight.SemiBold to on).forEach { (weight, weightAlpha) ->
+                    Text(
+                        text = title,
+                        style = TextStyle(fontFamily = ff, fontSize = 14.sp, fontWeight = weight),
+                        color = androidx.compose.ui.graphics.lerp(colors.textPrimary.copy(alpha = 0.5f), colors.textPrimary, on),
+                        modifier = Modifier.graphicsLayer { alpha = weightAlpha }
+                            .then(if (weight == FontWeight.SemiBold) Modifier.clearAndSetSemantics { } else Modifier)
+                    )
+                }
+            }
         }
     }
 }
