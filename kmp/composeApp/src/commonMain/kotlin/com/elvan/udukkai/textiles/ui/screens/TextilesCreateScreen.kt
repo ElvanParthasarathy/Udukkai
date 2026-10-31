@@ -1,6 +1,5 @@
 package com.elvan.udukkai.textiles.ui.screens
 
-import com.elvan.udukkai.ui.components.ExpressiveContainedLoader
 import com.elvan.udukkai.ui.components.ExpressiveDotsLoader
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
@@ -68,17 +67,6 @@ fun TextilesCreateScreen(
     val invoices by remember { derivedStateOf { TextilesInvoiceRepository.filteredInvoices } }
     val receipts by remember { derivedStateOf { TextilesReceiptRepository.filteredReceipts } }
 
-    val pageSize = 10
-    var visibleInvoiceCount by remember { mutableIntStateOf(pageSize) }
-    var visibleReceiptCount by remember { mutableIntStateOf(pageSize) }
-
-    LaunchedEffect(activeProfile.id, TextilesInvoiceRepository.startDateFilter, TextilesInvoiceRepository.endDateFilter) {
-        visibleInvoiceCount = pageSize
-    }
-    LaunchedEffect(activeProfile.id, TextilesReceiptRepository.startDateFilter, TextilesReceiptRepository.endDateFilter) {
-        visibleReceiptCount = pageSize
-    }
-
     // The pill slides over 150ms. Swapping the (Tamil text heavy) card list in the same frames made
     // that slide stutter, so the list follows once the pill has settled.
     var listSegment by remember { mutableIntStateOf(selectedSegment) }
@@ -93,8 +81,6 @@ fun TextilesCreateScreen(
     var isSearchLoading by remember { mutableStateOf(false) }
 
     LaunchedEffect(currentSearchQuery) {
-        visibleInvoiceCount = pageSize
-        visibleReceiptCount = pageSize
         if (currentSearchQuery.isNotBlank()) {
             isSearchLoading = true
             delay(300)
@@ -104,22 +90,12 @@ fun TextilesCreateScreen(
         }
     }
 
-    val displayedInvoices = remember(invoices, visibleInvoiceCount) {
-        invoices.take(visibleInvoiceCount)
-    }
-    val hasMoreInvoices = invoices.size > visibleInvoiceCount
-
-    val displayedReceipts = remember(receipts, visibleReceiptCount) {
-        receipts.take(visibleReceiptCount)
-    }
-    val hasMoreReceipts = receipts.size > visibleReceiptCount
-
-    val invoiceGroups = remember(displayedInvoices) {
-        DateGroupUtils.groupItemsByDate(displayedInvoices) { it.invoiceDate }
+    val invoiceGroups = remember(invoices) {
+        DateGroupUtils.groupItemsByDate(invoices) { it.invoiceDate }
     }
 
-    val receiptGroups = remember(displayedReceipts) {
-        DateGroupUtils.groupItemsByDate(displayedReceipts) { it.receiptDate }
+    val receiptGroups = remember(receipts) {
+        DateGroupUtils.groupItemsByDate(receipts) { it.receiptDate }
     }
 
     val shifterItems = listOf(
@@ -343,22 +319,6 @@ fun TextilesCreateScreen(
                         }
                     }
 
-                    if (hasMoreInvoices) {
-                        item(key = "inv_bottom_loader") {
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(vertical = 20.dp),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                ExpressiveContainedLoader(modifier = Modifier.size(48.dp), containerColor = colors.surface, indicatorColor = colors.textSecondary)
-                                LaunchedEffect(Unit) {
-                                    delay(350)
-                                    visibleInvoiceCount += pageSize
-                                }
-                            }
-                        }
-                    }
                 }
             } else {
                 if (receipts.isEmpty()) {
@@ -443,22 +403,6 @@ fun TextilesCreateScreen(
                         }
                     }
 
-                    if (hasMoreReceipts) {
-                        item(key = "rec_bottom_loader") {
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(vertical = 20.dp),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                ExpressiveContainedLoader(modifier = Modifier.size(48.dp), containerColor = colors.surface, indicatorColor = colors.textSecondary)
-                                LaunchedEffect(Unit) {
-                                    delay(350)
-                                    visibleReceiptCount += pageSize
-                                }
-                            }
-                        }
-                    }
                 }
             }
         }

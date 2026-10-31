@@ -1,6 +1,5 @@
 package com.elvan.udukkai.factory.ui.screens
 
-import com.elvan.udukkai.ui.components.ExpressiveContainedLoader
 import com.elvan.udukkai.ui.components.ExpressiveDotsLoader
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -51,18 +50,6 @@ fun FactoryItemScreen(
 ) {
     val items = FactoryItemRepository.filteredItems
     val ff = LocalAppFontFamily.current
-
-    val pageSize = 30
-    var visibleItemCount by remember { mutableIntStateOf(pageSize) }
-
-    LaunchedEffect(FactoryItemRepository.searchQuery) {
-        visibleItemCount = pageSize
-    }
-
-    val displayedItems = remember(items, visibleItemCount) {
-        items.take(visibleItemCount)
-    }
-    val hasMoreItems = items.size > visibleItemCount
 
     var isSearchLoading by remember { mutableStateOf(false) }
     LaunchedEffect(FactoryItemRepository.searchQuery) {
@@ -131,7 +118,7 @@ fun FactoryItemScreen(
                 }
             } else {
                 itemsIndexed(
-                    items = displayedItems,
+                    items = items,
                     key = { _, item -> "item_${item.id}" }
                 ) { index, item ->
                     val isSelected = selectedItemIds.contains(item.id)
@@ -157,21 +144,6 @@ fun FactoryItemScreen(
                     )
                 }
 
-                if (hasMoreItems) {
-                    item(key = "bottom_loader") {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(vertical = 20.dp),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            ExpressiveContainedLoader(modifier = Modifier.size(48.dp), containerColor = colors.surface, indicatorColor = colors.textSecondary)
-                            LaunchedEffect(Unit) {
-                                visibleItemCount += pageSize
-                            }
-                        }
-                    }
-                }
             }
         }
     }

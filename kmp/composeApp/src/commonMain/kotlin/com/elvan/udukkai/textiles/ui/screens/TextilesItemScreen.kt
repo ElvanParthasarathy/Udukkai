@@ -1,6 +1,5 @@
 package com.elvan.udukkai.textiles.ui.screens
 
-import com.elvan.udukkai.ui.components.ExpressiveContainedLoader
 import com.elvan.udukkai.ui.components.ExpressiveDotsLoader
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -89,18 +88,6 @@ fun TextilesItemScreen(
         }
     }
 
-    val pageSize = 30
-    var visibleItemCount by remember { mutableIntStateOf(pageSize) }
-
-    LaunchedEffect(TextilesItemRepository.searchQuery, selectedTabIndex) {
-        visibleItemCount = pageSize
-    }
-
-    val displayedItems = remember(tabFilteredItems, visibleItemCount) {
-        tabFilteredItems.take(visibleItemCount)
-    }
-    val hasMoreItems = tabFilteredItems.size > visibleItemCount
-
     var isSearchLoading by remember { mutableStateOf(false) }
     LaunchedEffect(TextilesItemRepository.searchQuery) {
         if (TextilesItemRepository.searchQuery.isNotBlank()) {
@@ -188,7 +175,7 @@ fun TextilesItemScreen(
                 }
             } else {
                 itemsIndexed(
-                    items = displayedItems,
+                    items = tabFilteredItems,
                     key = { _, item -> "item_${item.id}" }
                 ) { index, item ->
                     val isSelected = selectedItemIds.contains(item.id)
@@ -214,21 +201,6 @@ fun TextilesItemScreen(
                     )
                 }
 
-                if (hasMoreItems) {
-                    item(key = "bottom_loader") {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(vertical = 20.dp),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            ExpressiveContainedLoader(modifier = Modifier.size(48.dp), containerColor = colors.surface, indicatorColor = colors.textSecondary)
-                            LaunchedEffect(Unit) {
-                                visibleItemCount += pageSize
-                            }
-                        }
-                    }
-                }
             }
         }
     }

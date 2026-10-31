@@ -1,6 +1,5 @@
 package com.elvan.udukkai.textiles.ui.screens
 
-import com.elvan.udukkai.ui.components.ExpressiveContainedLoader
 import com.elvan.udukkai.ui.components.ExpressiveDotsLoader
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -56,18 +55,6 @@ fun TextilesCustomerScreen(
 ) {
     val customers = TextilesCustomerRepository.filteredMerchants
     val ff = LocalAppFontFamily.current
-
-    val pageSize = 10
-    var visibleCustomerCount by remember { mutableIntStateOf(pageSize) }
-
-    LaunchedEffect(TextilesCustomerRepository.searchQuery) {
-        visibleCustomerCount = pageSize
-    }
-
-    val displayedCustomers = remember(customers, visibleCustomerCount) {
-        customers.take(visibleCustomerCount)
-    }
-    val hasMoreCustomers = customers.size > visibleCustomerCount
 
     var isSearchLoading by remember { mutableStateOf(false) }
     LaunchedEffect(TextilesCustomerRepository.searchQuery) {
@@ -136,7 +123,7 @@ fun TextilesCustomerScreen(
                 }
             } else {
                 itemsIndexed(
-                    items = displayedCustomers,
+                    items = customers,
                     key = { _, item -> "cust_${item.id}" }
                 ) { index, item ->
                     val isSelected = selectedCustomerIds.contains(item.id)
@@ -162,22 +149,6 @@ fun TextilesCustomerScreen(
                     )
                 }
 
-                if (hasMoreCustomers) {
-                    item(key = "cust_bottom_loader") {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(vertical = 20.dp),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            ExpressiveContainedLoader(modifier = Modifier.size(48.dp), containerColor = colors.surface, indicatorColor = colors.textSecondary)
-                            LaunchedEffect(Unit) {
-                                delay(400)
-                                visibleCustomerCount += pageSize
-                            }
-                        }
-                    }
-                }
             }
         }
     }
