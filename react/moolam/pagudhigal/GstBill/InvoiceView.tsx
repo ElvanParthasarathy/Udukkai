@@ -239,7 +239,7 @@ export default function InvoiceView({ bill, profile, onBack, onEdit, onDuplicate
               .no-print { display: none !important; }
               #invoice-preview { padding: 0 !important; }
               #invoice-preview .inv-classic-header { padding-left: 1.5rem !important; padding-right: 1.5rem !important; padding-top: 1rem !important; }
-              #invoice-preview .inv-parties { padding-left: 1.5rem !important; padding-right: 1.5rem !important; }
+              #invoice-preview .inv-parties { margin-left: 1.5rem !important; margin-right: 1.5rem !important; }
               #invoice-preview .unified-table-box { margin-left: 1.5rem !important; margin-right: 1.5rem !important; }
               #invoice-preview .inv-footer { margin-left: 1.5rem !important; margin-right: 1.5rem !important; }
               #invoice-preview .inv-contact-block { padding-left: 1.5rem !important; padding-right: 1.5rem !important; }
