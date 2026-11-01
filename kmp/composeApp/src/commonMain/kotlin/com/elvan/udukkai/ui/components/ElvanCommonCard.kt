@@ -62,7 +62,9 @@ fun ElvanCommonCard(
 
     val defaultBg = LocalShellColors.current.surface
     val selectedBg = if (isDark) Color.White.copy(alpha = 0.06f) else Color.Black.copy(alpha = 0.04f)
-    val bgColor = if (isSelected) selectedBg else defaultBg
+    val bgColor by androidx.compose.animation.animateColorAsState(
+        if (isSelected) selectedBg else defaultBg, tween(180), label = "cardSelectedBg"
+    )
 
     val interactionSource = remember { MutableInteractionSource() }
     val isPressed by interactionSource.collectIsPressedAsState()

@@ -1,6 +1,9 @@
 package com.elvan.udukkai.ui.components.shell
 
 import androidx.compose.animation.*
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -415,16 +418,18 @@ fun <T> ElvanRadioSettingsRow(
                 }
             }
 
-            if (isSelected) {
-                Icon(
-                    imageVector = MaterialSymbols.Rounded.Check,
-                    contentDescription = null,
-                    tint = colors.accent,
-                    modifier = Modifier.size(22.dp)
-                )
-            } else {
-                Spacer(modifier = Modifier.size(22.dp))
-            }
+            // The tick fades and grows in instead of appearing in one frame
+            val on by animateFloatAsState(if (isSelected) 1f else 0f, tween(180), label = "radioRowCheck")
+            Icon(
+                imageVector = MaterialSymbols.Rounded.Check,
+                contentDescription = null,
+                tint = colors.accent,
+                modifier = Modifier.size(22.dp).graphicsLayer {
+                    alpha = on
+                    scaleX = 0.6f + 0.4f * on
+                    scaleY = 0.6f + 0.4f * on
+                }
+            )
         }
     }
 }

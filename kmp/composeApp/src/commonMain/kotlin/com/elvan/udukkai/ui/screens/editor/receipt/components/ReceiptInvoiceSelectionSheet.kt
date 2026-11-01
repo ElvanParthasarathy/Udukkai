@@ -13,6 +13,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -120,27 +121,32 @@ fun ReceiptInvoiceSelectionSheet(
                     .padding(horizontal = 32.dp, vertical = 12.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // Circular checkbox (monochrome matching Elvan Design System)
+                // Circular checkbox (monochrome matching Elvan Design System); it fills and the tick grows in smoothly
+                val on by androidx.compose.animation.core.animateFloatAsState(
+                    if (isSelected) 1f else 0f, androidx.compose.animation.core.tween(180), label = "billPick"
+                )
                 Box(
                     modifier = Modifier
                         .size(22.dp)
                         .clip(CircleShape)
-                        .background(if (isSelected) colors.textPrimary else Color.Transparent)
+                        .background(colors.textPrimary.copy(alpha = on))
                         .border(
                             width = 1.5.dp,
-                            color = if (isSelected) colors.textPrimary else colors.textSecondary.copy(alpha = 0.35f),
+                            color = androidx.compose.ui.graphics.lerp(colors.textSecondary.copy(alpha = 0.35f), colors.textPrimary, on),
                             shape = CircleShape
                         ),
                     contentAlignment = Alignment.Center
                 ) {
-                    if (isSelected) {
-                        Icon(
-                            imageVector = MaterialSymbols.Rounded.Check,
-                            contentDescription = null,
-                            tint = sheetBg,
-                            modifier = Modifier.size(16.dp)
-                        )
-                    }
+                    Icon(
+                        imageVector = MaterialSymbols.Rounded.Check,
+                        contentDescription = null,
+                        tint = sheetBg,
+                        modifier = Modifier.size(16.dp).graphicsLayer {
+                            alpha = on
+                            scaleX = 0.6f + 0.4f * on
+                            scaleY = 0.6f + 0.4f * on
+                        }
+                    )
                 }
 
                 Spacer(modifier = Modifier.width(16.dp))
