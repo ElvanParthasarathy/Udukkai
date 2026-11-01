@@ -34,13 +34,77 @@ import com.elvan.udukkai.core.extensions.cssShadow
 import com.elvan.udukkai.theme.LocalAppFontFamily
 import com.elvan.udukkai.theme.ShellColors
 import com.elvan.udukkai.theme.rememberShellColors
-import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
-import androidx.compose.ui.graphics.lerp
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.semantics
 import kotlin.math.abs
 import kotlin.math.floor
 import kotlin.math.roundToInt
+
+/**
+ * Apple-style springs for the pill bars (iOS's own default spring is about 0.35 s with 0.8 damping). A spring keeps its
+ * speed when the target changes mid-way, so quick taps and drags flow on instead of restarting.
+ */
+object PillMotion {
+    /** The pill gliding to a tab: a soft settle with the smallest overshoot. */
+    val glide = androidx.compose.animation.core.spring<Float>(dampingRatio = 0.82f, stiffness = 380f)
+    /** Following the finger while dragging: tight, only enough to smooth out touch jitter. */
+    val follow = androidx.compose.animation.core.spring<Float>(dampingRatio = 1f, stiffness = 2500f)
+    /** The press grow and its release: a little give, like the iOS tab bar lens. */
+    val press = androidx.compose.animation.core.spring<Float>(dampingRatio = 0.6f, stiffness = 500f)
+}
+
+/**
+ * Waits until a gliding pill has nearly landed on [targetLeftPx] (within a tenth of a slot), at most [maxMillis].
+ * The page behind changes only then: building it can cost the phone a few frames, which would stutter a moving pill.
+ */
+suspend fun awaitPillLanding(pillLeft: State<Float>, targetLeftPx: Float, slotWidthPx: Float, maxMillis: Long = 350) {
+    kotlinx.coroutines.withTimeoutOrNull(maxMillis) {
+        snapshotFlow { abs(pillLeft.value - targetLeftPx) < slotWidthPx * 0.1f }.first { it }
+    }
+}
+
+/** How far a pill whose left edge is at [pillLeftPx] sits over slot [index]: 1 when centred on it, 0 one slot away. */
+fun pillNearness(pillLeftPx: Float, pillWidthPx: Float, slotWidthPx: Float, index: Int): Float =
+    (1f - abs(pillLeftPx + pillWidthPx / 2f - (index + 0.5f) * slotWidthPx) / slotWidthPx).coerceIn(0f, 1f)
+
+/**
+ * One tab of a pill bar: the idle look (outline icon, regular grey label) and the active look (filled icon, bold label)
+ * lie on top of each other and trade places as [near] goes from 0 to 1. [near] is read only while drawing, so a moving
+ * pill redraws the tabs without rebuilding them each frame.
+ */
+@Composable
+fun PillTab(
+    icon: ImageVector,
+    activeIcon: ImageVector,
+    label: String,
+    near: () -> Float,
+    idleColor: Color,
+    activeColor: Color,
+    modifier: Modifier = Modifier
+) {
+    // The idle layer fades a little later than the active one comes in, so the tab never dims halfway
+    val idle = Modifier.graphicsLayer { val n = near(); alpha = 1f - n * n }
+    val active = Modifier.graphicsLayer { alpha = near() }
+    Column(
+        modifier = modifier.semantics(mergeDescendants = true) {},
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Box(Modifier.size(22.dp)) {
+            Icon(icon, null, tint = idleColor, modifier = Modifier.matchParentSize().then(idle))
+            Icon(activeIcon, null, tint = activeColor, modifier = Modifier.matchParentSize().then(active))
+        }
+        Spacer(modifier = Modifier.height(1.5.dp))
+        Box(contentAlignment = Alignment.Center) {
+            val ff = LocalAppFontFamily.current
+            Text(label, color = idleColor, fontSize = 9.5.sp, fontWeight = FontWeight.Normal, fontFamily = ff, maxLines = 1, lineHeight = 11.sp, modifier = idle)
+            Text(label, color = activeColor, fontSize = 9.5.sp, fontWeight = FontWeight.SemiBold, fontFamily = ff, maxLines = 1, lineHeight = 11.sp, modifier = active.clearAndSetSemantics { })
+        }
+    }
+}
 
 /**
  * Udukkai Floating Draggable Bottom Navigation Bar
@@ -84,10 +148,14 @@ fun BottomNavBar(
     val currentOnInteraction by rememberUpdatedState(onInteraction)
     val currentOnDragProgress by rememberUpdatedState(onDragProgress)
 
+    // The tab switch waits for the pill to land; a newer tap cancels an older one still waiting, so fast taps never pull back
+    var pendingSelect by remember { mutableStateOf<kotlinx.coroutines.Job?>(null) }
+
     val actualIndex = tabs.indexOf(selectedTab).coerceAtLeast(0)
     LaunchedEffect(actualIndex) {
+        // Our own tap landing: let the pill finish its glide. A change from elsewhere: jump straight there.
+        if (localLockedIndex != actualIndex) snapNextFrame = true
         localLockedIndex = null
-        snapNextFrame = true
     }
     LaunchedEffect(snapNextFrame) {
         if (snapNextFrame) {
@@ -104,13 +172,13 @@ fun BottomNavBar(
 
     val containerScale by animateFloatAsState(
         targetValue = if (isInteracting) 1.02f else 1.0f,
-        animationSpec = tween(150, easing = CubicBezierEasing(0.0f, 0.0f, 0.2f, 1.0f)),
+        animationSpec = PillMotion.press,
         label = "containerScale"
     )
 
     val pillScale by animateFloatAsState(
         targetValue = if (isInteracting) 1.30f else 1.0f,
-        animationSpec = tween(150, easing = CubicBezierEasing(0.0f, 0.0f, 0.2f, 1.0f)),
+        animationSpec = PillMotion.press,
         label = "pillScale"
     )
 
@@ -130,12 +198,12 @@ fun BottomNavBar(
         ((activeVisualIndex * layoutWidthPx) - overlapPx).coerceIn(minLeftPx, maxLeftPx)
     }
 
-    val animatedLeftPx by animateFloatAsState(
+    val animatedLeft = animateFloatAsState(
         targetValue = targetLeftPx,
-        animationSpec = if (snapNextFrame || (isInteracting && dragOffsetPx != null)) {
-            snap()
-        } else {
-            tween(150, easing = CubicBezierEasing(0.0f, 0.0f, 0.2f, 1.0f))
+        animationSpec = when {
+            snapNextFrame -> snap()
+            isInteracting && dragOffsetPx != null -> PillMotion.follow
+            else -> PillMotion.glide
         },
         label = "pillX"
     )
@@ -195,6 +263,7 @@ fun BottomNavBar(
                         Modifier.pointerInput(hideContent) {
                             awaitEachGesture {
                         val down = awaitFirstDown(requireUnconsumed = false)
+                        pendingSelect?.cancel()
                         isInteracting = true
                         currentOnInteraction(true)
 
@@ -234,8 +303,9 @@ fun BottomNavBar(
                         hoverIndex = null
 
                         if (finalIndex != null) {
-                            coroutineScope.launch {
-                                delay(150)
+                            pendingSelect?.cancel()
+                            pendingSelect = coroutineScope.launch {
+                                awaitPillLanding(animatedLeft, ((finalIndex * layoutWidthPx) - overlapPx).coerceIn(minLeftPx, maxLeftPx), layoutWidthPx)
                                 currentOnTabSelected(tabs[finalIndex], isDrag)
                             }
                         }
@@ -257,7 +327,7 @@ fun BottomNavBar(
                 // Master Background Pill (Detached & Draggable)
                 Box(
                     modifier = Modifier
-                        .offset { IntOffset(animatedLeftPx.roundToInt(), 0) }
+                        .offset { IntOffset(animatedLeft.value.roundToInt(), 0) }
                         .fillMaxHeight()
                         .width(bgWidth)
                         .graphicsLayer {
@@ -282,41 +352,15 @@ fun BottomNavBar(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     tabs.forEachIndexed { index, tab ->
-                        // How far the pill sits over this tab (0 to 1): colour, icon and weight blend with it while dragging
-                        val pillCenterPx = animatedLeftPx + bgWidthPx / 2f
-                        val near = (1f - abs(pillCenterPx - (index + 0.5f) * layoutWidthPx) / layoutWidthPx).coerceIn(0f, 1f)
-                        val color = lerp(colors.textSecondary, colors.textPrimary, near)
-
-                        // Uniform Apple pattern matching Flutter 1:1: large icons, small labels
-                        val iconSize = 22.dp
-
-                        Column(
-                            modifier = Modifier
-                                .fillMaxHeight()
-                                .width(layoutWidth),
-                            verticalArrangement = Arrangement.Center,
-                            horizontalAlignment = Alignment.CenterHorizontally
-                        ) {
-                            Box(Modifier.size(iconSize)) {
-                                Icon(tab.icon, tab.getLocalizedLabel(), tint = color, modifier = Modifier.matchParentSize().graphicsLayer { alpha = 1f - near })
-                                Icon(tab.activeIcon, null, tint = color, modifier = Modifier.matchParentSize().graphicsLayer { alpha = near })
-                            }
-                            Spacer(modifier = Modifier.height(1.5.dp))
-                            Box(contentAlignment = Alignment.Center) {
-                                listOf(FontWeight.Normal to 1f - near, FontWeight.SemiBold to near).forEach { (weight, weightAlpha) ->
-                                    Text(
-                                        text = tab.getLocalizedLabel(),
-                                        color = color,
-                                        fontSize = 9.5.sp,
-                                        fontWeight = weight,
-                                        fontFamily = LocalAppFontFamily.current,
-                                        maxLines = 1,
-                                        lineHeight = 11.sp,
-                                        modifier = Modifier.graphicsLayer { alpha = weightAlpha }.clearAndSetSemantics { }
-                                    )
-                                }
-                            }
-                        }
+                        PillTab(
+                            icon = tab.icon,
+                            activeIcon = tab.activeIcon,
+                            label = tab.getLocalizedLabel(),
+                            near = { pillNearness(animatedLeft.value, bgWidthPx, layoutWidthPx, index) },
+                            idleColor = colors.textSecondary,
+                            activeColor = colors.textPrimary,
+                            modifier = Modifier.fillMaxHeight().width(layoutWidth)
+                        )
                     }
                 }
             }

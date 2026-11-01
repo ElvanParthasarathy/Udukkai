@@ -35,9 +35,10 @@ import com.elvan.udukkai.theme.rememberShellColors
 import com.elvan.udukkai.ui.navigation.MaterialSymbols
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import androidx.compose.ui.graphics.lerp
-import androidx.compose.ui.semantics.clearAndSetSemantics
-import kotlin.math.abs
+import com.elvan.udukkai.ui.navigation.PillTab
+import com.elvan.udukkai.ui.navigation.PillMotion
+import com.elvan.udukkai.ui.navigation.awaitPillLanding
+import com.elvan.udukkai.ui.navigation.pillNearness
 import kotlin.math.floor
 import kotlin.math.roundToInt
 
@@ -112,10 +113,13 @@ fun RecycleBinBottomNavBar(
 
     val currentOnTabSelected by rememberUpdatedState(onTabSelected)
 
+    // As in the main bar: a newer tap cancels an older one still waiting, and our own tap lets the pill finish its glide
+    var pendingSelect by remember { mutableStateOf<kotlinx.coroutines.Job?>(null) }
+
     val actualIndex = tabs.indexOf(selectedTab).coerceAtLeast(0)
     LaunchedEffect(actualIndex) {
+        if (localLockedIndex != actualIndex) snapNextFrame = true
         localLockedIndex = null
-        snapNextFrame = true
     }
     LaunchedEffect(snapNextFrame) {
         if (snapNextFrame) {
@@ -132,13 +136,13 @@ fun RecycleBinBottomNavBar(
 
     val containerScale by animateFloatAsState(
         targetValue = if (isInteracting) 1.02f else 1.0f,
-        animationSpec = tween(150, easing = CubicBezierEasing(0.0f, 0.0f, 0.2f, 1.0f)),
+        animationSpec = PillMotion.press,
         label = "containerScale"
     )
 
     val pillScale by animateFloatAsState(
         targetValue = if (isInteracting) 1.30f else 1.0f,
-        animationSpec = tween(150, easing = CubicBezierEasing(0.0f, 0.0f, 0.2f, 1.0f)),
+        animationSpec = PillMotion.press,
         label = "pillScale"
     )
 
@@ -158,12 +162,12 @@ fun RecycleBinBottomNavBar(
         ((activeVisualIndex * layoutWidthPx) - overlapPx).coerceIn(minLeftPx, maxLeftPx)
     }
 
-    val animatedLeftPx by animateFloatAsState(
+    val animatedLeft = animateFloatAsState(
         targetValue = targetLeftPx,
-        animationSpec = if (snapNextFrame || (isInteracting && dragOffsetPx != null)) {
-            snap()
-        } else {
-            tween(150, easing = CubicBezierEasing(0.0f, 0.0f, 0.2f, 1.0f))
+        animationSpec = when {
+            snapNextFrame -> snap()
+            isInteracting && dragOffsetPx != null -> PillMotion.follow
+            else -> PillMotion.glide
         },
         label = "pillX"
     )
@@ -223,6 +227,7 @@ fun RecycleBinBottomNavBar(
                                 Modifier.pointerInput(hideContent) {
                                     awaitEachGesture {
                                         val down = awaitFirstDown(requireUnconsumed = false)
+                                        pendingSelect?.cancel()
                                         isInteracting = true
 
                                         val initialX = down.position.x
@@ -255,8 +260,9 @@ fun RecycleBinBottomNavBar(
                                         hoverIndex = null
 
                                         if (finalIndex != null) {
-                                            coroutineScope.launch {
-                                                delay(150)
+                                            pendingSelect?.cancel()
+                                            pendingSelect = coroutineScope.launch {
+                                                awaitPillLanding(animatedLeft, ((finalIndex * layoutWidthPx) - overlapPx).coerceIn(minLeftPx, maxLeftPx), layoutWidthPx)
                                                 currentOnTabSelected(tabs[finalIndex])
                                             }
                                         }
@@ -278,7 +284,7 @@ fun RecycleBinBottomNavBar(
                         // Master Background Pill (Detached & Draggable)
                         Box(
                             modifier = Modifier
-                                .offset { IntOffset(animatedLeftPx.roundToInt(), 0) }
+                                .offset { IntOffset(animatedLeft.value.roundToInt(), 0) }
                                 .fillMaxHeight()
                                 .width(bgWidth)
                                 .graphicsLayer {
@@ -302,39 +308,15 @@ fun RecycleBinBottomNavBar(
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             tabs.forEachIndexed { index, tab ->
-                                // As in the main bar: colour, icon and weight blend with how far the pill sits over this tab
-                                val pillCenterPx = animatedLeftPx + bgWidthPx / 2f
-                                val near = (1f - abs(pillCenterPx - (index + 0.5f) * layoutWidthPx) / layoutWidthPx).coerceIn(0f, 1f)
-                                val color = lerp(colors.textSecondary, colors.textPrimary, near)
-                                val iconSize = 22.dp
-
-                                Column(
-                                    modifier = Modifier
-                                        .fillMaxHeight()
-                                        .width(layoutWidth),
-                                    verticalArrangement = Arrangement.Center,
-                                    horizontalAlignment = Alignment.CenterHorizontally
-                                ) {
-                                    Box(Modifier.size(iconSize)) {
-                                        Icon(tab.icon, tab.getLocalizedLabel(), tint = color, modifier = Modifier.matchParentSize().graphicsLayer { alpha = 1f - near })
-                                        Icon(tab.activeIcon, null, tint = color, modifier = Modifier.matchParentSize().graphicsLayer { alpha = near })
-                                    }
-                                    Spacer(modifier = Modifier.height(1.5.dp))
-                                    Box(contentAlignment = Alignment.Center) {
-                                        listOf(FontWeight.Normal to 1f - near, FontWeight.SemiBold to near).forEach { (weight, weightAlpha) ->
-                                            Text(
-                                                text = tab.getLocalizedLabel(),
-                                                color = color,
-                                                fontSize = 9.5.sp,
-                                                fontWeight = weight,
-                                                fontFamily = LocalAppFontFamily.current,
-                                                maxLines = 1,
-                                                lineHeight = 11.sp,
-                                                modifier = Modifier.graphicsLayer { alpha = weightAlpha }.clearAndSetSemantics { }
-                                            )
-                                        }
-                                    }
-                                }
+                                PillTab(
+                                    icon = tab.icon,
+                                    activeIcon = tab.activeIcon,
+                                    label = tab.getLocalizedLabel(),
+                                    near = { pillNearness(animatedLeft.value, bgWidthPx, layoutWidthPx, index) },
+                                    idleColor = colors.textSecondary,
+                                    activeColor = colors.textPrimary,
+                                    modifier = Modifier.fillMaxHeight().width(layoutWidth)
+                                )
                             }
                         }
                     }

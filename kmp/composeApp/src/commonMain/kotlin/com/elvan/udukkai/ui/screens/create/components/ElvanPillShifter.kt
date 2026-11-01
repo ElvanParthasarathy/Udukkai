@@ -33,9 +33,10 @@ import com.elvan.udukkai.theme.preventBrokenLigatures
 import com.elvan.udukkai.theme.rememberShellColors
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.semantics.clearAndSetSemantics
-import kotlin.math.abs
+import com.elvan.udukkai.ui.navigation.PillMotion
+import com.elvan.udukkai.ui.navigation.awaitPillLanding
+import com.elvan.udukkai.ui.navigation.pillNearness
 import kotlin.math.floor
 import kotlin.math.roundToInt
 import com.elvan.udukkai.theme.LocalShellColors
@@ -85,9 +86,13 @@ fun ElvanPillShifter(
     var localLockedIndex by remember { mutableStateOf<Int?>(null) }
     var snapNextFrame by remember { mutableStateOf(false) }
 
+    var pendingSelect by remember { mutableStateOf<kotlinx.coroutines.Job?>(null) }
+    val currentOnIndexSelected by rememberUpdatedState(onIndexSelected)
+
     LaunchedEffect(actualIndex) {
+        // Our own tap: let the pill finish gliding there. A change from elsewhere: jump straight there.
+        if (localLockedIndex != actualIndex) snapNextFrame = true
         localLockedIndex = null
-        snapNextFrame = true
     }
     LaunchedEffect(snapNextFrame) {
         if (snapNextFrame) {
@@ -105,19 +110,19 @@ fun ElvanPillShifter(
     // Outer AnimatedScale: 1.02x on interaction (BottomNavBar / Schedule match)
     val containerScale by animateFloatAsState(
         targetValue = if (isInteracting) 1.02f else 1.0f,
-        animationSpec = tween(150, easing = CubicBezierEasing(0.0f, 0.0f, 0.2f, 1.0f)),
+        animationSpec = PillMotion.press,
         label = "containerScale"
     )
 
     // Pill scale on interaction: Symmetrical expansion in all directions
     val pillScaleX by animateFloatAsState(
         targetValue = if (isInteracting) 1.055f else 1.0f,
-        animationSpec = tween(150, easing = CubicBezierEasing(0.0f, 0.0f, 0.2f, 1.0f)),
+        animationSpec = PillMotion.press,
         label = "pillScaleX"
     )
     val pillScaleY by animateFloatAsState(
         targetValue = if (isInteracting) 1.20f else 1.0f,
-        animationSpec = tween(150, easing = CubicBezierEasing(0.0f, 0.0f, 0.2f, 1.0f)),
+        animationSpec = PillMotion.press,
         label = "pillScaleY"
     )
 
@@ -167,12 +172,12 @@ fun ElvanPillShifter(
             ((activeVisualIndex * layoutWidthPx) - overlapPx).coerceIn(minLeftPx, maxLeftPx)
         }
 
-        val animatedLeftPx by animateFloatAsState(
+        val animatedLeft = animateFloatAsState(
             targetValue = targetLeftPx,
-            animationSpec = if (snapNextFrame || (isInteracting && dragOffsetPx != null)) {
-                snap()
-            } else {
-                tween(150, easing = CubicBezierEasing(0.0f, 0.0f, 0.2f, 1.0f))
+            animationSpec = when {
+                snapNextFrame -> snap()
+                isInteracting && dragOffsetPx != null -> PillMotion.follow
+                else -> PillMotion.glide
             },
             label = "pillX"
         )
@@ -195,6 +200,7 @@ fun ElvanPillShifter(
                     if (layoutWidthPx <= 0f) return@pointerInput
                     awaitEachGesture {
                         val down = awaitFirstDown(requireUnconsumed = false)
+                        pendingSelect?.cancel()
                         isInteracting = true
                         onInteraction(true)
 
@@ -232,7 +238,12 @@ fun ElvanPillShifter(
                         hoverIndex = null
 
                         if (finalIndex != null) {
-                            onIndexSelected(finalIndex)
+                            // The list behind changes once the pill has nearly landed, so the glide never stutters
+                            pendingSelect?.cancel()
+                            pendingSelect = coroutineScope.launch {
+                                awaitPillLanding(animatedLeft, ((finalIndex * layoutWidthPx) - overlapPx).coerceIn(minLeftPx, maxLeftPx), layoutWidthPx)
+                                currentOnIndexSelected(finalIndex)
+                            }
                         }
                     }
                 },
@@ -246,7 +257,7 @@ fun ElvanPillShifter(
                 // Master Background Pill (Detached & Draggable)
                 Box(
                     modifier = Modifier
-                        .offset { IntOffset(animatedLeftPx.roundToInt(), 0) }
+                        .offset { IntOffset(animatedLeft.value.roundToInt(), 0) }
                         .fillMaxHeight()
                         .width(bgWidth)
                         .graphicsLayer {
@@ -267,15 +278,14 @@ fun ElvanPillShifter(
                     modifier = Modifier.fillMaxSize(),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
+                    val idleColor = if (isDark) Color(0xFF9E9E9E) else Color(0xFF7C7C80)
+                    val activeColor = LocalShellColors.current.textPrimary
                     items.forEachIndexed { index, item ->
-                        // How far the pill sits over this tab (0 to 1): colour, icon and weight blend with it while dragging
-                        val pillCenterPx = animatedLeftPx + bgWidthPx / 2f
-                        val near = (1f - abs(pillCenterPx - (index + 0.5f) * layoutWidthPx) / layoutWidthPx).coerceIn(0f, 1f)
-                        val itemColor = lerp(
-                            if (isDark) Color(0xFF9E9E9E) else Color(0xFF7C7C80),
-                            LocalShellColors.current.textPrimary,
-                            near
-                        )
+                        // Idle and active looks lie on top of each other and trade places as the pill passes, read only
+                        // while drawing so the moving pill never rebuilds the tabs (as in the bottom bar's PillTab)
+                        val near = { pillNearness(animatedLeft.value, bgWidthPx, layoutWidthPx, index) }
+                        val idle = Modifier.graphicsLayer { val n = near(); alpha = 1f - n * n }
+                        val active = Modifier.graphicsLayer { alpha = near() }
 
                         Box(
                             modifier = Modifier
@@ -289,14 +299,13 @@ fun ElvanPillShifter(
                             ) {
                                 if (item.icon != null) {
                                     Box(Modifier.size(if (itemCount > 2) 16.dp else 18.dp)) {
-                                        Icon(item.icon, null, tint = itemColor, modifier = Modifier.matchParentSize().graphicsLayer { alpha = 1f - near })
-                                        Icon(item.activeIcon ?: item.icon, null, tint = itemColor, modifier = Modifier.matchParentSize().graphicsLayer { alpha = near })
+                                        Icon(item.icon, null, tint = idleColor, modifier = Modifier.matchParentSize().then(idle))
+                                        Icon(item.activeIcon ?: item.icon, null, tint = activeColor, modifier = Modifier.matchParentSize().then(active))
                                     }
                                     Spacer(modifier = Modifier.width(if (itemCount > 2) 6.dp else 8.dp))
                                 }
-                                // The bold label lies over the regular one and takes over as the pill arrives (the regular one sets the width)
                                 Box(contentAlignment = Alignment.CenterStart) {
-                                    listOf(FontWeight.Medium to 1f - near, FontWeight.SemiBold to near).forEach { (weight, weightAlpha) ->
+                                    listOf(Triple(FontWeight.Medium, idleColor, idle), Triple(FontWeight.SemiBold, activeColor, active)).forEach { (weight, color, layer) ->
                                         Text(
                                             text = item.label.preventBrokenLigatures(),
                                             style = TextStyle(
@@ -304,11 +313,10 @@ fun ElvanPillShifter(
                                                 fontSize = if (isFullWidth) 13.sp else (if (itemCount > 2) 13.sp else 14.sp),
                                                 fontWeight = weight
                                             ),
-                                            color = itemColor,
+                                            color = color,
                                             maxLines = 1,
                                             overflow = TextOverflow.Ellipsis,
-                                            modifier = Modifier.graphicsLayer { alpha = weightAlpha }
-                                                .then(if (weight == FontWeight.SemiBold) Modifier.clearAndSetSemantics { } else Modifier)
+                                            modifier = layer.then(if (weight == FontWeight.SemiBold) Modifier.clearAndSetSemantics { } else Modifier)
                                         )
                                     }
                                 }
