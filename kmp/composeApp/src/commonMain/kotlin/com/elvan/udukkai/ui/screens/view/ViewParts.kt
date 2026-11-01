@@ -71,7 +71,7 @@ fun ViewHero(
     colors: ShellColors
 ) {
     val ff = LocalAppFontFamily.current
-    Column(Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 4.dp)) {
+    Column(Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 4.dp)) {
         Text(
             text = primary.preventBrokenLigatures(),
             style = TextStyle(fontFamily = ff, fontSize = 24.sp, fontWeight = FontWeight.Bold, color = colors.textPrimary, lineHeight = 30.sp)
@@ -163,6 +163,24 @@ fun ViewInfoSection(title: String, rows: List<Pair<String, String>>, colors: She
                     style = TextStyle(fontFamily = ff, fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = colors.textPrimary, textAlign = TextAlign.End),
                     modifier = Modifier.weight(0.58f)
                 )
+            }
+        }
+    }
+}
+
+/** A postal address in one rounded box, left-aligned like on an envelope: one line per part (empty parts are skipped). */
+@Composable
+fun ViewAddressBox(title: String?, lines: List<String>, colors: ShellColors) {
+    val shown = lines.filter { it.isNotBlank() }
+    if (shown.isEmpty()) return
+    val ff = LocalAppFontFamily.current
+    ElvanSettingsSection(title = title, colors = colors) {
+        Column(
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 16.dp).semantics(mergeDescendants = true) {},
+            verticalArrangement = Arrangement.spacedBy(4.dp)
+        ) {
+            shown.forEach {
+                Text(it.preventBrokenLigatures(), style = TextStyle(fontFamily = ff, fontSize = 16.sp, color = colors.textPrimary, lineHeight = 22.sp))
             }
         }
     }

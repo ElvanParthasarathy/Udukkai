@@ -232,7 +232,9 @@ private fun PreviewBottomArea(controller: DocumentPrintController, onEdit: (() -
                 )
             }
         }
-        if (controller.isReady) {
+        // The bar is there while the PDF is still being made: Edit works at once, Open, Print and Share are greyed
+        // until the document is ready
+        run {
             // Same slots as the view page's bar: Edit, then Open where Preview was, Print, Share
             ElvanFloatingActionBar(
                 actions = listOfNotNull(
@@ -246,17 +248,20 @@ private fun PreviewBottomArea(controller: DocumentPrintController, onEdit: (() -
                     ElvanFloatingAction(
                         label = K.openBtn.tr(),
                         icon = MaterialSymbols.Rounded.Description,
-                        onClick = { controller.open() }
+                        onClick = { controller.open() },
+                        enabled = controller.isReady
                     ),
                     ElvanFloatingAction(
                         label = K.printBtn.tr(),
                         icon = MaterialSymbols.Rounded.Print,
-                        onClick = { controller.print() }
+                        onClick = { controller.print() },
+                        enabled = controller.isReady
                     ),
                     ElvanFloatingAction(
                         label = K.shareBtn.tr(),
                         icon = MaterialSymbols.Rounded.Share,
-                        onClick = { controller.share() }
+                        onClick = { controller.share() },
+                        enabled = controller.isReady
                     )
                 )
             )

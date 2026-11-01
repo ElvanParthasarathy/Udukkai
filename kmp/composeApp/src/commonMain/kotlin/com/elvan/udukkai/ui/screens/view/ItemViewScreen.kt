@@ -2,6 +2,7 @@ package com.elvan.udukkai.ui.screens.view
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -28,6 +29,8 @@ fun ItemViewScreen(
     isCoolie: Boolean = false,
     activity: ViewActivity = ViewActivity(),
     onBillClick: (Long) -> Unit = {},
+    /** Kept by the caller, so the page comes back where it was after opening a bill. */
+    scrollState: LazyListState = rememberLazyListState(),
     onBack: () -> Unit,
     onEdit: () -> Unit,
     onCopy: (() -> Unit)? = null
@@ -50,13 +53,10 @@ fun ItemViewScreen(
     val availability = if (item.companyIds.isEmpty()) "${K.all.tr()} ${K.companies.tr()}"
     else item.companyIds.joinToString(", ") { companyName(it) }
 
-    val scrollState = rememberLazyListState()
-
     ViewTile(
         title = K.itemDetails.tr(),
         onBack = onBack,
         scrollState = scrollState,
-        fixedTopBar = true,
         onEdit = onEdit,
         onCopy = onCopy
     ) {

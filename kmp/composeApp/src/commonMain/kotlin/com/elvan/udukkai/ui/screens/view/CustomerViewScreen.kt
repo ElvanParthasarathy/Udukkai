@@ -2,6 +2,7 @@ package com.elvan.udukkai.ui.screens.view
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -30,6 +31,8 @@ fun CustomerViewScreen(
     showGst: Boolean = true,
     activity: ViewActivity = ViewActivity(),
     onBillClick: (Long) -> Unit = {},
+    /** Kept by the caller, so the page comes back where it was after opening a bill. */
+    scrollState: LazyListState = rememberLazyListState(),
     onBack: () -> Unit,
     onEdit: () -> Unit,
     onCopy: (() -> Unit)? = null
@@ -48,11 +51,27 @@ fun CustomerViewScreen(
     fun pick(map: Map<String, String>): String =
         map[primaryLang] ?: map[secondaryLang] ?: map.values.firstOrNull { it.isNotBlank() }.orEmpty()
 
-    val city = pick(merchant.city)
-    val district = pick(merchant.district)
-    val state = pick(merchant.state)
-    val country = pick(merchant.country).takeIf { it != "India" && it != "இந்தியா" }.orEmpty()
-    val address = pick(merchant.address)
+    fun isDefaultCountry(v: String) = v == "India" || v == "இந்தியா"
+    // Main language: whatever the customer has (it falls back to the other language when this one is empty)
+    val addressLines = listOf(
+        pick(merchant.address),
+        listOf(pick(merchant.city), pick(merchant.district)).filter { it.isNotBlank() }.joinToString(", "),
+        listOf(pick(merchant.state), merchant.pinCode).filter { it.isNotBlank() }.joinToString(" - "),
+        pick(merchant.country).takeUnless { isDefaultCountry(it) }.orEmpty()
+    )
+    // Second language: only what is really written in it, as its own complete address
+    fun second(map: Map<String, String>) = if (isBilingual) map[secondaryLang].orEmpty() else ""
+    val secondaryLines = listOf(
+        second(merchant.address),
+        listOf(second(merchant.city), second(merchant.district)).filter { it.isNotBlank() }.joinToString(", "),
+        listOf(second(merchant.state), merchant.pinCode).filter { it.isNotBlank() }.joinToString(" - "),
+        second(merchant.country).takeUnless { isDefaultCountry(it) }.orEmpty()
+    ).takeIf { lines -> lines.any { it.isNotBlank() } && lines != addressLines } ?: emptyList()
+
+    // Under the name: the second-language name with the place (in the main language) after a dot; with no second language the place stands alone
+    val heroSecond = if (secondaryName.isNotEmpty())
+        listOf(secondaryName, pick(merchant.city)).filter { it.isNotBlank() }.joinToString("  •  ")
+    else pick(merchant.city)
 
     val availability = if (merchant.companyIds.isEmpty()) "${K.all.tr()} ${K.companies.tr()}"
     else merchant.companyIds.mapNotNull { id ->
@@ -67,13 +86,10 @@ fun CustomerViewScreen(
         if (merchant.email.isNotBlank()) add(Triple(MaterialSymbols.Rounded.Email, mailLabel) { openMailTo(merchant.email) })
     }
 
-    val scrollState = rememberLazyListState()
-
     ViewTile(
         title = K.businessDetails.tr(),
         onBack = onBack,
         scrollState = scrollState,
-        fixedTopBar = true,
         onEdit = onEdit,
         onCopy = onCopy
     ) {
@@ -86,7 +102,7 @@ fun CustomerViewScreen(
             item(key = "top_spacer") { Spacer(Modifier.height(LocalElvanTopSpacerHeight.current)) }
 
             item(key = "hero") {
-                ViewHero(primary = primaryName, secondary = secondaryName, facts = "", colors = colors)
+                ViewHero(primary = primaryName, secondary = heroSecond, facts = "", colors = colors)
             }
 
             item(key = "stats") {
@@ -114,19 +130,15 @@ fun CustomerViewScreen(
             }
 
             item(key = "address") {
-                ViewInfoSection(
-                    title = K.address.tr(),
-                    rows = listOf(
-                        K.address.tr() to address,
-                        K.city.tr() to city,
-                        K.district.tr() to district,
-                        K.state.tr() to state,
-                        K.country.tr() to country,
-                        K.pincode.tr() to merchant.pinCode,
-                        K.companies.tr() to availability
-                    ),
-                    colors = colors
-                )
+                // One box for each language, the second a little under the first
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    ViewAddressBox(title = K.address.tr(), lines = addressLines, colors = colors)
+                    ViewAddressBox(title = null, lines = secondaryLines, colors = colors)
+                }
+            }
+
+            item(key = "companies") {
+                ViewInfoSection(title = K.companies.tr(), rows = listOf(K.companies.tr() to availability), colors = colors)
             }
 
             item(key = "bills") {

@@ -146,6 +146,18 @@ fun TextilesHomeScreen() {
 
     val scope = rememberCoroutineScope()
     val colors = rememberShellColors()
+    // Scroll positions of the item and customer pages, so they come back where they were after opening a bill
+    val viewScrollStates = remember { mutableMapOf<String, androidx.compose.foundation.lazy.LazyListState>() }
+    LaunchedEffect(subpageStack) {
+        val open = subpageStack.mapNotNull {
+            when (it) {
+                is ActiveSubpage.CustomerView -> "c${it.customer.id}"
+                is ActiveSubpage.ItemView -> "i${it.item.id}"
+                else -> null
+            }
+        }.toSet()
+        viewScrollStates.keys.retainAll(open)
+    }
 
     val itemDeletedMsg = K.itemDeleted.tr()
     val customerDeletedMsg = K.customerDeleted.tr()
@@ -332,7 +344,8 @@ fun TextilesHomeScreen() {
                         onBillClick = { id -> TextilesInvoiceRepository.invoices.find { it.id == id }?.let { navigateToSubpage(ActiveSubpage.InvoiceView(it)) } },
                         profile = TextilesProfileRepository.profile,
                         allProfiles = TextilesProfileRepository.profiles,
-                        onBack = popSubpage,
+                        scrollState = viewScrollStates.getOrPut("c${currentCustomer.id}") { androidx.compose.foundation.lazy.LazyListState() },
+                        onBack = { viewScrollStates.remove("c${currentCustomer.id}"); popSubpage() },
                         onEdit = {
                             navigateToSubpage(ActiveSubpage.MerchantEditor(currentCustomer))
                         },
@@ -349,7 +362,8 @@ fun TextilesHomeScreen() {
                         onBillClick = { id -> TextilesInvoiceRepository.invoices.find { it.id == id }?.let { navigateToSubpage(ActiveSubpage.InvoiceView(it)) } },
                         profile = TextilesProfileRepository.profile,
                         allProfiles = TextilesProfileRepository.profiles,
-                        onBack = popSubpage,
+                        scrollState = viewScrollStates.getOrPut("i${currentItem.id}") { androidx.compose.foundation.lazy.LazyListState() },
+                        onBack = { viewScrollStates.remove("i${currentItem.id}"); popSubpage() },
                         onEdit = {
                             navigateToSubpage(ActiveSubpage.ItemEditor(currentItem))
                         },

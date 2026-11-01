@@ -30,7 +30,6 @@ import com.elvan.udukkai.core.print.isDocumentPrintSupported
 import com.elvan.udukkai.localization.K
 import com.elvan.udukkai.localization.tr
 import com.elvan.udukkai.theme.rememberShellColors
-import com.elvan.udukkai.ui.components.shell.ElvanActionButton
 import com.elvan.udukkai.ui.components.shell.ElvanFloatingAction
 import com.elvan.udukkai.ui.components.shell.ElvanFloatingActionBar
 import com.elvan.udukkai.ui.components.shell.ElvanSnackbar
@@ -129,8 +128,6 @@ fun ViewTile(
     modifier: Modifier = Modifier,
     scrollState: LazyListState = rememberLazyListState(),
     isDocument: Boolean = false,
-    /** A plain top bar that does not collapse, as on bills and receipts (entity pages then get Edit and Copy in the floating pill). */
-    fixedTopBar: Boolean = isDocument,
     onEdit: (() -> Unit)? = null,
     onPrint: (() -> Unit)? = null,
     onCopy: (() -> Unit)? = null,
@@ -140,7 +137,7 @@ fun ViewTile(
 ) {
     val colors = rememberShellColors()
     Box(modifier = Modifier.fillMaxSize()) {
-        if (fixedTopBar) {
+        if (isDocument) {
             // Document views use a plain fixed top bar instead of the collapsing One UI header.
             SideEffect { ElvanSnackbar.isBottomBarVisible = true }
             val navBarsPadding = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
@@ -191,36 +188,23 @@ fun ViewTile(
                         onPrint = onPrint,
                         onShare = onShare,
                         onCopy = onCopy,
-                        isDocument = isDocument
+                        isDocument = true
                     )
                 }
             }
         } else {
+            // The collapsing header stays; Edit and Copy sit in the floating pill at the foot, as on bills and receipts
             ElvanSubShell(
                 title = title,
                 onBack = onBack,
                 scrollState = scrollState,
-                hasActions = !isDocument && onEdit != null,
-                actions = {
-                    if (!isDocument && onEdit != null) {
-                        ElvanActionButton(
-                            label = K.editRecord.tr(),
-                            onClick = onEdit
-                        )
-                    }
-                },
-                showBottomFade = isDocument,
+                showBottomFade = true,
                 floatingBar = {
-                    if (isDocument) {
-                        ElvanViewActionBar(
-                            onEdit = onEdit,
-                            onPreview = onPreview,
-                            onPrint = onPrint,
-                            onShare = onShare,
-                            onCopy = onCopy,
-                            isDocument = true
-                        )
-                    }
+                    ElvanViewActionBar(
+                        onEdit = onEdit,
+                        onCopy = onCopy,
+                        isDocument = false
+                    )
                 },
                 content = {
                     Box(modifier = modifier.fillMaxSize()) {
