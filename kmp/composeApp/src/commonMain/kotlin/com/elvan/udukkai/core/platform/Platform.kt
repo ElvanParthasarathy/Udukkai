@@ -16,6 +16,12 @@ expect fun ConfigureDialogWindow(
 /** Full-width dialog whose window also reaches under the system bars, so a bottom sheet's colour fills the gap at the foot. */
 expect fun edgeToEdgeDialogProperties(): androidx.compose.ui.window.DialogProperties
 
+/** Opens the phone's dialer with [number] filled in (nothing is dialled until the person presses call). */
+expect fun openDialer(number: String)
+
+/** Opens the mail app with a new message to [address]. */
+expect fun openMailTo(address: String)
+
 @androidx.compose.runtime.Composable
 expect fun DisableOverscroll(content: @androidx.compose.runtime.Composable () -> Unit)
 

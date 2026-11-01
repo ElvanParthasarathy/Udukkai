@@ -129,6 +129,8 @@ fun ViewTile(
     modifier: Modifier = Modifier,
     scrollState: LazyListState = rememberLazyListState(),
     isDocument: Boolean = false,
+    /** A plain top bar that does not collapse, as on bills and receipts (entity pages then get Edit and Copy in the floating pill). */
+    fixedTopBar: Boolean = isDocument,
     onEdit: (() -> Unit)? = null,
     onPrint: (() -> Unit)? = null,
     onCopy: (() -> Unit)? = null,
@@ -138,7 +140,7 @@ fun ViewTile(
 ) {
     val colors = rememberShellColors()
     Box(modifier = Modifier.fillMaxSize()) {
-        if (isDocument) {
+        if (fixedTopBar) {
             // Document views use a plain fixed top bar instead of the collapsing One UI header.
             SideEffect { ElvanSnackbar.isBottomBarVisible = true }
             val navBarsPadding = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
@@ -189,7 +191,7 @@ fun ViewTile(
                         onPrint = onPrint,
                         onShare = onShare,
                         onCopy = onCopy,
-                        isDocument = true
+                        isDocument = isDocument
                     )
                 }
             }

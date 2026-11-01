@@ -59,6 +59,8 @@ import com.elvan.udukkai.ui.screens.home.desktop.DesktopSideBar
 import com.elvan.udukkai.ui.screens.create.components.CreateDateFilterSheet
 import com.elvan.udukkai.factory.ui.screens.FactoryRecycleBinScreen
 import com.elvan.udukkai.factory.ui.screens.editor.FactoryReceiptEditorScreen
+import com.elvan.udukkai.factory.ui.screens.factoryCustomerActivity
+import com.elvan.udukkai.factory.ui.screens.factoryItemActivity
 import com.elvan.udukkai.ui.screens.view.CustomerViewScreen
 import com.elvan.udukkai.ui.screens.view.InvoiceViewScreen
 import com.elvan.udukkai.ui.screens.view.ItemViewScreen
@@ -173,6 +175,9 @@ fun FactoryHomeScreen() {
                 FactoryReceiptRepository.searchQuery = ""
                 FactoryItemRepository.searchQuery = ""
                 FactoryCustomerRepository.searchQuery = ""
+            } else if (selectedTab == NavTab.Create && uruvakkuSegment == 1) {
+                // Receipts step back to bills first; the next Back returns to Home
+                uruvakkuSegment = 0
             } else if (selectedTab != NavTab.Home) {
                 // Bottom tabs remain unanimated; Back simply returns to Home.
                 selectedTab = NavTab.Home
@@ -321,6 +326,8 @@ fun FactoryHomeScreen() {
                     val currentCustomer = FactoryCustomerRepository.merchants.find { it.id == subpage.customer.id } ?: subpage.customer
                     CustomerViewScreen(
                         merchant = currentCustomer,
+                        activity = factoryCustomerActivity(currentCustomer),
+                        onBillClick = { id -> FactoryInvoiceRepository.invoices.find { it.id == id }?.let { navigateToSubpage(ActiveSubpage.InvoiceView(it)) } },
                         profile = FactoryProfileRepository.profile,
                         allProfiles = FactoryProfileRepository.profiles,
                         showGst = false,
@@ -337,6 +344,8 @@ fun FactoryHomeScreen() {
                     val currentItem = FactoryItemRepository.items.find { it.id == subpage.item.id } ?: subpage.item
                     ItemViewScreen(
                         item = currentItem,
+                        activity = factoryItemActivity(currentItem),
+                        onBillClick = { id -> FactoryInvoiceRepository.invoices.find { it.id == id }?.let { navigateToSubpage(ActiveSubpage.InvoiceView(it)) } },
                         profile = FactoryProfileRepository.profile,
                         allProfiles = FactoryProfileRepository.profiles,
                         isCoolie = true,
@@ -554,17 +563,7 @@ fun FactoryHomeScreen() {
                             ) {
                                 AnimatedContent(
                                     targetState = isSelectionMode,
-                                    transitionSpec = {
-                                        if (initialState && !targetState) {
-                                            // Back out of selection mode immediately.
-                                            EnterTransition.None togetherWith ExitTransition.None
-                                        } else {
-                                            (fadeIn(animationSpec = tween(220, easing = CubicBezierEasing(0.0f, 0.0f, 0.2f, 1.0f))) +
-                                             scaleIn(initialScale = 0.94f, animationSpec = tween(220))) togetherWith
-                                            (fadeOut(animationSpec = tween(160, easing = CubicBezierEasing(0.4f, 0.0f, 1.0f, 1.0f))) +
-                                             scaleOut(targetScale = 0.94f, animationSpec = tween(160)))
-                                        }
-                                    },
+                                    transitionSpec = { com.elvan.udukkai.ui.components.shell.elvanBarSwap() },
                                     label = "bottomBarSelectionCrossfade"
                                 ) { inSelection ->
                                     if (inSelection) {

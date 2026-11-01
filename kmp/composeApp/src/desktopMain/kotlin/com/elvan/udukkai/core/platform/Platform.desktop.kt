@@ -15,6 +15,17 @@ actual fun ConfigureDialogWindow(
 
 actual fun edgeToEdgeDialogProperties() = androidx.compose.ui.window.DialogProperties(usePlatformDefaultWidth = false)
 
+actual fun openDialer(number: String) {
+    // No phone on desktop
+}
+
+actual fun openMailTo(address: String) {
+    try {
+        java.awt.Desktop.getDesktop().mail(java.net.URI("mailto:$address"))
+    } catch (_: Exception) {
+    }
+}
+
 @androidx.compose.runtime.Composable
 actual fun DisableOverscroll(content: @androidx.compose.runtime.Composable () -> Unit) {
     content()

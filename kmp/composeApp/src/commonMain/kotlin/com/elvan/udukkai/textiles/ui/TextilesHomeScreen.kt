@@ -60,6 +60,8 @@ import com.elvan.udukkai.ui.screens.create.components.CreateDateFilterSheet
 import com.elvan.udukkai.textiles.ui.screens.TextilesRecycleBinScreen
 import com.elvan.udukkai.textiles.ui.screens.TextilesReportsScreen
 import com.elvan.udukkai.textiles.ui.screens.editor.TextilesReceiptEditorScreen
+import com.elvan.udukkai.textiles.ui.screens.textilesCustomerActivity
+import com.elvan.udukkai.textiles.ui.screens.textilesItemActivity
 import com.elvan.udukkai.ui.screens.view.CustomerViewScreen
 import com.elvan.udukkai.ui.screens.view.InvoiceViewScreen
 import com.elvan.udukkai.ui.screens.view.ItemViewScreen
@@ -174,6 +176,9 @@ fun TextilesHomeScreen() {
                 TextilesReceiptRepository.searchQuery = ""
                 TextilesItemRepository.searchQuery = ""
                 TextilesCustomerRepository.searchQuery = ""
+            } else if (selectedTab == NavTab.Create && uruvakkuSegment == 1) {
+                // Receipts step back to bills first; the next Back returns to Home
+                uruvakkuSegment = 0
             } else if (selectedTab != NavTab.Home) {
                 // Bottom tabs remain unanimated; Back simply returns to Home.
                 selectedTab = NavTab.Home
@@ -323,6 +328,8 @@ fun TextilesHomeScreen() {
                     val currentCustomer = TextilesCustomerRepository.customers.find { it.id == subpage.customer.id } ?: subpage.customer
                     CustomerViewScreen(
                         merchant = currentCustomer,
+                        activity = textilesCustomerActivity(currentCustomer),
+                        onBillClick = { id -> TextilesInvoiceRepository.invoices.find { it.id == id }?.let { navigateToSubpage(ActiveSubpage.InvoiceView(it)) } },
                         profile = TextilesProfileRepository.profile,
                         allProfiles = TextilesProfileRepository.profiles,
                         onBack = popSubpage,
@@ -338,6 +345,8 @@ fun TextilesHomeScreen() {
                     val currentItem = TextilesItemRepository.items.find { it.id == subpage.item.id } ?: subpage.item
                     ItemViewScreen(
                         item = currentItem,
+                        activity = textilesItemActivity(currentItem),
+                        onBillClick = { id -> TextilesInvoiceRepository.invoices.find { it.id == id }?.let { navigateToSubpage(ActiveSubpage.InvoiceView(it)) } },
                         profile = TextilesProfileRepository.profile,
                         allProfiles = TextilesProfileRepository.profiles,
                         onBack = popSubpage,
@@ -554,17 +563,7 @@ fun TextilesHomeScreen() {
                             ) {
                                 AnimatedContent(
                                     targetState = isSelectionMode,
-                                    transitionSpec = {
-                                        if (initialState && !targetState) {
-                                            // Back out of selection mode immediately.
-                                            EnterTransition.None togetherWith ExitTransition.None
-                                        } else {
-                                            (fadeIn(animationSpec = tween(220, easing = CubicBezierEasing(0.0f, 0.0f, 0.2f, 1.0f))) +
-                                             scaleIn(initialScale = 0.94f, animationSpec = tween(220))) togetherWith
-                                            (fadeOut(animationSpec = tween(160, easing = CubicBezierEasing(0.4f, 0.0f, 1.0f, 1.0f))) +
-                                             scaleOut(targetScale = 0.94f, animationSpec = tween(160)))
-                                        }
-                                    },
+                                    transitionSpec = { com.elvan.udukkai.ui.components.shell.elvanBarSwap() },
                                     label = "bottomBarSelectionCrossfade"
                                 ) { inSelection ->
                                     if (inSelection) {

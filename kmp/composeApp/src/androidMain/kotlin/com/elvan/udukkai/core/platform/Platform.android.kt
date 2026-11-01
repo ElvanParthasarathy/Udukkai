@@ -30,6 +30,23 @@ actual val isDebugBuild: Boolean = com.elvan.udukkai.BuildConfig.DEBUG
 actual fun edgeToEdgeDialogProperties() =
     androidx.compose.ui.window.DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false)
 
+private fun startView(uri: String, action: String) {
+    val ctx = AppContext.context
+    try {
+        ctx.startActivity(
+            android.content.Intent(action, android.net.Uri.parse(uri)).addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
+        )
+    } catch (_: Exception) {
+        // No app to handle it: nothing to open
+    }
+}
+
+actual fun openDialer(number: String) =
+    startView("tel:" + number.filter { it.isDigit() || it == '+' }, android.content.Intent.ACTION_DIAL)
+
+actual fun openMailTo(address: String) =
+    startView("mailto:" + address.trim(), android.content.Intent.ACTION_SENDTO)
+
 @Composable
 actual fun ConfigureDialogWindow(
     isDark: Boolean,
