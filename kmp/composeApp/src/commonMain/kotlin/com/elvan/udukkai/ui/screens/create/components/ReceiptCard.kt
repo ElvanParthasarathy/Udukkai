@@ -35,7 +35,9 @@ fun ReceiptCard(
     onLongClick: (() -> Unit)? = null,
     profile: com.elvan.udukkai.data.settings.BusinessProfile? = null,
     allProfiles: List<com.elvan.udukkai.data.settings.BusinessProfile> = emptyList(),
-    linkedInvoiceNumbers: List<String> = emptyList()
+    linkedInvoiceNumbers: List<String> = emptyList(),
+    /** The customer's ஊர (city) field, which is the place shown under the name (not the saved address text). */
+    customerCity: Map<String, String> = emptyMap()
 ) {
     val ff = LocalAppFontFamily.current
 
@@ -55,8 +57,13 @@ fun ReceiptCard(
     val secondary = if (isBilingual) receipt.customerName[secondaryLang].orEmpty() else ""
     val showSecondary = isBilingual && secondary.isNotBlank() && secondary != primary
 
+    // Under the name: the second-language name with the place (in the main language) after a dot; the place alone without one
+    val primaryCity = customerCity[primaryLang] ?: customerCity["ta"] ?: customerCity["en"] ?: customerCity.values.firstOrNull() ?: ""
+    val nameSecondLine = listOf(secondary.takeIf { showSecondary }.orEmpty(), primaryCity)
+        .filter { it.isNotBlank() }.joinToString("  •  ")
+
     val dateStr = DateUtils.formatEpochMillis(receipt.receiptDate)
-    val amountStr = CurrencyUtils.formatInr(receipt.amount)
+    val amountStr = CurrencyUtils.formatInr(receipt.amount, showDecimals = receipt.amount % 1.0 != 0.0)
 
     val (taLabel, enLabel) = when (receipt.paymentMode.lowercase()) {
         "cash" -> "காசு" to "Cash"
@@ -94,132 +101,29 @@ fun ReceiptCard(
 
             Spacer(modifier = Modifier.width(12.dp))
 
-            Column(
-                modifier = Modifier.weight(1f)
-            ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.Top
-                ) {
-                    Column(
-                        modifier = Modifier.weight(1f)
-                    ) {
+            DocCardText(
+                colors = colors,
+                primary = primary,
+                secondLine = nameSecondLine,
+                amount = amountStr,
+                date = dateStr,
+                number = receipt.receiptNumber,
+                fy = "FY ${com.elvan.udukkai.core.finance.BillNumbering.fyShort(receipt.receiptDate)}",
+                status = paymentModeText,
+                textLines = 1,
+                modifier = Modifier.weight(1f),
+                below = {
+                    if (linkedInvoicesText.isNotEmpty()) {
+                        Spacer(Modifier.height(3.dp))
                         Text(
-                            text = primary.preventBrokenLigatures(),
-                            style = TextStyle(
-                                fontFamily = ff,
-                                fontSize = 16.5.sp,
-                                fontWeight = FontWeight.ExtraBold,
-                                color = colors.textPrimary
-                            ),
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
-                        )
-                        if (showSecondary) {
-                            Spacer(modifier = Modifier.height(2.dp))
-                            Text(
-                                text = secondary.preventBrokenLigatures(),
-                                style = TextStyle(
-                                    fontFamily = ff,
-                                    fontSize = 13.5.sp,
-                                    color = LocalShellColors.current.textSecondary
-                                ),
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis
-                            )
-                        }
-                    }
-
-                    Icon(
-                        imageVector = MaterialSymbols.Rounded.ChevronRight,
-                        contentDescription = null,
-                        tint = LocalShellColors.current.border,
-                        modifier = Modifier.size(18.dp)
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                // Bottom Section: Left (Receipt # • Date, Linked Invoices) + Right (Payment Mode over Amount)
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.Top
-                ) {
-                    // Left Column: Receipt #  •  Date + Linked Invoices
-                    Column(
-                        modifier = Modifier.weight(1f, fill = false),
-                        verticalArrangement = Arrangement.spacedBy(3.dp)
-                    ) {
-                        // As on the bill cards: the number with the financial year small and quiet beside it,
-                        // then the date with the bills it pays (those end in "..." when long; the date never does)
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Text(
-                                text = receipt.receiptNumber,
-                                modifier = Modifier.weight(1f, fill = false),
-                                style = TextStyle(
-                                    fontFamily = ff,
-                                    fontSize = 13.5.sp,
-                                    color = LocalShellColors.current.textSecondary
-                                ),
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis
-                            )
-                            Text(
-                                text = "FY ${com.elvan.udukkai.core.finance.BillNumbering.fyShort(receipt.receiptDate)}",
-                                modifier = Modifier.padding(start = 8.dp),
-                                style = TextStyle(
-                                    fontFamily = ff,
-                                    fontSize = 12.5.sp,
-                                    color = LocalShellColors.current.textTertiary
-                                ),
-                                maxLines = 1
-                            )
-                        }
-
-                        Text(
-                            text = if (linkedInvoicesText.isNotEmpty()) "$dateStr  •  ${linkedInvoicesText.preventBrokenLigatures()}" else dateStr,
-                            style = TextStyle(
-                                fontFamily = ff,
-                                fontSize = 13.sp,
-                                color = LocalShellColors.current.textSecondary
-                            ),
+                            text = linkedInvoicesText.preventBrokenLigatures(),
+                            style = TextStyle(fontFamily = ff, fontSize = 13.sp, color = LocalShellColors.current.textTertiary),
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis
                         )
                     }
-
-                    Spacer(modifier = Modifier.width(8.dp))
-
-                    // Right Column: Payment mode on top of Amount
-                    Column(
-                        horizontalAlignment = Alignment.End,
-                        verticalArrangement = Arrangement.spacedBy(3.dp)
-                    ) {
-                        Text(
-                            text = paymentModeText.preventBrokenLigatures(),
-                            style = TextStyle(
-                                fontFamily = ff,
-                                fontSize = 12.sp,
-                                fontWeight = FontWeight.Normal,
-                                color = LocalShellColors.current.textSecondary
-                            ),
-                            maxLines = 1
-                        )
-
-                        Text(
-                            text = amountStr,
-                            style = TextStyle(
-                                fontFamily = ff,
-                                fontSize = if (amountStr.length > 11) 13.sp else 15.sp,
-                                fontWeight = FontWeight.ExtraBold,
-                                color = colors.textPrimary
-                            ),
-                            maxLines = 1
-                        )
-                    }
                 }
-            }
+            )
         }
     }
 }

@@ -33,9 +33,11 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.elvan.udukkai.theme.rememberShellColors
 import com.elvan.udukkai.theme.LocalShellColors
 import com.elvan.udukkai.theme.gradientFor
+import com.elvan.udukkai.theme.preventBrokenLigatures
 import com.elvan.udukkai.ui.navigation.MaterialSymbols
 
 /**
@@ -193,6 +195,39 @@ fun ElvanCheckMark(
                 scaleY = pop
             }
         )
+    }
+}
+
+/**
+ * The grey line under a card's name. When the record belongs to certain businesses only, their short label sits at
+ * the right end of this line instead of taking a line of its own.
+ */
+@Composable
+fun ElvanCardSecondLine(
+    text: String,
+    label: String,
+    color: Color,
+    labelColor: Color,
+    fontFamily: androidx.compose.ui.text.font.FontFamily?
+) {
+    if (text.isBlank() && label.isBlank()) return
+    Spacer(modifier = Modifier.height(2.dp))
+    Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.Top) {
+        androidx.compose.material3.Text(
+            text = text.preventBrokenLigatures(),
+            modifier = Modifier.weight(1f),
+            style = androidx.compose.ui.text.TextStyle(fontFamily = fontFamily, fontSize = 13.5.sp, color = color),
+            maxLines = 2,
+            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+        )
+        if (label.isNotBlank()) {
+            androidx.compose.material3.Text(
+                text = label.preventBrokenLigatures(),
+                modifier = Modifier.padding(start = 8.dp, top = 1.dp),
+                style = androidx.compose.ui.text.TextStyle(fontFamily = fontFamily, fontSize = 12.5.sp, fontWeight = androidx.compose.ui.text.font.FontWeight.Medium, color = labelColor),
+                maxLines = 1
+            )
+        }
     }
 }
 

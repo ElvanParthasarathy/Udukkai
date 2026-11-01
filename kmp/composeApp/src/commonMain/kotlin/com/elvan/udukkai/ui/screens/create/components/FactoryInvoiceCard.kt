@@ -71,18 +71,23 @@ fun FactoryInvoiceCard(
     val secondary = if (isBilingual) invoice.customerName[secondaryLang].orEmpty() else ""
     val showSecondary = isBilingual && secondary.isNotBlank() && secondary != primary
 
-    val primaryCity = invoice.customerAddress[primaryLang]
-        ?: invoice.customerAddress["ta"]
-        ?: invoice.customerAddress["en"]
-        ?: invoice.customerAddress.values.firstOrNull()
-        ?: ""
+    // The place on the card is the customer's ஊர (city) field, not the saved address text: with the town in the
+    // address ("Mullipattu") and the city in ஊர ("Arani"), the card shows Arani
+    val cityMap = invoice.customerId?.let { id -> com.elvan.udukkai.factory.data.FactoryCustomerRepository.customers.find { it.id == id }?.city } ?: emptyMap()
+    val primaryCity = cityMap[primaryLang] ?: cityMap["ta"] ?: cityMap["en"] ?: cityMap.values.firstOrNull() ?: ""
 
-    val amountStr = CurrencyUtils.formatInr(invoice.totalAmount)
+    // The second line under the name: the second-language name with the place after a dot, the place in the main language ("Sundari Silks • ஆரணி").
+    // Without a second language the place stands alone there, so the card adapts.
+    val nameSecondLine = if (showSecondary) {
+        listOf(secondary, primaryCity).filter { it.isNotBlank() }.joinToString("  •  ")
+    } else primaryCity
+
+    val amountStr = CurrencyUtils.formatInr(invoice.totalAmount, showDecimals = invoice.totalAmount % 1.0 != 0.0)
     val dateStr = DateUtils.formatEpochMillis(invoice.invoiceDate)
 
     // A screen reader reads the card as one item; at a larger text size the name and place wrap instead of being cut
     val statusText = if (isPaid) K.statusPaid.tr() else K.statusUnpaid.tr()
-    val spoken = listOfNotNull(invoice.invoiceNumber, "FY " + BillNumbering.fyShort(invoice.invoiceDate), primary, secondary.takeIf { showSecondary }, if (primaryCity.isNotEmpty()) "$dateStr, $primaryCity" else dateStr, amountStr, statusText).joinToString(", ")
+    val spoken = listOfNotNull(invoice.invoiceNumber, "FY " + BillNumbering.fyShort(invoice.invoiceDate), primary, nameSecondLine.takeIf { it.isNotBlank() }, dateStr, amountStr, statusText).joinToString(", ")
     val textLines = if (LocalDensity.current.fontScale > 1.15f) 2 else 1
 
     ElvanCommonCard(
@@ -109,135 +114,18 @@ fun FactoryInvoiceCard(
 
             Spacer(modifier = Modifier.width(12.dp))
 
-            // Content
-            Column(
+            DocCardText(
+                colors = colors,
+                primary = primary,
+                secondLine = nameSecondLine,
+                amount = amountStr,
+                date = dateStr,
+                number = invoice.invoiceNumber,
+                fy = "FY ${BillNumbering.fyShort(invoice.invoiceDate)}",
+                status = statusText,
+                textLines = textLines,
                 modifier = Modifier.weight(1f)
-            ) {
-                // Row 1: Name + Chevron
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.Top
-                ) {
-                    Column(
-                        modifier = Modifier.weight(1f)
-                    ) {
-                        Text(
-                            text = primary.preventBrokenLigatures(),
-                            style = TextStyle(
-                                fontFamily = ff,
-                                fontSize = 16.5.sp,
-                                fontWeight = FontWeight.ExtraBold,
-                                color = colors.textPrimary
-                            ),
-                            maxLines = textLines,
-                            overflow = TextOverflow.Ellipsis
-                        )
-                        if (showSecondary) {
-                            Spacer(modifier = Modifier.height(2.dp))
-                            Text(
-                                text = secondary.preventBrokenLigatures(),
-                                style = TextStyle(
-                                    fontFamily = ff,
-                                    fontSize = 13.5.sp,
-                                    color = LocalShellColors.current.textSecondary
-                                ),
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis
-                            )
-                        }
-                    }
-
-                    Icon(
-                        imageVector = MaterialSymbols.Rounded.ChevronRight,
-                        contentDescription = null,
-                        tint = LocalShellColors.current.border,
-                        modifier = Modifier.size(18.dp)
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                // Bottom Section: Left (Invoice # • Date, City) + Right (Status over Amount)
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.Top
-                ) {
-                    // Left Column: Invoice #  •  Date + Oor (Place / Address)
-                    Column(
-                        modifier = Modifier.weight(1f, fill = false),
-                        verticalArrangement = Arrangement.spacedBy(3.dp)
-                    ) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Text(
-                                text = invoice.invoiceNumber,
-                                modifier = Modifier.weight(1f, fill = false),
-                                style = TextStyle(
-                                    fontFamily = ff,
-                                    fontSize = 13.5.sp,
-                                    color = LocalShellColors.current.textSecondary
-                                ),
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis
-                            )
-                            // The financial year, small and quiet beside the number
-                            Text(
-                                text = "FY ${BillNumbering.fyShort(invoice.invoiceDate)}",
-                                modifier = Modifier.padding(start = 8.dp),
-                                style = TextStyle(
-                                    fontFamily = ff,
-                                    fontSize = 12.5.sp,
-                                    color = LocalShellColors.current.textTertiary
-                                ),
-                                maxLines = 1
-                            )
-                        }
-
-                        run {
-                            Text(
-                                text = if (primaryCity.isNotEmpty()) "$dateStr  •  ${primaryCity.preventBrokenLigatures()}" else dateStr,
-                                style = TextStyle(
-                                    fontFamily = ff,
-                                    fontSize = 13.sp,
-                                    color = LocalShellColors.current.textSecondary
-                                ),
-                                maxLines = textLines,
-                                overflow = TextOverflow.Ellipsis
-                            )
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.width(8.dp))
-
-                    // Right Column: Status on top of Amount (no pill, clean text)
-                    Column(
-                        horizontalAlignment = Alignment.End,
-                        verticalArrangement = Arrangement.spacedBy(3.dp)
-                    ) {
-                        Text(
-                            text = (if (isPaid) K.statusPaid.tr() else K.statusUnpaid.tr()).preventBrokenLigatures(),
-                            style = TextStyle(
-                                fontFamily = ff,
-                                fontSize = 12.sp,
-                                fontWeight = FontWeight.Normal,
-                                color = LocalShellColors.current.textSecondary
-                            ),
-                            maxLines = 1
-                        )
-
-                        Text(
-                            text = amountStr,
-                            style = TextStyle(
-                                fontFamily = ff,
-                                fontSize = if (amountStr.length > 11) 13.sp else 15.sp,
-                                fontWeight = FontWeight.ExtraBold,
-                                color = colors.textPrimary
-                            ),
-                            maxLines = 1
-                        )
-                    }
-                }
-            }
+            )
         }
     }
 }

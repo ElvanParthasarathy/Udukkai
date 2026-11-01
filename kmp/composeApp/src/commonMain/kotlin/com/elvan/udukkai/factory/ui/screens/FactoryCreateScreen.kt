@@ -380,6 +380,7 @@ fun FactoryCreateScreen(
                                     onLongClick = onCardLongClick,
                                     profile = FactoryProfileRepository.profile,
                                     allProfiles = FactoryProfileRepository.allProfiles,
+                                    customerCity = receipt.customerId?.let { id -> com.elvan.udukkai.factory.data.FactoryCustomerRepository.customers.find { it.id == id }?.city } ?: emptyMap(),
                                     linkedInvoiceNumbers = FactoryReceiptRepository.getLinkedInvoiceNumbers(receipt.id)
                                 )
                             }

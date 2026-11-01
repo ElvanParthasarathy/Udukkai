@@ -425,6 +425,7 @@ fun TextilesRecycleBinScreen(
                                     onClick = onCardClick,
                                     onLongClick = onCardLongClick,
                                     modifier = Modifier.padding(horizontal = Dimens.ContentPadding),
+                                    customerCity = receipt.customerId?.let { id -> com.elvan.udukkai.textiles.data.TextilesCustomerRepository.customers.find { it.id == id }?.city } ?: emptyMap(),
                                     linkedInvoiceNumbers = TextilesReceiptRepository.getLinkedInvoiceNumbers(receipt.id)
                                 )
                             }

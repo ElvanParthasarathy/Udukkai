@@ -380,6 +380,7 @@ fun TextilesCreateScreen(
                                     onLongClick = onCardLongClick,
                                     profile = TextilesProfileRepository.profile,
                                     allProfiles = TextilesProfileRepository.allProfiles,
+                                    customerCity = receipt.customerId?.let { id -> com.elvan.udukkai.textiles.data.TextilesCustomerRepository.customers.find { it.id == id }?.city } ?: emptyMap(),
                                     linkedInvoiceNumbers = TextilesReceiptRepository.getLinkedInvoiceNumbers(receipt.id)
                                 )
                             }

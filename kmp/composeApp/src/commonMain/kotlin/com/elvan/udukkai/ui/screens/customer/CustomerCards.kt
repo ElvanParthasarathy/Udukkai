@@ -20,6 +20,7 @@ import com.elvan.udukkai.theme.LocalShellColors
 import com.elvan.udukkai.theme.ShellColors
 import com.elvan.udukkai.theme.preventBrokenLigatures
 import com.elvan.udukkai.ui.components.ElvanCardLeadingIcon
+import com.elvan.udukkai.ui.components.ElvanCardSecondLine
 import com.elvan.udukkai.ui.components.ElvanCardSelector
 import com.elvan.udukkai.ui.components.ElvanCommonCard
 import com.elvan.udukkai.ui.navigation.MaterialSymbols
@@ -89,6 +90,9 @@ fun FactoryCustomerCard(
         getBilingualSecondaryName(merchant.name, primaryLang, secondaryLang)
     } else ""
     val primaryCity = getMainLanguageField(merchant.city, primaryLang, secondaryLang)
+    // Under the name: the second-language name with the place (in the main language) after a dot; the place alone without one
+    val nameSecondLine = listOf(secondaryName.takeIf { it.isNotBlank() && it != primaryName }.orEmpty(), primaryCity)
+        .filter { it.isNotBlank() }.joinToString("  •  ")
 
     ElvanCommonCard(
         onClick = onClick,
@@ -135,23 +139,17 @@ fun FactoryCustomerCard(
                                 fontWeight = FontWeight.Bold,
                                 color = colors.textPrimary
                             ),
-                            maxLines = 1,
+                            maxLines = 2,
                             overflow = TextOverflow.Ellipsis
                         )
 
-                        if (secondaryName.isNotBlank() && secondaryName != primaryName) {
-                            Spacer(modifier = Modifier.height(2.dp))
-                            Text(
-                                text = secondaryName.preventBrokenLigatures(),
-                                style = TextStyle(
-                                    fontFamily = ff,
-                                    fontSize = 13.5.sp,
-                                    color = colors.textSecondary
-                                ),
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis
-                            )
-                        }
+                        ElvanCardSecondLine(
+                            text = nameSecondLine,
+                            label = if (merchant.companyIds.isNotEmpty()) resolveCustomerCompanyTag(merchant, profiles, primaryLang) else "",
+                            color = colors.textSecondary,
+                            labelColor = colors.textTertiary,
+                            fontFamily = ff
+                        )
                     }
 
                     Icon(
@@ -162,36 +160,6 @@ fun FactoryCustomerCard(
                     )
                 }
 
-                val companyTag = resolveCustomerCompanyTag(merchant, profiles, primaryLang)
-                val cityLine = primaryCity
-
-                if (cityLine.isNotBlank()) {
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text(
-                        text = cityLine.preventBrokenLigatures(),
-                        style = TextStyle(
-                            fontFamily = ff,
-                            fontSize = 13.5.sp,
-                            color = colors.textSecondary
-                        ),
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                }
-
-                if (companyTag.isNotBlank()) {
-                    Spacer(modifier = Modifier.height(if (cityLine.isNotBlank()) 2.dp else 4.dp))
-                    Text(
-                        text = companyTag.preventBrokenLigatures(),
-                        style = TextStyle(
-                            fontFamily = ff,
-                            fontSize = 13.5.sp,
-                            color = colors.textSecondary
-                        ),
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                }
             }
         }
     }
@@ -219,6 +187,9 @@ fun TextilesCustomerCard(
         getBilingualSecondaryName(merchant.name, primaryLang, secondaryLang)
     } else ""
     val primaryCity = getMainLanguageField(merchant.city, primaryLang, secondaryLang)
+    // Under the name: the second-language name with the place (in the main language) after a dot; the place alone without one
+    val nameSecondLine = listOf(secondaryName.takeIf { it.isNotBlank() && it != primaryName }.orEmpty(), primaryCity)
+        .filter { it.isNotBlank() }.joinToString("  •  ")
     val gstin = merchant.gstin.trim()
 
     ElvanCommonCard(
@@ -266,23 +237,17 @@ fun TextilesCustomerCard(
                                 fontWeight = FontWeight.Bold,
                                 color = colors.textPrimary
                             ),
-                            maxLines = 1,
+                            maxLines = 2,
                             overflow = TextOverflow.Ellipsis
                         )
 
-                        if (secondaryName.isNotBlank() && secondaryName != primaryName) {
-                            Spacer(modifier = Modifier.height(2.dp))
-                            Text(
-                                text = secondaryName.preventBrokenLigatures(),
-                                style = TextStyle(
-                                    fontFamily = ff,
-                                    fontSize = 13.5.sp,
-                                    color = colors.textSecondary
-                                ),
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis
-                            )
-                        }
+                        ElvanCardSecondLine(
+                            text = nameSecondLine,
+                            label = if (merchant.companyIds.isNotEmpty()) resolveCustomerCompanyTag(merchant, profiles, primaryLang) else "",
+                            color = colors.textSecondary,
+                            labelColor = colors.textTertiary,
+                            fontFamily = ff
+                        )
                     }
 
                     Icon(
@@ -293,52 +258,18 @@ fun TextilesCustomerCard(
                     )
                 }
 
-                val cityText = primaryCity
-                val companyTag = resolveCustomerCompanyTag(merchant, profiles, primaryLang)
-                val hasCity = cityText.isNotBlank()
-                val hasGstin = gstin.isNotBlank()
-                val hasCompany = companyTag.isNotBlank()
-
-                if (hasCity || hasGstin || hasCompany) {
-                    Spacer(modifier = Modifier.height(4.dp))
-                    if (hasCity) {
-                        Text(
-                            text = cityText.preventBrokenLigatures(),
-                            style = TextStyle(
-                                fontFamily = ff,
-                                fontSize = 13.5.sp,
-                                color = colors.textSecondary
-                            ),
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
-                        )
-                    }
-                    if (hasGstin) {
-                        if (hasCity) Spacer(modifier = Modifier.height(2.dp))
-                        Text(
-                            text = "GSTIN: $gstin",
-                            style = TextStyle(
-                                fontFamily = ff,
-                                fontSize = 13.5.sp,
-                                color = colors.textSecondary
-                            ),
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
-                        )
-                    }
-                    if (hasCompany) {
-                        if (hasCity || hasGstin) Spacer(modifier = Modifier.height(2.dp))
-                        Text(
-                            text = companyTag.preventBrokenLigatures(),
-                            style = TextStyle(
-                                fontFamily = ff,
-                                fontSize = 13.5.sp,
-                                color = colors.textSecondary
-                            ),
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
-                        )
-                    }
+                if (gstin.isNotBlank()) {
+                    Spacer(modifier = Modifier.height(6.dp))
+                    Text(
+                        text = "GSTIN: $gstin",
+                        style = TextStyle(
+                            fontFamily = ff,
+                            fontSize = 13.5.sp,
+                            color = colors.textSecondary
+                        ),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
                 }
             }
         }

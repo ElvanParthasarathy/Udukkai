@@ -25,6 +25,7 @@ import com.elvan.udukkai.theme.LocalShellColors
 import com.elvan.udukkai.theme.ShellColors
 import com.elvan.udukkai.theme.preventBrokenLigatures
 import com.elvan.udukkai.ui.components.ElvanCardLeadingIcon
+import com.elvan.udukkai.ui.components.ElvanCardSecondLine
 import com.elvan.udukkai.ui.components.ElvanCardSelector
 import com.elvan.udukkai.ui.components.ElvanCommonCard
 import com.elvan.udukkai.ui.navigation.MaterialSymbols
@@ -68,7 +69,10 @@ private fun getDynamicField(
     return ""
 }
 
-/** The item's name in the second language, in grey under the main name, as on the bill and receipt cards. */
+/**
+ * The item's name in the second language, in grey under the main name, with the short label of its businesses at the
+ * right end when it is not offered by all of them.
+ */
 @Composable
 private fun ItemSecondaryName(
     item: ItemModel,
@@ -76,21 +80,13 @@ private fun ItemSecondaryName(
     isBilingual: Boolean,
     primaryLang: String,
     secondaryLang: String,
+    profiles: List<BusinessProfile>,
     colors: ShellColors
 ) {
     val secondary = getDynamicField(item.name, isPrimary = false, isBilingual = isBilingual, primaryLang, secondaryLang)
-    if (secondary.isBlank() || secondary == primary) return
-    Spacer(modifier = Modifier.height(2.dp))
-    Text(
-        text = secondary.preventBrokenLigatures(),
-        style = TextStyle(
-            fontFamily = LocalAppFontFamily.current,
-            fontSize = 13.5.sp,
-            color = colors.textSecondary
-        ),
-        maxLines = 1,
-        overflow = TextOverflow.Ellipsis
-    )
+        .takeIf { it != primary }.orEmpty()
+    val label = if (item.companyIds.isNotEmpty()) resolveItemCompanyTag(item, profiles, primaryLang) else ""
+    ElvanCardSecondLine(secondary, label, colors.textSecondary, colors.textTertiary, LocalAppFontFamily.current)
 }
 
 @Composable
@@ -158,25 +154,11 @@ fun FactoryItemCard(
                                 fontWeight = FontWeight.Bold,
                                 color = colors.textPrimary
                             ),
-                            maxLines = 1,
+                            maxLines = 2,
                             overflow = TextOverflow.Ellipsis
                         )
-                        ItemSecondaryName(item, primary, isBilingual, primaryLang, secondaryLang, colors)
+                        ItemSecondaryName(item, primary, isBilingual, primaryLang, secondaryLang, profiles, colors)
 
-                        val companyTag = resolveItemCompanyTag(item, profiles, primaryLang)
-                        if (companyTag.isNotBlank()) {
-                            Spacer(modifier = Modifier.height(4.dp))
-                            Text(
-                                text = companyTag.preventBrokenLigatures(),
-                                style = TextStyle(
-                                    fontFamily = ff,
-                                    fontSize = 13.5.sp,
-                                    color = colors.textSecondary
-                                ),
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis
-                            )
-                        }
                     }
 
                     Icon(
@@ -256,10 +238,10 @@ fun TextilesItemCard(
                                 fontWeight = FontWeight.Bold,
                                 color = colors.textPrimary
                             ),
-                            maxLines = 1,
+                            maxLines = 2,
                             overflow = TextOverflow.Ellipsis
                         )
-                        ItemSecondaryName(item, primary, isBilingual, primaryLang, secondaryLang, colors)
+                        ItemSecondaryName(item, primary, isBilingual, primaryLang, secondaryLang, profiles, colors)
                     }
 
                     Icon(
@@ -270,7 +252,7 @@ fun TextilesItemCard(
                     )
                 }
 
-                Spacer(modifier = Modifier.height(4.dp))
+                Spacer(modifier = Modifier.height(6.dp))
 
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -311,20 +293,6 @@ fun TextilesItemCard(
                             modifier = Modifier.padding(top = 2.dp)
                         )
 
-                        val companyTag = resolveItemCompanyTag(item, profiles, primaryLang)
-                        if (companyTag.isNotBlank()) {
-                            Text(
-                                text = companyTag.preventBrokenLigatures(),
-                                style = TextStyle(
-                                    fontFamily = ff,
-                                    fontSize = 13.5.sp,
-                                    color = colors.textSecondary
-                                ),
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis,
-                                modifier = Modifier.padding(top = 2.dp)
-                            )
-                        }
                     }
 
                     Spacer(modifier = Modifier.width(8.dp))

@@ -425,6 +425,7 @@ fun FactoryRecycleBinScreen(
                                     onClick = onCardClick,
                                     onLongClick = onCardLongClick,
                                     modifier = Modifier.padding(horizontal = Dimens.ContentPadding),
+                                    customerCity = receipt.customerId?.let { id -> com.elvan.udukkai.factory.data.FactoryCustomerRepository.customers.find { it.id == id }?.city } ?: emptyMap(),
                                     linkedInvoiceNumbers = FactoryReceiptRepository.getLinkedInvoiceNumbers(receipt.id)
                                 )
                             }
