@@ -88,16 +88,6 @@ fun TextilesItemScreen(
         }
     }
 
-    var isSearchLoading by remember { mutableStateOf(false) }
-    LaunchedEffect(TextilesItemRepository.searchQuery) {
-        if (TextilesItemRepository.searchQuery.isNotBlank()) {
-            isSearchLoading = true
-            delay(300)
-            isSearchLoading = false
-        } else {
-            isSearchLoading = false
-        }
-    }
 
     Box(modifier = modifier.fillMaxSize()) {
         LazyColumn(
@@ -134,7 +124,7 @@ fun TextilesItemScreen(
                 }
             }
 
-            if (isSearchLoading || isRefreshing) {
+            if (isRefreshing) {
                 items(10) {
                     ItemCardSkeleton()
                 }

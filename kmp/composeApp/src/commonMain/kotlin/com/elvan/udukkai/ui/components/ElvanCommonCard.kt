@@ -69,11 +69,11 @@ fun ElvanCommonCard(
     val interactionSource = remember { MutableInteractionSource() }
     val isPressed by interactionSource.collectIsPressedAsState()
 
+    // As on iOS: the card sinks a little under the finger and springs back with a soft bounce when let go
+    // (after a long press too, as it turns into a selected card)
     val scale by animateFloatAsState(
-        targetValue = if (isPressed && (onClick != null || onLongClick != null)) 0.985f else 1.0f,
-        animationSpec = tween(
-            durationMillis = if (isPressed) 100 else 200
-        ),
+        targetValue = if (isPressed && (onClick != null || onLongClick != null)) 0.975f else 1.0f,
+        animationSpec = if (isPressed) tween(100) else spring(dampingRatio = 0.55f, stiffness = 500f),
         label = "pothuAttaiPressScale"
     )
 
@@ -131,11 +131,12 @@ fun ElvanCardSelector(
         ) + fadeIn(
             animationSpec = tween(220, easing = CubicBezierEasing(0.0f, 0.0f, 0.2f, 1.0f))
         ),
+        // Out on a firm spring too (no bounce), so the content slides back left fluidly instead of on a stiff curve
         exit = shrinkHorizontally(
-            animationSpec = tween(180, easing = CubicBezierEasing(0.4f, 0.0f, 1.0f, 1.0f)),
+            animationSpec = spring(dampingRatio = Spring.DampingRatioNoBouncy, stiffness = Spring.StiffnessMedium),
             shrinkTowards = Alignment.Start
         ) + fadeOut(
-            animationSpec = tween(140)
+            animationSpec = tween(120)
         ),
         modifier = modifier
     ) {

@@ -35,9 +35,8 @@ import com.elvan.udukkai.theme.rememberShellColors
 import com.elvan.udukkai.ui.navigation.MaterialSymbols
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import com.elvan.udukkai.ui.navigation.PillTab
 import com.elvan.udukkai.ui.navigation.PillMotion
-import com.elvan.udukkai.ui.navigation.awaitPillLanding
+import com.elvan.udukkai.ui.navigation.PillTab
 import com.elvan.udukkai.ui.navigation.pillNearness
 import kotlin.math.floor
 import kotlin.math.roundToInt
@@ -167,7 +166,7 @@ fun RecycleBinBottomNavBar(
         animationSpec = when {
             snapNextFrame -> snap()
             isInteracting && dragOffsetPx != null -> PillMotion.follow
-            else -> PillMotion.glide
+            else -> PillMotion.settle
         },
         label = "pillX"
     )
@@ -262,7 +261,7 @@ fun RecycleBinBottomNavBar(
                                         if (finalIndex != null) {
                                             pendingSelect?.cancel()
                                             pendingSelect = coroutineScope.launch {
-                                                awaitPillLanding(animatedLeft, ((finalIndex * layoutWidthPx) - overlapPx).coerceIn(minLeftPx, maxLeftPx), layoutWidthPx)
+                                                PillMotion.awaitLanded(animatedLeft, ((finalIndex * layoutWidthPx) - overlapPx).coerceIn(minLeftPx, maxLeftPx))
                                                 currentOnTabSelected(tabs[finalIndex])
                                             }
                                         }
@@ -288,8 +287,9 @@ fun RecycleBinBottomNavBar(
                                 .fillMaxHeight()
                                 .width(bgWidth)
                                 .graphicsLayer {
-                                    scaleX = pillScale
-                                    scaleY = pillScale
+                                    val stretch = PillMotion.stretch(targetLeftPx, animatedLeft.value, bgWidthPx)
+                                    scaleX = pillScale * (1f + stretch * 0.35f)
+                                    scaleY = pillScale * (1f - stretch * 0.12f)
                                     transformOrigin = TransformOrigin.Center
                                     clip = false
                                 }

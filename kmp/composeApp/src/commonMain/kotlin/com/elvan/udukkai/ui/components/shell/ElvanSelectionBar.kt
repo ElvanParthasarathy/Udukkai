@@ -1,8 +1,15 @@
 package com.elvan.udukkai.ui.components.shell
 
+import androidx.compose.animation.ContentTransform
+import androidx.compose.animation.SizeTransform
 import androidx.compose.animation.core.CubicBezierEasing
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
@@ -11,6 +18,18 @@ import com.elvan.udukkai.localization.tr
 import com.elvan.udukkai.theme.ShellColors
 import com.elvan.udukkai.theme.rememberShellColors
 import com.elvan.udukkai.ui.navigation.MaterialSymbols
+
+/**
+ * How the tab bar and the selection bar trade places, like an iOS morph: the incoming bar swells in from a little
+ * smaller on a spring and settles, while the outgoing one shrinks and fades a touch faster. Used in both directions.
+ */
+fun elvanBarSwap(): ContentTransform = ContentTransform(
+    targetContentEnter = fadeIn(tween(150, delayMillis = 30)) +
+        scaleIn(spring(dampingRatio = 0.72f, stiffness = 420f), initialScale = 0.88f),
+    initialContentExit = fadeOut(tween(110)) +
+        scaleOut(tween(150, easing = CubicBezierEasing(0.4f, 0f, 1f, 1f)), targetScale = 0.92f),
+    sizeTransform = SizeTransform(clip = false)
+)
 
 /**
  * ElvanSelectionBar — Floating multi-selection action bar.

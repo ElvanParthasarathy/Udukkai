@@ -35,7 +35,6 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import com.elvan.udukkai.ui.navigation.PillMotion
-import com.elvan.udukkai.ui.navigation.awaitPillLanding
 import com.elvan.udukkai.ui.navigation.pillNearness
 import kotlin.math.floor
 import kotlin.math.roundToInt
@@ -85,7 +84,7 @@ fun ElvanPillShifter(
     var hoverIndex by remember { mutableStateOf<Int?>(null) }
     var localLockedIndex by remember { mutableStateOf<Int?>(null) }
     var snapNextFrame by remember { mutableStateOf(false) }
-
+    // As in the tab bar: the list behind swaps only once the pill has landed, and a newer tap cancels an older one
     var pendingSelect by remember { mutableStateOf<kotlinx.coroutines.Job?>(null) }
     val currentOnIndexSelected by rememberUpdatedState(onIndexSelected)
 
@@ -114,7 +113,7 @@ fun ElvanPillShifter(
         label = "containerScale"
     )
 
-    // Pill scale on interaction: Symmetrical expansion in all directions
+    // Pill scale on interaction: Symmetrical expansion in all directions, with the lens bounce of the tab bar
     val pillScaleX by animateFloatAsState(
         targetValue = if (isInteracting) 1.055f else 1.0f,
         animationSpec = PillMotion.press,
@@ -177,7 +176,7 @@ fun ElvanPillShifter(
             animationSpec = when {
                 snapNextFrame -> snap()
                 isInteracting && dragOffsetPx != null -> PillMotion.follow
-                else -> PillMotion.glide
+                else -> PillMotion.settle
             },
             label = "pillX"
         )
@@ -238,10 +237,9 @@ fun ElvanPillShifter(
                         hoverIndex = null
 
                         if (finalIndex != null) {
-                            // The list behind changes once the pill has nearly landed, so the glide never stutters
                             pendingSelect?.cancel()
                             pendingSelect = coroutineScope.launch {
-                                awaitPillLanding(animatedLeft, ((finalIndex * layoutWidthPx) - overlapPx).coerceIn(minLeftPx, maxLeftPx), layoutWidthPx)
+                                PillMotion.awaitLanded(animatedLeft, ((finalIndex * layoutWidthPx) - overlapPx).coerceIn(minLeftPx, maxLeftPx))
                                 currentOnIndexSelected(finalIndex)
                             }
                         }
@@ -261,8 +259,9 @@ fun ElvanPillShifter(
                         .fillMaxHeight()
                         .width(bgWidth)
                         .graphicsLayer {
-                            scaleX = pillScaleX
-                            scaleY = pillScaleY
+                            val stretch = PillMotion.stretch(targetLeftPx, animatedLeft.value, bgWidthPx)
+                            scaleX = pillScaleX * (1f + stretch * 0.35f)
+                            scaleY = pillScaleY * (1f - stretch * 0.12f)
                             transformOrigin = TransformOrigin.Center
                             clip = false
                         }

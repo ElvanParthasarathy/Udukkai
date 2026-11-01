@@ -2,7 +2,9 @@ package com.elvan.udukkai.ui.navigation
 
 import androidx.compose.animation.core.CubicBezierEasing
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.AnimationSpec
 import androidx.compose.animation.core.snap
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -34,7 +36,9 @@ import com.elvan.udukkai.core.extensions.cssShadow
 import com.elvan.udukkai.theme.LocalAppFontFamily
 import com.elvan.udukkai.theme.ShellColors
 import com.elvan.udukkai.theme.rememberShellColors
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.coroutines.launch
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.semantics.clearAndSetSemantics
@@ -43,26 +47,39 @@ import kotlin.math.abs
 import kotlin.math.floor
 import kotlin.math.roundToInt
 
-/**
- * Apple-style springs for the pill bars (iOS's own default spring is about 0.35 s with 0.8 damping). A spring keeps its
- * speed when the target changes mid-way, so quick taps and drags flow on instead of restarting.
- */
+/** iOS-style pill motion, shared by the tab bars and the pill shifters. */
 object PillMotion {
-    /** The pill gliding to a tab: a soft settle with the smallest overshoot. */
-    val glide = androidx.compose.animation.core.spring<Float>(dampingRatio = 0.82f, stiffness = 380f)
-    /** Following the finger while dragging: tight, only enough to smooth out touch jitter. */
-    val follow = androidx.compose.animation.core.spring<Float>(dampingRatio = 1f, stiffness = 2500f)
-    /** The press grow and its release: a little give, like the iOS tab bar lens. */
-    val press = androidx.compose.animation.core.spring<Float>(dampingRatio = 0.6f, stiffness = 500f)
-}
+    /** On press the pill grows like a lens, with a little bounce. */
+    val press: AnimationSpec<Float> = spring(dampingRatio = 0.55f, stiffness = 600f)
+    /** While dragging it trails the finger by a hair, which is what lets it stretch. */
+    val follow: AnimationSpec<Float> = spring(dampingRatio = 0.9f, stiffness = 1400f)
+    /** On release or tap it glides over and settles with a slight overshoot. */
+    val settle: AnimationSpec<Float> = spring(dampingRatio = 0.72f, stiffness = 380f)
 
-/**
- * Waits until a gliding pill has nearly landed on [targetLeftPx] (within a tenth of a slot), at most [maxMillis].
- * The page behind changes only then: building it can cost the phone a few frames, which would stutter a moving pill.
- */
-suspend fun awaitPillLanding(pillLeft: State<Float>, targetLeftPx: Float, slotWidthPx: Float, maxMillis: Long = 350) {
-    kotlinx.coroutines.withTimeoutOrNull(maxMillis) {
-        snapshotFlow { abs(pillLeft.value - targetLeftPx) < slotWidthPx * 0.1f }.first { it }
+    /** How much the pill stretches along its path (0 to 0.6): more the further it still has to travel. */
+    fun stretch(targetLeftPx: Float, currentLeftPx: Float, pillWidthPx: Float): Float =
+        (abs(targetLeftPx - currentLeftPx) / pillWidthPx).coerceAtMost(0.6f)
+
+    /**
+     * Waits until the pill has come to rest at [landingPx], so the page behind it is swapped only after the glide:
+     * building a full page takes a heavy frame, and one landing mid-glide makes the pill skip. Gives up after
+     * [timeoutMs] so a tap is never lost.
+     */
+    suspend fun awaitLanded(
+        position: State<Float>,
+        landingPx: Float,
+        nearPx: Float = 2f,
+        restPx: Float = 0.5f,
+        timeoutMs: Long = 700
+    ) {
+        withTimeoutOrNull(timeoutMs) {
+            var previous = Float.NaN
+            snapshotFlow { position.value }.first { now ->
+                val resting = previous.isNaN() || abs(now - previous) < restPx
+                previous = now
+                abs(now - landingPx) < nearPx && resting
+            }
+        }
     }
 }
 
@@ -203,7 +220,7 @@ fun BottomNavBar(
         animationSpec = when {
             snapNextFrame -> snap()
             isInteracting && dragOffsetPx != null -> PillMotion.follow
-            else -> PillMotion.glide
+            else -> PillMotion.settle
         },
         label = "pillX"
     )
@@ -305,7 +322,7 @@ fun BottomNavBar(
                         if (finalIndex != null) {
                             pendingSelect?.cancel()
                             pendingSelect = coroutineScope.launch {
-                                awaitPillLanding(animatedLeft, ((finalIndex * layoutWidthPx) - overlapPx).coerceIn(minLeftPx, maxLeftPx), layoutWidthPx)
+                                PillMotion.awaitLanded(animatedLeft, ((finalIndex * layoutWidthPx) - overlapPx).coerceIn(minLeftPx, maxLeftPx))
                                 currentOnTabSelected(tabs[finalIndex], isDrag)
                             }
                         }
@@ -331,8 +348,9 @@ fun BottomNavBar(
                         .fillMaxHeight()
                         .width(bgWidth)
                         .graphicsLayer {
-                            scaleX = pillScale
-                            scaleY = pillScale
+                            val stretch = PillMotion.stretch(targetLeftPx, animatedLeft.value, bgWidthPx)
+                            scaleX = pillScale * (1f + stretch * 0.35f)
+                            scaleY = pillScale * (1f - stretch * 0.12f)
                             transformOrigin = TransformOrigin.Center
                             clip = false
                         }

@@ -52,16 +52,6 @@ fun FactoryCustomerScreen(
     val customers = FactoryCustomerRepository.filteredMerchants
     val ff = LocalAppFontFamily.current
 
-    var isSearchLoading by remember { mutableStateOf(false) }
-    LaunchedEffect(FactoryCustomerRepository.searchQuery) {
-        if (FactoryCustomerRepository.searchQuery.isNotBlank()) {
-            isSearchLoading = true
-            delay(300)
-            isSearchLoading = false
-        } else {
-            isSearchLoading = false
-        }
-    }
 
     Box(modifier = modifier.fillMaxSize()) {
         LazyColumn(
@@ -78,7 +68,7 @@ fun FactoryCustomerScreen(
                 Spacer(modifier = Modifier.height(LocalElvanTopSpacerHeight.current))
             }
 
-            if (isSearchLoading || isRefreshing) {
+            if (isRefreshing) {
                 items(10) {
                     CustomerCardSkeleton()
                 }

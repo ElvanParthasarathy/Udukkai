@@ -1,7 +1,8 @@
 package com.elvan.udukkai.ui.components.shell
 
+import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.CubicBezierEasing
-import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -63,19 +64,21 @@ fun ElvanPopupMenu(
         }
     }
 
-    if (!expanded) return
-
-    var isVisible by remember { mutableStateOf(false) }
-
-    LaunchedEffect(Unit) {
-        isVisible = true
+    // As on iOS: the menu grows out of the button on a spring and settles with a slight overshoot, then shrinks back
+    // into it quickly when closed (it stays on screen until that has played)
+    val progress = remember { Animatable(0f) }
+    var mounted by remember { mutableStateOf(false) }
+    LaunchedEffect(expanded) {
+        if (expanded) {
+            mounted = true
+            progress.animateTo(1f, spring(dampingRatio = 0.78f, stiffness = 420f))
+        } else if (mounted) {
+            progress.animateTo(0f, tween(140, easing = CubicBezierEasing(0.4f, 0f, 1f, 1f)))
+            mounted = false
+        }
     }
 
-    val animProgress by animateFloatAsState(
-        targetValue = if (isVisible) 1.0f else 0.0f,
-        animationSpec = tween(150, easing = CubicBezierEasing(0.0f, 0.0f, 0.2f, 1.0f)),
-        label = "popupAnim"
-    )
+    if (!expanded && !mounted) return
 
     Popup(
         alignment = Alignment.TopEnd,
@@ -93,10 +96,11 @@ fun ElvanPopupMenu(
         Box(
             modifier = modifier
                 .graphicsLayer {
-                    scaleX = 0.2f + (0.8f * animProgress)
-                    scaleY = 0.2f + (0.8f * animProgress)
-                    transformOrigin = TransformOrigin(1f, 0f) // Anchored at top-right
-                    alpha = animProgress
+                    val p = progress.value
+                    scaleX = 0.5f + 0.5f * p
+                    scaleY = 0.5f + 0.5f * p
+                    transformOrigin = TransformOrigin(1f, 0f) // Anchored at top-right, where the button is
+                    alpha = (p * 2.5f).coerceIn(0f, 1f)
                 }
                 .cssShadow(
                     color = Color.Black,
@@ -113,10 +117,15 @@ fun ElvanPopupMenu(
                     color = colors.floatingBorder.copy(alpha = if (colors.isDark) 0.25f else 0.6f),
                     shape = RoundedCornerShape(24.dp)
                 )
+                .clip(RoundedCornerShape(24.dp))
                 .width(IntrinsicSize.Max)
         ) {
             Column(
-                modifier = Modifier.fillMaxWidth()
+                // The rows come in just behind the panel, so the menu reads as growing first, then filling
+                modifier = Modifier.fillMaxWidth().graphicsLayer {
+                    alpha = ((progress.value - 0.25f) / 0.6f).coerceIn(0f, 1f)
+                    translationY = (1f - progress.value.coerceIn(0f, 1f)) * -6.dp.toPx()
+                }
             ) {
                 items.forEachIndexed { index, item ->
                     val isFirst = index == 0

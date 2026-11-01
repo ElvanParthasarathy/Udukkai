@@ -67,28 +67,11 @@ fun TextilesCreateScreen(
     val invoices by remember { derivedStateOf { TextilesInvoiceRepository.filteredInvoices } }
     val receipts by remember { derivedStateOf { TextilesReceiptRepository.filteredReceipts } }
 
-    // The pill slides over 150ms. Swapping the (Tamil text heavy) card list in the same frames made
-    // that slide stutter, so the list follows once the pill has settled.
-    var listSegment by remember { mutableIntStateOf(selectedSegment) }
-    LaunchedEffect(selectedSegment) {
-        if (listSegment != selectedSegment) {
-            delay(170)
-            listSegment = selectedSegment
-        }
-    }
+    // The pill shifter itself waits until its pill has landed before it reports the new segment
+    // (so the heavy card list never swaps mid-glide); the list follows it straight away.
+    val listSegment = selectedSegment
 
     val currentSearchQuery = if (selectedSegment == 0) TextilesInvoiceRepository.searchQuery else TextilesReceiptRepository.searchQuery
-    var isSearchLoading by remember { mutableStateOf(false) }
-
-    LaunchedEffect(currentSearchQuery) {
-        if (currentSearchQuery.isNotBlank()) {
-            isSearchLoading = true
-            delay(300)
-            isSearchLoading = false
-        } else {
-            isSearchLoading = false
-        }
-    }
 
     val invoiceGroups = remember(invoices) {
         DateGroupUtils.groupItemsByDate(invoices) { it.invoiceDate }
@@ -229,7 +212,7 @@ fun TextilesCreateScreen(
                 }
             }
 
-            if (isSearchLoading || isRefreshing) {
+            if (isRefreshing) {
                 items(6) {
                     Box(
                         modifier = Modifier
