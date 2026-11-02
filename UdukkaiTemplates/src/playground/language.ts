@@ -72,28 +72,42 @@ const ONE = {
 const first = (lines, t) => lines.findIndex((l) => l.includes(t));
 const ruleFails = async () => {
   const fails = [];
+  const FIELDS = Object.keys(ONE);
+  const combos = [];
+  for (let m = 0; m < 1 << FIELDS.length; m++) combos.push(Object.fromEntries(FIELDS.map((f, i) => [f, (m >> i) & 1 ? 'ta' : 'en'])));
   for (const doc of ['gst', 'coolie']) {
     const make = doc === 'gst' ? gst : coolie;
-    for (const [field, f] of Object.entries(ONE)) {
-      for (const rule of [undefined, 'en', 'ta']) {
-        const lines = await linesOf(make('bi', 'ta', { rules: rule ? { [field]: rule } : undefined }));
-        const [shown, hidden] = rule === 'ta' ? [f.ta, f.en] : [f.en, f.ta];
-        if (first(lines, shown) < 0 || first(lines, hidden) >= 0) fails.push(`${doc} / ${field} = ${rule || 'no rule'}: only ${rule === 'ta' ? 'Tamil' : 'English'} expected`);
+    // Both main languages x every combination of the three one-language rules: each field must show exactly its chosen language
+    for (const mode of ['bi', 'bien']) {
+      const main = mode === 'bi' ? 'Tamil' : 'English';
+      for (const rules of combos) {
+        const lines = await linesOf(make(mode, 'ta', { rules }));
+        const tag = `${doc} / main ${main} / ${FIELDS.map((f) => `${f}=${rules[f]}`).join(' ')}`;
+        for (const f of FIELDS) {
+          const [shown, hidden] = rules[f] === 'ta' ? [ONE[f].ta, ONE[f].en] : [ONE[f].en, ONE[f].ta];
+          if (first(lines, shown) < 0) fails.push(`${tag}: ${f} should show ${rules[f] === 'ta' ? 'Tamil' : 'English'} but it is missing`);
+          if (first(lines, hidden) >= 0) fails.push(`${tag}: ${f} should show only ${rules[f] === 'ta' ? 'Tamil' : 'English'}`);
+        }
       }
-    }
-    const bl = await linesOf(make('bi', 'ta', {}));
-    const e = first(bl, E.biz), t = first(bl, T.biz);
-    if (!(e >= 0 && t > e)) fails.push(`${doc} / business name: English, then Tamil under it (English at ${e}, Tamil at ${t})`);
-    for (const [mode, tamilFirst] of [['bi', true], ['bien', false]]) {
-      const il = await linesOf(make(mode, 'ta', {}));
-      const a = first(il, doc === 'gst' ? T.item : 'ஜரி தடை பணிக்கட்டணம்'), b = first(il, doc === 'gst' ? E.item : 'Jari Thadai Job Work Charges');
-      if (!(a >= 0 && b >= 0 && (tamilFirst ? a < b : b < a))) fails.push(`${doc} / item name, main language ${tamilFirst ? 'Tamil' : 'English'}: wrong order (Tamil at ${a}, English at ${b})`);
+      // No rule at all: the same as English everywhere
+      const none = await linesOf(make(mode, 'ta', {}));
+      for (const f of FIELDS) if (first(none, ONE[f].en) < 0 || first(none, ONE[f].ta) >= 0) fails.push(`${doc} / main ${main} / no rules: ${f} should default to English`);
+      // The business name is English with the Tamil name under it, whichever the main language is
+      const e = first(none, E.biz), t = first(none, T.biz);
+      if (!(e >= 0 && t > e)) fails.push(`${doc} / main ${main}: business name must be English, then Tamil under it (English at ${e}, Tamil at ${t})`);
+      // The item name follows the main language
+      const a = first(none, doc === 'gst' ? T.item : 'ஜரி தடை பணிக்கட்டணம்'), b = first(none, doc === 'gst' ? E.item : 'Jari Thadai Job Work Charges');
+      if (!(a >= 0 && b >= 0 && (mode === 'bi' ? a < b : b < a))) fails.push(`${doc} / main ${main}: item name order wrong (Tamil at ${a}, English at ${b})`);
     }
   }
   if ((await linesOf(gst('bi', 'ta', {}))).some((l) => l.includes('வரிப் பட்டியல்'))) fails.push('gst / bilingual: the title has a Tamil line under it');
-  // A single-language bill ignores every rule
+  // A single-language bill ignores every rule, in either language
   const all = { businessAddress: 'ta', customerName: 'ta', customerAddress: 'ta' };
   for (const l of (await linesOf(gst('en', 'ta', { rules: all }))).filter((l) => hasTamil(l.replace(/^உ$/, '')))) fails.push(`gst / English only ignores rules: "${l}"`);
+  for (const doc of ['gst', 'coolie']) {
+    const l = (await linesOf((doc === 'gst' ? gst : coolie)('ta', 'en', { rules: { businessAddress: 'en', customerName: 'en', customerAddress: 'en' } }))).filter(hasEnglishWord);
+    for (const x of l) fails.push(`${doc} / Tamil only ignores rules: "${x}"`);
+  }
   return fails;
 };
 
