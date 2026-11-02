@@ -43,13 +43,18 @@ const resolveLang = (profile) => {
   };
 };
 
+// The templates' older bank fields are language slots: the plain name is the Tamil one, the "En" one is English.
+// With English as the main language, "primary" is English, so slots must follow the language, not the order.
+const taSlot = (map, lang) => str(map?.ta ?? map?.[lang.primaryCode]);
+const enSlot = (map, lang) => str(map?.en ?? map?.[lang.secondaryCode]);
+
 const toPaymentAccount = (acc, lang) => ({
   id: str(acc.id),
   label: str(acc.label),
-  vangiPeyar: str(acc.bankName?.[lang.primaryCode]),
-  vangiPeyarEn: str(acc.bankName?.[lang.secondaryCode]),
-  bankBranch: str(acc.branch?.[lang.primaryCode]),
-  bankBranchEn: str(acc.branch?.[lang.secondaryCode]),
+  vangiPeyar: taSlot(acc.bankName, lang),
+  vangiPeyarEn: enSlot(acc.bankName, lang),
+  bankBranch: taSlot(acc.branch, lang),
+  bankBranchEn: enSlot(acc.branch, lang),
   kanakkuEn: str(acc.accountNumber),
   ifsc: str(acc.ifsc),
   swift: '',
@@ -107,10 +112,10 @@ export const toReactProfile = (p, lang) => {
 
   // Legacy flat bank fields (React synthesises an account from these when
   // paymentAccounts is empty).
-  out.vangiPeyar = str(p.bankName?.[lang.primaryCode]);
-  out.vangiPeyarEn = str(p.bankName?.[lang.secondaryCode]);
-  out.bankBranch = str(p.branch?.[lang.primaryCode]);
-  out.bankBranchEn = str(p.branch?.[lang.secondaryCode]);
+  out.vangiPeyar = taSlot(p.bankName, lang);
+  out.vangiPeyarEn = enSlot(p.bankName, lang);
+  out.bankBranch = taSlot(p.branch, lang);
+  out.bankBranchEn = enSlot(p.branch, lang);
   out.kanakkuEn = str(p.accountNumber);
   out.ifsc = str(p.ifsc);
   out.upiId = str(p.upiId);
@@ -345,7 +350,8 @@ export const toCoolieBillProps = (payload) => {
 export const toCoolieReceiptProps = (payload) => {
   const p = payload.profile || {};
   const profile = toCoolieProfile(p);
-  const receipt = toReactReceipt(payload.receipt || {}, { primaryCode: 'ta', secondaryCode: 'en' });
+  // The customer's name follows the business's language setting, like the Textiles receipt
+  const receipt = toReactReceipt(payload.receipt || {}, resolveLang(p));
   return {
     coolieProfiles: [profile],
     receipt: { ...receipt, company_id: profile.id, _companyProfile: profile },

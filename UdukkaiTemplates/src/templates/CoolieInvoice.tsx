@@ -100,11 +100,17 @@ export default function CoolieInvoiceBilingual({ bill }) {
   // Customer / place: the Tamil value, with the English one under it when bilingual
   const place = (a, c) => (a && c ? `${a}, ${c}` : (a || c || ''));
   const useEn = bi || isEng;
-  const customerName = (useEn ? (customerNameEn || customerNameTa) : customerNameTa) || '';
-  const customerPlace = (useEn ? (place(addressEn, cityEn) || place(addressTa, cityTa)) : place(addressTa, cityTa));
+  const same = (a, b) => (a || '').trim().toLowerCase() === (b || '').trim().toLowerCase();
+  // [main line, smaller second line]: bilingual gives both languages, a single-language bill only its own
+  const pair = (ta, en) => (bi ? (primaryEng ? [en || ta, ta] : [ta || en, en]) : [(isEng ? (en || ta) : (ta || en)) || '', '']);
+  const [customerName, customerName2] = pair(customerNameTa, customerNameEn);
+  const [customerPlace, customerPlace2] = pair(place(addressTa, cityTa), place(addressEn, cityEn));
+  const kg = !bi && !isEng ? 'கிலோ' : 'Kg';
 
   // Business
   const name = { english: p.nameEn || p.nameEnglish || '', tamil: p.name || p.nameTamil || '' };
+  // The bill's business name: both lines when bilingual, only the bill's own language otherwise
+  const ownName = isEng ? (name.english || name.tamil) : (name.tamil || name.english);
   const phone = p.phone ? (Array.isArray(p.phone) ? p.phone : String(p.phone).split(',')) : [];
   const contactLines = (en) => {
     const line1 = en ? p.addressEn : p.address;
@@ -144,8 +150,14 @@ export default function CoolieInvoiceBilingual({ bill }) {
       <div className="print-header-new" style={{ paddingLeft: '8px', paddingRight: '8px' }}>
         <div className="header-left">
           <div className="header-company-info">
-            <div className="company-name font-display">{name.english || name.tamil}</div>
-            {name.english && name.tamil && <div className="company-subtitle font-tamil">{name.tamil}</div>}
+            {bi ? (
+              <>
+                <div className="company-name font-display">{name.english || name.tamil}</div>
+                {name.english && name.tamil && <div className="company-subtitle font-tamil">{name.tamil}</div>}
+              </>
+            ) : (
+              <div className={`company-name ${isEng ? 'font-display' : 'font-tamil'}`}>{ownName}</div>
+            )}
           </div>
         </div>
         <div className="header-right" style={{ textAlign: 'right', display: 'flex', flexDirection: 'column', alignItems: 'flex-end', justifyContent: 'center' }}>
@@ -172,7 +184,8 @@ export default function CoolieInvoiceBilingual({ bill }) {
           <div className="inv-party" style={{ marginTop: '6px', paddingLeft: '8px', paddingRight: '8px' }}>
             <h4 className="inv-section-label" style={{ color: 'var(--bill-primary)', fontWeight: 700, fontSize: '12px', marginBottom: '3px', textTransform: 'none' }}>{slash('பெறுநர்', 'Bill To')}</h4>
             <p className="inv-party-name" style={{ color: '#242f3d', fontWeight: 600, fontSize: '15px', margin: 0, marginBottom: '2px' }}>{customerName || '-'}</p>
-            {customerPlace && <div className="inv-party-details" style={{ color: '#475569', fontSize: '13px' }}><p style={{ color: '#475569', margin: 0 }}>{customerPlace}</p></div>}
+            {bi && customerName2 && !same(customerName, customerName2) && <p style={{ color: '#64748b', fontSize: '12px', fontWeight: 500, margin: 0, marginBottom: '2px' }}>{customerName2}</p>}
+            {customerPlace && <div className="inv-party-details" style={{ color: '#475569', fontSize: '13px' }}><p style={{ color: '#475569', margin: 0 }}>{customerPlace}</p>{bi && customerPlace2 && !same(customerPlace, customerPlace2) && <p style={{ color: '#64748b', fontSize: '12px', margin: 0 }}>{customerPlace2}</p>}</div>}
           </div>
           {fyFull(date) && (
             <div style={{ marginTop: '6px', paddingRight: '8px', textAlign: 'right', whiteSpace: 'nowrap' }}>
@@ -205,7 +218,7 @@ export default function CoolieInvoiceBilingual({ bill }) {
                     <div style={{ fontSize: '12px', color: '#64748b', fontWeight: 500 }}>{item.name_english}</div>
                   )}
                 </td>
-                <td className="text-center" style={{ color: '#1e293b', whiteSpace: 'nowrap' }}>{item.kg ? `${formatWeight(item.kg)} Kg` : '—'}</td>
+                <td className="text-center" style={{ color: '#1e293b', whiteSpace: 'nowrap' }}>{item.kg ? `${formatWeight(item.kg)} ${kg}` : '—'}</td>
                 <td className="text-center" style={{ color: '#1e293b', fontVariantNumeric: 'tabular-nums' }}>{item.coolie ? `₹${formatCurrency(item.coolie)}` : '—'}</td>
                 <td className="text-right" style={{ fontVariantNumeric: 'tabular-nums', paddingRight: '16px', color: '#0f172a', fontWeight: 600 }}>{item.kg ? `₹${formatCurrency(calcItemAmount(item.coolie, item.kg))}` : '—'}</td>
               </tr>
@@ -219,7 +232,7 @@ export default function CoolieInvoiceBilingual({ bill }) {
                     <div style={{ fontSize: '12px', color: '#64748b', fontWeight: 500 }}>{row.en}</div>
                   )}
                 </td>
-                <td className="text-center" style={{ color: '#1e293b', whiteSpace: 'nowrap' }}>{row.weight ? `${formatWeight(row.weight)} Kg` : '—'}</td>
+                <td className="text-center" style={{ color: '#1e293b', whiteSpace: 'nowrap' }}>{row.weight ? `${formatWeight(row.weight)} ${kg}` : '—'}</td>
                 <td className="text-center" style={{ color: '#1e293b' }}>—</td>
                 <td className="text-right" style={{ fontVariantNumeric: 'tabular-nums', paddingRight: '16px', color: '#0f172a', fontWeight: 600 }}>{row.amount ? `₹${formatCurrency(row.amount)}` : '—'}</td>
               </tr>
@@ -236,7 +249,7 @@ export default function CoolieInvoiceBilingual({ bill }) {
                   </div>
                 </td>
                 <td className="text-center" style={{ fontWeight: 600, fontSize: '13.5px', color: '#1e293b', fontVariantNumeric: 'tabular-nums', borderBottom: '1px solid #ddd', verticalAlign: 'middle', whiteSpace: 'nowrap' }}>
-                  {formatWeight(totalKg)} Kg
+                  {formatWeight(totalKg)} {kg}
                 </td>
                 <td style={{ borderBottom: '1px solid #ddd' }}></td>
                 <td className="text-right" style={{ textAlign: 'right', paddingRight: '16px', fontWeight: 700, fontSize: '14.5px', color: accent, fontVariantNumeric: 'tabular-nums', borderBottom: '1px solid #ddd', verticalAlign: 'middle' }}>
@@ -319,7 +332,7 @@ export default function CoolieInvoiceBilingual({ bill }) {
           {/* Right: Business Name & Signature space */}
           <div style={{ textAlign: 'right', display: 'flex', flexDirection: 'column', alignItems: 'flex-end', minWidth: '220px' }}>
             <div className="sign-company font-display" style={{ color: accent, position: 'relative', zIndex: 10, fontSize: '14px', fontWeight: 700, marginBottom: '5px', lineHeight: 1.2 }}>
-              {name.english || name.tamil}
+              {bi ? (name.english || name.tamil) : ownName}
             </div>
             <div style={{ position: 'relative', height: '55px', width: '100%', display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
               {(p.signature || bill.signature) && (

@@ -23,6 +23,11 @@ import { ta } from '../lib/mozhi/ta';
 
 const SjsTheme = React.forwardRef(({ profile = {}, client = {}, details = {}, items = [], totals = {}, invoiceType = 'tax-invoice', customTerms, options = {} }, ref) => {
   const { t } = useLanguage();
+  // A single-language bill follows its own language, not the app's screen language
+  const mono = profile?.enableBilingual === false;
+  const monoTa = mono && (profile?.primaryDataLanguage || 'Tamil') === 'Tamil';
+  const monoEn = mono && !monoTa;
+  const bt = (key) => (monoTa ? (ta[key] || en[key] || key) : monoEn ? (en[key] || key) : t(key));
   
   const businessState = getDynamicField(profile, 'maanilam', profile, true)?.trim().toLowerCase();
   const clientState = getDynamicField(client, 'maanilam', profile, true)?.trim().toLowerCase();
@@ -80,7 +85,8 @@ const SjsTheme = React.forwardRef(({ profile = {}, client = {}, details = {}, it
   const showClientEmail = opt('showClientEmail');
   const showInvoiceNumber = opt('showInvoiceNumber');
   const showInvoiceDate = opt('showInvoiceDate');
-  const customTitle = details?.customTitle || options.customTitle || typeConfig.title;
+  const typeTitle = monoTa ? ({ 'tax-invoice': 'வரிப் பட்டியல்', proforma: 'முன்வரைவு' }[invoiceType] || typeConfig.title) : typeConfig.title;
+  const customTitle = details?.customTitle || options.customTitle || typeTitle;
   const currencySymbol = options.currency || 'INR';
 
   const renderLabel = (enLabel, taLabel) => {
@@ -288,10 +294,10 @@ const SjsTheme = React.forwardRef(({ profile = {}, client = {}, details = {}, it
           <div style={{ color: accent, display: 'flex', flexDirection: 'column', alignItems: 'flex-end', fontWeight: 700, fontSize: '1.05rem', textTransform: 'capitalize', transform: 'translateY(3px)' }}>
             <div>{String(customTitle || '').toLowerCase()}</div>
             {invoiceType === 'proforma' && (
-              <div style={{ fontSize: '0.55em', fontWeight: 500, opacity: 0.85, letterSpacing: '0.02em', marginTop: '2px' }}>{t('hc_thisIsNotATax')}</div>
+              <div style={{ fontSize: '0.55em', fontWeight: 500, opacity: 0.85, letterSpacing: '0.02em', marginTop: '2px' }}>{bt('hc_thisIsNotATax')}</div>
             )}
             {invoiceType === 'credit-note' && details?.originalInvoiceRef && (
-              <div style={{ fontSize: '0.55em', fontWeight: 500, opacity: 0.85, letterSpacing: '0.02em', marginTop: '2px' }}>{t('hc_againstInvoice')}<strong style={{ color: '#334155' }}>{details.originalInvoiceRef}</strong></div>
+              <div style={{ fontSize: '0.55em', fontWeight: 500, opacity: 0.85, letterSpacing: '0.02em', marginTop: '2px' }}>{bt('hc_againstInvoice')}<strong style={{ color: '#334155' }}>{details.originalInvoiceRef}</strong></div>
             )}
           </div>
           {showGSTIN && profile?.gstin && <p style={{ fontSize: '0.75rem', color: '#475569', margin: '1px 0 0', transform: 'translateY(3px)' }}>{getCountryConfig(profile?.country).taxIdLabel}: <strong style={{ color: 'inherit' }}>{profile.gstin}</strong></p>}
@@ -353,7 +359,7 @@ const SjsTheme = React.forwardRef(({ profile = {}, client = {}, details = {}, it
             })()}
             {showGSTIN && client?.gstin && <p style={{ marginTop: '1px', color: '#475569' }}>{getCountryConfig(profile?.country).taxIdLabel}: <strong style={{ color: 'inherit' }}>{client.gstin}</strong></p>}
             {showClientEmail && client?.email && <p>{client.email}</p>}
-            {showClientPhone && client?.tholaipesi && <p>Ph: {client.tholaipesi}</p>}
+            {showClientPhone && client?.tholaipesi && <p>{monoTa ? 'தொலைபேசி' : 'Ph'}: {client.tholaipesi}</p>}
           </div>
         </div>
         {showPlaceOfSupply && (
@@ -472,7 +478,7 @@ const SjsTheme = React.forwardRef(({ profile = {}, client = {}, details = {}, it
                 <tr>
                   <th className="inv-th" rowSpan="2">#</th>
                   <th className="inv-th" rowSpan="2" style={{ width: (!showGST || !showItemizedTax) ? '100%' : 'auto' }}>{renderSubtitleLabel('Product Name', 'பொருள் பெயர்')}</th>
-                  {showHSN && <th className="inv-th inv-th-center" rowSpan="2">HSN Code</th>}
+                  {showHSN && <th className="inv-th inv-th-center" rowSpan="2">{monoTa ? 'HSN குறியீடு' : 'HSN Code'}</th>}
                   {showItemQty && <th className="inv-th inv-th-center" rowSpan="2">{renderSubtitleLabel(qtyLabelEn, qtyLabelTa, 'center')}</th>}
                   {showRateColumn && <th className="inv-th inv-th-right" rowSpan="2">{renderSubtitleLabel('Rate', 'விலை', 'flex-end')}</th>}
                   {hasAnyDiscount && <th className="inv-th inv-th-right" rowSpan="2">{renderSubtitleLabel('Discount', 'தள்ளுபடி', 'flex-end')}</th>}
@@ -489,7 +495,7 @@ const SjsTheme = React.forwardRef(({ profile = {}, client = {}, details = {}, it
                 <tr>
                   <th className="inv-th" rowSpan="2">#</th>
                   <th className="inv-th" rowSpan="2" style={{ width: (!showGST || !showItemizedTax) ? '100%' : 'auto' }}>{renderSubtitleLabel('Product Name', 'பொருள் பெயர்')}</th>
-                  {showHSN && <th className="inv-th inv-th-center" rowSpan="2">HSN Code</th>}
+                  {showHSN && <th className="inv-th inv-th-center" rowSpan="2">{monoTa ? 'HSN குறியீடு' : 'HSN Code'}</th>}
                   {showItemQty && <th className="inv-th inv-th-center" rowSpan="2">{renderSubtitleLabel(qtyLabelEn, qtyLabelTa, 'center')}</th>}
                   {showRateColumn && <th className="inv-th inv-th-right" rowSpan="2">{renderSubtitleLabel('Rate', 'விலை', 'flex-end')}</th>}
                   {hasAnyDiscount && <th className="inv-th inv-th-right" rowSpan="2">{renderSubtitleLabel('Discount', 'தள்ளுபடி', 'flex-end')}</th>}
@@ -510,7 +516,7 @@ const SjsTheme = React.forwardRef(({ profile = {}, client = {}, details = {}, it
                 <tr>
                   <th className="inv-th" rowSpan="2">#</th>
                   <th className="inv-th" rowSpan="2" style={{ width: (!showGST || !showItemizedTax) ? '100%' : 'auto' }}>{renderSubtitleLabel('Product Name', 'பொருள் பெயர்')}</th>
-                  {showHSN && <th className="inv-th inv-th-center" rowSpan="2">HSN Code</th>}
+                  {showHSN && <th className="inv-th inv-th-center" rowSpan="2">{monoTa ? 'HSN குறியீடு' : 'HSN Code'}</th>}
                   {showItemQty && <th className="inv-th inv-th-center" rowSpan="2">{renderSubtitleLabel(qtyLabelEn, qtyLabelTa, 'center')}</th>}
                   {showRateColumn && <th className="inv-th inv-th-right" rowSpan="2">{renderSubtitleLabel('Rate', 'விலை', 'flex-end')}</th>}
                   {hasAnyDiscount && <th className="inv-th inv-th-right" rowSpan="2">{renderSubtitleLabel('Discount', 'தள்ளுபடி', 'flex-end')}</th>}
@@ -527,7 +533,7 @@ const SjsTheme = React.forwardRef(({ profile = {}, client = {}, details = {}, it
             <tr>
               <th className="inv-th">#</th>
               <th className="inv-th" style={{ width: (!showGST || !showItemizedTax) ? '100%' : 'auto' }}>{renderSubtitleLabel('Product Name', 'பொருள் பெயர்')}</th>
-              {showHSN && <th className="inv-th inv-th-center">HSN Code</th>}
+              {showHSN && <th className="inv-th inv-th-center">{monoTa ? 'HSN குறியீடு' : 'HSN Code'}</th>}
               {showItemQty && <th className="inv-th inv-th-center">{renderSubtitleLabel(qtyLabelEn, qtyLabelTa, 'center')}</th>}
               {showRateColumn && <th className="inv-th inv-th-right">{renderSubtitleLabel('Rate', 'விலை', 'flex-end')}</th>}
               {hasAnyDiscount && <th className="inv-th inv-th-right">{renderSubtitleLabel('Discount', 'தள்ளுபடி', 'flex-end')}</th>}
@@ -601,7 +607,7 @@ const SjsTheme = React.forwardRef(({ profile = {}, client = {}, details = {}, it
           )}
           {commonHSN && (
             <div style={{ marginBottom: '0.2rem', color: '#64748b', fontWeight: 400, fontSize: '0.8rem' }}>
-              HSN Code: <span style={{ fontWeight: 600, color: '#334155' }}>{commonHSN}</span>
+              {monoTa ? 'HSN குறியீடு' : 'HSN Code'}: <span style={{ fontWeight: 600, color: '#334155' }}>{commonHSN}</span>
             </div>
           )}
           
@@ -631,7 +637,7 @@ const SjsTheme = React.forwardRef(({ profile = {}, client = {}, details = {}, it
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                 <img src={qrDataUrl} alt="UPI QR" style={{ width: '90px', height: '90px', borderRadius: '6px', border: '1px solid #e2e8f0' }} />
                 <div style={{ fontSize: '0.7rem', color: '#94a3b8', lineHeight: 1.5 }}>
-                  <p style={{ margin: 0, color: '#94a3b8' }}>UPI ID:</p>
+                  <p style={{ margin: 0, color: '#94a3b8' }}>{monoTa ? 'UPI முகவரி' : 'UPI ID'}:</p>
                   <p style={{ margin: 0, color: '#334155', fontWeight: 600, fontSize: '0.75rem' }}>{upiId}</p>
                   <p style={{ margin: '0.25rem 0 0', color: '#94a3b8' }}>{fmt(totals.total)}</p>
                 </div>
@@ -737,7 +743,7 @@ const SjsTheme = React.forwardRef(({ profile = {}, client = {}, details = {}, it
           RCM. The buyer is responsible for paying GST under Section 9(3)/9(4). */}
       {options.reverseCharge && isIndia && showGST && (
         <div style={{ margin: '0 2rem 0.5rem', padding: '0.5rem 0.75rem', background: 'var(--warn-bg)', border: '1px solid var(--warn-border)', borderRadius: 4, fontSize: '0.78rem', color: 'var(--warn-text)' }}>
-          <strong>{t('hc_reverseChargeApplicable')}</strong> GST is payable by the recipient under Section 9(3)/9(4) of the CGST Act.
+          <strong>{bt('hc_reverseChargeApplicable')}</strong> {monoTa ? 'CGST சட்டம் பிரிவு 9(3)/9(4)-இன் கீழ் GST-ஐ பெறுநர் செலுத்த வேண்டும்.' : 'GST is payable by the recipient under Section 9(3)/9(4) of the CGST Act.'}
         </div>
       )}
 
@@ -771,7 +777,7 @@ const SjsTheme = React.forwardRef(({ profile = {}, client = {}, details = {}, it
               <div style={{ marginBottom: '15px', color: '#475569', fontSize: '0.85rem', lineHeight: '1.45', display: 'flex', flexDirection: 'column', gap: '3px' }}>
                 {showAccountLabel && account?.label && (
                   <div style={{ fontSize: '0.75rem', fontStyle: 'italic', marginBottom: '1px' }}>
-                    Pay via: <strong style={{ color: '#334155' }}>{account.label}</strong>
+                    {monoTa ? 'செலுத்த' : 'Pay via'}: <strong style={{ color: '#334155' }}>{account.label}</strong>
                   </div>
                 )}
                 <div style={{ display: 'flex', gap: '4px' }}>
@@ -813,7 +819,7 @@ const SjsTheme = React.forwardRef(({ profile = {}, client = {}, details = {}, it
             );})()}
             {options.exchangeRate && currencySymbol !== 'INR' && (
               <div className="inv-footer-block" style={{ marginBottom: '15px' }}>
-                <h4 className="inv-section-label">{t('hc_exchangeRate')}</h4>
+                <h4 className="inv-section-label">{bt('hc_exchangeRate')}</h4>
                 <p className="inv-terms">{formatExchangeRateLine(currencySymbol, options.exchangeRate, profile?.country === 'India' || !profile?.country ? 'INR' : sellerCC.currency)}</p>
               </div>
             )}
@@ -921,7 +927,7 @@ const SjsTheme = React.forwardRef(({ profile = {}, client = {}, details = {}, it
           fontSize: '5rem', fontWeight: 800, color: `${accent}0a`,
           pointerEvents: 'none', whiteSpace: 'nowrap'
         }}>
-          ESTIMATE
+          {monoTa ? 'மதிப்பீடு' : 'ESTIMATE'}
         </div>
       )}
 

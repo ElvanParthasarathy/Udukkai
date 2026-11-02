@@ -82,7 +82,9 @@ export function normalizeReceiptProfile(p: any = {}) {
     (typeof p.businessName === 'string' ? p.businessName : '') || 
     '';
 
-  const namePrimary = englishName || tamilName || 'Your Business';
+  // Bilingual: English first with the Tamil name under it. A single-language receipt shows only its own language.
+  const monoTamil = !isBilingual && primaryLang === 'Tamil';
+  const namePrimary = (isBilingual ? (englishName || tamilName) : (monoTamil ? (tamilName || englishName) : (englishName || tamilName))) || 'Your Business';
   const nameSecondary = tamilName;
 
   // Address lines matching invoice contact lines:
