@@ -3,6 +3,7 @@ import React from 'react';
 import '../styles/print.css'; // Same stylesheet as the original Coolie bill: same sizes and positions
 import { numberToWords } from '../lib/Payanpadu';
 import { fyFull } from '../lib/finYear';
+import { langRule, orderBy } from '../lib/langRules';
 
 // Coolie (Factory) invoice, print only. The original Coolie bill, made bilingual the way the
 // Textiles invoice is (Tamil line + smaller English line), without the "Motham" table footer: the
@@ -103,14 +104,18 @@ export default function CoolieInvoiceBilingual({ bill }) {
   const same = (a, b) => (a || '').trim().toLowerCase() === (b || '').trim().toLowerCase();
   // [main line, smaller second line]: bilingual gives both languages, a single-language bill only its own
   const pair = (ta, en) => (bi ? (primaryEng ? [en || ta, ta] : [ta || en, en]) : [(isEng ? (en || ta) : (ta || en)) || '', '']);
-  const [customerName, customerName2] = pair(customerNameTa, customerNameEn);
-  const [customerPlace, customerPlace2] = pair(place(addressTa, cityTa), place(addressEn, cityEn));
+  const priSec = (ta, en) => (primaryEng ? [en, ta] : [ta, en]);
+  const ruled = (field, ta, en, auto) => (bi ? orderBy(langRule(p, field), ...priSec(ta, en), auto) : null);
+  const [customerName, customerName2] = ruled('customerName', customerNameTa, customerNameEn, pair(customerNameTa, customerNameEn)) || pair(customerNameTa, customerNameEn);
+  const [customerPlace, customerPlace2] = ruled('customerAddress', place(addressTa, cityTa), place(addressEn, cityEn), pair(place(addressTa, cityTa), place(addressEn, cityEn))) || pair(place(addressTa, cityTa), place(addressEn, cityEn));
   const kg = !bi && !isEng ? 'கிலோ' : 'Kg';
 
   // Business
   const name = { english: p.nameEn || p.nameEnglish || '', tamil: p.name || p.nameTamil || '' };
   // The bill's business name: both lines when bilingual, only the bill's own language otherwise
   const ownName = isEng ? (name.english || name.tamil) : (name.tamil || name.english);
+  const bizLines = bi ? orderBy(langRule(p, 'businessName'), ...priSec(name.tamil, name.english), [name.english || name.tamil, name.english && name.tamil ? name.tamil : '']) : [ownName];
+  const fontOf = (t) => (/[\u0B80-\u0BFF]/.test(t) ? 'font-tamil' : 'font-display');
   const phone = p.phone ? (Array.isArray(p.phone) ? p.phone : String(p.phone).split(',')) : [];
   const contactLines = (en) => {
     const line1 = en ? p.addressEn : p.address;
@@ -119,7 +124,8 @@ export default function CoolieInvoiceBilingual({ bill }) {
     const cityPin = [city, p.pincode].filter(Boolean).join(' - ');
     return { l1: [line1, cityPin].filter(Boolean).join(', '), l2: district || '' };
   };
-  const contact = contactLines(useEn);
+  // No rule: English when bilingual, as before. A rule can show the main language, or both.
+  const contactBlocks = bi ? orderBy(langRule(p, 'businessAddress'), ...(primaryEng ? [contactLines(true), contactLines(false)] : [contactLines(false), contactLines(true)]), [contactLines(useEn)]) : [contactLines(useEn)];
   const ifsc = billIfsc || p.ifsc || '';
 
   // Amount in words, like the Textiles invoice (primary line, smaller secondary line)
@@ -150,14 +156,8 @@ export default function CoolieInvoiceBilingual({ bill }) {
       <div className="print-header-new" style={{ paddingLeft: '8px', paddingRight: '8px' }}>
         <div className="header-left">
           <div className="header-company-info">
-            {bi ? (
-              <>
-                <div className="company-name font-display">{name.english || name.tamil}</div>
-                {name.english && name.tamil && <div className="company-subtitle font-tamil">{name.tamil}</div>}
-              </>
-            ) : (
-              <div className={`company-name ${isEng ? 'font-display' : 'font-tamil'}`}>{ownName}</div>
-            )}
+            <div className={`company-name ${fontOf(bizLines[0] || '')}`}>{bizLines[0]}</div>
+            {bizLines[1] && <div className={`company-subtitle ${fontOf(bizLines[1])}`}>{bizLines[1]}</div>}
           </div>
         </div>
         <div className="header-right" style={{ textAlign: 'right', display: 'flex', flexDirection: 'column', alignItems: 'flex-end', justifyContent: 'center' }}>
@@ -213,10 +213,15 @@ export default function CoolieInvoiceBilingual({ bill }) {
               <tr key={i} className={i % 2 === 1 ? 'row-alt' : ''}>
                 <td className="text-center" style={{ color: '#1e293b' }}>{i + 1}</td>
                 <td className="text-left" style={{ color: '#1e293b' }}>
-                  <div>{isEng && item.name_english ? item.name_english : item.porul}</div>
-                  {bi && item.name_english && item.name_english.trim().toLowerCase() !== (item.porul || '').trim().toLowerCase() && (
-                    <div style={{ fontSize: '12px', color: '#64748b', fontWeight: 500 }}>{item.name_english}</div>
-                  )}
+                  {(() => {
+                    const nm = bi ? orderBy(langRule(p, 'itemName'), ...priSec(item.porul, item.name_english), [item.porul, item.name_english]) : [isEng && item.name_english ? item.name_english : item.porul];
+                    return (
+                      <>
+                        <div>{nm[0]}</div>
+                        {nm[1] && <div style={{ fontSize: '12px', color: '#64748b', fontWeight: 500 }}>{nm[1]}</div>}
+                      </>
+                    );
+                  })()}
                 </td>
                 <td className="text-center" style={{ color: '#1e293b', whiteSpace: 'nowrap' }}>{item.kg ? `${formatWeight(item.kg)} ${kg}` : '—'}</td>
                 <td className="text-center" style={{ color: '#1e293b', fontVariantNumeric: 'tabular-nums' }}>{item.coolie ? `₹${formatCurrency(item.coolie)}` : '—'}</td>
@@ -332,7 +337,7 @@ export default function CoolieInvoiceBilingual({ bill }) {
           {/* Right: Business Name & Signature space */}
           <div style={{ textAlign: 'right', display: 'flex', flexDirection: 'column', alignItems: 'flex-end', minWidth: '220px' }}>
             <div className="sign-company font-display" style={{ color: accent, position: 'relative', zIndex: 10, fontSize: '14px', fontWeight: 700, marginBottom: '5px', lineHeight: 1.2 }}>
-              {bi ? (name.english || name.tamil) : ownName}
+              {bizLines[0]}
             </div>
             <div style={{ position: 'relative', height: '55px', width: '100%', display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
               {(p.signature || bill.signature) && (
@@ -364,14 +369,11 @@ export default function CoolieInvoiceBilingual({ bill }) {
             <div style={{ fontSize: '0.85rem', fontWeight: 700, color: accent, display: 'flex', alignItems: 'center', height: '20px', lineHeight: 1.2 }}>
               {lbl('தொடர்பு கொள்ள', 'Contact Us')}
             </div>
-            <div style={{ fontSize: '0.82rem', color: '#334155', fontWeight: 500, display: 'flex', alignItems: 'center', height: '20px', lineHeight: 1.2 }}>
-              {contact.l1}
-            </div>
-            {contact.l2 && (
-              <div style={{ fontSize: '0.82rem', color: '#334155', fontWeight: 500, display: 'flex', alignItems: 'center', height: '20px', lineHeight: 1.2 }}>
-                {contact.l2}
+            {contactBlocks.flatMap((b) => [b.l1, b.l2]).filter(Boolean).map((line, i) => (
+              <div key={i} style={{ fontSize: '0.82rem', color: '#334155', fontWeight: 500, display: 'flex', alignItems: 'center', height: '20px', lineHeight: 1.2 }}>
+                {line}
               </div>
-            )}
+            ))}
           </div>
 
           {/* Right Column: Phones & Email */}

@@ -6,21 +6,21 @@
 import '../bridge/entry';
 
 const T = { biz: 'ஸ்ரீ ஜெய்பிரியா சில்க்ஸ்', tag: 'கைத்தறி பட்டு சேலைகள்', addr: '12 பெரிய தெரு', city: 'ஆரணி', dist: 'திருவண்ணாமலை', state: 'தமிழ்நாடு', country: 'இந்தியா', cust: 'ஸ்ரீ சிவராம் சில்க் சாரீஸ்', caddr: '45 காந்தி சாலை', ccity: 'காஞ்சிபுரம்', cdist: 'காஞ்சிபுரம்', item: 'பட்டுப்புடவை', bank: 'இந்தியன் வங்கி', br: 'ஆரணி கிளை' };
-const E = { biz: 'Sri Jaipriya Silks', tag: 'Handloom Silk Sarees', addr: '12 Periya Street', city: 'Arani', dist: 'Tiruvannamalai', state: 'Tamil Nadu', country: 'India', cust: 'Sri Sivaram Silk Sarees', caddr: '45 Gandhi Road', ccity: 'Kancheepuram', cdist: 'Kancheepuram', item: 'Silk Saree', bank: 'Indian Bank', br: 'Arani Branch' };
+const E = { biz: 'Sri Jaipriya Silks', tag: 'Handloom Silk Sarees', addr: '12 Periya Street', city: 'Arani', dist: 'Tiruvannamalai', state: 'Tamil Nadu', country: 'India', cust: 'Sri Sivaram Silk Sarees', caddr: '45 Gandhi Road', ccity: 'Kancheepuram', cdist: 'Kancheepuram', item: 'Zari Pattu Saree', bank: 'Indian Bank', br: 'Arani Branch' };
 const m = (k) => ({ ta: T[k], en: E[k] });
 
 // mode: 'bi' = bilingual, 'ta' / 'en' = that language only
-const profile = (mode) => ({
+const profile = (mode, rules) => ({
   id: '1', shortName: 'SJPS', primaryLanguage: mode === 'en' ? 'en' : 'ta', secondaryLanguage: mode === 'en' ? 'ta' : 'en', isBilingual: mode === 'bi',
   businessName: m('biz'), tagline: m('tag'), address: m('addr'), city: m('city'), district: m('dist'), state: m('state'), country: m('country'),
   pinCode: '632301', phone1: '9000000001', phone2: '9000000002', email: 'shop@example.com', gstin: '33AAAAA0000A1Z5', pan: 'AAAAA0000A',
   logo: '', wideLogo: '', headerLayout: 'small', signature: '', signatoryName: 'R. Owner', themeColor: '#388e3c', upiId: 'shop@upi',
-  bankName: m('bank'), branch: m('br'), accountNumber: '123456789012', ifsc: 'IDIB000A001', printSettings: {}, paymentAccounts: [],
+  bankName: m('bank'), branch: m('br'), accountNumber: '123456789012', ifsc: 'IDIB000A001', printSettings: rules ? { langRules: rules } : {}, paymentAccounts: [],
 });
 const customer = (state) => ({ name: m('cust'), address: m('caddr'), city: m('ccity'), district: m('cdist'), state: state || m('state'), country: m('country'), pinCode: '631501', gstin: '33BBBBB1111B1Z5', email: 'cust@example.com', phone: '9876543210' });
 
 const gst = (mode, ui, v = {}) => ({
-  docType: 'gst-invoice', appLanguage: ui, profile: profile(mode), customer: customer(v.cstate),
+  docType: 'gst-invoice', appLanguage: ui, profile: profile(mode, v.rules), customer: customer(v.cstate),
   invoice: {
     invoiceNumber: 'SJPS-007', invoiceType: v.type || 'tax-invoice', invoiceDate: '2026-11-02', customerName: m('cust'), customerAddress: m('ccity'),
     placeOfSupply: v.pos || 'Tamil Nadu', placeOfSupplyTa: v.posTa || 'தமிழ்நாடு',
@@ -29,8 +29,8 @@ const gst = (mode, ui, v = {}) => ({
     totals: v.totals || { subtotal: 3000, totalDiscount: 0, cgst: 180, sgst: 180, igst: 0, roundOff: 0, total: 3360 },
   },
 });
-const coolie = (mode, ui) => ({
-  docType: 'coolie-invoice', appLanguage: ui, profile: profile(mode), customer: customer(),
+const coolie = (mode, ui, v = {}) => ({
+  docType: 'coolie-invoice', appLanguage: ui, profile: profile(mode, v.rules), customer: customer(),
   invoice: {
     id: '1', invoiceNumber: 'VRM-007', invoiceDate: '2026-11-02', customerName: m('cust'), customerAddress: m('caddr'),
     items: [{ name: { ta: 'ஜரி தடை பணிக்கட்டணம்', en: 'Jari Thadai Job Work Charges' }, weight: 12.345, price: 150 }],
@@ -62,8 +62,36 @@ const linesOf = async (payload) => {
   return (paper()?.innerText || '').split('\n').map((s) => s.trim()).filter(Boolean);
 };
 
-const run = async () => {
+// ---- Per-field language rules (bilingual bills): each rule must put the right language(s), in the right order, on the paper
+const FIELDS = {
+  businessName: { pri: T.biz, sec: E.biz },
+  customerName: { pri: T.cust, sec: E.cust },
+  customerAddress: { pri: T.caddr, sec: E.caddr },
+  itemName: { gst: { pri: T.item, sec: E.item }, coolie: { pri: 'ஜரி தடை பணிக்கட்டணம்', sec: 'Jari Thadai Job Work Charges' } },
+  businessAddress: { pri: T.addr, sec: E.addr },
+};
+const first = (lines, t) => lines.findIndex((l) => l.includes(t));
+const ruleFails = async () => {
   const fails = [];
+  for (const doc of ['gst', 'coolie']) {
+    for (const [field, f0] of Object.entries(FIELDS)) {
+      const f = f0[doc] || f0;
+      for (const rule of ['pri', 'sec', 'both', 'both-rev']) {
+        const lines = await linesOf((doc === 'gst' ? gst : coolie)('bi', 'ta', { rules: { [field]: rule } }));
+        const p = first(lines, f.pri), s = first(lines, f.sec);
+        const ok = rule === 'pri' ? p >= 0 && s < 0 : rule === 'sec' ? s >= 0 && p < 0 : rule === 'both' ? p >= 0 && s > p : s >= 0 && p > s;
+        if (!ok) fails.push(`${doc} / ${field} = ${rule}: Tamil at ${p}, English at ${s}`);
+      }
+    }
+  }
+  // A single-language bill ignores every rule
+  const all = Object.fromEntries(Object.keys(FIELDS).map((k) => [k, 'sec']));
+  for (const l of (await linesOf(gst('ta', 'ta', { rules: all }))).filter(hasEnglishWord)) fails.push(`gst / Tamil only ignores rules: "${l}"`);
+  return fails;
+};
+
+const run = async () => {
+  const fails = await ruleFails();
   for (const [doc, make] of Object.entries(DOCS)) {
     const variants = doc === 'gst' ? { plain: {}, ...GST_VARIANTS } : { plain: {} };
     for (const [vn, v] of Object.entries(variants)) {
@@ -76,6 +104,10 @@ const run = async () => {
       // Bilingual: both languages are on the paper
       const bi = (await linesOf(make('bi', 'ta', v))).join('\n');
       if (!hasTamil(bi) || !/[A-Za-z]{3,}/.test(bi)) fails.push(`${doc} / ${vn} / bilingual: not both languages`);
+      // ...including these words, which used to print in English only on a bilingual Textiles bill
+      if (doc === 'gst') {
+        for (const w of ['தொலைபேசி', 'HSN குறியீடு', 'உபமொத்தம்', vn === 'estimate' ? 'முன்வரைவு' : 'வரிப் பட்டியல்']) if (!bi.includes(w)) fails.push(`gst / ${vn} / bilingual: "${w}" is missing`);
+      }
     }
   }
   return fails;

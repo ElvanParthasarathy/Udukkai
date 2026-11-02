@@ -69,6 +69,7 @@ export const toReactProfile = (p, lang) => {
     primaryDataLanguage: lang.primary,
     secondaryDataLanguage: lang.secondary,
     enableBilingual: p.isBilingual !== false,
+    langRules: p.printSettings?.langRules || {},
   };
 
   putBilingual(out, 'niruvanathinPeyar', p.businessName, lang);
@@ -286,6 +287,7 @@ export const toCoolieProfile = (p) => {
     primaryDataLanguage: langName(p.primaryLanguage || 'ta', 'Tamil'),
     secondaryDataLanguage: langName(p.secondaryLanguage || 'en', 'English'),
     receiptLanguage: ps.receiptLanguage || 'ta',
+    langRules: ps.langRules || {},
     phone: [p.phone1, p.phone2].map(str).filter(Boolean).join(','),
   };
 };

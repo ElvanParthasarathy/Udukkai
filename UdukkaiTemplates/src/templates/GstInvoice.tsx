@@ -18,6 +18,7 @@ const IconMail = ({ size = 14, className = '', style = {} }) => (
 );
 import { numberToWords, formatCurrency, INVOICE_TYPES, getCountryConfig, CURRENCY_NAMES, formatExchangeRateLine, getAccountById, getBilingualStateName, getBilingualCountryName, getDynamicField } from '../lib/Payanpadu';
 import { fyFull } from '../lib/finYear';
+import { langRule, orderBy } from '../lib/langRules';
 import { en } from '../lib/mozhi/en';
 import { ta } from '../lib/mozhi/ta';
 
@@ -276,16 +277,15 @@ const SjsTheme = React.forwardRef(({ profile = {}, client = {}, details = {}, it
             }}>
               {showLogo && profile?.logo && <img crossOrigin={profile.logo?.startsWith('http') ? 'anonymous' : undefined} src={profile.logo} alt="Logo" style={{ maxHeight: `${profile.logoHeight || 120}px`, maxWidth: '160px', objectFit: 'contain' }} />}
               <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-                {showniruvanathinPeyar && (
-                  <div style={{ fontSize: '1.35rem', fontWeight: 700, color: accent, whiteSpace: 'nowrap' }}>
-                    {getDynamicField(profile, 'niruvanathinPeyar', profile, true) || 'Your Business'}
-                  </div>
-                )}
-                {showniruvanathinPeyar && profile?.enableBilingual !== false && getDynamicField(profile, 'niruvanathinPeyar', profile, false) && (
-                  <div style={{ fontSize: '1rem', fontWeight: 500, color: '#475569', whiteSpace: 'nowrap' }}>
-                    {getDynamicField(profile, 'niruvanathinPeyar', profile, false)}
-                  </div>
-                )}
+                {showniruvanathinPeyar && (() => {
+                  const bn = orderBy(langRule(profile, 'businessName'), getDynamicField(profile, 'niruvanathinPeyar', profile, true), getDynamicField(profile, 'niruvanathinPeyar', profile, false), [getDynamicField(profile, 'niruvanathinPeyar', profile, true) || 'Your Business', getDynamicField(profile, 'niruvanathinPeyar', profile, false)]);
+                  return (
+                    <>
+                      <div style={{ fontSize: '1.35rem', fontWeight: 700, color: accent, whiteSpace: 'nowrap' }}>{bn[0] || 'Your Business'}</div>
+                      {bn[1] && <div style={{ fontSize: '1rem', fontWeight: 500, color: '#475569', whiteSpace: 'nowrap' }}>{bn[1]}</div>}
+                    </>
+                  );
+                })()}
               </div>
             </div>
           )}
@@ -293,6 +293,9 @@ const SjsTheme = React.forwardRef(({ profile = {}, client = {}, details = {}, it
         <div style={{ textAlign: 'right', zIndex: 5, position: 'relative' }}>
           <div style={{ color: accent, display: 'flex', flexDirection: 'column', alignItems: 'flex-end', fontWeight: 700, fontSize: '1.05rem', textTransform: 'capitalize', transform: 'translateY(3px)' }}>
             <div>{String(customTitle || '').toLowerCase()}</div>
+            {profile?.enableBilingual !== false && !details?.customTitle && !options.customTitle && ({ 'tax-invoice': 'வரிப் பட்டியல்', proforma: 'முன்வரைவு' })[invoiceType] && (
+              <div style={{ fontSize: '0.6em', fontWeight: 500, opacity: 0.85, marginTop: '1px' }}>{({ 'tax-invoice': 'வரிப் பட்டியல்', proforma: 'முன்வரைவு' })[invoiceType]}</div>
+            )}
             {invoiceType === 'proforma' && (
               <div style={{ fontSize: '0.55em', fontWeight: 500, opacity: 0.85, letterSpacing: '0.02em', marginTop: '2px' }}>{bt('hc_thisIsNotATax')}</div>
             )}
@@ -322,44 +325,40 @@ const SjsTheme = React.forwardRef(({ profile = {}, client = {}, details = {}, it
       <div className="inv-parties" style={{ padding: '0 0.5rem' }}>
         <div className="inv-party">
           <h4 className="inv-section-label">{renderLabel('Bill To', 'பெறுநர்')}</h4>
-          <p className="inv-party-name">{getDynamicField(client, 'name', profile, false) || getDynamicField(client, 'name', profile, true) || 'Client Name'}</p>
+          {(() => {
+            const cn = orderBy(langRule(profile, 'customerName'), getDynamicField(client, 'name', profile, true), getDynamicField(client, 'name', profile, false), [getDynamicField(client, 'name', profile, false) || getDynamicField(client, 'name', profile, true) || 'Client Name']);
+            return (
+              <>
+                <p className="inv-party-name">{cn[0] || 'Client Name'}</p>
+                {cn[1] && <p style={{ margin: 0, fontSize: '0.85em', color: '#64748b' }}>{cn[1]}</p>}
+              </>
+            );
+          })()}
           <div className="inv-party-details">
             {showClientAddress && (() => {
-              const mugavari = getDynamicField(client, 'mugavari', profile, false) || getDynamicField(client, 'mugavari', profile, true);
-              const oor = getDynamicField(client, 'oor', profile, false) || getDynamicField(client, 'oor', profile, true);
-              const addr1 = [mugavari, oor].filter(Boolean).join(', ') + (client?.pin ? ` - ${client.pin}` : '');
-              
-              const maavattam = showDistrict ? (getDynamicField(client, 'maavattam', profile, false) || getDynamicField(client, 'maavattam', profile, true)) : '';
-              const stateRaw = getDynamicField(client, 'maanilam', profile, true) || getDynamicField(client, 'maanilam', profile, false);
-              const maanilam = showState ? (
-                profile?.enableBilingual === false
-                  ? (getBilingualStateName(stateRaw, { ...profile, fallbackEnglishName: getDynamicField(client, 'maanilam', profile, false), returnOnlyPrimary: true }) || getDynamicField(client, 'maanilam', profile, true))
-                  : (getBilingualStateName(stateRaw, { ...profile, fallbackEnglishName: getDynamicField(client, 'maanilam', profile, false), returnOnlySecondary: true }) || getDynamicField(client, 'maanilam', profile, false) || getDynamicField(client, 'maanilam', profile, true))
-              ) : '';
-              
-              const isTamil = maavattam && /[\u0B80-\u0BFF]/.test(maavattam);
-              const distLabel = profile?.enableBilingual === false ? (isTamil ? 'மாவட்டம்' : 'District') : 'District';
-              const distString = maavattam ? (maavattam.toLowerCase().includes('district') || maavattam.includes('மாவட்டம்') ? maavattam : `${maavattam} ${distLabel}`) : '';
-              
-              const countryRaw = getDynamicField(client, 'country', profile, true) || getDynamicField(client, 'country', profile, false);
-              const country = showCountry ? (
-                profile?.enableBilingual === false
-                  ? (getBilingualCountryName(countryRaw, { ...profile, fallbackEnglishName: getDynamicField(client, 'country', profile, false), returnOnlyPrimary: true }) || getDynamicField(client, 'country', profile, true))
-                  : (getBilingualCountryName(countryRaw, { ...profile, fallbackEnglishName: getDynamicField(client, 'country', profile, false), returnOnlySecondary: true }) || getDynamicField(client, 'country', profile, false) || getDynamicField(client, 'country', profile, true))
-              ) : '';
-
-              const addr2 = [distString, maanilam, country].filter(Boolean).join(', ');
-
-              return (
-                <>
-                  {addr1 && <p>{addr1}</p>}
-                  {addr2 && <p>{addr2}</p>}
-                </>
-              );
+              // The address in one language ([line 1, line 2]): the main language, or the second one
+              const block = (second) => {
+                const get = (f) => (second
+                  ? (getDynamicField(client, f, profile, false) || getDynamicField(client, f, profile, true))
+                  : (getDynamicField(client, f, profile, true) || getDynamicField(client, f, profile, false)));
+                const addr1 = [get('mugavari'), get('oor')].filter(Boolean).join(', ') + (client?.pin ? ` - ${client.pin}` : '');
+                const maavattam = showDistrict ? get('maavattam') : '';
+                const stateRaw = getDynamicField(client, 'maanilam', profile, true) || getDynamicField(client, 'maanilam', profile, false);
+                const only = second ? { returnOnlySecondary: true } : { returnOnlyPrimary: true };
+                const maanilam = showState ? (getBilingualStateName(stateRaw, { ...profile, fallbackEnglishName: getDynamicField(client, 'maanilam', profile, false), ...only }) || get('maanilam')) : '';
+                const distLabel = /[\u0B80-\u0BFF]/.test(maavattam) ? 'மாவட்டம்' : 'District';
+                const distString = maavattam ? (maavattam.toLowerCase().includes('district') || maavattam.includes('மாவட்டம்') ? maavattam : `${maavattam} ${distLabel}`) : '';
+                const countryRaw = getDynamicField(client, 'country', profile, true) || getDynamicField(client, 'country', profile, false);
+                const country = showCountry ? (getBilingualCountryName(countryRaw, { ...profile, fallbackEnglishName: getDynamicField(client, 'country', profile, false), ...only }) || get('country')) : '';
+                return [addr1, [distString, maanilam, country].filter(Boolean).join(', ')];
+              };
+              // No rule: the second language when bilingual (as before), the main language otherwise
+              const lines = orderBy(langRule(profile, 'customerAddress'), block(false), block(true), [block(profile?.enableBilingual !== false)]).flat().filter(Boolean);
+              return <>{lines.map((l, i) => <p key={i}>{l}</p>)}</>;
             })()}
             {showGSTIN && client?.gstin && <p style={{ marginTop: '1px', color: '#475569' }}>{getCountryConfig(profile?.country).taxIdLabel}: <strong style={{ color: 'inherit' }}>{client.gstin}</strong></p>}
             {showClientEmail && client?.email && <p>{client.email}</p>}
-            {showClientPhone && client?.tholaipesi && <p>{monoTa ? 'தொலைபேசி' : 'Ph'}: {client.tholaipesi}</p>}
+            {showClientPhone && client?.tholaipesi && <p>{renderLabel('Ph', 'தொலைபேசி')}: {client.tholaipesi}</p>}
           </div>
         </div>
         {showPlaceOfSupply && (
@@ -478,7 +477,7 @@ const SjsTheme = React.forwardRef(({ profile = {}, client = {}, details = {}, it
                 <tr>
                   <th className="inv-th" rowSpan="2">#</th>
                   <th className="inv-th" rowSpan="2" style={{ width: (!showGST || !showItemizedTax) ? '100%' : 'auto' }}>{renderSubtitleLabel('Product Name', 'பொருள் பெயர்')}</th>
-                  {showHSN && <th className="inv-th inv-th-center" rowSpan="2">{monoTa ? 'HSN குறியீடு' : 'HSN Code'}</th>}
+                  {showHSN && <th className="inv-th inv-th-center" rowSpan="2">{renderSubtitleLabel('HSN Code', 'HSN குறியீடு', 'center')}</th>}
                   {showItemQty && <th className="inv-th inv-th-center" rowSpan="2">{renderSubtitleLabel(qtyLabelEn, qtyLabelTa, 'center')}</th>}
                   {showRateColumn && <th className="inv-th inv-th-right" rowSpan="2">{renderSubtitleLabel('Rate', 'விலை', 'flex-end')}</th>}
                   {hasAnyDiscount && <th className="inv-th inv-th-right" rowSpan="2">{renderSubtitleLabel('Discount', 'தள்ளுபடி', 'flex-end')}</th>}
@@ -495,7 +494,7 @@ const SjsTheme = React.forwardRef(({ profile = {}, client = {}, details = {}, it
                 <tr>
                   <th className="inv-th" rowSpan="2">#</th>
                   <th className="inv-th" rowSpan="2" style={{ width: (!showGST || !showItemizedTax) ? '100%' : 'auto' }}>{renderSubtitleLabel('Product Name', 'பொருள் பெயர்')}</th>
-                  {showHSN && <th className="inv-th inv-th-center" rowSpan="2">{monoTa ? 'HSN குறியீடு' : 'HSN Code'}</th>}
+                  {showHSN && <th className="inv-th inv-th-center" rowSpan="2">{renderSubtitleLabel('HSN Code', 'HSN குறியீடு', 'center')}</th>}
                   {showItemQty && <th className="inv-th inv-th-center" rowSpan="2">{renderSubtitleLabel(qtyLabelEn, qtyLabelTa, 'center')}</th>}
                   {showRateColumn && <th className="inv-th inv-th-right" rowSpan="2">{renderSubtitleLabel('Rate', 'விலை', 'flex-end')}</th>}
                   {hasAnyDiscount && <th className="inv-th inv-th-right" rowSpan="2">{renderSubtitleLabel('Discount', 'தள்ளுபடி', 'flex-end')}</th>}
@@ -516,7 +515,7 @@ const SjsTheme = React.forwardRef(({ profile = {}, client = {}, details = {}, it
                 <tr>
                   <th className="inv-th" rowSpan="2">#</th>
                   <th className="inv-th" rowSpan="2" style={{ width: (!showGST || !showItemizedTax) ? '100%' : 'auto' }}>{renderSubtitleLabel('Product Name', 'பொருள் பெயர்')}</th>
-                  {showHSN && <th className="inv-th inv-th-center" rowSpan="2">{monoTa ? 'HSN குறியீடு' : 'HSN Code'}</th>}
+                  {showHSN && <th className="inv-th inv-th-center" rowSpan="2">{renderSubtitleLabel('HSN Code', 'HSN குறியீடு', 'center')}</th>}
                   {showItemQty && <th className="inv-th inv-th-center" rowSpan="2">{renderSubtitleLabel(qtyLabelEn, qtyLabelTa, 'center')}</th>}
                   {showRateColumn && <th className="inv-th inv-th-right" rowSpan="2">{renderSubtitleLabel('Rate', 'விலை', 'flex-end')}</th>}
                   {hasAnyDiscount && <th className="inv-th inv-th-right" rowSpan="2">{renderSubtitleLabel('Discount', 'தள்ளுபடி', 'flex-end')}</th>}
@@ -533,7 +532,7 @@ const SjsTheme = React.forwardRef(({ profile = {}, client = {}, details = {}, it
             <tr>
               <th className="inv-th">#</th>
               <th className="inv-th" style={{ width: (!showGST || !showItemizedTax) ? '100%' : 'auto' }}>{renderSubtitleLabel('Product Name', 'பொருள் பெயர்')}</th>
-              {showHSN && <th className="inv-th inv-th-center">{monoTa ? 'HSN குறியீடு' : 'HSN Code'}</th>}
+              {showHSN && <th className="inv-th inv-th-center">{renderSubtitleLabel('HSN Code', 'HSN குறியீடு', 'center')}</th>}
               {showItemQty && <th className="inv-th inv-th-center">{renderSubtitleLabel(qtyLabelEn, qtyLabelTa, 'center')}</th>}
               {showRateColumn && <th className="inv-th inv-th-right">{renderSubtitleLabel('Rate', 'விலை', 'flex-end')}</th>}
               {hasAnyDiscount && <th className="inv-th inv-th-right">{renderSubtitleLabel('Discount', 'தள்ளுபடி', 'flex-end')}</th>}
@@ -556,8 +555,15 @@ const SjsTheme = React.forwardRef(({ profile = {}, client = {}, details = {}, it
               <tr key={item.id} className={index % 2 === 0 ? 'inv-tr-even' : ''}>
                 <td className="inv-td inv-td-muted">{index + 1}</td>
                 <td className="inv-td inv-td-name">
-                  <div style={{ fontWeight: 500 }}>{getDynamicField(item, 'name', profile, true) || '-'}</div>
-                  {profile?.enableBilingual !== false && getDynamicField(item, 'name', profile, false) && <div style={{ fontSize: '0.85em', color: '#64748b', marginTop: '2px' }}>{getDynamicField(item, 'name', profile, false)}</div>}
+                  {(() => {
+                    const nm = orderBy(langRule(profile, 'itemName'), getDynamicField(item, 'name', profile, true), getDynamicField(item, 'name', profile, false), [getDynamicField(item, 'name', profile, true) || '-', getDynamicField(item, 'name', profile, false)]);
+                    return (
+                      <>
+                        <div style={{ fontWeight: 500 }}>{nm[0] || '-'}</div>
+                        {nm[1] && <div style={{ fontSize: '0.85em', color: '#64748b', marginTop: '2px' }}>{nm[1]}</div>}
+                      </>
+                    );
+                  })()}
                   {getDynamicField(item, 'description', profile, true) && <div style={{ fontSize: '0.8em', color: '#94a3b8', marginTop: '2px' }}>{getDynamicField(item, 'description', profile, true)}</div>}
                   {profile?.enableBilingual !== false && getDynamicField(item, 'description', profile, false) && <div style={{ fontSize: '0.8em', color: '#94a3b8', marginTop: '1px' }}>{getDynamicField(item, 'description', profile, false)}</div>}
                 </td>
@@ -607,7 +613,7 @@ const SjsTheme = React.forwardRef(({ profile = {}, client = {}, details = {}, it
           )}
           {commonHSN && (
             <div style={{ marginBottom: '0.2rem', color: '#64748b', fontWeight: 400, fontSize: '0.8rem' }}>
-              {monoTa ? 'HSN குறியீடு' : 'HSN Code'}: <span style={{ fontWeight: 600, color: '#334155' }}>{commonHSN}</span>
+              {renderLabel('HSN Code', 'HSN குறியீடு')}: <span style={{ fontWeight: 600, color: '#334155' }}>{commonHSN}</span>
             </div>
           )}
           
@@ -637,7 +643,7 @@ const SjsTheme = React.forwardRef(({ profile = {}, client = {}, details = {}, it
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                 <img src={qrDataUrl} alt="UPI QR" style={{ width: '90px', height: '90px', borderRadius: '6px', border: '1px solid #e2e8f0' }} />
                 <div style={{ fontSize: '0.7rem', color: '#94a3b8', lineHeight: 1.5 }}>
-                  <p style={{ margin: 0, color: '#94a3b8' }}>{monoTa ? 'UPI முகவரி' : 'UPI ID'}:</p>
+                  <p style={{ margin: 0, color: '#94a3b8' }}>{renderLabel('UPI ID', 'UPI முகவரி')}:</p>
                   <p style={{ margin: 0, color: '#334155', fontWeight: 600, fontSize: '0.75rem' }}>{upiId}</p>
                   <p style={{ margin: '0.25rem 0 0', color: '#94a3b8' }}>{fmt(totals.total)}</p>
                 </div>
@@ -653,13 +659,13 @@ const SjsTheme = React.forwardRef(({ profile = {}, client = {}, details = {}, it
               <>
                 {showSubtotal && (
                   <div className="inv-total-row">
-                    <span>{isTamilTotals ? 'உபமொத்தம்' : 'Subtotal'}</span>
+                    <span>{renderLabel('Subtotal', 'உபமொத்தம்')}</span>
                     <span>{fmt(totals.subtotal)}</span>
                   </div>
                 )}
                 {totals.totalDiscount > 0 && (
                   <div className="inv-total-row">
-                    <span>{isTamilTotals ? 'தள்ளுபடி' : 'Discount'}</span>
+                    <span>{renderLabel('Discount', 'தள்ளுபடி')}</span>
                     <span>- {fmt(totals.totalDiscount)}</span>
                   </div>
                 )}
@@ -706,7 +712,7 @@ const SjsTheme = React.forwardRef(({ profile = {}, client = {}, details = {}, it
           )}
           {totals.roundOff !== undefined && totals.roundOff !== 0 && (
             <div className="inv-total-row" style={{ color: '#64748b' }}>
-              <span>{profile?.enableBilingual !== false ? 'Round-off' : (profile?.primaryDataLanguage === 'English' ? 'Round-off' : 'முழுமையாக்குதல்')}</span>
+              <span>{renderLabel('Round-off', 'முழுமையாக்குதல்')}</span>
               <span>{totals.roundOff > 0 ? '+' : ''}{fmt(totals.roundOff)}</span>
             </div>
           )}
@@ -777,7 +783,7 @@ const SjsTheme = React.forwardRef(({ profile = {}, client = {}, details = {}, it
               <div style={{ marginBottom: '15px', color: '#475569', fontSize: '0.85rem', lineHeight: '1.45', display: 'flex', flexDirection: 'column', gap: '3px' }}>
                 {showAccountLabel && account?.label && (
                   <div style={{ fontSize: '0.75rem', fontStyle: 'italic', marginBottom: '1px' }}>
-                    {monoTa ? 'செலுத்த' : 'Pay via'}: <strong style={{ color: '#334155' }}>{account.label}</strong>
+                    {renderLabel('Pay via', 'செலுத்த')}: <strong style={{ color: '#334155' }}>{account.label}</strong>
                   </div>
                 )}
                 <div style={{ display: 'flex', gap: '4px' }}>
@@ -829,7 +835,7 @@ const SjsTheme = React.forwardRef(({ profile = {}, client = {}, details = {}, it
           {showSignature && (
             <div style={{ textAlign: 'right', display: 'flex', flexDirection: 'column', alignItems: 'flex-end', minWidth: '220px' }}>
               <div style={{ color: accent, position: 'relative', zIndex: 10, fontSize: '1.05rem', fontWeight: 700, marginBottom: '5px', lineHeight: 1 }}>
-                {getDynamicField(profile, 'niruvanathinPeyar', profile, false) || getDynamicField(profile, 'niruvanathinPeyar', profile, true) || 'Your Business'}
+                {orderBy(langRule(profile, 'businessName'), getDynamicField(profile, 'niruvanathinPeyar', profile, true), getDynamicField(profile, 'niruvanathinPeyar', profile, false), [getDynamicField(profile, 'niruvanathinPeyar', profile, false) || getDynamicField(profile, 'niruvanathinPeyar', profile, true) || 'Your Business'])[0]}
               </div>
               <div style={{ position: 'relative', height: '55px', width: '100%', display: 'flex', justifyContent: 'flex-end' }}>
                 {profile?.signature && (
@@ -862,7 +868,8 @@ const SjsTheme = React.forwardRef(({ profile = {}, client = {}, details = {}, it
       {(() => {
         const addr1_eng = [getDynamicField(profile, 'mugavari', profile, false), getDynamicField(profile, 'oor', profile, false)].filter(Boolean).join(', ');
         const addr1_tam = [getDynamicField(profile, 'mugavari', profile, true), getDynamicField(profile, 'oor', profile, true)].filter(Boolean).join(', ');
-        const addr1 = (addr1_eng || addr1_tam) + (profile?.pin ? ` - ${profile.pin}` : '');
+        const pinSuffix = profile?.pin ? ` - ${profile.pin}` : '';
+        const addr1 = (addr1_eng || addr1_tam) + pinSuffix;
         
         const rawCountry = profile?.country || 'India';
         const country_eng = profile?.enableBilingual === false ? '' : (getBilingualCountryName(rawCountry, { ...profile, returnOnlySecondary: true, fallbackEnglishName: profile?.country_English }) || profile?.country_English || rawCountry);
@@ -872,7 +879,8 @@ const SjsTheme = React.forwardRef(({ profile = {}, client = {}, details = {}, it
         const dist_eng = [getDynamicField(profile, 'maavattam', profile, false), getBilingualStateName(profile.maanilam, { ...profile, returnOnlySecondary: true, fallbackEnglishName: profile.maanilamEn }), country_eng].filter(Boolean).join(', ');
         const dist_tam = [getDynamicField(profile, 'maavattam', profile, true), getBilingualStateName(profile.maanilam, { ...profile, returnOnlyPrimary: true }), country_tam].filter(Boolean).join(', ');
         const dist = dist_eng || dist_tam;
-        const addr2 = dist;
+        // No rule: the second language, as before. A rule can show the main one, or both.
+        const contactLines = orderBy(langRule(profile, 'businessAddress'), [addr1_tam && addr1_tam + pinSuffix, dist_tam], [addr1_eng && addr1_eng + pinSuffix, dist_eng], [[addr1, dist]]).flat().filter(Boolean);
         
         const email = profile?.email || profile?.minnanjal || '';
         const phoneArr = [];
@@ -888,14 +896,11 @@ const SjsTheme = React.forwardRef(({ profile = {}, client = {}, details = {}, it
                   <div style={{ fontSize: '0.85rem', fontWeight: 700, color: accent, display: 'flex', alignItems: 'center', minHeight: '20px' }}>
                     {profile?.primaryDataLanguage === 'Tamil' || !profile?.primaryDataLanguage ? 'தொடர்பு கொள்ள' : 'Contact Us'}
                   </div>
-                  <div style={{ fontSize: '0.8rem', color: '#333', fontWeight: 500, display: 'flex', alignItems: 'center', minHeight: '20px' }}>
-                    {addr1}
-                  </div>
-                  {addr2 && (
-                    <div style={{ fontSize: '0.8rem', color: '#333', fontWeight: 500, display: 'flex', alignItems: 'center', minHeight: '20px' }}>
-                      {addr2}
+                  {contactLines.map((line, i) => (
+                    <div key={i} style={{ fontSize: '0.8rem', color: '#333', fontWeight: 500, display: 'flex', alignItems: 'center', minHeight: '20px' }}>
+                      {line}
                     </div>
-                  )}
+                  ))}
                 </div>
                 {(phone.length > 0 || email) && (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>

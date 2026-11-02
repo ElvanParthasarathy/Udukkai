@@ -241,6 +241,12 @@ fun TextilesInvoiceCreationSettingsScreen(
                 }
             }
 
+            if (profile.isBilingual) {
+                item(key = "language_rules_section") {
+                    com.elvan.udukkai.ui.screens.settings.LanguageRulesSection(profile, colors) { TextilesProfileRepository.updateProfile(it); ElvanSnackbar.show(saveSuccessMsg) }
+                }
+            }
+
             // ── Section 3: PDF Theme ──
             item(key = "theme_section") {
                 val currentThemeColorHex = profile.themeColor.ifEmpty { "#388e3c" }
