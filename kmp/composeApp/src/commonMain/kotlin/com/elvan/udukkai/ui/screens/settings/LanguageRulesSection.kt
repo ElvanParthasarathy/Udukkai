@@ -12,30 +12,21 @@ import com.elvan.udukkai.ui.components.shell.ElvanSettingsSection
 import com.elvan.udukkai.ui.components.shell.LocalElvanBottomSheetController
 
 /**
- * Bilingual bills only: for each field, which language prints, and which comes first. The choice is stored in the
- * business's print settings and read by the bill papers. Shared by the Textiles and Factory "Create" settings.
+ * Bilingual bills only: the three fields that print in one language (business address, customer name, customer address)
+ * and which language each prints in, English or Tamil. Stored in the business's print settings and read by the bill
+ * papers. Shared by the Textiles and Factory "Create" settings.
  */
 @Composable
 fun LanguageRulesSection(profile: BusinessProfile, colors: ShellColors, onSave: (BusinessProfile) -> Unit) {
     val bottomSheet = LocalElvanBottomSheetController.current
-    val main = if (profile.primaryLanguage.startsWith("ta")) K.taCode.tr() else K.enCode.tr()
-    val second = if (profile.secondaryLanguage.startsWith("ta")) K.taCode.tr() else K.enCode.tr()
-    val only = K.ruleOnly.tr()
-    val default = K.ruleAuto.tr()
+    val english = K.enCode.tr()
+    val tamil = K.taCode.tr()
 
-    fun modeLabel(mode: String) = when (mode) {
-        "both" -> "$main → $second"
-        "both-rev" -> "$second → $main"
-        "pri" -> "$main $only"
-        "sec" -> "$second $only"
-        else -> default
-    }
+    fun modeLabel(mode: String) = if (mode == "ta") tamil else english
     val titles = mapOf(
-        "businessName" to K.ruleBusinessName.tr(),
         "businessAddress" to K.ruleBusinessAddress.tr(),
         "customerName" to K.ruleCustomerName.tr(),
         "customerAddress" to K.ruleCustomerAddress.tr(),
-        "itemName" to K.ruleItemName.tr(),
     )
 
     ElvanSettingsSection(title = K.languageRules.tr(), colors = colors) {

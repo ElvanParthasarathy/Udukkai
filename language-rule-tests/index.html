@@ -3,39 +3,45 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Language rules: test images</title>
+<title>Bilingual bill rules: test images</title>
 <style>
   body { font: 15px/1.5 system-ui, sans-serif; max-width: 860px; margin: 24px auto; padding: 0 16px; color: #111; background: #fff; }
   h1 { font-size: 22px; margin: 0 0 4px; }
   h2 { font-size: 18px; margin: 32px 0 6px; border-top: 1px solid #ddd; padding-top: 18px; }
-  p, li { margin: 4px 0; }
-  img { max-width: 100%; border: 1px solid #ccc; margin: 8px 0 4px; }
+  h3 { font-size: 15px; margin: 18px 0 2px; }
+  img { max-width: 100%; border: 1px solid #ccc; margin: 6px 0; }
   .note { background: #f5f7f5; padding: 8px 12px; border-radius: 6px; }
   code { background: #eee; padding: 1px 4px; border-radius: 3px; }
 </style>
 </head>
 <body>
-<h1>Language rules: every option, as images</h1>
-<p>Each image prints the same bilingual bill five times, once per option of one rule, cropped to the part of the bill that rule controls.
-The business is set to main language <b>Tamil</b> and second language <b>English</b>. Option 1 in every image is what the bill prints today with no rule set.</p>
+<h1>Bilingual bill rules: test images</h1>
 <div class="note">
-  <p>The five options, in order: <b>1.</b> Default (no rule) · <b>2.</b> Tamil → English · <b>3.</b> English → Tamil · <b>4.</b> Tamil only · <b>5.</b> English only.</p>
-  <p>Where Default already equals another option, the two images look the same on purpose (for example the Textiles business name already prints Tamil first, so options 1 and 2 match).</p>
-  <p>These are renders of the exact bill bundle the app uses. To make them again: in <code>UdukkaiTemplates</code> run <code>npm run dev</code> and open <code>/rules-sheet.html?paper=gst&amp;field=customerName</code> (<code>paper</code>: <code>gst</code> = Textiles, <code>coolie</code> = Factory).</p>
+  <p>On a <b>bilingual</b> bill (main language Tamil, second language English in these images):</p>
+  <ul>
+    <li><b>Business name:</b> English, with the Tamil name under it. No setting.</li>
+    <li><b>Item name:</b> the main language first, then the second. Swap the two languages and the order swaps. No setting.</li>
+    <li><b>Business address, customer name, customer address:</b> <b>one language</b>. English by default; each can be set to Tamil in Settings &rarr; Create &rarr; Language rules.</li>
+    <li>The title has no Tamil line under it ("Tax Invoice" only).</li>
+    <li>A single-language bill ignores all of this.</li>
+  </ul>
+  <p>Remake the images: in <code>UdukkaiTemplates</code> run <code>npm run dev</code> and open <code>/rules-sheet.html?paper=gst&amp;field=customerName</code> (<code>paper</code>: <code>gst</code> Textiles, <code>coolie</code> Factory; <code>field</code>: <code>businessAddress</code>, <code>customerName</code>, <code>customerAddress</code>, <code>itemName</code>, <code>full</code>; <code>main=en</code> makes English the main language).</p>
 </div>
 
 <h2>Textiles bill</h2>
-<h3>1. Business name</h3><img src="textiles-1-business-name.jpg" alt="Textiles business name, five options">
-<h3>2. Business address (bottom band)</h3><img src="textiles-2-business-address.jpg" alt="Textiles business address, five options">
-<h3>3. Customer name</h3><img src="textiles-3-customer-name.jpg" alt="Textiles customer name, five options">
-<h3>4. Customer address</h3><img src="textiles-4-customer-address.jpg" alt="Textiles customer address, five options">
-<h3>5. Item name</h3><img src="textiles-5-item-name.jpg" alt="Textiles item name, five options">
+<h3>The whole bill, nothing set (the default)</h3><img src="textiles-0-whole-bill-default.jpg" alt="Textiles default bilingual bill">
+<h3>Customer name: English (default) / Tamil</h3><img src="textiles-1-customer-name.png" alt="Textiles customer name">
+<h3>Customer address: English (default) / Tamil</h3><img src="textiles-2-customer-address.png" alt="Textiles customer address">
+<h3>Business address (bottom band): English (default) / Tamil</h3><img src="textiles-3-business-address.png" alt="Textiles business address">
+<h3>Item name, main language Tamil</h3><img src="textiles-4-item-name-main-tamil.png" alt="Textiles item name, Tamil first">
+<h3>Item name, main language English (the order swaps)</h3><img src="textiles-5-item-name-main-english.png" alt="Textiles item name, English first">
 
 <h2>Factory bill</h2>
-<h3>1. Business name</h3><img src="factory-1-business-name.jpg" alt="Factory business name, five options">
-<h3>2. Business address (bottom band)</h3><img src="factory-2-business-address.jpg" alt="Factory business address, five options">
-<h3>3. Customer name</h3><img src="factory-3-customer-name.jpg" alt="Factory customer name, five options">
-<h3>4. Customer address</h3><img src="factory-4-customer-address.jpg" alt="Factory customer address, five options">
-<h3>5. Item name</h3><img src="factory-5-item-name.jpg" alt="Factory item name, five options">
+<h3>The whole bill, nothing set (the default)</h3><img src="factory-0-whole-bill-default.jpg" alt="Factory default bilingual bill">
+<h3>Customer name: English (default) / Tamil</h3><img src="factory-1-customer-name.png" alt="Factory customer name">
+<h3>Customer address: English (default) / Tamil</h3><img src="factory-2-customer-address.png" alt="Factory customer address">
+<h3>Business address (bottom band): English (default) / Tamil</h3><img src="factory-3-business-address.png" alt="Factory business address">
+<h3>Item name, main language Tamil</h3><img src="factory-4-item-name-main-tamil.png" alt="Factory item name, Tamil first">
+<h3>Item name, main language English (the order swaps)</h3><img src="factory-5-item-name-main-english.png" alt="Factory item name, English first">
 </body>
 </html>

@@ -1,24 +1,25 @@
 // @ts-nocheck
-// Per-field language rules from the business's print settings (profile.langRules), for a bilingual bill.
-//   both      main language, then the second one      both-rev  second language, then the main one
-//   pri       main language only                      sec       second language only
-// A missing or "auto" rule keeps the bill's built-in layout for that field. A single-language bill ignores every rule.
-const RULES = ['both', 'both-rev', 'pri', 'sec'];
+// How a bilingual bill picks its languages (a single-language bill is never touched by any of this):
+//   business name   English, with the Tamil name under it          item name   the main language, then the second
+//   business address, customer name, customer address   ONE language: English, or Tamil when the business's rule
+//   (profile.langRules[field] === 'ta') says so. The other language fills in if the chosen one has no value.
+const has = (x) => (x && typeof x === 'object' ? Object.values(x).some(Boolean) : !!x);
+const tamilMain = (profile) => (profile?.primaryDataLanguage || 'Tamil') === 'Tamil';
 
-export const langRule = (profile, field) => {
-  if (profile?.enableBilingual === false) return 'auto';
-  const r = profile?.langRules?.[field];
-  return RULES.includes(r) ? r : 'auto';
+export const langRule = (profile, field) => (profile?.enableBilingual !== false && profile?.langRules?.[field] === 'ta' ? 'ta' : 'en');
+
+// The (main language, second language) pair as [English, Tamil]
+export const enTa = (profile, pri, sec) => (tamilMain(profile) ? [sec, pri] : [pri, sec]);
+
+// The values that have text, the first one first, without a repeat of the same text
+export const both = (list) => {
+  const out = list.filter(has);
+  return out.filter((x, i) => i === 0 || JSON.stringify(x).toLowerCase() !== JSON.stringify(out[0]).toLowerCase());
 };
 
-const has = (x) => (x && typeof x === 'object' ? Object.values(x).some(Boolean) : !!x);
-const same = (a, b) => JSON.stringify(a).toLowerCase() === JSON.stringify(b).toLowerCase();
-
-// The values (strings, or blocks of lines) in print order. `auto` is what the bill shows without a rule.
-// The chosen language having no value never blanks the field: the other language is shown instead.
-export const orderBy = (rule, pri, sec, auto) => {
-  const list = rule === 'both' ? [pri, sec] : rule === 'both-rev' ? [sec, pri] : rule === 'pri' ? [pri] : rule === 'sec' ? [sec] : auto;
-  let out = list.filter(has);
-  if (!out.length) out = [pri, sec].filter(has).slice(0, 1);
-  return out.filter((x, i) => i === 0 || !same(x, out[0]));
+// The one value a one-language field prints
+export const oneLang = (profile, field, pri, sec) => {
+  const [en, ta] = enTa(profile, pri, sec);
+  const list = langRule(profile, field) === 'ta' ? [ta, en] : [en, ta];
+  return list.find(has) ?? list[0];
 };

@@ -2,15 +2,16 @@
 // Language rules sheet: one paper and one field, the same bill printed once for every rule and cropped to the part of
 // the bill that field controls, so each option can be checked by eye.
 //   npm run dev, then open /rules-sheet.html?paper=gst&field=customerName
-//   paper: gst (Textiles) or coolie (Factory). field: businessName, businessAddress, customerName, customerAddress, itemName.
+//   paper: gst (Textiles) or coolie (Factory). field: businessAddress, customerName, customerAddress (English / Tamil), or full (the whole bill).
 import '../bridge/entry';
 
 const T = { biz: 'ஸ்ரீ ஜெய்பிரியா சில்க்ஸ்', tag: 'கைத்தறி பட்டு சேலைகள்', addr: '12 பெரிய தெரு', city: 'ஆரணி', dist: 'திருவண்ணாமலை', state: 'தமிழ்நாடு', country: 'இந்தியா', cust: 'ஸ்ரீ சிவராம் சில்க் சாரீஸ்', caddr: '45 காந்தி சாலை', ccity: 'காஞ்சிபுரம்', cdist: 'காஞ்சிபுரம்', item: 'பட்டுப்புடவை', bank: 'இந்தியன் வங்கி', br: 'ஆரணி கிளை' };
 const E = { biz: 'Sri Jaipriya Silks', tag: 'Handloom Silk Sarees', addr: '12 Periya Street', city: 'Arani', dist: 'Tiruvannamalai', state: 'Tamil Nadu', country: 'India', cust: 'Sri Sivaram Silk Sarees', caddr: '45 Gandhi Road', ccity: 'Kancheepuram', cdist: 'Kancheepuram', item: 'Zari Pattu Saree', bank: 'Indian Bank', br: 'Arani Branch' };
 const m = (k) => ({ ta: T[k], en: E[k] });
 
+const MAIN = new URLSearchParams(location.search).get('main') === 'en' ? 'en' : 'ta';
 const profile = (rules) => ({
-  id: '1', shortName: 'SJPS', primaryLanguage: 'ta', secondaryLanguage: 'en', isBilingual: true,
+  id: '1', shortName: 'SJPS', primaryLanguage: MAIN, secondaryLanguage: MAIN === 'en' ? 'ta' : 'en', isBilingual: true,
   businessName: m('biz'), tagline: m('tag'), address: m('addr'), city: m('city'), district: m('dist'), state: m('state'), country: m('country'),
   pinCode: '632301', phone1: '9000000001', phone2: '9000000002', email: 'shop@example.com', gstin: '33AAAAA0000A1Z5', pan: 'AAAAA0000A',
   logo: '', wideLogo: '', headerLayout: 'small', signature: '', signatoryName: 'R. Owner', themeColor: '#388e3c', upiId: '',
@@ -40,17 +41,19 @@ const PAPERS = {
 
 // The part of the bill each field controls
 const REGION = {
-  gst: { businessName: '.inv-classic-header', businessAddress: '.inv-contact-block', customerName: '.inv-parties', customerAddress: '.inv-parties', itemName: '.unified-table-box' },
-  coolie: { businessName: '.print-header-new', businessAddress: '.contact-section', customerName: '.bill-info-section', customerAddress: '.bill-info-section', itemName: '.bill-table-new' },
+  gst: { businessAddress: '.inv-contact-block', customerName: '.inv-parties', customerAddress: '.inv-parties', itemName: '.unified-table-box', full: '' },
+  coolie: { businessAddress: '.contact-section', customerName: '.bill-info-section', customerAddress: '.bill-info-section', itemName: '.bill-table-new', full: '' },
 };
-const TITLE = { businessName: 'Business name', businessAddress: 'Business address', customerName: 'Customer name', customerAddress: 'Customer address', itemName: 'Item name' };
-const RULES = [['auto', 'Default (no rule)'], ['both', 'Tamil → English'], ['both-rev', 'English → Tamil'], ['pri', 'Tamil only'], ['sec', 'English only']];
+const TITLE = { businessAddress: 'Business address', customerName: 'Customer name', customerAddress: 'Customer address', itemName: 'Item name', full: 'The whole bill, no rule set' };
 
 const q = new URLSearchParams(location.search);
 const paper = q.get('paper') === 'coolie' ? 'coolie' : 'gst';
-const field = REGION.gst[q.get('field')] ? q.get('field') : 'customerName';
+const field = q.get('field') in REGION.gst ? q.get('field') : 'customerName';
+// A one-language field: English (no rule) or Tamil (the rule). 'full' is one render of the whole default bill.
+const RULES = field === 'full' ? [['en', 'Default']] : field === 'itemName' ? [['en', 'Item name follows the main language (no setting)']] : [['en', 'English (the default, no rule set)'], ['ta', 'Tamil (the rule set to Tamil)']];
 // The box to show: the part of the bill a field controls (for the Factory item name: the header and the first row)
 const rectOf = (el) => {
+  if (field === 'full') return { top: el.getBoundingClientRect().top, height: el.getBoundingClientRect().height };
   if (paper === 'coolie' && field === 'itemName') {
     const a = el.querySelector('.bill-table-new thead').getBoundingClientRect();
     const b = el.querySelector('.bill-table-new tbody tr').getBoundingClientRect();
@@ -83,15 +86,15 @@ const run = async () => {
   out.innerHTML = '';
   const head = document.createElement('div');
   head.style.cssText = 'font:700 18px system-ui;margin:0 0 12px';
-  head.textContent = `${paper === 'gst' ? 'Textiles bill' : 'Factory bill'} · ${TITLE[field]} · bilingual, main language Tamil, second language English`;
+  head.textContent = `${paper === 'gst' ? 'Textiles bill' : 'Factory bill'} · ${TITLE[field]} · bilingual, main language ${MAIN === 'en' ? 'English, second language Tamil' : 'Tamil, second language English'}`;
   out.appendChild(head);
   const paperEl = () => document.querySelector('#root .a4-paper, #root #invoice-preview');
   const regionHeight = (el) => rectOf(el).height / (el.getBoundingClientRect().width / el.offsetWidth);
   // Five cells must fit on one screen: shrink the taller regions
   await window.UdukkaiPrint.render(PAPERS[paper](null));
-  const scale = Math.min(0.95, 166 / regionHeight(paperEl()));
+  const scale = field === 'full' ? Math.min(0.95, 940 / regionHeight(paperEl())) : Math.min(0.95, 166 / regionHeight(paperEl()));
   for (const [i, [rule, label]] of RULES.entries()) {
-    await window.UdukkaiPrint.render(PAPERS[paper](rule === 'auto' ? null : { [field]: rule }));
+    await window.UdukkaiPrint.render(PAPERS[paper](rule === 'ta' ? { [field]: 'ta' } : null));
     out.appendChild(cell(paperEl(), label, i + 1, scale));
   }
   document.title = 'Rules sheet: ready';

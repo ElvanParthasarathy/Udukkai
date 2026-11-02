@@ -18,7 +18,7 @@ const IconMail = ({ size = 14, className = '', style = {} }) => (
 );
 import { numberToWords, formatCurrency, INVOICE_TYPES, getCountryConfig, CURRENCY_NAMES, formatExchangeRateLine, getAccountById, getBilingualStateName, getBilingualCountryName, getDynamicField } from '../lib/Payanpadu';
 import { fyFull } from '../lib/finYear';
-import { langRule, orderBy } from '../lib/langRules';
+import { enTa, both, oneLang } from '../lib/langRules';
 import { en } from '../lib/mozhi/en';
 import { ta } from '../lib/mozhi/ta';
 
@@ -278,7 +278,7 @@ const SjsTheme = React.forwardRef(({ profile = {}, client = {}, details = {}, it
               {showLogo && profile?.logo && <img crossOrigin={profile.logo?.startsWith('http') ? 'anonymous' : undefined} src={profile.logo} alt="Logo" style={{ maxHeight: `${profile.logoHeight || 120}px`, maxWidth: '160px', objectFit: 'contain' }} />}
               <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
                 {showniruvanathinPeyar && (() => {
-                  const bn = orderBy(langRule(profile, 'businessName'), getDynamicField(profile, 'niruvanathinPeyar', profile, true), getDynamicField(profile, 'niruvanathinPeyar', profile, false), [getDynamicField(profile, 'niruvanathinPeyar', profile, true) || 'Your Business', getDynamicField(profile, 'niruvanathinPeyar', profile, false)]);
+                  const bn = both(enTa(profile, getDynamicField(profile, 'niruvanathinPeyar', profile, true), getDynamicField(profile, 'niruvanathinPeyar', profile, false)));
                   return (
                     <>
                       <div style={{ fontSize: '1.35rem', fontWeight: 700, color: accent, whiteSpace: 'nowrap' }}>{bn[0] || 'Your Business'}</div>
@@ -293,9 +293,6 @@ const SjsTheme = React.forwardRef(({ profile = {}, client = {}, details = {}, it
         <div style={{ textAlign: 'right', zIndex: 5, position: 'relative' }}>
           <div style={{ color: accent, display: 'flex', flexDirection: 'column', alignItems: 'flex-end', fontWeight: 700, fontSize: '1.05rem', textTransform: 'capitalize', transform: 'translateY(3px)' }}>
             <div>{String(customTitle || '').toLowerCase()}</div>
-            {profile?.enableBilingual !== false && !details?.customTitle && !options.customTitle && ({ 'tax-invoice': 'வரிப் பட்டியல்', proforma: 'முன்வரைவு' })[invoiceType] && (
-              <div style={{ fontSize: '0.6em', fontWeight: 500, opacity: 0.85, marginTop: '1px' }}>{({ 'tax-invoice': 'வரிப் பட்டியல்', proforma: 'முன்வரைவு' })[invoiceType]}</div>
-            )}
             {invoiceType === 'proforma' && (
               <div style={{ fontSize: '0.55em', fontWeight: 500, opacity: 0.85, letterSpacing: '0.02em', marginTop: '2px' }}>{bt('hc_thisIsNotATax')}</div>
             )}
@@ -325,15 +322,7 @@ const SjsTheme = React.forwardRef(({ profile = {}, client = {}, details = {}, it
       <div className="inv-parties" style={{ padding: '0 0.5rem' }}>
         <div className="inv-party">
           <h4 className="inv-section-label">{renderLabel('Bill To', 'பெறுநர்')}</h4>
-          {(() => {
-            const cn = orderBy(langRule(profile, 'customerName'), getDynamicField(client, 'name', profile, true), getDynamicField(client, 'name', profile, false), [getDynamicField(client, 'name', profile, false) || getDynamicField(client, 'name', profile, true) || 'Client Name']);
-            return (
-              <>
-                <p className="inv-party-name">{cn[0] || 'Client Name'}</p>
-                {cn[1] && <p style={{ margin: 0, fontSize: '0.85em', color: '#64748b' }}>{cn[1]}</p>}
-              </>
-            );
-          })()}
+          <p className="inv-party-name">{oneLang(profile, 'customerName', getDynamicField(client, 'name', profile, true), getDynamicField(client, 'name', profile, false)) || 'Client Name'}</p>
           <div className="inv-party-details">
             {showClientAddress && (() => {
               // The address in one language ([line 1, line 2]): the main language, or the second one
@@ -353,7 +342,8 @@ const SjsTheme = React.forwardRef(({ profile = {}, client = {}, details = {}, it
                 return [addr1, [distString, maanilam, country].filter(Boolean).join(', ')];
               };
               // No rule: the second language when bilingual (as before), the main language otherwise
-              const lines = orderBy(langRule(profile, 'customerAddress'), block(false), block(true), [block(profile?.enableBilingual !== false)]).flat().filter(Boolean);
+              // A single-language bill prints the main language; a bilingual one a single language, English unless the rule says Tamil
+              const lines = (profile?.enableBilingual === false ? block(false) : oneLang(profile, 'customerAddress', block(false), block(true))).flat().filter(Boolean);
               return <>{lines.map((l, i) => <p key={i}>{l}</p>)}</>;
             })()}
             {showGSTIN && client?.gstin && <p style={{ marginTop: '1px', color: '#475569' }}>{getCountryConfig(profile?.country).taxIdLabel}: <strong style={{ color: 'inherit' }}>{client.gstin}</strong></p>}
@@ -556,7 +546,7 @@ const SjsTheme = React.forwardRef(({ profile = {}, client = {}, details = {}, it
                 <td className="inv-td inv-td-muted">{index + 1}</td>
                 <td className="inv-td inv-td-name">
                   {(() => {
-                    const nm = orderBy(langRule(profile, 'itemName'), getDynamicField(item, 'name', profile, true), getDynamicField(item, 'name', profile, false), [getDynamicField(item, 'name', profile, true) || '-', getDynamicField(item, 'name', profile, false)]);
+                    const nm = both([getDynamicField(item, 'name', profile, true) || '-', getDynamicField(item, 'name', profile, false)]);
                     return (
                       <>
                         <div style={{ fontWeight: 500 }}>{nm[0] || '-'}</div>
@@ -835,7 +825,7 @@ const SjsTheme = React.forwardRef(({ profile = {}, client = {}, details = {}, it
           {showSignature && (
             <div style={{ textAlign: 'right', display: 'flex', flexDirection: 'column', alignItems: 'flex-end', minWidth: '220px' }}>
               <div style={{ color: accent, position: 'relative', zIndex: 10, fontSize: '1.05rem', fontWeight: 700, marginBottom: '5px', lineHeight: 1 }}>
-                {orderBy(langRule(profile, 'businessName'), getDynamicField(profile, 'niruvanathinPeyar', profile, true), getDynamicField(profile, 'niruvanathinPeyar', profile, false), [getDynamicField(profile, 'niruvanathinPeyar', profile, false) || getDynamicField(profile, 'niruvanathinPeyar', profile, true) || 'Your Business'])[0]}
+                {both(enTa(profile, getDynamicField(profile, 'niruvanathinPeyar', profile, true), getDynamicField(profile, 'niruvanathinPeyar', profile, false)))[0] || 'Your Business'}
               </div>
               <div style={{ position: 'relative', height: '55px', width: '100%', display: 'flex', justifyContent: 'flex-end' }}>
                 {profile?.signature && (
@@ -879,8 +869,8 @@ const SjsTheme = React.forwardRef(({ profile = {}, client = {}, details = {}, it
         const dist_eng = [getDynamicField(profile, 'maavattam', profile, false), getBilingualStateName(profile.maanilam, { ...profile, returnOnlySecondary: true, fallbackEnglishName: profile.maanilamEn }), country_eng].filter(Boolean).join(', ');
         const dist_tam = [getDynamicField(profile, 'maavattam', profile, true), getBilingualStateName(profile.maanilam, { ...profile, returnOnlyPrimary: true }), country_tam].filter(Boolean).join(', ');
         const dist = dist_eng || dist_tam;
-        // No rule: the second language, as before. A rule can show the main one, or both.
-        const contactLines = orderBy(langRule(profile, 'businessAddress'), [addr1_tam && addr1_tam + pinSuffix, dist_tam], [addr1_eng && addr1_eng + pinSuffix, dist_eng], [[addr1, dist]]).flat().filter(Boolean);
+        // A single-language bill prints as before; a bilingual one a single language, English unless the rule says Tamil
+        const contactLines = (profile?.enableBilingual === false ? [addr1, dist] : oneLang(profile, 'businessAddress', [addr1_tam && addr1_tam + pinSuffix, dist_tam], [addr1_eng && addr1_eng + pinSuffix, dist_eng])).flat().filter(Boolean);
         
         const email = profile?.email || profile?.minnanjal || '';
         const phoneArr = [];

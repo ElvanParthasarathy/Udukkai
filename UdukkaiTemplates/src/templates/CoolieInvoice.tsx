@@ -3,7 +3,7 @@ import React from 'react';
 import '../styles/print.css'; // Same stylesheet as the original Coolie bill: same sizes and positions
 import { numberToWords } from '../lib/Payanpadu';
 import { fyFull } from '../lib/finYear';
-import { langRule, orderBy } from '../lib/langRules';
+import { both, oneLang } from '../lib/langRules';
 
 // Coolie (Factory) invoice, print only. The original Coolie bill, made bilingual the way the
 // Textiles invoice is (Tamil line + smaller English line), without the "Motham" table footer: the
@@ -102,19 +102,19 @@ export default function CoolieInvoiceBilingual({ bill }) {
   const place = (a, c) => (a && c ? `${a}, ${c}` : (a || c || ''));
   const useEn = bi || isEng;
   const same = (a, b) => (a || '').trim().toLowerCase() === (b || '').trim().toLowerCase();
-  // [main line, smaller second line]: bilingual gives both languages, a single-language bill only its own
-  const pair = (ta, en) => (bi ? (primaryEng ? [en || ta, ta] : [ta || en, en]) : [(isEng ? (en || ta) : (ta || en)) || '', '']);
+  // The (main language, second language) pair of a Tamil + English value
   const priSec = (ta, en) => (primaryEng ? [en, ta] : [ta, en]);
-  const ruled = (field, ta, en, auto) => (bi ? orderBy(langRule(p, field), ...priSec(ta, en), auto) : null);
-  const [customerName, customerName2] = ruled('customerName', customerNameTa, customerNameEn, pair(customerNameTa, customerNameEn)) || pair(customerNameTa, customerNameEn);
-  const [customerPlace, customerPlace2] = ruled('customerAddress', place(addressTa, cityTa), place(addressEn, cityEn), pair(place(addressTa, cityTa), place(addressEn, cityEn))) || pair(place(addressTa, cityTa), place(addressEn, cityEn));
+  // Customer name and address: a single-language bill prints its own language; a bilingual one a single language, English unless the rule says Tamil
+  const one = (field, ta, en) => (bi ? oneLang(p, field, ...priSec(ta, en)) : (isEng ? (en || ta) : (ta || en)) || '');
+  const customerName = one('customerName', customerNameTa, customerNameEn);
+  const customerPlace = one('customerAddress', place(addressTa, cityTa), place(addressEn, cityEn));
   const kg = !bi && !isEng ? 'கிலோ' : 'Kg';
 
   // Business
   const name = { english: p.nameEn || p.nameEnglish || '', tamil: p.name || p.nameTamil || '' };
   // The bill's business name: both lines when bilingual, only the bill's own language otherwise
   const ownName = isEng ? (name.english || name.tamil) : (name.tamil || name.english);
-  const bizLines = bi ? orderBy(langRule(p, 'businessName'), ...priSec(name.tamil, name.english), [name.english || name.tamil, name.english && name.tamil ? name.tamil : '']) : [ownName];
+  const bizLines = bi ? both([name.english, name.tamil]) : [ownName];
   const fontOf = (t) => (/[\u0B80-\u0BFF]/.test(t) ? 'font-tamil' : 'font-display');
   const phone = p.phone ? (Array.isArray(p.phone) ? p.phone : String(p.phone).split(',')) : [];
   const contactLines = (en) => {
@@ -124,8 +124,8 @@ export default function CoolieInvoiceBilingual({ bill }) {
     const cityPin = [city, p.pincode].filter(Boolean).join(' - ');
     return { l1: [line1, cityPin].filter(Boolean).join(', '), l2: district || '' };
   };
-  // No rule: English when bilingual, as before. A rule can show the main language, or both.
-  const contactBlocks = bi ? orderBy(langRule(p, 'businessAddress'), ...(primaryEng ? [contactLines(true), contactLines(false)] : [contactLines(false), contactLines(true)]), [contactLines(useEn)]) : [contactLines(useEn)];
+  // Bilingual: a single language, English unless the rule says Tamil
+  const contactBlock = bi ? oneLang(p, 'businessAddress', ...(primaryEng ? [contactLines(true), contactLines(false)] : [contactLines(false), contactLines(true)])) : contactLines(useEn);
   const ifsc = billIfsc || p.ifsc || '';
 
   // Amount in words, like the Textiles invoice (primary line, smaller secondary line)
@@ -184,8 +184,7 @@ export default function CoolieInvoiceBilingual({ bill }) {
           <div className="inv-party" style={{ marginTop: '6px', paddingLeft: '8px', paddingRight: '8px' }}>
             <h4 className="inv-section-label" style={{ color: 'var(--bill-primary)', fontWeight: 700, fontSize: '12px', marginBottom: '3px', textTransform: 'none' }}>{slash('பெறுநர்', 'Bill To')}</h4>
             <p className="inv-party-name" style={{ color: '#242f3d', fontWeight: 600, fontSize: '15px', margin: 0, marginBottom: '2px' }}>{customerName || '-'}</p>
-            {bi && customerName2 && !same(customerName, customerName2) && <p style={{ color: '#64748b', fontSize: '12px', fontWeight: 500, margin: 0, marginBottom: '2px' }}>{customerName2}</p>}
-            {customerPlace && <div className="inv-party-details" style={{ color: '#475569', fontSize: '13px' }}><p style={{ color: '#475569', margin: 0 }}>{customerPlace}</p>{bi && customerPlace2 && !same(customerPlace, customerPlace2) && <p style={{ color: '#64748b', fontSize: '12px', margin: 0 }}>{customerPlace2}</p>}</div>}
+            {customerPlace && <div className="inv-party-details" style={{ color: '#475569', fontSize: '13px' }}><p style={{ color: '#475569', margin: 0 }}>{customerPlace}</p></div>}
           </div>
           {fyFull(date) && (
             <div style={{ marginTop: '6px', paddingRight: '8px', textAlign: 'right', whiteSpace: 'nowrap' }}>
@@ -214,7 +213,7 @@ export default function CoolieInvoiceBilingual({ bill }) {
                 <td className="text-center" style={{ color: '#1e293b' }}>{i + 1}</td>
                 <td className="text-left" style={{ color: '#1e293b' }}>
                   {(() => {
-                    const nm = bi ? orderBy(langRule(p, 'itemName'), ...priSec(item.porul, item.name_english), [item.porul, item.name_english]) : [isEng && item.name_english ? item.name_english : item.porul];
+                    const nm = bi ? both(priSec(item.porul, item.name_english)) : [isEng && item.name_english ? item.name_english : item.porul];
                     return (
                       <>
                         {/* The bilingual style treats a lone line as the "last" (small, grey) one: keep it a normal first line */}
@@ -370,7 +369,7 @@ export default function CoolieInvoiceBilingual({ bill }) {
             <div style={{ fontSize: '0.85rem', fontWeight: 700, color: accent, display: 'flex', alignItems: 'center', height: '20px', lineHeight: 1.2 }}>
               {lbl('தொடர்பு கொள்ள', 'Contact Us')}
             </div>
-            {contactBlocks.flatMap((b) => [b.l1, b.l2]).filter(Boolean).map((line, i) => (
+            {[contactBlock.l1, contactBlock.l2].filter(Boolean).map((line, i) => (
               <div key={i} style={{ fontSize: '0.82rem', color: '#334155', fontWeight: 500, display: 'flex', alignItems: 'center', height: '20px', lineHeight: 1.2 }}>
                 {line}
               </div>
