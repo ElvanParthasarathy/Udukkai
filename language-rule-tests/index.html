@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Language rules: test images</title>
+<style>
+  body { font: 15px/1.5 system-ui, sans-serif; max-width: 860px; margin: 24px auto; padding: 0 16px; color: #111; background: #fff; }
+  h1 { font-size: 22px; margin: 0 0 4px; }
+  h2 { font-size: 18px; margin: 32px 0 6px; border-top: 1px solid #ddd; padding-top: 18px; }
+  p, li { margin: 4px 0; }
+  img { max-width: 100%; border: 1px solid #ccc; margin: 8px 0 4px; }
+  .note { background: #f5f7f5; padding: 8px 12px; border-radius: 6px; }
+  code { background: #eee; padding: 1px 4px; border-radius: 3px; }
+</style>
+</head>
+<body>
+<h1>Language rules: every option, as images</h1>
+<p>Each image prints the same bilingual bill five times, once per option of one rule, cropped to the part of the bill that rule controls.
+The business is set to main language <b>Tamil</b> and second language <b>English</b>. Option 1 in every image is what the bill prints today with no rule set.</p>
+<div class="note">
+  <p>The five options, in order: <b>1.</b> Default (no rule) · <b>2.</b> Tamil → English · <b>3.</b> English → Tamil · <b>4.</b> Tamil only · <b>5.</b> English only.</p>
+  <p>Where Default already equals another option, the two images look the same on purpose (for example the Textiles business name already prints Tamil first, so options 1 and 2 match).</p>
+  <p>These are renders of the exact bill bundle the app uses. To make them again: in <code>UdukkaiTemplates</code> run <code>npm run dev</code> and open <code>/rules-sheet.html?paper=gst&amp;field=customerName</code> (<code>paper</code>: <code>gst</code> = Textiles, <code>coolie</code> = Factory).</p>
+</div>
+
+<h2>Textiles bill</h2>
+<h3>1. Business name</h3><img src="textiles-1-business-name.jpg" alt="Textiles business name, five options">
+<h3>2. Business address (bottom band)</h3><img src="textiles-2-business-address.jpg" alt="Textiles business address, five options">
+<h3>3. Customer name</h3><img src="textiles-3-customer-name.jpg" alt="Textiles customer name, five options">
+<h3>4. Customer address</h3><img src="textiles-4-customer-address.jpg" alt="Textiles customer address, five options">
+<h3>5. Item name</h3><img src="textiles-5-item-name.jpg" alt="Textiles item name, five options">
+
+<h2>Factory bill</h2>
+<h3>1. Business name</h3><img src="factory-1-business-name.jpg" alt="Factory business name, five options">
+<h3>2. Business address (bottom band)</h3><img src="factory-2-business-address.jpg" alt="Factory business address, five options">
+<h3>3. Customer name</h3><img src="factory-3-customer-name.jpg" alt="Factory customer name, five options">
+<h3>4. Customer address</h3><img src="factory-4-customer-address.jpg" alt="Factory customer address, five options">
+<h3>5. Item name</h3><img src="factory-5-item-name.jpg" alt="Factory item name, five options">
+</body>
+</html>

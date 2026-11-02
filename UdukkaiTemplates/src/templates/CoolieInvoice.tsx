@@ -217,7 +217,8 @@ export default function CoolieInvoiceBilingual({ bill }) {
                     const nm = bi ? orderBy(langRule(p, 'itemName'), ...priSec(item.porul, item.name_english), [item.porul, item.name_english]) : [isEng && item.name_english ? item.name_english : item.porul];
                     return (
                       <>
-                        <div>{nm[0]}</div>
+                        {/* The bilingual style treats a lone line as the "last" (small, grey) one: keep it a normal first line */}
+                        <div style={nm[1] ? undefined : { fontSize: '14px', color: '#1e293b', marginTop: 0 }}>{nm[0]}</div>
                         {nm[1] && <div style={{ fontSize: '12px', color: '#64748b', fontWeight: 500 }}>{nm[1]}</div>}
                       </>
                     );
