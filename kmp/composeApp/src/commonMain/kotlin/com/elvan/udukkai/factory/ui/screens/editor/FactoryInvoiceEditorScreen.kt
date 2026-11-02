@@ -458,7 +458,11 @@ fun FactoryInvoiceEditorScreen(
             postalCharges = thabaalThogai,
             ahimsaSilkAmount = ahimsaPattuThogai,
             otherTaxesJson = FactoryCalculation.chargesToJson(additionalCharges),
-            customPreferencesJson = displayOptions.toJson(),
+            customPreferencesJson = displayOptions.copy(
+                customer = selectedCustomerId?.let { com.elvan.udukkai.factory.data.FactoryCustomerRepository.getById(it) }?.let(com.elvan.udukkai.data.model.CustomerSnapshot::of)
+                    // Same customer as the saved bill, but gone from the list: keep what the bill already had
+                    ?: if (selectedCustomerId == invoice?.customerId) displayOptions.customer else emptyMap()
+            ).toJson(),
             updatedAt = System.currentTimeMillis()
         )
     }

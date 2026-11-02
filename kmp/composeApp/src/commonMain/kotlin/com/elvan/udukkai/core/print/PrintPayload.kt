@@ -3,6 +3,7 @@ package com.elvan.udukkai.core.print
 import com.elvan.udukkai.core.utils.DateUtils
 import com.elvan.udukkai.core.utils.MiniJson
 import com.elvan.udukkai.data.model.CustomerModel
+import com.elvan.udukkai.data.model.CustomerSnapshot
 import com.elvan.udukkai.data.model.InvoiceDisplayOptions
 import com.elvan.udukkai.data.model.InvoiceModel
 import com.elvan.udukkai.data.model.ReceiptModel
@@ -30,6 +31,9 @@ object PrintPayload {
         appLanguage: String
     ): String {
         val options = InvoiceDisplayOptions.fromJson(invoice.customPreferencesJson)
+        // The bill's own copy first; older bills use the live customer, then what the bill saved (a Textiles bill saves the city)
+        val billCustomer = CustomerSnapshot.toCustomer(options.customer) ?: customer
+            ?: CustomerModel(name = invoice.customerName, city = invoice.customerAddress)
         val items = TextilesCalculation.itemsFromJson(invoice.itemsJson)
         val totals = TextilesCalculation.calculate(
             items = items,
@@ -48,7 +52,7 @@ object PrintPayload {
             field("docType", "gst-invoice")
             field("appLanguage", appLanguage)
             field("profile") { profile(profile) }
-            field("customer") { if (customer != null) customer(customer) else nullValue() }
+            field("customer") { customer(billCustomer) }
             field("invoice") {
                 obj {
                     field("invoiceNumber", invoice.invoiceNumber)
@@ -134,6 +138,9 @@ object PrintPayload {
         customer: CustomerModel?,
         appLanguage: String
     ): String {
+        val options = InvoiceDisplayOptions.fromJson(invoice.customPreferencesJson)
+        val billCustomer = CustomerSnapshot.toCustomer(options.customer) ?: customer
+            ?: CustomerModel(name = invoice.customerName, address = invoice.customerAddress)
         val items = FactoryCalculation.itemsFromJson(invoice.itemsJson)
         val charges = FactoryCalculation.chargesFromJson(invoice.otherTaxesJson)
         val totals = FactoryCalculation.calculate(
@@ -148,14 +155,15 @@ object PrintPayload {
             field("docType", "coolie-invoice")
             field("appLanguage", appLanguage)
             field("profile") { profile(profile) }
-            field("customer") { if (customer != null) customer(customer) else nullValue() }
+            field("customer") { customer(billCustomer) }
             field("invoice") {
                 obj {
                     field("id", invoice.id.toString())
                     field("invoiceNumber", invoice.invoiceNumber)
                     field("invoiceDate", isoDate(invoice.invoiceDate))
                     field("customerName") { langMap(invoice.customerName) }
-                    field("customerAddress") { langMap(invoice.customerAddress) }
+                    // The template falls back to this as the city, so it stays empty: the address is on the customer
+                    field("customerAddress") { langMap(emptyMap()) }
                     field("items") {
                         array(items) { item ->
                             obj {
@@ -240,6 +248,7 @@ object PrintPayload {
         field("district") { langMap(c.district) }
         field("state") { langMap(c.state) }
         field("country") { langMap(c.country) }
+        field("internationalAddress") { langMap(c.internationalAddress) }
         field("pinCode", c.pinCode)
         field("gstin", c.gstin)
         field("email", c.email)

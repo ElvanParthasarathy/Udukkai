@@ -428,7 +428,10 @@ fun TextilesInvoiceEditorScreen(
             taxDataJson = TextilesCalculation.taxToJson(totals),
             customPreferencesJson = displayOptions.copy(
                 placeOfSupply = placeOfSupplyEn,
-                placeOfSupplyTa = placeOfSupplyTa
+                placeOfSupplyTa = placeOfSupplyTa,
+                customer = selectedCustomerId?.let { com.elvan.udukkai.textiles.data.TextilesCustomerRepository.getById(it) }?.let(com.elvan.udukkai.data.model.CustomerSnapshot::of)
+                    // Same customer as the saved bill, but gone from the list: keep what the bill already had
+                    ?: if (selectedCustomerId == invoice?.customerId) displayOptions.customer else emptyMap()
             ).toJson(),
             updatedAt = System.currentTimeMillis()
         )

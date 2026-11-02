@@ -14,7 +14,9 @@ data class InvoiceDisplayOptions(
     val globalDiscountValue: Double = 0.0,
     val globalDiscountType: String = "%",
     /** React per-bill measure mode: "weight" shows the எடை / Weight column with " Kg". */
-    val measureMode: String = ""
+    val measureMode: String = "",
+    /** The customer as printed when the bill was saved; empty on bills saved before this existed. */
+    val customer: Map<String, String> = emptyMap()
 ) {
     fun toJson(): String {
         val sb = StringBuilder("{")
@@ -25,7 +27,8 @@ data class InvoiceDisplayOptions(
         sb.append("\"placeOfSupplyTa\":\"").append(placeOfSupplyTa.replace("\"", "\\\"")).append("\",")
         sb.append("\"globalDiscountValue\":").append(BillRules.plainNumber(globalDiscountValue)).append(",")
         sb.append("\"globalDiscountType\":\"").append(globalDiscountType.replace("\"", "\\\"")).append("\",")
-        sb.append("\"measureMode\":\"").append(measureMode.replace("\"", "\\\"")).append("\"")
+        sb.append("\"measureMode\":\"").append(measureMode.replace("\"", "\\\"")).append("\",")
+        sb.append("\"customer\":").append(com.elvan.udukkai.core.utils.MiniJson.stringify(customer))
         sb.append("}")
         return sb.toString()
     }
@@ -44,6 +47,8 @@ data class InvoiceDisplayOptions(
                 val gDiscVal = Regex(""""globalDiscountValue"\s*:\s*([-+0-9.eE]+)""").find(json)?.groupValues?.get(1)?.toDoubleOrNull() ?: 0.0
                 val gDiscType = Regex(""""globalDiscountType"\s*:\s*"([^"]*)"""").find(json)?.groupValues?.get(1) ?: "%"
                 val measure = Regex(""""measureMode"\s*:\s*"([^"]*)"""").find(json)?.groupValues?.get(1) ?: ""
+                val snapshot = (com.elvan.udukkai.core.utils.MiniJson.parseObject(json)["customer"] as? Map<*, *>)
+                    ?.entries?.associate { it.key.toString() to it.value?.toString().orEmpty() } ?: emptyMap()
 
                 InvoiceDisplayOptions(
                     taxInclusive = taxInc,
@@ -53,7 +58,8 @@ data class InvoiceDisplayOptions(
                     placeOfSupplyTa = posTa,
                     globalDiscountValue = gDiscVal,
                     globalDiscountType = gDiscType,
-                    measureMode = measure
+                    measureMode = measure,
+                    customer = snapshot
                 )
             } catch (e: Exception) {
                 InvoiceDisplayOptions()
