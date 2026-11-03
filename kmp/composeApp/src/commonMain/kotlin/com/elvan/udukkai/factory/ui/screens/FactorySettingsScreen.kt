@@ -281,7 +281,7 @@ private fun FactorySettingsHubContent(
                     ElvanSettingsRow(
                         icon = MaterialSymbols.Rounded.BusinessCenter,
                         title = K.identifier.tr(),
-                        description = K.factoryCompanyBranding.tr(),
+                        description = K.identityHint.tr(),
                         onClick = { onNavigate(SettingsRoute.FactoryIdentity) },
                         colors = colors
                     )
@@ -334,7 +334,7 @@ private fun FactorySettingsHubContent(
                     ElvanSettingsRow(
                         icon = MaterialSymbols.Rounded.LightMode,
                         title = K.display.tr(),
-                        description = "${K.themeLightDarkAuto.tr()} • ${FontManager.currentFont.displayName}",
+                        description = K.themeLightDarkAuto.tr(),
                         onClick = { onNavigate(SettingsRoute.Display) },
                         colors = colors
                     )

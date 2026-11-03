@@ -281,7 +281,7 @@ private fun TextilesSettingsHubContent(
                     ElvanSettingsRow(
                         icon = MaterialSymbols.Rounded.BusinessCenter,
                         title = K.identifier.tr(),
-                        description = K.textilesCompanyBranding.tr(),
+                        description = K.identityHint.tr(),
                         onClick = { onNavigate(SettingsRoute.TextilesIdentity) },
                         colors = colors
                     )
@@ -334,7 +334,7 @@ private fun TextilesSettingsHubContent(
                     ElvanSettingsRow(
                         icon = MaterialSymbols.Rounded.LightMode,
                         title = K.display.tr(),
-                        description = "${K.themeLightDarkAuto.tr()} • ${FontManager.currentFont.displayName}",
+                        description = K.themeLightDarkAuto.tr(),
                         onClick = { onNavigate(SettingsRoute.Display) },
                         colors = colors
                     )

@@ -9,8 +9,9 @@ import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.interaction.collectIsPressedAsState
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.foundation.gestures.waitForUpOrCancellation
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -25,6 +26,10 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.onClick
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -44,6 +49,7 @@ import com.elvan.udukkai.theme.ShellColors
 import com.elvan.udukkai.ui.navigation.MaterialSymbols
 import com.elvan.udukkai.ui.screens.create.components.ElvanPillShifter
 import com.elvan.udukkai.ui.screens.create.components.PillShifterItem
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
@@ -67,8 +73,7 @@ private fun PinDot(filled: Boolean, colors: ShellColors) {
 @Composable
 private fun PadKey(label: String, colors: ShellColors, onClick: () -> Unit) {
     val ff = LocalAppFontFamily.current
-    val source = remember { MutableInteractionSource() }
-    val pressed by source.collectIsPressedAsState()
+    var pressed by remember { mutableStateOf(false) }
     val corner by animateDpAsState(if (pressed) 38.dp else 26.dp, spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessMedium), label = "corner")
     val scale by animateFloatAsState(if (pressed) 0.92f else 1f, bouncy, label = "keyScale")
     val fill by animateColorAsState(if (pressed) colors.textPrimary.copy(alpha = 0.22f) else colors.iconBg, label = "keyFill")
@@ -77,7 +82,18 @@ private fun PadKey(label: String, colors: ShellColors, onClick: () -> Unit) {
             .graphicsLayer { scaleX = scale; scaleY = scale }
             .clip(RoundedCornerShape(corner))
             .background(fill)
-            .clickable(interactionSource = source, indication = null, onClick = onClick),
+            // The digit counts when the finger lands, not when it lifts, so a quick tap is never lost
+            .pointerInput(Unit) {
+                awaitEachGesture {
+                    val down = awaitFirstDown(requireUnconsumed = false)
+                    down.consume()
+                    pressed = true
+                    onClick()
+                    waitForUpOrCancellation()
+                    pressed = false
+                }
+            }
+            .semantics(mergeDescendants = true) { role = Role.Button; onClick { onClick(); true } },
         contentAlignment = Alignment.Center
     ) {
         Text(label, style = TextStyle(fontFamily = ff, fontSize = 28.sp, fontWeight = FontWeight.Medium), color = colors.textPrimary)
@@ -93,6 +109,7 @@ fun PinPad(prompt: String, length: Int, error: String?, errorKey: Int, onComplet
     val ff = LocalAppFontFamily.current
     var digits by remember(length) { mutableStateOf("") }
     val scope = rememberCoroutineScope()
+    var clearJob by remember { mutableStateOf<Job?>(null) }
     val shake = remember { Animatable(0f) }
     LaunchedEffect(errorKey) {
         if (errorKey > 0) {
@@ -125,12 +142,13 @@ fun PinPad(prompt: String, length: Int, error: String?, errorKey: Int, onComplet
         }
 
         fun press(d: String) {
-            if (digits.length >= length) return
+            // A digit typed while the last full entry is still showing starts the next entry at once
+            if (digits.length >= length) { clearJob?.cancel(); digits = "" }
             digits += d
             if (digits.length == length) {
                 onComplete(digits)
                 // The dots empty after every full entry (wrong, or the first of two): the next try starts clean
-                scope.launch { delay(220); digits = "" }
+                clearJob = scope.launch { delay(220); digits = "" }
             }
         }
         Column(verticalArrangement = Arrangement.spacedBy(12.dp), horizontalAlignment = Alignment.CenterHorizontally) {

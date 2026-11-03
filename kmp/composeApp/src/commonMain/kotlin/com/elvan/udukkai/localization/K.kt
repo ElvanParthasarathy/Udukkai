@@ -339,6 +339,7 @@ object K {
     const val colorTooLight = "colorTooLight"
     const val logoSize = "logoSize"
     const val resetLogo = "resetLogo"
+    const val identityHint = "identityHint"
     const val groupBusiness = "groupBusiness"
     const val groupBills = "groupBills"
     const val groupApp = "groupApp"
