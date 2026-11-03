@@ -64,6 +64,7 @@ fun ElvanShell(
     onSelectAll: () -> Unit = {},
     onCancelSelection: () -> Unit = {},
     showBottomFade: Boolean = true,
+    hasFloatingBar: Boolean = false,
     overlay: @Composable () -> Unit = {},
     floatingBar: @Composable () -> Unit = {},
     content: @Composable () -> Unit
@@ -567,7 +568,7 @@ fun ElvanShell(
                         modifier = Modifier
                             .align(Alignment.BottomCenter)
                             .fillMaxWidth()
-                            .height(72.dp + navBarsPadding)
+                            .height(if (hasFloatingBar) (72.dp + 56.dp + 16.dp + navBarsPadding) else (72.dp + navBarsPadding))
                             .background(
                                 Brush.verticalGradient(
                                     0.0f to Color.Transparent,

@@ -128,6 +128,7 @@ fun FactorySettingsScreen(
                 title = pageTitle,
                 onBack = handleBack,
                 scrollState = scrollState,
+                hasFloatingBar = route == SettingsRoute.Hub,
                 floatingBar = { if (route == SettingsRoute.Hub) SettingsSearchPill(colors) { searchOpen = true } }
             ) {
                 when (route) {
