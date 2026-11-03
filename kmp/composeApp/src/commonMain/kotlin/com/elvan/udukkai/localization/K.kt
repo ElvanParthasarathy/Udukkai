@@ -339,6 +339,8 @@ object K {
     const val colorTooLight = "colorTooLight"
     const val logoSize = "logoSize"
     const val resetLogo = "resetLogo"
+    const val logoPlaceRow = "logoPlaceRow"
+    const val wideLogoPlaceRow = "wideLogoPlaceRow"
     const val wideLogoSize = "wideLogoSize"
     const val signatoryNameTa = "signatoryNameTa"
     const val signatoryNameEn = "signatoryNameEn"

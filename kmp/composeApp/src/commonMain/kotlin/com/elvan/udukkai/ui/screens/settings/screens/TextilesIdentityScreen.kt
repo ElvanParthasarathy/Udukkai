@@ -24,6 +24,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.elvan.udukkai.data.settings.SignatoryNames
 import com.elvan.udukkai.localization.K
+import kotlin.math.roundToInt
 import com.elvan.udukkai.data.settings.PrintNumbers
 import com.elvan.udukkai.ui.screens.settings.LogoAdjuster
 import com.elvan.udukkai.ui.screens.settings.LogoPlace
@@ -114,7 +115,6 @@ fun TextilesIdentityScreen(
                                 } else null,
                                 onEdit = {
                                     tempImagePath = logoPath
-                                    tempLogoPlace = LogoPlace.read(profile.printSettingsJson, "logo")
                                     editingSection = "logo"
                                 },
                                 colors = colors
@@ -127,7 +127,6 @@ fun TextilesIdentityScreen(
                                 onSave = {
                                     val updated = profile.copy()
                                     updated.logo = tempImagePath ?: ""
-                                    updated.printSettingsJson = tempLogoPlace.writeTo(updated.printSettingsJson, "logo")
                                     TextilesProfileRepository.updateProfile(updated)
                                     editingSection = null
                                     ElvanSnackbar.show(saveSuccessMsg)
@@ -143,14 +142,44 @@ fun TextilesIdentityScreen(
                                     onClear = { tempImagePath = null },
                                     colors = colors
                                 )
-                                if (tempImagePath != null) {
-                                    Spacer(Modifier.height(12.dp))
-                                    LogoAdjuster(remember(tempImagePath) { logoPreviewPayload(profile, false, tempImagePath, false) }, "logo", tempLogoPlace, LogoPlace.read(profile.printSettingsJson, "logo"), { tempLogoPlace = it }, K.logoSize.tr(), colors)
-                                }
                             }
                         }
                     )
                     ElvanSettingsDivider(colors = colors)
+
+                    if (logoPath != null) {
+                        ElvanSettingsAnimatedExpand(
+                            isEditing = editingSection == "logo_place",
+                            displayContent = {
+                                ElvanSettingsDisplayRow(
+                                    title = K.logoPlaceRow.tr(),
+                                    primaryValue = "${(LogoPlace.read(profile.printSettingsJson, "logo").scale * 100f).roundToInt()}%",
+                                    onEdit = {
+                                        tempLogoPlace = LogoPlace.read(profile.printSettingsJson, "logo")
+                                        editingSection = "logo_place"
+                                    },
+                                    colors = colors
+                                )
+                            },
+                            editContent = {
+                                ElvanSettingsEditContainer(
+                                    title = K.logoPlaceRow.tr(),
+                                    onCancel = { editingSection = null },
+                                    onSave = {
+                                        val updated = profile.copy()
+                                        updated.printSettingsJson = tempLogoPlace.writeTo(updated.printSettingsJson, "logo")
+                                        TextilesProfileRepository.updateProfile(updated)
+                                        editingSection = null
+                                        ElvanSnackbar.show(saveSuccessMsg)
+                                    },
+                                    colors = colors
+                                ) {
+                                    LogoAdjuster(remember(logoPath) { logoPreviewPayload(profile, false, logoPath, false) }, "logo", tempLogoPlace, LogoPlace.read(profile.printSettingsJson, "logo"), { tempLogoPlace = it }, K.logoSize.tr(), colors)
+                                }
+                            }
+                        )
+                        ElvanSettingsDivider(colors = colors)
+                    }
 
                     // 2. Wide Logo (Agala Oavuru)
                     ElvanSettingsAnimatedExpand(
@@ -170,7 +199,6 @@ fun TextilesIdentityScreen(
                                 } else null,
                                 onEdit = {
                                     tempWideImagePath = wideLogoPath
-                                    tempWidePlace = LogoPlace.read(profile.printSettingsJson, "wideLogo")
                                     editingSection = "wide_logo"
                                 },
                                 colors = colors
@@ -183,7 +211,6 @@ fun TextilesIdentityScreen(
                                 onSave = {
                                     val updated = profile.copy()
                                     updated.wideLogo = tempWideImagePath ?: ""
-                                    updated.printSettingsJson = tempWidePlace.writeTo(updated.printSettingsJson, "wideLogo")
                                     TextilesProfileRepository.updateProfile(updated)
                                     editingSection = null
                                     ElvanSnackbar.show(saveSuccessMsg)
@@ -199,14 +226,44 @@ fun TextilesIdentityScreen(
                                     onClear = { tempWideImagePath = null },
                                     colors = colors
                                 )
-                                if (tempWideImagePath != null) {
-                                    Spacer(Modifier.height(12.dp))
-                                    LogoAdjuster(remember(tempWideImagePath) { logoPreviewPayload(profile, true, tempWideImagePath, false) }, "wideLogo", tempWidePlace, LogoPlace.read(profile.printSettingsJson, "wideLogo"), { tempWidePlace = it }, K.wideLogoSize.tr(), colors)
-                                }
                             }
                         }
                     )
                     ElvanSettingsDivider(colors = colors)
+
+                    if (wideLogoPath != null) {
+                        ElvanSettingsAnimatedExpand(
+                            isEditing = editingSection == "wide_logo_place",
+                            displayContent = {
+                                ElvanSettingsDisplayRow(
+                                    title = K.wideLogoPlaceRow.tr(),
+                                    primaryValue = "${(LogoPlace.read(profile.printSettingsJson, "wideLogo").scale * 100f).roundToInt()}%",
+                                    onEdit = {
+                                        tempWidePlace = LogoPlace.read(profile.printSettingsJson, "wideLogo")
+                                        editingSection = "wide_logo_place"
+                                    },
+                                    colors = colors
+                                )
+                            },
+                            editContent = {
+                                ElvanSettingsEditContainer(
+                                    title = K.wideLogoPlaceRow.tr(),
+                                    onCancel = { editingSection = null },
+                                    onSave = {
+                                        val updated = profile.copy()
+                                        updated.printSettingsJson = tempWidePlace.writeTo(updated.printSettingsJson, "wideLogo")
+                                        TextilesProfileRepository.updateProfile(updated)
+                                        editingSection = null
+                                        ElvanSnackbar.show(saveSuccessMsg)
+                                    },
+                                    colors = colors
+                                ) {
+                                    LogoAdjuster(remember(wideLogoPath) { logoPreviewPayload(profile, true, wideLogoPath, false) }, "wideLogo", tempWidePlace, LogoPlace.read(profile.printSettingsJson, "wideLogo"), { tempWidePlace = it }, K.wideLogoSize.tr(), colors)
+                                }
+                            }
+                        )
+                        ElvanSettingsDivider(colors = colors)
+                    }
 
                     // 3. Header Style (Chinnathin Vadivam)
                     ElvanSettingsAnimatedExpand(

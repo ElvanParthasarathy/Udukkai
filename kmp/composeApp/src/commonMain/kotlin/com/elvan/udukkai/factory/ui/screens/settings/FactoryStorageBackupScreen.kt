@@ -57,6 +57,8 @@ fun FactoryStorageBackupScreen(
 
     var showBackupConfirm by remember { mutableStateOf(false) }
     var showUndoConfirm by remember { mutableStateOf(false) }
+    // Bumped after a restore so the "go back" row appears at once
+    var restoreTick by remember { mutableStateOf(0) }
     var isBackingUp by remember { mutableStateOf(false) }
     var isRestoring by remember { mutableStateOf(false) }
 
@@ -69,6 +71,7 @@ fun FactoryStorageBackupScreen(
     val restoreSuccessMsg = K.restoreSuccess.tr()
 
     fun refreshAll() {
+        restoreTick++
         backupStats = backupService.getBackupStats()
         totalDbSize = backupService.getTotalDatabaseSize().coerceAtLeast(128 * 1024L)
         availableBackups = backupService.getAllAvailableBackups()
@@ -223,7 +226,7 @@ fun FactoryStorageBackupScreen(
                     onClick = startRestore,
                     colors = colors
                 )
-                if (backupService.lastRestoreBackup() != null) {
+                if (restoreTick >= 0 && backupService.lastRestoreBackup() != null) {
                     ElvanSettingsDivider(colors = colors)
                     ElvanSettingsRow(
                         icon = MaterialSymbols.Rounded.Restore,

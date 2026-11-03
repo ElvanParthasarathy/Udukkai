@@ -323,6 +323,8 @@ val ta: Map<String, String> = mapOf(
     K.colorTooLight to "பில்லில் படிக்க முடியாத அளவு வெளிர்",
     K.logoSize to "அளவு",
     K.resetLogo to "மீட்டமை",
+    K.logoPlaceRow to "லோகோ இடம் & அளவு",
+    K.wideLogoPlaceRow to "அகன்ற லோகோ இடம் & அளவு",
     K.wideLogoSize to "அளவு",
     K.signatoryNameTa to "கையொப்பமிடுபவர் பெயர் (தமிழ்)",
     K.signatoryNameEn to "கையொப்பமிடுபவர் பெயர் (ஆங்கிலம்)",
