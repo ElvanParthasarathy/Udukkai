@@ -139,6 +139,12 @@ class MainActivity : FragmentActivity() {
 
     override fun onStart() {
         super.onStart()
+        com.elvan.udukkai.core.platform.CurrentActivity.activity = this
         com.elvan.udukkai.core.security.AppLock.returned()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        com.elvan.udukkai.core.platform.CurrentActivity.activity = this
     }
 }

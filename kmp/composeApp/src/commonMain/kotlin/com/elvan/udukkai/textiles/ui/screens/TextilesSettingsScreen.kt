@@ -44,9 +44,11 @@ import com.elvan.udukkai.textiles.ui.screens.settings.*
 
 @Composable
 fun TextilesSettingsScreen(
+    initialRoute: SettingsRoute = SettingsRoute.Hub,
+    onNavigateOverride: ((SettingsRoute) -> Boolean)? = null,
     onBack: () -> Unit = {}
 ) {
-    var navState by remember { mutableStateOf(SettingsNavState(SettingsRoute.Hub, 0)) }
+    var navState by remember { mutableStateOf(SettingsNavState(initialRoute, 0)) }
     var searchOpen by remember { mutableStateOf(false) }
     val colors = rememberShellColors()
 
@@ -54,11 +56,12 @@ fun TextilesSettingsScreen(
     val subpageScrollStates = remember { mutableStateMapOf<SettingsRoute, LazyListState>() }
 
     // History stack for correct pop destinations (Hub is always at the bottom)
-    val routeHistory = remember { mutableStateListOf<SettingsRoute>(SettingsRoute.Hub) }
+    val routeHistory = remember { mutableStateListOf<SettingsRoute>(initialRoute) }
 
     var lastNavTime by remember { mutableLongStateOf(0L) }
 
     fun navigateTo(route: SettingsRoute) {
+        if (onNavigateOverride?.invoke(route) == true) return
         val now = System.currentTimeMillis()
         if (now - lastNavTime < 240L) return
         if (routeHistory.last() == route) return
@@ -190,7 +193,12 @@ fun TextilesSettingsScreen(
             open = searchOpen,
             entries = remember { settingsEntries(SettingsRoute.TextilesIdentity) },
             colors = colors,
-            onOpen = { navigateTo(it); searchOpen = false },
+            onOpen = { targetRoute ->
+                if (onNavigateOverride?.invoke(targetRoute) != true) {
+                    navigateTo(targetRoute)
+                }
+                searchOpen = false
+            },
             onClose = { searchOpen = false }
         )
     }

@@ -39,6 +39,8 @@ import com.elvan.udukkai.textiles.ui.screens.TextilesCustomerScreen
 import com.elvan.udukkai.textiles.ui.screens.TextilesDashboardScreen
 import com.elvan.udukkai.textiles.ui.screens.TextilesItemScreen
 import com.elvan.udukkai.textiles.ui.screens.TextilesSettingsScreen
+import com.elvan.udukkai.ui.screens.settings.SettingsRoute
+import com.elvan.udukkai.ui.screens.settings.openPlatformSettings
 import com.elvan.udukkai.textiles.ui.screens.editor.TextilesCustomerEditorScreen
 import com.elvan.udukkai.textiles.ui.screens.editor.TextilesInvoiceEditorScreen
 import com.elvan.udukkai.textiles.ui.screens.editor.TextilesItemEditorScreen
@@ -89,7 +91,9 @@ fun TextilesHomeScreen() {
     val activeSubpage = subpageStack.lastOrNull()
     // The same page is never pushed twice on top of itself (a double tap would slide it in twice and need two Backs)
     val navigateToSubpage: (ActiveSubpage) -> Unit = { subpage ->
-        if (subpageStack.lastOrNull() != subpage) {
+        if (subpage is ActiveSubpage.Settings && openPlatformSettings()) {
+            // Handled natively by Activity on Android
+        } else if (subpageStack.lastOrNull() != subpage) {
             if (isLandscapeMode && (subpage is ActiveSubpage.InvoiceView || subpage is ActiveSubpage.ItemView || subpage is ActiveSubpage.CustomerView || subpage is ActiveSubpage.ReceiptView)) {
                 subpageStack = listOf(subpage)
             } else {
@@ -813,7 +817,9 @@ fun TextilesHomeScreen() {
                                             navigateToSubpage(ActiveSubpage.InvoiceView(invoice))
                                         },
                                         onManageProfiles = {
-                                            navigateToSubpage(ActiveSubpage.Settings)
+                                            if (!openPlatformSettings(SettingsRoute.ManageProfiles)) {
+                                                navigateToSubpage(ActiveSubpage.Settings)
+                                            }
                                         }
                                     )
                                 }

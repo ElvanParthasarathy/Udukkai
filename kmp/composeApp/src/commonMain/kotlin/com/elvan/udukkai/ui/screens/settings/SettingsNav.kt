@@ -44,3 +44,54 @@ val SettingsRoute.depth: Int
  */
 data class SettingsNavState(val route: SettingsRoute, val index: Int)
 
+val SettingsRoute.name: String
+    get() = when (this) {
+        SettingsRoute.Hub -> "Hub"
+        SettingsRoute.Display -> "Display"
+        SettingsRoute.Language -> "Language"
+        SettingsRoute.Merchant -> "Merchant"
+        SettingsRoute.FactoryIdentity -> "FactoryIdentity"
+        SettingsRoute.TextilesIdentity -> "TextilesIdentity"
+        SettingsRoute.Address -> "Address"
+        SettingsRoute.Bank -> "Bank"
+        SettingsRoute.InvoiceCreation -> "InvoiceCreation"
+        SettingsRoute.StorageBackup -> "StorageBackup"
+        SettingsRoute.Security -> "Security"
+        SettingsRoute.AboutDeveloper -> "AboutDeveloper"
+        SettingsRoute.AboutApp -> "AboutApp"
+        SettingsRoute.ElvanNavil -> "ElvanNavil"
+        SettingsRoute.ManageProfiles -> "ManageProfiles"
+        SettingsRoute.Privacy -> "Privacy"
+        SettingsRoute.Terms -> "Terms"
+        SettingsRoute.Licences -> "Licences"
+        SettingsRoute.AppLock -> "AppLock"
+        SettingsRoute.About -> "About"
+    }
+
+fun settingsRouteFromName(name: String?): SettingsRoute = when (name) {
+    "Display" -> SettingsRoute.Display
+    "Language" -> SettingsRoute.Language
+    "Merchant" -> SettingsRoute.Merchant
+    "FactoryIdentity" -> SettingsRoute.FactoryIdentity
+    "TextilesIdentity" -> SettingsRoute.TextilesIdentity
+    "Address" -> SettingsRoute.Address
+    "Bank" -> SettingsRoute.Bank
+    "InvoiceCreation" -> SettingsRoute.InvoiceCreation
+    "StorageBackup" -> SettingsRoute.StorageBackup
+    "Security" -> SettingsRoute.Security
+    "AboutDeveloper" -> SettingsRoute.AboutDeveloper
+    "AboutApp" -> SettingsRoute.AboutApp
+    "ElvanNavil" -> SettingsRoute.ElvanNavil
+    "ManageProfiles" -> SettingsRoute.ManageProfiles
+    "Privacy" -> SettingsRoute.Privacy
+    "Terms" -> SettingsRoute.Terms
+    "Licences" -> SettingsRoute.Licences
+    "AppLock" -> SettingsRoute.AppLock
+    "About" -> SettingsRoute.About
+    else -> SettingsRoute.Hub
+}
+
+/** Opens settings using native platform window (e.g. Activity on Android). Returns true if handled natively. */
+expect fun openPlatformSettings(route: SettingsRoute = SettingsRoute.Hub): Boolean
+
+
