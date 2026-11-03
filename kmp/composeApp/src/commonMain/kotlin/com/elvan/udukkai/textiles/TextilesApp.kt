@@ -36,6 +36,11 @@ fun TextilesApp() {
 
     LaunchedEffect(Unit) {
         TextilesProfileRepository.refreshFromDatabase()
+        // The recycle bin says 30 days: clear what is older, for bills and receipts as well as items and customers
+        com.elvan.udukkai.textiles.data.TextilesInvoiceRepository.purgeExpired(days = 30)
+        com.elvan.udukkai.textiles.data.TextilesReceiptRepository.purgeExpired(days = 30)
+        com.elvan.udukkai.textiles.data.TextilesItemRepository.purgeExpired(days = 30)
+        com.elvan.udukkai.textiles.data.TextilesCustomerRepository.purgeExpired(days = 30)
     }
 
     ProvideAppLanguage {

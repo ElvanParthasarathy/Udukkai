@@ -36,6 +36,11 @@ fun FactoryApp() {
 
     LaunchedEffect(Unit) {
         FactoryProfileRepository.refreshFromDatabase()
+        // The recycle bin says 30 days: clear what is older, for bills and receipts as well as items and customers
+        com.elvan.udukkai.factory.data.FactoryInvoiceRepository.purgeExpired(days = 30)
+        com.elvan.udukkai.factory.data.FactoryReceiptRepository.purgeExpired(days = 30)
+        com.elvan.udukkai.factory.data.FactoryItemRepository.purgeExpired(days = 30)
+        com.elvan.udukkai.factory.data.FactoryCustomerRepository.purgeExpired(days = 30)
     }
 
     ProvideAppLanguage {

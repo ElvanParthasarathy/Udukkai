@@ -14,7 +14,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -31,13 +30,14 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.window.Dialog
-import androidx.compose.ui.window.DialogProperties
 import com.elvan.udukkai.localization.K
 import com.elvan.udukkai.localization.tr
 import com.elvan.udukkai.theme.LocalAppFontFamily
 import com.elvan.udukkai.theme.ShellColors
+import com.elvan.udukkai.ui.components.shell.ElvanActionSheet
 import com.elvan.udukkai.ui.components.shell.ElvanSettingsTextField
+import com.elvan.udukkai.ui.screens.create.components.ElvanPillShifter
+import com.elvan.udukkai.ui.screens.create.components.PillShifterItem
 import kotlin.math.abs
 
 /** "#rrggbb" of a colour. */
@@ -76,18 +76,24 @@ private fun hslColor(h: Float, s: Float, l: Float): Color {
 }
 
 /**
- * The bill's text colour sits on white paper, so a colour this light cannot be read.
- * shortcut: plain sRGB brightness, good enough to turn pale colours away; use a contrast ratio if finer control is needed.
+ * The bill's text colour sits on white paper, so a pale colour cannot be read: Done darkens it until it can.
+ * shortcut: plain sRGB brightness, good enough to rescue pale colours; use a contrast ratio if finer control is needed.
  */
-private fun tooLight(c: Color) = 0.299f * c.red + 0.587f * c.green + 0.114f * c.blue > 0.6f
+private fun readable(c: Color): Color {
+    val brightness = 0.299f * c.red + 0.587f * c.green + 0.114f * c.blue
+    if (brightness <= 0.6f) return c
+    val k = 0.6f / brightness
+    return Color(c.red * k, c.green * k, c.blue * k)
+}
 
 private val hues = listOf(0f, 30f, 55f, 85f, 130f, 170f, 200f, 225f, 265f, 305f)
 private const val ROWS = 10
 
 /**
- * "More colours": a swatch grid and a spectrum with a brightness slider, the hex code and its red, green and blue
- * values, the colour as it is now beside the new one, and the last colours used. Done keeps the colour (pale ones are
- * refused, see [tooLight]); Cancel leaves it as it was.
+ * "More colours", in the app's action sheet: a Swatches | Spectrum pill shifter (tap or drag), the grid or the spectrum
+ * with its brightness slider, the hex code with its red, green and blue values, the colour as it is now beside the new
+ * one, and the last colours used. Done keeps the colour (a pale one is darkened to stay readable, see [readable]);
+ * Cancel leaves it as it was.
  */
 @Composable
 fun BillColorPickerDialog(initial: Color, colors: ShellColors, recent: List<String>, onDismiss: () -> Unit, onDone: (String) -> Unit) {
@@ -95,42 +101,34 @@ fun BillColorPickerDialog(initial: Color, colors: ShellColors, recent: List<Stri
     var tab by remember { mutableStateOf(0) }
     var color by remember { mutableStateOf(initial) }
     var hsv by remember { mutableStateOf(toHsv(initial)) }
-    var refused by remember { mutableStateOf(false) }
 
     fun pick(c: Color) {
         color = c
         hsv = toHsv(c)
-        refused = false
     }
     fun pickHsv(h: Float, s: Float, v: Float) {
         hsv = Triple(h, s, v)
         color = Color.hsv(h, s, v)
-        refused = false
     }
     val hex = billColorHex(color)
     var hexText by remember(hex) { mutableStateOf(hex.uppercase()) }
 
-    Dialog(onDismissRequest = onDismiss, properties = DialogProperties(usePlatformDefaultWidth = false)) {
-        Surface(
-            shape = RoundedCornerShape(28.dp),
-            color = colors.surface,
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp).heightIn(max = 760.dp)
-        ) {
-            Column(Modifier.verticalScroll(rememberScrollState()).padding(20.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
-                // Swatches | Spectrum
-                Row(Modifier.fillMaxWidth().clip(RoundedCornerShape(100)).background(colors.iconBg).padding(4.dp)) {
-                    listOf(K.swatches.tr(), K.spectrum.tr()).forEachIndexed { i, label ->
-                        Box(
-                            Modifier.weight(1f).height(40.dp).clip(RoundedCornerShape(100))
-                                .background(if (tab == i) colors.textPrimary.copy(alpha = 0.14f) else Color.Transparent)
-                                .clickable { tab = i },
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Text(label, style = TextStyle(fontFamily = ff, fontSize = 15.sp, fontWeight = FontWeight.SemiBold), color = colors.textPrimary)
-                        }
-                    }
-                }
-
+    ElvanActionSheet(
+        title = K.pdfTheme.tr(),
+        onDismissRequest = onDismiss,
+        onConfirm = { onDone(billColorHex(readable(color))) },
+        colors = colors,
+        confirmColor = readable(color),
+        isConfirmFilled = true,
+        customContent = {
+            Column(Modifier.heightIn(max = 470.dp).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+                ElvanPillShifter(
+                    items = listOf(PillShifterItem(K.swatches.tr()), PillShifterItem(K.spectrum.tr())),
+                    selectedIndex = tab,
+                    onIndexSelected = { tab = it },
+                    colors = colors,
+                    isFullWidth = true
+                )
                 if (tab == 0) {
                     Column(Modifier.clip(RoundedCornerShape(8.dp))) {
                         for (r in 0 until ROWS) {
@@ -210,20 +208,7 @@ fun BillColorPickerDialog(initial: Color, colors: ShellColors, recent: List<Stri
                         }
                     }
                 }
-
-                if (refused) {
-                    Text(K.colorTooLight.tr(), style = TextStyle(fontFamily = ff, fontSize = 13.sp), color = Color(0xFFE53935))
-                }
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
-                    Text(K.cancel.tr(), Modifier.clickable { onDismiss() }.padding(12.dp), style = TextStyle(fontFamily = ff, fontSize = 17.sp, fontWeight = FontWeight.SemiBold), color = colors.textPrimary)
-                    Text(
-                        K.confirm.tr(),
-                        Modifier.clickable { if (tooLight(color)) refused = true else onDone(hex) }.padding(12.dp),
-                        style = TextStyle(fontFamily = ff, fontSize = 17.sp, fontWeight = FontWeight.SemiBold),
-                        color = colors.textPrimary
-                    )
-                }
             }
         }
-    }
+    )
 }

@@ -46,6 +46,8 @@ import com.elvan.udukkai.theme.Dimens
 import com.elvan.udukkai.theme.LocalAppFontFamily
 import com.elvan.udukkai.theme.rememberShellColors
 import com.elvan.udukkai.ui.components.shell.*
+import com.elvan.udukkai.ui.screens.create.components.ElvanPillShifter
+import com.elvan.udukkai.ui.screens.create.components.PillShifterItem
 
 /**
  * Unified, reusable Customer Editor screen for Udukkai (shared across Textiles and Factory).
@@ -76,6 +78,9 @@ fun CustomerEditorScreen(
 
     var nameMap by remember { mutableStateOf(merchant?.name ?: emptyMap()) }
     var gstin by remember { mutableStateOf(merchant?.gstin ?: "") }
+    // B2B = registered with a GSTIN, B2C = no GSTIN: the type is the GSTIN itself, so nothing new is stored
+    var isB2b by remember { mutableStateOf(!merchant?.gstin.isNullOrBlank()) }
+    val billGstin = if (isB2b) gstin else ""
     var countryMap by remember { mutableStateOf(merchant?.country ?: emptyMap()) }
 
     val currentCallingCode = remember(countryMap) {
@@ -181,11 +186,11 @@ fun CustomerEditorScreen(
     val companyChanged = merchant != null && initialCompanyId != currentCompanyId
 
     val hasChanges = remember(
-        nameMap, gstin, fullPhone, email, countryMap, stateMap, districtMap,
+        nameMap, billGstin, fullPhone, email, countryMap, stateMap, districtMap,
         cityMap, addressMap, pinCode, isCustomCountry, isCustomState, isCustomDistrict, companyChanged
     ) {
         if (merchant == null) {
-            nameMap.values.any { it.isNotBlank() } || gstin.isNotBlank() || fullPhone.isNotBlank() ||
+            nameMap.values.any { it.isNotBlank() } || billGstin.isNotBlank() || fullPhone.isNotBlank() ||
                 email.isNotBlank() ||
                 countryMap.values.any { it.isNotBlank() } ||
                 stateMap.values.any { it.isNotBlank() } ||
@@ -194,7 +199,7 @@ fun CustomerEditorScreen(
                 addressMap.values.any { it.isNotBlank() } ||
                 pinCode.isNotBlank() || companyChanged
         } else {
-            nameMap != merchant.name || gstin != merchant.gstin || fullPhone != merchant.phone ||
+            nameMap != merchant.name || billGstin != merchant.gstin || fullPhone != merchant.phone ||
                 email != merchant.email || countryMap != merchant.country || stateMap != merchant.state ||
                 districtMap != merchant.district || cityMap != merchant.city || addressMap != merchant.address ||
                 pinCode != merchant.pinCode || companyChanged
@@ -231,7 +236,7 @@ fun CustomerEditorScreen(
 
         // A GSTIN is checked for customers in India (or with no country set)
         val inIndia = countryMap.values.all { it.isBlank() } || countryMap.values.any { it.contains("india", ignoreCase = true) || it.contains("இந்தியா") }
-        if (gstin.isNotBlank() && inIndia && !BillRules.isValidGstin(gstin)) {
+        if (billGstin.isNotBlank() && inIndia && !BillRules.isValidGstin(billGstin)) {
             ElvanSnackbar.show(invalidGstinMsg)
             return
         }
@@ -243,7 +248,7 @@ fun CustomerEditorScreen(
             name = nameMap.filterValues { it.isNotBlank() },
             phone = fullPhone.trim(),
             email = email.trim(),
-            gstin = gstin.trim().uppercase(),
+            gstin = billGstin.trim().uppercase(),
             address = addressMap.filterValues { it.isNotBlank() },
             city = cityMap.filterValues { it.isNotBlank() },
             district = districtMap.filterValues { it.isNotBlank() },
@@ -271,15 +276,12 @@ fun CustomerEditorScreen(
         title = pageTitle,
         onBack = handleBackAttempt,
         scrollState = scrollState,
-        hasActions = true,
-        actions = {
-            ElvanActionButton(
-                label = K.saveBtn.tr(),
-                onClick = { handleSave() }
-            )
-        },
+        hasActions = false,
+        actions = {},
         showBottomFade = false,
-        floatingBar = {}
+        floatingBar = {
+            ElvanEditorBottomBar(label = K.saveBtn.tr(), onClick = { handleSave() }, accentColor = editorAccent)
+        }
     ) {
         Box(modifier = Modifier.fillMaxSize()) {
             CompositionLocalProvider(LocalEditorAccentColor provides editorAccent) {
@@ -289,7 +291,7 @@ fun CustomerEditorScreen(
                     contentPadding = PaddingValues(
                         start = 16.dp,
                         end = 16.dp,
-                        bottom = Dimens.SubpageContentPaddingBottom
+                        bottom = Dimens.SubpageContentPaddingBottom + 72.dp
                     ),
                     verticalArrangement = Arrangement.spacedBy(24.dp)
                 ) {
@@ -308,7 +310,7 @@ fun CustomerEditorScreen(
                                 verticalArrangement = Arrangement.spacedBy(16.dp)
                             ) {
                                 ElvanIrumozhiPulan(
-                                    label = "${K.customerName.tr()} *",
+                                    label = "${(if (showGst && isB2b) K.customerBusinessName else K.customerName).tr()} *",
                                     value = nameMap,
                                     onChanged = {
                                         nameMap = it
@@ -344,6 +346,16 @@ fun CustomerEditorScreen(
                                 }
 
                                 if (showGst) {
+                                    ElvanPillShifter(
+                                        items = listOf(PillShifterItem(K.customerB2b.tr()), PillShifterItem(K.customerB2c.tr())),
+                                        selectedIndex = if (isB2b) 0 else 1,
+                                        onIndexSelected = { isB2b = it == 0 },
+                                        colors = colors,
+                                        isFullWidth = true
+                                    )
+                                }
+
+                                if (showGst && isB2b) {
                                     ElvanEditorTextField(
                                         value = gstin,
                                         onValueChange = { gstin = it.uppercase() },

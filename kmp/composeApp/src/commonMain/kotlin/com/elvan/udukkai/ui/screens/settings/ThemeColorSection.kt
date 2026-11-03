@@ -8,6 +8,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -76,8 +77,9 @@ fun ThemeColorSection(profile: BusinessProfile, colors: ShellColors, onSave: (Bu
                     currentValue = items.firstOrNull { it.equals(current, true) } ?: MORE,
                     itemLabelBuilder = { if (it == MORE) moreName else names.getValue(it) },
                     leadingBuilder = { item ->
-                        // More colours shows the colour in use when it is not one of the main ones
-                        Box(Modifier.size(24.dp).clip(CircleShape).background(parseBillColor(if (item == MORE) current else item)))
+                        // More colours is a colour wheel, never the colour in use (that would look like a second green)
+                        val fill = if (item == MORE) Modifier.background(Brush.sweepGradient((0..6).map { Color.hsv(it * 60f, 0.85f, 0.95f) })) else Modifier.background(parseBillColor(item))
+                        Box(Modifier.size(24.dp).clip(CircleShape).then(fill))
                     },
                     onSelected = { item -> if (item == MORE) picking = true else onSave(profile.copy(themeColor = item)) }
                 )
