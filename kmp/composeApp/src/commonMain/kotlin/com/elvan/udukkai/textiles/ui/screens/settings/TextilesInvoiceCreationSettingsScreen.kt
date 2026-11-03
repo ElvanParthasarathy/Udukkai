@@ -249,58 +249,7 @@ fun TextilesInvoiceCreationSettingsScreen(
 
             // ── Section 3: PDF Theme ──
             item(key = "theme_section") {
-                val currentThemeColorHex = profile.themeColor.ifEmpty { "#388e3c" }
-                val currentColor = parseColor(currentThemeColorHex)
-
-                ElvanSettingsSection(colors = colors) {
-                    ElvanSettingsDisplayRow(
-                        title = K.pdfTheme.tr(),
-                        primaryValue = "",
-                        primaryWidget = {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Box(
-                                    modifier = Modifier
-                                        .size(14.dp)
-                                        .clip(CircleShape)
-                                        .background(currentColor)
-                                )
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Text(
-                                    text = getThemeName(currentThemeColorHex),
-                                    style = TextStyle(
-                                        fontFamily = ff,
-                                        fontSize = 14.sp,
-                                        fontWeight = FontWeight.Medium
-                                    ),
-                                    color = colors.textPrimary
-                                )
-                            }
-                        },
-                        onEdit = {
-                            bottomSheet.showSelection(
-                                title = pdfThemeTitle,
-                                items = listOf("#388e3c", "#6a1b9a"),
-                                currentValue = profile.themeColor.ifEmpty { "#388e3c" },
-                                itemLabelBuilder = { getThemeName(it) },
-                                leadingBuilder = { colorHex ->
-                                    Box(
-                                        modifier = Modifier
-                                            .size(24.dp)
-                                            .clip(CircleShape)
-                                            .background(parseColor(colorHex))
-                                    )
-                                },
-                                onSelected = { selectedColor ->
-                                    val updated = profile.copy()
-                                    updated.themeColor = selectedColor
-                                    TextilesProfileRepository.updateProfile(updated)
-                                    ElvanSnackbar.show(saveSuccessMsg)
-                                }
-                            )
-                        },
-                        colors = colors
-                    )
-                }
+                com.elvan.udukkai.ui.screens.settings.ThemeColorSection(profile, colors, appThemeHex = "#db2777") { TextilesProfileRepository.updateProfile(it); ElvanSnackbar.show(saveSuccessMsg) }
             }
         }
     }

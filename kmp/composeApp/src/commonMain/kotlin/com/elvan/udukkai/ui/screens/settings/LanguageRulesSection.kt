@@ -31,6 +31,7 @@ fun LanguageRulesSection(profile: BusinessProfile, colors: ShellColors, onSave: 
         "businessName" to K.ruleBusinessName.tr(),
         "businessAddress" to K.ruleBusinessAddress.tr(),
         "customer" to K.ruleCustomer.tr(),
+        "signatureName" to K.ruleSignatureName.tr(),
     )
 
     ElvanSettingsSection(title = K.languageRules.tr(), colors = colors) {

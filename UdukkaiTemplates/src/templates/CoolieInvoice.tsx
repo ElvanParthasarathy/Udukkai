@@ -115,6 +115,7 @@ export default function CoolieInvoiceBilingual({ bill }) {
   // The bill's business name: both lines when bilingual, only the bill's own language otherwise
   const ownName = isEng ? (name.english || name.tamil) : (name.tamil || name.english);
   const bizLines = bi ? both(langRule(p, 'businessName') === 'ta' ? [name.tamil, name.english] : [name.english, name.tamil]) : [ownName];
+  const wideLogo = !!p.wideLogo && p.billHeaderStyle === 'wide';
   const fontOf = (t) => (/[\u0B80-\u0BFF]/.test(t) ? 'font-tamil' : 'font-display');
   const phone = p.phone ? (Array.isArray(p.phone) ? p.phone : String(p.phone).split(',')) : [];
   const contactLines = (en) => {
@@ -155,10 +156,26 @@ export default function CoolieInvoiceBilingual({ bill }) {
       {/* Header */}
       <div className="print-header-new" style={{ paddingLeft: '8px', paddingRight: '8px' }}>
         <div className="header-left">
-          <div className="header-company-info">
+          {/* Same as the Textiles bill: a wide logo replaces the name; otherwise the small logo sits beside it */}
+          {wideLogo ? (
+            <img
+              crossOrigin={String(p.wideLogo).startsWith('http') ? 'anonymous' : undefined}
+              src={p.wideLogo}
+              alt="Wide Logo"
+              style={{ height: '64px', maxWidth: '340px', objectFit: 'contain', objectPosition: 'left center' }}
+            />
+          ) : p.logo ? (
+            <img
+              crossOrigin={String(p.logo).startsWith('http') ? 'anonymous' : undefined}
+              src={p.logo}
+              alt="Logo"
+              style={{ height: '56px', maxWidth: '90px', objectFit: 'contain' }}
+            />
+          ) : null}
+          {!wideLogo && <div className="header-company-info">
             <div className={`company-name ${fontOf(bizLines[0] || '')}`}>{bizLines[0]}</div>
             {bizLines[1] && <div className={`company-subtitle ${fontOf(bizLines[1])}`}>{bizLines[1]}</div>}
-          </div>
+          </div>}
         </div>
         <div className="header-right" style={{ textAlign: 'right', display: 'flex', flexDirection: 'column', alignItems: 'flex-end', justifyContent: 'center' }}>
           <div className={isEng ? 'font-display' : 'font-tamil'} style={{ fontSize: '14.5px', fontWeight: 700, color: accent, lineHeight: 1.25, letterSpacing: '0.1px' }}>
@@ -355,7 +372,7 @@ export default function CoolieInvoiceBilingual({ bill }) {
           </div>
           <div style={{ minWidth: '220px', textAlign: 'right' }}>
             <div style={{ position: 'relative', zIndex: 10, fontSize: '0.75rem', fontWeight: 600, color: '#475569', lineHeight: 1 }}>
-              {p.authorizedSignatoryName ? `(${p.authorizedSignatoryName})` : lbl('(கையொப்பம்)', '(Authorized Signature)')}
+              {p.authorizedSignatoryName ? `(${p.authorizedSignatoryName})` : (bi ? (primaryEng ? '(Authorized Signature / கையொப்பம்)' : '(கையொப்பம் / Authorized Signature)') : lbl('(கையொப்பம்)', '(Authorized Signature)'))}
             </div>
           </div>
         </div>

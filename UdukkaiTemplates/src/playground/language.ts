@@ -10,17 +10,17 @@ const E = { biz: 'Sri Jaipriya Silks', tag: 'Handloom Silk Sarees', addr: '12 Pe
 const m = (k) => ({ ta: T[k], en: E[k] });
 
 // mode: 'bi' = bilingual, 'ta' / 'en' = that language only
-const profile = (mode, rules) => ({
+const profile = (mode, rules, extra = {}) => ({
   id: '1', shortName: 'SJPS', primaryLanguage: mode === 'en' || mode === 'bien' ? 'en' : 'ta', secondaryLanguage: mode === 'en' || mode === 'bien' ? 'ta' : 'en', isBilingual: mode === 'bi' || mode === 'bien',
   businessName: m('biz'), tagline: m('tag'), address: m('addr'), city: m('city'), district: m('dist'), state: m('state'), country: m('country'),
   pinCode: '632301', phone1: '9000000001', phone2: '9000000002', email: 'shop@example.com', gstin: '33AAAAA0000A1Z5', pan: 'AAAAA0000A',
   logo: '', wideLogo: '', headerLayout: 'small', signature: '', signatoryName: 'R. Owner', themeColor: '#388e3c', upiId: 'shop@upi',
-  bankName: m('bank'), branch: m('br'), accountNumber: '123456789012', ifsc: 'IDIB000A001', printSettings: rules ? { langRules: rules } : {}, paymentAccounts: [],
+  bankName: m('bank'), branch: m('br'), accountNumber: '123456789012', ifsc: 'IDIB000A001', printSettings: { signatoryNames: { ta: 'ஆர். உரிமையாளர்', en: 'R. Owner' }, ...(rules ? { langRules: rules } : {}) }, paymentAccounts: [], ...extra, ...extra,
 });
 const customer = (state) => ({ name: m('cust'), address: m('caddr'), city: m('ccity'), district: m('cdist'), state: state || m('state'), country: m('country'), pinCode: '631501', gstin: '33BBBBB1111B1Z5', email: 'cust@example.com', phone: '9876543210' });
 
 const gst = (mode, ui, v = {}) => ({
-  docType: 'gst-invoice', appLanguage: ui, profile: profile(mode, v.rules), customer: customer(v.cstate),
+  docType: 'gst-invoice', appLanguage: ui, profile: profile(mode, v.rules, v.profile), customer: customer(v.cstate),
   invoice: {
     invoiceNumber: 'SJPS-007', invoiceType: v.type || 'tax-invoice', invoiceDate: '2026-11-02', customerName: m('cust'), customerAddress: m('ccity'),
     placeOfSupply: v.pos || 'Tamil Nadu', placeOfSupplyTa: v.posTa || 'தமிழ்நாடு',
@@ -30,7 +30,7 @@ const gst = (mode, ui, v = {}) => ({
   },
 });
 const coolie = (mode, ui, v = {}) => ({
-  docType: 'coolie-invoice', appLanguage: ui, profile: profile(mode, v.rules), customer: customer(),
+  docType: 'coolie-invoice', appLanguage: ui, profile: profile(mode, v.rules, v.profile), customer: customer(),
   invoice: {
     id: '1', invoiceNumber: 'VRM-007', invoiceDate: '2026-11-02', customerName: m('cust'), customerAddress: m('caddr'),
     items: [{ name: { ta: 'ஜரி தடை பணிக்கட்டணம்', en: 'Jari Thadai Job Work Charges' }, weight: 12.345, price: 150 }],
@@ -119,8 +119,62 @@ const ruleFails = async () => {
   return fails;
 };
 
+
+// ---- Thank you, place of supply, signature name, logos and colours
+const PX = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==';
+const extraFails = async () => {
+  const fails = [];
+  for (const [mode, tamilMain] of [['bi', true], ['bien', false]]) {
+    const main = tamilMain ? 'Tamil' : 'English';
+    // Thank you: both languages on both bills, the main language first
+    for (const doc of ['gst', 'coolie']) {
+      const lines = await linesOf((doc === 'gst' ? gst : coolie)(mode, 'ta', {}));
+      const a = first(lines, 'நன்றி'), b = first(lines, 'Thank You');
+      const line = lines.find((l) => l.includes('நன்றி')) || '';
+      if (a < 0 || b < 0 || !line.includes('Thank You')) fails.push(`${doc} / main ${main}: Thank You and நன்றி must be on the same line`);
+      else if (tamilMain ? line.indexOf('நன்றி') > line.indexOf('Thank You') : line.indexOf('Thank You') > line.indexOf('நன்றி')) fails.push(`${doc} / main ${main}: Thank You pair is in the wrong order: "${line}"`);
+    }
+    // Place of supply: the main language first
+    const pl = await linesOf(gst(mode, 'ta', {}));
+    const t = first(pl, 'தமிழ்நாடு'), e = pl.findIndex((l, i) => i > 0 && l === 'Tamil Nadu');
+    if (!(t >= 0 && e >= 0 && (tamilMain ? t < e : e < t))) fails.push(`gst / main ${main}: place of supply should show the main language first (Tamil at ${t}, English at ${e})`);
+    // Signature name: English by default, Tamil by the rule, the other language when one is missing
+    for (const doc of ['gst', 'coolie']) {
+      const make = doc === 'gst' ? gst : coolie;
+      const text = async (rules, names) => (await linesOf(make(mode, 'ta', { rules, profile: names ? { printSettings: { signatoryNames: names, ...(rules ? { langRules: rules } : {}) } } : undefined }))).join('\n');
+      const def = await text(undefined);
+      if (!def.includes('R. Owner') || def.includes('ஆர். உரிமையாளர்')) fails.push(`${doc} / main ${main}: signature name should default to English`);
+      const ta = await text({ signatureName: 'ta' });
+      if (!ta.includes('ஆர். உரிமையாளர்') || ta.includes('R. Owner')) fails.push(`${doc} / main ${main}: signature name rule Tamil should print the Tamil name only`);
+      const only = await text({ signatureName: 'ta' }, { en: 'R. Owner' });
+      if (!only.includes('R. Owner')) fails.push(`${doc} / main ${main}: with no Tamil name the English one should print`);
+    }
+  }
+  // The signature label when there is no name is a pair too
+  for (const [doc, make] of [['gst', gst], ['coolie', coolie]]) {
+    const l = (await linesOf(make('bi', 'ta', { profile: { signatoryName: '', printSettings: {} } }))).find((x) => x.includes('கையொப்பம்')) || '';
+    if (!l.includes('Signature')) fails.push(`${doc} / no signatory name: the label must be bilingual, got "${l}"`);
+  }
+  // Logos on the Factory bill: wide logo replaces the name, the small logo sits beside it, none when none is set
+  const imgs = async (extra) => { await linesOf(coolie('bi', 'ta', { profile: extra })); return [...paper().querySelectorAll('img')].map((i) => i.alt); };
+  const small = await imgs({ logo: PX, headerLayout: 'small' });
+  if (!small.includes('Logo')) fails.push('coolie / small logo: the logo is missing');
+  const wide = await imgs({ logo: PX, wideLogo: PX, headerLayout: 'wide' });
+  if (!wide.includes('Wide Logo')) fails.push('coolie / wide logo: the wide logo is missing');
+  await linesOf(coolie('bi', 'ta', { profile: { wideLogo: PX, headerLayout: 'wide' } }));
+  if (paper().querySelector('.print-header-new').innerText.includes(E.biz)) fails.push('coolie / wide logo: the name should be replaced by the wide logo');
+  if ((await imgs({ logo: '', wideLogo: '' })).some((a) => /Logo/.test(a))) fails.push('coolie / no logo: no logo image expected');
+  // Colours: any #rrggbb reaches both bills
+  for (const [doc, make] of [['gst', gst], ['coolie', coolie]]) {
+    await linesOf(make('bi', 'ta', { profile: { themeColor: '#b8860b' } }));
+    const used = [...paper().querySelectorAll('*')].some((el) => getComputedStyle(el).color === 'rgb(184, 134, 11)');
+    if (!used) fails.push(`${doc}: the theme colour #b8860b is not used anywhere on the bill`);
+  }
+  return fails;
+};
+
 const run = async () => {
-  const fails = await ruleFails();
+  const fails = [...(await ruleFails()), ...(await extraFails())];
   for (const [doc, make] of Object.entries(DOCS)) {
     const variants = doc === 'gst' ? { plain: {}, ...GST_VARIANTS } : { plain: {} };
     for (const [vn, v] of Object.entries(variants)) {

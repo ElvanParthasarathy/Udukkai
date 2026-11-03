@@ -14,8 +14,8 @@ class LanguageRulesTest {
     }
 
     @Test
-    fun three_rows_and_only_the_business_name_prints_both_languages() {
-        assertEquals(listOf("businessName", "businessAddress", "customer"), LanguageRules.fields)
+    fun four_rows_and_only_the_business_name_prints_both_languages() {
+        assertEquals(listOf("businessName", "businessAddress", "customer", "signatureName"), LanguageRules.fields)
         assertTrue(LanguageRules.isBoth("businessName"))
         assertFalse(LanguageRules.isBoth("businessAddress"))
         assertFalse(LanguageRules.isBoth("customer"))

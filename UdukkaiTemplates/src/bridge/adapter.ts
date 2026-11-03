@@ -48,6 +48,15 @@ const resolveLang = (profile) => {
 const taSlot = (map, lang) => str(map?.ta ?? map?.[lang.primaryCode]);
 const enSlot = (map, lang) => str(map?.en ?? map?.[lang.secondaryCode]);
 
+// The signatory's name: one string in the language the business chose (Settings, Create: Signature name), the other
+// language when that one was left empty, then the single name saved before names were bilingual.
+// A single-language bill uses its own language.
+const signatoryName = (p, lang) => {
+  const names = p.printSettings?.signatoryNames || {};
+  const want = p.isBilingual === false ? (lang?.primaryCode || 'ta') : (p.printSettings?.langRules?.signatureName === 'ta' ? 'ta' : 'en');
+  return str(names[want]) || str(names[want === 'ta' ? 'en' : 'ta']) || str(p.signatoryName);
+};
+
 const toPaymentAccount = (acc, lang) => ({
   id: str(acc.id),
   label: str(acc.label),
@@ -107,7 +116,7 @@ export const toReactProfile = (p, lang) => {
   if (ps.receiptLanguage) out.receiptLanguage = ps.receiptLanguage;
   out.billHeaderStyle = p.headerLayout === 'wide' ? 'wide' : 'small';
   out.signature = str(p.signature);
-  out.authorizedSignatoryName = str(p.signatoryName);
+  out.authorizedSignatoryName = signatoryName(p, lang);
   out.themeColor = str(p.themeColor) || '#388e3c';
   out.invoiceTheme = 'sjs';
 
@@ -278,8 +287,10 @@ export const toCoolieProfile = (p) => {
     branchEn: str(p.branch?.en),
     email: str(p.email),
     logo: str(p.logo),
+    wideLogo: str(p.wideLogo),
+    billHeaderStyle: p.headerLayout === 'wide' ? 'wide' : 'small',
     signature: str(p.signature),
-    authorizedSignatoryName: str(p.signatoryName),
+    authorizedSignatoryName: signatoryName(p, resolveLang(p)),
     themeColor: str(p.themeColor),
     defaultPrintLanguage: ps.defaultPrintLanguage || 'ta',
     // Bilingual bills: Tamil line + English line, like the Textiles invoice

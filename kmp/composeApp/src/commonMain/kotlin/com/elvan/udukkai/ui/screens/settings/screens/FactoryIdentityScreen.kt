@@ -22,11 +22,13 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.elvan.udukkai.data.settings.SignatoryNames
 import com.elvan.udukkai.localization.K
 import com.elvan.udukkai.localization.tr
 import com.elvan.udukkai.theme.Dimens
 import com.elvan.udukkai.theme.LocalAppFontFamily
 import com.elvan.udukkai.theme.ShellColors
+import com.elvan.udukkai.theme.ShellDefaults
 import com.elvan.udukkai.theme.rememberShellColors
 import com.elvan.udukkai.ui.components.shell.*
 import com.elvan.udukkai.ui.navigation.MaterialSymbols
@@ -45,21 +47,30 @@ fun FactoryIdentityScreen(
 
     var editingSection by remember { mutableStateOf<String?>(null) }
     var tempImagePath by remember { mutableStateOf<String?>(null) }
-    var tempSignatoryFirstName by remember { mutableStateOf("") }
-    var tempSignatoryLastName by remember { mutableStateOf("") }
+    var tempWideImagePath by remember { mutableStateOf<String?>(null) }
+    var tempHeaderStyle by remember { mutableStateOf(profile.headerLayout.ifEmpty { "small" }) }
+    var tempSignatoryTa by remember { mutableStateOf("") }
+    var tempSignatoryEn by remember { mutableStateOf("") }
     var activePickerField by remember { mutableStateOf<String?>(null) }
 
     val imagePicker = rememberImagePicker { path ->
         when (activePickerField) {
             "logo" -> tempImagePath = path
+            "wide_logo" -> tempWideImagePath = path
             "kaiyoppam" -> tempImagePath = path
         }
         activePickerField = null
     }
 
     val logoPath = profile.logo.ifEmpty { null }
+    val wideLogoPath = profile.wideLogo.ifEmpty { null }
+    val headerStyle = profile.headerLayout.ifEmpty { "small" }
+    val smallLabel = K.smallLogoCompanyName.tr()
+    val wideLabel = K.wideLogoOnly.tr()
+    val headerStyleTitle = K.billHeaderStyle.tr()
+    val bottomSheet = LocalElvanBottomSheetController.current
     val signaturePath = profile.signature.ifEmpty { null }
-    val signatoryName = profile.fullSignatoryName
+    val signatoryName = SignatoryNames.get(profile).let { it.second.ifEmpty { it.first } }
     val saveSuccessMsg = K.profileSaved.tr()
 
     LazyColumn(
@@ -128,7 +139,133 @@ fun FactoryIdentityScreen(
                     )
                     ElvanSettingsDivider(colors = colors)
 
-                    // 2. Signature (Kaiyoppam & Oppam Peyar)
+                    // 2. Wide Logo (Agala Oavuru)
+                    ElvanSettingsAnimatedExpand(
+                        isEditing = editingSection == "wide_logo",
+                        displayContent = {
+                            ElvanSettingsDisplayRow(
+                                title = K.verticalWideLogo.tr(),
+                                primaryValue = if (wideLogoPath != null) "" else K.none.tr(),
+                                primaryWidget = if (wideLogoPath != null) {
+                                    {
+                                        ElvanImageViewer(
+                                            value = wideLogoPath,
+                                            modifier = Modifier.height(36.dp).clip(RoundedCornerShape(6.dp)),
+                                            contentScale = ContentScale.Fit
+                                        )
+                                    }
+                                } else null,
+                                onEdit = {
+                                    tempWideImagePath = wideLogoPath
+                                    editingSection = "wide_logo"
+                                },
+                                colors = colors
+                            )
+                        },
+                        editContent = {
+                            ElvanSettingsEditContainer(
+                                title = K.verticalWideLogo.tr(),
+                                onCancel = { editingSection = null },
+                                onSave = {
+                                    val updated = profile.copy()
+                                    updated.wideLogo = tempWideImagePath ?: ""
+                                    FactoryProfileRepository.updateProfile(updated)
+                                    editingSection = null
+                                    ElvanSnackbar.show(saveSuccessMsg)
+                                },
+                                colors = colors
+                            ) {
+                                ImageUploadBox(
+                                    imagePath = tempWideImagePath,
+                                    onPick = {
+                                        activePickerField = "wide_logo"
+                                        imagePicker.launch()
+                                    },
+                                    onClear = { tempWideImagePath = null },
+                                    colors = colors
+                                )
+                            }
+                        }
+                    )
+                    ElvanSettingsDivider(colors = colors)
+
+                    // 3. Header Style (Chinnathin Vadivam)
+                    ElvanSettingsAnimatedExpand(
+                        isEditing = editingSection == "header_style",
+                        displayContent = {
+                            ElvanSettingsDisplayRow(
+                                title = K.billHeaderStyle.tr(),
+                                primaryValue = if (headerStyle == "wide") wideLabel else smallLabel,
+                                onEdit = {
+                                    tempHeaderStyle = headerStyle
+                                    editingSection = "header_style"
+                                },
+                                colors = colors
+                            )
+                        },
+                        editContent = {
+                            ElvanSettingsEditContainer(
+                                title = K.billHeaderStyle.tr(),
+                                onCancel = { editingSection = null },
+                                onSave = {
+                                    val updated = profile.copy()
+                                    updated.headerLayout = tempHeaderStyle
+                                    FactoryProfileRepository.updateProfile(updated)
+                                    editingSection = null
+                                    ElvanSnackbar.show(saveSuccessMsg)
+                                },
+                                colors = colors
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .height(48.dp)
+                                        .clip(RoundedCornerShape(100))
+                                        .background(colors.textPrimary.copy(alpha = 0.08f))
+                                        .clickable(
+                                            interactionSource = remember { MutableInteractionSource() },
+                                            indication = ShellDefaults.ripple(colors, bounded = true),
+                                            onClick = {
+                                                bottomSheet.showSelection(
+                                                    title = headerStyleTitle,
+                                                    items = listOf("small", "wide"),
+                                                    currentValue = tempHeaderStyle,
+                                                    itemLabelBuilder = { if (it == "wide") wideLabel else smallLabel },
+                                                    onSelected = { tempHeaderStyle = it }
+                                                )
+                                            }
+                                        )
+                                        .padding(horizontal = 20.dp),
+                                    contentAlignment = Alignment.CenterStart
+                                ) {
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Text(
+                                            text = if (tempHeaderStyle == "wide") wideLabel else smallLabel,
+                                            style = TextStyle(
+                                                fontFamily = ff,
+                                                fontSize = 14.sp,
+                                                fontWeight = FontWeight.Normal
+                                            ),
+                                            color = colors.textPrimary
+                                        )
+                                        Icon(
+                                            imageVector = MaterialSymbols.Rounded.KeyboardArrowDown,
+                                            contentDescription = null,
+                                            tint = colors.textPrimary.copy(alpha = 0.6f),
+                                            modifier = Modifier.size(20.dp)
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    )
+                    ElvanSettingsDivider(colors = colors)
+
+                    // 4. Signature (Kaiyoppam & Oppam Peyar)
                     ElvanSettingsAnimatedExpand(
                         isEditing = editingSection == "kaiyoppam",
                         displayContent = {
@@ -146,13 +283,9 @@ fun FactoryIdentityScreen(
                                 } else null,
                                 onEdit = {
                                     tempImagePath = signaturePath
-                                    tempSignatoryFirstName = profile.signatoryFirstName
-                                    tempSignatoryLastName = profile.signatoryLastName
-                                    if (tempSignatoryFirstName.isEmpty() && tempSignatoryLastName.isEmpty() && profile.signatoryName.isNotEmpty()) {
-                                        val parts = profile.signatoryName.trim().split(" ", limit = 2)
-                                        tempSignatoryFirstName = parts.firstOrNull() ?: ""
-                                        tempSignatoryLastName = if (parts.size > 1) parts[1] else ""
-                                    }
+                                    val names = SignatoryNames.get(profile)
+                                    tempSignatoryTa = names.first
+                                    tempSignatoryEn = names.second
                                     editingSection = "kaiyoppam"
                                 },
                                 colors = colors
@@ -165,9 +298,10 @@ fun FactoryIdentityScreen(
                                 onSave = {
                                     val updated = profile.copy()
                                     updated.signature = tempImagePath ?: ""
-                                    updated.signatoryFirstName = tempSignatoryFirstName.trim()
-                                    updated.signatoryLastName = tempSignatoryLastName.trim()
-                                    updated.signatoryName = updated.fullSignatoryName
+                                    updated.signatoryFirstName = ""
+                                    updated.signatoryLastName = ""
+                                    updated.signatoryName = tempSignatoryEn.trim().ifEmpty { tempSignatoryTa.trim() }
+                                    updated.printSettingsJson = SignatoryNames.set(updated.printSettingsJson, tempSignatoryTa, tempSignatoryEn)
                                     FactoryProfileRepository.updateProfile(updated)
                                     editingSection = null
                                     ElvanSnackbar.show(saveSuccessMsg)
@@ -185,18 +319,18 @@ fun FactoryIdentityScreen(
                                 )
                                 Spacer(modifier = Modifier.height(16.dp))
                                 ElvanSettingsTextField(
-                                    label = K.firstName.tr(),
-                                    value = tempSignatoryFirstName,
-                                    onValueChange = { tempSignatoryFirstName = it },
-                                    placeholder = K.firstName.tr(),
+                                    label = K.signatoryNameTa.tr(),
+                                    value = tempSignatoryTa,
+                                    onValueChange = { tempSignatoryTa = it },
+                                    placeholder = K.signatoryNameTa.tr(),
                                     colors = colors
                                 )
                                 Spacer(modifier = Modifier.height(12.dp))
                                 ElvanSettingsTextField(
-                                    label = K.lastName.tr(),
-                                    value = tempSignatoryLastName,
-                                    onValueChange = { tempSignatoryLastName = it },
-                                    placeholder = K.lastName.tr(),
+                                    label = K.signatoryNameEn.tr(),
+                                    value = tempSignatoryEn,
+                                    onValueChange = { tempSignatoryEn = it },
+                                    placeholder = K.signatoryNameEn.tr(),
                                     colors = colors
                                 )
                             }

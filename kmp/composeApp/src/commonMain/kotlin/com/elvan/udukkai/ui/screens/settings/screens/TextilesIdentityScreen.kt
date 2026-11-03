@@ -22,6 +22,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.elvan.udukkai.data.settings.SignatoryNames
 import com.elvan.udukkai.localization.K
 import com.elvan.udukkai.localization.tr
 import com.elvan.udukkai.theme.Dimens
@@ -48,8 +49,8 @@ fun TextilesIdentityScreen(
     var tempImagePath by remember { mutableStateOf<String?>(null) }
     var tempWideImagePath by remember { mutableStateOf<String?>(null) }
     var tempHeaderStyle by remember { mutableStateOf(profile.headerLayout.ifEmpty { "small" }) }
-    var tempSignatoryFirstName by remember { mutableStateOf("") }
-    var tempSignatoryLastName by remember { mutableStateOf("") }
+    var tempSignatoryTa by remember { mutableStateOf("") }
+    var tempSignatoryEn by remember { mutableStateOf("") }
     var activePickerField by remember { mutableStateOf<String?>(null) }
 
     val imagePicker = rememberImagePicker { path ->
@@ -65,7 +66,7 @@ fun TextilesIdentityScreen(
     val wideLogoPath = profile.wideLogo.ifEmpty { null }
     val headerStyle = profile.headerLayout.ifEmpty { "small" }
     val signaturePath = profile.signature.ifEmpty { null }
-    val signatoryName = profile.fullSignatoryName
+    val signatoryName = SignatoryNames.get(profile).let { it.second.ifEmpty { it.first } }
 
     val smallLabel = K.smallLogoCompanyName.tr()
     val wideLabel = K.wideLogoOnly.tr()
@@ -283,13 +284,9 @@ fun TextilesIdentityScreen(
                                 } else null,
                                 onEdit = {
                                     tempImagePath = signaturePath
-                                    tempSignatoryFirstName = profile.signatoryFirstName
-                                    tempSignatoryLastName = profile.signatoryLastName
-                                    if (tempSignatoryFirstName.isEmpty() && tempSignatoryLastName.isEmpty() && profile.signatoryName.isNotEmpty()) {
-                                        val parts = profile.signatoryName.trim().split(" ", limit = 2)
-                                        tempSignatoryFirstName = parts.firstOrNull() ?: ""
-                                        tempSignatoryLastName = if (parts.size > 1) parts[1] else ""
-                                    }
+                                    val names = SignatoryNames.get(profile)
+                                    tempSignatoryTa = names.first
+                                    tempSignatoryEn = names.second
                                     editingSection = "kaiyoppam"
                                 },
                                 colors = colors
@@ -302,9 +299,10 @@ fun TextilesIdentityScreen(
                                 onSave = {
                                     val updated = profile.copy()
                                     updated.signature = tempImagePath ?: ""
-                                    updated.signatoryFirstName = tempSignatoryFirstName.trim()
-                                    updated.signatoryLastName = tempSignatoryLastName.trim()
-                                    updated.signatoryName = updated.fullSignatoryName
+                                    updated.signatoryFirstName = ""
+                                    updated.signatoryLastName = ""
+                                    updated.signatoryName = tempSignatoryEn.trim().ifEmpty { tempSignatoryTa.trim() }
+                                    updated.printSettingsJson = SignatoryNames.set(updated.printSettingsJson, tempSignatoryTa, tempSignatoryEn)
                                     TextilesProfileRepository.updateProfile(updated)
                                     editingSection = null
                                     ElvanSnackbar.show(saveSuccessMsg)
@@ -322,18 +320,18 @@ fun TextilesIdentityScreen(
                                 )
                                 Spacer(modifier = Modifier.height(16.dp))
                                 ElvanSettingsTextField(
-                                    label = K.firstName.tr(),
-                                    value = tempSignatoryFirstName,
-                                    onValueChange = { tempSignatoryFirstName = it },
-                                    placeholder = K.firstName.tr(),
+                                    label = K.signatoryNameTa.tr(),
+                                    value = tempSignatoryTa,
+                                    onValueChange = { tempSignatoryTa = it },
+                                    placeholder = K.signatoryNameTa.tr(),
                                     colors = colors
                                 )
                                 Spacer(modifier = Modifier.height(12.dp))
                                 ElvanSettingsTextField(
-                                    label = K.lastName.tr(),
-                                    value = tempSignatoryLastName,
-                                    onValueChange = { tempSignatoryLastName = it },
-                                    placeholder = K.lastName.tr(),
+                                    label = K.signatoryNameEn.tr(),
+                                    value = tempSignatoryEn,
+                                    onValueChange = { tempSignatoryEn = it },
+                                    placeholder = K.signatoryNameEn.tr(),
                                     colors = colors
                                 )
                             }

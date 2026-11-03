@@ -90,7 +90,7 @@ const SjsTheme = React.forwardRef(({ profile = {}, client = {}, details = {}, it
   const customTitle = details?.customTitle || options.customTitle || typeTitle;
   const currencySymbol = options.currency || 'INR';
 
-  const renderLabel = (enLabel, taLabel) => {
+  const renderLabel = (enLabel, taLabel, sep = ' / ') => {
     const p = profile?.primaryDataLanguage || 'Tamil';
     const s = profile?.secondaryDataLanguage || 'English';
     const b = profile?.enableBilingual !== false;
@@ -106,7 +106,7 @@ const SjsTheme = React.forwardRef(({ profile = {}, client = {}, details = {}, it
 
     if (!b) return pStr || getLabel('English');
 
-    if (pStr && sStr) return `${pStr} / ${sStr}`;
+    if (pStr && sStr) return `${pStr}${sep}${sStr}`;
     return pStr || sStr || '';
   };
 
@@ -362,15 +362,17 @@ const SjsTheme = React.forwardRef(({ profile = {}, client = {}, details = {}, it
                 const en = parts.length > 1 ? (isTa ? parts[1] : parts[0]) : parts[0];
                 const ta = parts.length > 1 ? (isTa ? parts[0] : parts[1]) : parts[0];
                 
-                if (profile?.enableBilingual !== false && ta && en) {
+                // The main language first (larger), the second under it
+                const [main, second] = isTa ? [ta, en] : [en, ta];
+                if (profile?.enableBilingual !== false && main && second && main !== second) {
                   return (
                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', justifyContent: 'center' }}>
-                      <div style={{ fontWeight: 700, fontSize: '1.1rem', marginBottom: '2px', lineHeight: 1.2 }}>{ta}</div>
-                      <div style={{ fontWeight: 500, fontSize: '0.8rem', color: '#64748b' }}>{en}</div>
+                      <div style={{ fontWeight: 700, fontSize: '1.1rem', marginBottom: '2px', lineHeight: 1.2 }}>{main}</div>
+                      <div style={{ fontWeight: 500, fontSize: '0.8rem', color: '#64748b' }}>{second}</div>
                     </div>
                   );
                 }
-                return <span style={{ fontSize: '1.1rem', fontWeight: 700 }}>{ta || en || ''}</span>;
+                return <span style={{ fontSize: '1.1rem', fontWeight: 700 }}>{(isTa ? ta : en) || ta || en || ''}</span>;
               })()}
             </div>
           </div>
@@ -839,14 +841,14 @@ const SjsTheme = React.forwardRef(({ profile = {}, client = {}, details = {}, it
         {/* Bottom Row: Nandri & Signatory Text */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', width: '100%', marginTop: 'auto', paddingTop: '10px' }}>
           <div style={{ fontFamily: 'inherit', fontSize: '0.85rem', fontWeight: 700, color: accent, lineHeight: 1 }}>
-            {profile?.primaryDataLanguage === 'English' ? 'Thank You' : 'நன்றி'}
+            {renderLabel('Thank You', 'நன்றி', ' • ')}
           </div>
           
           {showSignature && (
             <div style={{ minWidth: '220px', textAlign: 'right' }}>
               {showSignatoryText && (
                 <div style={{ position: 'relative', zIndex: 10, fontSize: '0.75rem', fontWeight: 600, color: '#555', lineHeight: 1 }}>
-                  {profile?.authorizedSignatoryName ? `(${profile.authorizedSignatoryName})` : `(${profile?.primaryDataLanguage === 'English' ? 'Signature' : 'கையொப்பம்'})`}
+                  {profile?.authorizedSignatoryName ? `(${profile.authorizedSignatoryName})` : `(${renderLabel('Signature', 'கையொப்பம்')})`}
                 </div>
               )}
             </div>
