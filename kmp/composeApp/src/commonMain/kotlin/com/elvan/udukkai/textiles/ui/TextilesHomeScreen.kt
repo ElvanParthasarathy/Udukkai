@@ -83,7 +83,8 @@ fun TextilesHomeScreen() {
     var uruvakkuSegment by remember { mutableStateOf(0) } // 0 = Invoices, 1 = Receipts
     var subpageStack by remember { mutableStateOf<List<ActiveSubpage>>(emptyList()) }
     val activeSubpage = subpageStack.lastOrNull()
-    val navigateToSubpage: (ActiveSubpage) -> Unit = { subpage -> subpageStack = subpageStack + subpage }
+    // The same page is never pushed twice on top of itself (a double tap would slide it in twice and need two Backs)
+    val navigateToSubpage: (ActiveSubpage) -> Unit = { subpage -> if (subpageStack.lastOrNull() != subpage) subpageStack = subpageStack + subpage }
     val popSubpage: () -> Unit = { if (subpageStack.isNotEmpty()) subpageStack = subpageStack.dropLast(1) }
     val clearSubpages: () -> Unit = { subpageStack = emptyList() }
     var isRefreshing by remember { mutableStateOf(false) }

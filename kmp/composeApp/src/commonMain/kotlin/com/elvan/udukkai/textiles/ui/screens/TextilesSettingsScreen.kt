@@ -100,8 +100,8 @@ fun TextilesSettingsScreen(
                 SettingsRoute.Language -> K.appLanguage.tr()
                 SettingsRoute.Merchant -> K.company.tr()
                 SettingsRoute.ManageProfiles -> K.manage.tr()
-                SettingsRoute.FactoryIdentity -> K.factoryCompanyBranding.tr()
-                SettingsRoute.TextilesIdentity -> K.textilesCompanyBranding.tr()
+                SettingsRoute.FactoryIdentity -> K.identifier.tr()
+                SettingsRoute.TextilesIdentity -> K.identifier.tr()
                 SettingsRoute.Address -> K.address.tr()
                 SettingsRoute.Bank -> K.bank.tr()
                 SettingsRoute.InvoiceCreation -> K.createBtn.tr()
@@ -114,7 +114,7 @@ fun TextilesSettingsScreen(
                 SettingsRoute.Terms -> K.termsOfUse.tr()
                 SettingsRoute.Licences -> K.openSourceLicences.tr()
                 SettingsRoute.AppLock -> K.appLock.tr()
-                SettingsRoute.About -> K.aboutAndLegal.tr()
+                SettingsRoute.About -> K.groupAbout.tr()
             }
 
             ElvanSubShell(
