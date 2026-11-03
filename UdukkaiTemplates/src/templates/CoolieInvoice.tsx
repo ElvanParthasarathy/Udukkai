@@ -71,6 +71,7 @@ export default function CoolieInvoiceBilingual({ bill }) {
     address_en: addressEn,
     city: cityTa,
     city_en: cityEn,
+    customer_gstin: customerGstin,
     items = [],
     setharam_grams: setharamGrams,
     courier_rs: courierRs,
@@ -202,7 +203,7 @@ export default function CoolieInvoiceBilingual({ bill }) {
           <div className="inv-party" style={{ marginTop: '6px', paddingLeft: '8px', paddingRight: '8px' }}>
             <h4 className="inv-section-label" style={{ color: 'var(--bill-primary)', fontWeight: 700, fontSize: '12px', marginBottom: '3px', textTransform: 'none' }}>{slash('பெறுநர்', 'Bill To')}</h4>
             <p className="inv-party-name" style={{ color: '#242f3d', fontWeight: 600, fontSize: '15px', margin: 0, marginBottom: '2px' }}>{customerName || '-'}</p>
-            {customerPlace && <div className="inv-party-details" style={{ color: '#475569', fontSize: '13px' }}><p style={{ color: '#475569', margin: 0 }}>{customerPlace}</p></div>}
+            {(customerPlace || customerGstin) && <div className="inv-party-details" style={{ color: '#475569', fontSize: '13px' }}>{customerPlace && <p style={{ color: '#475569', margin: 0 }}>{customerPlace}</p>}{customerGstin && <p style={{ color: '#475569', margin: 0 }}>GSTIN: {customerGstin}</p>}</div>}
           </div>
           {fyFull(date) && (
             <div style={{ marginTop: '6px', paddingRight: '8px', textAlign: 'right', whiteSpace: 'nowrap' }}>

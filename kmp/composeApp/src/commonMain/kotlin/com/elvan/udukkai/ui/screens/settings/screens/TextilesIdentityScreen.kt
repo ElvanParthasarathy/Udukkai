@@ -24,6 +24,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.elvan.udukkai.data.settings.SignatoryNames
 import com.elvan.udukkai.localization.K
+import com.elvan.udukkai.data.settings.PrintNumbers
+import com.elvan.udukkai.ui.screens.settings.LogoSizeEditor
 import com.elvan.udukkai.localization.tr
 import com.elvan.udukkai.theme.Dimens
 import com.elvan.udukkai.theme.LocalAppFontFamily
@@ -47,6 +49,8 @@ fun TextilesIdentityScreen(
 
     var editingSection by remember { mutableStateOf<String?>(null) }
     var tempImagePath by remember { mutableStateOf<String?>(null) }
+    var tempLogoScale by remember { mutableStateOf(1f) }
+    var tempWideScale by remember { mutableStateOf(1f) }
     var tempWideImagePath by remember { mutableStateOf<String?>(null) }
     var tempHeaderStyle by remember { mutableStateOf(profile.headerLayout.ifEmpty { "small" }) }
     var tempSignatoryTa by remember { mutableStateOf("") }
@@ -108,6 +112,7 @@ fun TextilesIdentityScreen(
                                 } else null,
                                 onEdit = {
                                     tempImagePath = logoPath
+                                    tempLogoScale = PrintNumbers.get(profile.printSettingsJson, "logoScale", 1.0).toFloat()
                                     editingSection = "logo"
                                 },
                                 colors = colors
@@ -120,6 +125,7 @@ fun TextilesIdentityScreen(
                                 onSave = {
                                     val updated = profile.copy()
                                     updated.logo = tempImagePath ?: ""
+                                    updated.printSettingsJson = PrintNumbers.set(updated.printSettingsJson, "logoScale", tempLogoScale.toDouble())
                                     TextilesProfileRepository.updateProfile(updated)
                                     editingSection = null
                                     ElvanSnackbar.show(saveSuccessMsg)
@@ -135,6 +141,10 @@ fun TextilesIdentityScreen(
                                     onClear = { tempImagePath = null },
                                     colors = colors
                                 )
+                                if (tempImagePath != null) {
+                                    Spacer(Modifier.height(12.dp))
+                                    LogoSizeEditor(tempImagePath, tempLogoScale, { tempLogoScale = it }, 160, 120, K.logoSize.tr(), colors)
+                                }
                             }
                         }
                     )
@@ -158,6 +168,7 @@ fun TextilesIdentityScreen(
                                 } else null,
                                 onEdit = {
                                     tempWideImagePath = wideLogoPath
+                                    tempWideScale = PrintNumbers.get(profile.printSettingsJson, "wideLogoScale", 1.0).toDouble().toFloat()
                                     editingSection = "wide_logo"
                                 },
                                 colors = colors
@@ -170,6 +181,7 @@ fun TextilesIdentityScreen(
                                 onSave = {
                                     val updated = profile.copy()
                                     updated.wideLogo = tempWideImagePath ?: ""
+                                    updated.printSettingsJson = PrintNumbers.set(updated.printSettingsJson, "wideLogoScale", tempWideScale.toDouble())
                                     TextilesProfileRepository.updateProfile(updated)
                                     editingSection = null
                                     ElvanSnackbar.show(saveSuccessMsg)
@@ -185,6 +197,10 @@ fun TextilesIdentityScreen(
                                     onClear = { tempWideImagePath = null },
                                     colors = colors
                                 )
+                                if (tempWideImagePath != null) {
+                                    Spacer(Modifier.height(12.dp))
+                                    LogoSizeEditor(tempWideImagePath, tempWideScale, { tempWideScale = it }, 400, 140, K.wideLogoSize.tr(), colors)
+                                }
                             }
                         }
                     )

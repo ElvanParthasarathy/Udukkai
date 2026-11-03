@@ -251,9 +251,6 @@ fun TextilesInvoiceCreationSettingsScreen(
             item(key = "theme_section") {
                 com.elvan.udukkai.ui.screens.settings.ThemeColorSection(profile, colors) { TextilesProfileRepository.updateProfile(it); ElvanSnackbar.show(saveSuccessMsg) }
             }
-            item(key = "logo_size_section") {
-                com.elvan.udukkai.ui.screens.settings.LogoSizeSection(profile, colors) { TextilesProfileRepository.updateProfile(it); ElvanSnackbar.show(saveSuccessMsg) }
-            }
         }
     }
 }

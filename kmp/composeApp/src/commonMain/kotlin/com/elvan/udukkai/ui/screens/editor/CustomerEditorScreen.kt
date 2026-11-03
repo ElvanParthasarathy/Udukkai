@@ -403,7 +403,7 @@ fun CustomerEditorScreen(
                                     )
                                 }
 
-                                if (showGst && isB2b) {
+                                if (isB2b) {
                                     ElvanEditorTextField(
                                         value = gstin,
                                         onValueChange = { gstin = it.uppercase() },
