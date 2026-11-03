@@ -94,11 +94,12 @@ object BackupMerge {
         val mine = db.columns("main", table)
         val theirs = db.columns("bak", table).toSet()
         val cols = mine.filter { it in theirs }.joinToString(",") { "\"$it\"" }
-        val before = db.count("SELECT COUNT(*) FROM main.\"$table\"")
-        val offered = db.count("SELECT COUNT(*) FROM bak.\"$table\"")
+        // Counted as the user sees them: what is in the recycle bin is copied too but not counted
+        val before = total(db, "main", table, notDeleted = true)
+        val offered = total(db, "bak", table, notDeleted = true)
         db.exec("INSERT OR IGNORE INTO main.\"$table\" ($cols) SELECT $cols FROM bak.\"$table\"")
-        val added = db.count("SELECT COUNT(*) FROM main.\"$table\"") - before
-        return added to (offered - added)
+        val added = total(db, "main", table, notDeleted = true) - before
+        return added to (offered - added).coerceAtLeast(0)
     }
 
     /**
