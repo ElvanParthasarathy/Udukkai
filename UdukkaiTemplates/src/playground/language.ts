@@ -164,6 +164,26 @@ const extraFails = async () => {
   await linesOf(coolie('bi', 'ta', { profile: { wideLogo: PX, headerLayout: 'wide' } }));
   if (paper().querySelector('.print-header-new').innerText.includes(E.biz)) fails.push('coolie / wide logo: the name should be replaced by the wide logo');
   if ((await imgs({ logo: '', wideLogo: '' })).some((a) => /Logo/.test(a))) fails.push('coolie / no logo: no logo image expected');
+  // The Factory bill's labels follow the main language, like the Textiles bill's
+  for (const [mode, tamilMain] of [['bi', true], ['bien', false]]) {
+    const lines = await linesOf(coolie(mode, 'ta', {}));
+    const billNo = lines.find((l) => l.includes('Bill No')) || '';
+    const okNo = tamilMain ? billNo.indexOf('பட்டியல் எண்') < billNo.indexOf('Bill No') : billNo.indexOf('Bill No') < billNo.indexOf('பட்டியல் எண்');
+    if (!billNo || !okNo) fails.push(`coolie / main ${tamilMain ? 'Tamil' : 'English'}: Bill No label is in the wrong order: "${billNo}"`);
+    const part = first(lines, 'Particulars'), partTa = first(lines, 'உருப்படியின் பெயர்');
+    if (!(part >= 0 && partTa >= 0 && (tamilMain ? partTa < part : part < partTa))) fails.push(`coolie / main ${tamilMain ? 'Tamil' : 'English'}: table heading is in the wrong order`);
+    const wa = first(lines, 'Ahimsa Silk'), wt = first(lines, 'அகிம்சைப் பட்டு');
+    if (!(wa >= 0 && wt >= 0 && (tamilMain ? wt < wa : wa < wt))) fails.push(`coolie / main ${tamilMain ? 'Tamil' : 'English'}: the extra rows (Ahimsa Silk...) are in the wrong order`);
+    const greet = lines.some((l) => l.includes('Vaazhga Vaiyagam'));
+    if (greet === tamilMain) fails.push(`coolie / main ${tamilMain ? 'Tamil' : 'English'}: the greeting should follow the main language`);
+  }
+  // Logo size settings reach both bills
+  const imgStyle = async (make, extra, alt) => { await linesOf(make('bi', 'ta', { profile: extra })); return [...paper().querySelectorAll('img')].find((i) => i.alt === alt)?.style || {}; };
+  if (parseFloat((await imgStyle(coolie, { logo: PX, printSettings: { logoScale: 1.5 } }, 'Logo')).height) !== 84) fails.push('coolie: logoScale 1.5 should make the small logo 84px high');
+  if (parseFloat((await imgStyle(coolie, { logo: PX }, 'Logo')).height) !== 56) fails.push('coolie: the small logo should stay 56px high without a setting');
+  if (parseFloat((await imgStyle(coolie, { wideLogo: PX, headerLayout: 'wide', printSettings: { wideLogoScale: 0.5 } }, 'Wide Logo')).height) !== 32) fails.push('coolie: wideLogoScale 0.5 should make the wide logo 32px high');
+  if (parseFloat((await imgStyle(gst, { logo: PX, printSettings: { logoScale: 1.5 } }, 'Logo')).maxHeight) !== 180) fails.push('gst: logoScale 1.5 should make the small logo 180px high at most');
+  if (parseFloat((await imgStyle(gst, { logo: PX }, 'Logo')).maxHeight) !== 120) fails.push('gst: the small logo should stay 120px high at most without a setting');
   // Colours: any #rrggbb reaches both bills
   for (const [doc, make] of [['gst', gst], ['coolie', coolie]]) {
     await linesOf(make('bi', 'ta', { profile: { themeColor: '#b8860b' } }));

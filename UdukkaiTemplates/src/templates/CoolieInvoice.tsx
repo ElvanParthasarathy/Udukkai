@@ -57,8 +57,9 @@ export default function CoolieInvoiceBilingual({ bill }) {
   // Same rules as the Textiles bill. Table headings: Tamil line + smaller English line when bilingual.
   // Bill number, date and "Bill To" read "Tamil / English"; the other labels, the address and the bank
   // details are in one language (labels in the primary language, values in English when bilingual).
-  const lines = (ta, en) => (bi ? [ta, en] : [isEng ? en : ta]).map((text, i) => <div key={i}>{text}</div>);
-  const slash = (ta, en) => (bi ? `${ta} / ${en}` : (isEng ? en : ta));
+  // Bilingual: the main language first, whichever it is
+  const lines = (ta, en) => (bi ? (primaryEng ? [en, ta] : [ta, en]) : [isEng ? en : ta]).map((text, i) => <div key={i}>{text}</div>);
+  const slash = (ta, en) => (bi ? (primaryEng ? `${en} / ${ta}` : `${ta} / ${en}`) : (isEng ? en : ta));
   const lbl = (ta, en) => (primaryEng ? en : ta);
 
   const {
@@ -148,9 +149,9 @@ export default function CoolieInvoiceBilingual({ bill }) {
     <div className={`a4-paper font-tamil${bi ? ' bilingual' : ''}`} style={{ margin: '0 auto', background: 'white', ...themeStyles(p.themeColor) }}>
       {/* Top Greeting Row */}
       <div className="top-greeting-row" style={{ paddingLeft: '8px', paddingRight: '8px' }}>
-        <span className="greeting-left">{isEng ? 'Vaazhga Vaiyagam' : 'வாழ்க வையகம்'}</span>
+        <span className="greeting-left">{primaryEng ? 'Vaazhga Vaiyagam' : 'வாழ்க வையகம்'}</span>
         <span className="greeting-center">உ</span>
-        <span className="greeting-right">{isEng ? 'Vaazhga Valamudan' : 'வாழ்க வளமுடன்'}</span>
+        <span className="greeting-right">{primaryEng ? 'Vaazhga Valamudan' : 'வாழ்க வளமுடன்'}</span>
       </div>
 
       {/* Header */}
@@ -162,14 +163,14 @@ export default function CoolieInvoiceBilingual({ bill }) {
               crossOrigin={String(p.wideLogo).startsWith('http') ? 'anonymous' : undefined}
               src={p.wideLogo}
               alt="Wide Logo"
-              style={{ height: '64px', maxWidth: '340px', objectFit: 'contain', objectPosition: 'left center' }}
+              style={{ height: `${64 * (p.wideLogoScale || 1)}px`, maxWidth: `${340 * (p.wideLogoScale || 1)}px`, objectFit: 'contain', objectPosition: 'left center' }}
             />
           ) : p.logo ? (
             <img
               crossOrigin={String(p.logo).startsWith('http') ? 'anonymous' : undefined}
               src={p.logo}
               alt="Logo"
-              style={{ height: '56px', maxWidth: '90px', objectFit: 'contain' }}
+              style={{ height: `${56 * (p.logoScale || 1)}px`, maxWidth: `${90 * (p.logoScale || 1)}px`, objectFit: 'contain' }}
             />
           ) : null}
           {!wideLogo && <div className="header-company-info">
@@ -178,12 +179,12 @@ export default function CoolieInvoiceBilingual({ bill }) {
           </div>}
         </div>
         <div className="header-right" style={{ textAlign: 'right', display: 'flex', flexDirection: 'column', alignItems: 'flex-end', justifyContent: 'center' }}>
-          <div className={isEng ? 'font-display' : 'font-tamil'} style={{ fontSize: '14.5px', fontWeight: 700, color: accent, lineHeight: 1.25, letterSpacing: '0.1px' }}>
-            {isEng ? 'Silk Job Work Bill' : 'பட்டுநூல் பணிக்கட்டணம்'}
+          <div className={primaryEng ? 'font-display' : 'font-tamil'} style={{ fontSize: '14.5px', fontWeight: 700, color: accent, lineHeight: 1.25, letterSpacing: '0.1px' }}>
+            {primaryEng ? 'Silk Job Work Bill' : 'பட்டுநூல் பணிக்கட்டணம்'}
           </div>
           {bi && (
-            <div className={isEng ? 'font-tamil' : undefined} style={{ fontSize: '12.5px', fontWeight: 600, color: '#475569', marginTop: '2px', lineHeight: 1.1 }}>
-              {isEng ? 'பட்டுநூல் பணிக்கட்டணம்' : 'Silk Job Work Bill'}
+            <div className={primaryEng ? 'font-tamil' : undefined} style={{ fontSize: '12.5px', fontWeight: 600, color: '#475569', marginTop: '2px', lineHeight: 1.1 }}>
+              {primaryEng ? 'பட்டுநூல் பணிக்கட்டணம்' : 'Silk Job Work Bill'}
             </div>
           )}
         </div>
@@ -249,10 +250,15 @@ export default function CoolieInvoiceBilingual({ bill }) {
               <tr key={row.key} className={(items.length + i) % 2 === 1 ? 'row-alt' : ''}>
                 <td className="text-center" style={{ color: '#1e293b' }}>{items.length + i + 1}</td>
                 <td className="text-left" style={{ color: '#1e293b' }}>
-                  <div>{isEng && row.en ? row.en : row.ta}</div>
-                  {bi && row.en && row.en.trim().toLowerCase() !== (row.ta || '').trim().toLowerCase() && (
-                    <div style={{ fontSize: '12px', color: '#64748b', fontWeight: 500 }}>{row.en}</div>
-                  )}
+                  {(() => {
+                    const nm = bi ? both(priSec(row.ta, row.en)) : [isEng && row.en ? row.en : row.ta];
+                    return (
+                      <>
+                        <div>{nm[0]}</div>
+                        {nm[1] && <div style={{ fontSize: '12px', color: '#64748b', fontWeight: 500 }}>{nm[1]}</div>}
+                      </>
+                    );
+                  })()}
                 </td>
                 <td className="text-center" style={{ color: '#1e293b', whiteSpace: 'nowrap' }}>{row.weight ? `${formatWeight(row.weight)} ${kg}` : '—'}</td>
                 <td className="text-center" style={{ color: '#1e293b' }}>—</td>

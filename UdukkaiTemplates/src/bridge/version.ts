@@ -1,1 +1,1 @@
-export const TEMPLATE_VERSION = '18';
+export const TEMPLATE_VERSION = '19';

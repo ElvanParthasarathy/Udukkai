@@ -63,3 +63,15 @@ object SignatoryNames {
         return MiniJson.stringify(all)
     }
 }
+
+/** A number kept in the business's print settings (the logo sizes). 1.0, the size the bill always used, is not stored. */
+object PrintNumbers {
+    fun get(printSettingsJson: String, key: String, default: Double): Double =
+        (MiniJson.parseObject(printSettingsJson)[key] as? Number)?.toDouble() ?: default
+
+    fun set(printSettingsJson: String, key: String, value: Double): String {
+        val all = MiniJson.parseObject(printSettingsJson).toMutableMap()
+        if (kotlin.math.abs(value - 1.0) < 0.005) all.remove(key) else all[key] = value
+        return MiniJson.stringify(all)
+    }
+}

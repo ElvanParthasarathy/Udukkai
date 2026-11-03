@@ -109,6 +109,7 @@ export const toReactProfile = (p, lang) => {
   const ps = p.printSettings || {};
   out.logo = str(p.logo);
   if (ps.logoHeight !== undefined) out.logoHeight = Number(ps.logoHeight);
+  if (ps.logoScale !== undefined) out.logoScale = Number(ps.logoScale);
   out.wideLogo = str(p.wideLogo);
   if (ps.wideLogoX !== undefined) out.wideLogoX = Number(ps.wideLogoX);
   if (ps.wideLogoY !== undefined) out.wideLogoY = Number(ps.wideLogoY);
@@ -289,6 +290,8 @@ export const toCoolieProfile = (p) => {
     logo: str(p.logo),
     wideLogo: str(p.wideLogo),
     billHeaderStyle: p.headerLayout === 'wide' ? 'wide' : 'small',
+    logoScale: Number(ps.logoScale) || 1,
+    wideLogoScale: Number(ps.wideLogoScale) || 1,
     signature: str(p.signature),
     authorizedSignatoryName: signatoryName(p, resolveLang(p)),
     themeColor: str(p.themeColor),

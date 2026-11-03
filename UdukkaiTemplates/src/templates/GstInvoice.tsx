@@ -275,7 +275,7 @@ const SjsTheme = React.forwardRef(({ profile = {}, client = {}, details = {}, it
               gap: '1rem',
               height: '140px'
             }}>
-              {showLogo && profile?.logo && <img crossOrigin={profile.logo?.startsWith('http') ? 'anonymous' : undefined} src={profile.logo} alt="Logo" style={{ maxHeight: `${profile.logoHeight || 120}px`, maxWidth: '160px', objectFit: 'contain' }} />}
+              {showLogo && profile?.logo && <img crossOrigin={profile.logo?.startsWith('http') ? 'anonymous' : undefined} src={profile.logo} alt="Logo" style={{ maxHeight: `${(profile.logoHeight || 120) * (profile.logoScale || 1)}px`, maxWidth: `${160 * (profile.logoScale || 1)}px`, objectFit: 'contain' }} />}
               <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
                 {showniruvanathinPeyar && (() => {
                   const bn = ordered(profile, 'businessName', getDynamicField(profile, 'niruvanathinPeyar', profile, true), getDynamicField(profile, 'niruvanathinPeyar', profile, false));
