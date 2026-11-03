@@ -53,6 +53,7 @@ import com.elvan.udukkai.ui.components.shell.*
 import com.elvan.udukkai.ui.navigation.ActiveSubpage
 import com.elvan.udukkai.ui.navigation.BottomNavBar
 import com.elvan.udukkai.ui.navigation.LandscapeSideNavBar
+import com.elvan.udukkai.ui.components.shell.LandscapeEmptyDetailPane
 import com.elvan.udukkai.ui.navigation.ElvanSearchBar
 import com.elvan.udukkai.ui.navigation.MaterialSymbols
 import com.elvan.udukkai.ui.navigation.NavTab
@@ -81,10 +82,19 @@ fun FactoryHomeScreen() {
 
     var selectedTab by remember { mutableStateOf(NavTab.Home) }
     var uruvakkuSegment by remember { mutableStateOf(0) } // 0 = Invoices, 1 = Receipts
+    var isLandscapeMode by remember { mutableStateOf(false) }
     var subpageStack by remember { mutableStateOf<List<ActiveSubpage>>(emptyList()) }
     val activeSubpage = subpageStack.lastOrNull()
     // The same page is never pushed twice on top of itself (a double tap would slide it in twice and need two Backs)
-    val navigateToSubpage: (ActiveSubpage) -> Unit = { subpage -> if (subpageStack.lastOrNull() != subpage) subpageStack = subpageStack + subpage }
+    val navigateToSubpage: (ActiveSubpage) -> Unit = { subpage ->
+        if (subpageStack.lastOrNull() != subpage) {
+            if (isLandscapeMode && (subpage is ActiveSubpage.InvoiceView || subpage is ActiveSubpage.ItemView || subpage is ActiveSubpage.CustomerView || subpage is ActiveSubpage.ReceiptView)) {
+                subpageStack = listOf(subpage)
+            } else {
+                subpageStack = subpageStack + subpage
+            }
+        }
+    }
     val popSubpage: () -> Unit = { if (subpageStack.isNotEmpty()) subpageStack = subpageStack.dropLast(1) }
     val clearSubpages: () -> Unit = { subpageStack = emptyList() }
     var isRefreshing by remember { mutableStateOf(false) }
@@ -288,6 +298,7 @@ fun FactoryHomeScreen() {
         }
 
         val isLandscape = maxWidth > maxHeight
+        SideEffect { isLandscapeMode = isLandscape }
         val isWideScreen = isDesktop && maxWidth >= 768.dp
 
         val shouldShowBottomBarForSnackbar = (activeSubpage !is ActiveSubpage.Settings) && !isWideScreen
@@ -460,7 +471,7 @@ fun FactoryHomeScreen() {
                     ElvanShell(
                         scrollState = currentScrollState,
                         title = selectedTab.getLocalizedHeader(),
-                        showNavbar = !isWideScreen,
+                        showNavbar = !isLandscape && !isWideScreen,
                         hasActions = !isSearchActive && !isSelectionMode,
                         isSearchActive = isSearchActive,
                         isSelectionMode = isSelectionMode,
@@ -1008,27 +1019,167 @@ fun FactoryHomeScreen() {
             Box(
                 modifier = if (isWideScreen) Modifier.weight(1f).fillMaxHeight() else Modifier.fillMaxSize()
             ) {
-            // Use one transition owner for subpages. Rendering the current and previous
-            // subpages again in a predictive overlay caused duplicate composition and competing
-            // motion on quick Back gestures. The same AnimatedContent now handles each stack change.
-            AnimatedContent(
-                targetState = subpageStack,
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(colors.background),
-                transitionSpec = {
-                    val isForward = targetState.size >= initialState.size
-                    with(Transitions) {
-                        smoothHorizontal(forward = isForward)
+            if (isLandscape) {
+                // ── Two-Panel Split View for Landscape (Leading Master List + Trailing Detail View) ──
+                Box(modifier = Modifier.fillMaxSize()) {
+                    Row(modifier = Modifier.fillMaxSize()) {
+                        // Left Panel (Master List): Fixed 360.dp width so cards never over-extend
+                        Box(
+                            modifier = Modifier
+                                .width(360.dp)
+                                .fillMaxHeight()
+                                .background(colors.background)
+                        ) {
+                            RenderMainShell()
+                        }
+
+                        // Subtle Vertical Divider
+                        Box(
+                            modifier = Modifier
+                                .width(0.5.dp)
+                                .fillMaxHeight()
+                                .background(colors.floatingBorder.copy(alpha = if (colors.isDark) 0.15f else 0.4f))
+                        )
+
+                        // Right Panel (Detail View): Occupies the remaining width
+                        Box(
+                            modifier = Modifier
+                                .weight(1f)
+                                .fillMaxHeight()
+                                .background(colors.background)
+                        ) {
+                            AnimatedContent(
+                                targetState = subpageStack.lastOrNull(),
+                                transitionSpec = {
+                                    with(Transitions) {
+                                        smoothHorizontal(forward = targetState != null)
+                                    }
+                                },
+                                label = "DetailPaneTransition"
+                            ) { activeSubpage ->
+                                if (activeSubpage != null) {
+                                    RenderSubpage(activeSubpage)
+                                } else {
+                                    LandscapeEmptyDetailPane(
+                                        selectedTab = selectedTab,
+                                        colors = colors
+                                    )
+                                }
+                            }
+                        }
                     }
-                },
-                label = "HomeToSubpageTransition"
-            ) { stack ->
-                val subpage = stack.lastOrNull()
-                if (subpage != null) {
-                    RenderSubpage(subpage)
-                } else {
-                    RenderMainShell()
+
+                    // Trailing Navigation Rail (Floating along the far right edge of the entire display)
+                    if (!isSelectionMode) {
+                        LandscapeSideNavBar(
+                            selectedTab = selectedTab,
+                            hideContent = isSearchActive || showDateFilterSheet,
+                            onMoreClick = {
+                                ElvanMenuState.isMenuOpen = true
+                                menuExpanded = true
+                            },
+                            moreMenuContent = {
+                                val settingsLabel = K.settings.tr()
+                                val meetpagamLabel = K.recycleBin.tr()
+                                val thaerndheduLabel = K.select.tr()
+                                val sideMenuItems = buildList {
+                                    add(
+                                        ElvanPopupMenuItem(
+                                            title = settingsLabel,
+                                            icon = MaterialSymbols.Rounded.Settings,
+                                            onClick = {
+                                                ElvanMenuState.isMenuOpen = false
+                                                menuExpanded = false
+                                                navigateToSubpage(ActiveSubpage.Settings)
+                                            }
+                                        )
+                                    )
+                                    add(
+                                        ElvanPopupMenuItem(
+                                            title = meetpagamLabel,
+                                            icon = MaterialSymbols.Rounded.Delete,
+                                            onClick = {
+                                                ElvanMenuState.isMenuOpen = false
+                                                menuExpanded = false
+                                                navigateToSubpage(ActiveSubpage.RecycleBin)
+                                            }
+                                        )
+                                    )
+                                    if (selectedTab != NavTab.Home) {
+                                        add(
+                                            ElvanPopupMenuItem(
+                                                title = thaerndheduLabel,
+                                                icon = MaterialSymbols.Rounded.CheckCircleFill,
+                                                onClick = {
+                                                    ElvanMenuState.isMenuOpen = false
+                                                    menuExpanded = false
+                                                    isSelectionMode = true
+                                                }
+                                            )
+                                        )
+                                    }
+                                }
+                                ElvanPopupMenu(
+                                    expanded = menuExpanded,
+                                    onDismissRequest = {
+                                        ElvanMenuState.isMenuOpen = false
+                                        menuExpanded = false
+                                    },
+                                    colors = colors,
+                                    items = sideMenuItems
+                                )
+                            },
+                            onAddClick = {
+                                when (selectedTab) {
+                                    NavTab.Home -> navigateToSubpage(ActiveSubpage.InvoiceEditor(null))
+                                    NavTab.Items -> navigateToSubpage(ActiveSubpage.ItemEditor(null))
+                                    NavTab.Customers -> navigateToSubpage(ActiveSubpage.MerchantEditor(null))
+                                    NavTab.Create -> {
+                                        if (uruvakkuSegment == 0) navigateToSubpage(ActiveSubpage.InvoiceEditor(null))
+                                        else navigateToSubpage(ActiveSubpage.ReceiptEditor(null))
+                                    }
+                                }
+                            },
+                            onTabSelected = { tab, _ ->
+                                if (selectedTab != tab) {
+                                    if (selectedTab == NavTab.Create || tab != NavTab.Create) {
+                                        uruvakkuSegment = 0
+                                    }
+                                    val targetScrollState = when (tab) {
+                                        NavTab.Home -> homeScrollState
+                                        NavTab.Create -> createScrollState
+                                        NavTab.Items -> itemsScrollState
+                                        NavTab.Customers -> customersScrollState
+                                    }
+                                    scope.launch { targetScrollState.scrollToItem(0, 0) }
+                                    selectedTab = tab
+                                }
+                            },
+                            modifier = Modifier.align(Alignment.BottomEnd)
+                        )
+                    }
+                }
+            } else {
+                // ── Single-Pane Mobile Portrait Navigation ──
+                AnimatedContent(
+                    targetState = subpageStack,
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(colors.background),
+                    transitionSpec = {
+                        val isForward = targetState.size >= initialState.size
+                        with(Transitions) {
+                            smoothHorizontal(forward = isForward)
+                        }
+                    },
+                    label = "HomeToSubpageTransition"
+                ) { stack ->
+                    val subpage = stack.lastOrNull()
+                    if (subpage != null) {
+                        RenderSubpage(subpage)
+                    } else {
+                        RenderMainShell()
+                    }
                 }
             }
 
