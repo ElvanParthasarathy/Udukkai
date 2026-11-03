@@ -29,3 +29,11 @@ sealed interface SettingsRoute {
         val aboutPages: Set<SettingsRoute> = setOf(AboutApp, AboutDeveloper, ElvanNavil, Privacy, Terms, Licences)
     }
 }
+
+/** How deep a page is: the hub is 0, the pages opened from it 1, the pages opened from those 2. Going to a shallower one is Back. */
+val SettingsRoute.depth: Int
+    get() = when {
+        this == SettingsRoute.Hub -> 0
+        this == SettingsRoute.ManageProfiles || this in SettingsRoute.aboutPages -> 2
+        else -> 1
+    }

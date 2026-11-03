@@ -131,7 +131,7 @@ private val PILL_OPEN_MARGIN = 16.dp
 @Composable
 private fun Modifier.floatingPill(colors: ShellColors): Modifier = this
     .height(PILL_HEIGHT)
-    .cssShadow(color = Color.Black, alpha = 0.05f, blurRadius = 16.dp, offsetY = 4.dp)
+    .cssShadow(color = Color.Black, alpha = if (colors.isDark) 0.55f else 0.2f, blurRadius = 32.dp, offsetY = 12.dp)
     .background(color = colors.floatingBg.copy(alpha = 0.88f), shape = CircleShape)
     .border(width = 0.5.dp, color = colors.floatingBorder.copy(alpha = if (colors.isDark) 0.15f else 0.6f), shape = CircleShape)
 
@@ -182,6 +182,8 @@ fun SettingsSearchOverlay(open: Boolean, entries: List<SettingsEntry>, colors: S
     if (!open && progress.value == 0f) return
     val p = progress.value
     val imeBottom = getImeBottomPadding()
+    // One continuous value from the keyboard down to the navigation bar, so nothing jumps when the keyboard closes
+    val navInset = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
 
     BoxWithConstraints(
         Modifier.fillMaxSize()
@@ -201,7 +203,7 @@ fun SettingsSearchOverlay(open: Boolean, entries: List<SettingsEntry>, colors: S
             colors = colors, open = open, query = query, onQuery = { query = it },
             onSearch = { results.firstOrNull()?.let { openResult(it.route) } },
             modifier = Modifier.align(Alignment.BottomCenter)
-                .then(if (imeBottom > 0.dp) Modifier.padding(bottom = imeBottom + 16.dp) else Modifier.navigationBarsPaddingIfMobile().padding(bottom = 16.dp))
+                .padding(bottom = maxOf(imeBottom, navInset) + 16.dp)
                 .width(closedWidth + (openWidth - closedWidth) * p)
         )
     }
@@ -253,7 +255,7 @@ private fun SearchPage(
         LazyColumn(
             state = scrollState,
             modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(bottom = Dimens.SubpageContentPaddingBottom + 72.dp),
+            contentPadding = PaddingValues(bottom = 112.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
             item(key = "shell_top_spacer") { Spacer(Modifier.height(LocalElvanTopSpacerHeight.current + 6.dp)) }

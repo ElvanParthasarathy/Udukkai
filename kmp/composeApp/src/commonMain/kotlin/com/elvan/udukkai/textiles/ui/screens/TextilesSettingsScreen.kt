@@ -35,6 +35,7 @@ import com.elvan.udukkai.theme.rememberShellColors
 import com.elvan.udukkai.ui.components.shell.*
 import com.elvan.udukkai.ui.navigation.MaterialSymbols
 import com.elvan.udukkai.ui.screens.settings.SettingsRoute
+import com.elvan.udukkai.ui.screens.settings.depth
 import com.elvan.udukkai.ui.screens.settings.SettingsSearchOverlay
 import com.elvan.udukkai.ui.screens.settings.SettingsSearchPill
 import com.elvan.udukkai.ui.screens.settings.settingsEntries
@@ -85,7 +86,7 @@ fun TextilesSettingsScreen(
                     } else if (initialState == SettingsRoute.ManageProfiles) {
                         smoothVertical(forward = false)
                     } else {
-                        val isForward = targetState != SettingsRoute.Hub
+                        val isForward = targetState.depth >= initialState.depth
                         smoothHorizontal(forward = isForward)
                     }
                 }
