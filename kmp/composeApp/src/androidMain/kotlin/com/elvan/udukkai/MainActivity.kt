@@ -130,4 +130,14 @@ class MainActivity : ComponentActivity() {
             }
         }
     }
+
+    override fun onStop() {
+        super.onStop()
+        com.elvan.udukkai.core.security.AppLock.left()
+    }
+
+    override fun onStart() {
+        super.onStart()
+        com.elvan.udukkai.core.security.AppLock.returned()
+    }
 }

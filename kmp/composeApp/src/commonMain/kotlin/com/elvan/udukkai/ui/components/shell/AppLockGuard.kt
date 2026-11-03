@@ -10,6 +10,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -41,21 +42,32 @@ fun rememberPinGuard(colors: ShellColors): (() -> Unit) -> Unit {
 }
 
 /**
- * The opening page of an app with the lock on: the app shows only after the phone's lock was passed, once per run of the
- * app. If the phone no longer has a screen lock, the app opens (it must never lock its owner out).
+ * The app lock page: the app is drawn under it (so nothing being edited is lost) but only the lock page shows and takes
+ * touches while the phone's lock has not been passed: at opening, and when the app comes back after a minute away.
+ * If the phone no longer has a screen lock, the app opens (it must never lock its owner out).
  */
 @Composable
 fun AppLockGate(colors: ShellColors, content: @Composable () -> Unit) {
-    var unlocked by remember { mutableStateOf(!AppLock.isEnabled() || AppLock.unlockedThisRun || !deviceLockAvailable()) }
-    if (unlocked) {
+    val locked = AppLock.isEnabled() && !AppLock.unlockedThisRun && deviceLockAvailable()
+    Box(Modifier.fillMaxSize()) {
         content()
-        return
+        if (locked) LockPage(colors)
     }
+}
+
+@Composable
+private fun LockPage(colors: ShellColors) {
     val ff = LocalAppFontFamily.current
     val title = K.appLock.tr()
-    fun ask() = authenticateDeviceLock(title) { ok -> if (ok) { AppLock.unlockedThisRun = true; unlocked = true } }
+    fun ask() = authenticateDeviceLock(title) { ok -> if (ok) AppLock.unlockedThisRun = true }
+    // The back gesture must not reach the screens under the lock page
+    com.elvan.udukkai.core.platform.AppBackHandler { }
     LaunchedEffect(Unit) { ask() }
-    Box(Modifier.fillMaxSize().background(colors.background), contentAlignment = Alignment.Center) {
+    Box(
+        Modifier.fillMaxSize().background(colors.background)
+            .pointerInput(Unit) { awaitPointerEventScope { while (true) awaitPointerEvent().changes.forEach { it.consume() } } },
+        contentAlignment = Alignment.Center
+    ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(16.dp)) {
             Box(Modifier.size(72.dp).clip(CircleShape).background(colors.iconBg).clickable { ask() }, contentAlignment = Alignment.Center) {
                 Icon(MaterialSymbols.Rounded.Lock, null, tint = colors.textPrimary, modifier = Modifier.size(30.dp))
