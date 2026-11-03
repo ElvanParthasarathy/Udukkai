@@ -51,7 +51,8 @@ fun FactoryDashboardScreen(
     val overallTotal = FactoryInvoiceRepository.overallTotal
     val activeCompanyInvoiceCount = FactoryInvoiceRepository.activeCompanyInvoices.size
 
-    Box(modifier = modifier.fillMaxSize()) {
+    BoxWithConstraints(modifier = modifier.fillMaxSize()) {
+        val isLandscape = maxWidth > maxHeight
         LazyColumn(
             state = scrollState,
             modifier = Modifier.fillMaxSize(),
@@ -159,21 +160,51 @@ fun FactoryDashboardScreen(
                         DashboardEmptyState(colors = colors)
                     }
                 } else {
-                    itemsIndexed(
-                        items = recentBills,
-                        key = { _, item -> "recent_inv_${item.id}" }
-                    ) { index, item ->
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = Dimens.ContentPadding)
-                        ) {
-                            FactoryInvoiceCard(
-                                index = index + 1,
-                                invoice = item,
-                                colors = colors,
-                                onClick = { onInvoiceClick(item) }
-                            )
+                    if (isLandscape) {
+                        val pairs = recentBills.chunked(2)
+                        itemsIndexed(
+                            items = pairs,
+                            key = { _, pair -> "recent_pair_${pair.first().id}" }
+                        ) { rowIndex, pair ->
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = Dimens.ContentPadding),
+                                horizontalArrangement = Arrangement.spacedBy(Dimens.ItemSpacing)
+                            ) {
+                                pair.forEachIndexed { colIndex, item ->
+                                    val cardIndex = (rowIndex * 2) + colIndex + 1
+                                    Box(modifier = Modifier.weight(1f)) {
+                                        FactoryInvoiceCard(
+                                            index = cardIndex,
+                                            invoice = item,
+                                            colors = colors,
+                                            onClick = { onInvoiceClick(item) }
+                                        )
+                                    }
+                                }
+                                if (pair.size == 1) {
+                                    Spacer(modifier = Modifier.weight(1f))
+                                }
+                            }
+                        }
+                    } else {
+                        itemsIndexed(
+                            items = recentBills,
+                            key = { _, item -> "recent_inv_${item.id}" }
+                        ) { index, item ->
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = Dimens.ContentPadding)
+                            ) {
+                                FactoryInvoiceCard(
+                                    index = index + 1,
+                                    invoice = item,
+                                    colors = colors,
+                                    onClick = { onInvoiceClick(item) }
+                                )
+                            }
                         }
                     }
                 }

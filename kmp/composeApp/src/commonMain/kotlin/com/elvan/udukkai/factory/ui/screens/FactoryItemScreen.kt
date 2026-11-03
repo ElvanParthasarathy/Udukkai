@@ -52,7 +52,8 @@ fun FactoryItemScreen(
     val ff = LocalAppFontFamily.current
 
 
-    Box(modifier = modifier.fillMaxSize()) {
+    BoxWithConstraints(modifier = modifier.fillMaxSize()) {
+        val isLandscape = maxWidth > maxHeight
         LazyColumn(
             state = scrollState,
             modifier = Modifier.fillMaxSize(),
@@ -107,33 +108,73 @@ fun FactoryItemScreen(
                     }
                 }
             } else {
-                itemsIndexed(
-                    items = items,
-                    key = { _, item -> "item_${item.id}" }
-                ) { index, item ->
-                    val isSelected = selectedItemIds.contains(item.id)
-                    val onCardClick: () -> Unit = {
-                        if (isSelectionMode) {
-                            onToggleSelect?.invoke(item.id)
-                        } else {
-                            onItemClick(item)
+                if (isLandscape) {
+                    val pairs = items.chunked(2)
+                    itemsIndexed(
+                        items = pairs,
+                        key = { _, pair -> "item_pair_${pair.first().id}" }
+                    ) { rowIndex, pair ->
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = Dimens.ContentPadding),
+                            horizontalArrangement = Arrangement.spacedBy(Dimens.ItemSpacing)
+                        ) {
+                            pair.forEachIndexed { colIndex, item ->
+                                val cardIndex = (rowIndex * 2) + colIndex
+                                val isSelected = selectedItemIds.contains(item.id)
+                                val onCardClick: () -> Unit = {
+                                    if (isSelectionMode) onToggleSelect?.invoke(item.id)
+                                    else onItemClick(item)
+                                }
+                                val onCardLongClick: () -> Unit = {
+                                    onItemLongClick?.invoke(item.id)
+                                }
+                                Box(modifier = Modifier.weight(1f)) {
+                                    FactoryItemCard(
+                                        index = cardIndex,
+                                        item = item,
+                                        onClick = onCardClick,
+                                        colors = colors,
+                                        isSelectionMode = isSelectionMode,
+                                        isSelected = isSelected,
+                                        onLongClick = onCardLongClick
+                                    )
+                                }
+                            }
+                            if (pair.size == 1) {
+                                Spacer(modifier = Modifier.weight(1f))
+                            }
                         }
                     }
-                    val onCardLongClick: () -> Unit = {
-                        onItemLongClick?.invoke(item.id)
+                } else {
+                    itemsIndexed(
+                        items = items,
+                        key = { _, item -> "item_${item.id}" }
+                    ) { index, item ->
+                        val isSelected = selectedItemIds.contains(item.id)
+                        val onCardClick: () -> Unit = {
+                            if (isSelectionMode) {
+                                onToggleSelect?.invoke(item.id)
+                            } else {
+                                onItemClick(item)
+                            }
+                        }
+                        val onCardLongClick: () -> Unit = {
+                            onItemLongClick?.invoke(item.id)
+                        }
+
+                        FactoryItemCard(
+                            index = index,
+                            item = item,
+                            onClick = onCardClick,
+                            colors = colors,
+                            isSelectionMode = isSelectionMode,
+                            isSelected = isSelected,
+                            onLongClick = onCardLongClick
+                        )
                     }
-
-                    FactoryItemCard(
-                        index = index,
-                        item = item,
-                        onClick = onCardClick,
-                        colors = colors,
-                        isSelectionMode = isSelectionMode,
-                        isSelected = isSelected,
-                        onLongClick = onCardLongClick
-                    )
                 }
-
             }
         }
     }

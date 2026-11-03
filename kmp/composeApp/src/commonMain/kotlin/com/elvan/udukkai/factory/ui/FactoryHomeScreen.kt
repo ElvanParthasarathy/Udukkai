@@ -473,7 +473,75 @@ fun FactoryHomeScreen() {
                         scrollState = currentScrollState,
                         title = selectedTab.getLocalizedHeader(),
                         showNavbar = !isLandscape && !isWideScreen,
-                        hasActions = !isSearchActive && !isSelectionMode,
+                        hasActions = (!isSearchActive && !isSelectionMode) && (selectedTab != NavTab.Home || !isLandscape),
+                        leadingActions = if (isLandscape && !isSearchActive && !isSelectionMode) {
+                            {
+                                Box {
+                                    ElvanTopBarIconButton(
+                                        onClick = {
+                                            ElvanMenuState.isMenuOpen = true
+                                            menuExpanded = true
+                                        }
+                                    ) {
+                                        Icon(
+                                            imageVector = MaterialSymbols.Rounded.MoreVert,
+                                            contentDescription = K.more.tr(),
+                                            tint = colors.textPrimary,
+                                            modifier = Modifier.size(22.dp)
+                                        )
+                                    }
+                                    val settingsLabel = K.settings.tr()
+                                    val meetpagamLabel = K.recycleBin.tr()
+                                    val thaerndheduLabel = K.select.tr()
+                                    val menuItems = buildList {
+                                        add(
+                                            ElvanPopupMenuItem(
+                                                title = settingsLabel,
+                                                icon = MaterialSymbols.Rounded.Settings,
+                                                onClick = {
+                                                    ElvanMenuState.isMenuOpen = false
+                                                    menuExpanded = false
+                                                    navigateToSubpage(ActiveSubpage.Settings)
+                                                }
+                                            )
+                                        )
+                                        add(
+                                            ElvanPopupMenuItem(
+                                                title = meetpagamLabel,
+                                                icon = MaterialSymbols.Rounded.Delete,
+                                                onClick = {
+                                                    ElvanMenuState.isMenuOpen = false
+                                                    menuExpanded = false
+                                                    navigateToSubpage(ActiveSubpage.RecycleBin)
+                                                }
+                                            )
+                                        )
+                                        if (selectedTab != NavTab.Home) {
+                                            add(
+                                                ElvanPopupMenuItem(
+                                                    title = thaerndheduLabel,
+                                                    icon = MaterialSymbols.Rounded.CheckCircleFill,
+                                                    onClick = {
+                                                        ElvanMenuState.isMenuOpen = false
+                                                        menuExpanded = false
+                                                        isSelectionMode = true
+                                                    }
+                                                )
+                                            )
+                                        }
+                                    }
+                                    ElvanPopupMenu(
+                                        expanded = menuExpanded,
+                                        onDismissRequest = {
+                                            ElvanMenuState.isMenuOpen = false
+                                            menuExpanded = false
+                                        },
+                                        colors = colors,
+                                        items = menuItems
+                                    )
+                                }
+                            }
+                        } else null,
                         isSearchActive = isSearchActive,
                         isSelectionMode = isSelectionMode,
                         selectedCount = selectedItemIds.size,
@@ -515,8 +583,9 @@ fun FactoryHomeScreen() {
                                 }
                             }
 
-                            // 3-Dot More Menu (மேலும்) - in leading header
-                            Box {
+                            // 3-Dot More Menu (மேலும்) - in actions for portrait only
+                            if (!isLandscape) {
+                                Box {
                                     ElvanTopBarIconButton(
                                         onClick = {
                                             ElvanMenuState.isMenuOpen = true
@@ -580,6 +649,7 @@ fun FactoryHomeScreen() {
                                         items = menuItems
                                     )
                                 }
+                            }
                         },
                         navbar = {
                             val shellController = LocalElvanShellController.current
@@ -883,131 +953,12 @@ fun FactoryHomeScreen() {
             Box(
                 modifier = if (isWideScreen) Modifier.weight(1f).fillMaxHeight() else Modifier.fillMaxSize()
             ) {
-            if (isLandscape) {
-                // ── Adaptive Landscape Architecture ──
-                // If a subpage / detail screen is open: Two-Panel layout (Master list 360.dp + Detail view)
-                // If on main screen: Full-width layout (cards spread across the screen, zero empty pane)
-                Box(modifier = Modifier.fillMaxSize()) {
-                    if (subpageStack.isNotEmpty()) {
-                        Row(modifier = Modifier.fillMaxSize()) {
-                            // Left Panel (Master List): Fixed 360.dp width so cards never over-extend
-                            Box(
-                                modifier = Modifier
-                                    .width(360.dp)
-                                    .fillMaxHeight()
-                                    .background(colors.background)
-                            ) {
-                                RenderMainShell()
-                            }
-
-                            // Subtle Vertical Divider
-                            Box(
-                                modifier = Modifier
-                                    .width(0.5.dp)
-                                    .fillMaxHeight()
-                                    .background(colors.floatingBorder.copy(alpha = if (colors.isDark) 0.15f else 0.4f))
-                            )
-
-                            // Right Panel (Detail View): Occupies remaining width, padded away from side controls
-                            Box(
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .fillMaxHeight()
-                                    .background(colors.background)
-                                    .padding(end = 84.dp)
-                            ) {
-                                AnimatedContent(
-                                    targetState = subpageStack.lastOrNull(),
-                                    transitionSpec = {
-                                        with(Transitions) {
-                                            smoothHorizontal(forward = targetState != null)
-                                        }
-                                    },
-                                    label = "DetailPaneTransition"
-                                ) { activeSubpage ->
-                                    if (activeSubpage != null) {
-                                        RenderSubpage(activeSubpage)
-                                    }
-                                }
-                            }
-                        }
-                    } else {
-                        // Full-width Main Landscape View (All cards spread across the screen, zero empty pane)
-                        Box(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .background(colors.background)
-                                .padding(end = 80.dp)
-                        ) {
-                            RenderMainShell()
-                        }
-                    }
-
-                    // Floating Controls on the Trailing Edge (Apple HIG Landscape Controls)
-                    if (!isSelectionMode) {
-                        // Top-Right Action Button (Stationary at TopEnd)
-                        // Shows ArrowBack (<) when viewing a subpage; shows Add (+) on the main screen
-                        AnimatedContent(
-                            targetState = subpageStack.isNotEmpty(),
-                            transitionSpec = {
-                                (fadeIn(tween(180)) + scaleIn(initialScale = 0.85f, animationSpec = tween(180)))
-                                    .togetherWith(fadeOut(tween(140)) + scaleOut(targetScale = 0.85f, animationSpec = tween(140)))
-                            },
-                            modifier = Modifier.align(Alignment.TopEnd),
-                            label = "TopActionButtonTransition"
-                        ) { hasSubpage ->
-                            if (hasSubpage) {
-                                LandscapeTopActionButton(
-                                    icon = MaterialSymbols.Rounded.ArrowBack,
-                                    contentDescription = K.back.tr(),
-                                    onClick = popSubpage,
-                                    colors = colors
-                                )
-                            } else {
-                                LandscapeTopActionButton(
-                                    icon = MaterialSymbols.Rounded.Add,
-                                    contentDescription = K.add.tr(),
-                                    onClick = {
-                                        when (selectedTab) {
-                                            NavTab.Home -> navigateToSubpage(ActiveSubpage.InvoiceEditor(null))
-                                            NavTab.Items -> navigateToSubpage(ActiveSubpage.ItemEditor(null))
-                                            NavTab.Customers -> navigateToSubpage(ActiveSubpage.MerchantEditor(null))
-                                            NavTab.Create -> {
-                                                if (uruvakkuSegment == 0) navigateToSubpage(ActiveSubpage.InvoiceEditor(null))
-                                                else navigateToSubpage(ActiveSubpage.ReceiptEditor(null))
-                                            }
-                                        }
-                                    },
-                                    colors = colors
-                                )
-                            }
-                        }
-
-                        // Bottom-Right Trailing Navigation Rail (Dual-axis Apple fluid spring physics)
-                        LandscapeSideNavBar(
-                            selectedTab = selectedTab,
-                            hideContent = isSearchActive || showDateFilterSheet,
-                            onTabSelected = { tab, _ ->
-                                if (selectedTab != tab) {
-                                    if (selectedTab == NavTab.Create || tab != NavTab.Create) {
-                                        uruvakkuSegment = 0
-                                    }
-                                    val targetScrollState = when (tab) {
-                                        NavTab.Home -> homeScrollState
-                                        NavTab.Create -> createScrollState
-                                        NavTab.Items -> itemsScrollState
-                                        NavTab.Customers -> customersScrollState
-                                    }
-                                    scope.launch { targetScrollState.scrollToItem(0, 0) }
-                                    selectedTab = tab
-                                }
-                            },
-                            modifier = Modifier.align(Alignment.BottomEnd)
-                        )
-                    }
-                }
-            } else {
-                // ── Single-Pane Mobile Portrait Navigation ──
+            // ── Unified Adaptive Navigation (Zero split screen; full single-pane across portrait & landscape) ──
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .then(if (isLandscape) Modifier.padding(end = 76.dp) else Modifier)
+            ) {
                 AnimatedContent(
                     targetState = subpageStack,
                     modifier = Modifier
@@ -1027,6 +978,71 @@ fun FactoryHomeScreen() {
                     } else {
                         RenderMainShell()
                     }
+                }
+            }
+
+            // Floating Controls on the Trailing Edge in Landscape (Apple HIG Landscape Controls)
+            if (isLandscape && !isSelectionMode) {
+                // Top-Right Action Button (Stationary at TopEnd)
+                // Shows ArrowBack (<) when viewing a subpage; shows Add (+) on the main screen
+                AnimatedContent(
+                    targetState = subpageStack.isNotEmpty(),
+                    transitionSpec = {
+                        (fadeIn(tween(180)) + scaleIn(initialScale = 0.85f, animationSpec = tween(180)))
+                            .togetherWith(fadeOut(tween(140)) + scaleOut(targetScale = 0.85f, animationSpec = tween(140)))
+                    },
+                    modifier = Modifier.align(Alignment.TopEnd),
+                    label = "TopActionButtonTransition"
+                ) { hasSubpage ->
+                    if (hasSubpage) {
+                        LandscapeTopActionButton(
+                            icon = MaterialSymbols.Rounded.ArrowBack,
+                            contentDescription = K.back.tr(),
+                            onClick = popSubpage,
+                            colors = colors
+                        )
+                    } else {
+                        LandscapeTopActionButton(
+                            icon = MaterialSymbols.Rounded.Add,
+                            contentDescription = K.add.tr(),
+                            onClick = {
+                                when (selectedTab) {
+                                    NavTab.Home -> navigateToSubpage(ActiveSubpage.InvoiceEditor(null))
+                                    NavTab.Items -> navigateToSubpage(ActiveSubpage.ItemEditor(null))
+                                    NavTab.Customers -> navigateToSubpage(ActiveSubpage.MerchantEditor(null))
+                                    NavTab.Create -> {
+                                        if (uruvakkuSegment == 0) navigateToSubpage(ActiveSubpage.InvoiceEditor(null))
+                                        else navigateToSubpage(ActiveSubpage.ReceiptEditor(null))
+                                    }
+                                }
+                            },
+                            colors = colors
+                        )
+                    }
+                }
+
+                // Bottom-Right Trailing Navigation Rail (Close to bottom, normal drag doesn't expand, long-press expands)
+                if (subpageStack.isEmpty()) {
+                    LandscapeSideNavBar(
+                        selectedTab = selectedTab,
+                        hideContent = isSearchActive || showDateFilterSheet,
+                        onTabSelected = { tab, _ ->
+                            if (selectedTab != tab) {
+                                if (selectedTab == NavTab.Create || tab != NavTab.Create) {
+                                    uruvakkuSegment = 0
+                                }
+                                val targetScrollState = when (tab) {
+                                    NavTab.Home -> homeScrollState
+                                    NavTab.Create -> createScrollState
+                                    NavTab.Items -> itemsScrollState
+                                    NavTab.Customers -> customersScrollState
+                                }
+                                scope.launch { targetScrollState.scrollToItem(0, 0) }
+                                selectedTab = tab
+                            }
+                        },
+                        modifier = Modifier.align(Alignment.BottomEnd)
+                    )
                 }
             }
 

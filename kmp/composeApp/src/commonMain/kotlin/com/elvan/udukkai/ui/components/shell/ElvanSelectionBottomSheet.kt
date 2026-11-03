@@ -368,9 +368,13 @@ fun <T> ElvanSelectionBottomSheet(
                 ) {
                     dismissSheet()
                 },
-            contentAlignment = Alignment.BottomCenter
         ) {
+            val isLandscape = maxWidth > maxHeight
             val availableHeight = maxHeight
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = if (isLandscape) Alignment.CenterEnd else Alignment.BottomCenter
+            ) {
             val hasBottomAction = onRequestAddNew != null || onConfirmed != null
             val topDragReserved = 48.dp
             val searchReserved = if (showSearch) 64.dp else 0.dp
@@ -378,14 +382,26 @@ fun <T> ElvanSelectionBottomSheet(
             val navReserved = 24.dp
             val maxListHeight = (availableHeight - topDragReserved - searchReserved - bottomReserved - navReserved).coerceIn(120.dp, 460.dp)
 
+            val sheetShape = if (isLandscape) RoundedCornerShape(24.dp) else RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp)
+            val sheetModifier = if (isLandscape) {
+                modifier
+                    .widthIn(max = 420.dp)
+                    .fillMaxWidth()
+                    .windowInsetsPadding(WindowInsets.navigationBars.only(WindowInsetsSides.End + WindowInsetsSides.Bottom))
+                    .padding(end = 24.dp, top = 16.dp, bottom = 16.dp)
+                    .offset { IntOffset((sheetOffsetY.value + dragOffsetY).roundToInt(), 0) }
+            } else {
+                modifier
+                    .fillMaxWidth()
+                    .offset { IntOffset(0, (sheetOffsetY.value + dragOffsetY).roundToInt()) }
+            }
+
             Surface(
-                    shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
+                    shape = sheetShape,
                     color = sheetBg,
                     contentColor = colors.textPrimary,
                     shadowElevation = 16.dp,
-                    modifier = modifier
-                        .fillMaxWidth()
-                        .offset { IntOffset(0, (sheetOffsetY.value + dragOffsetY).roundToInt()) }
+                    modifier = sheetModifier
                         .clickable(
                             interactionSource = remember { MutableInteractionSource() },
                             indication = null
@@ -598,6 +614,7 @@ fun <T> ElvanSelectionBottomSheet(
                         )
                     }
                 }
+            }
             }
         }
     }

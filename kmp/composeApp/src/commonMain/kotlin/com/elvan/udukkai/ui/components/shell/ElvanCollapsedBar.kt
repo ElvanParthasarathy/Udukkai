@@ -82,7 +82,8 @@ fun ElvanCollapsedBar(
     isAllSelected: Boolean = false,
     onSelectAll: () -> Unit = {},
     onCancelSelection: () -> Unit = {},
-    isPinnedAlways: Boolean = false
+    isPinnedAlways: Boolean = false,
+    leadingActions: (@Composable RowScope.() -> Unit)? = null
 ) {
     val statusBarHeight = com.elvan.udukkai.core.platform.getStatusBarTopPadding()
     val isDesktop = com.elvan.udukkai.core.platform.currentPlatform == com.elvan.udukkai.core.platform.PlatformType.DESKTOP
@@ -219,12 +220,23 @@ fun ElvanCollapsedBar(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    // Left side (Back Button / Title)
-                    if (onBack != null || title != null) {
+                    // Left side (Leading Actions / Back Button / Title)
+                    if (leadingActions != null || onBack != null || title != null) {
                         Row(
                             modifier = Modifier.weight(1f, fill = false),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
+                            if (leadingActions != null) {
+                                ElvanPill(liftProgress = liftProgress, colors = colors) {
+                                    Row(
+                                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 6.dp),
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(4.dp),
+                                        content = leadingActions
+                                    )
+                                }
+                                Spacer(modifier = Modifier.width(8.dp))
+                            }
                             if (onBack != null) {
                                 ElvanPill(liftProgress = liftProgress, colors = colors, modifier = Modifier.size(50.dp)) {
                                     ElvanTopBarIconButton(
@@ -252,7 +264,7 @@ fun ElvanCollapsedBar(
                                         color = colors.textPrimary
                                     ),
                                     modifier = Modifier
-                                        .padding(start = if (onBack != null) 12.dp else 8.dp, end = if (hasActions) 8.dp else 0.dp)
+                                        .padding(start = if (onBack != null || leadingActions != null) 12.dp else 8.dp, end = if (hasActions) 8.dp else 0.dp)
                                         .graphicsLayer {
                                             this.alpha = liftProgress
                                         }

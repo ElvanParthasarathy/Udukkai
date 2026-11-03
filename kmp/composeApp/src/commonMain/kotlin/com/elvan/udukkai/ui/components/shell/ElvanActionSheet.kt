@@ -142,7 +142,7 @@ fun ElvanActionSheet(
 
         val navBarBottomPadding = getNavBarBottomPadding()
 
-        Box(
+        BoxWithConstraints(
             modifier = Modifier
                 .fillMaxSize()
                 .background(Color.Black.copy(alpha = scrimAlpha))
@@ -152,41 +152,65 @@ fun ElvanActionSheet(
                 ) {
                     dismiss()
                 },
-            contentAlignment = if (isDesktop) Alignment.Center else Alignment.BottomCenter
         ) {
-            val cardShape = RoundedCornerShape(32.dp)
-            val cardModifier = if (isDesktop) {
-                modifier
-                    .widthIn(max = if (tertiaryText != null) 360.dp else 460.dp)
-                    .fillMaxWidth()
-                    .padding(24.dp)
-                    .offset { IntOffset(0, (sheetOffsetY.value + dragOffsetY).roundToInt()) }
-                    .clickable(
-                        interactionSource = remember { MutableInteractionSource() },
-                        indication = null
-                    ) { /* Consume clicks */ }
-            } else {
-                modifier
-                    .fillMaxWidth()
-                    .navigationBarsPadding()
-                    .imePadding()
-                    .padding(start = 16.dp, end = 16.dp, bottom = 16.dp)
-                    .offset { IntOffset(0, (sheetOffsetY.value + dragOffsetY).roundToInt()) }
-                    .draggable(
-                        state = draggableState,
-                        orientation = Orientation.Vertical,
-                        onDragStopped = { velocity ->
-                            if (dragOffsetY > 80f || velocity > 600f) {
-                                dismiss()
-                            } else {
-                                snapBackDrag()
+            val isLandscape = maxWidth > maxHeight && !isDesktop
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = when {
+                    isDesktop -> Alignment.Center
+                    isLandscape -> Alignment.CenterEnd
+                    else -> Alignment.BottomCenter
+                }
+            ) {
+            val cardShape = if (isLandscape) RoundedCornerShape(24.dp) else RoundedCornerShape(32.dp)
+            val cardModifier = when {
+                isDesktop -> {
+                    modifier
+                        .widthIn(max = if (tertiaryText != null) 360.dp else 460.dp)
+                        .fillMaxWidth()
+                        .padding(24.dp)
+                        .offset { IntOffset(0, (sheetOffsetY.value + dragOffsetY).roundToInt()) }
+                        .clickable(
+                            interactionSource = remember { MutableInteractionSource() },
+                            indication = null
+                        ) { /* Consume clicks */ }
+                }
+                isLandscape -> {
+                    // Adaptive Side Sheet for Landscape: Right-side anchored, max-width ~420.dp
+                    modifier
+                        .widthIn(max = 420.dp)
+                        .fillMaxWidth()
+                        .windowInsetsPadding(WindowInsets.navigationBars.only(WindowInsetsSides.End + WindowInsetsSides.Bottom))
+                        .padding(end = 24.dp, top = 16.dp, bottom = 16.dp)
+                        .offset { IntOffset((sheetOffsetY.value + dragOffsetY).roundToInt(), 0) }
+                        .clickable(
+                            interactionSource = remember { MutableInteractionSource() },
+                            indication = null
+                        ) { /* Consume clicks */ }
+                }
+                else -> {
+                    modifier
+                        .fillMaxWidth()
+                        .navigationBarsPadding()
+                        .imePadding()
+                        .padding(start = 16.dp, end = 16.dp, bottom = 16.dp)
+                        .offset { IntOffset(0, (sheetOffsetY.value + dragOffsetY).roundToInt()) }
+                        .draggable(
+                            state = draggableState,
+                            orientation = Orientation.Vertical,
+                            onDragStopped = { velocity ->
+                                if (dragOffsetY > 80f || velocity > 600f) {
+                                    dismiss()
+                                } else {
+                                    snapBackDrag()
+                                }
                             }
-                        }
-                    )
-                    .clickable(
-                        interactionSource = remember { MutableInteractionSource() },
-                        indication = null
-                    ) { /* Consume clicks */ }
+                        )
+                        .clickable(
+                            interactionSource = remember { MutableInteractionSource() },
+                            indication = null
+                        ) { /* Consume clicks */ }
+                }
             }
 
             Surface(
@@ -405,6 +429,7 @@ fun ElvanActionSheet(
                         }
                     }
                 }
+            }
             }
         }
     }

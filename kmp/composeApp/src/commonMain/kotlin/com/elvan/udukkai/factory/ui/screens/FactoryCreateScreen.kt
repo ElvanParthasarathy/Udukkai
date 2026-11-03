@@ -94,7 +94,8 @@ fun FactoryCreateScreen(
         )
     )
 
-    Box(modifier = modifier.fillMaxSize()) {
+    BoxWithConstraints(modifier = modifier.fillMaxSize()) {
+        val isLandscape = maxWidth > maxHeight
         LazyColumn(
             state = scrollState,
             modifier = Modifier.fillMaxSize(),
@@ -266,38 +267,80 @@ fun FactoryCreateScreen(
                             )
                         }
 
-                        items(
-                            items = group.items,
-                            key = { "invoice_${it.data.id}" }
-                        ) { indexedInvoice ->
-                            val index = indexedInvoice.globalIndex
-                            val invoice = indexedInvoice.data
-                            val isSelected = selectedItemIds.contains(invoice.id)
-                            val onCardClick: () -> Unit = {
-                                if (isSelectionMode) {
-                                    onToggleSelect?.invoke(invoice.id)
-                                } else {
-                                    onInvoiceClick(invoice)
+                        if (isLandscape) {
+                            val pairs = group.items.chunked(2)
+                            items(
+                                items = pairs,
+                                key = { "inv_pair_${it.first().data.id}" }
+                            ) { pair ->
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(horizontal = Dimens.ContentPadding),
+                                    horizontalArrangement = Arrangement.spacedBy(Dimens.ItemSpacing)
+                                ) {
+                                    pair.forEach { indexedInvoice ->
+                                        val index = indexedInvoice.globalIndex
+                                        val invoice = indexedInvoice.data
+                                        val isSelected = selectedItemIds.contains(invoice.id)
+                                        val onCardClick: () -> Unit = {
+                                            if (isSelectionMode) onToggleSelect?.invoke(invoice.id)
+                                            else onInvoiceClick(invoice)
+                                        }
+                                        val onCardLongClick: () -> Unit = {
+                                            onItemLongClick?.invoke(invoice.id)
+                                        }
+                                        Box(modifier = Modifier.weight(1f)) {
+                                            FactoryInvoiceCard(
+                                                index = index,
+                                                invoice = invoice,
+                                                colors = colors,
+                                                isSelectionMode = isSelectionMode,
+                                                isSelected = isSelected,
+                                                onClick = onCardClick,
+                                                onLongClick = onCardLongClick
+                                            )
+                                        }
+                                    }
+                                    if (pair.size == 1) {
+                                        Spacer(modifier = Modifier.weight(1f))
+                                    }
                                 }
                             }
-                            val onCardLongClick: () -> Unit = {
-                                onItemLongClick?.invoke(invoice.id)
-                            }
+                        } else {
+                            items(
+                                items = group.items,
+                                key = { "invoice_${it.data.id}" }
+                            ) { indexedInvoice ->
+                                val index = indexedInvoice.globalIndex
+                                val invoice = indexedInvoice.data
+                                val isSelected = selectedItemIds.contains(invoice.id)
+                                val onCardClick: () -> Unit = {
+                                    if (isSelectionMode) {
+                                        onToggleSelect?.invoke(invoice.id)
+                                    } else {
+                                        onInvoiceClick(invoice)
+                                    }
+                                }
+                                val onCardLongClick: () -> Unit = {
+                                    onItemLongClick?.invoke(invoice.id)
+                                }
 
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(horizontal = Dimens.ContentPadding)
-                            ) {
-                                FactoryInvoiceCard(
-                                    index = index,
-                                    invoice = invoice,
-                                    colors = colors,
-                                    isSelectionMode = isSelectionMode,
-                                    isSelected = isSelected,
-                                    onClick = onCardClick,
-                                    onLongClick = onCardLongClick
-                                )
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(horizontal = Dimens.ContentPadding)
+                                ) {
+                                    FactoryInvoiceCard(
+                                        index = index,
+                                        invoice = invoice,
+                                        colors = colors,
+                                        isSelectionMode = isSelectionMode,
+                                        isSelected = isSelected,
+                                        onClick = onCardClick,
+                                        onLongClick = onCardLongClick
+                                    )
+                                }
                             }
                         }
                     }

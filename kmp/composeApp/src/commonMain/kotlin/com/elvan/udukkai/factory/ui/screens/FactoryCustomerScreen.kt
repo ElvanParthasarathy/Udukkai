@@ -53,7 +53,8 @@ fun FactoryCustomerScreen(
     val ff = LocalAppFontFamily.current
 
 
-    Box(modifier = modifier.fillMaxSize()) {
+    BoxWithConstraints(modifier = modifier.fillMaxSize()) {
+        val isLandscape = maxWidth > maxHeight
         LazyColumn(
             state = scrollState,
             modifier = Modifier.fillMaxSize(),
@@ -108,33 +109,73 @@ fun FactoryCustomerScreen(
                     }
                 }
             } else {
-                itemsIndexed(
-                    items = customers,
-                    key = { _, item -> "cust_${item.id}" }
-                ) { index, item ->
-                    val isSelected = selectedCustomerIds.contains(item.id)
-                    val onCardClick: () -> Unit = {
-                        if (isSelectionMode) {
-                            onToggleSelect?.invoke(item.id)
-                        } else {
-                            onCustomerClick(item)
+                if (isLandscape) {
+                    val pairs = customers.chunked(2)
+                    itemsIndexed(
+                        items = pairs,
+                        key = { _, pair -> "cust_pair_${pair.first().id}" }
+                    ) { rowIndex, pair ->
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = Dimens.ContentPadding),
+                            horizontalArrangement = Arrangement.spacedBy(Dimens.ItemSpacing)
+                        ) {
+                            pair.forEachIndexed { colIndex, item ->
+                                val cardIndex = (rowIndex * 2) + colIndex
+                                val isSelected = selectedCustomerIds.contains(item.id)
+                                val onCardClick: () -> Unit = {
+                                    if (isSelectionMode) onToggleSelect?.invoke(item.id)
+                                    else onCustomerClick(item)
+                                }
+                                val onCardLongClick: () -> Unit = {
+                                    onCustomerLongClick?.invoke(item.id)
+                                }
+                                Box(modifier = Modifier.weight(1f)) {
+                                    FactoryCustomerCard(
+                                        index = cardIndex,
+                                        merchant = item,
+                                        onClick = onCardClick,
+                                        colors = colors,
+                                        isSelectionMode = isSelectionMode,
+                                        isSelected = isSelected,
+                                        onLongClick = onCardLongClick
+                                    )
+                                }
+                            }
+                            if (pair.size == 1) {
+                                Spacer(modifier = Modifier.weight(1f))
+                            }
                         }
                     }
-                    val onCardLongClick: () -> Unit = {
-                        onCustomerLongClick?.invoke(item.id)
+                } else {
+                    itemsIndexed(
+                        items = customers,
+                        key = { _, item -> "cust_${item.id}" }
+                    ) { index, item ->
+                        val isSelected = selectedCustomerIds.contains(item.id)
+                        val onCardClick: () -> Unit = {
+                            if (isSelectionMode) {
+                                onToggleSelect?.invoke(item.id)
+                            } else {
+                                onCustomerClick(item)
+                            }
+                        }
+                        val onCardLongClick: () -> Unit = {
+                            onCustomerLongClick?.invoke(item.id)
+                        }
+
+                        FactoryCustomerCard(
+                            index = index,
+                            merchant = item,
+                            onClick = onCardClick,
+                            colors = colors,
+                            isSelectionMode = isSelectionMode,
+                            isSelected = isSelected,
+                            onLongClick = onCardLongClick
+                        )
                     }
-
-                    FactoryCustomerCard(
-                        index = index,
-                        merchant = item,
-                        onClick = onCardClick,
-                        colors = colors,
-                        isSelectionMode = isSelectionMode,
-                        isSelected = isSelected,
-                        onLongClick = onCardLongClick
-                    )
                 }
-
             }
         }
     }

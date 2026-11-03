@@ -328,8 +328,8 @@ fun LandscapeSideNavBar(
         Box(
             modifier = modifier
                 .graphicsLayer { alpha = navBarAlpha }
-                .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal + WindowInsetsSides.Bottom))
-                .padding(end = 16.dp, bottom = 16.dp),
+                .windowInsetsPadding(WindowInsets.navigationBars.only(WindowInsetsSides.Bottom + WindowInsetsSides.End))
+                .padding(end = 14.dp, bottom = 8.dp),
             contentAlignment = Alignment.BottomEnd
         ) {
             Box(
@@ -380,6 +380,7 @@ fun LandscapeSideNavBar(
                                         touchOffsetFromCenterPx = initialY - slotCenter
                                         dragOffsetPx = null
 
+                                        var isLongPressed = false
                                         var isDrag = false
                                         val pointerId = down.id
 
@@ -390,14 +391,21 @@ fun LandscapeSideNavBar(
 
                                             val elapsed = change.uptimeMillis - downTime
                                             val pressure = change.pressure
+                                            val currentPos = change.position
+                                            val moved = abs(currentPos.y - down.position.y) > 6f
 
-                                            // Subtle zoom only on genuine long-press (>300ms) or firm touch
-                                            if (pressure > 1.25f || elapsed > 300L) {
+                                            // Normal swipe/drag does NOT expand the pill
+                                            if (moved && !isLongPressed) {
+                                                isDrag = true
+                                            }
+
+                                            // ONLY forced/deliberate long press (>380ms) BEFORE moving triggers expansion
+                                            if (!isDrag && (pressure > 1.3f || elapsed >= 380L)) {
+                                                isLongPressed = true
                                                 isExpanded = true
                                             }
 
-                                            val currentPos = change.position
-                                            if (abs(currentPos.y - down.position.y) > 4f) {
+                                            if (moved) {
                                                 isDrag = true
                                                 val targetCenter = currentPos.y - touchOffsetFromCenterPx
                                                 dragOffsetPx = targetCenter

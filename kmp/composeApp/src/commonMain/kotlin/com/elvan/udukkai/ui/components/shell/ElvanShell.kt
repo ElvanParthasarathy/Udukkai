@@ -53,6 +53,7 @@ fun ElvanShell(
     showNavbar: Boolean = true,
     onBack: (() -> Unit)? = null,
     leadingIcon: ImageVector? = null,
+    leadingActions: (@Composable RowScope.() -> Unit)? = null,
     hasActions: Boolean = false,
     actions: @Composable RowScope.() -> Unit = {},
     navbar: @Composable () -> Unit = {},
@@ -428,7 +429,8 @@ fun ElvanShell(
                     selectedCount = selectedCount,
                     isAllSelected = isAllSelected,
                     onSelectAll = onSelectAll,
-                    onCancelSelection = onCancelSelection
+                    onCancelSelection = onCancelSelection,
+                    leadingActions = leadingActions
                 )
             } else {
                 // Layer 2: Top Fade Mask — strictly for portrait/desktop, NOT landscape (controls moved to sides)
@@ -485,7 +487,8 @@ fun ElvanShell(
                         isAllSelected = isAllSelected,
                         onSelectAll = onSelectAll,
                         onCancelSelection = onCancelSelection,
-                        isPinnedAlways = true
+                        isPinnedAlways = true,
+                        leadingActions = leadingActions
                     )
                 }
             }
