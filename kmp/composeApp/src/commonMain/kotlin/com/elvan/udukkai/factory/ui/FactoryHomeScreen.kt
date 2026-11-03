@@ -171,8 +171,9 @@ fun FactoryHomeScreen() {
     // AnimatedContent transition below handle all subpage motion.
     AppPredictiveBackHandler(
         enabled = activeSubpage != null || isSelectionMode || isSearchActive || showBulkDeleteConfirm || selectedTab != NavTab.Home,
-        onProgress = { _, _ -> },
-        onCancel = {},
+        // The whole screen shrinks and slides under the finger (see BackGesture), then the page change animates
+        onProgress = { p, e -> com.elvan.udukkai.core.platform.BackGesture.progress = p; com.elvan.udukkai.core.platform.BackGesture.edge = e },
+        onCancel = { com.elvan.udukkai.core.platform.BackGesture.progress = 0f },
         onBack = {
             if (showBulkDeleteConfirm) {
                 showBulkDeleteConfirm = false

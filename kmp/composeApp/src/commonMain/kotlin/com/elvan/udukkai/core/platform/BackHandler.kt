@@ -5,6 +5,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.dp
@@ -31,6 +32,9 @@ fun Modifier.backGestureScale(): Modifier = graphicsLayer {
         scaleX = scale
         scaleY = scale
         translationX = (if (BackGesture.edge == 0) 1f else -1f) * p * 24.dp.toPx()
+        // Rounded corners appear as it shrinks, like the system's own preview
+        shape = RoundedCornerShape((28f * p).dp)
+        clip = true
     }
 }
 
