@@ -27,6 +27,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.clearAndSetSemantics
@@ -47,22 +48,21 @@ import kotlin.math.floor
 import kotlin.math.roundToInt
 
 /**
- * Vertical nearness metric for smooth icon interpolation as the selection pill glides along the Y axis.
+ * Vertical nearness metric for smooth icon & label interpolation as the selection pill glides along the Y axis.
  */
 private fun pillNearnessVertical(pillTopPx: Float, pillHeightPx: Float, slotHeightPx: Float, index: Int): Float =
     (1f - abs(pillTopPx + pillHeightPx / 2f - (index + 0.5f) * slotHeightPx) / slotHeightPx).coerceIn(0f, 1f)
 
 /**
  * One tab slot in the landscape vertical rail.
- * Idle look and active look smoothly blend via nearness metric.
- * When expanded (deep press/hold drag), localized label crossfades in alongside the icon.
+ * Places the localized Pure Tamil label DIRECTLY BELOW the icon (vertical stack) so it looks identical to BottomNavBar tabs.
  */
 @Composable
-private fun LandscapePillTab(
+private fun LandscapeVerticalTab(
     tab: NavTab,
     near: () -> Float,
     labelAlpha: Float,
-    isExpanded: Boolean,
+    slotHeight: androidx.compose.ui.unit.Dp,
     idleColor: Color,
     activeColor: Color,
     modifier: Modifier = Modifier
@@ -71,53 +71,56 @@ private fun LandscapePillTab(
     val active = Modifier.graphicsLayer { alpha = near() }
     val ff = LocalAppFontFamily.current
 
-    Row(
-        modifier = modifier.semantics(mergeDescendants = true) {},
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.Start
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .height(slotHeight)
+            .semantics(mergeDescendants = true) {},
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Box(
-            modifier = Modifier.size(44.dp),
+            modifier = Modifier.size(22.dp),
             contentAlignment = Alignment.Center
         ) {
             Icon(
                 imageVector = tab.icon,
                 contentDescription = null,
                 tint = idleColor,
-                modifier = Modifier.size(24.dp).then(idle)
+                modifier = Modifier.matchParentSize().then(idle)
             )
             Icon(
                 imageVector = tab.activeIcon,
                 contentDescription = null,
                 tint = activeColor,
-                modifier = Modifier.size(24.dp).then(active)
+                modifier = Modifier.matchParentSize().then(active)
             )
         }
 
         if (labelAlpha > 0.02f) {
-            Spacer(modifier = Modifier.width(6.dp))
+            Spacer(modifier = Modifier.height(2.dp))
             Box(
-                modifier = Modifier
-                    .weight(1f)
-                    .graphicsLayer { alpha = labelAlpha },
-                contentAlignment = Alignment.CenterStart
+                modifier = Modifier.graphicsLayer { alpha = labelAlpha },
+                contentAlignment = Alignment.Center
             ) {
                 Text(
                     text = tab.getLocalizedLabel(),
                     color = idleColor,
-                    fontSize = 13.sp,
+                    fontSize = 9.sp,
                     fontWeight = FontWeight.Normal,
                     fontFamily = ff,
                     maxLines = 1,
+                    lineHeight = 11.sp,
                     modifier = idle
                 )
                 Text(
                     text = tab.getLocalizedLabel(),
                     color = activeColor,
-                    fontSize = 13.sp,
+                    fontSize = 9.sp,
                     fontWeight = FontWeight.SemiBold,
                     fontFamily = ff,
                     maxLines = 1,
+                    lineHeight = 11.sp,
                     modifier = active.clearAndSetSemantics { }
                 )
             }
@@ -126,11 +129,71 @@ private fun LandscapePillTab(
 }
 
 /**
- * Udukkai Landscape Floating Side Navigation Bar (Inspired by iPhone Duo Trailing Rail).
- * - Docked along the trailing (right) vertical edge, safely respecting camera notch & navigation bar insets.
- * - In default resting state: compact vertical capsule showing pure icons (no labels) with vertical PillMotion glide.
- * - On light drag: vertical scrubbing glides the active selection pill smoothly with liquid glass stretch physics.
- * - On firm / hold drag: expands horizontally to reveal localized labels while preserving full drag physics.
+ * Circular dynamic island action button for the trailing rail (e.g. 3-dot More, Plus Add, Back).
+ */
+@Composable
+private fun LandscapeRailCircleButton(
+    icon: ImageVector,
+    contentDescription: String?,
+    onClick: () -> Unit,
+    colors: ShellColors,
+    isDark: Boolean,
+    modifier: Modifier = Modifier
+) {
+    val interactionSource = remember { MutableInteractionSource() }
+    val isPressed by interactionSource.collectIsPressedAsState()
+    val scale by animateFloatAsState(
+        targetValue = if (isPressed) 0.92f else 1.0f,
+        animationSpec = tween(120, easing = CubicBezierEasing(0.0f, 0.0f, 0.2f, 1.0f)),
+        label = "railBtnScale"
+    )
+
+    Box(
+        modifier = modifier
+            .size(50.dp)
+            .graphicsLayer {
+                scaleX = scale
+                scaleY = scale
+                clip = false
+            }
+            .cssShadow(color = Color.Black, alpha = 0.08f, blurRadius = 14.dp, offsetY = 3.dp)
+            .background(
+                color = colors.floatingBg.copy(alpha = 0.88f),
+                shape = CircleShape
+            )
+            .border(
+                width = 0.5.dp,
+                color = colors.floatingBorder.copy(alpha = if (isDark) 0.15f else 0.6f),
+                shape = CircleShape
+            )
+            .clip(CircleShape)
+            .clickable(
+                interactionSource = interactionSource,
+                indication = ripple(bounded = true, radius = 25.dp),
+                onClick = onClick
+            ),
+        contentAlignment = Alignment.Center
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = contentDescription,
+            tint = colors.textPrimary,
+            modifier = Modifier.size(22.dp)
+        )
+    }
+}
+
+/**
+ * Udukkai Landscape Floating Side Navigation Bar (iPhone Duo Architecture).
+ * - Docked on the trailing (right) vertical edge, safely respecting camera cutout and navigation bar.
+ * - Order in rail from top to bottom:
+ *     1. [Optional] Back Button (<)
+ *     2. [Optional] 3-Dot More Menu Button (...) with anchored popup menu
+ *     3. [Optional] Plus Action Button (+)
+ *     4. Tab Bar Floating Capsule (Situated BELOW the Plus button)
+ * - Compact Resting State: pure icons (46.dp slot height, 56.dp width).
+ * - On Long Press / Firm Drag: smoothly expands vertically (58.dp slot height), showing Pure Tamil labels
+ *   BELOW the icons with liquid glass PillMotion stretch and glide physics.
  */
 @Composable
 fun LandscapeSideNavBar(
@@ -140,6 +203,9 @@ fun LandscapeSideNavBar(
     onDragProgress: (Float) -> Unit = {},
     hideContent: Boolean = false,
     onAddClick: (() -> Unit)? = null,
+    onMoreClick: (() -> Unit)? = null,
+    onBackClick: (() -> Unit)? = null,
+    moreMenuContent: @Composable () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val tabs = NavTab.entries
@@ -148,7 +214,6 @@ fun LandscapeSideNavBar(
     val isDark = colors.isDark
 
     val itemCount = tabs.size
-    val slotHeight = 50.dp
     val verticalPadding = 5.dp
     val horizontalPadding = 5.dp
 
@@ -160,9 +225,45 @@ fun LandscapeSideNavBar(
     var localLockedIndex by remember { mutableStateOf<Int?>(null) }
     var snapNextFrame by remember { mutableStateOf(false) }
 
+    // Dynamic slot height: 46.dp compact -> 58.dp expanded (showing labels below icons)
+    val slotHeight by animateDpAsState(
+        targetValue = if (isExpanded) 58.dp else 46.dp,
+        animationSpec = spring(dampingRatio = 0.75f, stiffness = 450f),
+        label = "railSlotHeight"
+    )
+
+    val indicatorHeight by animateDpAsState(
+        targetValue = if (isExpanded) 50.dp else 38.dp,
+        animationSpec = spring(dampingRatio = 0.75f, stiffness = 450f),
+        label = "railIndicatorHeight"
+    )
+
+    val labelAlpha by animateFloatAsState(
+        targetValue = if (isExpanded) 1f else 0f,
+        animationSpec = tween(durationMillis = 140),
+        label = "railLabelAlpha"
+    )
+
+    val containerScale by animateFloatAsState(
+        targetValue = if (isInteracting) 1.02f else 1.0f,
+        animationSpec = PillMotion.press,
+        label = "railContainerScale"
+    )
+
+    val pillScale by animateFloatAsState(
+        targetValue = if (isInteracting) 1.06f else 1.0f,
+        animationSpec = PillMotion.press,
+        label = "railPillScale"
+    )
+
+    val contentAlpha by animateFloatAsState(
+        targetValue = if (hideContent) 0f else 1f,
+        animationSpec = tween(150),
+        label = "railContentAlpha"
+    )
+
     val density = LocalDensity.current
     val slotHeightPx = with(density) { slotHeight.toPx() }
-    val indicatorHeight = 44.dp
     val indicatorHeightPx = with(density) { indicatorHeight.toPx() }
 
     val currentOnTabSelected by rememberUpdatedState(onTabSelected)
@@ -188,37 +289,6 @@ fun LandscapeSideNavBar(
     } else {
         localLockedIndex ?: actualIndex
     }
-
-    // Width animation: compact (54.dp) -> expanded (160.dp) on hard press / hold drag
-    val railWidth by animateDpAsState(
-        targetValue = if (isExpanded) 160.dp else 54.dp,
-        animationSpec = spring(dampingRatio = 0.75f, stiffness = 450f),
-        label = "railWidth"
-    )
-
-    val labelAlpha by animateFloatAsState(
-        targetValue = if (isExpanded) 1f else 0f,
-        animationSpec = tween(durationMillis = 160),
-        label = "railLabelAlpha"
-    )
-
-    val containerScale by animateFloatAsState(
-        targetValue = if (isInteracting) 1.02f else 1.0f,
-        animationSpec = PillMotion.press,
-        label = "railContainerScale"
-    )
-
-    val pillScale by animateFloatAsState(
-        targetValue = if (isInteracting) 1.05f else 1.0f,
-        animationSpec = PillMotion.press,
-        label = "railPillScale"
-    )
-
-    val contentAlpha by animateFloatAsState(
-        targetValue = if (hideContent) 0f else 1f,
-        animationSpec = tween(150),
-        label = "railContentAlpha"
-    )
 
     val overlapPy = (slotHeightPx - indicatorHeightPx) / 2f
     val maxTopPx = ((itemCount - 1) * slotHeightPx)
@@ -251,11 +321,47 @@ fun LandscapeSideNavBar(
             modifier = modifier
                 .graphicsLayer { alpha = navBarAlpha }
                 .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal + WindowInsetsSides.Bottom))
-                .padding(end = 12.dp, bottom = 16.dp),
+                .padding(end = 12.dp, bottom = 14.dp),
             horizontalAlignment = Alignment.End,
-            verticalArrangement = Arrangement.spacedBy(10.dp)
+            verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            // Tab Bar Floating Capsule
+            // 1. Back Button (if provided)
+            if (onBackClick != null) {
+                LandscapeRailCircleButton(
+                    icon = MaterialSymbols.Rounded.ArrowBack,
+                    contentDescription = K.back.tr(),
+                    onClick = onBackClick,
+                    colors = colors,
+                    isDark = isDark
+                )
+            }
+
+            // 2. 3-Dot More Menu Button (with anchored popup menu)
+            if (onMoreClick != null) {
+                Box {
+                    LandscapeRailCircleButton(
+                        icon = MaterialSymbols.Rounded.MoreVert,
+                        contentDescription = K.more.tr(),
+                        onClick = onMoreClick,
+                        colors = colors,
+                        isDark = isDark
+                    )
+                    moreMenuContent()
+                }
+            }
+
+            // 3. Plus Add Button
+            if (onAddClick != null) {
+                LandscapeRailCircleButton(
+                    icon = MaterialSymbols.Rounded.Add,
+                    contentDescription = K.add.tr(),
+                    onClick = onAddClick,
+                    colors = colors,
+                    isDark = isDark
+                )
+            }
+
+            // 4. Tab Bar Floating Capsule (BELOW the Plus button)
             Box(
                 modifier = Modifier
                     .graphicsLayer {
@@ -264,8 +370,8 @@ fun LandscapeSideNavBar(
                         clip = false
                     }
                     .height((slotHeight * itemCount) + (verticalPadding * 2))
-                    .width(railWidth),
-                contentAlignment = Alignment.TopStart
+                    .width(56.dp),
+                contentAlignment = Alignment.TopCenter
             ) {
                 // Layer 1: Translucent Capsule Background & Border
                 Box(
@@ -274,16 +380,16 @@ fun LandscapeSideNavBar(
                         .cssShadow(color = Color.Black, alpha = 0.08f, blurRadius = 16.dp, offsetY = 4.dp)
                         .background(
                             color = colors.floatingBg.copy(alpha = 0.88f),
-                            shape = RoundedCornerShape(27.dp)
+                            shape = RoundedCornerShape(28.dp)
                         )
                         .border(
                             width = 0.5.dp,
                             color = colors.floatingBorder.copy(alpha = if (isDark) 0.15f else 0.6f),
-                            shape = RoundedCornerShape(27.dp)
+                            shape = RoundedCornerShape(28.dp)
                         )
                 )
 
-                // Layer 2: Draggable / Touch Area
+                // Layer 2: Gesture Drag Area
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
@@ -315,7 +421,7 @@ fun LandscapeSideNavBar(
                                             val elapsed = change.uptimeMillis - downTime
                                             val pressure = change.pressure
 
-                                            // Firm press detection: high touch pressure or firm hold (>180ms) expands labels
+                                            // Firm press or hold (>180ms) expands labels below icons
                                             if (pressure > 1.15f || elapsed > 180L) {
                                                 isExpanded = true
                                             }
@@ -352,7 +458,7 @@ fun LandscapeSideNavBar(
                                 }
                             } else Modifier
                         ),
-                    contentAlignment = Alignment.TopStart
+                    contentAlignment = Alignment.TopCenter
                 ) {
                     Box(
                         modifier = Modifier
@@ -360,7 +466,8 @@ fun LandscapeSideNavBar(
                                 alpha = contentAlpha
                                 clip = false
                             }
-                            .fillMaxSize()
+                            .fillMaxSize(),
+                        contentAlignment = Alignment.TopCenter
                     ) {
                         // Master Background Pill (Detached & Draggable along vertical Y axis)
                         Box(
@@ -380,73 +487,28 @@ fun LandscapeSideNavBar(
                                 )
                                 .background(
                                     color = if (isDark) Color(0xFF333333) else Color(0xFFE5E5E5),
-                                    shape = RoundedCornerShape(22.dp)
+                                    shape = RoundedCornerShape(20.dp)
                                 )
                         )
 
-                        // Foreground Tab Items (Vertical Column)
+                        // Tab Items Column
                         Column(
                             modifier = Modifier.fillMaxSize(),
                             verticalArrangement = Arrangement.Center
                         ) {
                             tabs.forEachIndexed { index, tab ->
-                                LandscapePillTab(
+                                LandscapeVerticalTab(
                                     tab = tab,
                                     near = { pillNearnessVertical(animatedTop.value, indicatorHeightPx, slotHeightPx, index) },
                                     labelAlpha = labelAlpha,
-                                    isExpanded = isExpanded,
+                                    slotHeight = slotHeight,
                                     idleColor = colors.textSecondary,
                                     activeColor = colors.textPrimary,
-                                    modifier = Modifier.height(slotHeight).fillMaxWidth()
+                                    modifier = Modifier.fillMaxWidth()
                                 )
                             }
                         }
                     }
-                }
-            }
-
-            // Floating Add (+) Action Button (below the vertical tab capsule, like iPhone Duo toolbar)
-            if (onAddClick != null) {
-                val addInteractionSource = remember { MutableInteractionSource() }
-                val isAddPressed by addInteractionSource.collectIsPressedAsState()
-                val addScale by animateFloatAsState(
-                    targetValue = if (isAddPressed) 0.92f else 1.0f,
-                    animationSpec = tween(120, easing = CubicBezierEasing(0.0f, 0.0f, 0.2f, 1.0f)),
-                    label = "landscapeAddScale"
-                )
-
-                Box(
-                    modifier = Modifier
-                        .size(54.dp)
-                        .graphicsLayer {
-                            scaleX = addScale
-                            scaleY = addScale
-                            clip = false
-                        }
-                        .cssShadow(color = Color.Black, alpha = 0.08f, blurRadius = 16.dp, offsetY = 4.dp)
-                        .background(
-                            color = colors.floatingBg.copy(alpha = 0.88f),
-                            shape = CircleShape
-                        )
-                        .border(
-                            width = 0.5.dp,
-                            color = colors.floatingBorder.copy(alpha = if (isDark) 0.15f else 0.6f),
-                            shape = CircleShape
-                        )
-                        .clip(CircleShape)
-                        .clickable(
-                            interactionSource = addInteractionSource,
-                            indication = ripple(bounded = true, radius = 27.dp),
-                            onClick = onAddClick
-                        ),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        imageVector = MaterialSymbols.Rounded.Add,
-                        contentDescription = K.add.tr(),
-                        tint = colors.textPrimary,
-                        modifier = Modifier.size(24.dp)
-                    )
                 }
             }
         }

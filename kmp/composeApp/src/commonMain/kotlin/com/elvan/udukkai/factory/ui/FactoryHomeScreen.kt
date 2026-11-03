@@ -503,14 +503,15 @@ fun FactoryHomeScreen() {
                                 }
                             }
 
-                            // 3-Dot More Menu (மேலும்)
-                            Box {
-                                ElvanTopBarIconButton(
-                                    onClick = {
-                                        ElvanMenuState.isMenuOpen = true
-                                        menuExpanded = true
-                                    }
-                                ) {
+                            // 3-Dot More Menu (மேலும்) - only in portrait top bar
+                            if (!isLandscape) {
+                                Box {
+                                    ElvanTopBarIconButton(
+                                        onClick = {
+                                            ElvanMenuState.isMenuOpen = true
+                                            menuExpanded = true
+                                        }
+                                    ) {
                                     Icon(
                                         imageVector = MaterialSymbols.Rounded.MoreVert,
                                         contentDescription = K.more.tr(),
@@ -558,15 +559,16 @@ fun FactoryHomeScreen() {
                                         )
                                     }
                                 }
-                                ElvanPopupMenu(
-                                    expanded = menuExpanded,
-                                    onDismissRequest = {
-                                        ElvanMenuState.isMenuOpen = false
-                                        menuExpanded = false
-                                    },
-                                    colors = colors,
-                                    items = menuItems
-                                )
+                                    ElvanPopupMenu(
+                                        expanded = menuExpanded,
+                                        onDismissRequest = {
+                                            ElvanMenuState.isMenuOpen = false
+                                            menuExpanded = false
+                                        },
+                                        colors = colors,
+                                        items = menuItems
+                                    )
+                                }
                             }
                         },
                         navbar = {
@@ -619,6 +621,61 @@ fun FactoryHomeScreen() {
                                 LandscapeSideNavBar(
                                     selectedTab = selectedTab,
                                     hideContent = isSearchActive || showDateFilterSheet,
+                                    onMoreClick = {
+                                        ElvanMenuState.isMenuOpen = true
+                                        menuExpanded = true
+                                    },
+                                    moreMenuContent = {
+                                        val settingsLabel = K.settings.tr()
+                                        val meetpagamLabel = K.recycleBin.tr()
+                                        val thaerndheduLabel = K.select.tr()
+                                        val sideMenuItems = buildList {
+                                            add(
+                                                ElvanPopupMenuItem(
+                                                    title = settingsLabel,
+                                                    icon = MaterialSymbols.Rounded.Settings,
+                                                    onClick = {
+                                                        ElvanMenuState.isMenuOpen = false
+                                                        menuExpanded = false
+                                                        navigateToSubpage(ActiveSubpage.Settings)
+                                                    }
+                                                )
+                                            )
+                                            add(
+                                                ElvanPopupMenuItem(
+                                                    title = meetpagamLabel,
+                                                    icon = MaterialSymbols.Rounded.Delete,
+                                                    onClick = {
+                                                        ElvanMenuState.isMenuOpen = false
+                                                        menuExpanded = false
+                                                        navigateToSubpage(ActiveSubpage.RecycleBin)
+                                                    }
+                                                )
+                                            )
+                                            if (selectedTab != NavTab.Home) {
+                                                add(
+                                                    ElvanPopupMenuItem(
+                                                        title = thaerndheduLabel,
+                                                        icon = MaterialSymbols.Rounded.CheckCircleFill,
+                                                        onClick = {
+                                                            ElvanMenuState.isMenuOpen = false
+                                                            menuExpanded = false
+                                                            isSelectionMode = true
+                                                        }
+                                                    )
+                                                )
+                                            }
+                                        }
+                                        ElvanPopupMenu(
+                                            expanded = menuExpanded,
+                                            onDismissRequest = {
+                                                ElvanMenuState.isMenuOpen = false
+                                                menuExpanded = false
+                                            },
+                                            colors = colors,
+                                            items = sideMenuItems
+                                        )
+                                    },
                                     onAddClick = {
                                         when (selectedTab) {
                                             NavTab.Home -> {
