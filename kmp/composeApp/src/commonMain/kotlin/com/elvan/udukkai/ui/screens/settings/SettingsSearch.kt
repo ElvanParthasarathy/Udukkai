@@ -121,36 +121,38 @@ object RecentSettingSearches {
     private fun save(list: List<String>) = getPreferencesHelper().setString(KEY, list.take(MAX).joinToString("\n"))
 }
 
-/** The same floating pill as the app's navigation bar and search bar: 56dp high, the same translucency, hairline and shadow. */
-private val PILL_HEIGHT = 56.dp
+/** The search pill: compact and sleek (44dp high, 176dp wide), matching the floating style. */
+private val PILL_HEIGHT = 44.dp
+private val PILL_FIELD_HEIGHT = 48.dp
 
-/** The closed pill's width (the navigation bar's), and the room left at each side when it is open. */
-private val PILL_CLOSED_WIDTH = 248.dp
+/** The closed pill's width, and the room left at each side when it is open. */
+private val PILL_CLOSED_WIDTH = 176.dp
 private val PILL_OPEN_MARGIN = 16.dp
 
 @Composable
-private fun Modifier.floatingPill(colors: ShellColors): Modifier = this
-    .height(PILL_HEIGHT)
-    .cssShadow(color = Color.Black, alpha = if (colors.isDark) 0.55f else 0.2f, blurRadius = 32.dp, offsetY = 12.dp)
+private fun Modifier.floatingPill(colors: ShellColors, height: Dp = PILL_HEIGHT): Modifier = this
+    .height(height)
+    .cssShadow(color = Color.Black, alpha = if (colors.isDark) 0.50f else 0.16f, blurRadius = 20.dp, offsetY = 8.dp)
     .background(color = colors.floatingBg.copy(alpha = 0.88f), shape = CircleShape)
     .border(width = 0.5.dp, color = colors.floatingBorder.copy(alpha = if (colors.isDark) 0.15f else 0.6f), shape = CircleShape)
 
-/** The search pill kept at the bottom of the settings page, where the navigation bar sits on the other pages. */
+/** The search pill kept at the bottom of the settings page: compact, elegant floating search pill. */
 @Composable
 fun SettingsSearchPill(colors: ShellColors, onClick: () -> Unit) {
     val ff = LocalAppFontFamily.current
     BoxWithConstraints(Modifier.fillMaxWidth().navigationBarsPaddingIfMobile().padding(bottom = Dimens.FloatingBarBottomGap), contentAlignment = Alignment.Center) {
         Row(
             Modifier.width(PILL_CLOSED_WIDTH.coerceAtMost(maxWidth - PILL_OPEN_MARGIN * 2))
-                .floatingPill(colors)
+                .floatingPill(colors, height = PILL_HEIGHT)
                 .clip(CircleShape)
                 .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null, onClick = onClick)
-                .padding(horizontal = 16.dp),
-            verticalAlignment = Alignment.CenterVertically
+                .padding(horizontal = 14.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Center
         ) {
-            Icon(MaterialSymbols.Rounded.Search, null, tint = colors.textSecondary, modifier = Modifier.size(20.dp))
-            Spacer(Modifier.width(10.dp))
-            Text(K.searchWord.tr(), style = TextStyle(fontFamily = ff, fontSize = 17.sp, color = colors.textSecondary.copy(alpha = 0.6f)))
+            Icon(MaterialSymbols.Rounded.Search, null, tint = colors.textSecondary, modifier = Modifier.size(18.dp))
+            Spacer(Modifier.width(8.dp))
+            Text(K.searchWord.tr(), style = TextStyle(fontFamily = ff, fontSize = 15.sp, fontWeight = FontWeight.Medium, color = colors.textSecondary.copy(alpha = 0.7f)))
         }
     }
 }
@@ -218,16 +220,16 @@ private fun SearchField(colors: ShellColors, open: Boolean, query: String, onQue
     LaunchedEffect(open) {
         if (open) { delay(260); runCatching { focus.requestFocus() } } else focusManager.clearFocus()
     }
-    Row(modifier.floatingPill(colors).padding(start = 16.dp, end = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-        Icon(MaterialSymbols.Rounded.Search, null, tint = colors.textSecondary, modifier = Modifier.size(20.dp))
+    Row(modifier.floatingPill(colors, height = PILL_FIELD_HEIGHT).padding(start = 16.dp, end = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+        Icon(MaterialSymbols.Rounded.Search, null, tint = colors.textSecondary, modifier = Modifier.size(19.dp))
         Spacer(Modifier.width(10.dp))
         Box(Modifier.weight(1f), contentAlignment = Alignment.CenterStart) {
-            if (query.isEmpty()) Text(K.searchWord.tr(), style = TextStyle(fontFamily = ff, fontSize = 17.sp, color = colors.textSecondary.copy(alpha = 0.6f)))
+            if (query.isEmpty()) Text(K.searchWord.tr(), style = TextStyle(fontFamily = ff, fontSize = 16.sp, color = colors.textSecondary.copy(alpha = 0.6f)))
             BasicTextField(
                 value = query,
                 onValueChange = onQuery,
                 singleLine = true,
-                textStyle = TextStyle(fontFamily = ff, fontSize = 17.sp, color = colors.textPrimary),
+                textStyle = TextStyle(fontFamily = ff, fontSize = 16.sp, color = colors.textPrimary),
                 cursorBrush = SolidColor(colors.textPrimary),
                 keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
                 keyboardActions = KeyboardActions(onSearch = { onSearch() }),

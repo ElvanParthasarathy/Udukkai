@@ -81,10 +81,12 @@ fun ElvanCollapsedBar(
     selectedCount: Int = 0,
     isAllSelected: Boolean = false,
     onSelectAll: () -> Unit = {},
-    onCancelSelection: () -> Unit = {}
+    onCancelSelection: () -> Unit = {},
+    isPinnedAlways: Boolean = false
 ) {
     val statusBarHeight = com.elvan.udukkai.core.platform.getStatusBarTopPadding()
-    val ceiling = statusBarHeight + 20.dp
+    val isDesktop = com.elvan.udukkai.core.platform.currentPlatform == com.elvan.udukkai.core.platform.PlatformType.DESKTOP
+    val ceiling = if (isDesktop) 16.dp else if (isPinnedAlways) statusBarHeight + 8.dp else statusBarHeight + 20.dp
     val density = LocalDensity.current
     val ceilingPx = with(density) { ceiling.toPx() }
 
@@ -92,12 +94,12 @@ fun ElvanCollapsedBar(
     val currentHeightPx = expandedHeightPx - scrollOffset
     val currentTopPx = currentHeightPx - with(density) { 64.dp.toPx() }
 
-    val isPinned = currentTopPx <= ceilingPx
+    val isPinned = isPinnedAlways || currentTopPx <= ceilingPx
     val finalTopPx = if (isPinned) ceilingPx else currentTopPx
     val finalTopDp = with(density) { finalTopPx.toDp() }
 
     val liftStartOffsetPx = collisionOffsetPx - with(density) { 4.dp.toPx() }
-    val liftProgress = if (scrollOffset > liftStartOffsetPx) {
+    val liftProgress = if (isPinnedAlways) 1.0f else if (scrollOffset > liftStartOffsetPx) {
         ((scrollOffset - liftStartOffsetPx) / with(density) { 12.dp.toPx() }).coerceIn(0f, 1f)
     } else {
         0f

@@ -74,23 +74,29 @@ fun ElvanShell(
     val effectiveTitle = if (isSelectionMode) selectionTitle else title
 
     val isDesktop = com.elvan.udukkai.core.platform.currentPlatform == com.elvan.udukkai.core.platform.PlatformType.DESKTOP
-    val expandedHeight = if (isDesktop) 130.dp else 280.dp
-    val pillHeight = 50.dp
     val statusBarHeight = com.elvan.udukkai.core.platform.getStatusBarTopPadding()
-    val ceiling = if (isDesktop) 16.dp else statusBarHeight + 20.dp
     val density = LocalDensity.current
 
-    val collisionOffsetDp = expandedHeight - (ceiling + pillHeight)
-    val collisionOffsetPx = with(density) { collisionOffsetDp.toPx() }
+    BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
+        val isLandscape = maxWidth > maxHeight
+        val isCompactHeader = isLandscape || isDesktop || !useNewDesign
 
-    val handoffShrinkOffsetDp = if (isDesktop) 50.dp else (196.dp - statusBarHeight)
-    val handoffShrinkOffsetPx = with(density) { handoffShrinkOffsetDp.toPx() }
+        val pillHeight = 50.dp
+        val ceiling = if (isDesktop) 16.dp else if (isLandscape) statusBarHeight + 8.dp else statusBarHeight + 20.dp
 
-    val globalHeaderExpanded = LocalGlobalHeaderExpanded.current
+        val expandedHeight = if (isCompactHeader) ceiling + pillHeight else 280.dp
 
-    var headerCollapsePx by remember(scrollState) {
-        mutableFloatStateOf(if (globalHeaderExpanded.value) 0f else handoffShrinkOffsetPx)
-    }
+        val collisionOffsetDp = expandedHeight - (ceiling + pillHeight)
+        val collisionOffsetPx = with(density) { collisionOffsetDp.toPx() }
+
+        val handoffShrinkOffsetDp = if (isCompactHeader) 0.dp else (196.dp - statusBarHeight)
+        val handoffShrinkOffsetPx = with(density) { handoffShrinkOffsetDp.toPx() }
+
+        val globalHeaderExpanded = LocalGlobalHeaderExpanded.current
+
+        var headerCollapsePx by remember(scrollState, isCompactHeader) {
+            mutableFloatStateOf(if (!isCompactHeader && globalHeaderExpanded.value) 0f else handoffShrinkOffsetPx)
+        }
 
     LaunchedEffect(headerCollapsePx, handoffShrinkOffsetPx) {
         if (headerCollapsePx >= handoffShrinkOffsetPx && globalHeaderExpanded.value) {
@@ -126,7 +132,11 @@ fun ElvanShell(
     }
     val currentScrollOffset = (headerCollapsePx + rawScrollOffset).coerceAtMost(with(density) { expandedHeight.toPx() })
 
-    val topSpacerHeight = (expandedHeight - Dimens.SectionSpacing - with(density) { headerCollapsePx.toDp() }).coerceAtLeast(0.dp)
+    val topSpacerHeight = if (isCompactHeader) {
+        ceiling + pillHeight + 10.dp
+    } else {
+        (expandedHeight - Dimens.SectionSpacing - with(density) { headerCollapsePx.toDp() }).coerceAtLeast(0.dp)
+    }
 
     var isHeaderExpanded by remember(scrollState) {
         mutableStateOf(
@@ -340,11 +350,19 @@ fun ElvanShell(
         LocalElvanTopSpacerHeight provides topSpacerHeight,
         LocalElvanShellController provides shellController
     ) {
-        Box(
-            modifier = Modifier
+        val shellModifier = if (!isCompactHeader) {
+            Modifier
                 .fillMaxSize()
                 .background(colors.background)
                 .nestedScroll(nestedScrollConnection)
+        } else {
+            Modifier
+                .fillMaxSize()
+                .background(colors.background)
+        }
+
+        Box(
+            modifier = shellModifier
         ) {
             // Layer 1: Content (100% Full screen, ZERO translation, ZERO bottom clipping)
             Box(
@@ -355,7 +373,7 @@ fun ElvanShell(
                 content()
             }
 
-            if (useNewDesign) {
+            if (!isCompactHeader) {
                 // Layer 2: Top Fade Mask (Solid at top, fading down)
                 Box(
                     modifier = Modifier
@@ -399,7 +417,7 @@ fun ElvanShell(
                     collisionOffsetPx = collisionOffsetPx,
                     colors = colors,
                     expandedHeight = expandedHeight,
-                    title = if (useNewDesign) null else effectiveTitle,
+                    title = null,
                     onBack = onBack,
                     leadingIcon = leadingIcon,
                     navOpacity = effectiveNavOpacity,
@@ -412,22 +430,39 @@ fun ElvanShell(
                     onCancelSelection = onCancelSelection
                 )
             } else {
+                // Layer 2: Compact Top Fade Mask for Landscape / Desktop / Tablet
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.TopCenter)
+                        .fillMaxWidth()
+                        .height(ceiling + pillHeight + 14.dp)
+                        .zIndex(10f)
+                        .background(
+                            Brush.verticalGradient(
+                                0.0f to colors.background,
+                                0.65f to colors.background.copy(alpha = 0.85f),
+                                1.0f to Color.Transparent
+                            )
+                        )
+                )
+
                 ElvanCollapsedBar(
-                    scrollOffset = currentScrollOffset,
-                    collisionOffsetPx = collisionOffsetPx,
+                    scrollOffset = 0f,
+                    collisionOffsetPx = 0f,
                     colors = colors,
                     expandedHeight = expandedHeight,
                     title = effectiveTitle,
                     onBack = onBack,
                     leadingIcon = leadingIcon,
-                    navOpacity = effectiveNavOpacity,
+                    navOpacity = 1f,
                     hasActions = if (isSelectionMode) false else hasActions,
                     actions = actions,
                     isSelectionMode = isSelectionMode,
                     selectedCount = selectedCount,
                     isAllSelected = isAllSelected,
                     onSelectAll = onSelectAll,
-                    onCancelSelection = onCancelSelection
+                    onCancelSelection = onCancelSelection,
+                    isPinnedAlways = true
                 )
             }
 
@@ -549,6 +584,7 @@ fun ElvanShell(
                 )
             }
         }
+    }
     }
 }
 
