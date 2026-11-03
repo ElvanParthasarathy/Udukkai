@@ -1,48 +1,79 @@
 package com.elvan.udukkai.theme
 
 import androidx.compose.animation.*
-import androidx.compose.animation.core.Spring
-import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.unit.IntOffset
 
 /**
  * Material 3 Transitions
- * Implements standard patterns: Shared Axis, Fade Through, Elevation Scale,
- * and fluid physics-based Spring screen transitions.
+ * Implements standard patterns: Normal platform slide with parallax, Shared Axis, Fade Through,
+ * Elevation Scale, and menu popups.
  */
 object Transitions {
 
     /**
-     * Organic spring transition for horizontal screen navigation.
-     * Uses gentle, unbouncy spring physics (Spring.StiffnessLow, Spring.DampingRatioNoBouncy).
+     * Standard native platform horizontal screen transition.
+     * Forward: Incoming screen slides in from right (100% to 0) with EmphasizedDecelerate,
+     *          while outgoing screen slides left by 25% parallax and dims slightly.
+     * Backward: Outgoing screen slides out to right (0 to 100%) with EmphasizedAccelerate,
+     *           while incoming screen slides from -25% parallax to 0 and brightens.
      *
-     * Forward: Incoming screen slides in smoothly from the right, with parent fading slightly underneath.
-     * Backward: Exiting subpage remains on top (targetContentZIndex = -1f) and slides out smoothly
-     *           to the right, gracefully revealing the parent screen underneath.
+     * targetContentZIndex is set to 1f on forward (incoming on top) and -1f on backward
+     * (outgoing stays on top while sliding away), completely preventing card-shuffle artifacts
+     * even during rapid navigation.
      */
     fun <S> AnimatedContentTransitionScope<S>.smoothHorizontal(forward: Boolean): ContentTransform {
-        val springSpec = spring<IntOffset>(
-            stiffness = Spring.StiffnessLow,
-            dampingRatio = Spring.DampingRatioNoBouncy
-        )
         return if (forward) {
-            slideIntoContainer(
-                towards = AnimatedContentTransitionScope.SlideDirection.Left,
-                animationSpec = springSpec
-            ) togetherWith fadeOut(
-                targetAlpha = 0.9f,
-                animationSpec = tween(durationMillis = 50)
-            )
+            (
+                slideIntoContainer(
+                    towards = AnimatedContentTransitionScope.SlideDirection.Left,
+                    animationSpec = tween(
+                        durationMillis = MotionTokens.DurationMedium,
+                        easing = MotionTokens.EmphasizedDecelerate
+                    )
+                ) togetherWith (
+                    slideOutOfContainer(
+                        towards = AnimatedContentTransitionScope.SlideDirection.Left,
+                        animationSpec = tween(
+                            durationMillis = MotionTokens.DurationMedium,
+                            easing = MotionTokens.EmphasizedDecelerate
+                        ),
+                        targetOffset = { fullWidth -> fullWidth / 4 }
+                    ) + fadeOut(
+                        targetAlpha = 0.85f,
+                        animationSpec = tween(
+                            durationMillis = MotionTokens.DurationMedium,
+                            easing = MotionTokens.StandardAccelerate
+                        )
+                    )
+                )
+            ).apply {
+                targetContentZIndex = 1f
+            }
         } else {
             (
-                fadeIn(
-                    initialAlpha = 0.9f,
-                    animationSpec = tween(durationMillis = 50)
+                (
+                    slideIntoContainer(
+                        towards = AnimatedContentTransitionScope.SlideDirection.Right,
+                        animationSpec = tween(
+                            durationMillis = MotionTokens.DurationShort,
+                            easing = MotionTokens.EmphasizedDecelerate
+                        ),
+                        initialOffset = { fullWidth -> fullWidth / 4 }
+                    ) + fadeIn(
+                        initialAlpha = 0.85f,
+                        animationSpec = tween(
+                            durationMillis = MotionTokens.DurationShort,
+                            easing = MotionTokens.StandardDecelerate
+                        )
+                    )
                 ) togetherWith slideOutOfContainer(
                     towards = AnimatedContentTransitionScope.SlideDirection.Right,
-                    animationSpec = springSpec
+                    animationSpec = tween(
+                        durationMillis = MotionTokens.DurationShort,
+                        easing = MotionTokens.EmphasizedAccelerate
+                    )
                 )
             ).apply {
                 targetContentZIndex = -1f
@@ -51,34 +82,61 @@ object Transitions {
     }
 
     /**
-     * Organic spring transition for vertical screen navigation (e.g. ManageProfiles modal subpage).
-     * Uses gentle, unbouncy spring physics (Spring.StiffnessLow, Spring.DampingRatioNoBouncy).
-     *
-     * Forward: Incoming screen slides up smoothly from bottom.
-     * Backward: Exiting screen remains on top (targetContentZIndex = -1f) and slides down smoothly,
-     *           gracefully revealing the parent screen underneath.
+     * Standard native platform vertical screen transition (for modal-style subpages like ManageProfiles).
+     * Forward: Incoming screen slides up smoothly from bottom on top.
+     * Backward: Exiting screen remains on top and slides down smoothly, revealing the parent screen underneath.
      */
     fun <S> AnimatedContentTransitionScope<S>.smoothVertical(forward: Boolean): ContentTransform {
-        val springSpec = spring<IntOffset>(
-            stiffness = Spring.StiffnessLow,
-            dampingRatio = Spring.DampingRatioNoBouncy
-        )
         return if (forward) {
-            slideIntoContainer(
-                towards = AnimatedContentTransitionScope.SlideDirection.Up,
-                animationSpec = springSpec
-            ) togetherWith fadeOut(
-                targetAlpha = 0.9f,
-                animationSpec = tween(durationMillis = 50)
-            )
+            (
+                slideIntoContainer(
+                    towards = AnimatedContentTransitionScope.SlideDirection.Up,
+                    animationSpec = tween(
+                        durationMillis = MotionTokens.DurationMedium,
+                        easing = MotionTokens.EmphasizedDecelerate
+                    )
+                ) togetherWith (
+                    slideOutOfContainer(
+                        towards = AnimatedContentTransitionScope.SlideDirection.Up,
+                        animationSpec = tween(
+                            durationMillis = MotionTokens.DurationMedium,
+                            easing = MotionTokens.EmphasizedDecelerate
+                        ),
+                        targetOffset = { fullHeight -> fullHeight / 6 }
+                    ) + fadeOut(
+                        targetAlpha = 0.9f,
+                        animationSpec = tween(
+                            durationMillis = MotionTokens.DurationShort,
+                            easing = MotionTokens.StandardAccelerate
+                        )
+                    )
+                )
+            ).apply {
+                targetContentZIndex = 1f
+            }
         } else {
             (
-                fadeIn(
-                    initialAlpha = 0.9f,
-                    animationSpec = tween(durationMillis = 50)
+                (
+                    slideIntoContainer(
+                        towards = AnimatedContentTransitionScope.SlideDirection.Down,
+                        animationSpec = tween(
+                            durationMillis = MotionTokens.DurationShort,
+                            easing = MotionTokens.EmphasizedDecelerate
+                        ),
+                        initialOffset = { fullHeight -> fullHeight / 6 }
+                    ) + fadeIn(
+                        initialAlpha = 0.9f,
+                        animationSpec = tween(
+                            durationMillis = MotionTokens.DurationShort,
+                            easing = MotionTokens.StandardDecelerate
+                        )
+                    )
                 ) togetherWith slideOutOfContainer(
                     towards = AnimatedContentTransitionScope.SlideDirection.Down,
-                    animationSpec = springSpec
+                    animationSpec = tween(
+                        durationMillis = MotionTokens.DurationShort,
+                        easing = MotionTokens.EmphasizedAccelerate
+                    )
                 )
             ).apply {
                 targetContentZIndex = -1f
@@ -96,112 +154,18 @@ object Transitions {
 
     /**
      * Standard Android platform / WhatsApp style horizontal screen transition.
-     * Forward: Incoming screen slides in from right (100% to 0) with EmphasizedDecelerate,
-     *          while outgoing screen slides left by 25% parallax and dims slightly.
-     * Backward: Outgoing screen slides out to right (0 to 100%) with EmphasizedAccelerate,
-     *           while incoming screen slides from -25% parallax to 0 and brightens.
+     * Alias to smoothHorizontal.
      */
     fun <S> AnimatedContentTransitionScope<S>.platformSlideHorizontal(forward: Boolean): ContentTransform {
-        return if (forward) {
-            slideIntoContainer(
-                towards = AnimatedContentTransitionScope.SlideDirection.Left,
-                animationSpec = tween(
-                    durationMillis = MotionTokens.DurationMedium,
-                    easing = MotionTokens.EmphasizedDecelerate
-                )
-            ) togetherWith (
-                slideOutOfContainer(
-                    towards = AnimatedContentTransitionScope.SlideDirection.Left,
-                    animationSpec = tween(
-                        durationMillis = MotionTokens.DurationMedium,
-                        easing = MotionTokens.EmphasizedDecelerate
-                    ),
-                    targetOffset = { fullWidth -> fullWidth / 4 }
-                ) + fadeOut(
-                    targetAlpha = 0.85f,
-                    animationSpec = tween(
-                        durationMillis = MotionTokens.DurationMedium,
-                        easing = MotionTokens.StandardAccelerate
-                    )
-                )
-            )
-        } else {
-            (
-                slideIntoContainer(
-                    towards = AnimatedContentTransitionScope.SlideDirection.Right,
-                    animationSpec = tween(
-                        durationMillis = MotionTokens.DurationShort,
-                        easing = MotionTokens.EmphasizedDecelerate
-                    ),
-                    initialOffset = { fullWidth -> fullWidth / 4 }
-                ) + fadeIn(
-                    initialAlpha = 0.85f,
-                    animationSpec = tween(
-                        durationMillis = MotionTokens.DurationShort,
-                        easing = MotionTokens.StandardDecelerate
-                    )
-                )
-            ) togetherWith slideOutOfContainer(
-                towards = AnimatedContentTransitionScope.SlideDirection.Right,
-                animationSpec = tween(
-                    durationMillis = MotionTokens.DurationShort,
-                    easing = MotionTokens.EmphasizedAccelerate
-                )
-            )
-        }
+        return smoothHorizontal(forward)
     }
 
     /**
      * Standard Android platform style vertical screen transition (for modal-style subpages).
+     * Alias to smoothVertical.
      */
     fun <S> AnimatedContentTransitionScope<S>.platformSlideVertical(forward: Boolean): ContentTransform {
-        return if (forward) {
-            slideIntoContainer(
-                towards = AnimatedContentTransitionScope.SlideDirection.Up,
-                animationSpec = tween(
-                    durationMillis = MotionTokens.DurationMedium,
-                    easing = MotionTokens.EmphasizedDecelerate
-                )
-            ) togetherWith (
-                slideOutOfContainer(
-                    towards = AnimatedContentTransitionScope.SlideDirection.Up,
-                    animationSpec = tween(
-                        durationMillis = MotionTokens.DurationMedium,
-                        easing = MotionTokens.EmphasizedDecelerate
-                    ),
-                    targetOffset = { fullHeight -> fullHeight / 6 }
-                ) + fadeOut(
-                    targetAlpha = 0.9f,
-                    animationSpec = tween(
-                        durationMillis = MotionTokens.DurationShort,
-                        easing = MotionTokens.StandardAccelerate
-                    )
-                )
-            )
-        } else {
-            (
-                slideIntoContainer(
-                    towards = AnimatedContentTransitionScope.SlideDirection.Down,
-                    animationSpec = tween(
-                        durationMillis = MotionTokens.DurationShort,
-                        easing = MotionTokens.EmphasizedDecelerate
-                    ),
-                    initialOffset = { fullHeight -> fullHeight / 6 }
-                ) + fadeIn(
-                    initialAlpha = 0.9f,
-                    animationSpec = tween(
-                        durationMillis = MotionTokens.DurationShort,
-                        easing = MotionTokens.StandardDecelerate
-                    )
-                )
-            ) togetherWith slideOutOfContainer(
-                towards = AnimatedContentTransitionScope.SlideDirection.Down,
-                animationSpec = tween(
-                    durationMillis = MotionTokens.DurationShort,
-                    easing = MotionTokens.EmphasizedAccelerate
-                )
-            )
-        }
+        return smoothVertical(forward)
     }
 
     /**

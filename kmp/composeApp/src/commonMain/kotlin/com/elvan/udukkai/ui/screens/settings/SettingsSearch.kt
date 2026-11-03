@@ -121,18 +121,18 @@ object RecentSettingSearches {
     private fun save(list: List<String>) = getPreferencesHelper().setString(KEY, list.take(MAX).joinToString("\n"))
 }
 
-/** The search pill: comfortable and sleek (48dp high, 212dp wide), matching the floating style. */
-private val PILL_HEIGHT = 48.dp
-private val PILL_FIELD_HEIGHT = 48.dp
+/** The search pill: comfortable, substantial floating pill (56dp high, 248dp wide), matching the navbar style. */
+private val PILL_HEIGHT = 56.dp
+private val PILL_FIELD_HEIGHT = 56.dp
 
 /** The closed pill's width, and the room left at each side when it is open. */
-private val PILL_CLOSED_WIDTH = 212.dp
+private val PILL_CLOSED_WIDTH = 248.dp
 private val PILL_OPEN_MARGIN = 16.dp
 
 @Composable
 private fun Modifier.floatingPill(colors: ShellColors, height: Dp = PILL_HEIGHT): Modifier = this
     .height(height)
-    .cssShadow(color = Color.Black, alpha = if (colors.isDark) 0.50f else 0.16f, blurRadius = 20.dp, offsetY = 8.dp)
+    .cssShadow(color = Color.Black, alpha = if (colors.isDark) 0.55f else 0.20f, blurRadius = 32.dp, offsetY = 12.dp)
     .background(color = colors.floatingBg.copy(alpha = 0.88f), shape = CircleShape)
     .border(width = 0.5.dp, color = colors.floatingBorder.copy(alpha = if (colors.isDark) 0.15f else 0.6f), shape = CircleShape)
 
@@ -146,15 +146,14 @@ fun SettingsSearchPill(colors: ShellColors, onClick: () -> Unit) {
                 .floatingPill(colors, height = PILL_HEIGHT)
                 .clip(CircleShape)
                 .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null, onClick = onClick)
-                .padding(horizontal = 18.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.Center
+                .padding(start = 16.dp, end = 8.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
             Icon(MaterialSymbols.Rounded.Search, null, tint = colors.textSecondary, modifier = Modifier.size(20.dp))
             Spacer(Modifier.width(10.dp))
             Text(
                 K.searchWord.tr(),
-                style = TextStyle(fontFamily = ff, fontSize = 15.sp, fontWeight = FontWeight.Medium, color = colors.textSecondary.copy(alpha = 0.75f)),
+                style = TextStyle(fontFamily = ff, fontSize = 16.sp, color = colors.textSecondary.copy(alpha = 0.6f)),
                 maxLines = 1,
                 softWrap = false
             )
@@ -163,7 +162,7 @@ fun SettingsSearchPill(colors: ShellColors, onClick: () -> Unit) {
 }
 
 /**
- * The search page, opened the way Samsung's own apps do it: the small pill at the bottom widens into the search field
+ * The search page, opened the way Samsung's own apps do it: the pill at the bottom widens into the search field
  * while the settings page fades away and the search page rises into its place. Closing runs the same in reverse. The
  * page has the app's usual heading, large while open and small once the list is scrolled, with the back button.
  * Inside, the results show as you type, the last searches show as removable chips when nothing is typed, and the field
@@ -226,7 +225,7 @@ private fun SearchField(colors: ShellColors, open: Boolean, query: String, onQue
         if (open) { delay(260); runCatching { focus.requestFocus() } } else focusManager.clearFocus()
     }
     Row(modifier.floatingPill(colors, height = PILL_FIELD_HEIGHT).padding(start = 16.dp, end = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-        Icon(MaterialSymbols.Rounded.Search, null, tint = colors.textSecondary, modifier = Modifier.size(19.dp))
+        Icon(MaterialSymbols.Rounded.Search, null, tint = colors.textSecondary, modifier = Modifier.size(20.dp))
         Spacer(Modifier.width(10.dp))
         Box(Modifier.weight(1f), contentAlignment = Alignment.CenterStart) {
             if (query.isEmpty()) Text(K.searchWord.tr(), style = TextStyle(fontFamily = ff, fontSize = 16.sp, color = colors.textSecondary.copy(alpha = 0.6f)))
