@@ -1,6 +1,7 @@
 // @ts-nocheck
 // How a bilingual bill picks its languages (a single-language bill is never touched by any of this):
-//   business name   English, with the Tamil name under it          item name   the main language, then the second
+//   business name   BOTH languages, English first with the Tamil name under it, or Tamil first when the business's rule
+//                   (profile.langRules.businessName === 'ta') says so            item name   the main language, then the second
 //   business address, customer name, customer address   ONE language: English, or Tamil when the business's rule
 //   (profile.langRules[field] === 'ta') says so. The other language fills in if the chosen one has no value.
 const has = (x) => (x && typeof x === 'object' ? Object.values(x).some(Boolean) : !!x);
@@ -15,6 +16,12 @@ export const enTa = (profile, pri, sec) => (tamilMain(profile) ? [sec, pri] : [p
 export const both = (list) => {
   const out = list.filter(has);
   return out.filter((x, i) => i === 0 || JSON.stringify(x).toLowerCase() !== JSON.stringify(out[0]).toLowerCase());
+};
+
+// The business name's two values, in the order its rule says
+export const ordered = (profile, field, pri, sec) => {
+  const [en, ta] = enTa(profile, pri, sec);
+  return both(langRule(profile, field) === 'ta' ? [ta, en] : [en, ta]);
 };
 
 // The one value a one-language field prints

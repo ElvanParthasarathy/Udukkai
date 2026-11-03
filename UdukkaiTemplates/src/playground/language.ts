@@ -72,9 +72,14 @@ const ONE = {
 const first = (lines, t) => lines.findIndex((l) => l.includes(t));
 const ruleFails = async () => {
   const fails = [];
+  const ROWS = ['businessName', 'businessAddress', 'customer'];
   const FIELDS = Object.keys(ONE);
+  // Each combination of the three rows; the customer row sets the name and the address together, as the app does
   const combos = [];
-  for (let m = 0; m < 1 << FIELDS.length; m++) combos.push(Object.fromEntries(FIELDS.map((f, i) => [f, (m >> i) & 1 ? 'ta' : 'en'])));
+  for (let m = 0; m < 1 << ROWS.length; m++) {
+    const row = Object.fromEntries(ROWS.map((r, i) => [r, (m >> i) & 1 ? 'ta' : 'en']));
+    combos.push({ businessName: row.businessName, businessAddress: row.businessAddress, customerName: row.customer, customerAddress: row.customer });
+  }
   for (const doc of ['gst', 'coolie']) {
     const make = doc === 'gst' ? gst : coolie;
     // Both main languages x every combination of the three one-language rules: each field must show exactly its chosen language
@@ -82,7 +87,10 @@ const ruleFails = async () => {
       const main = mode === 'bi' ? 'Tamil' : 'English';
       for (const rules of combos) {
         const lines = await linesOf(make(mode, 'ta', { rules }));
-        const tag = `${doc} / main ${main} / ${FIELDS.map((f) => `${f}=${rules[f]}`).join(' ')}`;
+        const tag = `${doc} / main ${main} / ${Object.entries(rules).map(([f, v]) => `${f}=${v}`).join(' ')}`;
+        // The business name prints both languages, in the order the rule says
+        const e0 = first(lines, E.biz), t0 = first(lines, T.biz);
+        if (!(e0 >= 0 && t0 >= 0 && (rules.businessName === 'ta' ? t0 < e0 : e0 < t0))) fails.push(`${tag}: business name should be ${rules.businessName === 'ta' ? 'Tamil then English' : 'English then Tamil'} (English at ${e0}, Tamil at ${t0})`);
         for (const f of FIELDS) {
           const [shown, hidden] = rules[f] === 'ta' ? [ONE[f].ta, ONE[f].en] : [ONE[f].en, ONE[f].ta];
           if (first(lines, shown) < 0) fails.push(`${tag}: ${f} should show ${rules[f] === 'ta' ? 'Tamil' : 'English'} but it is missing`);
@@ -92,7 +100,7 @@ const ruleFails = async () => {
       // No rule at all: the same as English everywhere
       const none = await linesOf(make(mode, 'ta', {}));
       for (const f of FIELDS) if (first(none, ONE[f].en) < 0 || first(none, ONE[f].ta) >= 0) fails.push(`${doc} / main ${main} / no rules: ${f} should default to English`);
-      // The business name is English with the Tamil name under it, whichever the main language is
+      // The business name is English with the Tamil name under it by default, whichever the main language is
       const e = first(none, E.biz), t = first(none, T.biz);
       if (!(e >= 0 && t > e)) fails.push(`${doc} / main ${main}: business name must be English, then Tamil under it (English at ${e}, Tamil at ${t})`);
       // The item name follows the main language

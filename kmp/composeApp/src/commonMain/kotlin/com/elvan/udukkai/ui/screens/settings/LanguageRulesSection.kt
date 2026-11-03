@@ -12,9 +12,9 @@ import com.elvan.udukkai.ui.components.shell.ElvanSettingsSection
 import com.elvan.udukkai.ui.components.shell.LocalElvanBottomSheetController
 
 /**
- * Bilingual bills only: the three fields that print in one language (business address, customer name, customer address)
- * and which language each prints in, English or Tamil. Stored in the business's print settings and read by the bill
- * papers. Shared by the Textiles and Factory "Create" settings.
+ * Bilingual bills only: the business name (English then Tamil, or Tamil then English), the business address and the
+ * customer (name and address together), each in English or Tamil. Stored in the business's print settings and read by
+ * the bill papers. Shared by the Textiles and Factory "Create" settings.
  */
 @Composable
 fun LanguageRulesSection(profile: BusinessProfile, colors: ShellColors, onSave: (BusinessProfile) -> Unit) {
@@ -22,11 +22,15 @@ fun LanguageRulesSection(profile: BusinessProfile, colors: ShellColors, onSave: 
     val english = K.enCode.tr()
     val tamil = K.taCode.tr()
 
-    fun modeLabel(mode: String) = if (mode == "ta") tamil else english
+    fun modeLabel(field: String, mode: String) = when {
+        LanguageRules.isBoth(field) -> if (mode == "ta") "$tamil → $english" else "$english → $tamil"
+        mode == "ta" -> tamil
+        else -> english
+    }
     val titles = mapOf(
+        "businessName" to K.ruleBusinessName.tr(),
         "businessAddress" to K.ruleBusinessAddress.tr(),
-        "customerName" to K.ruleCustomerName.tr(),
-        "customerAddress" to K.ruleCustomerAddress.tr(),
+        "customer" to K.ruleCustomer.tr(),
     )
 
     ElvanSettingsSection(title = K.languageRules.tr(), colors = colors) {
@@ -35,13 +39,13 @@ fun LanguageRulesSection(profile: BusinessProfile, colors: ShellColors, onSave: 
             val current = LanguageRules.get(profile.printSettingsJson, field)
             ElvanSettingsDisplayRow(
                 title = titles.getValue(field),
-                primaryValue = modeLabel(current),
+                primaryValue = modeLabel(field, current),
                 onEdit = {
                     bottomSheet.showSelection(
                         title = titles.getValue(field),
                         items = LanguageRules.modes,
                         currentValue = current,
-                        itemLabelBuilder = ::modeLabel,
+                        itemLabelBuilder = { modeLabel(field, it) },
                         onSelected = { mode ->
                             onSave(profile.copy(printSettingsJson = LanguageRules.set(profile.printSettingsJson, field, mode)))
                         }

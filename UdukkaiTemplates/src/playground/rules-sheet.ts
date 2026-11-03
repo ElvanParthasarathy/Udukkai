@@ -41,16 +41,16 @@ const PAPERS = {
 
 // The part of the bill each field controls
 const REGION = {
-  gst: { businessAddress: '.inv-contact-block', customerName: '.inv-parties', customerAddress: '.inv-parties', itemName: '.unified-table-box', full: '' },
-  coolie: { businessAddress: '.contact-section', customerName: '.bill-info-section', customerAddress: '.bill-info-section', itemName: '.bill-table-new', full: '' },
+  gst: { businessName: '.inv-classic-header', businessAddress: '.inv-contact-block', customerName: '.inv-parties', customerAddress: '.inv-parties', itemName: '.unified-table-box', full: '' },
+  coolie: { businessName: '.print-header-new', businessAddress: '.contact-section', customerName: '.bill-info-section', customerAddress: '.bill-info-section', itemName: '.bill-table-new', full: '' },
 };
-const TITLE = { businessAddress: 'Business address', customerName: 'Customer name', customerAddress: 'Customer address', itemName: 'Item name', full: 'The whole bill, no rule set' };
+const TITLE = { businessName: 'Business name', businessAddress: 'Business address', customerName: 'Customer name', customerAddress: 'Customer address', itemName: 'Item name', full: 'The whole bill, no rule set' };
 
 const q = new URLSearchParams(location.search);
 const paper = q.get('paper') === 'coolie' ? 'coolie' : 'gst';
 const field = q.get('field') in REGION.gst ? q.get('field') : 'customerName';
 // A one-language field: English (no rule) or Tamil (the rule). 'full' is one render of the whole default bill.
-const RULES = field === 'full' ? [['en', 'Default']] : field === 'itemName' ? [['en', 'Item name follows the main language (no setting)']] : [['en', 'English (the default, no rule set)'], ['ta', 'Tamil (the rule set to Tamil)']];
+const RULES = field === 'full' ? [['en', 'Default']] : field === 'itemName' ? [['en', 'Item name follows the main language (no setting)']] : field === 'businessName' ? [['en', 'English → Tamil (the default, no rule set)'], ['ta', 'Tamil → English (the rule set to Tamil first)']] : [['en', 'English (the default, no rule set)'], ['ta', 'Tamil (the rule set to Tamil)']];
 // The box to show: the part of the bill a field controls (for the Factory item name: the header and the first row)
 const rectOf = (el) => {
   if (field === 'full') return { top: el.getBoundingClientRect().top, height: el.getBoundingClientRect().height };

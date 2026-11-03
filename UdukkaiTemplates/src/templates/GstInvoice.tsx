@@ -18,7 +18,7 @@ const IconMail = ({ size = 14, className = '', style = {} }) => (
 );
 import { numberToWords, formatCurrency, INVOICE_TYPES, getCountryConfig, CURRENCY_NAMES, formatExchangeRateLine, getAccountById, getBilingualStateName, getBilingualCountryName, getDynamicField } from '../lib/Payanpadu';
 import { fyFull } from '../lib/finYear';
-import { enTa, both, oneLang } from '../lib/langRules';
+import { enTa, both, oneLang, ordered } from '../lib/langRules';
 import { en } from '../lib/mozhi/en';
 import { ta } from '../lib/mozhi/ta';
 
@@ -278,7 +278,7 @@ const SjsTheme = React.forwardRef(({ profile = {}, client = {}, details = {}, it
               {showLogo && profile?.logo && <img crossOrigin={profile.logo?.startsWith('http') ? 'anonymous' : undefined} src={profile.logo} alt="Logo" style={{ maxHeight: `${profile.logoHeight || 120}px`, maxWidth: '160px', objectFit: 'contain' }} />}
               <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
                 {showniruvanathinPeyar && (() => {
-                  const bn = both(enTa(profile, getDynamicField(profile, 'niruvanathinPeyar', profile, true), getDynamicField(profile, 'niruvanathinPeyar', profile, false)));
+                  const bn = ordered(profile, 'businessName', getDynamicField(profile, 'niruvanathinPeyar', profile, true), getDynamicField(profile, 'niruvanathinPeyar', profile, false));
                   return (
                     <>
                       <div style={{ fontSize: '1.35rem', fontWeight: 700, color: accent, whiteSpace: 'nowrap' }}>{bn[0] || 'Your Business'}</div>
@@ -825,7 +825,7 @@ const SjsTheme = React.forwardRef(({ profile = {}, client = {}, details = {}, it
           {showSignature && (
             <div style={{ textAlign: 'right', display: 'flex', flexDirection: 'column', alignItems: 'flex-end', minWidth: '220px' }}>
               <div style={{ color: accent, position: 'relative', zIndex: 10, fontSize: '1.05rem', fontWeight: 700, marginBottom: '5px', lineHeight: 1 }}>
-                {both(enTa(profile, getDynamicField(profile, 'niruvanathinPeyar', profile, true), getDynamicField(profile, 'niruvanathinPeyar', profile, false)))[0] || 'Your Business'}
+                {ordered(profile, 'businessName', getDynamicField(profile, 'niruvanathinPeyar', profile, true), getDynamicField(profile, 'niruvanathinPeyar', profile, false))[0] || 'Your Business'}
               </div>
               <div style={{ position: 'relative', height: '55px', width: '100%', display: 'flex', justifyContent: 'flex-end' }}>
                 {profile?.signature && (

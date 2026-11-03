@@ -3,7 +3,7 @@ import React from 'react';
 import '../styles/print.css'; // Same stylesheet as the original Coolie bill: same sizes and positions
 import { numberToWords } from '../lib/Payanpadu';
 import { fyFull } from '../lib/finYear';
-import { both, oneLang } from '../lib/langRules';
+import { both, oneLang, langRule } from '../lib/langRules';
 
 // Coolie (Factory) invoice, print only. The original Coolie bill, made bilingual the way the
 // Textiles invoice is (Tamil line + smaller English line), without the "Motham" table footer: the
@@ -114,7 +114,7 @@ export default function CoolieInvoiceBilingual({ bill }) {
   const name = { english: p.nameEn || p.nameEnglish || '', tamil: p.name || p.nameTamil || '' };
   // The bill's business name: both lines when bilingual, only the bill's own language otherwise
   const ownName = isEng ? (name.english || name.tamil) : (name.tamil || name.english);
-  const bizLines = bi ? both([name.english, name.tamil]) : [ownName];
+  const bizLines = bi ? both(langRule(p, 'businessName') === 'ta' ? [name.tamil, name.english] : [name.english, name.tamil]) : [ownName];
   const fontOf = (t) => (/[\u0B80-\u0BFF]/.test(t) ? 'font-tamil' : 'font-display');
   const phone = p.phone ? (Array.isArray(p.phone) ? p.phone : String(p.phone).split(',')) : [];
   const contactLines = (en) => {
