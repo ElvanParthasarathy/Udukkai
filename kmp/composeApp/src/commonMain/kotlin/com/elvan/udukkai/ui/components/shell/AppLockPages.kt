@@ -370,30 +370,67 @@ private fun LockPage(colors: ShellColors) {
     val fingerprintReady = AppLock.fingerprintOn() && fingerprintAvailable()
     val accountBefore = remember { AuthManager.signedInEmail }
 
-    fun askFingerprint() = authenticateFingerprint(title, usePin) { ok -> if (ok) AppLock.unlockedThisRun = true }
+    var awaitingBiometric by remember { mutableStateOf(fingerprintReady) }
+
+    fun askFingerprint() {
+        awaitingBiometric = true
+        authenticateFingerprint(title, usePin) { ok ->
+            if (ok) {
+                AppLock.unlockedThisRun = true
+            } else {
+                awaitingBiometric = false
+            }
+        }
+    }
     LaunchedEffect(Unit) { if (fingerprintReady) askFingerprint() }
 
     LockLayer(colors) {
         LockBadge(colors)
-        PinPad(
-            prompt = K.pinEnter.tr(),
-            length = AppLock.length(),
-            error = error,
-            errorKey = errorKey,
-            colors = colors,
-            onComplete = { pin ->
-                val waiting = AppLock.secondsLocked()
-                if (waiting > 0) { error = "$lockedText $waiting"; errorKey++ }
-                else if (!AppLock.verify(pin)) { error = AppLock.secondsLocked().let { if (it > 0) "$lockedText $it" else wrong }; errorKey++ }
-            }
-        )
-        if (fingerprintReady) {
+        if (awaitingBiometric) {
+            Spacer(Modifier.height(8.dp))
             Text(
                 K.fingerprintUnlock.tr(),
+                style = TextStyle(fontFamily = ff, fontSize = 20.sp, fontWeight = FontWeight.SemiBold, textAlign = TextAlign.Center),
+                color = colors.textPrimary
+            )
+            Spacer(Modifier.height(6.dp))
+            Text(
+                K.fingerprintHint.tr(),
+                style = TextStyle(fontFamily = ff, fontSize = 14.sp, textAlign = TextAlign.Center),
+                color = colors.textPrimary.copy(alpha = 0.65f)
+            )
+            Spacer(Modifier.height(18.dp))
+            Text(
+                K.usePin.tr(),
                 style = TextStyle(fontFamily = ff, fontSize = 15.sp, fontWeight = FontWeight.SemiBold),
                 color = colors.textPrimary,
-                modifier = Modifier.clip(RoundedCornerShape(20.dp)).background(colors.iconBg).clickable { askFingerprint() }.padding(horizontal = 20.dp, vertical = 12.dp)
+                modifier = Modifier
+                    .clip(RoundedCornerShape(20.dp))
+                    .background(colors.iconBg)
+                    .clickable { awaitingBiometric = false }
+                    .padding(horizontal = 24.dp, vertical = 12.dp)
             )
+        } else {
+            PinPad(
+                prompt = K.pinEnter.tr(),
+                length = AppLock.length(),
+                error = error,
+                errorKey = errorKey,
+                colors = colors,
+                onComplete = { pin ->
+                    val waiting = AppLock.secondsLocked()
+                    if (waiting > 0) { error = "$lockedText $waiting"; errorKey++ }
+                    else if (!AppLock.verify(pin)) { error = AppLock.secondsLocked().let { if (it > 0) "$lockedText $it" else wrong }; errorKey++ }
+                }
+            )
+            if (fingerprintReady) {
+                Text(
+                    K.fingerprintUnlock.tr(),
+                    style = TextStyle(fontFamily = ff, fontSize = 15.sp, fontWeight = FontWeight.SemiBold),
+                    color = colors.textPrimary,
+                    modifier = Modifier.clip(RoundedCornerShape(20.dp)).background(colors.iconBg).clickable { askFingerprint() }.padding(horizontal = 20.dp, vertical = 12.dp)
+                )
+            }
         }
         // A forgotten PIN: the Google account that is signed in on this phone allows choosing a new one
         Text(

@@ -121,12 +121,12 @@ object RecentSettingSearches {
     private fun save(list: List<String>) = getPreferencesHelper().setString(KEY, list.take(MAX).joinToString("\n"))
 }
 
-/** The search pill: compact and sleek (44dp high, 176dp wide), matching the floating style. */
-private val PILL_HEIGHT = 44.dp
+/** The search pill: comfortable and sleek (48dp high, 212dp wide), matching the floating style. */
+private val PILL_HEIGHT = 48.dp
 private val PILL_FIELD_HEIGHT = 48.dp
 
 /** The closed pill's width, and the room left at each side when it is open. */
-private val PILL_CLOSED_WIDTH = 176.dp
+private val PILL_CLOSED_WIDTH = 212.dp
 private val PILL_OPEN_MARGIN = 16.dp
 
 @Composable
@@ -136,7 +136,7 @@ private fun Modifier.floatingPill(colors: ShellColors, height: Dp = PILL_HEIGHT)
     .background(color = colors.floatingBg.copy(alpha = 0.88f), shape = CircleShape)
     .border(width = 0.5.dp, color = colors.floatingBorder.copy(alpha = if (colors.isDark) 0.15f else 0.6f), shape = CircleShape)
 
-/** The search pill kept at the bottom of the settings page: compact, elegant floating search pill. */
+/** The search pill kept at the bottom of the settings page: comfortable, elegant floating search pill. */
 @Composable
 fun SettingsSearchPill(colors: ShellColors, onClick: () -> Unit) {
     val ff = LocalAppFontFamily.current
@@ -146,13 +146,18 @@ fun SettingsSearchPill(colors: ShellColors, onClick: () -> Unit) {
                 .floatingPill(colors, height = PILL_HEIGHT)
                 .clip(CircleShape)
                 .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null, onClick = onClick)
-                .padding(horizontal = 14.dp),
+                .padding(horizontal = 18.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.Center
         ) {
-            Icon(MaterialSymbols.Rounded.Search, null, tint = colors.textSecondary, modifier = Modifier.size(18.dp))
-            Spacer(Modifier.width(8.dp))
-            Text(K.searchWord.tr(), style = TextStyle(fontFamily = ff, fontSize = 15.sp, fontWeight = FontWeight.Medium, color = colors.textSecondary.copy(alpha = 0.7f)))
+            Icon(MaterialSymbols.Rounded.Search, null, tint = colors.textSecondary, modifier = Modifier.size(20.dp))
+            Spacer(Modifier.width(10.dp))
+            Text(
+                K.searchWord.tr(),
+                style = TextStyle(fontFamily = ff, fontSize = 15.sp, fontWeight = FontWeight.Medium, color = colors.textSecondary.copy(alpha = 0.75f)),
+                maxLines = 1,
+                softWrap = false
+            )
         }
     }
 }

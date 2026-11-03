@@ -128,27 +128,27 @@ fun DesktopSideBar(
 
             Spacer(modifier = Modifier.height(28.dp))
 
-            // ── 2. Navigation Items ──
+            // ── 2. Navigation Items (Apple HIG macOS Sidebar Style) ──
             Column(
                 modifier = Modifier
                     .weight(1f)
                     .fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
+                verticalArrangement = Arrangement.spacedBy(4.dp)
             ) {
                 NavTab.entries.forEach { tab ->
                     val isSelected = selectedTab == tab
                     val title = tab.getLocalizedLabel()
                     val icon = if (isSelected) tab.activeIcon else tab.icon
-                    val itemBg = if (isSelected) colors.textPrimary else Color.Transparent
-                    val itemContentColor = if (isSelected) colors.background else colors.textPrimary.copy(alpha = 0.7f)
+                    val itemBg = if (isSelected) colors.textPrimary.copy(alpha = 0.12f) else Color.Transparent
+                    val itemContentColor = if (isSelected) colors.textPrimary else colors.textPrimary.copy(alpha = 0.7f)
 
                     Surface(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(48.dp)
-                            .clip(RoundedCornerShape(100.dp))
+                            .height(40.dp)
+                            .clip(RoundedCornerShape(10.dp))
                             .clickable { onTabSelected(tab) },
-                        shape = RoundedCornerShape(100.dp),
+                        shape = RoundedCornerShape(10.dp),
                         color = itemBg
                     ) {
                         Row(
@@ -156,21 +156,21 @@ fun DesktopSideBar(
                             horizontalArrangement = if (isCollapsed) Arrangement.Center else Arrangement.Start,
                             modifier = Modifier
                                 .fillMaxSize()
-                                .padding(horizontal = if (isCollapsed) 0.dp else 16.dp)
+                                .padding(horizontal = if (isCollapsed) 0.dp else 12.dp)
                         ) {
                             Icon(
                                 imageVector = icon,
                                 contentDescription = title,
                                 tint = itemContentColor,
-                                modifier = Modifier.size(22.dp)
+                                modifier = Modifier.size(20.dp)
                             )
                             if (!isCollapsed) {
-                                Spacer(modifier = Modifier.width(14.dp))
+                                Spacer(modifier = Modifier.width(12.dp))
                                 Text(
                                     text = title,
                                     fontFamily = ff,
-                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
-                                    fontSize = 15.sp,
+                                    fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
+                                    fontSize = 14.sp,
                                     color = itemContentColor,
                                     maxLines = 1,
                                     overflow = TextOverflow.Ellipsis
@@ -184,7 +184,7 @@ fun DesktopSideBar(
             // ── 3. Bottom Zone: Profile & Settings ──
             HorizontalDivider(
                 color = colors.textPrimary.copy(alpha = 0.08f),
-                modifier = Modifier.padding(vertical = 12.dp)
+                modifier = Modifier.padding(vertical = 10.dp)
             )
 
             // Company Selector Pill (Desktop)
@@ -193,27 +193,27 @@ fun DesktopSideBar(
             Surface(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clip(RoundedCornerShape(16.dp))
+                    .clip(RoundedCornerShape(12.dp))
                     .clickable { showCompanySheet = true },
-                shape = RoundedCornerShape(16.dp),
-                color = colors.textPrimary.copy(alpha = 0.05f)
+                shape = RoundedCornerShape(12.dp),
+                color = colors.textPrimary.copy(alpha = 0.04f)
             ) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = if (isCollapsed) Arrangement.Center else Arrangement.Start,
-                    modifier = Modifier.padding(12.dp)
+                    modifier = Modifier.padding(10.dp)
                 ) {
                     Surface(
                         shape = CircleShape,
                         color = colors.iconBg,
-                        modifier = Modifier.size(32.dp)
+                        modifier = Modifier.size(30.dp)
                     ) {
                         Box(contentAlignment = Alignment.Center) {
                             Text(
                                 text = businessName.take(1).uppercase(),
                                 style = TextStyle(
                                     fontFamily = ff,
-                                    fontSize = 15.sp,
+                                    fontSize = 14.sp,
                                     fontWeight = FontWeight.Bold,
                                     color = colors.textPrimary
                                 )
@@ -268,16 +268,16 @@ fun DesktopSideBar(
                 )
             }
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(6.dp))
 
             // Settings Button
             Surface(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(44.dp)
-                    .clip(RoundedCornerShape(100.dp))
+                    .height(40.dp)
+                    .clip(RoundedCornerShape(10.dp))
                     .clickable { onSettingsClick() },
-                shape = RoundedCornerShape(100.dp),
+                shape = RoundedCornerShape(10.dp),
                 color = Color.Transparent
             ) {
                 Row(
