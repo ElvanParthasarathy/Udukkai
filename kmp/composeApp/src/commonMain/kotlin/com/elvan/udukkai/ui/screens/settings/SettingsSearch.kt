@@ -124,8 +124,8 @@ object RecentSettingSearches {
 /** The same floating pill as the app's navigation bar and search bar: 56dp high, the same translucency, hairline and shadow. */
 private val PILL_HEIGHT = 56.dp
 
-/** The closed pill's width (the app's own search bar uses the same), and the room left at each side when it is open. */
-private val PILL_CLOSED_WIDTH = 284.dp
+/** The closed pill's width (the navigation bar's), and the room left at each side when it is open. */
+private val PILL_CLOSED_WIDTH = 248.dp
 private val PILL_OPEN_MARGIN = 16.dp
 
 @Composable

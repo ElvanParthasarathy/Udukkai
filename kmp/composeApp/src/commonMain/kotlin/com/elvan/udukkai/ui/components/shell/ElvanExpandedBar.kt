@@ -56,28 +56,21 @@ fun ElvanExpandedBar(
 
         // 1. Measure text width
         val textMeasurer = rememberTextMeasurer()
-        val baseStyle = TextStyle(
+        val titleStyle = TextStyle(
             fontFamily = ff,
             fontSize = 34.sp,
             fontWeight = FontWeight.Bold,
             color = colors.textPrimary
         )
-        val screenWidthPx = with(density) { screenWidth.toPx() }
-        val maxAvailableWidthPx = screenWidthPx - with(density) { 32.dp.toPx() }
-        // A long title is made smaller (down to 26sp, never smaller) so that it stays on one line
-        val titleSizeSp = remember(safeTitle, ff, maxAvailableWidthPx) {
-            var size = 34f
-            while (size > 26f && textMeasurer.measure(text = safeTitle, style = baseStyle.copy(fontSize = size.sp)).size.width > maxAvailableWidthPx) size -= 1f
-            size
-        }
-        val titleStyle = baseStyle.copy(fontSize = titleSizeSp.sp)
-        val fullLayout = remember(safeTitle, ff, titleSizeSp) {
+        val fullLayout = remember(safeTitle, ff) {
             textMeasurer.measure(
                 text = safeTitle,
                 style = titleStyle
             )
         }
-        // Only a title too wide for one line even at 26sp sits on two centred lines while the bar is open.
+        val screenWidthPx = with(density) { screenWidth.toPx() }
+        val maxAvailableWidthPx = screenWidthPx - with(density) { 32.dp.toPx() }
+        // A title too wide for one line sits on two centred lines while the bar is open (as on Samsung's own pages).
         val wraps = fullLayout.size.width > maxAvailableWidthPx
         val wrappedLayout = remember(safeTitle, ff, maxAvailableWidthPx, wraps) {
             if (!wraps) null else textMeasurer.measure(
@@ -96,7 +89,7 @@ fun ElvanExpandedBar(
         val targetLeftPx = with(density) { if (hasLeadingWidget || onBack != null) 74.dp.toPx() else 24.dp.toPx() }
         // Closed, the title is one line of the usual 22sp beside the buttons, ending in "..." where the room runs out
         val closedRoomPx = screenWidthPx - targetLeftPx - with(density) { (if (hasActions) 78.dp else 16.dp).toPx() }
-        val finalScale = 22f / titleSizeSp
+        val finalScale = 22f / 34f
 
         // 2. Compute X endpoints (center to target left)
         val centeredLeftPx = if (rawTextWidthPx > maxAvailableWidthPx) {
