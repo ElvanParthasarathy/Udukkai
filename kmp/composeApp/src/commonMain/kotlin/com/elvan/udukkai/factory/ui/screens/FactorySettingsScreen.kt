@@ -35,6 +35,9 @@ import com.elvan.udukkai.theme.rememberShellColors
 import com.elvan.udukkai.ui.components.shell.*
 import com.elvan.udukkai.ui.navigation.MaterialSymbols
 import com.elvan.udukkai.ui.screens.settings.SettingsRoute
+import com.elvan.udukkai.ui.screens.settings.SettingsSearchPage
+import com.elvan.udukkai.ui.screens.settings.SettingsSearchPill
+import com.elvan.udukkai.ui.screens.settings.settingsEntries
 import com.elvan.udukkai.ui.screens.settings.screens.*
 import com.elvan.udukkai.factory.ui.screens.settings.*
 
@@ -88,6 +91,15 @@ fun FactorySettingsScreen(
             },
             label = "FactorySettingsTransition"
         ) { route ->
+            if (route == SettingsRoute.Search) {
+                SettingsSearchPage(
+                    entries = remember { settingsEntries(SettingsRoute.FactoryIdentity) },
+                    colors = colors,
+                    onOpen = { currentRoute = it },
+                    onBack = handleBack
+                )
+                return@AnimatedContent
+            }
             val scrollState = if (route == SettingsRoute.Hub) hubScrollState else subpageScrollStates.getOrPut(route) { LazyListState() }
             val pageTitle = when (route) {
                 SettingsRoute.Hub -> K.settings.tr()
@@ -110,12 +122,14 @@ fun FactorySettingsScreen(
                 SettingsRoute.Licences -> K.openSourceLicences.tr()
                 SettingsRoute.AppLock -> K.appLock.tr()
                 SettingsRoute.About -> K.aboutAndLegal.tr()
+                SettingsRoute.Search -> K.searchSettings.tr()
             }
 
             ElvanSubShell(
                 title = pageTitle,
                 onBack = handleBack,
-                scrollState = scrollState
+                scrollState = scrollState,
+                floatingBar = { if (route == SettingsRoute.Hub) SettingsSearchPill(colors) { currentRoute = SettingsRoute.Search } }
             ) {
                 when (route) {
                     SettingsRoute.Hub -> FactorySettingsHubContent(
@@ -160,6 +174,7 @@ fun FactorySettingsScreen(
                     SettingsRoute.Licences -> LegalScreen(LegalPage.LICENCES, scrollState, colors)
                     SettingsRoute.AppLock -> AppLockSettingsScreen(scrollState = scrollState, colors = colors)
                     SettingsRoute.About -> AboutHubScreen(versionText = "Udukkai Factory v1.0", onNavigate = { currentRoute = it }, scrollState = scrollState, colors = colors)
+                    SettingsRoute.Search -> {}
                 }
             }
         }
@@ -181,7 +196,7 @@ private fun FactorySettingsHubContent(
         state = scrollState,
         modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(
-            bottom = Dimens.SubpageContentPaddingBottom
+            bottom = Dimens.SubpageContentPaddingBottom + 72.dp
         ),
         verticalArrangement = Arrangement.spacedBy(10.dp)
     ) {

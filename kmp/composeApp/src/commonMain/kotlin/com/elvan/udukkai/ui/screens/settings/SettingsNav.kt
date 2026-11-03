@@ -23,6 +23,7 @@ sealed interface SettingsRoute {
     data object Licences : SettingsRoute
     data object AppLock : SettingsRoute
     data object About : SettingsRoute
+    data object Search : SettingsRoute
 
     companion object {
         /** The pages that are opened from the About page: Back from them returns to it. */
