@@ -7,7 +7,9 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.border
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
@@ -36,15 +38,22 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.elvan.udukkai.core.extensions.cssShadow
+import com.elvan.udukkai.core.platform.getImeBottomPadding
 import com.elvan.udukkai.core.platform.getPreferencesHelper
+import com.elvan.udukkai.core.platform.navigationBarsPaddingIfMobile
 import com.elvan.udukkai.localization.K
 import com.elvan.udukkai.localization.tr
 import com.elvan.udukkai.localization.trWithLang
+import com.elvan.udukkai.theme.Dimens
 import com.elvan.udukkai.theme.LocalAppFontFamily
 import com.elvan.udukkai.theme.ShellColors
+import com.elvan.udukkai.ui.components.shell.ElvanSectionContainer
 import com.elvan.udukkai.ui.components.shell.ElvanSettingsDivider
 import com.elvan.udukkai.ui.components.shell.ElvanSettingsRow
 import com.elvan.udukkai.ui.components.shell.ElvanSettingsSection
+import com.elvan.udukkai.ui.components.shell.ElvanSubShell
+import com.elvan.udukkai.ui.components.shell.LocalElvanTopSpacerHeight
 import com.elvan.udukkai.ui.navigation.MaterialSymbols
 import kotlinx.coroutines.delay
 
@@ -112,43 +121,47 @@ object RecentSettingSearches {
     private fun save(list: List<String>) = getPreferencesHelper().setString(KEY, list.take(MAX).joinToString("\n"))
 }
 
-private val PILL_HEIGHT = 52.dp
-private val PILL_SIDE = 20.dp
-private val PILL_GAP = 12.dp
+/** The same floating pill as the app's navigation bar and search bar: 56dp high, the same translucency, hairline and shadow. */
+private val PILL_HEIGHT = 56.dp
 
-/** How much of the width the closed pill takes (as in Samsung's own apps), centred. */
-private const val PILL_SHARE = 0.68f
+/** The closed pill's width (the app's own search bar uses the same), and the room left at each side when it is open. */
+private val PILL_CLOSED_WIDTH = 284.dp
+private val PILL_OPEN_MARGIN = 16.dp
 
-/** The pill is a little lighter than the cards around it, with no outline. */
-private fun pillColor(colors: ShellColors): Color = lerp(colors.surface, colors.textPrimary, 0.14f)
+@Composable
+private fun Modifier.floatingPill(colors: ShellColors): Modifier = this
+    .height(PILL_HEIGHT)
+    .cssShadow(color = Color.Black, alpha = 0.05f, blurRadius = 16.dp, offsetY = 4.dp)
+    .background(color = colors.floatingBg.copy(alpha = 0.88f), shape = CircleShape)
+    .border(width = 0.5.dp, color = colors.floatingBorder.copy(alpha = if (colors.isDark) 0.15f else 0.6f), shape = CircleShape)
 
-/** The search pill kept at the bottom of the settings page: it opens the search page when tapped. */
+/** The search pill kept at the bottom of the settings page, where the navigation bar sits on the other pages. */
 @Composable
 fun SettingsSearchPill(colors: ShellColors, onClick: () -> Unit) {
     val ff = LocalAppFontFamily.current
-    Box(Modifier.fillMaxWidth().windowInsetsPadding(WindowInsets.navigationBars).padding(vertical = PILL_GAP), contentAlignment = Alignment.Center) {
+    BoxWithConstraints(Modifier.fillMaxWidth().navigationBarsPaddingIfMobile().padding(bottom = 16.dp), contentAlignment = Alignment.Center) {
         Row(
-            Modifier.fillMaxWidth(PILL_SHARE).height(PILL_HEIGHT)
+            Modifier.width(PILL_CLOSED_WIDTH.coerceAtMost(maxWidth - PILL_OPEN_MARGIN * 2))
+                .floatingPill(colors)
                 .clip(CircleShape)
-                .background(pillColor(colors))
                 .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null, onClick = onClick)
-                .padding(horizontal = 18.dp),
+                .padding(horizontal = 16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Icon(MaterialSymbols.Rounded.Search, null, tint = colors.textPrimary.copy(alpha = 0.7f), modifier = Modifier.size(22.dp))
-            Spacer(Modifier.width(12.dp))
-            Text(K.searchWord.tr(), style = TextStyle(fontFamily = ff, fontSize = 16.sp, fontWeight = FontWeight.Medium), color = colors.textPrimary.copy(alpha = 0.6f))
+            Icon(MaterialSymbols.Rounded.Search, null, tint = colors.textSecondary, modifier = Modifier.size(20.dp))
+            Spacer(Modifier.width(10.dp))
+            Text(K.searchWord.tr(), style = TextStyle(fontFamily = ff, fontSize = 17.sp, color = colors.textSecondary.copy(alpha = 0.6f)))
         }
     }
 }
 
 /**
  * The search page, opened the way Samsung's own apps do it: the small pill at the bottom widens into the search field
- * while the settings page fades away and the search page (its heading, the last searches) rises into its place. Closing
- * runs the same in reverse: the field narrows back to the pill and the settings page returns. Inside, the results show as
- * you type, the last searches show as removable chips when nothing is typed, and the field stays at the bottom, above the keyboard.
+ * while the settings page fades away and the search page rises into its place. Closing runs the same in reverse. The
+ * page has the app's usual heading, large while open and small once the list is scrolled, with the back button.
+ * Inside, the results show as you type, the last searches show as removable chips when nothing is typed, and the field
+ * stays at the bottom, above the keyboard.
  */
-@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun SettingsSearchOverlay(open: Boolean, entries: List<SettingsEntry>, colors: ShellColors, onOpen: (SettingsRoute) -> Unit, onClose: () -> Unit) {
     val progress = remember { Animatable(0f) }
@@ -168,8 +181,7 @@ fun SettingsSearchOverlay(open: Boolean, entries: List<SettingsEntry>, colors: S
     }
     if (!open && progress.value == 0f) return
     val p = progress.value
-    val safeTop = WindowInsets.safeDrawing.asPaddingValues().calculateTopPadding()
-    val safeBottom = WindowInsets.safeDrawing.asPaddingValues().calculateBottomPadding()
+    val imeBottom = getImeBottomPadding()
 
     BoxWithConstraints(
         Modifier.fillMaxSize()
@@ -179,18 +191,18 @@ fun SettingsSearchOverlay(open: Boolean, entries: List<SettingsEntry>, colors: S
             .pointerInput(Unit) { awaitPointerEventScope { while (true) awaitPointerEvent().changes.forEach { it.consume() } } }
     ) {
         val rise = with(LocalDensity.current) { (28.dp * (1f - p)).toPx() }
-        SearchPageContent(
-            Modifier.fillMaxSize().graphicsLayer { alpha = p; translationY = rise },
-            query, { query = it }, recents, { recents = it }, results, colors, safeTop, ::openResult, onClose
-        )
-        val pillSide = maxWidth * (1f - PILL_SHARE) / 2
+        val closedWidth = PILL_CLOSED_WIDTH.coerceAtMost(maxWidth - PILL_OPEN_MARGIN * 2)
+        val openWidth = maxWidth - PILL_OPEN_MARGIN * 2
+        Box(Modifier.fillMaxSize().graphicsLayer { alpha = p; translationY = rise }) {
+            SearchPage(query, { query = it }, recents, { recents = it }, results, colors, ::openResult, onClose)
+        }
         // The field is the pill itself: it starts at the pill's place and size and widens to the full field
         SearchField(
             colors = colors, open = open, query = query, onQuery = { query = it },
             onSearch = { results.firstOrNull()?.let { openResult(it.route) } },
             modifier = Modifier.align(Alignment.BottomCenter)
-                .padding(horizontal = pillSide + (PILL_SIDE - pillSide) * p, vertical = PILL_GAP)
-                .padding(bottom = safeBottom)
+                .then(if (imeBottom > 0.dp) Modifier.padding(bottom = imeBottom + 16.dp) else Modifier.navigationBarsPaddingIfMobile().padding(bottom = 16.dp))
+                .width(closedWidth + (openWidth - closedWidth) * p)
         )
     }
 }
@@ -202,21 +214,18 @@ private fun SearchField(colors: ShellColors, open: Boolean, query: String, onQue
     val focusManager = LocalFocusManager.current
     // After the page has opened, so the keyboard does not fight the animation; closing puts the keyboard away
     LaunchedEffect(open) {
-        if (open) { delay(260); runCatching { focus.requestFocus() } } else { focusManager.clearFocus(); }
+        if (open) { delay(260); runCatching { focus.requestFocus() } } else focusManager.clearFocus()
     }
-    Row(
-        modifier.fillMaxWidth().height(PILL_HEIGHT).clip(CircleShape).background(pillColor(colors)).padding(start = 18.dp, end = 8.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Icon(MaterialSymbols.Rounded.Search, null, tint = colors.textPrimary.copy(alpha = 0.7f), modifier = Modifier.size(22.dp))
-        Spacer(Modifier.width(12.dp))
+    Row(modifier.floatingPill(colors).padding(start = 16.dp, end = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+        Icon(MaterialSymbols.Rounded.Search, null, tint = colors.textSecondary, modifier = Modifier.size(20.dp))
+        Spacer(Modifier.width(10.dp))
         Box(Modifier.weight(1f), contentAlignment = Alignment.CenterStart) {
-            if (query.isEmpty()) Text(K.searchWord.tr(), style = TextStyle(fontFamily = ff, fontSize = 16.sp, fontWeight = FontWeight.Medium), color = colors.textPrimary.copy(alpha = 0.6f))
+            if (query.isEmpty()) Text(K.searchWord.tr(), style = TextStyle(fontFamily = ff, fontSize = 17.sp, color = colors.textSecondary.copy(alpha = 0.6f)))
             BasicTextField(
                 value = query,
                 onValueChange = onQuery,
                 singleLine = true,
-                textStyle = TextStyle(fontFamily = ff, fontSize = 16.sp, color = colors.textPrimary),
+                textStyle = TextStyle(fontFamily = ff, fontSize = 17.sp, color = colors.textPrimary),
                 cursorBrush = SolidColor(colors.textPrimary),
                 keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
                 keyboardActions = KeyboardActions(onSearch = { onSearch() }),
@@ -225,78 +234,74 @@ private fun SearchField(colors: ShellColors, open: Boolean, query: String, onQue
         }
         if (query.isNotEmpty()) {
             Box(Modifier.size(36.dp).clip(CircleShape).clickable { onQuery("") }, contentAlignment = Alignment.Center) {
-                Icon(MaterialSymbols.Rounded.Close, null, tint = colors.textPrimary.copy(alpha = 0.7f), modifier = Modifier.size(20.dp))
+                Icon(MaterialSymbols.Rounded.Close, null, tint = colors.textSecondary, modifier = Modifier.size(20.dp))
             }
         }
     }
 }
 
+/** The page itself, in the app's usual shell: a large heading that shrinks into the bar as the list is scrolled. */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun SearchPageContent(
-    modifier: Modifier, query: String, onQuery: (String) -> Unit, recents: List<String>, onRecents: (List<String>) -> Unit,
-    results: List<SettingsEntry>, colors: ShellColors, safeTop: Dp, openResult: (SettingsRoute) -> Unit, onClose: () -> Unit
+private fun SearchPage(
+    query: String, onQuery: (String) -> Unit, recents: List<String>, onRecents: (List<String>) -> Unit,
+    results: List<SettingsEntry>, colors: ShellColors, openResult: (SettingsRoute) -> Unit, onClose: () -> Unit
 ) {
     val ff = LocalAppFontFamily.current
+    val scrollState = rememberLazyListState()
+    ElvanSubShell(title = K.searchWord.tr(), onBack = onClose, scrollState = scrollState) {
+        LazyColumn(
+            state = scrollState,
+            modifier = Modifier.fillMaxSize(),
+            contentPadding = PaddingValues(bottom = Dimens.SubpageContentPaddingBottom + 72.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            item(key = "shell_top_spacer") { Spacer(Modifier.height(LocalElvanTopSpacerHeight.current + 6.dp)) }
 
-    Column(modifier) {
-        Row(Modifier.fillMaxWidth().padding(top = safeTop + 8.dp, start = 8.dp, end = 20.dp, bottom = 4.dp), verticalAlignment = Alignment.CenterVertically) {
-            Box(Modifier.size(48.dp).clip(CircleShape).clickable(onClick = onClose), contentAlignment = Alignment.Center) {
-                Icon(MaterialSymbols.Rounded.ArrowBack, null, tint = colors.textPrimary, modifier = Modifier.size(24.dp))
-            }
-            Spacer(Modifier.width(4.dp))
-            Text(K.searchWord.tr(), style = TextStyle(fontFamily = ff, fontSize = 22.sp, fontWeight = FontWeight.Bold), color = colors.textPrimary)
-        }
-
-        Box(Modifier.weight(1f).fillMaxWidth()) {
             when {
-                query.isBlank() && recents.isNotEmpty() -> Column(
-                    Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 8.dp)
-                        .clip(RoundedCornerShape(24.dp)).background(colors.surface).padding(16.dp)
-                ) {
-                    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                        Text(K.recentSearches.tr(), Modifier.weight(1f), style = TextStyle(fontFamily = ff, fontSize = 14.sp, fontWeight = FontWeight.Medium), color = colors.textPrimary.copy(alpha = 0.6f))
-                        Text(
-                            K.clearAll.tr(),
-                            style = TextStyle(fontFamily = ff, fontSize = 14.sp, fontWeight = FontWeight.SemiBold),
-                            color = colors.textPrimary,
-                            modifier = Modifier.clip(CircleShape).clickable { RecentSettingSearches.clear(); onRecents(emptyList()) }.padding(horizontal = 8.dp, vertical = 4.dp)
-                        )
-                    }
-                    Spacer(Modifier.height(12.dp))
-                    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        recents.forEach { word ->
-                            Row(
-                                Modifier.clip(CircleShape).background(colors.iconBg).clickable { onQuery(word) }.padding(start = 16.dp, end = 6.dp, top = 6.dp, bottom = 6.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Text(word, style = TextStyle(fontFamily = ff, fontSize = 15.sp), color = colors.textPrimary)
-                                Spacer(Modifier.width(6.dp))
-                                Box(
-                                    Modifier.size(28.dp).clip(CircleShape).clickable { RecentSettingSearches.remove(word); onRecents(RecentSettingSearches.all()) },
-                                    contentAlignment = Alignment.Center
-                                ) { Icon(MaterialSymbols.Rounded.Close, null, tint = colors.textPrimary.copy(alpha = 0.7f), modifier = Modifier.size(16.dp)) }
+                query.isBlank() && recents.isNotEmpty() -> item(key = "recents") {
+                    ElvanSectionContainer {
+                        Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(24.dp)).background(colors.surface).padding(16.dp)) {
+                            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                                Text(K.recentSearches.tr(), Modifier.weight(1f), style = TextStyle(fontFamily = ff, fontSize = 14.sp, fontWeight = FontWeight.Medium), color = colors.textPrimary.copy(alpha = 0.6f))
+                                Text(
+                                    K.clearAll.tr(),
+                                    style = TextStyle(fontFamily = ff, fontSize = 14.sp, fontWeight = FontWeight.SemiBold),
+                                    color = colors.textPrimary,
+                                    modifier = Modifier.clip(CircleShape).clickable { RecentSettingSearches.clear(); onRecents(emptyList()) }.padding(horizontal = 8.dp, vertical = 4.dp)
+                                )
+                            }
+                            Spacer(Modifier.height(12.dp))
+                            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                recents.forEach { word ->
+                                    Row(
+                                        Modifier.clip(CircleShape).background(colors.iconBg).clickable { onQuery(word) }.padding(start = 16.dp, end = 6.dp, top = 6.dp, bottom = 6.dp),
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Text(word, style = TextStyle(fontFamily = ff, fontSize = 15.sp), color = colors.textPrimary)
+                                        Spacer(Modifier.width(6.dp))
+                                        Box(
+                                            Modifier.size(28.dp).clip(CircleShape).clickable { RecentSettingSearches.remove(word); onRecents(RecentSettingSearches.all()) },
+                                            contentAlignment = Alignment.Center
+                                        ) { Icon(MaterialSymbols.Rounded.Close, null, tint = colors.textPrimary.copy(alpha = 0.7f), modifier = Modifier.size(16.dp)) }
+                                    }
+                                }
                             }
                         }
                     }
                 }
 
-                query.isBlank() -> Text(
-                    K.searchSettingsHint.tr(),
-                    style = TextStyle(fontFamily = ff, fontSize = 15.sp, textAlign = TextAlign.Center),
-                    color = colors.textPrimary.copy(alpha = 0.5f),
-                    modifier = Modifier.align(Alignment.Center).padding(horizontal = 40.dp)
-                )
+                query.isBlank() || results.isEmpty() -> item(key = "message") {
+                    Text(
+                        if (query.isBlank()) K.searchSettingsHint.tr() else K.noResults.tr(),
+                        style = TextStyle(fontFamily = ff, fontSize = 15.sp, textAlign = TextAlign.Center),
+                        color = colors.textPrimary.copy(alpha = 0.5f),
+                        modifier = Modifier.fillMaxWidth().padding(horizontal = 40.dp, vertical = 24.dp)
+                    )
+                }
 
-                results.isEmpty() -> Text(
-                    K.noResults.tr(),
-                    style = TextStyle(fontFamily = ff, fontSize = 16.sp, textAlign = TextAlign.Center),
-                    color = colors.textPrimary.copy(alpha = 0.5f),
-                    modifier = Modifier.align(Alignment.Center).padding(horizontal = 40.dp)
-                )
-
-                else -> LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp)) {
-                    item {
+                else -> item(key = "results") {
+                    ElvanSectionContainer {
                         ElvanSettingsSection(colors = colors) {
                             results.forEachIndexed { i, e ->
                                 if (i > 0) ElvanSettingsDivider(colors = colors)
@@ -307,7 +312,5 @@ private fun SearchPageContent(
                 }
             }
         }
-        // Room for the field that is drawn over the bottom of this page
-        Spacer(Modifier.height(PILL_HEIGHT + PILL_GAP * 2 + WindowInsets.safeDrawing.asPaddingValues().calculateBottomPadding()))
     }
 }
