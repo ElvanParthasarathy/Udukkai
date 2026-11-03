@@ -59,6 +59,7 @@ fun ElvanActionSheet(
     tertiaryText: String? = null,
     onTertiary: (() -> Unit)? = null,
     tertiaryColor: Color? = null,
+    slideDistance: androidx.compose.ui.unit.Dp = 300.dp,
     customContent: (@Composable () -> Unit)? = null
 ) {
     val ff = LocalAppFontFamily.current
@@ -68,7 +69,7 @@ fun ElvanActionSheet(
 
     val coroutineScope = rememberCoroutineScope()
     val density = LocalDensity.current
-    val initialOffsetPx = with(density) { 300.dp.toPx() }
+    val initialOffsetPx = with(density) { slideDistance.toPx() }
     val sheetOffsetY = remember { Animatable(initialOffsetPx) }
     var isClosing by remember { mutableStateOf(false) }
     var dragOffsetY by remember { mutableFloatStateOf(0f) }

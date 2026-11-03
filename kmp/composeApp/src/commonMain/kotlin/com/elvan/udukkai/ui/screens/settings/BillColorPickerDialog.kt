@@ -87,13 +87,16 @@ private fun readable(c: Color): Color {
 }
 
 private val hues = listOf(0f, 30f, 55f, 85f, 130f, 170f, 200f, 225f, 265f, 305f)
-private const val ROWS = 10
+private const val ROWS = 6
+
+/** The colour area is this tall in both modes, so the sheet never changes size when the mode changes. */
+private val AREA_HEIGHT = 168.dp
 
 /**
- * "More colours", in the app's action sheet: a Swatches | Spectrum pill shifter (tap or drag), the grid or the spectrum
- * with its brightness slider, the hex code with its red, green and blue values, the colour as it is now beside the new
- * one, and the last colours used. Done keeps the colour (a pale one is darkened to stay readable, see [readable]);
- * Cancel leaves it as it was.
+ * "More colours", in the app's action sheet, one fixed size with nothing to scroll: a Swatches | Spectrum pill shifter
+ * (tap or drag), the colour area (the same height in both), the hex code, the colour as it is now beside the new one
+ * with its red, green and blue values, and the last colours used. Done keeps the colour (a pale one is darkened to stay
+ * readable, see [readable]); Cancel leaves it as it was.
  */
 @Composable
 fun BillColorPickerDialog(initial: Color, colors: ShellColors, recent: List<String>, onDismiss: () -> Unit, onDone: (String) -> Unit) {
@@ -112,16 +115,16 @@ fun BillColorPickerDialog(initial: Color, colors: ShellColors, recent: List<Stri
     }
     val hex = billColorHex(color)
     var hexText by remember(hex) { mutableStateOf(hex.uppercase()) }
+    val small = TextStyle(fontFamily = ff, fontSize = 12.sp)
 
     ElvanActionSheet(
         title = K.pdfTheme.tr(),
         onDismissRequest = onDismiss,
         onConfirm = { onDone(billColorHex(readable(color))) },
         colors = colors,
-        confirmColor = readable(color),
-        isConfirmFilled = true,
+        slideDistance = 620.dp,
         customContent = {
-            Column(Modifier.heightIn(max = 470.dp).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 ElvanPillShifter(
                     items = listOf(PillShifterItem(K.swatches.tr()), PillShifterItem(K.spectrum.tr())),
                     selectedIndex = tab,
@@ -129,57 +132,69 @@ fun BillColorPickerDialog(initial: Color, colors: ShellColors, recent: List<Stri
                     colors = colors,
                     isFullWidth = true
                 )
-                if (tab == 0) {
-                    Column(Modifier.clip(RoundedCornerShape(8.dp))) {
-                        for (r in 0 until ROWS) {
-                            val l = 0.62f - r * (0.54f / (ROWS - 1))
-                            Row(Modifier.fillMaxWidth()) {
-                                (listOf<Color>(hslColor(0f, 0f, l)) + hues.map { hslColor(it, 1f, l) }).forEach { c ->
-                                    Box(
-                                        Modifier.weight(1f).aspectRatio(1f).background(c)
-                                            .then(if (billColorHex(c) == hex) Modifier.border(BorderStroke(2.dp, Color.White)) else Modifier)
-                                            .clickable { pick(c) }
-                                    )
+
+                Column(Modifier.fillMaxWidth().height(AREA_HEIGHT)) {
+                    if (tab == 0) {
+                        val cols = hues.size + 1
+                        fun cellColor(r: Int, c: Int): Color {
+                            val l = 0.62f - r * (0.50f / (ROWS - 1))
+                            return if (c == 0) hslColor(0f, 0f, l) else hslColor(hues[c - 1], 1f, l)
+                        }
+                        Canvas(
+                            Modifier.fillMaxSize().clip(RoundedCornerShape(10.dp)).pointerInput(Unit) {
+                                detectTapGestures { o ->
+                                    val c = (o.x / size.width * cols).toInt().coerceIn(0, cols - 1)
+                                    val r = (o.y / size.height * ROWS).toInt().coerceIn(0, ROWS - 1)
+                                    pick(cellColor(r, c))
                                 }
                             }
+                        ) {
+                            val w = size.width / cols
+                            val h = size.height / ROWS
+                            for (r in 0 until ROWS) for (c in 0 until cols) {
+                                val cc = cellColor(r, c)
+                                drawRect(cc, Offset(c * w, r * h), androidx.compose.ui.geometry.Size(w + 1f, h + 1f))
+                                if (billColorHex(cc) == hex) drawRect(Color.White, Offset(c * w + 2f, r * h + 2f), androidx.compose.ui.geometry.Size(w - 4f, h - 4f), style = Stroke(3f))
+                            }
                         }
+                    } else {
+                        var box by remember { mutableStateOf(IntSize(1, 1)) }
+                        fun at(o: Offset) = pickHsv(
+                            (o.x / box.width * 360f).coerceIn(0f, 360f),
+                            (o.y / box.height).coerceIn(0f, 1f),
+                            hsv.third
+                        )
+                        Canvas(
+                            Modifier.fillMaxWidth().weight(1f).clip(RoundedCornerShape(10.dp))
+                                .onSizeChanged { box = it }
+                                .pointerInput(Unit) { detectTapGestures { at(it) } }
+                                .pointerInput(Unit) { detectDragGestures(onDragStart = { at(it) }) { change, _ -> at(change.position) } }
+                        ) {
+                            drawRect(Brush.horizontalGradient((0..6).map { Color.hsv(it * 60f, 1f, 1f) }))
+                            drawRect(Brush.verticalGradient(listOf(Color.White, Color.Transparent)))
+                            val p = Offset(hsv.first / 360f * size.width, hsv.second * size.height)
+                            drawCircle(color, radius = 11.dp.toPx(), center = p)
+                            drawCircle(Color.White, radius = 11.dp.toPx(), center = p, style = Stroke(2.5.dp.toPx()))
+                        }
+                        Slider(
+                            value = hsv.third,
+                            onValueChange = { pickHsv(hsv.first, hsv.second, it) },
+                            valueRange = 0.1f..1f,
+                            modifier = Modifier.height(36.dp),
+                            colors = SliderDefaults.colors(thumbColor = color, activeTrackColor = color)
+                        )
                     }
-                } else {
-                    var box by remember { mutableStateOf(IntSize(1, 1)) }
-                    fun at(o: Offset) = pickHsv(
-                        (o.x / box.width * 360f).coerceIn(0f, 360f),
-                        (o.y / box.height).coerceIn(0f, 1f),
-                        hsv.third
-                    )
-                    Canvas(
-                        Modifier.fillMaxWidth().height(220.dp).clip(RoundedCornerShape(8.dp))
-                            .onSizeChanged { box = it }
-                            .pointerInput(Unit) { detectTapGestures { at(it) } }
-                            .pointerInput(Unit) { detectDragGestures(onDragStart = { at(it) }) { change, _ -> at(change.position) } }
-                    ) {
-                        drawRect(Brush.horizontalGradient((0..6).map { Color.hsv(it * 60f, 1f, 1f) }))
-                        drawRect(Brush.verticalGradient(listOf(Color.White, Color.Transparent)))
-                        val p = Offset(hsv.first / 360f * size.width, hsv.second * size.height)
-                        drawCircle(color, radius = 14.dp.toPx(), center = p)
-                        drawCircle(Color.White, radius = 14.dp.toPx(), center = p, style = Stroke(3.dp.toPx()))
-                    }
-                    Slider(
-                        value = hsv.third,
-                        onValueChange = { pickHsv(hsv.first, hsv.second, it) },
-                        valueRange = 0.1f..1f,
-                        colors = SliderDefaults.colors(thumbColor = color, activeTrackColor = color)
-                    )
                 }
 
-                // The colour now and the new one, the hex code and its red, green and blue values
-                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                // The colour now beside the new one, the hex code, and the red, green and blue values
+                Row(verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     Row(Modifier.size(width = 64.dp, height = 48.dp).clip(RoundedCornerShape(12.dp)).border(BorderStroke(1.dp, colors.textPrimary.copy(alpha = 0.3f)), RoundedCornerShape(12.dp))) {
                         Box(Modifier.weight(1f).fillMaxHeight().background(initial))
                         Box(Modifier.weight(1f).fillMaxHeight().background(color))
                     }
                     Box(Modifier.weight(1f)) {
                         ElvanSettingsTextField(
-                            label = K.hexLabel.tr(),
+                            label = "${K.hexLabel.tr()}   ${(color.red * 255f + 0.5f).toInt()} \u00b7 ${(color.green * 255f + 0.5f).toInt()} \u00b7 ${(color.blue * 255f + 0.5f).toInt()}",
                             value = hexText,
                             onValueChange = { v ->
                                 hexText = v.uppercase()
@@ -191,20 +206,12 @@ fun BillColorPickerDialog(initial: Color, colors: ShellColors, recent: List<Stri
                         )
                     }
                 }
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
-                    listOf(K.colorRed.tr() to color.red, K.green.tr() to color.green, K.colorBlue.tr() to color.blue).forEach { (label, v) ->
-                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Text(label, style = TextStyle(fontFamily = ff, fontSize = 13.sp), color = colors.textPrimary.copy(alpha = 0.6f))
-                            Text((v * 255f + 0.5f).toInt().toString(), style = TextStyle(fontFamily = ff, fontSize = 18.sp, fontWeight = FontWeight.Medium), color = colors.textPrimary)
-                        }
-                    }
-                }
 
                 if (recent.isNotEmpty()) {
-                    Text(K.recentColors.tr(), style = TextStyle(fontFamily = ff, fontSize = 13.sp), color = colors.textPrimary.copy(alpha = 0.6f))
-                    Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                        Text(K.recentColors.tr(), style = small, color = colors.textPrimary.copy(alpha = 0.6f), modifier = Modifier.weight(1f))
                         recent.take(5).forEach { h ->
-                            Box(Modifier.size(40.dp).clip(CircleShape).background(parseBillColor(h)).clickable { pick(parseBillColor(h)) })
+                            Box(Modifier.size(28.dp).clip(CircleShape).background(parseBillColor(h)).clickable { pick(parseBillColor(h)) })
                         }
                     }
                 }

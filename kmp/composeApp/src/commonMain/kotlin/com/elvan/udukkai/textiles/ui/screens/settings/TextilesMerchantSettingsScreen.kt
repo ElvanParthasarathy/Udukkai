@@ -475,6 +475,8 @@ fun TextilesMerchantSettingsScreen(
                                     } else {
                                         saveField {
                                             profile.gstin = tempPrimary.uppercase()
+                                            // The PAN is inside a valid GSTIN
+                                            BillRules.gstinPan(tempPrimary)?.let { profile.pan = it }
                                         }
                                     }
                                 },
