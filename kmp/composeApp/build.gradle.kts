@@ -140,7 +140,7 @@ android {
 // ── Desktop: default entry point (./gradlew :composeApp:run) defaults to Factory ──
 compose.desktop {
     application {
-        mainClass = "MainFactoryKt"
+        mainClass = "Main_factoryKt"
         javaHome = "C:/Program Files/Android/Android Studio/jbr"
 
         nativeDistributions {
@@ -164,9 +164,10 @@ tasks.register<JavaExec>("runFactory") {
         kotlin.targets.named("desktop").map { t ->
             t.compilations.named("main").map { it.output.classesDirs }
         },
-        runtimeCp
+        runtimeCp,
+        project.file("src/desktopMain/resources")
     )
-    mainClass.set("MainFactoryKt")
+    mainClass.set("Main_factoryKt")
     jvmArgs("-Xms64m", "-Xmx512m")
 }
 
@@ -180,8 +181,9 @@ tasks.register<JavaExec>("runTextiles") {
         kotlin.targets.named("desktop").map { t ->
             t.compilations.named("main").map { it.output.classesDirs }
         },
-        runtimeCp
+        runtimeCp,
+        project.file("src/desktopMain/resources")
     )
-    mainClass.set("MainTextilesKt")
+    mainClass.set("Main_textilesKt")
     jvmArgs("-Xms64m", "-Xmx512m")
 }
