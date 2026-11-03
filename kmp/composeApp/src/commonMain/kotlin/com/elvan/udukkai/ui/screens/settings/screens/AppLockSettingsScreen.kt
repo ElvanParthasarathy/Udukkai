@@ -23,8 +23,7 @@ import com.elvan.udukkai.ui.components.shell.*
 import com.elvan.udukkai.ui.navigation.MaterialSymbols
 
 /**
- * Everything about the app lock in one place: change the PIN (4 or 6 digits), the fingerprint, and what to do when the
- * PIN is forgotten. The PIN cannot be switched off: the bills are private.
+ * App lock settings using the device's system lock (Fingerprint, Face, or Phone Screen Lock PIN/Pattern).
  */
 @Composable
 fun AppLockSettingsScreen(
@@ -32,12 +31,8 @@ fun AppLockSettingsScreen(
     colors: ShellColors = rememberShellColors()
 ) {
     val ff = LocalAppFontFamily.current
-    val guard = rememberPinGuard(colors)
-    var tick by remember { mutableStateOf(0) }
-    var changePin by remember { mutableStateOf(false) }
+    var isEnabled by remember { mutableStateOf(AppLock.isSet()) }
     val lockTitle = K.appLock.tr()
-    val usePin = K.usePin.tr()
-    val pinChangedMsg = K.pinChanged.tr()
 
     LazyColumn(
         state = scrollState,
@@ -50,40 +45,44 @@ fun AppLockSettingsScreen(
             ElvanSettingsSection(colors = colors) {
                 ElvanSettingsRow(
                     icon = MaterialSymbols.Rounded.Lock,
-                    title = K.pinChange.tr(),
-                    description = "${if (tick >= 0) AppLock.length() else 0} ${K.pinDigitsWord.tr()}\n" + K.appPinHint.tr(),
-                    onClick = { guard { changePin = true } },
+                    title = K.appLock.tr(),
+                    description = (if (isEnabled) K.pinOn else K.pinOff).tr() + "\n" + K.appLockRowHint.tr(),
+                    onClick = {
+                        if (isEnabled) {
+                            // Verify identity before disabling
+                            authenticateFingerprint(lockTitle, "") { ok ->
+                                if (ok) {
+                                    AppLock.setEnabled(false)
+                                    isEnabled = false
+                                }
+                            }
+                        } else {
+                            // Verify system lock works before enabling
+                            authenticateFingerprint(lockTitle, "") { ok ->
+                                if (ok) {
+                                    AppLock.setEnabled(true)
+                                    isEnabled = true
+                                }
+                            }
+                        }
+                    },
                     colors = colors
                 )
-                if (fingerprintAvailable()) {
-                    ElvanSettingsDivider(colors = colors)
-                    ElvanSettingsRow(
-                        icon = MaterialSymbols.Rounded.Lock,
-                        title = K.fingerprintUnlock.tr(),
-                        description = (if (tick >= 0 && AppLock.fingerprintOn()) K.pinOn else K.pinOff).tr() + "\n" + K.fingerprintHint.tr(),
-                        onClick = {
-                            if (AppLock.fingerprintOn()) {
-                                guard { AppLock.setFingerprint(false); tick++ }
-                            } else {
-                                // Turning it on needs a fingerprint now, to be sure it works
-                                authenticateFingerprint(lockTitle, usePin) { ok -> if (ok) { AppLock.setFingerprint(true); tick++ } }
-                            }
-                        },
-                        colors = colors
-                    )
-                }
             }
         }
         item(key = "lock_help") {
             Column(Modifier.fillMaxWidth().padding(horizontal = 26.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                Text(K.forgotPinHelpTitle.tr(), style = TextStyle(fontFamily = ff, fontSize = 14.sp, lineHeight = 20.sp), color = colors.textPrimary)
-                Text(K.forgotPinHelp.tr(), style = TextStyle(fontFamily = ff, fontSize = 13.sp, lineHeight = 19.sp), color = colors.textPrimary.copy(alpha = 0.6f))
+                Text(
+                    text = K.appLockHelpTitle.tr(),
+                    style = TextStyle(fontFamily = ff, fontSize = 14.sp, lineHeight = 20.sp),
+                    color = colors.textPrimary
+                )
+                Text(
+                    text = K.appLockHelpDesc.tr(),
+                    style = TextStyle(fontFamily = ff, fontSize = 13.sp, lineHeight = 19.sp),
+                    color = colors.textPrimary.copy(alpha = 0.6f)
+                )
             }
         }
-    }
-
-    if (changePin) PinSheet(PinMode.CREATE, colors) { pin ->
-        changePin = false
-        if (pin != null) { tick++; ElvanSnackbar.show(pinChangedMsg) }
     }
 }

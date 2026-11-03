@@ -2,430 +2,78 @@ package com.elvan.udukkai.ui.components.shell
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.EnterTransition
-import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleOut
-import androidx.compose.animation.core.Animatable
-import androidx.compose.animation.core.Spring
-import androidx.compose.animation.core.animateDpAsState
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.spring
-import androidx.compose.animation.core.tween
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.awaitEachGesture
-import androidx.compose.foundation.gestures.awaitFirstDown
-import androidx.compose.foundation.gestures.waitForUpOrCancellation
-import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Icon
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.semantics.onClick
-import androidx.compose.ui.semantics.role
-import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.IntOffset
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import com.elvan.udukkai.core.auth.AuthManager
-import com.elvan.udukkai.core.auth.GoogleSignInResult
 import com.elvan.udukkai.core.platform.AppBackHandler
 import com.elvan.udukkai.core.security.AppLock
 import com.elvan.udukkai.core.security.authenticateFingerprint
 import com.elvan.udukkai.core.security.fingerprintAvailable
 import com.elvan.udukkai.localization.K
 import com.elvan.udukkai.localization.tr
-import com.elvan.udukkai.theme.LocalAppFontFamily
 import com.elvan.udukkai.theme.ShellColors
-import com.elvan.udukkai.ui.navigation.MaterialSymbols
-import com.elvan.udukkai.ui.screens.create.components.ElvanPillShifter
-import com.elvan.udukkai.ui.screens.create.components.PillShifterItem
 import com.elvan.udukkai.ui.components.splash.UdukkaiSplashScreen
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
-import kotlin.math.roundToInt
-
-enum class PinMode { VERIFY, CREATE }
-
-private val bouncy = spring<Float>(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessMedium)
-
-/** Material 3 Expressive PIN dot: morphs into distinct geometric shapes with bouncy spring physics. */
-@Composable
-private fun PinDot(index: Int, filled: Boolean, colors: ShellColors) {
-    ExpressivePinDot(index = index, filled = filled, colors = colors)
-}
 
 /**
- * A key of the number pad with standard Material 3 Surface and native ripple touch response.
- */
-@Composable
-private fun PadKey(label: String, colors: ShellColors, onClick: () -> Unit) {
-    val ff = LocalAppFontFamily.current
-    Surface(
-        onClick = onClick,
-        shape = CircleShape,
-        color = colors.iconBg,
-        contentColor = colors.textPrimary,
-        modifier = Modifier.size(72.dp)
-    ) {
-        Box(contentAlignment = Alignment.Center) {
-            Text(
-                text = label,
-                style = TextStyle(fontFamily = ff, fontSize = 28.sp, fontWeight = FontWeight.Medium),
-                color = colors.textPrimary
-            )
-        }
-    }
-}
-
-/**
- * Dots and a number pad (Material 3 Expressive): the PIN is typed here, never with the keyboard, so nothing remembers or
- * shows it. [errorKey] goes up with every wrong entry so the dots shake each time, even when the message is the same.
- */
-@Composable
-fun PinPad(prompt: String, length: Int, error: String?, errorKey: Int, onComplete: (String) -> Unit, colors: ShellColors, modifier: Modifier = Modifier) {
-    val ff = LocalAppFontFamily.current
-    var digits by remember(length) { mutableStateOf("") }
-    val scope = rememberCoroutineScope()
-    var clearJob by remember { mutableStateOf<Job?>(null) }
-    val shake = remember { Animatable(0f) }
-    LaunchedEffect(errorKey) {
-        if (errorKey > 0) {
-            repeat(3) { shake.animateTo(12f, tween(45)); shake.animateTo(-12f, tween(45)) }
-            shake.animateTo(0f, tween(45))
-        }
-    }
-
-    Column(modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
-        Text(
-            prompt,
-            style = TextStyle(fontFamily = ff, fontSize = 17.sp, fontWeight = FontWeight.Medium, textAlign = TextAlign.Center),
-            color = colors.textPrimary,
-            modifier = Modifier.heightIn(min = 28.dp)
-        )
-        Spacer(Modifier.height(14.dp))
-        Row(
-            Modifier.offset { IntOffset(shake.value.dp.roundToPx(), 0) },
-            horizontalArrangement = Arrangement.spacedBy(if (length > 6) 12.dp else 16.dp)
-        ) {
-            repeat(length) { i -> PinDot(index = i, filled = i < digits.length, colors = colors) }
-        }
-        // Always two lines high, so a message appearing never moves the pad
-        Box(Modifier.height(30.dp).fillMaxWidth(), contentAlignment = Alignment.Center) {
-            Text(
-                error.orEmpty(),
-                style = TextStyle(fontFamily = ff, fontSize = 13.sp, textAlign = TextAlign.Center, lineHeight = 18.sp),
-                color = Color(0xFFE53935)
-            )
-        }
-
-        fun press(d: String) {
-            if (digits.length >= length) {
-                clearJob?.cancel()
-                digits = ""
-            }
-            if (digits.length < length) {
-                val next = digits + d
-                digits = next
-                if (next.length == length) {
-                    clearJob = scope.launch {
-                        delay(120) // Brief delay so the user visibly sees the last entered dot fill up
-                        onComplete(next)
-                        delay(240)
-                        digits = ""
-                    }
-                }
-            }
-        }
-        Column(verticalArrangement = Arrangement.spacedBy(10.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-            listOf(listOf("1", "2", "3"), listOf("4", "5", "6"), listOf("7", "8", "9"), listOf("", "0", "⌫")).forEach { row ->
-                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    row.forEach { key ->
-                        if (key.isEmpty()) Spacer(Modifier.size(72.dp))
-                        else PadKey(key, colors) { if (key == "⌫") digits = digits.dropLast(1) else press(key) }
-                    }
-                }
-            }
-        }
-    }
-}
-
-/**
- * Choosing a new PIN: 4 or 6 digits, typed twice. Everything keeps its place from the first entry to the second: the
- * length choice stays (dimmed) so the pad never jumps. [onCreated] gets the PIN once it is stored.
- */
-@Composable
-fun PinCreator(colors: ShellColors, onCreated: (String) -> Unit) {
-    var length by remember { mutableStateOf(AppLock.length().takeIf { it in AppLock.LENGTHS } ?: 6) }
-    var first by remember { mutableStateOf<String?>(null) }
-    var error by remember { mutableStateOf<String?>(null) }
-    var errorKey by remember { mutableStateOf(0) }
-    val mismatch = K.pinMismatch.tr()
-    val four = K.pinDigits4.tr()
-    val six = K.pinDigits6.tr()
-    Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        Box(Modifier.graphicsLayer { alpha = if (first == null) 1f else 0.35f }) {
-            ElvanPillShifter(
-                items = listOf(PillShifterItem(four), PillShifterItem(six)),
-                selectedIndex = AppLock.LENGTHS.indexOf(length).coerceAtLeast(0),
-                onIndexSelected = { length = AppLock.LENGTHS[it] },
-                colors = colors,
-                isFullWidth = true
-            )
-            if (first != null) {
-                Box(Modifier.matchParentSize().pointerInput(Unit) { awaitPointerEventScope { while (true) awaitPointerEvent().changes.forEach { it.consume() } } })
-            }
-        }
-        PinPad(
-            prompt = if (first == null) K.pinChoose.tr() else K.pinAgain.tr(),
-            length = length,
-            error = error,
-            errorKey = errorKey,
-            colors = colors,
-            onComplete = { pin ->
-                when {
-                    first == null -> { first = pin; error = null }
-                    first == pin -> { AppLock.set(pin); onCreated(pin) }
-                    else -> { first = null; error = mismatch; errorKey++ }
-                }
-            }
-        )
-    }
-}
-
-/**
- * The PIN in an action sheet. [PinMode.VERIFY] asks for the PIN and checks it (with the lock-out of [AppLock]);
- * [PinMode.CREATE] chooses a new one. [onResult] gets the PIN, or null when the sheet is closed.
- */
-@Composable
-fun PinSheet(mode: PinMode, colors: ShellColors, onResult: (String?) -> Unit) {
-    var error by remember { mutableStateOf<String?>(null) }
-    var errorKey by remember { mutableStateOf(0) }
-    val wrong = K.pinWrong.tr()
-    val lockedText = K.pinLocked.tr()
-
-    ElvanActionSheet(
-        title = K.appPin.tr(),
-        cancelText = K.cancelBtn.tr(),
-        confirmText = "",
-        onDismissRequest = { onResult(null) },
-        onConfirm = {},
-        customContent = {
-            if (mode == PinMode.CREATE) {
-                PinCreator(colors) { onResult(it) }
-            } else {
-                PinPad(
-                    prompt = K.pinEnter.tr(),
-                    length = AppLock.length(),
-                    error = error,
-                    errorKey = errorKey,
-                    colors = colors,
-                    onComplete = { pin ->
-                        val waiting = AppLock.secondsLocked()
-                        if (waiting > 0) { error = "$lockedText $waiting"; errorKey++ }
-                        else if (AppLock.verify(pin)) onResult(pin)
-                        else { error = AppLock.secondsLocked().let { if (it > 0) "$lockedText $it" else wrong }; errorKey++ }
-                    }
-                )
-            }
-        },
-        colors = colors
-    )
-}
-
-/**
- * Returns a function that runs an action only after the app PIN (or the fingerprint, when it is on) was passed. Used for
- * the actions that can lose or give away data. The PIN sheet is drawn where this is called.
- */
-@Composable
-fun rememberPinGuard(colors: ShellColors): (() -> Unit) -> Unit {
-    var pending by remember { mutableStateOf<(() -> Unit)?>(null) }
-    val title = K.appLock.tr()
-    val usePin = K.usePin.tr()
-    pending?.let { action ->
-        PinSheet(PinMode.VERIFY, colors) { pin ->
-            pending = null
-            if (pin != null) action()
-        }
-    }
-    return { action ->
-        when {
-            !AppLock.isSet() -> action()
-            AppLock.fingerprintOn() && fingerprintAvailable() ->
-                authenticateFingerprint(title, usePin) { ok -> if (ok) action() else pending = action }
-            else -> pending = action
-        }
-    }
-}
-
-/**
- * The app lock. Until a PIN exists only the page that makes one shows (it cannot be skipped); afterwards only the PIN
- * page shows while the PIN has not been entered: at opening, and when the app comes back after a minute away. The app
- * itself is drawn only once it has been unlocked, so the lock page and the fingerprint prompt come up at once; after
- * that it stays drawn under a later lock, so nothing being edited is lost. Right after the PIN is made, the fingerprint
- * is asked for, so it becomes the main way in.
+ * The app lock gate. When enabled by the user in Settings, it displays the expressive
+ * Udukkai splash screen and immediately requests Android system credentials
+ * (Fingerprint / Face / Device PIN / Pattern) with zero delay.
  */
 @Composable
 fun AppLockGate(colors: ShellColors, content: @Composable () -> Unit) {
-    // Both are read every time (no short-cut), so the gate redraws when the PIN is saved or the app unlocks
     val unlocked = AppLock.unlockedThisRun
     val isSet = AppLock.isSet()
-    val locked = !isSet || !unlocked
-    var appShown by remember { mutableStateOf(false) }
+    val locked = isSet && !unlocked
+    var appShown by remember { mutableStateOf(!isSet || unlocked) }
     LaunchedEffect(locked) { if (!locked) appShown = true }
+
     val title = K.appLock.tr()
-    val notNow = K.fingerprintOfferNo.tr()
+
+    fun askAuth() {
+        if (fingerprintAvailable()) {
+            authenticateFingerprint(title, "") { ok ->
+                if (ok) AppLock.unlockedThisRun = true
+            }
+        }
+    }
+
     Box(Modifier.fillMaxSize()) {
-        if (appShown) content()
-        // The lock page lifts away (fades and grows a little) to show the app under it, instead of vanishing
+        if (appShown) {
+            content()
+        }
+
         val leave = fadeOut(tween(260)) + scaleOut(tween(260), targetScale = 1.06f)
-        AnimatedVisibility(visible = !isSet, enter = EnterTransition.None, exit = leave) {
-            CreatePinPage(colors) { if (fingerprintAvailable()) authenticateFingerprint(title, notNow) { ok -> if (ok) AppLock.setFingerprint(true) } }
-        }
-        AnimatedVisibility(visible = isSet && !unlocked, enter = EnterTransition.None, exit = leave) { LockPage(colors) }
-    }
-}
-
-@Composable
-private fun LockLayer(colors: ShellColors, content: @Composable ColumnScope.() -> Unit) {
-    // The back gesture and touches must not reach the screens under the lock
-    AppBackHandler { }
-    Box(
-        Modifier.fillMaxSize().background(colors.background)
-            .pointerInput(Unit) { awaitPointerEventScope { while (true) awaitPointerEvent().changes.forEach { it.consume() } } }
-            .windowInsetsPadding(WindowInsets.safeDrawing),
-        contentAlignment = Alignment.Center
-    ) {
-        Column(
-            Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(horizontal = 24.dp, vertical = 16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(12.dp),
-            content = content
-        )
-    }
-}
-
-/** The lock badge: a rounded square (the Expressive shape) with the lock in it. */
-@Composable
-private fun LockBadge(colors: ShellColors) {
-    Box(Modifier.size(76.dp).clip(RoundedCornerShape(28.dp)).background(colors.iconBg), contentAlignment = Alignment.Center) {
-        Icon(MaterialSymbols.Rounded.Lock, null, tint = colors.textPrimary, modifier = Modifier.size(32.dp))
-    }
-}
-
-/** The first thing a new install shows: a PIN has to be chosen before the app can be used. */
-@Composable
-private fun CreatePinPage(colors: ShellColors, onCreated: () -> Unit) {
-    val ff = LocalAppFontFamily.current
-    LockLayer(colors) {
-        LockBadge(colors)
-        Text(
-            K.setUpPinTitle.tr(),
-            style = TextStyle(fontFamily = ff, fontSize = 24.sp, fontWeight = FontWeight.SemiBold, textAlign = TextAlign.Center, lineHeight = 32.sp),
-            color = colors.textPrimary
-        )
-        Text(
-            K.setUpPinHint.tr(),
-            style = TextStyle(fontFamily = ff, fontSize = 14.sp, lineHeight = 20.sp, textAlign = TextAlign.Center),
-            color = colors.textPrimary.copy(alpha = 0.65f)
-        )
-        Spacer(Modifier.height(4.dp))
-        PinCreator(colors) { onCreated() }
-    }
-}
-
-@Composable
-private fun LockPage(colors: ShellColors) {
-    val ff = LocalAppFontFamily.current
-    val scope = rememberCoroutineScope()
-    var error by remember { mutableStateOf<String?>(null) }
-    var errorKey by remember { mutableStateOf(0) }
-    var busy by remember { mutableStateOf(false) }
-    var settingNew by remember { mutableStateOf(false) }
-    val wrong = K.pinWrong.tr()
-    val lockedText = K.pinLocked.tr()
-    val title = K.appLock.tr()
-    val usePin = K.usePin.tr()
-    val recoverFailed = K.recoverFailed.tr()
-    val fingerprintReady = AppLock.fingerprintOn() && fingerprintAvailable()
-    val accountBefore = remember { AuthManager.signedInEmail }
-
-    var awaitingBiometric by remember { mutableStateOf(fingerprintReady) }
-
-    fun askFingerprint() {
-        awaitingBiometric = true
-        authenticateFingerprint(title, usePin) { ok ->
-            if (ok) {
-                AppLock.unlockedThisRun = true
-            } else {
-                awaitingBiometric = false
-            }
-        }
-    }
-    LaunchedEffect(Unit) { if (fingerprintReady) askFingerprint() }
-
-    if (awaitingBiometric) {
-        AppBackHandler { }
-        UdukkaiSplashScreen(
-            colors = colors,
-            onUsePin = { awaitingBiometric = false }
-        )
-    } else {
-        LockLayer(colors) {
-            LockBadge(colors)
-            PinPad(
-                prompt = K.pinEnter.tr(),
-                length = AppLock.length(),
-                error = error,
-                errorKey = errorKey,
+        AnimatedVisibility(visible = locked, enter = EnterTransition.None, exit = leave) {
+            AppBackHandler { }
+            UdukkaiSplashScreen(
                 colors = colors,
-                onComplete = { pin ->
-                    val waiting = AppLock.secondsLocked()
-                    if (waiting > 0) { error = "$lockedText $waiting"; errorKey++ }
-                    else if (!AppLock.verify(pin)) { error = AppLock.secondsLocked().let { if (it > 0) "$lockedText $it" else wrong }; errorKey++ }
-                }
+                onUnlock = { askAuth() }
             )
-            if (fingerprintReady) {
-                Text(
-                    K.fingerprintUnlock.tr(),
-                    style = TextStyle(fontFamily = ff, fontSize = 15.sp, fontWeight = FontWeight.SemiBold),
-                    color = colors.textPrimary,
-                    modifier = Modifier.clip(RoundedCornerShape(20.dp)).background(colors.iconBg).clickable { askFingerprint() }.padding(horizontal = 20.dp, vertical = 12.dp)
-                )
+            LaunchedEffect(Unit) {
+                askAuth()
             }
-            // A forgotten PIN: the Google account that is signed in on this phone allows choosing a new one
-            Text(
-                K.forgotPin.tr(),
-                style = TextStyle(fontFamily = ff, fontSize = 14.sp),
-                color = colors.textPrimary.copy(alpha = 0.7f),
-                modifier = Modifier.clip(CircleShape).clickable(enabled = !busy) {
-                    busy = true
-                    scope.launch {
-                        val result = try { AuthManager.signInWithGoogle() } catch (_: Throwable) { GoogleSignInResult.Failed }
-                        busy = false
-                        val sameAccount = result is GoogleSignInResult.Success && (accountBefore == null || result.email.equals(accountBefore, ignoreCase = true))
-                        if (sameAccount) settingNew = true else if (result !is GoogleSignInResult.Cancelled) ElvanSnackbar.show(recoverFailed)
-                    }
-                }.padding(horizontal = 16.dp, vertical = 10.dp)
-            )
         }
     }
+}
 
-    if (settingNew) PinSheet(PinMode.CREATE, colors) { pin -> settingNew = false; if (pin != null) AppLock.unlockedThisRun = true }
-    if (busy) ElvanLoadingOverlay(text = K.syncing.tr(), colors = colors)
+/**
+ * Runs an action only after system authentication succeeds when AppLock is enabled.
+ * Used for sensitive actions like deleting backups or restoring data.
+ */
+@Composable
+fun rememberPinGuard(colors: ShellColors): (() -> Unit) -> Unit {
+    val title = K.appLock.tr()
+    return { action ->
+        if (!AppLock.isSet() || !fingerprintAvailable()) {
+            action()
+        } else {
+            authenticateFingerprint(title, "") { ok ->
+                if (ok) action()
+            }
+        }
+    }
 }

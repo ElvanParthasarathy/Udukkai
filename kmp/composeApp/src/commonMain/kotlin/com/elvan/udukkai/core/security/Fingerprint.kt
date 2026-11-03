@@ -1,11 +1,11 @@
 package com.elvan.udukkai.core.security
 
-/** Whether this phone can read a fingerprint right now (the hardware is there and a fingerprint is saved on the phone). */
+/** Whether this device can authenticate right now (biometric hardware or screen lock PIN/pattern is available). */
 expect fun fingerprintAvailable(): Boolean
 
 /**
- * Asks for a fingerprint only: the phone's screen lock is never offered. [cancelText] is the sheet's cancel button
- * ("Use PIN"). [onResult] gets true only when a saved fingerprint matched; false when cancelled or on any error.
- * Always called on the main thread.
+ * Asks for system authentication (Fingerprint, Face, or device screen lock PIN/pattern).
+ * [title] is the prompt title. [onResult] gets true only when authentication succeeded;
+ * false when cancelled or on error. Always called on the main thread.
  */
 expect fun authenticateFingerprint(title: String, cancelText: String, onResult: (Boolean) -> Unit)

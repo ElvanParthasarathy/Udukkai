@@ -5,40 +5,73 @@ import android.content.SharedPreferences
 import java.util.Locale
 
 class AndroidPreferencesHelper : PreferencesHelper {
+    private val memoryFallback = mutableMapOf<String, Any?>()
+
     private val prefs: SharedPreferences?
         get() = if (AppContext.isInitialized) {
             AppContext.context.getSharedPreferences("udukkai_preferences", Context.MODE_PRIVATE)
         } else null
 
     override fun getString(key: String, defaultValue: String?): String? {
-        return prefs?.getString(key, defaultValue) ?: defaultValue
+        val p = prefs
+        return if (p != null) {
+            p.getString(key, defaultValue) ?: defaultValue
+        } else {
+            memoryFallback[key] as? String ?: defaultValue
+        }
     }
 
     override fun setString(key: String, value: String?) {
-        prefs?.edit()?.apply {
-            if (value == null) remove(key) else putString(key, value)
-            apply()
+        val p = prefs
+        if (p != null) {
+            p.edit()?.apply {
+                if (value == null) remove(key) else putString(key, value)
+                apply()
+            }
+        } else {
+            if (value == null) memoryFallback.remove(key) else memoryFallback[key] = value
         }
     }
 
     override fun getBoolean(key: String, defaultValue: Boolean): Boolean {
-        return prefs?.getBoolean(key, defaultValue) ?: defaultValue
+        val p = prefs
+        return if (p != null) {
+            p.getBoolean(key, defaultValue)
+        } else {
+            memoryFallback[key] as? Boolean ?: defaultValue
+        }
     }
 
     override fun setBoolean(key: String, value: Boolean) {
-        prefs?.edit()?.putBoolean(key, value)?.apply()
+        val p = prefs
+        if (p != null) {
+            p.edit()?.putBoolean(key, value)?.apply()
+        } else {
+            memoryFallback[key] = value
+        }
     }
 
     override fun getInt(key: String, defaultValue: Int): Int {
-        return prefs?.getInt(key, defaultValue) ?: defaultValue
+        val p = prefs
+        return if (p != null) {
+            p.getInt(key, defaultValue)
+        } else {
+            memoryFallback[key] as? Int ?: defaultValue
+        }
     }
 
     override fun setInt(key: String, value: Int) {
-        prefs?.edit()?.putInt(key, value)?.apply()
+        val p = prefs
+        if (p != null) {
+            p.edit()?.putInt(key, value)?.apply()
+        } else {
+            memoryFallback[key] = value
+        }
     }
 
     override fun clear() {
         prefs?.edit()?.clear()?.apply()
+        memoryFallback.clear()
     }
 }
 

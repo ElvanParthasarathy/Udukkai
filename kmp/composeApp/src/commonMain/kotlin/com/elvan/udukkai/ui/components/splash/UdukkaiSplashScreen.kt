@@ -8,6 +8,7 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -27,6 +28,7 @@ import com.elvan.udukkai.localization.tr
 import com.elvan.udukkai.theme.LocalAppFontFamily
 import com.elvan.udukkai.theme.ShellColors
 import com.elvan.udukkai.theme.ThemeManager
+import com.elvan.udukkai.ui.navigation.MaterialSymbols
 import migrate.composeapp.generated.resources.Res
 import migrate.composeapp.generated.resources.udukkai_logo
 import org.jetbrains.compose.resources.painterResource
@@ -42,7 +44,7 @@ private val SplashEaseInOut = CubicBezierEasing(0.42f, 0.0f, 0.58f, 1.0f)
 fun UdukkaiSplashScreen(
     colors: ShellColors,
     modifier: Modifier = Modifier,
-    onUsePin: (() -> Unit)? = null
+    onUnlock: (() -> Unit)? = null
 ) {
     val ff = LocalAppFontFamily.current
     val isDark = ThemeManager.isDark()
@@ -156,7 +158,7 @@ fun UdukkaiSplashScreen(
                 .background(shapeColor, CircleShape)
         )
 
-        // Centered Content: App Logo & Optional "Use PIN" Button
+        // Centered Content: App Logo & Tap-to-Unlock Action
         Column(
             modifier = Modifier
                 .align(Alignment.Center)
@@ -170,26 +172,37 @@ fun UdukkaiSplashScreen(
                 colorFilter = ColorFilter.tint(colors.textPrimary)
             )
 
-            if (onUsePin != null) {
+            if (onUnlock != null) {
                 Spacer(Modifier.height(28.dp))
-                Text(
-                    text = K.usePin.tr(),
-                    style = TextStyle(
-                        fontFamily = ff,
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.SemiBold
-                    ),
-                    color = colors.textPrimary.copy(alpha = 0.75f),
+                Row(
                     modifier = Modifier
-                        .clip(RoundedCornerShape(20.dp))
+                        .clip(RoundedCornerShape(50))
                         .background(colors.iconBg)
                         .clickable(
                             interactionSource = remember { MutableInteractionSource() },
                             indication = null,
-                            onClick = onUsePin
+                            onClick = onUnlock
                         )
-                        .padding(horizontal = 20.dp, vertical = 10.dp)
-                )
+                        .padding(horizontal = 22.dp, vertical = 12.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Icon(
+                        imageVector = MaterialSymbols.Rounded.Lock,
+                        contentDescription = null,
+                        tint = colors.textPrimary,
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Text(
+                        text = K.unlockApp.tr(),
+                        style = TextStyle(
+                            fontFamily = ff,
+                            fontSize = 15.sp,
+                            fontWeight = FontWeight.SemiBold
+                        ),
+                        color = colors.textPrimary
+                    )
+                }
             }
         }
 
