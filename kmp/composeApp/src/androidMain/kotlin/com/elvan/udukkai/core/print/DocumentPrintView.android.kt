@@ -57,7 +57,7 @@ actual val isDocumentPrintSupported: Boolean = true
 
 // The bundle in assets/print is served from this origin so the React
 // stylesheet's absolute url('/fonts/...') paths resolve unchanged.
-private const val PRINT_ORIGIN = "https://udukkai.print"
+internal const val PRINT_ORIGIN = "https://udukkai.print"
 private const val TAG = "DocumentPrintView"
 private const val CACHE_DIR = "print_pdfs"
 private const val CACHE_LIMIT = 50
@@ -130,7 +130,7 @@ actual fun DocumentPrintView(
  * darkens WebView content (white paper turns black). React's paper is always white.
  */
 @Suppress("DEPRECATION")
-private fun keepDocumentLight(view: WebView) {
+internal fun keepDocumentLight(view: WebView) {
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
         view.isForceDarkAllowed = false
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
@@ -142,7 +142,7 @@ private fun keepDocumentLight(view: WebView) {
     }
 }
 
-private open class AssetPrintClient(private val context: Context) : WebViewClient() {
+internal open class AssetPrintClient(private val context: Context) : WebViewClient() {
     override fun shouldInterceptRequest(view: WebView, request: WebResourceRequest): WebResourceResponse? {
         val url = request.url
         if ("${url.scheme}://${url.host}" != PRINT_ORIGIN) return null

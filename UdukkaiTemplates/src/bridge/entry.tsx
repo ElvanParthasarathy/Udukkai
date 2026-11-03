@@ -353,5 +353,59 @@ const buildPdf = async () => {
   return null;
 };
 
-window.UdukkaiPrint = { render, renderProps, buildPdf, printHtml, setTopInset, version: TEMPLATE_VERSION };
+// The top of a bill for the logo adjustment screen: the real template, shrunk to the screen width and cut off after
+// `cropPx` pixels of the paper. previewSettings() changes the print settings (logo size and place) and redraws at once.
+let previewState = null;
+const PREVIEW_PAPER_PX = 794;
+
+const fitPreview = (cropPx) => {
+  const paper = paperElement();
+  if (!paper) return;
+  const scale = window.innerWidth / PREVIEW_PAPER_PX;
+  const style = (el, css) => Object.entries(css).forEach(([k, v]) => el.style.setProperty(k, v, 'important'));
+  style(document.documentElement, { overflow: 'hidden', background: '#fff' });
+  style(document.body, {
+    margin: '0', background: '#fff', width: `${PREVIEW_PAPER_PX}px`, height: `${cropPx}px`, overflow: 'hidden',
+    transform: `scale(${scale})`, 'transform-origin': '0 0',
+  });
+  style(paper, { margin: '0', 'box-shadow': 'none', width: `${PREVIEW_PAPER_PX}px`, border: 'none' });
+};
+
+const drawPreview = () => {
+  const { data, docType, token } = previewState;
+  root.render(
+    <LanguageProvider key={token}>{renderDocument(docType, toProps(data))}</LanguageProvider>
+  );
+};
+
+const preview = async (payload, cropPx = 300) => {
+  const data = typeof payload === 'string' ? JSON.parse(payload) : payload;
+  const docType = DOC_TYPES[data.docType] ? data.docType : 'gst-invoice';
+  try { localStorage.setItem('elvanniril_language', data.appLanguage === 'ta' ? 'ta' : 'en'); } catch (e) { /* ignore */ }
+  if (!root) root = createRoot(document.getElementById('root'));
+  previewState = { data, docType, token: ++renderToken, cropPx };
+  current = { docType, props: null };
+  await new Promise((resolve) => {
+    root.render(
+      <LanguageProvider key={previewState.token}>
+        <Mounted onMounted={resolve}>{renderDocument(docType, toProps(data))}</Mounted>
+      </LanguageProvider>
+    );
+  });
+  const paper = await waitFor(paperElement);
+  try { await document.fonts.ready; } catch (e) { /* ignore */ }
+  await nextFrame();
+  if (paper) await waitForImages(paper);
+  fitPreview(cropPx);
+  notify(paper ? 'onReady' : 'onError', ...(paper ? [] : ['Template did not render']));
+};
+
+const previewSettings = (settings) => {
+  if (!previewState) return;
+  const s = typeof settings === 'string' ? JSON.parse(settings) : settings;
+  previewState.data.profile.printSettings = { ...(previewState.data.profile.printSettings || {}), ...s };
+  drawPreview();
+};
+
+window.UdukkaiPrint = { render, renderProps, buildPdf, printHtml, setTopInset, preview, previewSettings, version: TEMPLATE_VERSION };
 notify('onLoaded');

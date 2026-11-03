@@ -288,6 +288,7 @@ val ta: Map<String, String> = mapOf(
     K.hexLabel to "Hex",
     K.colorTooLight to "பில்லில் படிக்க முடியாத அளவு வெளிர்",
     K.logoSize to "லோகோ அளவு",
+    K.resetLogo to "இடம் மற்றும் அளவை மீட்டமை",
     K.wideLogoSize to "அகன்ற லோகோ அளவு",
     K.signatoryNameTa to "கையொப்பமிடுபவர் பெயர் (தமிழ்)",
     K.signatoryNameEn to "கையொப்பமிடுபவர் பெயர் (ஆங்கிலம்)",

@@ -164,14 +164,14 @@ export default function CoolieInvoiceBilingual({ bill }) {
               crossOrigin={String(p.wideLogo).startsWith('http') ? 'anonymous' : undefined}
               src={p.wideLogo}
               alt="Wide Logo"
-              style={{ height: `${64 * (p.wideLogoScale || 1)}px`, maxWidth: `${340 * (p.wideLogoScale || 1)}px`, objectFit: 'contain', objectPosition: 'left center' }}
+              style={{ height: `${64 * (p.wideLogoScale || 1)}px`, maxWidth: `${340 * (p.wideLogoScale || 1)}px`, objectFit: 'contain', objectPosition: 'left center', transform: `translate(${p.wideLogoX || 0}px, ${p.wideLogoY || 0}px)` }}
             />
           ) : p.logo ? (
             <img
               crossOrigin={String(p.logo).startsWith('http') ? 'anonymous' : undefined}
               src={p.logo}
               alt="Logo"
-              style={{ height: `${56 * (p.logoScale || 1)}px`, maxWidth: `${90 * (p.logoScale || 1)}px`, objectFit: 'contain' }}
+              style={{ height: `${56 * (p.logoScale || 1)}px`, maxWidth: `${90 * (p.logoScale || 1)}px`, objectFit: 'contain', transform: `translate(${p.logoX || 0}px, ${p.logoY || 0}px)` }}
             />
           ) : null}
           {!wideLogo && <div className="header-company-info">

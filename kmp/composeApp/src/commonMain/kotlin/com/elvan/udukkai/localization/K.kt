@@ -304,6 +304,7 @@ object K {
     const val hexLabel = "hexLabel"
     const val colorTooLight = "colorTooLight"
     const val logoSize = "logoSize"
+    const val resetLogo = "resetLogo"
     const val wideLogoSize = "wideLogoSize"
     const val signatoryNameTa = "signatoryNameTa"
     const val signatoryNameEn = "signatoryNameEn"

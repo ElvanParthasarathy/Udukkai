@@ -25,7 +25,9 @@ import androidx.compose.ui.unit.sp
 import com.elvan.udukkai.data.settings.SignatoryNames
 import com.elvan.udukkai.localization.K
 import com.elvan.udukkai.data.settings.PrintNumbers
-import com.elvan.udukkai.ui.screens.settings.LogoSizeEditor
+import com.elvan.udukkai.ui.screens.settings.LogoAdjuster
+import com.elvan.udukkai.ui.screens.settings.LogoPlace
+import com.elvan.udukkai.ui.screens.settings.logoPreviewPayload
 import com.elvan.udukkai.localization.tr
 import com.elvan.udukkai.theme.Dimens
 import com.elvan.udukkai.theme.LocalAppFontFamily
@@ -49,8 +51,8 @@ fun FactoryIdentityScreen(
 
     var editingSection by remember { mutableStateOf<String?>(null) }
     var tempImagePath by remember { mutableStateOf<String?>(null) }
-    var tempLogoScale by remember { mutableStateOf(1f) }
-    var tempWideScale by remember { mutableStateOf(1f) }
+    var tempLogoPlace by remember { mutableStateOf(LogoPlace()) }
+    var tempWidePlace by remember { mutableStateOf(LogoPlace()) }
     var tempWideImagePath by remember { mutableStateOf<String?>(null) }
     var tempHeaderStyle by remember { mutableStateOf(profile.headerLayout.ifEmpty { "small" }) }
     var tempSignatoryTa by remember { mutableStateOf("") }
@@ -111,7 +113,7 @@ fun FactoryIdentityScreen(
                                 } else null,
                                 onEdit = {
                                     tempImagePath = logoPath
-                                    tempLogoScale = PrintNumbers.get(profile.printSettingsJson, "logoScale", 1.0).toFloat()
+                                    tempLogoPlace = LogoPlace.read(profile.printSettingsJson, "logo")
                                     editingSection = "logo"
                                 },
                                 colors = colors
@@ -124,7 +126,7 @@ fun FactoryIdentityScreen(
                                 onSave = {
                                     val updated = profile.copy()
                                     updated.logo = tempImagePath ?: ""
-                                    updated.printSettingsJson = PrintNumbers.set(updated.printSettingsJson, "logoScale", tempLogoScale.toDouble())
+                                    updated.printSettingsJson = tempLogoPlace.writeTo(updated.printSettingsJson, "logo")
                                     FactoryProfileRepository.updateProfile(updated)
                                     editingSection = null
                                     ElvanSnackbar.show(saveSuccessMsg)
@@ -142,7 +144,7 @@ fun FactoryIdentityScreen(
                                 )
                                 if (tempImagePath != null) {
                                     Spacer(Modifier.height(12.dp))
-                                    LogoSizeEditor(tempImagePath, tempLogoScale, { tempLogoScale = it }, 90, 56, K.logoSize.tr(), colors)
+                                    LogoAdjuster(remember(tempImagePath) { logoPreviewPayload(profile, false, tempImagePath, true) }, "logo", tempLogoPlace, { tempLogoPlace = it }, K.logoSize.tr(), colors)
                                 }
                             }
                         }
@@ -167,7 +169,7 @@ fun FactoryIdentityScreen(
                                 } else null,
                                 onEdit = {
                                     tempWideImagePath = wideLogoPath
-                                    tempWideScale = PrintNumbers.get(profile.printSettingsJson, "wideLogoScale", 1.0).toDouble().toFloat()
+                                    tempWidePlace = LogoPlace.read(profile.printSettingsJson, "wideLogo")
                                     editingSection = "wide_logo"
                                 },
                                 colors = colors
@@ -180,7 +182,7 @@ fun FactoryIdentityScreen(
                                 onSave = {
                                     val updated = profile.copy()
                                     updated.wideLogo = tempWideImagePath ?: ""
-                                    updated.printSettingsJson = PrintNumbers.set(updated.printSettingsJson, "wideLogoScale", tempWideScale.toDouble())
+                                    updated.printSettingsJson = tempWidePlace.writeTo(updated.printSettingsJson, "wideLogo")
                                     FactoryProfileRepository.updateProfile(updated)
                                     editingSection = null
                                     ElvanSnackbar.show(saveSuccessMsg)
@@ -198,7 +200,7 @@ fun FactoryIdentityScreen(
                                 )
                                 if (tempWideImagePath != null) {
                                     Spacer(Modifier.height(12.dp))
-                                    LogoSizeEditor(tempWideImagePath, tempWideScale, { tempWideScale = it }, 340, 64, K.wideLogoSize.tr(), colors)
+                                    LogoAdjuster(remember(tempWideImagePath) { logoPreviewPayload(profile, true, tempWideImagePath, true) }, "wideLogo", tempWidePlace, { tempWidePlace = it }, K.wideLogoSize.tr(), colors)
                                 }
                             }
                         }
