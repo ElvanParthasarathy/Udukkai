@@ -70,11 +70,8 @@ class MainActivity : ComponentActivity() {
             android.util.Log.e("MainActivity", "Failed to start sync: ${e.message}")
         }
 
-        onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
-            override fun handleOnBackPressed() {
-                finish()
-            }
-        })
+        // No catch-all back callback here: with one always on, the system treats every back as handled by the app and
+        // never shows its back-to-home preview. With none, back at the first screen leaves the app as the system does.
 
         val isSystemDark = (resources.configuration.uiMode and android.content.res.Configuration.UI_MODE_NIGHT_MASK) == android.content.res.Configuration.UI_MODE_NIGHT_YES
         val isInitialDark = when (ThemeManager.currentThemeMode) {

@@ -1,6 +1,8 @@
 package com.elvan.udukkai.factory.ui.screens.settings
 
 import com.elvan.udukkai.core.security.AppLock
+import com.elvan.udukkai.core.security.authenticateDeviceLock
+import com.elvan.udukkai.core.security.deviceLockAvailable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
@@ -38,12 +40,9 @@ fun FactorySecuritySettingsScreen(
     var showSignOutConfirm by remember { mutableStateOf(false) }
     var showSignOutLoading by remember { mutableStateOf(false) }
     val guard = rememberPinGuard(colors)
-    var pinSheet by remember { mutableStateOf<PinMode?>(null) }
-    var pinTick by remember { mutableStateOf(0) }
-    val bottomSheet = LocalElvanBottomSheetController.current
-    val pinTitle = K.appPin.tr()
-    val changeLabel = K.pinChange.tr()
-    val removeLabel = K.pinRemove.tr()
+    var lockTick by remember { mutableStateOf(0) }
+    val lockTitle = K.appLock.tr()
+    val noScreenLockMsg = K.appLockNeedsScreenLock.tr()
 
 
 
@@ -91,26 +90,19 @@ fun FactorySecuritySettingsScreen(
                 )
                 ElvanSettingsDivider(colors = colors)
 
-                // App PIN: asked at opening and before the actions that can lose or give away data
+                // App lock: the phone's own screen lock, asked at opening and before the actions that can lose or give away data
                 ElvanSettingsRow(
                     icon = MaterialSymbols.Rounded.Lock,
-                    title = pinTitle,
-                    description = (if (pinTick >= 0 && AppLock.isSet()) K.pinOn else K.pinOff).tr() + "\n" + K.appPinHint.tr(),
+                    title = lockTitle,
+                    description = (if (lockLabelOn(lockTick)) K.pinOn else K.pinOff).tr() + "\n" + K.appLockHint.tr(),
                     onClick = {
-                        if (!AppLock.isSet()) {
-                            pinSheet = PinMode.CREATE
+                        if (!deviceLockAvailable()) {
+                            ElvanSnackbar.show(noScreenLockMsg)
                         } else {
-                            bottomSheet.showSelection(
-                                title = pinTitle,
-                                items = listOf("change", "remove"),
-                                currentValue = null,
-                                itemLabelBuilder = { if (it == "change") changeLabel else removeLabel },
-                                onSelected = { item ->
-                                    guard {
-                                        if (item == "change") pinSheet = PinMode.CREATE else { AppLock.remove(); pinTick++ }
-                                    }
-                                }
-                            )
+                            // Turning it on or off needs the phone's lock too, so only its owner can change it
+                            authenticateDeviceLock(lockTitle) { ok ->
+                                if (ok) { AppLock.setEnabled(!AppLock.isEnabled()); lockTick++ }
+                            }
                         }
                     },
                     colors = colors
@@ -153,8 +145,6 @@ fun FactorySecuritySettingsScreen(
         )
     }
 
-    pinSheet?.let { mode -> PinSheet(mode, colors) { pinSheet = null; pinTick++ } }
-
     if (showSyncLoading) {
         ElvanLoadingOverlay(
             text = K.syncing.tr(),
@@ -169,3 +159,6 @@ fun FactorySecuritySettingsScreen(
         )
     }
 }
+
+// Reading the tick makes the row follow the switch
+private fun lockLabelOn(tick: Int): Boolean = tick >= 0 && AppLock.isEnabled()
