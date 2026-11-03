@@ -12,10 +12,14 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.drawscope.DrawScope
+import androidx.compose.ui.graphics.drawscope.withTransform
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.elvan.udukkai.theme.ShellColors
@@ -24,52 +28,111 @@ import kotlin.math.cos
 import kotlin.math.sin
 
 /**
- * Creates the vector Path for a Material 3 Expressive PIN shape at [index].
- *
- * Distinct Expressive Shapes:
- * 0: 4-Petal Clover (இதழ் மலர்)
- * 1: 4-Point Starburst (நட்சத்திரம்)
- * 2: 8-Petal Sunburst / Daisy (கதிர் வட்டம்)
- * 3: Squircle / Bulged Square (வளைந்த சதுரம்)
- * 4: 6-Petal Blossom (ஆறிதழ் மலர்)
- * 5: 8-Point Sparkle Star (எண்கதிர் நட்சத்திரம்)
+ * Creates a crisp regular hexagon path centered at ([cx], [cy]) with radius [r].
  */
-fun getExpressiveShapePath(index: Int, width: Float, height: Float): Path {
+private fun createHexagonPath(cx: Float, cy: Float, r: Float): Path {
     val path = Path()
-    val count = 48
-    val r = minOf(width, height) * 0.45f
-    val cx = width / 2f
-    val cy = height / 2f
-    val pi = PI.toFloat()
-
-    fun pointAt(step: Int): Offset {
-        val t = (step.toFloat() * 2f * pi / count.toFloat()) - (pi / 2f)
-        val factor = when (index % 6) {
-            0 -> 0.74f + 0.26f * cos(4f * t) // 4-petal clover
-            1 -> 0.62f + 0.38f * cos(4f * t) // 4-point starburst
-            2 -> 0.86f + 0.14f * cos(8f * t) // 8-petal sunburst
-            3 -> 0.88f - 0.12f * cos(4f * t) // squircle (soft rounded square)
-            4 -> 0.78f + 0.22f * cos(6f * t) // 6-petal blossom
-            else -> 0.70f + 0.30f * cos(8f * t) // 8-point sparkle star
-        }
-        return Offset(cx + r * factor * cos(t), cy + r * factor * sin(t))
-    }
-
-    val start = pointAt(0)
-    path.moveTo(start.x, start.y)
-    for (i in 1 until count) {
-        val pt = pointAt(i)
-        path.lineTo(pt.x, pt.y)
+    for (i in 0 until 6) {
+        val a = (i.toFloat() * PI.toFloat() / 3f) - (PI.toFloat() / 6f)
+        val x = cx + r * cos(a)
+        val y = cy + r * sin(a)
+        if (i == 0) path.moveTo(x, y) else path.lineTo(x, y)
     }
     path.close()
     return path
 }
 
 /**
+ * Creates a crisp 4-point starburst path centered at ([cx], [cy]).
+ */
+private fun createStarPath(cx: Float, cy: Float, rOuter: Float, rInner: Float): Path {
+    val path = Path()
+    for (i in 0 until 8) {
+        val a = (i.toFloat() * PI.toFloat() / 4f) - (PI.toFloat() / 2f)
+        val r = if (i % 2 == 0) rOuter else rInner
+        val x = cx + r * cos(a)
+        val y = cy + r * sin(a)
+        if (i == 0) path.moveTo(x, y) else path.lineTo(x, y)
+    }
+    path.close()
+    return path
+}
+
+/**
+ * Draws one of the 6 distinct, geometrically crisp Material 3 Expressive shapes:
+ * 0: Rounded Square (Squircle / மழுங்கிய சதுரம்)
+ * 1: Diamond (45° Rotated Square / வைரம்)
+ * 2: Circle (வட்டம்)
+ * 3: Pill (Capsule / குளிகை)
+ * 4: Hexagon (அறுகோணம்)
+ * 5: 4-Point Star (நான்குகதிர் நட்சத்திரம்)
+ */
+fun DrawScope.drawExpressiveShape(index: Int, color: Color) {
+    val r = size.minDimension * 0.42f
+    val cx = center.x
+    val cy = center.y
+
+    when (index % 6) {
+        0 -> {
+            // Squircle / Rounded Square
+            drawRoundRect(
+                color = color,
+                topLeft = Offset(cx - r, cy - r),
+                size = Size(2f * r, 2f * r),
+                cornerRadius = CornerRadius(5.dp.toPx(), 5.dp.toPx())
+            )
+        }
+        1 -> {
+            // Diamond (45° rotated rounded square)
+            withTransform({
+                rotate(degrees = 45f, pivot = center)
+            }) {
+                val dr = r * 0.88f
+                drawRoundRect(
+                    color = color,
+                    topLeft = Offset(cx - dr, cy - dr),
+                    size = Size(2f * dr, 2f * dr),
+                    cornerRadius = CornerRadius(3.5.dp.toPx(), 3.5.dp.toPx())
+                )
+            }
+        }
+        2 -> {
+            // Circle
+            drawCircle(
+                color = color,
+                radius = r,
+                center = center
+            )
+        }
+        3 -> {
+            // Horizontal Capsule / Pill
+            val w = r * 2.3f
+            val h = r * 1.5f
+            drawRoundRect(
+                color = color,
+                topLeft = Offset(cx - w / 2f, cy - h / 2f),
+                size = Size(w, h),
+                cornerRadius = CornerRadius(h / 2f, h / 2f)
+            )
+        }
+        4 -> {
+            // Hexagon
+            val hexPath = createHexagonPath(cx, cy, r)
+            drawPath(path = hexPath, color = color)
+        }
+        else -> {
+            // 4-Point Star
+            val starPath = createStarPath(cx, cy, r, r * 0.40f)
+            drawPath(path = starPath, color = color)
+        }
+    }
+}
+
+/**
  * One Material 3 Expressive dot of the PIN pad:
  * When empty, it rests as a subtle circular dot.
  * When a digit is entered, it springs and morphs into a distinct Material 3 Expressive
- * geometric shape (Clover, 4-Point Star, Sunburst, Squircle, Blossom, Sparkle) with bouncy physics.
+ * geometric shape (Squircle, Diamond, Circle, Pill, Hexagon, 4-Point Star) with bouncy physics.
  */
 @Composable
 fun ExpressivePinDot(
@@ -87,34 +150,28 @@ fun ExpressivePinDot(
     }
 
     val scale by animateFloatAsState(
-        targetValue = if (filled) 1.18f else 0.82f,
+        targetValue = if (filled) 1.15f else 0.80f,
         animationSpec = bouncy,
         label = "m3_dot_scale"
     )
 
     val rotation by animateFloatAsState(
-        targetValue = if (filled) 0f else -45f,
+        targetValue = if (filled) 0f else -30f,
         animationSpec = bouncy,
         label = "m3_dot_rotation"
     )
 
     val filledAlpha by animateFloatAsState(
         targetValue = if (filled) 1f else 0f,
-        animationSpec = tween(durationMillis = 180),
+        animationSpec = tween(durationMillis = 150),
         label = "m3_dot_filled_alpha"
     )
 
     val emptyAlpha by animateFloatAsState(
         targetValue = if (!filled) 1f else 0f,
-        animationSpec = tween(durationMillis = 180),
+        animationSpec = tween(durationMillis = 150),
         label = "m3_dot_empty_alpha"
     )
-
-    val density = LocalDensity.current
-    val sizePx = with(density) { size.toPx() }
-    val shapePath = remember(index, sizePx) {
-        getExpressiveShapePath(index, sizePx, sizePx)
-    }
 
     Box(
         modifier = modifier
@@ -129,14 +186,14 @@ fun ExpressivePinDot(
         Canvas(modifier = Modifier.size(size)) {
             if (emptyAlpha > 0f) {
                 drawCircle(
-                    color = colors.textPrimary.copy(alpha = 0.22f * emptyAlpha),
-                    radius = this.size.minDimension * 0.22f,
+                    color = colors.textPrimary.copy(alpha = 0.20f * emptyAlpha),
+                    radius = this.size.minDimension * 0.20f,
                     center = center
                 )
             }
             if (filledAlpha > 0f) {
-                drawPath(
-                    path = shapePath,
+                drawExpressiveShape(
+                    index = index,
                     color = colors.textPrimary.copy(alpha = filledAlpha)
                 )
             }

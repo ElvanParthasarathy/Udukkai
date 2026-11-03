@@ -286,7 +286,8 @@ fun FactoryHomeScreen() {
             }
         }
 
-        val isWideScreen = isDesktop && maxWidth >= 768.dp
+        val isLandscape = maxWidth > maxHeight
+        val isWideScreen = (isDesktop && maxWidth >= 768.dp) || (isLandscape && maxWidth >= 540.dp)
 
         val shouldShowBottomBarForSnackbar = (activeSubpage !is ActiveSubpage.Settings) && !isWideScreen
         SideEffect {
@@ -841,7 +842,7 @@ fun FactoryHomeScreen() {
                     }
         }
 
-        Row(modifier = Modifier.fillMaxSize()) {
+        Row(modifier = Modifier.fillMaxSize().windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal))) {
             if (isWideScreen) {
                 DesktopSideBar(
                     selectedTab = selectedTab,

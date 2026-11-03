@@ -3,6 +3,8 @@ package com.elvan.udukkai.ui.screens.home.desktop
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -45,32 +47,35 @@ fun DesktopSideBar(
     allProfiles: List<BusinessProfile> = emptyList(),
     onSelectProfile: ((Long) -> Unit)? = null
 ) {
-    var isCollapsed by remember { mutableStateOf(false) }
-    val ff = LocalAppFontFamily.current
+    BoxWithConstraints(modifier = modifier.fillMaxHeight()) {
+        val isMobileLandscape = maxHeight < 520.dp
+        var isCollapsed by remember(isMobileLandscape) { mutableStateOf(isMobileLandscape) }
+        val ff = LocalAppFontFamily.current
 
-    val businessName = remember(activeProfile, appTitle) {
-        val resolved = activeProfile?.let { resolveCompanyItemLabel(it).trim().ifBlank { it.shortName.trim() } }
-        if (!resolved.isNullOrBlank()) resolved else appTitle
-    }
+        val businessName = remember(activeProfile, appTitle) {
+            val resolved = activeProfile?.let { resolveCompanyItemLabel(it).trim().ifBlank { it.shortName.trim() } }
+            if (!resolved.isNullOrBlank()) resolved else appTitle
+        }
 
-    val sidebarWidth by animateDpAsState(
-        targetValue = if (isCollapsed) 80.dp else 260.dp,
-        animationSpec = tween(durationMillis = 300),
-        label = "sidebar_width"
-    )
+        val sidebarWidth by animateDpAsState(
+            targetValue = if (isCollapsed) (if (isMobileLandscape) 72.dp else 80.dp) else 260.dp,
+            animationSpec = tween(durationMillis = 300),
+            label = "sidebar_width"
+        )
 
-    Surface(
-        modifier = modifier
-            .width(sidebarWidth)
-            .fillMaxHeight(),
-        color = colors.background,
-        tonalElevation = 1.dp
-    ) {
-        Column(
+        Surface(
             modifier = Modifier
-                .fillMaxSize()
-                .padding(vertical = 20.dp, horizontal = if (isCollapsed) 12.dp else 16.dp)
+                .width(sidebarWidth)
+                .fillMaxHeight(),
+            color = colors.background,
+            tonalElevation = 1.dp
         ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .verticalScroll(rememberScrollState())
+                    .padding(vertical = if (isMobileLandscape) 8.dp else 16.dp, horizontal = if (isCollapsed) 6.dp else 14.dp)
+            ) {
             // ── 1. Top Brand Header ──
             Row(
                 modifier = Modifier
@@ -306,5 +311,6 @@ fun DesktopSideBar(
                 }
             }
         }
+    }
     }
 }

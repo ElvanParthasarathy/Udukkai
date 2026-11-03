@@ -22,6 +22,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Icon
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -69,38 +70,25 @@ private fun PinDot(index: Int, filled: Boolean, colors: ShellColors) {
 }
 
 /**
- * A key of the number pad in the Material 3 Expressive style: a big rounded square that springs into a circle (and
- * shrinks a little) while it is pressed, instead of a plain ripple.
+ * A key of the number pad with standard Material 3 Surface and native ripple touch response.
  */
 @Composable
 private fun PadKey(label: String, colors: ShellColors, onClick: () -> Unit) {
     val ff = LocalAppFontFamily.current
-    var pressed by remember { mutableStateOf(false) }
-    // The touch handler lives as long as the key, so it must call the newest action (the PIN length may have changed)
-    val action by rememberUpdatedState(onClick)
-    val corner by animateDpAsState(if (pressed) 26.dp else 36.dp, spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessMedium), label = "corner")
-    val scale by animateFloatAsState(if (pressed) 0.92f else 1f, bouncy, label = "keyScale")
-    val fill by animateColorAsState(if (pressed) colors.textPrimary.copy(alpha = 0.22f) else colors.iconBg, label = "keyFill")
-    Box(
-        Modifier.size(72.dp)
-            .graphicsLayer { scaleX = scale; scaleY = scale }
-            .clip(RoundedCornerShape(corner))
-            .background(fill)
-            // The digit counts when the finger lands, not when it lifts, so a quick tap is never lost
-            .pointerInput(Unit) {
-                awaitEachGesture {
-                    val down = awaitFirstDown(requireUnconsumed = false)
-                    down.consume()
-                    pressed = true
-                    action()
-                    waitForUpOrCancellation()
-                    pressed = false
-                }
-            }
-            .semantics(mergeDescendants = true) { role = Role.Button; onClick { action(); true } },
-        contentAlignment = Alignment.Center
+    Surface(
+        onClick = onClick,
+        shape = CircleShape,
+        color = colors.iconBg,
+        contentColor = colors.textPrimary,
+        modifier = Modifier.size(72.dp)
     ) {
-        Text(label, style = TextStyle(fontFamily = ff, fontSize = 28.sp, fontWeight = FontWeight.Medium), color = colors.textPrimary)
+        Box(contentAlignment = Alignment.Center) {
+            Text(
+                text = label,
+                style = TextStyle(fontFamily = ff, fontSize = 28.sp, fontWeight = FontWeight.Medium),
+                color = colors.textPrimary
+            )
+        }
     }
 }
 
@@ -146,13 +134,21 @@ fun PinPad(prompt: String, length: Int, error: String?, errorKey: Int, onComplet
         }
 
         fun press(d: String) {
-            // A digit typed while the last full entry is still showing starts the next entry at once
-            if (digits.length >= length) { clearJob?.cancel(); digits = "" }
-            digits += d
-            if (digits.length == length) {
-                onComplete(digits)
-                // The dots empty after every full entry (wrong, or the first of two): the next try starts clean
-                clearJob = scope.launch { delay(220); digits = "" }
+            if (digits.length >= length) {
+                clearJob?.cancel()
+                digits = ""
+            }
+            if (digits.length < length) {
+                val next = digits + d
+                digits = next
+                if (next.length == length) {
+                    clearJob = scope.launch {
+                        delay(120) // Brief delay so the user visibly sees the last entered dot fill up
+                        onComplete(next)
+                        delay(240)
+                        digits = ""
+                    }
+                }
             }
         }
         Column(verticalArrangement = Arrangement.spacedBy(10.dp), horizontalAlignment = Alignment.CenterHorizontally) {
