@@ -103,6 +103,9 @@ fun FactorySettingsScreen(
                 SettingsRoute.AboutDeveloper -> K.softwareDesigner.tr()
                 SettingsRoute.AboutApp -> K.aboutApp.tr()
                 SettingsRoute.ElvanNavil -> K.aboutElvanNavil.tr()
+                SettingsRoute.Privacy -> K.privacyPolicy.tr()
+                SettingsRoute.Terms -> K.termsOfUse.tr()
+                SettingsRoute.Licences -> K.openSourceLicences.tr()
             }
 
             ElvanSubShell(
@@ -148,6 +151,9 @@ fun FactorySettingsScreen(
                     SettingsRoute.AboutDeveloper -> AboutDeveloperScreen(scrollState = scrollState, colors = colors)
                     SettingsRoute.AboutApp -> AboutAppScreen(scrollState = scrollState, colors = colors)
                     SettingsRoute.ElvanNavil -> TransliteratorSettingsScreen(scrollState = scrollState, colors = colors)
+                    SettingsRoute.Privacy -> LegalScreen(LegalPage.PRIVACY, scrollState, colors)
+                    SettingsRoute.Terms -> LegalScreen(LegalPage.TERMS, scrollState, colors)
+                    SettingsRoute.Licences -> LegalScreen(LegalPage.LICENCES, scrollState, colors)
                 }
             }
         }
@@ -384,6 +390,36 @@ private fun FactorySettingsHubContent(
                         title = K.aboutElvanNavil.tr(),
                         description = "Pure Senthamizh Linguistic Engine",
                         onClick = { onNavigate(SettingsRoute.ElvanNavil) },
+                        colors = colors
+                    )
+
+                    ElvanSettingsDivider(colors = colors)
+
+                    ElvanSettingsRow(
+                        icon = MaterialSymbols.Rounded.Lock,
+                        title = K.privacyPolicy.tr(),
+                        description = K.privacyPolicyHint.tr(),
+                        onClick = { onNavigate(SettingsRoute.Privacy) },
+                        colors = colors
+                    )
+
+                    ElvanSettingsDivider(colors = colors)
+
+                    ElvanSettingsRow(
+                        icon = MaterialSymbols.Rounded.Info,
+                        title = K.termsOfUse.tr(),
+                        description = K.termsOfUseHint.tr(),
+                        onClick = { onNavigate(SettingsRoute.Terms) },
+                        colors = colors
+                    )
+
+                    ElvanSettingsDivider(colors = colors)
+
+                    ElvanSettingsRow(
+                        icon = MaterialSymbols.Rounded.Code,
+                        title = K.openSourceLicences.tr(),
+                        description = K.openSourceLicencesHint.tr(),
+                        onClick = { onNavigate(SettingsRoute.Licences) },
                         colors = colors
                     )
                 }
