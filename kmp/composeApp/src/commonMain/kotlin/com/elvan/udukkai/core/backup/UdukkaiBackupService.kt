@@ -114,6 +114,17 @@ interface UdukkaiBackupService {
     fun getTotalDatabaseSize(): Long
     fun getLiveStats(): DatabaseLiveStats
 
+    /** Reads a backup file the user picked, without touching the app's data: it is checked and its contents counted. */
+    fun inspectBackupFile(path: String): BackupPreview = BackupPreview(problem = BackupProblem.UNSUPPORTED)
+
+    /**
+     * Brings back the data of a backup file the user picked. The file is checked first, a safety copy of the current
+     * data is kept, and with [RestoreMode.MERGE] only what the app does not have is added, in one step that is undone
+     * as a whole if anything fails. [categories] says what to bring back (merge only).
+     */
+    fun restoreFromFile(path: String, mode: RestoreMode, categories: Set<RestoreCategory>): RestoreReport =
+        RestoreReport(ok = false, problem = BackupProblem.UNSUPPORTED)
+
     /**
      * Export / Share the backup file.
      * Returns true if share dialog was successfully launched.

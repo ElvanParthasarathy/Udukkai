@@ -25,29 +25,39 @@ import com.elvan.udukkai.ui.components.ExpressiveDotsLoader
 import org.jetbrains.compose.resources.ExperimentalResourceApi
 import org.jetbrains.compose.resources.decodeToImageBitmap
 
+/** The account picture once per app run and account, so each screen shows it at once and none starts a download of its own. */
+private object AccountPhotoHolder {
+    var email: String? = null
+    var photo by mutableStateOf<ImageBitmap?>(null)
+    var checked by mutableStateOf(false)
+}
+
 /** Fills its circle with the photo of the signed-in Google account; [fallback] shows until there is one. */
 @OptIn(ExperimentalResourceApi::class)
 @Composable
 fun AccountAvatar(fallback: @Composable () -> Unit) {
     val email = AuthManager.signedInEmail
-    var photo by remember(email) { mutableStateOf<ImageBitmap?>(null) }
-    var loading by remember(email) { mutableStateOf(email != null) }
+    if (AccountPhotoHolder.email != email) {
+        AccountPhotoHolder.email = email
+        AccountPhotoHolder.photo = null
+        AccountPhotoHolder.checked = false
+    }
+    val loading = email != null && !AccountPhotoHolder.checked
 
     LaunchedEffect(email) {
-        if (email == null) return@LaunchedEffect
-        // The saved copy first, so the picture is there at once; then a fresh download
+        if (email == null || AccountPhotoHolder.checked) return@LaunchedEffect
+        // The saved copy first, so the picture is there at once; then a download only if it is old or missing
         platformCachedPhotoBytes()?.let { bytes ->
-            runCatching { bytes.decodeToImageBitmap() }.getOrNull()?.let { photo = it }
+            runCatching { bytes.decodeToImageBitmap() }.getOrNull()?.let { AccountPhotoHolder.photo = it }
         }
-        // With a saved picture there is nothing to wait for
-        if (photo != null) loading = false
+        if (AccountPhotoHolder.photo != null) AccountPhotoHolder.checked = true
         platformProfilePhotoBytes()?.let { bytes ->
-            runCatching { bytes.decodeToImageBitmap() }.getOrNull()?.let { photo = it }
+            runCatching { bytes.decodeToImageBitmap() }.getOrNull()?.let { AccountPhotoHolder.photo = it }
         }
-        loading = false
+        AccountPhotoHolder.checked = true
     }
 
-    val current = photo
+    val current = AccountPhotoHolder.photo
     if (current != null) {
         Image(
             bitmap = current,

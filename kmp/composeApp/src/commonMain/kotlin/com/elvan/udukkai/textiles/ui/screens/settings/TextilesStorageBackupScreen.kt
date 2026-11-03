@@ -35,6 +35,7 @@ import com.elvan.udukkai.theme.ShellColors
 import com.elvan.udukkai.theme.preventBrokenLigatures
 import com.elvan.udukkai.theme.rememberShellColors
 import com.elvan.udukkai.ui.components.shell.*
+import com.elvan.udukkai.ui.screens.settings.restoreFlow
 import com.elvan.udukkai.ui.navigation.AppSvgs
 import com.elvan.udukkai.ui.navigation.MaterialSymbols
 import kotlinx.coroutines.delay
@@ -54,8 +55,7 @@ fun TextilesStorageBackupScreen(
     val backupService = remember { getUdukkaiBackupService() }
 
     var showBackupConfirm by remember { mutableStateOf(false) }
-    var showRestoreSelectSheet by remember { mutableStateOf(false) }
-    var slotToRestore by remember { mutableStateOf<BackupSlot?>(null) }
+    var showUndoConfirm by remember { mutableStateOf(false) }
     var isBackingUp by remember { mutableStateOf(false) }
     var isRestoring by remember { mutableStateOf(false) }
 
@@ -72,6 +72,8 @@ fun TextilesStorageBackupScreen(
         totalDbSize = backupService.getTotalDatabaseSize().coerceAtLeast(128 * 1024L)
         availableBackups = backupService.getAllAvailableBackups()
     }
+
+    val startRestore = restoreFlow(colors) { refreshAll() }
 
     val latestBackupMeta = availableBackups.firstOrNull { it.slot == BackupSlot.LATEST }
     val lastBackupFormatted = remember(latestBackupMeta) {
@@ -215,14 +217,21 @@ fun TextilesStorageBackupScreen(
 
                 ElvanSettingsRow(
                     icon = MaterialSymbols.Rounded.Restore,
-                    title = K.restoreDataBtn.tr(),
-                    description = K.restorePreviousDataPrompt.tr(),
-                    onClick = {
-                        refreshAll()
-                        showRestoreSelectSheet = true
-                    },
+                    title = K.restoreFromFile.tr(),
+                    description = K.restoreFromFileHint.tr(),
+                    onClick = startRestore,
                     colors = colors
                 )
+                if (backupService.hasSafetySnapshot()) {
+                    ElvanSettingsDivider(colors = colors)
+                    ElvanSettingsRow(
+                        icon = MaterialSymbols.Rounded.Restore,
+                        title = K.undoRestore.tr(),
+                        description = K.undoRestoreHint.tr(),
+                        onClick = { showUndoConfirm = true },
+                        colors = colors
+                    )
+                }
                 ElvanSettingsDivider(colors = colors)
 
                 ElvanSettingsRow(
@@ -402,131 +411,19 @@ fun TextilesStorageBackupScreen(
         )
     }
 
-    // Available Backups Selection Sheet
-    if (showRestoreSelectSheet) {
+    // Going back to the copy kept just before the last restore
+    if (showUndoConfirm) {
         ElvanActionSheet(
-            title = K.availableBackups.tr(),
-            cancelText = K.cancelBtn.tr(),
-            confirmText = "",
-            onDismissRequest = { showRestoreSelectSheet = false },
-            onConfirm = {},
-            customContent = {
-                if (availableBackups.isEmpty()) {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 16.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text = K.noBackupsAvailable.tr(),
-                            style = TextStyle(
-                                fontFamily = ff,
-                                fontSize = 14.sp,
-                                color = colors.textSecondary
-                            )
-                        )
-                    }
-                } else {
-                    Column(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        availableBackups.forEach { backup ->
-                            val slotName = when (backup.slot) {
-                                BackupSlot.LATEST -> K.backupLatest.tr()
-                                BackupSlot.PREVIOUS -> K.backupPrevious.tr()
-                                BackupSlot.SAFETY_VAULT -> K.safetyVault.tr()
-                            }
-                            val dateString = DateUtils.formatDateTime(backup.lastModified)
-                            val summary = if (backup.invoiceCount > 0 || backup.customerCount > 0) {
-                                "${backup.invoiceCount} ${K.invoices.tr()} • ${backup.customerCount} ${K.customers.tr()}"
-                            } else {
-                                formatBytes(backup.sizeBytes)
-                            }
-
-                            Surface(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .clip(RoundedCornerShape(16.dp))
-                                    .clickable {
-                                        slotToRestore = backup.slot
-                                        showRestoreSelectSheet = false
-                                    },
-                                shape = RoundedCornerShape(16.dp),
-                                color = colors.surface
-                            ) {
-                                Row(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(horizontal = 16.dp, vertical = 12.dp),
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Surface(
-                                        shape = CircleShape,
-                                        color = if (backup.slot == BackupSlot.SAFETY_VAULT) colors.accent.copy(alpha = 0.15f) else colors.iconBg,
-                                        modifier = Modifier.size(36.dp)
-                                    ) {
-                                        Box(contentAlignment = Alignment.Center) {
-                                            Icon(
-                                                imageVector = if (backup.slot == BackupSlot.SAFETY_VAULT) MaterialSymbols.Rounded.Lock else MaterialSymbols.Rounded.Backup,
-                                                contentDescription = null,
-                                                tint = if (backup.slot == BackupSlot.SAFETY_VAULT) colors.accent else colors.textPrimary,
-                                                modifier = Modifier.size(18.dp)
-                                            )
-                                        }
-                                    }
-                                    Spacer(modifier = Modifier.width(14.dp))
-                                    Column(modifier = Modifier.weight(1f)) {
-                                        Text(
-                                            text = slotName,
-                                            style = TextStyle(
-                                                fontFamily = ff,
-                                                fontSize = 14.sp,
-                                                fontWeight = FontWeight.SemiBold,
-                                                color = colors.textPrimary
-                                            )
-                                        )
-                                        Text(
-                                            text = "$dateString • $summary",
-                                            style = TextStyle(
-                                                fontFamily = ff,
-                                                fontSize = 12.sp,
-                                                color = colors.textSecondary
-                                            )
-                                        )
-                                    }
-                                    Icon(
-                                        imageVector = MaterialSymbols.Rounded.ArrowForward,
-                                        contentDescription = null,
-                                        tint = colors.textSecondary.copy(alpha = 0.5f),
-                                        modifier = Modifier.size(16.dp)
-                                    )
-                                }
-                            }
-                        }
-                    }
-                }
-            },
-            colors = colors
-        )
-    }
-
-    // Restore Pre-Confirmation Sheet
-    if (slotToRestore != null) {
-        val targetSlot = slotToRestore!!
-        ElvanActionSheet(
-            title = K.restoreDataBtn.tr(),
+            title = K.undoRestore.tr(),
             cancelText = K.cancelBtn.tr(),
             confirmText = K.restoreBtn.tr(),
-            onDismissRequest = { slotToRestore = null },
+            onDismissRequest = { showUndoConfirm = false },
             onConfirm = {
-                val slot = targetSlot
-                slotToRestore = null
+                showUndoConfirm = false
                 isRestoring = true
                 scope.launch {
                     delay(250)
-                    val success = backupService.restoreFromSlot(slot)
+                    val success = backupService.restoreFromSlot(BackupSlot.SAFETY_VAULT)
                     isRestoring = false
                     if (success) {
                         refreshAll()
@@ -538,13 +435,8 @@ fun TextilesStorageBackupScreen(
             },
             customContent = {
                 Text(
-                    text = K.restoreConfirmPrompt.tr().preventBrokenLigatures(),
-                    style = TextStyle(
-                        fontFamily = ff,
-                        fontSize = 13.sp,
-                        color = colors.textSecondary,
-                        lineHeight = 18.sp
-                    ),
+                    text = K.undoRestoreHint.tr().preventBrokenLigatures(),
+                    style = TextStyle(fontFamily = ff, fontSize = 13.sp, color = colors.textSecondary, lineHeight = 18.sp),
                     modifier = Modifier.padding(horizontal = 8.dp)
                 )
             },

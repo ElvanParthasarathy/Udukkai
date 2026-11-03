@@ -90,7 +90,7 @@ private val hues = listOf(0f, 30f, 55f, 85f, 130f, 170f, 200f, 225f, 265f, 305f)
 private const val ROWS = 6
 
 /** The colour area is this tall in both modes, so the sheet never changes size when the mode changes. */
-private val AREA_HEIGHT = 168.dp
+private val AREA_HEIGHT = 180.dp
 
 /**
  * "More colours", in the app's action sheet, one fixed size with nothing to scroll: a Swatches | Spectrum pill shifter
@@ -176,11 +176,12 @@ fun BillColorPickerDialog(initial: Color, colors: ShellColors, recent: List<Stri
                             drawCircle(color, radius = 11.dp.toPx(), center = p)
                             drawCircle(Color.White, radius = 11.dp.toPx(), center = p, style = Stroke(2.5.dp.toPx()))
                         }
+                        Spacer(Modifier.height(12.dp))
                         Slider(
                             value = hsv.third,
                             onValueChange = { pickHsv(hsv.first, hsv.second, it) },
                             valueRange = 0.1f..1f,
-                            modifier = Modifier.height(36.dp),
+                            modifier = Modifier.height(32.dp),
                             colors = SliderDefaults.colors(thumbColor = color, activeTrackColor = color)
                         )
                     }
@@ -188,7 +189,7 @@ fun BillColorPickerDialog(initial: Color, colors: ShellColors, recent: List<Stri
 
                 // The colour now beside the new one, the hex code, and the red, green and blue values
                 Row(verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    Row(Modifier.size(width = 64.dp, height = 48.dp).clip(RoundedCornerShape(12.dp)).border(BorderStroke(1.dp, colors.textPrimary.copy(alpha = 0.3f)), RoundedCornerShape(12.dp))) {
+                    Row(Modifier.size(width = 96.dp, height = 48.dp).clip(RoundedCornerShape(100.dp)).border(BorderStroke(1.dp, colors.textPrimary.copy(alpha = 0.3f)), RoundedCornerShape(100.dp))) {
                         Box(Modifier.weight(1f).fillMaxHeight().background(initial))
                         Box(Modifier.weight(1f).fillMaxHeight().background(color))
                     }

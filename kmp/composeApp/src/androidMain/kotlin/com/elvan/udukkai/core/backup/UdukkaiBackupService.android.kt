@@ -647,6 +647,159 @@ class AndroidUdukkaiBackupService : UdukkaiBackupService {
         }
     }
 
+    // ── Restoring from a file the user picked ───────────────────────────────────────
+
+    private class AndroidMergeDb(private val db: android.database.sqlite.SQLiteDatabase) : MergeDb {
+        override fun count(sql: String): Int = db.rawQuery(sql, null).use { if (it.moveToFirst()) it.getInt(0) else 0 }
+
+        override fun columns(schema: String, table: String): List<String> =
+            db.rawQuery("PRAGMA $schema.table_info(\"$table\")", null).use { c ->
+                val name = c.getColumnIndexOrThrow("name")
+                buildList { while (c.moveToNext()) add(c.getString(name)) }
+            }
+
+        override fun exec(sql: String) = db.execSQL(sql)
+        override fun begin() = db.beginTransaction()
+        override fun commit() { db.setTransactionSuccessful(); db.endTransaction() }
+        override fun rollback() = db.endTransaction()
+    }
+
+    private fun tablePrefix(): String = if (isFactory()) "factory_" else "textiles_"
+    private fun liveDbPath(): String = if (isFactory()) getFactoryDbPath() else getTextilesDbPath()
+
+    private fun hasBackupMagic(file: File): Boolean = try {
+        RandomAccessFile(file, "r").use { raf ->
+            raf.seek(0)
+            val first = java.lang.Long.reverseBytes(raf.readLong())
+            raf.seek(raf.length() - 8)
+            first == magicConstant || java.lang.Long.reverseBytes(raf.readLong()) == magicConstant
+        }
+    } catch (_: Exception) {
+        false
+    }
+
+    private fun trailerTime(file: File): Long = try {
+        RandomAccessFile(file, "r").use { raf ->
+            val length = raf.length()
+            raf.seek(length - 12)
+            val jsonLen = java.lang.Integer.reverseBytes(raf.readInt())
+            raf.seek(length - 12 - jsonLen)
+            val bytes = ByteArray(jsonLen)
+            raf.readFully(bytes)
+            Regex("\"time\":(\\d+)").find(String(bytes, Charsets.UTF_8))?.groupValues?.get(1)?.toLongOrNull() ?: file.lastModified()
+        }
+    } catch (_: Exception) {
+        file.lastModified()
+    }
+
+    private fun deleteWithSidecars(db: File) {
+        listOf("", "-wal", "-shm", "-journal").forEach { try { File(db.path + it).delete() } catch (_: Exception) {} }
+    }
+
+    /** Checks the archive and copies this app's database out of it to [target]; returns a [BackupProblem] or null. */
+    private fun extractCurrentDb(archive: File, target: File): String? {
+        if (!validateArchive(archive)) return if (hasBackupMagic(archive)) BackupProblem.DAMAGED else BackupProblem.NOT_A_BACKUP
+        return try {
+            RandomAccessFile(archive, "r").use { raf ->
+                raf.seek(0)
+                val isV1 = java.lang.Long.reverseBytes(raf.readLong()) == magicConstant
+                raf.seek(if (isV1) 64L else 0L)
+                val lengths = LongArray(6) { java.lang.Long.reverseBytes(raf.readLong()) }
+                val base = if (isFactory()) 0 else 3
+                if (lengths[base] <= 0L) return BackupProblem.OTHER_APP
+                var offset = if (isV1) 112L else 48L
+                for (i in 0 until 6) {
+                    val dest = when (i) {
+                        base -> target
+                        base + 1 -> File(target.path + "-wal")
+                        else -> null
+                    }
+                    if (dest != null && lengths[i] > 0L) {
+                        FileOutputStream(dest).use { out ->
+                            raf.seek(offset)
+                            val buf = ByteArray(8192)
+                            var remaining = lengths[i]
+                            while (remaining > 0) {
+                                val read = raf.read(buf, 0, minOf(remaining, buf.size.toLong()).toInt())
+                                if (read <= 0) return BackupProblem.DAMAGED
+                                out.write(buf, 0, read)
+                                remaining -= read
+                            }
+                        }
+                    }
+                    offset += lengths[i]
+                }
+            }
+            null
+        } catch (e: Exception) {
+            Log.e(tag, "Extracting the backup failed: ${e.message}", e)
+            BackupProblem.DAMAGED
+        }
+    }
+
+    override fun inspectBackupFile(path: String): BackupPreview {
+        val archive = File(path)
+        val work = File(AppContext.context.cacheDir, "restore_check_${System.nanoTime()}.db")
+        return try {
+            extractCurrentDb(archive, work)?.let { return BackupPreview(problem = it) }
+            val db = android.database.sqlite.SQLiteDatabase.openDatabase(work.path, null, android.database.sqlite.SQLiteDatabase.OPEN_READWRITE)
+            db.use {
+                val verdict = it.rawQuery("PRAGMA integrity_check", null).use { c -> if (c.moveToFirst()) c.getString(0) else "" }
+                if (verdict != "ok") return BackupPreview(problem = BackupProblem.DAMAGED)
+                BackupMerge.preview(AndroidMergeDb(it), tablePrefix(), "main", trailerTime(archive))
+            }
+        } catch (e: Exception) {
+            Log.e(tag, "Inspecting the backup failed: ${e.message}", e)
+            BackupPreview(problem = BackupProblem.DAMAGED)
+        } finally {
+            deleteWithSidecars(work)
+        }
+    }
+
+    override fun restoreFromFile(path: String, mode: RestoreMode, categories: Set<RestoreCategory>): RestoreReport {
+        val archive = File(path)
+        val preview = inspectBackupFile(path)
+        if (!preview.ok) return RestoreReport(ok = false, problem = preview.problem)
+        if (mode == RestoreMode.MERGE && categories.isEmpty()) return RestoreReport(ok = false, problem = BackupProblem.NOTHING_CHOSEN)
+        // Nothing is changed until a copy of the current data is safe
+        if (!createSafetySnapshot()) return RestoreReport(ok = false, problem = BackupProblem.NO_SAFETY_COPY)
+
+        if (mode == RestoreMode.REPLACE) {
+            val done = unpackFromFile(archive)
+            return if (done) {
+                RestoreReport(
+                    ok = true,
+                    added = mapOf(
+                        RestoreCategory.BUSINESSES to preview.businesses, RestoreCategory.CUSTOMERS to preview.customers,
+                        RestoreCategory.ITEMS to preview.items, RestoreCategory.BILLS to preview.invoices + preview.receipts
+                    )
+                )
+            } else {
+                RestoreReport(ok = false, problem = BackupProblem.FAILED)
+            }
+        }
+
+        val work = File(AppContext.context.cacheDir, "restore_merge_${System.nanoTime()}.db")
+        var live: android.database.sqlite.SQLiteDatabase? = null
+        return try {
+            extractCurrentDb(archive, work)?.let { return RestoreReport(ok = false, problem = it) }
+            live = android.database.sqlite.SQLiteDatabase.openDatabase(liveDbPath(), null, android.database.sqlite.SQLiteDatabase.OPEN_READWRITE)
+            live.execSQL("ATTACH DATABASE '${work.absolutePath.replace("'", "''")}' AS bak")
+            val report = BackupMerge.merge(AndroidMergeDb(live), tablePrefix(), categories)
+            try { live.execSQL("DETACH DATABASE bak") } catch (_: Exception) {}
+            if (report.ok) {
+                if (isFactory()) reloadFactoryRepositories() else reloadTextilesRepositories()
+            }
+            report
+        } catch (e: Exception) {
+            Log.e(tag, "Merging the backup failed: ${e.message}", e)
+            RestoreReport(ok = false, problem = BackupProblem.FAILED)
+        } finally {
+            try { live?.close() } catch (_: Exception) {}
+            deleteWithSidecars(work)
+        }
+    }
+
     override fun hasBackup(slot: BackupSlot): Boolean {
         return try {
             val f = resolveExistingFileForReading(slot)
