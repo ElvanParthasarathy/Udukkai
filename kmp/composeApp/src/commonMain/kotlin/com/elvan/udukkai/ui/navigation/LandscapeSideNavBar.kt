@@ -80,7 +80,7 @@ private fun LandscapeVerticalTab(
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Box(
-            modifier = Modifier.size(22.dp),
+            modifier = Modifier.size(20.dp),
             contentAlignment = Alignment.Center
         ) {
             Icon(
@@ -98,7 +98,7 @@ private fun LandscapeVerticalTab(
         }
 
         if (labelAlpha > 0.02f) {
-            Spacer(modifier = Modifier.height(2.dp))
+            Spacer(modifier = Modifier.height(1.dp))
             Box(
                 modifier = Modifier.graphicsLayer { alpha = labelAlpha },
                 contentAlignment = Alignment.Center
@@ -106,21 +106,21 @@ private fun LandscapeVerticalTab(
                 Text(
                     text = tab.getLocalizedLabel(),
                     color = idleColor,
-                    fontSize = 9.sp,
+                    fontSize = 8.5.sp,
                     fontWeight = FontWeight.Normal,
                     fontFamily = ff,
                     maxLines = 1,
-                    lineHeight = 11.sp,
+                    lineHeight = 10.sp,
                     modifier = idle
                 )
                 Text(
                     text = tab.getLocalizedLabel(),
                     color = activeColor,
-                    fontSize = 9.sp,
+                    fontSize = 8.5.sp,
                     fontWeight = FontWeight.SemiBold,
                     fontFamily = ff,
                     maxLines = 1,
-                    lineHeight = 11.sp,
+                    lineHeight = 10.sp,
                     modifier = active.clearAndSetSemantics { }
                 )
             }
@@ -220,30 +220,29 @@ fun LandscapeSideNavBar(
     var localLockedIndex by remember { mutableStateOf<Int?>(null) }
     var snapNextFrame by remember { mutableStateOf(false) }
 
-    // Apple fluid dual-axis expansion:
-    // Width expands 54.dp -> 76.dp so labels have comfortable breathing room
+    // Apple fluid subtle zoom on long-press (keeps stadium pill shape, zero collision with plus button)
     val railWidth by animateDpAsState(
-        targetValue = if (isExpanded) 76.dp else 54.dp,
-        animationSpec = spring(dampingRatio = 0.75f, stiffness = 420f),
+        targetValue = if (isExpanded) 60.dp else 50.dp,
+        animationSpec = spring(dampingRatio = 0.82f, stiffness = 320f),
         label = "railWidth"
     )
 
-    // Slot height expands 46.dp -> 58.dp to comfortably fit labels below icons
+    // Slot height expands subtly (44.dp -> 46.dp, only 8.dp total height change so it never hits the plus button)
     val slotHeight by animateDpAsState(
-        targetValue = if (isExpanded) 58.dp else 46.dp,
-        animationSpec = spring(dampingRatio = 0.75f, stiffness = 420f),
+        targetValue = if (isExpanded) 46.dp else 44.dp,
+        animationSpec = spring(dampingRatio = 0.82f, stiffness = 320f),
         label = "railSlotHeight"
     )
 
     val indicatorHeight by animateDpAsState(
-        targetValue = if (isExpanded) 50.dp else 38.dp,
-        animationSpec = spring(dampingRatio = 0.75f, stiffness = 420f),
+        targetValue = if (isExpanded) 38.dp else 36.dp,
+        animationSpec = spring(dampingRatio = 0.82f, stiffness = 320f),
         label = "railIndicatorHeight"
     )
 
     val indicatorWidth by animateDpAsState(
-        targetValue = if (isExpanded) 66.dp else 44.dp,
-        animationSpec = spring(dampingRatio = 0.75f, stiffness = 420f),
+        targetValue = if (isExpanded) 50.dp else 42.dp,
+        animationSpec = spring(dampingRatio = 0.82f, stiffness = 320f),
         label = "railIndicatorWidth"
     )
 
@@ -254,13 +253,13 @@ fun LandscapeSideNavBar(
     )
 
     val containerScale by animateFloatAsState(
-        targetValue = if (isInteracting) 1.02f else 1.0f,
-        animationSpec = PillMotion.press,
+        targetValue = if (isExpanded) 1.03f else if (isInteracting) 1.01f else 1.0f,
+        animationSpec = spring(dampingRatio = 0.82f, stiffness = 320f),
         label = "railContainerScale"
     )
 
     val pillScale by animateFloatAsState(
-        targetValue = if (isInteracting) 1.05f else 1.0f,
+        targetValue = if (isInteracting) 1.03f else 1.0f,
         animationSpec = PillMotion.press,
         label = "railPillScale"
     )
@@ -344,19 +343,19 @@ fun LandscapeSideNavBar(
                     .width(railWidth),
                 contentAlignment = Alignment.TopCenter
             ) {
-                // Translucent Capsule Background & Border
+                // Translucent Capsule Background & Border (Continuous Stadium Pill)
                 Box(
                     modifier = Modifier
                         .matchParentSize()
                         .cssShadow(color = Color.Black, alpha = 0.08f, blurRadius = 16.dp, offsetY = 4.dp)
                         .background(
                             color = colors.floatingBg.copy(alpha = 0.88f),
-                            shape = RoundedCornerShape(28.dp)
+                            shape = RoundedCornerShape(percent = 50)
                         )
                         .border(
                             width = 0.5.dp,
                             color = colors.floatingBorder.copy(alpha = if (isDark) 0.15f else 0.6f),
-                            shape = RoundedCornerShape(28.dp)
+                            shape = RoundedCornerShape(percent = 50)
                         )
                 )
 
@@ -392,8 +391,8 @@ fun LandscapeSideNavBar(
                                             val elapsed = change.uptimeMillis - downTime
                                             val pressure = change.pressure
 
-                                            // Dual-axis expansion on firm press or hold (>180ms)
-                                            if (pressure > 1.15f || elapsed > 180L) {
+                                            // Subtle zoom only on genuine long-press (>300ms) or firm touch
+                                            if (pressure > 1.25f || elapsed > 300L) {
                                                 isExpanded = true
                                             }
 
@@ -458,7 +457,7 @@ fun LandscapeSideNavBar(
                                 )
                                 .background(
                                     color = if (isDark) Color(0xFF333333) else Color(0xFFE5E5E5),
-                                    shape = RoundedCornerShape(20.dp)
+                                    shape = RoundedCornerShape(percent = 50)
                                 )
                         )
 

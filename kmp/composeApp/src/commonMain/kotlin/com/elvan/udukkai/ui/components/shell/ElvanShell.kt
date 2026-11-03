@@ -1,6 +1,7 @@
 package com.elvan.udukkai.ui.components.shell
 
 import androidx.compose.animation.core.CubicBezierEasing
+import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
@@ -430,40 +431,63 @@ fun ElvanShell(
                     onCancelSelection = onCancelSelection
                 )
             } else {
-                // Layer 2: Compact Top Fade Mask for Landscape / Desktop / Tablet
+                // Layer 2: Top Fade Mask — strictly for portrait/desktop, NOT landscape (controls moved to sides)
+                if (!isLandscape) {
+                    Box(
+                        modifier = Modifier
+                            .align(Alignment.TopCenter)
+                            .fillMaxWidth()
+                            .height(ceiling + pillHeight + 14.dp)
+                            .zIndex(10f)
+                            .background(
+                                Brush.verticalGradient(
+                                    0.0f to colors.background,
+                                    0.65f to colors.background.copy(alpha = 0.85f),
+                                    1.0f to Color.Transparent
+                                )
+                            )
+                    )
+                }
+
+                // In landscape, header hides when scrolling just like in scrolled view!
+                val isScrolled = scrollState.firstVisibleItemIndex > 0 || scrollState.firstVisibleItemScrollOffset > 8
+                val topBarOffset by animateDpAsState(
+                    targetValue = if (isLandscape && isScrolled && !isSelectionMode) -(ceiling + pillHeight + 14.dp) else 0.dp,
+                    animationSpec = tween(durationMillis = 220, easing = CubicBezierEasing(0.0f, 0.0f, 0.2f, 1.0f)),
+                    label = "landscapeTopBarOffset"
+                )
+                val topBarAlpha by animateFloatAsState(
+                    targetValue = if (isLandscape && isScrolled && !isSelectionMode) 0f else 1f,
+                    animationSpec = tween(durationMillis = 180),
+                    label = "landscapeTopBarAlpha"
+                )
+
                 Box(
                     modifier = Modifier
                         .align(Alignment.TopCenter)
-                        .fillMaxWidth()
-                        .height(ceiling + pillHeight + 14.dp)
-                        .zIndex(10f)
-                        .background(
-                            Brush.verticalGradient(
-                                0.0f to colors.background,
-                                0.65f to colors.background.copy(alpha = 0.85f),
-                                1.0f to Color.Transparent
-                            )
-                        )
-                )
-
-                ElvanCollapsedBar(
-                    scrollOffset = 0f,
-                    collisionOffsetPx = 0f,
-                    colors = colors,
-                    expandedHeight = expandedHeight,
-                    title = effectiveTitle,
-                    onBack = onBack,
-                    leadingIcon = leadingIcon,
-                    navOpacity = 1f,
-                    hasActions = if (isSelectionMode) false else hasActions,
-                    actions = actions,
-                    isSelectionMode = isSelectionMode,
-                    selectedCount = selectedCount,
-                    isAllSelected = isAllSelected,
-                    onSelectAll = onSelectAll,
-                    onCancelSelection = onCancelSelection,
-                    isPinnedAlways = true
-                )
+                        .offset(y = topBarOffset)
+                        .graphicsLayer { alpha = topBarAlpha }
+                        .zIndex(100f)
+                ) {
+                    ElvanCollapsedBar(
+                        scrollOffset = 0f,
+                        collisionOffsetPx = 0f,
+                        colors = colors,
+                        expandedHeight = expandedHeight,
+                        title = effectiveTitle,
+                        onBack = onBack,
+                        leadingIcon = leadingIcon,
+                        navOpacity = 1f,
+                        hasActions = if (isSelectionMode) false else hasActions,
+                        actions = actions,
+                        isSelectionMode = isSelectionMode,
+                        selectedCount = selectedCount,
+                        isAllSelected = isAllSelected,
+                        onSelectAll = onSelectAll,
+                        onCancelSelection = onCancelSelection,
+                        isPinnedAlways = true
+                    )
+                }
             }
 
             // Layer 4: Bottom Fade Mask and Navbar

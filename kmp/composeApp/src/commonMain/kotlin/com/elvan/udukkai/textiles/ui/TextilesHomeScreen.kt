@@ -885,54 +885,62 @@ fun TextilesHomeScreen() {
                 modifier = if (isWideScreen) Modifier.weight(1f).fillMaxHeight() else Modifier.fillMaxSize()
             ) {
             if (isLandscape) {
-                // ── Two-Panel Split View for Landscape (Leading Master List + Trailing Detail View) ──
+                // ── Adaptive Landscape Architecture ──
+                // If a subpage / detail screen is open: Two-Panel layout (Master list 360.dp + Detail view)
+                // If on main screen: Full-width layout (cards spread across the screen, zero empty pane)
                 Box(modifier = Modifier.fillMaxSize()) {
-                    Row(modifier = Modifier.fillMaxSize()) {
-                        // Left Panel (Master List): Fixed 360.dp width so cards never over-extend
-                        Box(
-                            modifier = Modifier
-                                .width(360.dp)
-                                .fillMaxHeight()
-                                .background(colors.background)
-                        ) {
-                            RenderMainShell()
-                        }
+                    if (subpageStack.isNotEmpty()) {
+                        Row(modifier = Modifier.fillMaxSize()) {
+                            // Left Panel (Master List): Fixed 360.dp width so cards never over-extend
+                            Box(
+                                modifier = Modifier
+                                    .width(360.dp)
+                                    .fillMaxHeight()
+                                    .background(colors.background)
+                            ) {
+                                RenderMainShell()
+                            }
 
-                        // Subtle Vertical Divider
-                        Box(
-                            modifier = Modifier
-                                .width(0.5.dp)
-                                .fillMaxHeight()
-                                .background(colors.floatingBorder.copy(alpha = if (colors.isDark) 0.15f else 0.4f))
-                        )
+                            // Subtle Vertical Divider
+                            Box(
+                                modifier = Modifier
+                                    .width(0.5.dp)
+                                    .fillMaxHeight()
+                                    .background(colors.floatingBorder.copy(alpha = if (colors.isDark) 0.15f else 0.4f))
+                            )
 
-                        // Right Panel (Detail View): Occupies the remaining width
-                        // Inset by 84.dp on the trailing edge so detail content/tiles never cross under the floating side controls
-                        Box(
-                            modifier = Modifier
-                                .weight(1f)
-                                .fillMaxHeight()
-                                .background(colors.background)
-                                .padding(end = 84.dp)
-                        ) {
-                            AnimatedContent(
-                                targetState = subpageStack.lastOrNull(),
-                                transitionSpec = {
-                                    with(Transitions) {
-                                        smoothHorizontal(forward = targetState != null)
+                            // Right Panel (Detail View): Occupies remaining width, padded away from side controls
+                            Box(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .fillMaxHeight()
+                                    .background(colors.background)
+                                    .padding(end = 84.dp)
+                            ) {
+                                AnimatedContent(
+                                    targetState = subpageStack.lastOrNull(),
+                                    transitionSpec = {
+                                        with(Transitions) {
+                                            smoothHorizontal(forward = targetState != null)
+                                        }
+                                    },
+                                    label = "DetailPaneTransition"
+                                ) { activeSubpage ->
+                                    if (activeSubpage != null) {
+                                        RenderSubpage(activeSubpage)
                                     }
-                                },
-                                label = "DetailPaneTransition"
-                            ) { activeSubpage ->
-                                if (activeSubpage != null) {
-                                    RenderSubpage(activeSubpage)
-                                } else {
-                                    LandscapeEmptyDetailPane(
-                                        selectedTab = selectedTab,
-                                        colors = colors
-                                    )
                                 }
                             }
+                        }
+                    } else {
+                        // Full-width Main Landscape View (All cards spread across the screen, zero empty pane)
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .background(colors.background)
+                                .padding(end = 80.dp)
+                        ) {
+                            RenderMainShell()
                         }
                     }
 

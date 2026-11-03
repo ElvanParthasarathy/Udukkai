@@ -136,7 +136,8 @@ fun ViewTile(
     content: @Composable () -> Unit
 ) {
     val colors = rememberShellColors()
-    Box(modifier = Modifier.fillMaxSize()) {
+    BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
+        val isLandscape = maxWidth > maxHeight
         if (isDocument) {
             // Document views use a plain fixed top bar instead of the collapsing One UI header.
             SideEffect { ElvanSnackbar.isBottomBarVisible = true }
@@ -160,21 +161,23 @@ fun ViewTile(
                     scrolled = scrolled,
                     modifier = Modifier.align(Alignment.TopCenter).zIndex(100f)
                 )
-                // Soft fade above the system navigation bar, then the floating action pill
-                Box(
-                    modifier = Modifier
-                        .align(Alignment.BottomCenter)
-                        .fillMaxWidth()
-                        .height(72.dp + navBarsPadding)
-                        .background(
-                            Brush.verticalGradient(
-                                0.0f to Color.Transparent,
-                                0.3f to colors.background.copy(alpha = 0.16f),
-                                0.65f to colors.background.copy(alpha = 0.55f),
-                                1.0f to colors.background
+                // Soft fade above the system navigation bar (portrait only)
+                if (!isLandscape) {
+                    Box(
+                        modifier = Modifier
+                            .align(Alignment.BottomCenter)
+                            .fillMaxWidth()
+                            .height(72.dp + navBarsPadding)
+                            .background(
+                                Brush.verticalGradient(
+                                    0.0f to Color.Transparent,
+                                    0.3f to colors.background.copy(alpha = 0.16f),
+                                    0.65f to colors.background.copy(alpha = 0.55f),
+                                    1.0f to colors.background
+                                )
                             )
-                        )
-                )
+                    )
+                }
                 Box(
                     modifier = Modifier
                         .align(Alignment.BottomCenter)
