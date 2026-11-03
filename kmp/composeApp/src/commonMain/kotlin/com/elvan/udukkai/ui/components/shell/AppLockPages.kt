@@ -1,6 +1,10 @@
 package com.elvan.udukkai.ui.components.shell
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleOut
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateDpAsState
@@ -74,6 +78,8 @@ private fun PinDot(filled: Boolean, colors: ShellColors) {
 private fun PadKey(label: String, colors: ShellColors, onClick: () -> Unit) {
     val ff = LocalAppFontFamily.current
     var pressed by remember { mutableStateOf(false) }
+    // The touch handler lives as long as the key, so it must call the newest action (the PIN length may have changed)
+    val action by rememberUpdatedState(onClick)
     val corner by animateDpAsState(if (pressed) 38.dp else 26.dp, spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessMedium), label = "corner")
     val scale by animateFloatAsState(if (pressed) 0.92f else 1f, bouncy, label = "keyScale")
     val fill by animateColorAsState(if (pressed) colors.textPrimary.copy(alpha = 0.22f) else colors.iconBg, label = "keyFill")
@@ -88,12 +94,12 @@ private fun PadKey(label: String, colors: ShellColors, onClick: () -> Unit) {
                     val down = awaitFirstDown(requireUnconsumed = false)
                     down.consume()
                     pressed = true
-                    onClick()
+                    action()
                     waitForUpOrCancellation()
                     pressed = false
                 }
             }
-            .semantics(mergeDescendants = true) { role = Role.Button; onClick { onClick(); true } },
+            .semantics(mergeDescendants = true) { role = Role.Button; onClick { action(); true } },
         contentAlignment = Alignment.Center
     ) {
         Text(label, style = TextStyle(fontFamily = ff, fontSize = 28.sp, fontWeight = FontWeight.Medium), color = colors.textPrimary)
@@ -125,7 +131,7 @@ fun PinPad(prompt: String, length: Int, error: String?, errorKey: Int, onComplet
             color = colors.textPrimary,
             modifier = Modifier.heightIn(min = 28.dp)
         )
-        Spacer(Modifier.height(18.dp))
+        Spacer(Modifier.height(14.dp))
         Row(
             Modifier.offset { IntOffset(shake.value.dp.roundToPx(), 0) },
             horizontalArrangement = Arrangement.spacedBy(if (length > 6) 12.dp else 16.dp)
@@ -133,7 +139,7 @@ fun PinPad(prompt: String, length: Int, error: String?, errorKey: Int, onComplet
             repeat(length) { i -> PinDot(i < digits.length, colors) }
         }
         // Always two lines high, so a message appearing never moves the pad
-        Box(Modifier.height(44.dp).fillMaxWidth(), contentAlignment = Alignment.Center) {
+        Box(Modifier.height(30.dp).fillMaxWidth(), contentAlignment = Alignment.Center) {
             Text(
                 error.orEmpty(),
                 style = TextStyle(fontFamily = ff, fontSize = 13.sp, textAlign = TextAlign.Center, lineHeight = 18.sp),
@@ -151,9 +157,9 @@ fun PinPad(prompt: String, length: Int, error: String?, errorKey: Int, onComplet
                 clearJob = scope.launch { delay(220); digits = "" }
             }
         }
-        Column(verticalArrangement = Arrangement.spacedBy(12.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+        Column(verticalArrangement = Arrangement.spacedBy(10.dp), horizontalAlignment = Alignment.CenterHorizontally) {
             listOf(listOf("1", "2", "3"), listOf("4", "5", "6"), listOf("7", "8", "9"), listOf("", "0", "⌫")).forEach { row ->
-                Row(horizontalArrangement = Arrangement.spacedBy(14.dp)) {
+                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                     row.forEach { key ->
                         if (key.isEmpty()) Spacer(Modifier.size(width = 82.dp, height = 68.dp))
                         else PadKey(key, colors) { if (key == "⌫") digits = digits.dropLast(1) else press(key) }
@@ -177,7 +183,7 @@ fun PinCreator(colors: ShellColors, onCreated: (String) -> Unit) {
     val mismatch = K.pinMismatch.tr()
     val four = K.pinDigits4.tr()
     val six = K.pinDigits6.tr()
-    Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(14.dp)) {
+    Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Box(Modifier.graphicsLayer { alpha = if (first == null) 1f else 0.35f }) {
             ElvanPillShifter(
                 items = listOf(PillShifterItem(four), PillShifterItem(six)),
@@ -281,16 +287,22 @@ fun rememberPinGuard(colors: ShellColors): (() -> Unit) -> Unit {
  */
 @Composable
 fun AppLockGate(colors: ShellColors, content: @Composable () -> Unit) {
+    // Both are read every time (no short-cut), so the gate redraws when the PIN is saved or the app unlocks
+    val unlocked = AppLock.unlockedThisRun
     val isSet = AppLock.isSet()
-    val locked = !isSet || !AppLock.unlockedThisRun
+    val locked = !isSet || !unlocked
     var appShown by remember { mutableStateOf(false) }
     LaunchedEffect(locked) { if (!locked) appShown = true }
     val title = K.appLock.tr()
     val notNow = K.fingerprintOfferNo.tr()
     Box(Modifier.fillMaxSize()) {
         if (appShown) content()
-        if (!isSet) CreatePinPage(colors) { if (fingerprintAvailable()) authenticateFingerprint(title, notNow) { ok -> if (ok) AppLock.setFingerprint(true) } }
-        else if (!AppLock.unlockedThisRun) LockPage(colors)
+        // The lock page lifts away (fades and grows a little) to show the app under it, instead of vanishing
+        val leave = fadeOut(tween(260)) + scaleOut(tween(260), targetScale = 1.06f)
+        AnimatedVisibility(visible = !isSet, enter = EnterTransition.None, exit = leave) {
+            CreatePinPage(colors) { if (fingerprintAvailable()) authenticateFingerprint(title, notNow) { ok -> if (ok) AppLock.setFingerprint(true) } }
+        }
+        AnimatedVisibility(visible = isSet && !unlocked, enter = EnterTransition.None, exit = leave) { LockPage(colors) }
     }
 }
 
@@ -307,7 +319,7 @@ private fun LockLayer(colors: ShellColors, content: @Composable ColumnScope.() -
         Column(
             Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(horizontal = 24.dp, vertical = 16.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(14.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
             content = content
         )
     }

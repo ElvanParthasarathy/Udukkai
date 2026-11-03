@@ -87,7 +87,8 @@ fun TextilesDashboardScreen(
                 )
             }
 
-            item(key = "restore_banner") {
+            // An empty list item would still add a second gap, so it exists only while a restore runs
+            if (com.elvan.udukkai.core.sync.getFirebaseSyncManager().restoreProgress.value != null) item(key = "restore_banner") {
                 com.elvan.udukkai.ui.screens.settings.RestoreBanner()
             }
 

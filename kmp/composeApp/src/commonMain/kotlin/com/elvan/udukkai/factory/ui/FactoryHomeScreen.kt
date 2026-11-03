@@ -885,7 +885,7 @@ fun FactoryHomeScreen() {
                 transitionSpec = {
                     val isForward = targetState.size >= initialState.size
                     with(Transitions) {
-                        smoothHorizontal(forward = isForward)
+                        platformSlideHorizontal(forward = isForward)
                     }
                 },
                 label = "HomeToSubpageTransition"

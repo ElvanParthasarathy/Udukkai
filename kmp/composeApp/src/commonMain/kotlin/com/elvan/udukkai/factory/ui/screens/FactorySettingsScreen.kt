@@ -82,7 +82,7 @@ fun FactorySettingsScreen(
                         smoothVertical(forward = false)
                     } else {
                         val isForward = targetState != SettingsRoute.Hub
-                        smoothHorizontal(forward = isForward)
+                        platformSlideHorizontal(forward = isForward)
                     }
                 }
             },
@@ -183,10 +183,10 @@ private fun FactorySettingsHubContent(
         contentPadding = PaddingValues(
             bottom = Dimens.SubpageContentPaddingBottom
         ),
-        verticalArrangement = Arrangement.spacedBy(Dimens.SectionSpacing)
+        verticalArrangement = Arrangement.spacedBy(10.dp)
     ) {
         item(key = "shell_top_spacer") {
-            Spacer(modifier = Modifier.height(LocalElvanTopSpacerHeight.current))
+            Spacer(modifier = Modifier.height(LocalElvanTopSpacerHeight.current + 6.dp)) // keeps the top where it was while the gaps below are tighter
         }
 
         // Section 0: Factory Company Pill

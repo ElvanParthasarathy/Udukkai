@@ -1,7 +1,20 @@
 package com.elvan.udukkai.ui.screens.settings.screens
 
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.graphics.graphicsLayer
+import com.elvan.udukkai.ui.components.shell.ElvanSnackbar
+import kotlinx.coroutines.launch
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -40,6 +53,9 @@ fun AboutAppScreen(
     colors: ShellColors = rememberShellColors()
 ) {
     val ff = LocalAppFontFamily.current
+    var taps by remember { mutableStateOf(0) }
+    val spin = remember { Animatable(0f) }
+    val scope = rememberCoroutineScope()
 
     LazyColumn(
         state = scrollState,
@@ -66,11 +82,18 @@ fun AboutAppScreen(
                 val logoBg = if (colors.isDark) colors.textPrimary.copy(alpha = 0.08f)
                 else colors.textPrimary.copy(alpha = 0.06f)
 
+                // Easter egg: the logo spins when tapped, and the seventh tap brings a line about the weavers
                 Box(
                     modifier = Modifier
                         .size(88.dp)
+                        .graphicsLayer { rotationZ = spin.value }
                         .clip(RoundedCornerShape(24.dp))
-                        .background(logoBg),
+                        .background(logoBg)
+                        .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null) {
+                            taps++
+                            scope.launch { spin.animateTo(spin.value + 360f, spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow)) }
+                            if (taps % 7 == 0) ElvanSnackbar.show("🧵 நூலோடு நூல் சேர்த்து நெய்தது · woven thread by thread")
+                        },
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
