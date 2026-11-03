@@ -49,7 +49,8 @@ fun updateSystemBarsAppearance(window: Window, isDark: Boolean) {
 class MainActivity : FragmentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        requestedOrientation = android.content.pm.ActivityInfo.SCREEN_ORIENTATION_USER
+        // Temporarily locked to portrait per user decision. Landscape mode preserved for future continuation (see LANDSCAPE_MODE_NOTES.md).
+        requestedOrientation = android.content.pm.ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
         com.elvan.udukkai.core.platform.AppContext.context = applicationContext
         com.elvan.udukkai.core.platform.CurrentActivity.activity = this
         com.elvan.udukkai.localization.LanguageManager.init()
