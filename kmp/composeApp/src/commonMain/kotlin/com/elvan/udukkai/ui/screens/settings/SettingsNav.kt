@@ -1,10 +1,5 @@
 package com.elvan.udukkai.ui.screens.settings
 
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateListOf
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
-
 sealed interface SettingsRoute {
     data object Hub : SettingsRoute
     data object Display : SettingsRoute
@@ -44,44 +39,8 @@ val SettingsRoute.depth: Int
     }
 
 /**
- * A simple back-stack for the in-app Settings navigation.
- *
- * Call [push] when moving forward (navigate deeper), [pop] to go back.
- * [current] is the page to display; [isForward] tells the animator which
- * direction the last transition went, so it never has to guess from depth alone.
- *
- * The stack always has at least [SettingsRoute.Hub] at position 0 and is
- * never allowed to become empty.
+ * Route + a monotonically-changing index so AnimatedContent always knows
+ * the exact slide direction: higher index = forward push, lower index = back pop.
  */
-class SettingsBackStack {
-    private val _stack = mutableStateListOf<SettingsRoute>(SettingsRoute.Hub)
+data class SettingsNavState(val route: SettingsRoute, val index: Int)
 
-    /** The page that should be displayed right now. */
-    val current: SettingsRoute get() = _stack.last()
-
-    /** True after a [push], false after a [pop]. Used to pick the slide direction. */
-    var isForward: Boolean by mutableStateOf(true)
-        private set
-
-    /** Whether the back button should be offered (stack has more than the hub). */
-    val canGoBack: Boolean get() = _stack.size > 1
-
-    /** Navigate to [route], pushing it on top of the stack. */
-    fun push(route: SettingsRoute) {
-        // Avoid duplicate pushes (e.g. from a double-tap)
-        if (_stack.last() == route) return
-        isForward = true
-        _stack.add(route)
-    }
-
-    /**
-     * Go back one step. Returns the route we landed on, or null when the
-     * stack was already at the root (Hub) — the caller should handle app-level back.
-     */
-    fun pop(): SettingsRoute? {
-        if (_stack.size <= 1) return null
-        isForward = false
-        _stack.removeLast()
-        return _stack.last()
-    }
-}

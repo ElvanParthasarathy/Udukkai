@@ -35,7 +35,7 @@ import com.elvan.udukkai.theme.rememberShellColors
 import com.elvan.udukkai.ui.components.shell.*
 import com.elvan.udukkai.ui.navigation.MaterialSymbols
 import com.elvan.udukkai.ui.screens.settings.SettingsRoute
-import com.elvan.udukkai.ui.screens.settings.SettingsBackStack
+import com.elvan.udukkai.ui.screens.settings.SettingsNavState
 import com.elvan.udukkai.ui.screens.settings.SettingsSearchOverlay
 import com.elvan.udukkai.ui.screens.settings.SettingsSearchPill
 import com.elvan.udukkai.ui.screens.settings.settingsEntries
@@ -46,20 +46,32 @@ import com.elvan.udukkai.textiles.ui.screens.settings.*
 fun TextilesSettingsScreen(
     onBack: () -> Unit = {}
 ) {
-    val backStack = remember { SettingsBackStack() }
-    val currentRoute by remember { derivedStateOf { backStack.current } }
+    var navState by remember { mutableStateOf(SettingsNavState(SettingsRoute.Hub, 0)) }
     var searchOpen by remember { mutableStateOf(false) }
     val colors = rememberShellColors()
 
     val hubScrollState = rememberLazyListState()
     val subpageScrollStates = remember { mutableStateMapOf<SettingsRoute, LazyListState>() }
 
-    val handleBack: () -> Unit = {
-        val popped = backStack.pop()
-        if (popped == null) onBack()
+    // History stack for correct pop destinations (Hub is always at the bottom)
+    val routeHistory = remember { mutableStateListOf<SettingsRoute>(SettingsRoute.Hub) }
+
+    fun navigateTo(route: SettingsRoute) {
+        if (routeHistory.last() == route) return
+        routeHistory.add(route)
+        navState = SettingsNavState(route, navState.index + 1)
     }
 
-    AppBackHandler(enabled = searchOpen || backStack.canGoBack) {
+    val handleBack: () -> Unit = {
+        if (routeHistory.size > 1) {
+            routeHistory.removeLast()
+            navState = SettingsNavState(routeHistory.last(), navState.index - 1)
+        } else {
+            onBack()
+        }
+    }
+
+    AppBackHandler(enabled = searchOpen || routeHistory.size > 1) {
         if (searchOpen) searchOpen = false else handleBack()
     }
 
@@ -69,23 +81,25 @@ fun TextilesSettingsScreen(
             .background(colors.background)
     ) {
         AnimatedContent(
-            targetState = currentRoute,
+            targetState = navState,
             modifier = Modifier
                 .fillMaxSize()
                 .background(colors.background),
             transitionSpec = {
+                val isForward = targetState.index >= initialState.index
                 with(Transitions) {
-                    if (targetState == SettingsRoute.ManageProfiles) {
+                    if (targetState.route == SettingsRoute.ManageProfiles) {
                         smoothVertical(forward = true)
-                    } else if (initialState == SettingsRoute.ManageProfiles) {
+                    } else if (initialState.route == SettingsRoute.ManageProfiles) {
                         smoothVertical(forward = false)
                     } else {
-                        smoothHorizontal(forward = backStack.isForward)
+                        smoothHorizontal(forward = isForward)
                     }
                 }
             },
             label = "TextilesSettingsTransition"
-        ) { route ->
+        ) { state ->
+            val route = state.route
             val scrollState = if (route == SettingsRoute.Hub) hubScrollState else subpageScrollStates.getOrPut(route) { LazyListState() }
             val pageTitle = when (route) {
                 SettingsRoute.Hub -> K.settings.tr()
@@ -118,18 +132,18 @@ fun TextilesSettingsScreen(
             ) {
                 when (route) {
                     SettingsRoute.Hub -> TextilesSettingsHubContent(
-                        onNavigate = { backStack.push(it) },
+                        onNavigate = { navigateTo(it) },
                         scrollState = scrollState
                     )
                     SettingsRoute.Display -> DisplaySettingsScreen(scrollState = scrollState, colors = colors)
                     SettingsRoute.Language -> LanguageSettingsScreen(scrollState = scrollState, colors = colors)
                     SettingsRoute.Merchant -> TextilesMerchantSettingsScreen(
-                        onNavigateToManageProfiles = { backStack.push(SettingsRoute.ManageProfiles) },
+                        onNavigateToManageProfiles = { navigateTo(SettingsRoute.ManageProfiles) },
                         scrollState = scrollState,
                         colors = colors
                     )
                     SettingsRoute.ManageProfiles -> TextilesManageProfilesScreen(
-                        onBack = { backStack.pop() },
+                        onBack = { handleBack() },
                         scrollState = scrollState,
                         colors = colors
                     )
@@ -158,7 +172,7 @@ fun TextilesSettingsScreen(
                     SettingsRoute.Terms -> LegalScreen(LegalPage.TERMS, scrollState, colors)
                     SettingsRoute.Licences -> LegalScreen(LegalPage.LICENCES, scrollState, colors)
                     SettingsRoute.AppLock -> AppLockSettingsScreen(scrollState = scrollState, colors = colors)
-                    SettingsRoute.About -> AboutHubScreen(versionText = "Udukkai Textiles v1.0", onNavigate = { backStack.push(it) }, scrollState = scrollState, colors = colors)
+                    SettingsRoute.About -> AboutHubScreen(versionText = "Udukkai Textiles v1.0", onNavigate = { navigateTo(it) }, scrollState = scrollState, colors = colors)
                 }
             }
         }
@@ -166,7 +180,7 @@ fun TextilesSettingsScreen(
             open = searchOpen,
             entries = remember { settingsEntries(SettingsRoute.TextilesIdentity) },
             colors = colors,
-            onOpen = { backStack.push(it); searchOpen = false },
+            onOpen = { navigateTo(it); searchOpen = false },
             onClose = { searchOpen = false }
         )
     }
