@@ -29,6 +29,8 @@ kotlin {
         androidMain.dependencies {
             implementation(compose.preview)
             implementation(libs.androidx.activity.compose)
+            // The fingerprint prompt: Google's own library (the same on every phone maker's Android)
+            implementation("androidx.biometric:biometric:1.1.0")
             implementation(project.dependencies.platform(libs.firebase.bom))
             implementation(libs.firebase.database)
             implementation(libs.firebase.auth)

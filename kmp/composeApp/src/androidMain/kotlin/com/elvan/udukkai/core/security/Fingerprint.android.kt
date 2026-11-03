@@ -1,42 +1,37 @@
 package com.elvan.udukkai.core.security
 
-import android.hardware.biometrics.BiometricManager
-import android.hardware.biometrics.BiometricPrompt
-import android.os.Build
-import android.os.CancellationSignal
+import androidx.biometric.BiometricManager
+import androidx.biometric.BiometricManager.Authenticators.BIOMETRIC_STRONG
+import androidx.biometric.BiometricPrompt
+import androidx.core.content.ContextCompat
+import androidx.fragment.app.FragmentActivity
 import com.elvan.udukkai.core.platform.AppContext
 import com.elvan.udukkai.core.platform.CurrentActivity
 
 actual fun fingerprintAvailable(): Boolean = try {
-    when {
-        Build.VERSION.SDK_INT >= Build.VERSION_CODES.R ->
-            AppContext.context.getSystemService(BiometricManager::class.java)
-                .canAuthenticate(BiometricManager.Authenticators.BIOMETRIC_STRONG) == BiometricManager.BIOMETRIC_SUCCESS
-        Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q ->
-            @Suppress("DEPRECATION")
-            AppContext.context.getSystemService(BiometricManager::class.java).canAuthenticate() == BiometricManager.BIOMETRIC_SUCCESS
-        else -> false
-    }
+    BiometricManager.from(AppContext.context).canAuthenticate(BIOMETRIC_STRONG) == BiometricManager.BIOMETRIC_SUCCESS
 } catch (_: Exception) {
     false
 }
 
+/** Fingerprint only: the phone's screen lock is never offered. Anything but a match (cancel, error, lock-out) is "no". */
 actual fun authenticateFingerprint(title: String, cancelText: String, onResult: (Boolean) -> Unit) {
     // Whatever goes wrong with the sensor, the app must not crash: it counts as not matched, and the PIN is there
     try {
-        val activity = CurrentActivity.activity
+        val activity = CurrentActivity.activity as? FragmentActivity
         if (activity == null || !fingerprintAvailable()) return onResult(false)
-        val builder = BiometricPrompt.Builder(activity)
-            .setTitle(title)
-            .setNegativeButton(cancelText, activity.mainExecutor) { _, _ -> onResult(false) }
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) builder.setAllowedAuthenticators(BiometricManager.Authenticators.BIOMETRIC_STRONG)
-        builder.build().authenticate(CancellationSignal(), activity.mainExecutor, object : BiometricPrompt.AuthenticationCallback() {
-            override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult?) = onResult(true)
-            override fun onAuthenticationError(errorCode: Int, errString: CharSequence?) {
-                // The cancel button reports through its own listener
-                if (errorCode != BiometricPrompt.BIOMETRIC_ERROR_USER_CANCELED) onResult(false)
-            }
+        val prompt = BiometricPrompt(activity, ContextCompat.getMainExecutor(activity), object : BiometricPrompt.AuthenticationCallback() {
+            override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult) = onResult(true)
+            override fun onAuthenticationError(errorCode: Int, errString: CharSequence) = onResult(false)
         })
+        prompt.authenticate(
+            BiometricPrompt.PromptInfo.Builder()
+                .setTitle(title)
+                .setNegativeButtonText(cancelText)
+                .setAllowedAuthenticators(BIOMETRIC_STRONG)
+                .setConfirmationRequired(false)
+                .build()
+        )
     } catch (e: Exception) {
         android.util.Log.e("Fingerprint", "Could not ask for a fingerprint: ${e.message}", e)
         onResult(false)

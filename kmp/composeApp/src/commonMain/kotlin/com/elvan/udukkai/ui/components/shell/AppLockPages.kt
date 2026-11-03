@@ -273,34 +273,24 @@ fun rememberPinGuard(colors: ShellColors): (() -> Unit) -> Unit {
 }
 
 /**
- * The app lock: the app is drawn under it (so nothing being edited is lost), but until a PIN exists only the page that
- * makes one shows (it cannot be skipped), and afterwards only the PIN page shows while the PIN has not been entered:
- * at opening, and when the app comes back after a minute away. Right after the PIN is made, a fingerprint is offered.
+ * The app lock. Until a PIN exists only the page that makes one shows (it cannot be skipped); afterwards only the PIN
+ * page shows while the PIN has not been entered: at opening, and when the app comes back after a minute away. The app
+ * itself is drawn only once it has been unlocked, so the lock page and the fingerprint prompt come up at once; after
+ * that it stays drawn under a later lock, so nothing being edited is lost. Right after the PIN is made, the fingerprint
+ * is asked for, so it becomes the main way in.
  */
 @Composable
 fun AppLockGate(colors: ShellColors, content: @Composable () -> Unit) {
     val isSet = AppLock.isSet()
-    var offerFingerprint by remember { mutableStateOf(false) }
+    val locked = !isSet || !AppLock.unlockedThisRun
+    var appShown by remember { mutableStateOf(false) }
+    LaunchedEffect(locked) { if (!locked) appShown = true }
     val title = K.appLock.tr()
-    val usePin = K.usePin.tr()
+    val notNow = K.fingerprintOfferNo.tr()
     Box(Modifier.fillMaxSize()) {
-        content()
-        if (!isSet) CreatePinPage(colors) { if (fingerprintAvailable()) offerFingerprint = true }
+        if (appShown) content()
+        if (!isSet) CreatePinPage(colors) { if (fingerprintAvailable()) authenticateFingerprint(title, notNow) { ok -> if (ok) AppLock.setFingerprint(true) } }
         else if (!AppLock.unlockedThisRun) LockPage(colors)
-    }
-    if (offerFingerprint) {
-        ElvanActionSheet(
-            title = K.fingerprintOfferTitle.tr(),
-            cancelText = K.fingerprintOfferNo.tr(),
-            confirmText = K.fingerprintOfferYes.tr(),
-            onDismissRequest = { offerFingerprint = false },
-            // Switched on only after a fingerprint was read now, so it is known to work
-            onConfirm = { authenticateFingerprint(title, usePin) { ok -> if (ok) AppLock.setFingerprint(true) } },
-            customContent = {
-                Text(K.fingerprintOfferHint.tr(), style = TextStyle(fontFamily = LocalAppFontFamily.current, fontSize = 14.sp, lineHeight = 20.sp), color = colors.textPrimary.copy(alpha = 0.7f))
-            },
-            colors = colors
-        )
     }
 }
 

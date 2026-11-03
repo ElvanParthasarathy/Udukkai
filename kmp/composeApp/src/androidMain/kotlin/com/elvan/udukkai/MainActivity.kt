@@ -7,7 +7,7 @@ import android.os.Bundle
 import android.view.View
 import android.view.Window
 import android.view.WindowInsetsController
-import androidx.activity.ComponentActivity
+import androidx.fragment.app.FragmentActivity
 import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -46,7 +46,7 @@ fun updateSystemBarsAppearance(window: Window, isDark: Boolean) {
     decorView.systemUiVisibility = flags
 }
 
-class MainActivity : ComponentActivity() {
+class MainActivity : FragmentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         requestedOrientation = android.content.pm.ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
