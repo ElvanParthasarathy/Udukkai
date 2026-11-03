@@ -93,20 +93,51 @@ fun LogoAdjuster(payloadJson: String, prefix: String, place: LogoPlace, saved: L
         )
     }
     Spacer(Modifier.height(12.dp))
-    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp)) {
         LogoJoystick(onMove = { dx, dy -> onPlace(latest.moved(dx, dy)) }, colors = colors)
-        Column(Modifier.weight(1f)) {
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                Text(title, style = TextStyle(fontFamily = ff, fontSize = 13.sp), color = colors.textPrimary.copy(alpha = 0.6f))
-                Text("${(place.scale * 100f).roundToInt()}%", style = TextStyle(fontFamily = ff, fontSize = 13.sp), color = colors.textPrimary)
+        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = title,
+                    style = TextStyle(fontFamily = ff, fontSize = 13.sp, fontWeight = FontWeight.Medium),
+                    color = colors.textPrimary.copy(alpha = 0.7f),
+                    maxLines = 1,
+                    softWrap = false
+                )
+                Text(
+                    text = "${(place.scale * 100f).roundToInt()}%",
+                    style = TextStyle(fontFamily = ff, fontSize = 13.sp, fontWeight = FontWeight.SemiBold),
+                    color = colors.textPrimary,
+                    maxLines = 1
+                )
             }
-            Slider(value = place.scale, onValueChange = { onPlace(latest.copy(scale = it)) }, valueRange = 0.5f..1.3f)
-            Text(
-                K.resetLogo.tr(),
-                style = TextStyle(fontFamily = ff, fontSize = 13.sp, fontWeight = FontWeight.SemiBold),
-                color = colors.textPrimary,
-                modifier = Modifier.clip(CircleShape).clickable { onPlace(saved) }.padding(horizontal = 12.dp, vertical = 8.dp)
+            Slider(
+                value = place.scale,
+                onValueChange = { onPlace(latest.copy(scale = it)) },
+                valueRange = 0.5f..1.3f,
+                modifier = Modifier.fillMaxWidth()
             )
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+                Box(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(colors.iconBg)
+                        .clickable { onPlace(saved) }
+                        .padding(horizontal = 12.dp, vertical = 6.dp)
+                ) {
+                    Text(
+                        text = K.resetLogo.tr(),
+                        style = TextStyle(fontFamily = ff, fontSize = 12.sp, fontWeight = FontWeight.SemiBold),
+                        color = colors.textPrimary,
+                        maxLines = 1,
+                        softWrap = false
+                    )
+                }
+            }
         }
     }
 }
@@ -128,7 +159,7 @@ private fun LogoJoystick(onMove: (Float, Float) -> Unit, colors: ShellColors) {
     }
     val ring = colors.textPrimary.copy(alpha = 0.25f)
     Canvas(
-        Modifier.size(124.dp).clip(CircleShape).background(colors.iconBg).pointerInput(Unit) {
+        Modifier.size(110.dp).clip(CircleShape).background(colors.iconBg).pointerInput(Unit) {
             val reach = size.width / 2f * 0.7f
             awaitEachGesture {
                 val down = awaitFirstDown(requireUnconsumed = false)
@@ -157,9 +188,9 @@ private fun LogoJoystick(onMove: (Float, Float) -> Unit, colors: ShellColors) {
     ) {
         val c = Offset(size.width / 2f, size.height / 2f)
         val reach = size.width / 2f * 0.7f
-        drawLine(ring, Offset(c.x, 14.dp.toPx()), Offset(c.x, size.height - 14.dp.toPx()), 1.dp.toPx())
-        drawLine(ring, Offset(14.dp.toPx(), c.y), Offset(size.width - 14.dp.toPx(), c.y), 1.dp.toPx())
+        drawLine(ring, Offset(c.x, 12.dp.toPx()), Offset(c.x, size.height - 12.dp.toPx()), 1.dp.toPx())
+        drawLine(ring, Offset(12.dp.toPx(), c.y), Offset(size.width - 12.dp.toPx(), c.y), 1.dp.toPx())
         drawCircle(ring, radius = reach, center = c, style = Stroke(1.dp.toPx()))
-        drawCircle(Color(0xFF9E9E9E).copy(alpha = 0.9f), radius = 22.dp.toPx(), center = c + knob * reach)
+        drawCircle(Color(0xFF9E9E9E).copy(alpha = 0.9f), radius = 18.dp.toPx(), center = c + knob * reach)
     }
 }
