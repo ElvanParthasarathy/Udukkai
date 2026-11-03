@@ -326,6 +326,7 @@ val ta: Map<String, String> = mapOf(
     K.identityHint to "பெயர், லோகோ, கையொப்பம்",
     K.searchSettings to "அமைப்புகளைத் தேடு",
     K.searchSettingsHint to "எந்த அமைப்பையும் பெயரால் கண்டறியுங்கள்",
+    K.searchWord to "தேடவும்",
     K.recentSearches to "சமீபத்திய தேடல்கள்",
     K.clearAll to "அனைத்தையும் அழி",
     K.noResults to "எதுவும் கிடைக்கவில்லை",

@@ -325,6 +325,7 @@ val en: Map<String, String> = mapOf(
     K.identityHint to "Name, logo, signature",
     K.searchSettings to "Search settings",
     K.searchSettingsHint to "Find any setting by its name",
+    K.searchWord to "Search",
     K.recentSearches to "Recent searches",
     K.clearAll to "Clear all",
     K.noResults to "Nothing found",

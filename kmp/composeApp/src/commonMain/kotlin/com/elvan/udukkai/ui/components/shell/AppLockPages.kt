@@ -80,11 +80,11 @@ private fun PadKey(label: String, colors: ShellColors, onClick: () -> Unit) {
     var pressed by remember { mutableStateOf(false) }
     // The touch handler lives as long as the key, so it must call the newest action (the PIN length may have changed)
     val action by rememberUpdatedState(onClick)
-    val corner by animateDpAsState(if (pressed) 38.dp else 26.dp, spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessMedium), label = "corner")
+    val corner by animateDpAsState(if (pressed) 26.dp else 36.dp, spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessMedium), label = "corner")
     val scale by animateFloatAsState(if (pressed) 0.92f else 1f, bouncy, label = "keyScale")
     val fill by animateColorAsState(if (pressed) colors.textPrimary.copy(alpha = 0.22f) else colors.iconBg, label = "keyFill")
     Box(
-        Modifier.size(width = 82.dp, height = 68.dp)
+        Modifier.size(72.dp)
             .graphicsLayer { scaleX = scale; scaleY = scale }
             .clip(RoundedCornerShape(corner))
             .background(fill)
@@ -161,7 +161,7 @@ fun PinPad(prompt: String, length: Int, error: String?, errorKey: Int, onComplet
             listOf(listOf("1", "2", "3"), listOf("4", "5", "6"), listOf("7", "8", "9"), listOf("", "0", "⌫")).forEach { row ->
                 Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                     row.forEach { key ->
-                        if (key.isEmpty()) Spacer(Modifier.size(width = 82.dp, height = 68.dp))
+                        if (key.isEmpty()) Spacer(Modifier.size(72.dp))
                         else PadKey(key, colors) { if (key == "⌫") digits = digits.dropLast(1) else press(key) }
                     }
                 }

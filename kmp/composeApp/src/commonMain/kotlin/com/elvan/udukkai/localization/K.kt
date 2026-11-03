@@ -342,6 +342,7 @@ object K {
     const val identityHint = "identityHint"
     const val searchSettings = "searchSettings"
     const val searchSettingsHint = "searchSettingsHint"
+    const val searchWord = "searchWord"
     const val recentSearches = "recentSearches"
     const val clearAll = "clearAll"
     const val noResults = "noResults"
