@@ -324,7 +324,7 @@ val ta: Map<String, String> = mapOf(
     K.logoSize to "அளவு",
     K.resetLogo to "மீட்டமை",
     K.identityHint to "பெயர், லோகோ, கையொப்பம்",
-    K.groupBusiness to "வணிகம்",
+    K.groupBusiness to "நிறுவனம்",
     K.groupBills to "பட்டியல்கள்",
     K.groupApp to "செயலி",
     K.groupData to "தரவும் தனியுரிமையும்",

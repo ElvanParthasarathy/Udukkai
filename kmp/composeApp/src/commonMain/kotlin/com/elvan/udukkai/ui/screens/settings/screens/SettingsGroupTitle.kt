@@ -20,7 +20,7 @@ fun SettingsGroupTitle(text: String, colors: ShellColors) {
             text,
             style = TextStyle(fontFamily = LocalAppFontFamily.current, fontSize = 13.sp, fontWeight = FontWeight.SemiBold, letterSpacing = 0.3.sp),
             color = colors.textPrimary.copy(alpha = 0.55f),
-            modifier = Modifier.padding(start = 20.dp, top = 6.dp)
+            modifier = Modifier.padding(start = 20.dp)
         )
     }
 }

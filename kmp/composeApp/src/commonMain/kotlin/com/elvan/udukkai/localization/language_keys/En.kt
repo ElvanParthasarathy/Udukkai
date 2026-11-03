@@ -323,7 +323,7 @@ val en: Map<String, String> = mapOf(
     K.logoSize to "Size",
     K.resetLogo to "Reset",
     K.identityHint to "Name, logo, signature",
-    K.groupBusiness to "Business",
+    K.groupBusiness to "Company",
     K.groupBills to "Bills",
     K.groupApp to "App",
     K.groupData to "Data and privacy",
