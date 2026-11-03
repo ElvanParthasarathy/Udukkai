@@ -19,6 +19,24 @@ object BillRules {
         return GSTIN_CHARS[(36 - total % 36) % 36] == g[14]
     }
 
+    private val STATE_BY_CODE = mapOf(
+        1 to "Jammu and Kashmir", 2 to "Himachal Pradesh", 3 to "Punjab", 4 to "Chandigarh", 5 to "Uttarakhand",
+        6 to "Haryana", 7 to "Delhi", 8 to "Rajasthan", 9 to "Uttar Pradesh", 10 to "Bihar", 11 to "Sikkim",
+        12 to "Arunachal Pradesh", 13 to "Nagaland", 14 to "Manipur", 15 to "Mizoram", 16 to "Tripura",
+        17 to "Meghalaya", 18 to "Assam", 19 to "West Bengal", 20 to "Jharkhand", 21 to "Odisha", 22 to "Chhattisgarh",
+        23 to "Madhya Pradesh", 24 to "Gujarat", 26 to "Dadra and Nagar Haveli and Daman and Diu", 27 to "Maharashtra",
+        28 to "Andhra Pradesh", 29 to "Karnataka", 30 to "Goa", 31 to "Lakshadweep", 32 to "Kerala", 33 to "Tamil Nadu",
+        34 to "Puducherry", 35 to "Andaman and Nicobar Islands", 36 to "Telangana", 37 to "Andhra Pradesh", 38 to "Ladakh",
+    )
+
+    /** The state a valid GSTIN belongs to, by its first two digits (English name as in the state list); null for other codes. */
+    fun gstinState(value: String): String? =
+        if (isValidGstin(value)) STATE_BY_CODE[value.trim().take(2).toInt()] else null
+
+    /** The PAN inside a valid GSTIN (characters 3 to 12), or null. */
+    fun gstinPan(value: String): String? =
+        if (isValidGstin(value)) value.trim().uppercase().substring(2, 12) else null
+
     private val PAN_FORMAT = Regex("[A-Z]{5}[0-9]{4}[A-Z]")
 
     /** 10 characters: five letters, four digits, one letter. */

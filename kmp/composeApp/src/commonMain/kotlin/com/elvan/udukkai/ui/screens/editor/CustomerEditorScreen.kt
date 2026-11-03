@@ -173,6 +173,18 @@ fun CustomerEditorScreen(
         }
     }
 
+    // A valid GSTIN says which state the customer is in: fill it in (and India), no lookup needed
+    LaunchedEffect(billGstin) {
+        val state = BillRules.gstinState(billGstin) ?: return@LaunchedEffect
+        val preset = indianStates.firstOrNull { it.en == state } ?: return@LaunchedEffect
+        if (countryMap.values.all { it.isBlank() } && !isCustomCountry) countryMap = mapOf("en" to "India", "ta" to "இந்தியா")
+        if (!isCustomCountry && stateMap["en"] != preset.en) {
+            isCustomState = false
+            stateMap = mapOf("en" to preset.en, "ta" to preset.ta)
+            if (preset.en != "Tamil Nadu") districtMap = emptyMap()
+        }
+    }
+
     val isTamilNadu = remember(stateMap, isIndia, isCustomState) {
         if (!isIndia || isCustomState) false else {
             val en = stateMap["en"]?.lowercase() ?: ""
@@ -362,6 +374,13 @@ fun CustomerEditorScreen(
                                         label = "GSTIN",
                                         placeholder = "33AAAAA0000A1Z5"
                                     )
+                                    BillRules.gstinPan(gstin)?.let { pan ->
+                                        Text(
+                                            text = "PAN $pan",
+                                            style = TextStyle(fontFamily = ff, fontSize = 12.sp, color = colors.textPrimary.copy(alpha = 0.6f)),
+                                            modifier = Modifier.padding(start = 4.dp)
+                                        )
+                                    }
                                 }
                             }
                         }
