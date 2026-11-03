@@ -31,6 +31,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
 import com.elvan.udukkai.core.extensions.cssShadow
 import com.elvan.udukkai.core.platform.navigationBarsPaddingIfMobile
+import com.elvan.udukkai.theme.Dimens
 import com.elvan.udukkai.theme.LocalAppFontFamily
 import com.elvan.udukkai.theme.ShellColors
 import com.elvan.udukkai.theme.preventBrokenLigatures
@@ -79,7 +80,7 @@ fun ElvanFloatingActionBar(
             .fillMaxWidth()
             .zIndex(100f)
             .navigationBarsPaddingIfMobile()
-            .padding(bottom = 16.dp),
+            .padding(bottom = Dimens.FloatingBarBottomGap),
         contentAlignment = Alignment.Center
     ) {
         Box(

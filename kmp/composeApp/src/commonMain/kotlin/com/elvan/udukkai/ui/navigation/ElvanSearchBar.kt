@@ -31,6 +31,7 @@ import com.elvan.udukkai.core.extensions.cssShadow
 import com.elvan.udukkai.core.platform.navigationBarsPaddingIfMobile
 import com.elvan.udukkai.localization.K
 import com.elvan.udukkai.localization.tr
+import com.elvan.udukkai.theme.Dimens
 import com.elvan.udukkai.theme.LocalAppFontFamily
 import com.elvan.udukkai.theme.ShellColors
 import kotlinx.coroutines.delay
@@ -73,9 +74,9 @@ fun ElvanSearchBar(
             .fillMaxWidth()
             .then(
                 if (isImeOpen) {
-                    Modifier.padding(bottom = imeBottom + 16.dp)
+                    Modifier.padding(bottom = imeBottom + Dimens.FloatingBarBottomGap)
                 } else {
-                    Modifier.navigationBarsPaddingIfMobile().padding(bottom = 16.dp)
+                    Modifier.navigationBarsPaddingIfMobile().padding(bottom = Dimens.FloatingBarBottomGap)
                 }
             ),
         contentAlignment = Alignment.Center

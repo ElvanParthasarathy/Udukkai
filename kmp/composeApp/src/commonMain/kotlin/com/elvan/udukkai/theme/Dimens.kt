@@ -33,6 +33,8 @@ object Dimens {
 
     val ContentPaddingTop = 85.dp
     val HeaderMarginTop = 20.dp
+    /** The gap between the bottom floating bars (navigation, search, action bars) and the navigation bar or the keyboard. */
+    val FloatingBarBottomGap = 11.dp
     val HeaderGap = 8.dp
     val HeaderPillPadding = 12.dp
 }

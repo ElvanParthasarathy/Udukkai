@@ -30,6 +30,7 @@ import com.elvan.udukkai.core.extensions.cssShadow
 import com.elvan.udukkai.core.platform.navigationBarsPaddingIfMobile
 import com.elvan.udukkai.localization.K
 import com.elvan.udukkai.localization.tr
+import com.elvan.udukkai.theme.Dimens
 import com.elvan.udukkai.theme.LocalAppFontFamily
 import com.elvan.udukkai.theme.rememberShellColors
 import com.elvan.udukkai.ui.navigation.MaterialSymbols
@@ -182,7 +183,7 @@ fun RecycleBinBottomNavBar(
             modifier = modifier
                 .fillMaxWidth()
                 .navigationBarsPaddingIfMobile()
-                .padding(bottom = 16.dp)
+                .padding(bottom = Dimens.FloatingBarBottomGap)
                 .graphicsLayer {
                     alpha = navBarAlpha
                 },

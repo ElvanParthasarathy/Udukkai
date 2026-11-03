@@ -139,7 +139,7 @@ private fun Modifier.floatingPill(colors: ShellColors): Modifier = this
 @Composable
 fun SettingsSearchPill(colors: ShellColors, onClick: () -> Unit) {
     val ff = LocalAppFontFamily.current
-    BoxWithConstraints(Modifier.fillMaxWidth().navigationBarsPaddingIfMobile().padding(bottom = 16.dp), contentAlignment = Alignment.Center) {
+    BoxWithConstraints(Modifier.fillMaxWidth().navigationBarsPaddingIfMobile().padding(bottom = Dimens.FloatingBarBottomGap), contentAlignment = Alignment.Center) {
         Row(
             Modifier.width(PILL_CLOSED_WIDTH.coerceAtMost(maxWidth - PILL_OPEN_MARGIN * 2))
                 .floatingPill(colors)
@@ -203,7 +203,7 @@ fun SettingsSearchOverlay(open: Boolean, entries: List<SettingsEntry>, colors: S
             colors = colors, open = open, query = query, onQuery = { query = it },
             onSearch = { results.firstOrNull()?.let { openResult(it.route) } },
             modifier = Modifier.align(Alignment.BottomCenter)
-                .padding(bottom = maxOf(imeBottom, navInset) + 16.dp)
+                .padding(bottom = maxOf(imeBottom, navInset) + Dimens.FloatingBarBottomGap)
                 .width(closedWidth + (openWidth - closedWidth) * p)
         )
     }
