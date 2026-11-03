@@ -11,7 +11,7 @@ import javax.crypto.spec.PBEKeySpec
 
 /**
  * The app's own lock for the privacy of the bills, separate from the phone's screen lock (people who know the phone's
- * unlock code must not get into the bills). A PIN of 6 or 8 digits is compulsory: the app cannot be used before one is
+ * unlock code must not get into the bills). A PIN of 4 or 6 digits is compulsory: the app cannot be used before one is
  * set. It is kept only as a salted PBKDF2 hash, never as the digits. The app asks for it when it opens, when it comes back
  * after a minute away, and before the actions that can lose or give away data (replacing data by a restore, going back
  * to an earlier copy, deleting a business, sharing a backup, signing out). The phone's fingerprint can open it instead
@@ -19,7 +19,8 @@ import javax.crypto.spec.PBEKeySpec
  * Wrong tries slow down: five wrong in a row lock it for 30 s, and the wait doubles with each further wrong try (15 min at most).
  */
 object AppLock {
-    val LENGTHS = listOf(6, 8)
+    /** The lengths a new PIN may have. */
+    val LENGTHS = listOf(4, 6)
 
     private const val SALT = "app_pin_salt"
     private const val HASH = "app_pin_hash"
@@ -42,11 +43,11 @@ object AppLock {
 
     fun isSet(): Boolean = !prefs.getString(HASH).isNullOrEmpty()
 
-    /** The number of digits of the PIN that is set (6 when none is). */
-    fun length(): Int = prefs.getInt(LEN, 6).takeIf { it in LENGTHS } ?: 6
+    /** The number of digits of the PIN that is set (6 when none is); a PIN made earlier with 8 digits keeps working. */
+    fun length(): Int = prefs.getInt(LEN, 6).takeIf { it in 4..8 } ?: 6
 
     fun set(pin: String) {
-        require(pin.length in LENGTHS && pin.all { it.isDigit() }) { "The PIN is 6 or 8 digits" }
+        require(pin.length in LENGTHS && pin.all { it.isDigit() }) { "The PIN is 4 or 6 digits" }
         val salt = ByteArray(16).also { SecureRandom().nextBytes(it) }
         prefs.setString(SALT, hex(salt))
         prefs.setString(HASH, hex(hash(pin, salt)))

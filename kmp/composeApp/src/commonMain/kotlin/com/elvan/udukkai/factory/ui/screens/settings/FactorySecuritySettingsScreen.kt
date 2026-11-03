@@ -1,8 +1,5 @@
 package com.elvan.udukkai.factory.ui.screens.settings
 
-import com.elvan.udukkai.core.security.AppLock
-import com.elvan.udukkai.core.security.authenticateFingerprint
-import com.elvan.udukkai.core.security.fingerprintAvailable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
@@ -40,10 +37,6 @@ fun FactorySecuritySettingsScreen(
     var showSignOutConfirm by remember { mutableStateOf(false) }
     var showSignOutLoading by remember { mutableStateOf(false) }
     val guard = rememberPinGuard(colors)
-    var lockTick by remember { mutableStateOf(0) }
-    var changePin by remember { mutableStateOf(false) }
-    val lockTitle = K.appLock.tr()
-    val usePinText = K.usePin.tr()
 
 
 
@@ -91,34 +84,6 @@ fun FactorySecuritySettingsScreen(
                 )
                 ElvanSettingsDivider(colors = colors)
 
-                // App PIN: compulsory, 6 or 8 digits, its own (not the phone's screen lock)
-                ElvanSettingsRow(
-                    icon = MaterialSymbols.Rounded.Lock,
-                    title = K.appPin.tr(),
-                    description = "${if (lockTick >= 0) AppLock.length() else 0} ${K.pinDigitsWord.tr()}\n" + K.appPinHint.tr(),
-                    onClick = { guard { changePin = true } },
-                    colors = colors
-                )
-
-                if (fingerprintAvailable()) {
-                    ElvanSettingsDivider(colors = colors)
-                    ElvanSettingsRow(
-                        icon = MaterialSymbols.Rounded.Lock,
-                        title = K.fingerprintUnlock.tr(),
-                        description = (if (lockTick >= 0 && AppLock.fingerprintOn()) K.pinOn else K.pinOff).tr() + "\n" + K.fingerprintHint.tr(),
-                        onClick = {
-                            if (AppLock.fingerprintOn()) {
-                                guard { AppLock.setFingerprint(false); lockTick++ }
-                            } else {
-                                // Turning it on needs a fingerprint now, to be sure it works
-                                authenticateFingerprint(lockTitle, usePinText) { ok -> if (ok) { AppLock.setFingerprint(true); lockTick++ } }
-                            }
-                        },
-                        colors = colors
-                    )
-                }
-                ElvanSettingsDivider(colors = colors)
-
                 // 2. Sign Out (Veliyaeru)
                 ElvanSettingsRow(
                     icon = MaterialSymbols.Rounded.Logout,
@@ -154,8 +119,6 @@ fun FactorySecuritySettingsScreen(
             colors = colors
         )
     }
-
-    if (changePin) PinSheet(PinMode.CREATE, colors) { changePin = false; lockTick++ }
 
     if (showSyncLoading) {
         ElvanLoadingOverlay(

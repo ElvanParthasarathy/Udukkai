@@ -5,7 +5,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
-/** The PIN is kept hashed, 6 or 8 digits, wrong tries slow down, and the app asks again after a minute away. */
+/** The PIN is kept hashed, 4 or 6 digits, wrong tries slow down, and the app asks again after a minute away. */
 class AppLockTest {
     @Test
     fun setVerifyWrongAndLockout() {
@@ -33,14 +33,14 @@ class AppLockTest {
     }
 
     @Test
-    fun anEightDigitPinWorksAndOtherLengthsDoNot() {
+    fun aFourDigitPinWorksAndOtherLengthsDoNot() {
         AppLock.clearForTests()
         try {
-            AppLock.set("12345678")
-            assertEquals(8, AppLock.length())
-            assertTrue(AppLock.verify("12345678"))
+            AppLock.set("1234")
+            assertEquals(4, AppLock.length())
+            assertTrue(AppLock.verify("1234"))
             assertFalse(AppLock.verify("123456"))
-            for (bad in listOf("1234", "1234567", "123456789", "12ab56", "")) {
+            for (bad in listOf("123", "12345", "1234567", "12345678", "12ab", "")) {
                 try {
                     AppLock.set(bad)
                     error("accepted $bad")

@@ -21,4 +21,11 @@ sealed interface SettingsRoute {
     data object Privacy : SettingsRoute
     data object Terms : SettingsRoute
     data object Licences : SettingsRoute
+    data object AppLock : SettingsRoute
+    data object About : SettingsRoute
+
+    companion object {
+        /** The pages that are opened from the About page: Back from them returns to it. */
+        val aboutPages: Set<SettingsRoute> = setOf(AboutApp, AboutDeveloper, ElvanNavil, Privacy, Terms, Licences)
+    }
 }

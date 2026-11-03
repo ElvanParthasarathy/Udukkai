@@ -51,6 +51,8 @@ fun FactorySettingsScreen(
     val handleBack: () -> Unit = {
         if (currentRoute == SettingsRoute.ManageProfiles) {
             currentRoute = SettingsRoute.Merchant
+        } else if (currentRoute in SettingsRoute.aboutPages) {
+            currentRoute = SettingsRoute.About
         } else if (currentRoute != SettingsRoute.Hub) {
             currentRoute = SettingsRoute.Hub
         } else {
@@ -106,6 +108,8 @@ fun FactorySettingsScreen(
                 SettingsRoute.Privacy -> K.privacyPolicy.tr()
                 SettingsRoute.Terms -> K.termsOfUse.tr()
                 SettingsRoute.Licences -> K.openSourceLicences.tr()
+                SettingsRoute.AppLock -> K.appLock.tr()
+                SettingsRoute.About -> K.aboutAndLegal.tr()
             }
 
             ElvanSubShell(
@@ -154,6 +158,8 @@ fun FactorySettingsScreen(
                     SettingsRoute.Privacy -> LegalScreen(LegalPage.PRIVACY, scrollState, colors)
                     SettingsRoute.Terms -> LegalScreen(LegalPage.TERMS, scrollState, colors)
                     SettingsRoute.Licences -> LegalScreen(LegalPage.LICENCES, scrollState, colors)
+                    SettingsRoute.AppLock -> AppLockSettingsScreen(scrollState = scrollState, colors = colors)
+                    SettingsRoute.About -> AboutHubScreen(versionText = "Udukkai Factory v1.0", onNavigate = { currentRoute = it }, scrollState = scrollState, colors = colors)
                 }
             }
         }
@@ -266,6 +272,8 @@ private fun FactorySettingsHubContent(
             }
         }
 
+        item(key = "group_business") { SettingsGroupTitle(K.groupBusiness.tr(), colors) }
+
         // Section 1: Business Identity & Finance
         item(key = "business_identity_section") {
             ElvanSectionContainer {
@@ -301,6 +309,8 @@ private fun FactorySettingsHubContent(
             }
         }
 
+        item(key = "group_bills") { SettingsGroupTitle(K.groupBills.tr(), colors) }
+
         // Section 2: Invoicing & Interface
         item(key = "invoicing_interface_section") {
             ElvanSectionContainer {
@@ -312,9 +322,15 @@ private fun FactorySettingsHubContent(
                         onClick = { onNavigate(SettingsRoute.InvoiceCreation) },
                         colors = colors
                     )
+                }
+            }
+        }
 
-                    ElvanSettingsDivider(colors = colors)
+        item(key = "group_app") { SettingsGroupTitle(K.groupApp.tr(), colors) }
 
+        item(key = "app_looks_section") {
+            ElvanSectionContainer {
+                ElvanSettingsSection(colors = colors) {
                     ElvanSettingsRow(
                         icon = MaterialSymbols.Rounded.LightMode,
                         title = K.display.tr(),
@@ -336,6 +352,8 @@ private fun FactorySettingsHubContent(
             }
         }
 
+        item(key = "group_data") { SettingsGroupTitle(K.groupData.tr(), colors) }
+
         // Section 3: Data & Security
         item(key = "data_security_section") {
             ElvanSectionContainer {
@@ -352,6 +370,16 @@ private fun FactorySettingsHubContent(
 
                     ElvanSettingsRow(
                         icon = MaterialSymbols.Rounded.Lock,
+                        title = K.appLock.tr(),
+                        description = K.appLockRowHint.tr(),
+                        onClick = { onNavigate(SettingsRoute.AppLock) },
+                        colors = colors
+                    )
+
+                    ElvanSettingsDivider(colors = colors)
+
+                    ElvanSettingsRow(
+                        icon = MaterialSymbols.Rounded.Lock,
                         title = K.security.tr(),
                         description = K.syncLogoutClearData.tr(),
                         onClick = { onNavigate(SettingsRoute.Security) },
@@ -361,65 +389,16 @@ private fun FactorySettingsHubContent(
             }
         }
 
-        // Section 4: System & About
+        item(key = "group_about") { SettingsGroupTitle(K.groupAbout.tr(), colors) }
+
         item(key = "system_about_section") {
             ElvanSectionContainer {
                 ElvanSettingsSection(colors = colors) {
                     ElvanSettingsRow(
                         icon = MaterialSymbols.Rounded.Info,
-                        title = K.aboutApp.tr(),
-                        description = "Udukkai Factory v1.0",
-                        onClick = { onNavigate(SettingsRoute.AboutApp) },
-                        colors = colors
-                    )
-
-                    ElvanSettingsDivider(colors = colors)
-
-                    ElvanSettingsRow(
-                        icon = MaterialSymbols.Rounded.Person,
-                        title = K.softwareDesigner.tr(),
-                        description = "Elvan Parthasarathy",
-                        onClick = { onNavigate(SettingsRoute.AboutDeveloper) },
-                        colors = colors
-                    )
-
-                    ElvanSettingsDivider(colors = colors)
-
-                    ElvanSettingsRow(
-                        icon = MaterialSymbols.Rounded.Code,
-                        title = K.aboutElvanNavil.tr(),
-                        description = "Pure Senthamizh Linguistic Engine",
-                        onClick = { onNavigate(SettingsRoute.ElvanNavil) },
-                        colors = colors
-                    )
-
-                    ElvanSettingsDivider(colors = colors)
-
-                    ElvanSettingsRow(
-                        icon = MaterialSymbols.Rounded.Lock,
-                        title = K.privacyPolicy.tr(),
-                        description = K.privacyPolicyHint.tr(),
-                        onClick = { onNavigate(SettingsRoute.Privacy) },
-                        colors = colors
-                    )
-
-                    ElvanSettingsDivider(colors = colors)
-
-                    ElvanSettingsRow(
-                        icon = MaterialSymbols.Rounded.Info,
-                        title = K.termsOfUse.tr(),
-                        description = K.termsOfUseHint.tr(),
-                        onClick = { onNavigate(SettingsRoute.Terms) },
-                        colors = colors
-                    )
-
-                    ElvanSettingsDivider(colors = colors)
-
-                    ElvanSettingsRow(
-                        icon = MaterialSymbols.Rounded.Code,
-                        title = K.openSourceLicences.tr(),
-                        description = K.openSourceLicencesHint.tr(),
-                        onClick = { onNavigate(SettingsRoute.Licences) },
+                        title = K.aboutAndLegal.tr(),
+                        description = K.aboutAndLegalHint.tr(),
+                        onClick = { onNavigate(SettingsRoute.About) },
                         colors = colors
                     )
                 }
