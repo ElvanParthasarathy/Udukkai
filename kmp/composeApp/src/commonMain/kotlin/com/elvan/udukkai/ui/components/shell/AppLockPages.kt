@@ -62,12 +62,10 @@ enum class PinMode { VERIFY, CREATE }
 
 private val bouncy = spring<Float>(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessMedium)
 
-/** One dot of the PIN: it springs up when a digit fills it. */
+/** Material 3 Expressive PIN dot: morphs into distinct geometric shapes with bouncy spring physics. */
 @Composable
-private fun PinDot(filled: Boolean, colors: ShellColors) {
-    val scale by animateFloatAsState(if (filled) 1.15f else 0.8f, bouncy, label = "dot")
-    val color by animateColorAsState(if (filled) colors.textPrimary else colors.textPrimary.copy(alpha = 0.18f), label = "dotColor")
-    Box(Modifier.size(16.dp).graphicsLayer { scaleX = scale; scaleY = scale }.clip(CircleShape).background(color))
+private fun PinDot(index: Int, filled: Boolean, colors: ShellColors) {
+    ExpressivePinDot(index = index, filled = filled, colors = colors)
 }
 
 /**
@@ -136,7 +134,7 @@ fun PinPad(prompt: String, length: Int, error: String?, errorKey: Int, onComplet
             Modifier.offset { IntOffset(shake.value.dp.roundToPx(), 0) },
             horizontalArrangement = Arrangement.spacedBy(if (length > 6) 12.dp else 16.dp)
         ) {
-            repeat(length) { i -> PinDot(i < digits.length, colors) }
+            repeat(length) { i -> PinDot(index = i, filled = i < digits.length, colors = colors) }
         }
         // Always two lines high, so a message appearing never moves the pad
         Box(Modifier.height(30.dp).fillMaxWidth(), contentAlignment = Alignment.Center) {
