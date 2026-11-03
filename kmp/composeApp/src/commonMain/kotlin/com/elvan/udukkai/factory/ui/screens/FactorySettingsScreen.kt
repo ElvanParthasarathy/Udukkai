@@ -35,7 +35,7 @@ import com.elvan.udukkai.theme.rememberShellColors
 import com.elvan.udukkai.ui.components.shell.*
 import com.elvan.udukkai.ui.navigation.MaterialSymbols
 import com.elvan.udukkai.ui.screens.settings.SettingsRoute
-import com.elvan.udukkai.ui.screens.settings.depth
+import com.elvan.udukkai.ui.screens.settings.SettingsBackStack
 import com.elvan.udukkai.ui.screens.settings.SettingsSearchOverlay
 import com.elvan.udukkai.ui.screens.settings.SettingsSearchPill
 import com.elvan.udukkai.ui.screens.settings.settingsEntries
@@ -46,7 +46,8 @@ import com.elvan.udukkai.factory.ui.screens.settings.*
 fun FactorySettingsScreen(
     onBack: () -> Unit = {}
 ) {
-    var currentRoute by remember { mutableStateOf<SettingsRoute>(SettingsRoute.Hub) }
+    val backStack = remember { SettingsBackStack() }
+    val currentRoute by remember { derivedStateOf { backStack.current } }
     var searchOpen by remember { mutableStateOf(false) }
     val colors = rememberShellColors()
 
@@ -54,18 +55,11 @@ fun FactorySettingsScreen(
     val subpageScrollStates = remember { mutableStateMapOf<SettingsRoute, LazyListState>() }
 
     val handleBack: () -> Unit = {
-        if (currentRoute == SettingsRoute.ManageProfiles) {
-            currentRoute = SettingsRoute.Merchant
-        } else if (currentRoute in SettingsRoute.aboutPages) {
-            currentRoute = SettingsRoute.About
-        } else if (currentRoute != SettingsRoute.Hub) {
-            currentRoute = SettingsRoute.Hub
-        } else {
-            onBack()
-        }
+        val popped = backStack.pop()
+        if (popped == null) onBack()
     }
 
-    AppBackHandler(enabled = searchOpen || currentRoute != SettingsRoute.Hub) {
+    AppBackHandler(enabled = searchOpen || backStack.canGoBack) {
         if (searchOpen) searchOpen = false else handleBack()
     }
 
@@ -86,8 +80,7 @@ fun FactorySettingsScreen(
                     } else if (initialState == SettingsRoute.ManageProfiles) {
                         smoothVertical(forward = false)
                     } else {
-                        val isForward = targetState.depth >= initialState.depth
-                        smoothHorizontal(forward = isForward)
+                        smoothHorizontal(forward = backStack.isForward)
                     }
                 }
             },
@@ -125,18 +118,18 @@ fun FactorySettingsScreen(
             ) {
                 when (route) {
                     SettingsRoute.Hub -> FactorySettingsHubContent(
-                        onNavigate = { currentRoute = it },
+                        onNavigate = { backStack.push(it) },
                         scrollState = scrollState
                     )
                     SettingsRoute.Display -> DisplaySettingsScreen(scrollState = scrollState, colors = colors)
                     SettingsRoute.Language -> LanguageSettingsScreen(scrollState = scrollState, colors = colors)
                     SettingsRoute.Merchant -> FactoryMerchantSettingsScreen(
-                        onNavigateToManageProfiles = { currentRoute = SettingsRoute.ManageProfiles },
+                        onNavigateToManageProfiles = { backStack.push(SettingsRoute.ManageProfiles) },
                         scrollState = scrollState,
                         colors = colors
                     )
                     SettingsRoute.ManageProfiles -> FactoryManageProfilesScreen(
-                        onBack = { currentRoute = SettingsRoute.Merchant },
+                        onBack = { backStack.pop() },
                         scrollState = scrollState,
                         colors = colors
                     )
@@ -165,7 +158,7 @@ fun FactorySettingsScreen(
                     SettingsRoute.Terms -> LegalScreen(LegalPage.TERMS, scrollState, colors)
                     SettingsRoute.Licences -> LegalScreen(LegalPage.LICENCES, scrollState, colors)
                     SettingsRoute.AppLock -> AppLockSettingsScreen(scrollState = scrollState, colors = colors)
-                    SettingsRoute.About -> AboutHubScreen(versionText = "Udukkai Factory v1.0", onNavigate = { currentRoute = it }, scrollState = scrollState, colors = colors)
+                    SettingsRoute.About -> AboutHubScreen(versionText = "Udukkai Factory v1.0", onNavigate = { backStack.push(it) }, scrollState = scrollState, colors = colors)
                 }
             }
         }
@@ -173,7 +166,7 @@ fun FactorySettingsScreen(
             open = searchOpen,
             entries = remember { settingsEntries(SettingsRoute.FactoryIdentity) },
             colors = colors,
-            onOpen = { currentRoute = it; searchOpen = false },
+            onOpen = { backStack.push(it); searchOpen = false },
             onClose = { searchOpen = false }
         )
     }
