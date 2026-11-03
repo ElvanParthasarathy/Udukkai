@@ -502,35 +502,39 @@ fun ElvanShell(
                 } else {
                     // Standard floating navbar / bottom search pill: Smooth subtle gradient, zero solid box.
                     // Content flows freely beneath the navbar.
-                    Box(
-                        modifier = Modifier
-                            .align(Alignment.BottomCenter)
-                            .fillMaxWidth()
-                            .height(72.dp + 56.dp + 16.dp + navBarsPadding)
-                            .background(
-                                Brush.verticalGradient(
-                                    0.0f to Color.Transparent,
-                                    0.3f to colors.background.copy(alpha = 0.16f),
-                                    0.65f to colors.background.copy(alpha = 0.55f),
-                                    1.0f to colors.background
+                    if (!isLandscape) {
+                        Box(
+                            modifier = Modifier
+                                .align(Alignment.BottomCenter)
+                                .fillMaxWidth()
+                                .height(72.dp + 56.dp + 16.dp + navBarsPadding)
+                                .background(
+                                    Brush.verticalGradient(
+                                        0.0f to Color.Transparent,
+                                        0.3f to colors.background.copy(alpha = 0.16f),
+                                        0.65f to colors.background.copy(alpha = 0.55f),
+                                        1.0f to colors.background
+                                    )
                                 )
-                            )
-                    )
+                        )
+                    }
                 }
 
                 Box(
                     modifier = Modifier
-                        .align(Alignment.BottomCenter)
-                        .fillMaxWidth()
+                        .then(
+                            if (isLandscape) Modifier.fillMaxSize()
+                            else Modifier.align(Alignment.BottomCenter).fillMaxWidth()
+                        )
                         .graphicsLayer {
                             alpha = effectiveNavOpacity
                         },
-                    contentAlignment = Alignment.BottomCenter
+                    contentAlignment = if (isLandscape) Alignment.BottomEnd else Alignment.BottomCenter
                 ) {
                     navbar()
                 }
             } else {
-                if (showBottomFade) {
+                if (showBottomFade && !isLandscape) {
                     // Subpages: Bottom Shadow Fade Mask above System Navigation Bar (Layer 4)
                     Box(
                         modifier = Modifier
@@ -566,7 +570,7 @@ fun ElvanShell(
             // Layer 6: Android System Navigation Bar Touch Shield
             // Blocks touches in the physical system navigation bar area from leaking to the list underneath,
             // while keeping 100% edge-to-edge transparent rendering (Zero visual change).
-            if (navBarsPadding > 0.dp) {
+            if (!isLandscape && navBarsPadding > 0.dp) {
                 Box(
                     modifier = Modifier
                         .align(Alignment.BottomCenter)

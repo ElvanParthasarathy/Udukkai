@@ -52,6 +52,7 @@ import com.elvan.udukkai.ui.components.ExpressivePullToRefreshBox
 import com.elvan.udukkai.ui.components.shell.*
 import com.elvan.udukkai.ui.navigation.ActiveSubpage
 import com.elvan.udukkai.ui.navigation.BottomNavBar
+import com.elvan.udukkai.ui.navigation.LandscapeSideNavBar
 import com.elvan.udukkai.ui.navigation.ElvanSearchBar
 import com.elvan.udukkai.ui.navigation.MaterialSymbols
 import com.elvan.udukkai.ui.navigation.NavTab
@@ -287,7 +288,7 @@ fun FactoryHomeScreen() {
         }
 
         val isLandscape = maxWidth > maxHeight
-        val isWideScreen = (isDesktop && maxWidth >= 768.dp) || (isLandscape && maxWidth >= 540.dp)
+        val isWideScreen = isDesktop && maxWidth >= 768.dp
 
         val shouldShowBottomBarForSnackbar = (activeSubpage !is ActiveSubpage.Settings) && !isWideScreen
         SideEffect {
@@ -571,132 +572,206 @@ fun FactoryHomeScreen() {
                         navbar = {
                             val shellController = LocalElvanShellController.current
 
-                            Box(
-                                contentAlignment = Alignment.Center,
-                                modifier = Modifier.fillMaxWidth()
-                            ) {
-                                AnimatedContent(
-                                    targetState = isSelectionMode,
-                                    transitionSpec = { com.elvan.udukkai.ui.components.shell.elvanBarSwap() },
-                                    label = "bottomBarSelectionCrossfade"
-                                ) { inSelection ->
-                                    if (inSelection) {
-                                        val canCopyTab = selectedTab == NavTab.Items ||
-                                                         selectedTab == NavTab.Customers ||
-                                                         (selectedTab == NavTab.Create && uruvakkuSegment == 0)
+                            if (isSelectionMode) {
+                                val canCopyTab = selectedTab == NavTab.Items ||
+                                                 selectedTab == NavTab.Customers ||
+                                                 (selectedTab == NavTab.Create && uruvakkuSegment == 0)
 
-                                        val onSelectionCopy: (() -> Unit)? = if (canCopyTab) {
-                                            {
-                                                if (selectedItemIds.size == 1) {
-                                                    val selectedId = selectedItemIds.first()
-                                                    when (selectedTab) {
-                                                        NavTab.Items -> {
-                                                            FactoryItemRepository.items.find { it.id == selectedId }?.let { copyItemAndEdit(it) }
+                                val onSelectionCopy: (() -> Unit)? = if (canCopyTab) {
+                                    {
+                                        if (selectedItemIds.size == 1) {
+                                            val selectedId = selectedItemIds.first()
+                                            when (selectedTab) {
+                                                NavTab.Items -> {
+                                                    FactoryItemRepository.items.find { it.id == selectedId }?.let { copyItemAndEdit(it) }
+                                                }
+                                                NavTab.Customers -> {
+                                                    FactoryCustomerRepository.merchants.find { it.id == selectedId }?.let { copyCustomerAndEdit(it) }
+                                                }
+                                                NavTab.Create -> {
+                                                    if (uruvakkuSegment == 0) {
+                                                        FactoryInvoiceRepository.invoices.find { it.id == selectedId }?.let { copyInvoiceAndEdit(it) }
+                                                    }
+                                                }
+                                                else -> {}
+                                            }
+                                        }
+                                    }
+                                } else null
+
+                                Box(
+                                    contentAlignment = Alignment.BottomCenter,
+                                    modifier = Modifier.fillMaxWidth()
+                                ) {
+                                    ElvanSelectionBar(
+                                        visible = true,
+                                        selectedCount = selectedItemIds.size,
+                                        onDelete = {
+                                            if (selectedItemIds.isNotEmpty()) {
+                                                showBulkDeleteConfirm = true
+                                            }
+                                        },
+                                        onCopy = onSelectionCopy,
+                                        colors = colors
+                                    )
+                                }
+                            } else if (isLandscape) {
+                                LandscapeSideNavBar(
+                                    selectedTab = selectedTab,
+                                    hideContent = isSearchActive || showDateFilterSheet,
+                                    onAddClick = {
+                                        when (selectedTab) {
+                                            NavTab.Home -> {
+                                                navigateToSubpage(ActiveSubpage.InvoiceEditor(null))
+                                            }
+                                            NavTab.Items -> {
+                                                navigateToSubpage(ActiveSubpage.ItemEditor(null))
+                                            }
+                                            NavTab.Customers -> {
+                                                navigateToSubpage(ActiveSubpage.MerchantEditor(null))
+                                            }
+                                            NavTab.Create -> {
+                                                if (uruvakkuSegment == 0) {
+                                                    navigateToSubpage(ActiveSubpage.InvoiceEditor(null))
+                                                } else {
+                                                    navigateToSubpage(ActiveSubpage.ReceiptEditor(null))
+                                                }
+                                            }
+                                        }
+                                    },
+                                    onTabSelected = { tab, _ ->
+                                        if (selectedTab == tab) {
+                                            shellController.toggleHeader()
+                                        } else {
+                                            if (selectedTab == NavTab.Create || tab != NavTab.Create) {
+                                                uruvakkuSegment = 0
+                                            }
+                                            val targetScrollState = when (tab) {
+                                                NavTab.Home -> homeScrollState
+                                                NavTab.Create -> createScrollState
+                                                NavTab.Items -> itemsScrollState
+                                                NavTab.Customers -> customersScrollState
+                                            }
+                                            scope.launch { targetScrollState.scrollToItem(0, 0) }
+                                            selectedTab = tab
+                                        }
+                                    }
+                                )
+
+                                if (isSearchActive) {
+                                    Box(
+                                        contentAlignment = Alignment.BottomCenter,
+                                        modifier = Modifier.fillMaxWidth()
+                                    ) {
+                                        ElvanSearchBar(
+                                            visible = true,
+                                            query = currentSearchQuery,
+                                            onQueryChange = { newQuery ->
+                                                when (selectedTab) {
+                                                    NavTab.Create -> {
+                                                        if (uruvakkuSegment == 0) {
+                                                            FactoryInvoiceRepository.searchQuery = newQuery
+                                                        } else {
+                                                            FactoryReceiptRepository.searchQuery = newQuery
                                                         }
-                                                        NavTab.Customers -> {
-                                                            FactoryCustomerRepository.merchants.find { it.id == selectedId }?.let { copyCustomerAndEdit(it) }
-                                                        }
-                                                        NavTab.Create -> {
-                                                            if (uruvakkuSegment == 0) {
-                                                                FactoryInvoiceRepository.invoices.find { it.id == selectedId }?.let { copyInvoiceAndEdit(it) }
-                                                            }
-                                                        }
-                                                        else -> {}
+                                                    }
+                                                    NavTab.Items -> {
+                                                        FactoryItemRepository.searchQuery = newQuery
+                                                    }
+                                                    NavTab.Customers -> {
+                                                        FactoryCustomerRepository.searchQuery = newQuery
+                                                    }
+                                                    else -> {}
+                                                }
+                                            },
+                                            onClose = {
+                                                isSearchActive = false
+                                                FactoryInvoiceRepository.searchQuery = ""
+                                                FactoryReceiptRepository.searchQuery = ""
+                                                FactoryItemRepository.searchQuery = ""
+                                                FactoryCustomerRepository.searchQuery = ""
+                                            },
+                                            colors = colors
+                                        )
+                                    }
+                                }
+                            } else {
+                                Box(
+                                    contentAlignment = Alignment.Center,
+                                    modifier = Modifier.fillMaxWidth()
+                                ) {
+                                    BottomNavBar(
+                                        selectedTab = selectedTab,
+                                        hideContent = isSearchActive || showDateFilterSheet,
+                                        onAddClick = {
+                                            when (selectedTab) {
+                                                NavTab.Home -> {
+                                                    navigateToSubpage(ActiveSubpage.InvoiceEditor(null))
+                                                }
+                                                NavTab.Items -> {
+                                                    navigateToSubpage(ActiveSubpage.ItemEditor(null))
+                                                }
+                                                NavTab.Customers -> {
+                                                    navigateToSubpage(ActiveSubpage.MerchantEditor(null))
+                                                }
+                                                NavTab.Create -> {
+                                                    if (uruvakkuSegment == 0) {
+                                                        navigateToSubpage(ActiveSubpage.InvoiceEditor(null))
+                                                    } else {
+                                                        navigateToSubpage(ActiveSubpage.ReceiptEditor(null))
                                                     }
                                                 }
                                             }
-                                        } else null
-
-                                        ElvanSelectionBar(
-                                            visible = true,
-                                            selectedCount = selectedItemIds.size,
-                                            onDelete = {
-                                                if (selectedItemIds.isNotEmpty()) {
-                                                    showBulkDeleteConfirm = true
+                                        },
+                                        onTabSelected = { tab, _ ->
+                                            if (selectedTab == tab) {
+                                                shellController.toggleHeader()
+                                            } else {
+                                                if (selectedTab == NavTab.Create || tab != NavTab.Create) {
+                                                    uruvakkuSegment = 0
                                                 }
-                                            },
-                                            onCopy = onSelectionCopy,
-                                            colors = colors
-                                        )
-                                    } else {
-                                        Box(
-                                            contentAlignment = Alignment.Center,
-                                            modifier = Modifier.fillMaxWidth()
-                                        ) {
-                                            BottomNavBar(
-                                                selectedTab = selectedTab,
-                                                hideContent = isSearchActive || showDateFilterSheet,
-                                                onAddClick = {
-                                                    when (selectedTab) {
-                                                        NavTab.Home -> {
-                                                            navigateToSubpage(ActiveSubpage.InvoiceEditor(null))
-                                                        }
-                                                        NavTab.Items -> {
-                                                            navigateToSubpage(ActiveSubpage.ItemEditor(null))
-                                                        }
-                                                        NavTab.Customers -> {
-                                                            navigateToSubpage(ActiveSubpage.MerchantEditor(null))
-                                                        }
-                                                        NavTab.Create -> {
-                                                            if (uruvakkuSegment == 0) {
-                                                                navigateToSubpage(ActiveSubpage.InvoiceEditor(null))
-                                                            } else {
-                                                                navigateToSubpage(ActiveSubpage.ReceiptEditor(null))
-                                                            }
-                                                        }
-                                                    }
-                                                },
-                                                onTabSelected = { tab, _ ->
-                                                    if (selectedTab == tab) {
-                                                        shellController.toggleHeader()
-                                                    } else {
-                                                        if (selectedTab == NavTab.Create || tab != NavTab.Create) {
-                                                            uruvakkuSegment = 0
-                                                        }
-                                                        val targetScrollState = when (tab) {
-                                                            NavTab.Home -> homeScrollState
-                                                            NavTab.Create -> createScrollState
-                                                            NavTab.Items -> itemsScrollState
-                                                            NavTab.Customers -> customersScrollState
-                                                        }
-                                                        scope.launch { targetScrollState.scrollToItem(0, 0) }
-                                                        selectedTab = tab
-                                                    }
+                                                val targetScrollState = when (tab) {
+                                                    NavTab.Home -> homeScrollState
+                                                    NavTab.Create -> createScrollState
+                                                    NavTab.Items -> itemsScrollState
+                                                    NavTab.Customers -> customersScrollState
                                                 }
-                                            )
-
-                                            ElvanSearchBar(
-                                                visible = isSearchActive,
-                                                query = currentSearchQuery,
-                                                onQueryChange = { newQuery ->
-                                                    when (selectedTab) {
-                                                        NavTab.Create -> {
-                                                            if (uruvakkuSegment == 0) {
-                                                                FactoryInvoiceRepository.searchQuery = newQuery
-                                                            } else {
-                                                                FactoryReceiptRepository.searchQuery = newQuery
-                                                            }
-                                                        }
-                                                        NavTab.Items -> {
-                                                            FactoryItemRepository.searchQuery = newQuery
-                                                        }
-                                                        NavTab.Customers -> {
-                                                            FactoryCustomerRepository.searchQuery = newQuery
-                                                        }
-                                                        else -> {}
-                                                    }
-                                                },
-                                                onClose = {
-                                                    isSearchActive = false
-                                                    FactoryInvoiceRepository.searchQuery = ""
-                                                    FactoryReceiptRepository.searchQuery = ""
-                                                    FactoryItemRepository.searchQuery = ""
-                                                    FactoryCustomerRepository.searchQuery = ""
-                                                },
-                                                colors = colors
-                                            )
+                                                scope.launch { targetScrollState.scrollToItem(0, 0) }
+                                                selectedTab = tab
+                                            }
                                         }
-                                    }
+                                    )
+
+                                    ElvanSearchBar(
+                                        visible = isSearchActive,
+                                        query = currentSearchQuery,
+                                        onQueryChange = { newQuery ->
+                                            when (selectedTab) {
+                                                NavTab.Create -> {
+                                                    if (uruvakkuSegment == 0) {
+                                                        FactoryInvoiceRepository.searchQuery = newQuery
+                                                    } else {
+                                                        FactoryReceiptRepository.searchQuery = newQuery
+                                                    }
+                                                }
+                                                NavTab.Items -> {
+                                                    FactoryItemRepository.searchQuery = newQuery
+                                                }
+                                                NavTab.Customers -> {
+                                                    FactoryCustomerRepository.searchQuery = newQuery
+                                                }
+                                                else -> {}
+                                            }
+                                        },
+                                        onClose = {
+                                            isSearchActive = false
+                                            FactoryInvoiceRepository.searchQuery = ""
+                                            FactoryReceiptRepository.searchQuery = ""
+                                            FactoryItemRepository.searchQuery = ""
+                                            FactoryCustomerRepository.searchQuery = ""
+                                        },
+                                        colors = colors
+                                    )
                                 }
                             }
                         }
