@@ -54,6 +54,7 @@ import com.elvan.udukkai.theme.ShellColors
 import com.elvan.udukkai.ui.navigation.MaterialSymbols
 import com.elvan.udukkai.ui.screens.create.components.ElvanPillShifter
 import com.elvan.udukkai.ui.screens.create.components.PillShifterItem
+import com.elvan.udukkai.ui.components.splash.UdukkaiSplashScreen
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -378,33 +379,15 @@ private fun LockPage(colors: ShellColors) {
     }
     LaunchedEffect(Unit) { if (fingerprintReady) askFingerprint() }
 
-    LockLayer(colors) {
-        LockBadge(colors)
-        if (awaitingBiometric) {
-            Spacer(Modifier.height(8.dp))
-            Text(
-                K.fingerprintUnlock.tr(),
-                style = TextStyle(fontFamily = ff, fontSize = 20.sp, fontWeight = FontWeight.SemiBold, textAlign = TextAlign.Center),
-                color = colors.textPrimary
-            )
-            Spacer(Modifier.height(6.dp))
-            Text(
-                K.fingerprintHint.tr(),
-                style = TextStyle(fontFamily = ff, fontSize = 14.sp, textAlign = TextAlign.Center),
-                color = colors.textPrimary.copy(alpha = 0.65f)
-            )
-            Spacer(Modifier.height(18.dp))
-            Text(
-                K.usePin.tr(),
-                style = TextStyle(fontFamily = ff, fontSize = 15.sp, fontWeight = FontWeight.SemiBold),
-                color = colors.textPrimary,
-                modifier = Modifier
-                    .clip(RoundedCornerShape(20.dp))
-                    .background(colors.iconBg)
-                    .clickable { awaitingBiometric = false }
-                    .padding(horizontal = 24.dp, vertical = 12.dp)
-            )
-        } else {
+    if (awaitingBiometric) {
+        AppBackHandler { }
+        UdukkaiSplashScreen(
+            colors = colors,
+            onUsePin = { awaitingBiometric = false }
+        )
+    } else {
+        LockLayer(colors) {
+            LockBadge(colors)
             PinPad(
                 prompt = K.pinEnter.tr(),
                 length = AppLock.length(),
@@ -425,22 +408,22 @@ private fun LockPage(colors: ShellColors) {
                     modifier = Modifier.clip(RoundedCornerShape(20.dp)).background(colors.iconBg).clickable { askFingerprint() }.padding(horizontal = 20.dp, vertical = 12.dp)
                 )
             }
+            // A forgotten PIN: the Google account that is signed in on this phone allows choosing a new one
+            Text(
+                K.forgotPin.tr(),
+                style = TextStyle(fontFamily = ff, fontSize = 14.sp),
+                color = colors.textPrimary.copy(alpha = 0.7f),
+                modifier = Modifier.clip(CircleShape).clickable(enabled = !busy) {
+                    busy = true
+                    scope.launch {
+                        val result = try { AuthManager.signInWithGoogle() } catch (_: Throwable) { GoogleSignInResult.Failed }
+                        busy = false
+                        val sameAccount = result is GoogleSignInResult.Success && (accountBefore == null || result.email.equals(accountBefore, ignoreCase = true))
+                        if (sameAccount) settingNew = true else if (result !is GoogleSignInResult.Cancelled) ElvanSnackbar.show(recoverFailed)
+                    }
+                }.padding(horizontal = 16.dp, vertical = 10.dp)
+            )
         }
-        // A forgotten PIN: the Google account that is signed in on this phone allows choosing a new one
-        Text(
-            K.forgotPin.tr(),
-            style = TextStyle(fontFamily = ff, fontSize = 14.sp),
-            color = colors.textPrimary.copy(alpha = 0.7f),
-            modifier = Modifier.clip(CircleShape).clickable(enabled = !busy) {
-                busy = true
-                scope.launch {
-                    val result = try { AuthManager.signInWithGoogle() } catch (_: Throwable) { GoogleSignInResult.Failed }
-                    busy = false
-                    val sameAccount = result is GoogleSignInResult.Success && (accountBefore == null || result.email.equals(accountBefore, ignoreCase = true))
-                    if (sameAccount) settingNew = true else if (result !is GoogleSignInResult.Cancelled) ElvanSnackbar.show(recoverFailed)
-                }
-            }.padding(horizontal = 16.dp, vertical = 10.dp)
-        )
     }
 
     if (settingNew) PinSheet(PinMode.CREATE, colors) { pin -> settingNew = false; if (pin != null) AppLock.unlockedThisRun = true }
