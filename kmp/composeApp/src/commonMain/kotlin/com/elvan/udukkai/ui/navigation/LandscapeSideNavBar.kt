@@ -55,7 +55,7 @@ private fun pillNearnessVertical(pillTopPx: Float, pillHeightPx: Float, slotHeig
 
 /**
  * One tab slot in the landscape vertical rail.
- * Places the localized Pure Tamil label DIRECTLY BELOW the icon (vertical stack) so it looks identical to BottomNavBar tabs.
+ * Places the localized Pure Tamil label DIRECTLY BELOW the icon (vertical stack) so it matches BottomNavBar tabs.
  */
 @Composable
 private fun LandscapeVerticalTab(
@@ -129,27 +129,31 @@ private fun LandscapeVerticalTab(
 }
 
 /**
- * Circular dynamic island action button for the trailing rail (e.g. 3-dot More, Plus Add, Back).
+ * Top-Right floating action button in Landscape mode.
+ * - On main screen: displays the Plus Add action button.
+ * - Inside subpages: displays the Back Chevron (<) button at the exact same location.
  */
 @Composable
-private fun LandscapeRailCircleButton(
+fun LandscapeTopActionButton(
     icon: ImageVector,
     contentDescription: String?,
     onClick: () -> Unit,
-    colors: ShellColors,
-    isDark: Boolean,
+    colors: ShellColors = rememberShellColors(),
     modifier: Modifier = Modifier
 ) {
+    val isDark = colors.isDark
     val interactionSource = remember { MutableInteractionSource() }
     val isPressed by interactionSource.collectIsPressedAsState()
     val scale by animateFloatAsState(
         targetValue = if (isPressed) 0.92f else 1.0f,
         animationSpec = tween(120, easing = CubicBezierEasing(0.0f, 0.0f, 0.2f, 1.0f)),
-        label = "railBtnScale"
+        label = "landscapeTopBtnScale"
     )
 
     Box(
         modifier = modifier
+            .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal + WindowInsetsSides.Top))
+            .padding(end = 16.dp, top = 16.dp)
             .size(50.dp)
             .graphicsLayer {
                 scaleX = scale
@@ -178,22 +182,17 @@ private fun LandscapeRailCircleButton(
             imageVector = icon,
             contentDescription = contentDescription,
             tint = colors.textPrimary,
-            modifier = Modifier.size(22.dp)
+            modifier = Modifier.size(24.dp)
         )
     }
 }
 
 /**
- * Udukkai Landscape Floating Side Navigation Bar (iPhone Duo Architecture).
- * - Docked on the trailing (right) vertical edge, safely respecting camera cutout and navigation bar.
- * - Order in rail from top to bottom:
- *     1. [Optional] Back Button (<)
- *     2. [Optional] 3-Dot More Menu Button (...) with anchored popup menu
- *     3. [Optional] Plus Action Button (+)
- *     4. Tab Bar Floating Capsule (Situated BELOW the Plus button)
- * - Compact Resting State: pure icons (46.dp slot height, 56.dp width).
- * - On Long Press / Firm Drag: smoothly expands vertically (58.dp slot height), showing Pure Tamil labels
- *   BELOW the icons with liquid glass PillMotion stretch and glide physics.
+ * Udukkai Landscape Floating Side Navigation Bar (Bottom-Right Trailing Capsule).
+ * - Anchored in the bottom-right corner of the landscape screen.
+ * - In compact state: 54.dp wide, 46.dp per slot (icons only).
+ * - On long press / firm drag: expands BOTH horizontally (to 76.dp) AND vertically (to 58.dp per slot)
+ *   with Apple fluid spring physics, smoothly revealing labels beneath icons without text clipping.
  */
 @Composable
 fun LandscapeSideNavBar(
@@ -202,10 +201,6 @@ fun LandscapeSideNavBar(
     onInteraction: (Boolean) -> Unit = {},
     onDragProgress: (Float) -> Unit = {},
     hideContent: Boolean = false,
-    onAddClick: (() -> Unit)? = null,
-    onMoreClick: (() -> Unit)? = null,
-    onBackClick: (() -> Unit)? = null,
-    moreMenuContent: @Composable () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val tabs = NavTab.entries
@@ -225,17 +220,31 @@ fun LandscapeSideNavBar(
     var localLockedIndex by remember { mutableStateOf<Int?>(null) }
     var snapNextFrame by remember { mutableStateOf(false) }
 
-    // Dynamic slot height: 46.dp compact -> 58.dp expanded (showing labels below icons)
+    // Apple fluid dual-axis expansion:
+    // Width expands 54.dp -> 76.dp so labels have comfortable breathing room
+    val railWidth by animateDpAsState(
+        targetValue = if (isExpanded) 76.dp else 54.dp,
+        animationSpec = spring(dampingRatio = 0.75f, stiffness = 420f),
+        label = "railWidth"
+    )
+
+    // Slot height expands 46.dp -> 58.dp to comfortably fit labels below icons
     val slotHeight by animateDpAsState(
         targetValue = if (isExpanded) 58.dp else 46.dp,
-        animationSpec = spring(dampingRatio = 0.75f, stiffness = 450f),
+        animationSpec = spring(dampingRatio = 0.75f, stiffness = 420f),
         label = "railSlotHeight"
     )
 
     val indicatorHeight by animateDpAsState(
         targetValue = if (isExpanded) 50.dp else 38.dp,
-        animationSpec = spring(dampingRatio = 0.75f, stiffness = 450f),
+        animationSpec = spring(dampingRatio = 0.75f, stiffness = 420f),
         label = "railIndicatorHeight"
+    )
+
+    val indicatorWidth by animateDpAsState(
+        targetValue = if (isExpanded) 66.dp else 44.dp,
+        animationSpec = spring(dampingRatio = 0.75f, stiffness = 420f),
+        label = "railIndicatorWidth"
     )
 
     val labelAlpha by animateFloatAsState(
@@ -251,7 +260,7 @@ fun LandscapeSideNavBar(
     )
 
     val pillScale by animateFloatAsState(
-        targetValue = if (isInteracting) 1.06f else 1.0f,
+        targetValue = if (isInteracting) 1.05f else 1.0f,
         animationSpec = PillMotion.press,
         label = "railPillScale"
     )
@@ -317,51 +326,13 @@ fun LandscapeSideNavBar(
     )
 
     if (navBarAlpha > 0f) {
-        Column(
+        Box(
             modifier = modifier
                 .graphicsLayer { alpha = navBarAlpha }
                 .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal + WindowInsetsSides.Bottom))
-                .padding(end = 12.dp, bottom = 14.dp),
-            horizontalAlignment = Alignment.End,
-            verticalArrangement = Arrangement.spacedBy(8.dp)
+                .padding(end = 16.dp, bottom = 16.dp),
+            contentAlignment = Alignment.BottomEnd
         ) {
-            // 1. Back Button (if provided)
-            if (onBackClick != null) {
-                LandscapeRailCircleButton(
-                    icon = MaterialSymbols.Rounded.ArrowBack,
-                    contentDescription = K.back.tr(),
-                    onClick = onBackClick,
-                    colors = colors,
-                    isDark = isDark
-                )
-            }
-
-            // 2. 3-Dot More Menu Button (with anchored popup menu)
-            if (onMoreClick != null) {
-                Box {
-                    LandscapeRailCircleButton(
-                        icon = MaterialSymbols.Rounded.MoreVert,
-                        contentDescription = K.more.tr(),
-                        onClick = onMoreClick,
-                        colors = colors,
-                        isDark = isDark
-                    )
-                    moreMenuContent()
-                }
-            }
-
-            // 3. Plus Add Button
-            if (onAddClick != null) {
-                LandscapeRailCircleButton(
-                    icon = MaterialSymbols.Rounded.Add,
-                    contentDescription = K.add.tr(),
-                    onClick = onAddClick,
-                    colors = colors,
-                    isDark = isDark
-                )
-            }
-
-            // 4. Tab Bar Floating Capsule (BELOW the Plus button)
             Box(
                 modifier = Modifier
                     .graphicsLayer {
@@ -370,10 +341,10 @@ fun LandscapeSideNavBar(
                         clip = false
                     }
                     .height((slotHeight * itemCount) + (verticalPadding * 2))
-                    .width(56.dp),
+                    .width(railWidth),
                 contentAlignment = Alignment.TopCenter
             ) {
-                // Layer 1: Translucent Capsule Background & Border
+                // Translucent Capsule Background & Border
                 Box(
                     modifier = Modifier
                         .matchParentSize()
@@ -389,7 +360,7 @@ fun LandscapeSideNavBar(
                         )
                 )
 
-                // Layer 2: Gesture Drag Area
+                // Gesture Drag Area
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
@@ -421,7 +392,7 @@ fun LandscapeSideNavBar(
                                             val elapsed = change.uptimeMillis - downTime
                                             val pressure = change.pressure
 
-                                            // Firm press or hold (>180ms) expands labels below icons
+                                            // Dual-axis expansion on firm press or hold (>180ms)
                                             if (pressure > 1.15f || elapsed > 180L) {
                                                 isExpanded = true
                                             }
@@ -469,12 +440,12 @@ fun LandscapeSideNavBar(
                             .fillMaxSize(),
                         contentAlignment = Alignment.TopCenter
                     ) {
-                        // Master Background Pill (Detached & Draggable along vertical Y axis)
+                        // Master Background Selection Pill
                         Box(
                             modifier = Modifier
                                 .offset { IntOffset(0, (animatedTop.value + overlapPy).roundToInt()) }
                                 .height(indicatorHeight)
-                                .fillMaxWidth()
+                                .width(indicatorWidth)
                                 .graphicsLayer {
                                     val stretch = PillMotion.stretch(targetTopPx, animatedTop.value, slotHeightPx)
                                     scaleY = pillScale * (1f + stretch * 0.35f)
@@ -491,7 +462,7 @@ fun LandscapeSideNavBar(
                                 )
                         )
 
-                        // Tab Items Column
+                        // Vertical Tab Items
                         Column(
                             modifier = Modifier.fillMaxSize(),
                             verticalArrangement = Arrangement.Center

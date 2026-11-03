@@ -53,6 +53,7 @@ import com.elvan.udukkai.ui.components.shell.*
 import com.elvan.udukkai.ui.navigation.ActiveSubpage
 import com.elvan.udukkai.ui.navigation.BottomNavBar
 import com.elvan.udukkai.ui.navigation.LandscapeSideNavBar
+import com.elvan.udukkai.ui.navigation.LandscapeTopActionButton
 import com.elvan.udukkai.ui.components.shell.LandscapeEmptyDetailPane
 import com.elvan.udukkai.ui.navigation.ElvanSearchBar
 import com.elvan.udukkai.ui.navigation.MaterialSymbols
@@ -514,9 +515,8 @@ fun FactoryHomeScreen() {
                                 }
                             }
 
-                            // 3-Dot More Menu (மேலும்) - only in portrait top bar
-                            if (!isLandscape) {
-                                Box {
+                            // 3-Dot More Menu (மேலும்) - in leading header
+                            Box {
                                     ElvanTopBarIconButton(
                                         onClick = {
                                             ElvanMenuState.isMenuOpen = true
@@ -580,7 +580,6 @@ fun FactoryHomeScreen() {
                                         items = menuItems
                                     )
                                 }
-                            }
                         },
                         navbar = {
                             val shellController = LocalElvanShellController.current
@@ -627,141 +626,6 @@ fun FactoryHomeScreen() {
                                         onCopy = onSelectionCopy,
                                         colors = colors
                                     )
-                                }
-                            } else if (isLandscape) {
-                                LandscapeSideNavBar(
-                                    selectedTab = selectedTab,
-                                    hideContent = isSearchActive || showDateFilterSheet,
-                                    onMoreClick = {
-                                        ElvanMenuState.isMenuOpen = true
-                                        menuExpanded = true
-                                    },
-                                    moreMenuContent = {
-                                        val settingsLabel = K.settings.tr()
-                                        val meetpagamLabel = K.recycleBin.tr()
-                                        val thaerndheduLabel = K.select.tr()
-                                        val sideMenuItems = buildList {
-                                            add(
-                                                ElvanPopupMenuItem(
-                                                    title = settingsLabel,
-                                                    icon = MaterialSymbols.Rounded.Settings,
-                                                    onClick = {
-                                                        ElvanMenuState.isMenuOpen = false
-                                                        menuExpanded = false
-                                                        navigateToSubpage(ActiveSubpage.Settings)
-                                                    }
-                                                )
-                                            )
-                                            add(
-                                                ElvanPopupMenuItem(
-                                                    title = meetpagamLabel,
-                                                    icon = MaterialSymbols.Rounded.Delete,
-                                                    onClick = {
-                                                        ElvanMenuState.isMenuOpen = false
-                                                        menuExpanded = false
-                                                        navigateToSubpage(ActiveSubpage.RecycleBin)
-                                                    }
-                                                )
-                                            )
-                                            if (selectedTab != NavTab.Home) {
-                                                add(
-                                                    ElvanPopupMenuItem(
-                                                        title = thaerndheduLabel,
-                                                        icon = MaterialSymbols.Rounded.CheckCircleFill,
-                                                        onClick = {
-                                                            ElvanMenuState.isMenuOpen = false
-                                                            menuExpanded = false
-                                                            isSelectionMode = true
-                                                        }
-                                                    )
-                                                )
-                                            }
-                                        }
-                                        ElvanPopupMenu(
-                                            expanded = menuExpanded,
-                                            onDismissRequest = {
-                                                ElvanMenuState.isMenuOpen = false
-                                                menuExpanded = false
-                                            },
-                                            colors = colors,
-                                            items = sideMenuItems
-                                        )
-                                    },
-                                    onAddClick = {
-                                        when (selectedTab) {
-                                            NavTab.Home -> {
-                                                navigateToSubpage(ActiveSubpage.InvoiceEditor(null))
-                                            }
-                                            NavTab.Items -> {
-                                                navigateToSubpage(ActiveSubpage.ItemEditor(null))
-                                            }
-                                            NavTab.Customers -> {
-                                                navigateToSubpage(ActiveSubpage.MerchantEditor(null))
-                                            }
-                                            NavTab.Create -> {
-                                                if (uruvakkuSegment == 0) {
-                                                    navigateToSubpage(ActiveSubpage.InvoiceEditor(null))
-                                                } else {
-                                                    navigateToSubpage(ActiveSubpage.ReceiptEditor(null))
-                                                }
-                                            }
-                                        }
-                                    },
-                                    onTabSelected = { tab, _ ->
-                                        if (selectedTab == tab) {
-                                            shellController.toggleHeader()
-                                        } else {
-                                            if (selectedTab == NavTab.Create || tab != NavTab.Create) {
-                                                uruvakkuSegment = 0
-                                            }
-                                            val targetScrollState = when (tab) {
-                                                NavTab.Home -> homeScrollState
-                                                NavTab.Create -> createScrollState
-                                                NavTab.Items -> itemsScrollState
-                                                NavTab.Customers -> customersScrollState
-                                            }
-                                            scope.launch { targetScrollState.scrollToItem(0, 0) }
-                                            selectedTab = tab
-                                        }
-                                    }
-                                )
-
-                                if (isSearchActive) {
-                                    Box(
-                                        contentAlignment = Alignment.BottomCenter,
-                                        modifier = Modifier.fillMaxWidth()
-                                    ) {
-                                        ElvanSearchBar(
-                                            visible = true,
-                                            query = currentSearchQuery,
-                                            onQueryChange = { newQuery ->
-                                                when (selectedTab) {
-                                                    NavTab.Create -> {
-                                                        if (uruvakkuSegment == 0) {
-                                                            FactoryInvoiceRepository.searchQuery = newQuery
-                                                        } else {
-                                                            FactoryReceiptRepository.searchQuery = newQuery
-                                                        }
-                                                    }
-                                                    NavTab.Items -> {
-                                                        FactoryItemRepository.searchQuery = newQuery
-                                                    }
-                                                    NavTab.Customers -> {
-                                                        FactoryCustomerRepository.searchQuery = newQuery
-                                                    }
-                                                    else -> {}
-                                                }
-                                            },
-                                            onClose = {
-                                                isSearchActive = false
-                                                FactoryInvoiceRepository.searchQuery = ""
-                                                FactoryReceiptRepository.searchQuery = ""
-                                                FactoryItemRepository.searchQuery = ""
-                                                FactoryCustomerRepository.searchQuery = ""
-                                            },
-                                            colors = colors
-                                        )
-                                    }
                                 }
                             } else {
                                 Box(
@@ -1042,11 +906,13 @@ fun FactoryHomeScreen() {
                         )
 
                         // Right Panel (Detail View): Occupies the remaining width
+                        // Inset by 84.dp on the trailing edge so detail content/tiles never cross under the floating side controls
                         Box(
                             modifier = Modifier
                                 .weight(1f)
                                 .fillMaxHeight()
                                 .background(colors.background)
+                                .padding(end = 84.dp)
                         ) {
                             AnimatedContent(
                                 targetState = subpageStack.lastOrNull(),
@@ -1069,77 +935,50 @@ fun FactoryHomeScreen() {
                         }
                     }
 
-                    // Trailing Navigation Rail (Floating along the far right edge of the entire display)
+                    // Floating Controls on the Trailing Edge (Apple HIG Landscape Controls)
                     if (!isSelectionMode) {
+                        // Top-Right Action Button (Stationary at TopEnd)
+                        // Shows ArrowBack (<) when viewing a subpage; shows Add (+) on the main screen
+                        AnimatedContent(
+                            targetState = subpageStack.isNotEmpty(),
+                            transitionSpec = {
+                                (fadeIn(tween(180)) + scaleIn(initialScale = 0.85f, animationSpec = tween(180)))
+                                    .togetherWith(fadeOut(tween(140)) + scaleOut(targetScale = 0.85f, animationSpec = tween(140)))
+                            },
+                            modifier = Modifier.align(Alignment.TopEnd),
+                            label = "TopActionButtonTransition"
+                        ) { hasSubpage ->
+                            if (hasSubpage) {
+                                LandscapeTopActionButton(
+                                    icon = MaterialSymbols.Rounded.ArrowBack,
+                                    contentDescription = K.back.tr(),
+                                    onClick = popSubpage,
+                                    colors = colors
+                                )
+                            } else {
+                                LandscapeTopActionButton(
+                                    icon = MaterialSymbols.Rounded.Add,
+                                    contentDescription = K.add.tr(),
+                                    onClick = {
+                                        when (selectedTab) {
+                                            NavTab.Home -> navigateToSubpage(ActiveSubpage.InvoiceEditor(null))
+                                            NavTab.Items -> navigateToSubpage(ActiveSubpage.ItemEditor(null))
+                                            NavTab.Customers -> navigateToSubpage(ActiveSubpage.MerchantEditor(null))
+                                            NavTab.Create -> {
+                                                if (uruvakkuSegment == 0) navigateToSubpage(ActiveSubpage.InvoiceEditor(null))
+                                                else navigateToSubpage(ActiveSubpage.ReceiptEditor(null))
+                                            }
+                                        }
+                                    },
+                                    colors = colors
+                                )
+                            }
+                        }
+
+                        // Bottom-Right Trailing Navigation Rail (Dual-axis Apple fluid spring physics)
                         LandscapeSideNavBar(
                             selectedTab = selectedTab,
                             hideContent = isSearchActive || showDateFilterSheet,
-                            onMoreClick = {
-                                ElvanMenuState.isMenuOpen = true
-                                menuExpanded = true
-                            },
-                            moreMenuContent = {
-                                val settingsLabel = K.settings.tr()
-                                val meetpagamLabel = K.recycleBin.tr()
-                                val thaerndheduLabel = K.select.tr()
-                                val sideMenuItems = buildList {
-                                    add(
-                                        ElvanPopupMenuItem(
-                                            title = settingsLabel,
-                                            icon = MaterialSymbols.Rounded.Settings,
-                                            onClick = {
-                                                ElvanMenuState.isMenuOpen = false
-                                                menuExpanded = false
-                                                navigateToSubpage(ActiveSubpage.Settings)
-                                            }
-                                        )
-                                    )
-                                    add(
-                                        ElvanPopupMenuItem(
-                                            title = meetpagamLabel,
-                                            icon = MaterialSymbols.Rounded.Delete,
-                                            onClick = {
-                                                ElvanMenuState.isMenuOpen = false
-                                                menuExpanded = false
-                                                navigateToSubpage(ActiveSubpage.RecycleBin)
-                                            }
-                                        )
-                                    )
-                                    if (selectedTab != NavTab.Home) {
-                                        add(
-                                            ElvanPopupMenuItem(
-                                                title = thaerndheduLabel,
-                                                icon = MaterialSymbols.Rounded.CheckCircleFill,
-                                                onClick = {
-                                                    ElvanMenuState.isMenuOpen = false
-                                                    menuExpanded = false
-                                                    isSelectionMode = true
-                                                }
-                                            )
-                                        )
-                                    }
-                                }
-                                ElvanPopupMenu(
-                                    expanded = menuExpanded,
-                                    onDismissRequest = {
-                                        ElvanMenuState.isMenuOpen = false
-                                        menuExpanded = false
-                                    },
-                                    colors = colors,
-                                    items = sideMenuItems
-                                )
-                            },
-                            onAddClick = {
-                                when (selectedTab) {
-                                    NavTab.Home -> navigateToSubpage(ActiveSubpage.InvoiceEditor(null))
-                                    NavTab.Items -> navigateToSubpage(ActiveSubpage.ItemEditor(null))
-                                    NavTab.Customers -> navigateToSubpage(ActiveSubpage.MerchantEditor(null))
-                                    NavTab.Create -> {
-                                        if (uruvakkuSegment == 0) navigateToSubpage(ActiveSubpage.InvoiceEditor(null))
-                                        else navigateToSubpage(ActiveSubpage.ReceiptEditor(null))
-                                    }
-                                }
-                            },
                             onTabSelected = { tab, _ ->
                                 if (selectedTab != tab) {
                                     if (selectedTab == NavTab.Create || tab != NavTab.Create) {
