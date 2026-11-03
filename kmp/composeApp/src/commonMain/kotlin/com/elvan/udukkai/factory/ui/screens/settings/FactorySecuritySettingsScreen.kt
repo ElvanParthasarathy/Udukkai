@@ -1,8 +1,8 @@
 package com.elvan.udukkai.factory.ui.screens.settings
 
 import com.elvan.udukkai.core.security.AppLock
-import com.elvan.udukkai.core.security.authenticateDeviceLock
-import com.elvan.udukkai.core.security.deviceLockAvailable
+import com.elvan.udukkai.core.security.authenticateFingerprint
+import com.elvan.udukkai.core.security.fingerprintAvailable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
@@ -41,8 +41,9 @@ fun FactorySecuritySettingsScreen(
     var showSignOutLoading by remember { mutableStateOf(false) }
     val guard = rememberPinGuard(colors)
     var lockTick by remember { mutableStateOf(0) }
+    var changePin by remember { mutableStateOf(false) }
     val lockTitle = K.appLock.tr()
-    val noScreenLockMsg = K.appLockNeedsScreenLock.tr()
+    val usePinText = K.usePin.tr()
 
 
 
@@ -90,24 +91,32 @@ fun FactorySecuritySettingsScreen(
                 )
                 ElvanSettingsDivider(colors = colors)
 
-                // App lock: the phone's own screen lock, asked at opening and before the actions that can lose or give away data
+                // App PIN: compulsory, 6 or 8 digits, its own (not the phone's screen lock)
                 ElvanSettingsRow(
                     icon = MaterialSymbols.Rounded.Lock,
-                    title = lockTitle,
-                    description = (if (lockLabelOn(lockTick)) K.pinOn else K.pinOff).tr() + "\n" + K.appLockHint.tr(),
-                    onClick = {
-                        if (!deviceLockAvailable()) {
-                            // The phone's screen lock is gone: the switch can still be turned off, never on
-                            if (AppLock.isEnabled()) { AppLock.setEnabled(false); lockTick++ } else ElvanSnackbar.show(noScreenLockMsg)
-                        } else {
-                            // Turning it on or off needs the phone's lock too, so only its owner can change it
-                            authenticateDeviceLock(lockTitle) { ok ->
-                                if (ok) { AppLock.setEnabled(!AppLock.isEnabled()); lockTick++ }
-                            }
-                        }
-                    },
+                    title = K.appPin.tr(),
+                    description = "${if (lockTick >= 0) AppLock.length() else 0} ${K.pinDigitsWord.tr()}\n" + K.appPinHint.tr(),
+                    onClick = { guard { changePin = true } },
                     colors = colors
                 )
+
+                if (fingerprintAvailable()) {
+                    ElvanSettingsDivider(colors = colors)
+                    ElvanSettingsRow(
+                        icon = MaterialSymbols.Rounded.Lock,
+                        title = K.fingerprintUnlock.tr(),
+                        description = (if (lockTick >= 0 && AppLock.fingerprintOn()) K.pinOn else K.pinOff).tr() + "\n" + K.fingerprintHint.tr(),
+                        onClick = {
+                            if (AppLock.fingerprintOn()) {
+                                guard { AppLock.setFingerprint(false); lockTick++ }
+                            } else {
+                                // Turning it on needs a fingerprint now, to be sure it works
+                                authenticateFingerprint(lockTitle, usePinText) { ok -> if (ok) { AppLock.setFingerprint(true); lockTick++ } }
+                            }
+                        },
+                        colors = colors
+                    )
+                }
                 ElvanSettingsDivider(colors = colors)
 
                 // 2. Sign Out (Veliyaeru)
@@ -146,6 +155,8 @@ fun FactorySecuritySettingsScreen(
         )
     }
 
+    if (changePin) PinSheet(PinMode.CREATE, colors) { changePin = false; lockTick++ }
+
     if (showSyncLoading) {
         ElvanLoadingOverlay(
             text = K.syncing.tr(),
@@ -161,5 +172,3 @@ fun FactorySecuritySettingsScreen(
     }
 }
 
-// Reading the tick makes the row follow the switch
-private fun lockLabelOn(tick: Int): Boolean = tick >= 0 && AppLock.isEnabled()

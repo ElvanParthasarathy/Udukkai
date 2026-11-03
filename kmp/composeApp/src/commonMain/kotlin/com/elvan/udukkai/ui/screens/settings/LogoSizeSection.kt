@@ -166,7 +166,12 @@ fun LogoAdjuster(payloadJson: String, prefix: String, place: LogoPlace, saved: L
                     )
                 }
             }
-            LogoSlider(place.scale, 0.5f..1.3f, { onPlace(latest.copy(scale = it)) }, colors)
+            androidx.compose.material3.Slider(
+                value = place.scale,
+                onValueChange = { onPlace(latest.copy(scale = it)) },
+                valueRange = 0.5f..1.3f,
+                modifier = Modifier.fillMaxWidth()
+            )
         }
     }
 }
@@ -285,38 +290,5 @@ fun LogoPlaceSection(profile: BusinessProfile, isFactory: Boolean, colors: Shell
                 }
             )
         }
-    }
-}
-
-/** Thin track, round thumb, in the app's own colours; tap or drag anywhere on it. */
-@Composable
-private fun LogoSlider(value: Float, range: ClosedFloatingPointRange<Float>, onChange: (Float) -> Unit, colors: ShellColors) {
-    val fraction = ((value - range.start) / (range.endInclusive - range.start)).coerceIn(0f, 1f)
-    val latest by rememberUpdatedState(onChange)
-    Canvas(
-        Modifier.fillMaxWidth().height(32.dp)
-            .pointerInput(Unit) {
-                awaitEachGesture {
-                    val down = awaitFirstDown(requireUnconsumed = false)
-                    val pad = 11.dp.toPx()
-                    fun at(x: Float) = latest(range.start + ((x - pad) / (size.width - 2 * pad)).coerceIn(0f, 1f) * (range.endInclusive - range.start))
-                    at(down.position.x)
-                    down.consume()
-                    while (true) {
-                        val change = awaitPointerEvent().changes.firstOrNull { it.id == down.id } ?: break
-                        if (!change.pressed) break
-                        at(change.position.x)
-                        change.consume()
-                    }
-                }
-            }
-    ) {
-        val pad = 11.dp.toPx()
-        val y = size.height / 2f
-        val x = pad + fraction * (size.width - 2 * pad)
-        val track = 4.dp.toPx()
-        drawLine(colors.textPrimary.copy(alpha = 0.18f), Offset(pad, y), Offset(size.width - pad, y), track, androidx.compose.ui.graphics.StrokeCap.Round)
-        drawLine(colors.textPrimary, Offset(pad, y), Offset(x, y), track, androidx.compose.ui.graphics.StrokeCap.Round)
-        drawCircle(colors.textPrimary, radius = 10.dp.toPx(), center = Offset(x, y))
     }
 }
