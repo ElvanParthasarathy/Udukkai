@@ -56,18 +56,27 @@ fun TextilesSettingsScreen(
     // History stack for correct pop destinations (Hub is always at the bottom)
     val routeHistory = remember { mutableStateListOf<SettingsRoute>(SettingsRoute.Hub) }
 
+    var lastNavTime by remember { mutableLongStateOf(0L) }
+
     fun navigateTo(route: SettingsRoute) {
+        val now = System.currentTimeMillis()
+        if (now - lastNavTime < 240L) return
         if (routeHistory.last() == route) return
+        lastNavTime = now
         routeHistory.add(route)
         navState = SettingsNavState(route, navState.index + 1)
     }
 
     val handleBack: () -> Unit = {
-        if (routeHistory.size > 1) {
-            routeHistory.removeLast()
-            navState = SettingsNavState(routeHistory.last(), navState.index - 1)
-        } else {
-            onBack()
+        val now = System.currentTimeMillis()
+        if (now - lastNavTime >= 200L) {
+            lastNavTime = now
+            if (routeHistory.size > 1) {
+                routeHistory.removeLast()
+                navState = SettingsNavState(routeHistory.last(), navState.index - 1)
+            } else {
+                onBack()
+            }
         }
     }
 
