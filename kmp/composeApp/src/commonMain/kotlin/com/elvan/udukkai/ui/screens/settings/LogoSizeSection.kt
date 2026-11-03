@@ -28,6 +28,8 @@ import com.elvan.udukkai.core.print.BillHeaderPreview
 import com.elvan.udukkai.core.print.PrintPayload
 import com.elvan.udukkai.data.model.CustomerModel
 import com.elvan.udukkai.data.model.InvoiceModel
+import com.elvan.udukkai.data.model.ReceiptModel
+import com.elvan.udukkai.core.utils.MiniJson
 import com.elvan.udukkai.data.settings.BusinessProfile
 import com.elvan.udukkai.data.settings.PrintNumbers
 import com.elvan.udukkai.localization.LanguageManager
@@ -35,6 +37,7 @@ import com.elvan.udukkai.localization.K
 import com.elvan.udukkai.localization.tr
 import com.elvan.udukkai.theme.LocalAppFontFamily
 import com.elvan.udukkai.theme.ShellColors
+import com.elvan.udukkai.ui.components.shell.*
 import kotlinx.coroutines.delay
 import kotlin.math.roundToInt
 
@@ -43,14 +46,21 @@ data class LogoPlace(val x: Float = 0f, val y: Float = 0f, val scale: Float = 1f
     fun moved(dx: Float, dy: Float) = copy(x = (x + dx).coerceIn(-MAX_MOVE, MAX_MOVE), y = (y + dy).coerceIn(-MAX_MOVE, MAX_MOVE))
 
     /** These settings written into the print settings JSON under [prefix] ("logo" or "wideLogo"). */
-    fun writeTo(printSettingsJson: String, prefix: String): String {
-        var json = PrintNumbers.set(printSettingsJson, prefix + "Scale", scale.toDouble())
-        json = PrintNumbers.set(json, prefix + "X", x.toDouble(), default = 0.0)
-        return PrintNumbers.set(json, prefix + "Y", y.toDouble(), default = 0.0)
+    fun writeTo(printSettingsJson: String, prefix: String, explicit: Boolean = false): String {
+        // explicit keeps the values even when they are the defaults (a receipt's own place must not fall back to the invoice's)
+        var json = PrintNumbers.set(printSettingsJson, prefix + "Scale", scale.toDouble(), default = if (explicit) Double.NaN else 1.0)
+        json = PrintNumbers.set(json, prefix + "X", x.toDouble(), default = if (explicit) Double.NaN else 0.0)
+        return PrintNumbers.set(json, prefix + "Y", y.toDouble(), default = if (explicit) Double.NaN else 0.0)
     }
 
     companion object {
         const val MAX_MOVE = 250f
+
+        /** The place under [prefix]; where that has no setting, the one under [fallbackPrefix] (what is printed in that case). */
+        fun readEffective(printSettingsJson: String, prefix: String, fallbackPrefix: String?): LogoPlace {
+            val has = MiniJson.parseObject(printSettingsJson).containsKey(prefix + "Scale") || MiniJson.parseObject(printSettingsJson).containsKey(prefix + "X")
+            return if (has || fallbackPrefix == null) read(printSettingsJson, prefix) else read(printSettingsJson, fallbackPrefix)
+        }
 
         fun read(printSettingsJson: String, prefix: String) = LogoPlace(
             x = PrintNumbers.get(printSettingsJson, prefix + "X", 0.0).toFloat(),
@@ -61,13 +71,17 @@ data class LogoPlace(val x: Float = 0f, val y: Float = 0f, val scale: Float = 1f
 }
 
 /** A sample bill of this business with the logo being adjusted, for [BillHeaderPreview]; only the top of it is shown. */
-fun logoPreviewPayload(profile: BusinessProfile, wide: Boolean, imagePath: String?, isFactory: Boolean): String {
+fun logoPreviewPayload(profile: BusinessProfile, wide: Boolean, imagePath: String?, isFactory: Boolean, receipt: Boolean = false): String {
     val shown = profile.copy()
     if (wide) shown.wideLogo = imagePath.orEmpty() else shown.logo = imagePath.orEmpty()
     shown.headerLayout = if (wide) "wide" else "small"
     val invoice = InvoiceModel(invoiceNumber = "SAMPLE-001")
     val customer = CustomerModel(name = mapOf("en" to "Sample Customer", "ta" to "மாதிரி வாங்குநர்"))
     val lang = LanguageManager.activeLanguageCode
+    if (receipt) {
+        val sample = ReceiptModel(receiptNumber = "SAMPLE-001", customerName = customer.name, amount = 1000.0)
+        return PrintPayload.forReceipt(sample, shown, emptyList(), isFactory, lang)
+    }
     return if (isFactory) PrintPayload.forFactoryInvoice(invoice, shown, customer, lang)
     else PrintPayload.forTextilesInvoice(invoice, shown, customer, lang)
 }
@@ -235,5 +249,65 @@ private fun LogoJoystick(onMove: (Float, Float) -> Unit, colors: ShellColors) {
         drawLine(ring, Offset(10.dp.toPx(), c.y), Offset(size.width - 10.dp.toPx(), c.y), 1.dp.toPx())
         drawCircle(ring, radius = reach, center = c, style = Stroke(1.dp.toPx()))
         drawCircle(if (colors.isDark) Color(0xFFCCCCCC) else Color(0xFF666666), radius = 15.dp.toPx(), center = c + knob * reach)
+    }
+}
+
+/**
+ * The logo settings of the Create page: the one logo the bill header uses (the small or the wide one, as the header
+ * style says), with its place and size on the invoice and on the receipt, each set apart. Shown only when that logo
+ * exists. Stored in the print settings (the database and the cloud sync).
+ */
+@Composable
+fun LogoPlaceSection(profile: BusinessProfile, isFactory: Boolean, colors: ShellColors, onSave: (BusinessProfile) -> Unit) {
+    val wide = profile.headerLayout == "wide" && profile.wideLogo.isNotEmpty()
+    val path = if (wide) profile.wideLogo else profile.logo
+    if (path.isEmpty()) return
+    var editing by remember { mutableStateOf<String?>(null) }
+    var temp by remember { mutableStateOf(LogoPlace()) }
+    val rows = listOf("invoice" to K.invoiceLogoPlace, "receipt" to K.receiptLogoPlace)
+
+    ElvanSettingsSection(colors = colors) {
+        rows.forEachIndexed { i, (doc, title) ->
+            if (i > 0) ElvanSettingsDivider(colors = colors)
+            val receipt = doc == "receipt"
+            val prefix = when {
+                receipt && wide -> "receiptWideLogo"
+                receipt -> "receiptLogo"
+                wide -> "wideLogo"
+                else -> "logo"
+            }
+            // A receipt without a place of its own prints the invoice's wide place, so that is where it starts
+            val fallback = if (receipt && wide) "wideLogo" else null
+            val saved = LogoPlace.readEffective(profile.printSettingsJson, prefix, fallback)
+            ElvanSettingsAnimatedExpand(
+                isEditing = editing == doc,
+                displayContent = {
+                    ElvanSettingsDisplayRow(
+                        title = title.tr(),
+                        primaryValue = "${(saved.scale * 100f).roundToInt()}%",
+                        onEdit = { temp = saved; editing = doc },
+                        colors = colors
+                    )
+                },
+                editContent = {
+                    ElvanSettingsEditContainer(
+                        title = title.tr(),
+                        onCancel = { editing = null },
+                        onSave = {
+                            val updated = profile.copy()
+                            updated.printSettingsJson = temp.writeTo(updated.printSettingsJson, prefix, explicit = receipt)
+                            onSave(updated)
+                            editing = null
+                        },
+                        colors = colors
+                    ) {
+                        LogoAdjuster(
+                            remember(path, receipt, wide) { logoPreviewPayload(profile, wide, path, isFactory, receipt) },
+                            prefix, temp, saved, { temp = it }, (if (wide) K.wideLogoSize else K.logoSize).tr(), colors
+                        )
+                    }
+                }
+            )
+        }
     }
 }

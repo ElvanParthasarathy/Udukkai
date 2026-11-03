@@ -146,40 +146,6 @@ fun FactoryIdentityScreen(
                     )
                     ElvanSettingsDivider(colors = colors)
 
-                    if (logoPath != null) {
-                        ElvanSettingsAnimatedExpand(
-                            isEditing = editingSection == "logo_place",
-                            displayContent = {
-                                ElvanSettingsDisplayRow(
-                                    title = K.logoPlaceRow.tr(),
-                                    primaryValue = "${(LogoPlace.read(profile.printSettingsJson, "logo").scale * 100f).roundToInt()}%",
-                                    onEdit = {
-                                        tempLogoPlace = LogoPlace.read(profile.printSettingsJson, "logo")
-                                        editingSection = "logo_place"
-                                    },
-                                    colors = colors
-                                )
-                            },
-                            editContent = {
-                                ElvanSettingsEditContainer(
-                                    title = K.logoPlaceRow.tr(),
-                                    onCancel = { editingSection = null },
-                                    onSave = {
-                                        val updated = profile.copy()
-                                        updated.printSettingsJson = tempLogoPlace.writeTo(updated.printSettingsJson, "logo")
-                                        FactoryProfileRepository.updateProfile(updated)
-                                        editingSection = null
-                                        ElvanSnackbar.show(saveSuccessMsg)
-                                    },
-                                    colors = colors
-                                ) {
-                                    LogoAdjuster(remember(logoPath) { logoPreviewPayload(profile, false, logoPath, true) }, "logo", tempLogoPlace, LogoPlace.read(profile.printSettingsJson, "logo"), { tempLogoPlace = it }, K.logoSize.tr(), colors)
-                                }
-                            }
-                        )
-                        ElvanSettingsDivider(colors = colors)
-                    }
-
                     // 2. Wide Logo (Agala Oavuru)
                     ElvanSettingsAnimatedExpand(
                         isEditing = editingSection == "wide_logo",
@@ -229,40 +195,6 @@ fun FactoryIdentityScreen(
                         }
                     )
                     ElvanSettingsDivider(colors = colors)
-
-                    if (wideLogoPath != null) {
-                        ElvanSettingsAnimatedExpand(
-                            isEditing = editingSection == "wide_logo_place",
-                            displayContent = {
-                                ElvanSettingsDisplayRow(
-                                    title = K.wideLogoPlaceRow.tr(),
-                                    primaryValue = "${(LogoPlace.read(profile.printSettingsJson, "wideLogo").scale * 100f).roundToInt()}%",
-                                    onEdit = {
-                                        tempWidePlace = LogoPlace.read(profile.printSettingsJson, "wideLogo")
-                                        editingSection = "wide_logo_place"
-                                    },
-                                    colors = colors
-                                )
-                            },
-                            editContent = {
-                                ElvanSettingsEditContainer(
-                                    title = K.wideLogoPlaceRow.tr(),
-                                    onCancel = { editingSection = null },
-                                    onSave = {
-                                        val updated = profile.copy()
-                                        updated.printSettingsJson = tempWidePlace.writeTo(updated.printSettingsJson, "wideLogo")
-                                        FactoryProfileRepository.updateProfile(updated)
-                                        editingSection = null
-                                        ElvanSnackbar.show(saveSuccessMsg)
-                                    },
-                                    colors = colors
-                                ) {
-                                    LogoAdjuster(remember(wideLogoPath) { logoPreviewPayload(profile, true, wideLogoPath, true) }, "wideLogo", tempWidePlace, LogoPlace.read(profile.printSettingsJson, "wideLogo"), { tempWidePlace = it }, K.wideLogoSize.tr(), colors)
-                                }
-                            }
-                        )
-                        ElvanSettingsDivider(colors = colors)
-                    }
 
                     // 3. Header Style (Chinnathin Vadivam)
                     ElvanSettingsAnimatedExpand(

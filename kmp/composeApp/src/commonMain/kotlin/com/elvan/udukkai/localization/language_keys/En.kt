@@ -322,6 +322,8 @@ val en: Map<String, String> = mapOf(
     K.colorTooLight to "Too light to read on the bill",
     K.logoSize to "Size",
     K.resetLogo to "Reset",
+    K.invoiceLogoPlace to "Logo on the invoice: position & size",
+    K.receiptLogoPlace to "Logo on the receipt: position & size",
     K.logoPlaceRow to "Logo position & size",
     K.wideLogoPlaceRow to "Wide logo position & size",
     K.wideLogoSize to "Size",

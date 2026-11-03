@@ -140,6 +140,9 @@ export function normalizeReceiptProfile(p: any = {}) {
     nameSecondary,
     logo: p.logo,
     logoHeight: p.logoHeight || 120,
+    logoScale: p.logoScale || 1,
+    logoX: p.logoX || 0,
+    logoY: p.logoY || 0,
     wideLogo: p.wideLogo,
     wideLogoX: p.wideLogoX || 0,
     wideLogoY: p.wideLogoY || 0,
@@ -313,7 +316,7 @@ export default function PodhuReceiptPaper({
                           crossOrigin={norm.logo?.startsWith('http') ? 'anonymous' : undefined}
                           src={norm.logo} 
                           alt="Logo" 
-                          style={{ maxHeight: `${Math.min(norm.logoHeight || 60, 70)}px`, maxWidth: '150px', objectFit: 'contain' }} 
+                          style={{ maxHeight: `${Math.min(norm.logoHeight || 60, 70) * norm.logoScale}px`, maxWidth: `${150 * norm.logoScale}px`, objectFit: 'contain', transform: `translate(${norm.logoX}px, ${norm.logoY}px)` }} 
                         />
                       )}
                       <div className="header-company-info" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>

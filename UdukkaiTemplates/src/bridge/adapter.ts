@@ -257,8 +257,21 @@ const toReactReceipt = (r, lang) => ({
 });
 
 // GST receipt payload -> ReceiptView props.
+// A receipt's logo place: its own settings. The small logo has no place of the invoice's to inherit; the wide logo
+// keeps using the invoice's until the receipt's own is set.
+const forReceipt = (p) => {
+  const ps = { ...(p.printSettings || {}) };
+  delete ps.logoScale; delete ps.logoX; delete ps.logoY;
+  const map = {
+    receiptLogoScale: 'logoScale', receiptLogoX: 'logoX', receiptLogoY: 'logoY',
+    receiptWideLogoScale: 'wideLogoScale', receiptWideLogoX: 'wideLogoX', receiptWideLogoY: 'wideLogoY',
+  };
+  Object.entries(map).forEach(([from, to]) => { if (ps[from] !== undefined) ps[to] = ps[from]; });
+  return { ...p, printSettings: ps };
+};
+
 export const toGstReceiptProps = (payload) => {
-  const p = payload.profile || {};
+  const p = forReceipt(payload.profile || {});
   const lang = resolveLang(p);
   return {
     profile: toReactProfile(p, lang),
@@ -371,7 +384,7 @@ export const toCoolieBillProps = (payload) => {
 
 // Coolie receipt payload -> CoolieReceiptView `receipt` (+ profile for the Avanam shim).
 export const toCoolieReceiptProps = (payload) => {
-  const p = payload.profile || {};
+  const p = forReceipt(payload.profile || {});
   const profile = toCoolieProfile(p);
   // The customer's name follows the business's language setting, like the Textiles receipt
   const receipt = toReactReceipt(payload.receipt || {}, resolveLang(p));

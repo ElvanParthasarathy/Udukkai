@@ -233,6 +233,9 @@ fun FactoryInvoiceCreationSettingsScreen(
             item(key = "theme_section") {
                 com.elvan.udukkai.ui.screens.settings.ThemeColorSection(profile, colors) { FactoryProfileRepository.updateProfile(it); ElvanSnackbar.show(saveSuccessMsg) }
             }
+            item(key = "logo_place_section") {
+                com.elvan.udukkai.ui.screens.settings.LogoPlaceSection(profile, true, colors) { FactoryProfileRepository.updateProfile(it); ElvanSnackbar.show(saveSuccessMsg) }
+            }
         }
     }
 }
