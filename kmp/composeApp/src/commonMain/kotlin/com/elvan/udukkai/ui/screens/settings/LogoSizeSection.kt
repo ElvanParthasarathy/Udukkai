@@ -58,14 +58,17 @@ data class LogoPlace(val x: Float = 0f, val y: Float = 0f, val scale: Float = 1f
 
         /** The place under [prefix]; where that has no setting, the one under [fallbackPrefix] (what is printed in that case). */
         fun readEffective(printSettingsJson: String, prefix: String, fallbackPrefix: String?): LogoPlace {
-            val has = MiniJson.parseObject(printSettingsJson).containsKey(prefix + "Scale") || MiniJson.parseObject(printSettingsJson).containsKey(prefix + "X")
-            return if (has || fallbackPrefix == null) read(printSettingsJson, prefix) else read(printSettingsJson, fallbackPrefix)
+            val all = MiniJson.parseObject(printSettingsJson)
+            val has = all.containsKey(prefix + "Scale") || all.containsKey(prefix + "X")
+            return fromMap(all, if (has || fallbackPrefix == null) prefix else fallbackPrefix)
         }
 
-        fun read(printSettingsJson: String, prefix: String) = LogoPlace(
-            x = PrintNumbers.get(printSettingsJson, prefix + "X", 0.0).toFloat(),
-            y = PrintNumbers.get(printSettingsJson, prefix + "Y", 0.0).toFloat(),
-            scale = PrintNumbers.get(printSettingsJson, prefix + "Scale", 1.0).toFloat()
+        fun read(printSettingsJson: String, prefix: String) = fromMap(MiniJson.parseObject(printSettingsJson), prefix)
+
+        private fun fromMap(all: Map<String, Any?>, prefix: String) = LogoPlace(
+            x = (all[prefix + "X"] as? Number)?.toFloat() ?: 0f,
+            y = (all[prefix + "Y"] as? Number)?.toFloat() ?: 0f,
+            scale = (all[prefix + "Scale"] as? Number)?.toFloat() ?: 1f
         )
     }
 }
@@ -251,7 +254,7 @@ fun LogoPlaceSection(profile: BusinessProfile, isFactory: Boolean, colors: Shell
             }
             // A receipt without a place of its own prints the invoice's wide place, so that is where it starts
             val fallback = if (receipt && wide) "wideLogo" else null
-            val saved = LogoPlace.readEffective(profile.printSettingsJson, prefix, fallback)
+            val saved = remember(profile.printSettingsJson, prefix, fallback) { LogoPlace.readEffective(profile.printSettingsJson, prefix, fallback) }
             ElvanSettingsAnimatedExpand(
                 isEditing = editing == doc,
                 displayContent = {

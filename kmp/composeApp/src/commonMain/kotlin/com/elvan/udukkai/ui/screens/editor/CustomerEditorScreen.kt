@@ -185,7 +185,9 @@ fun CustomerEditorScreen(
     }
 
     // A valid GSTIN says which state the customer is in: fill it in (and India), no lookup needed
+    val gstinWhenOpened = remember { billGstin }
     LaunchedEffect(billGstin) {
+        if (billGstin == gstinWhenOpened) return@LaunchedEffect // a saved customer keeps what was saved
         val state = BillRules.gstinState(billGstin) ?: return@LaunchedEffect
         val preset = indianStates.firstOrNull { it.en == state } ?: return@LaunchedEffect
         if (countryMap.values.all { it.isBlank() } && !isCustomCountry) countryMap = mapOf("en" to "India", "ta" to "இந்தியா")

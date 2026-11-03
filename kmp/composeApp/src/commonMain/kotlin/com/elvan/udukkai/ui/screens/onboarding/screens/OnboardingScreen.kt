@@ -31,6 +31,7 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.elvan.udukkai.theme.ElvanSansFontFamily
+import com.elvan.udukkai.core.auth.AllowedAccounts
 import com.elvan.udukkai.core.auth.AuthManager
 import com.elvan.udukkai.core.auth.GoogleSignInResult
 import com.elvan.udukkai.core.auth.platformSendPasswordReset
@@ -287,6 +288,7 @@ private fun ResetPasswordPage(initialEmail: String, onBack: () -> Unit) {
     val enterEmailMsg = K.enterEmailFirst.tr()
     val notAllowedMsg = K.accountNotAllowed.tr()
     val sentMsg = K.resetMailSent.tr()
+    val notSentMsg = K.resetNotSent.tr()
 
     fun send() {
         if (email.isBlank()) { message = enterEmailMsg; return }
@@ -295,7 +297,11 @@ private fun ResetPasswordPage(initialEmail: String, onBack: () -> Unit) {
         scope.launch {
             val ok = try { platformSendPasswordReset(email.trim()) } catch (_: Throwable) { false }
             busy = false
-            if (ok) sent = true else message = notAllowedMsg
+            message = when {
+                !AllowedAccounts.isAllowed(email) -> notAllowedMsg
+                ok -> { sent = true; null }
+                else -> notSentMsg
+            }
         }
     }
 

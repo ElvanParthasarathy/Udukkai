@@ -8,7 +8,6 @@ import android.view.View
 import android.view.Window
 import android.view.WindowInsetsController
 import androidx.activity.ComponentActivity
-import androidx.activity.OnBackPressedCallback
 import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge

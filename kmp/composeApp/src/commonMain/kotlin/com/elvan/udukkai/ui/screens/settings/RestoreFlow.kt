@@ -161,7 +161,6 @@ fun restoreFlow(colors: ShellColors, onRestored: () -> Unit): () -> Unit {
     // 2. Replacing everything asks once more, and says what would be lost
     confirmReplace?.let { (path, preview) ->
         val live = remember { service.getLiveStats() }
-        val fewer = (live.invoiceCount - preview.invoices).coerceAtLeast(0)
         ElvanActionSheet(
             title = K.restoreReplaceTitle.tr(),
             cancelText = K.cancelBtn.tr(),
@@ -173,9 +172,14 @@ fun restoreFlow(colors: ShellColors, onRestored: () -> Unit): () -> Unit {
             customContent = {
                 Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text(K.restoreReplaceWarn.tr(), style = body, color = colors.textPrimary)
-                    if (fewer > 0) {
+                    listOf(
+                        Triple(K.invoices.tr(), live.invoiceCount, preview.invoices),
+                        Triple(K.receipts.tr(), live.receiptCount, preview.receipts),
+                        Triple(K.customers.tr(), live.customerCount, preview.customers),
+                        Triple(K.items.tr(), live.itemCount, preview.items)
+                    ).filter { it.second > it.third }.forEach { (name, have, inFile) ->
                         Text(
-                            "${K.restoreYouHave.tr()} ${live.invoiceCount} ${K.invoices.tr()}, ${K.restoreFileHas2.tr()} ${preview.invoices}: $fewer ${K.restoreWouldGo.tr()}",
+                            "${K.restoreYouHave.tr()} $have $name, ${K.restoreFileHas2.tr()} $inFile: ${have - inFile} ${K.restoreWouldGo.tr()}",
                             style = body.copy(fontWeight = FontWeight.SemiBold), color = Color(0xFFE53935)
                         )
                     }

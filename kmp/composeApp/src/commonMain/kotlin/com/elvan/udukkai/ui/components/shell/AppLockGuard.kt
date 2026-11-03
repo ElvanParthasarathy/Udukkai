@@ -30,8 +30,13 @@ import com.elvan.udukkai.ui.navigation.MaterialSymbols
 @Composable
 fun rememberPinGuard(colors: ShellColors): (() -> Unit) -> Unit {
     val title = K.appLock.tr()
+    val notUnlocked = K.appLockNotUnlocked.tr()
     return { action ->
-        if (AppLock.isEnabled() && deviceLockAvailable()) authenticateDeviceLock(title) { ok -> if (ok) action() } else action()
+        if (AppLock.isEnabled() && deviceLockAvailable()) {
+            authenticateDeviceLock(title) { ok -> if (ok) action() else ElvanSnackbar.show(notUnlocked) }
+        } else {
+            action()
+        }
     }
 }
 

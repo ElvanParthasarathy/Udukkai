@@ -60,9 +60,13 @@ actual fun BillHeaderPreview(payloadJson: String, settingsJson: String, modifier
                 setBackgroundColor(android.graphics.Color.WHITE)
                 // Touches belong to the controls around it, not to the page
                 setOnTouchListener { _, _ -> true }
+                var pending: String? = payloadJson // handed to the page once, then dropped
                 addJavascriptInterface(
                     HeaderPreviewBridge(
-                        onLoadedCall = { evaluateJavascript("UdukkaiPrint.preview(${JSONObject.quote(payloadJson)}, 300)", null) },
+                        onLoadedCall = {
+                            pending?.let { evaluateJavascript("UdukkaiPrint.preview(${JSONObject.quote(it)}, 300)", null) }
+                            pending = null
+                        },
                         onReadyCall = { ready = true }
                     ),
                     "UdukkaiNative"

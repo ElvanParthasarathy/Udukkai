@@ -97,7 +97,8 @@ fun TextilesSecuritySettingsScreen(
                     description = (if (lockLabelOn(lockTick)) K.pinOn else K.pinOff).tr() + "\n" + K.appLockHint.tr(),
                     onClick = {
                         if (!deviceLockAvailable()) {
-                            ElvanSnackbar.show(noScreenLockMsg)
+                            // The phone's screen lock is gone: the switch can still be turned off, never on
+                            if (AppLock.isEnabled()) { AppLock.setEnabled(false); lockTick++ } else ElvanSnackbar.show(noScreenLockMsg)
                         } else {
                             // Turning it on or off needs the phone's lock too, so only its owner can change it
                             authenticateDeviceLock(lockTitle) { ok ->

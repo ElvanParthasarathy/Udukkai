@@ -129,8 +129,8 @@ object BackupMerge {
     fun merge(db: MergeDb, prefix: String, categories: Set<RestoreCategory>): RestoreReport {
         val added = mutableMapOf<RestoreCategory, Int>()
         val kept = mutableMapOf<RestoreCategory, Int>()
-        db.begin()
         return try {
+            db.begin()
             // Businesses first, bills last: a bill's receipt links need both ends to be in place
             RestoreCategory.entries.filter { it in categories }.forEach { category ->
                 var a = 0

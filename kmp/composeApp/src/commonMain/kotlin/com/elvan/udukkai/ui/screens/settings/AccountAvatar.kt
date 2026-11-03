@@ -37,14 +37,15 @@ private object AccountPhotoHolder {
 @Composable
 fun AccountAvatar(fallback: @Composable () -> Unit) {
     val email = AuthManager.signedInEmail
-    if (AccountPhotoHolder.email != email) {
-        AccountPhotoHolder.email = email
-        AccountPhotoHolder.photo = null
-        AccountPhotoHolder.checked = false
-    }
-    val loading = email != null && !AccountPhotoHolder.checked
+    val current = AccountPhotoHolder.photo.takeIf { AccountPhotoHolder.email == email }
+    val loading = email != null && !(AccountPhotoHolder.email == email && AccountPhotoHolder.checked)
 
     LaunchedEffect(email) {
+        if (AccountPhotoHolder.email != email) {
+            AccountPhotoHolder.email = email
+            AccountPhotoHolder.photo = null
+            AccountPhotoHolder.checked = false
+        }
         if (email == null || AccountPhotoHolder.checked) return@LaunchedEffect
         // The saved copy first, so the picture is there at once; then a download only if it is old or missing
         platformCachedPhotoBytes()?.let { bytes ->
@@ -57,7 +58,6 @@ fun AccountAvatar(fallback: @Composable () -> Unit) {
         AccountPhotoHolder.checked = true
     }
 
-    val current = AccountPhotoHolder.photo
     if (current != null) {
         Image(
             bitmap = current,
