@@ -6,7 +6,7 @@ package com.elvan.udukkai.data.model
  */
 object CustomerSnapshot {
     private fun maps(c: CustomerModel) = mapOf(
-        "name" to c.name, "address" to c.address, "city" to c.city, "district" to c.district,
+        "name" to c.billName(), "address" to c.address, "city" to c.city, "district" to c.district,
         "state" to c.state, "country" to c.country, "internationalAddress" to c.internationalAddress
     )
 

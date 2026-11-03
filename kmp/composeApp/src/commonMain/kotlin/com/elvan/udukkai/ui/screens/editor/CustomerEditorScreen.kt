@@ -38,6 +38,9 @@ import com.elvan.udukkai.ui.screens.editor.rememberCompanyOptions
 import com.elvan.udukkai.core.data.*
 import com.elvan.udukkai.core.platform.AppBackHandler
 import com.elvan.udukkai.data.model.CustomerModel
+import com.elvan.udukkai.data.model.SHOW_BOTH
+import com.elvan.udukkai.data.model.SHOW_BUSINESS
+import com.elvan.udukkai.data.model.SHOW_OWNER
 import com.elvan.udukkai.data.settings.BusinessProfile
 import com.elvan.udukkai.localization.K
 import com.elvan.udukkai.localization.LanguageManager
@@ -79,7 +82,15 @@ fun CustomerEditorScreen(
     var nameMap by remember { mutableStateOf(merchant?.name ?: emptyMap()) }
     var gstin by remember { mutableStateOf(merchant?.gstin ?: "") }
     // B2B = registered with a GSTIN, B2C = no GSTIN: the type is the GSTIN itself, so nothing new is stored
-    var isB2b by remember { mutableStateOf(!merchant?.gstin.isNullOrBlank()) }
+    var isB2b by remember { mutableStateOf(merchant?.isBusiness ?: false) }
+    // A business has an owner (optional) and says which name the bill prints: the business, the owner, or both
+    var ownerMap by remember { mutableStateOf(merchant?.ownerName ?: emptyMap()) }
+    var showMode by remember { mutableStateOf(merchant?.billNameMode ?: SHOW_BUSINESS) }
+    val extra = if (isB2b) buildMap {
+        put("type", "b2b")
+        ownerMap.forEach { (lang, v) -> if (v.isNotBlank()) put("owner.$lang", v.trim()) }
+        if (ownerMap.values.any { it.isNotBlank() } && showMode != SHOW_BUSINESS) put("show", showMode)
+    } else emptyMap()
     val billGstin = if (isB2b) gstin else ""
     var countryMap by remember { mutableStateOf(merchant?.country ?: emptyMap()) }
 
@@ -198,11 +209,11 @@ fun CustomerEditorScreen(
     val companyChanged = merchant != null && initialCompanyId != currentCompanyId
 
     val hasChanges = remember(
-        nameMap, billGstin, fullPhone, email, countryMap, stateMap, districtMap,
+        nameMap, billGstin, extra, fullPhone, email, countryMap, stateMap, districtMap,
         cityMap, addressMap, pinCode, isCustomCountry, isCustomState, isCustomDistrict, companyChanged
     ) {
         if (merchant == null) {
-            nameMap.values.any { it.isNotBlank() } || billGstin.isNotBlank() || fullPhone.isNotBlank() ||
+            nameMap.values.any { it.isNotBlank() } || billGstin.isNotBlank() || extra.isNotEmpty() || fullPhone.isNotBlank() ||
                 email.isNotBlank() ||
                 countryMap.values.any { it.isNotBlank() } ||
                 stateMap.values.any { it.isNotBlank() } ||
@@ -211,7 +222,7 @@ fun CustomerEditorScreen(
                 addressMap.values.any { it.isNotBlank() } ||
                 pinCode.isNotBlank() || companyChanged
         } else {
-            nameMap != merchant.name || billGstin != merchant.gstin || fullPhone != merchant.phone ||
+            nameMap != merchant.name || billGstin != merchant.gstin || extra != merchant.extra || fullPhone != merchant.phone ||
                 email != merchant.email || countryMap != merchant.country || stateMap != merchant.state ||
                 districtMap != merchant.district || cityMap != merchant.city || addressMap != merchant.address ||
                 pinCode != merchant.pinCode || companyChanged
@@ -238,6 +249,11 @@ fun CustomerEditorScreen(
     val fillNameMsg = K.customerNameRequired.tr()
     val invalidGstinMsg = K.invalidGstin.tr()
     val saveFailedMsg = K.couldNotSavePrefix.tr()
+    val b2bLabel = K.customerB2b.tr()
+    val b2cLabel = K.customerB2c.tr()
+    val showBothLabel = K.showBusinessAndOwner.tr()
+    val showOwnerLabel = K.showOwnerOnly.tr()
+    val showBusinessLabel = K.showBusinessOnly.tr()
 
     fun handleSave() {
         val hasName = nameMap.values.any { it.trim().isNotBlank() }
@@ -258,6 +274,7 @@ fun CustomerEditorScreen(
         val merchantToSave = CustomerModel(
             id = merchant?.id ?: 0L,
             name = nameMap.filterValues { it.isNotBlank() },
+            extra = extra,
             phone = fullPhone.trim(),
             email = email.trim(),
             gstin = billGstin.trim().uppercase(),
@@ -321,8 +338,16 @@ fun CustomerEditorScreen(
                                 modifier = Modifier.fillMaxWidth(),
                                 verticalArrangement = Arrangement.spacedBy(16.dp)
                             ) {
+                                ElvanEditorDropdown<Boolean>(
+                                    label = K.customerType.tr(),
+                                    value = isB2b,
+                                    items = listOf(true, false),
+                                    onSelected = { isB2b = it },
+                                    itemLabelBuilder = { if (it) b2bLabel else b2cLabel }
+                                )
+
                                 ElvanIrumozhiPulan(
-                                    label = "${(if (showGst && isB2b) K.customerBusinessName else K.customerName).tr()} *",
+                                    label = "${(if (isB2b) K.customerBusinessName else K.customerName).tr()} *",
                                     value = nameMap,
                                     onChanged = {
                                         nameMap = it
@@ -346,6 +371,27 @@ fun CustomerEditorScreen(
                                     )
                                 }
 
+                                if (isB2b) {
+                                    ElvanIrumozhiPulan(
+                                        label = K.businessOwnerName.tr(),
+                                        value = ownerMap,
+                                        onChanged = { ownerMap = it },
+                                        isBilingual = isBilingual,
+                                        primaryLang = primaryLang,
+                                        secondaryLang = secondaryLang,
+                                        placeholder = K.businessOwnerName.tr()
+                                    )
+                                    if (ownerMap.values.any { it.isNotBlank() }) {
+                                        ElvanEditorDropdown<String>(
+                                            label = K.showOnBill.tr(),
+                                            value = showMode,
+                                            items = listOf(SHOW_BUSINESS, SHOW_BOTH, SHOW_OWNER),
+                                            onSelected = { showMode = it },
+                                            itemLabelBuilder = { when (it) { SHOW_BOTH -> showBothLabel; SHOW_OWNER -> showOwnerLabel; else -> showBusinessLabel } }
+                                        )
+                                    }
+                                }
+
                                 if (allProfiles.isNotEmpty()) {
                                     ElvanEditorDropdown<CompanyOption>(
                                         label = K.company.tr(),
@@ -354,16 +400,6 @@ fun CustomerEditorScreen(
                                         onSelected = { selectedCompanyOption = it },
                                         itemLabelBuilder = { it.name },
                                         subtitleBuilder = { it.subtitle }
-                                    )
-                                }
-
-                                if (showGst) {
-                                    ElvanPillShifter(
-                                        items = listOf(PillShifterItem(K.customerB2b.tr()), PillShifterItem(K.customerB2c.tr())),
-                                        selectedIndex = if (isB2b) 0 else 1,
-                                        onIndexSelected = { isB2b = it == 0 },
-                                        colors = colors,
-                                        isFullWidth = true
                                     )
                                 }
 

@@ -227,6 +227,7 @@ class AndroidUdukkaiDatabaseHelper(
                 "state" TEXT NOT NULL DEFAULT '{}',
                 "country" TEXT NOT NULL DEFAULT '{"en": "India", "ta": "இந்தியா"}',
                 "international_address" TEXT NOT NULL DEFAULT '{}',
+                "extra" TEXT NOT NULL DEFAULT '{}',
                 "pin_code" TEXT NOT NULL DEFAULT '',
                 "gstin" TEXT NOT NULL DEFAULT '',
                 "email" TEXT NOT NULL DEFAULT '',
@@ -366,6 +367,7 @@ class AndroidUdukkaiDatabaseHelper(
         """.trimIndent())
 
         try { db.execSQL("ALTER TABLE \"$customersTable\" ADD COLUMN \"company_ids\" TEXT NOT NULL DEFAULT '[]'") } catch (_: Exception) {}
+        try { db.execSQL("ALTER TABLE \"$customersTable\" ADD COLUMN \"extra\" TEXT NOT NULL DEFAULT '{}'") } catch (_: Exception) {}
         try { db.execSQL("ALTER TABLE \"$profilesTable\" ADD COLUMN \"print_settings\" TEXT NOT NULL DEFAULT '{}'") } catch (_: Exception) {}
         try { db.execSQL("ALTER TABLE \"$profilesTable\" ADD COLUMN \"pan\" TEXT NOT NULL DEFAULT ''") } catch (_: Exception) {}
         try { db.execSQL("ALTER TABLE \"$linksTable\" ADD COLUMN \"created_at\" INTEGER NOT NULL DEFAULT 0") } catch (_: Exception) {}
@@ -504,6 +506,7 @@ class AndroidUdukkaiDatabaseHelper(
             put("state", LanguageJsonConverter.stringify(customer.state))
             put("country", LanguageJsonConverter.stringify(customer.country))
             put("international_address", LanguageJsonConverter.stringify(customer.internationalAddress))
+            put("extra", LanguageJsonConverter.stringify(customer.extra))
             put("pin_code", customer.pinCode)
             put("gstin", customer.gstin)
             put("email", customer.email)
@@ -1152,6 +1155,7 @@ class AndroidUdukkaiDatabaseHelper(
         state = LanguageJsonConverter.parse(getStringCol(c, "state", "maanilam")),
         country = LanguageJsonConverter.parse(getStringCol(c, "country", "naadu", default = "{\"en\":\"India\",\"ta\":\"இந்தியா\"}")),
         internationalAddress = LanguageJsonConverter.parse(getStringCol(c, "international_address", "velinaad_mugavari")),
+        extra = LanguageJsonConverter.parse(getStringCol(c, "extra", default = "{}")),
         pinCode = getStringCol(c, "pin_code", "anjal_kuriyeedu"),
         gstin = getStringCol(c, "gstin"),
         email = getStringCol(c, "email", "minnanjal"),
