@@ -47,6 +47,7 @@ fun FactoryManageProfilesScreen(
 
     var showNewProfileSheet by remember { mutableStateOf(false) }
     var profileToDelete by remember { mutableStateOf<BusinessProfile?>(null) }
+    val guard = rememberPinGuard(colors)
     var nameInput by remember { mutableStateOf("") }
 
     val deleteSuccessMsg = K.profileDeleted.tr()
@@ -100,7 +101,7 @@ fun FactoryManageProfilesScreen(
                                     secondaryValue = if (isBilingual) profileItem.getSecondary("niruvanathinPeyar").takeIf { it.isNotBlank() } else null,
                                     icon = MaterialSymbols.Rounded.Delete,
                                     iconColor = null,
-                                    onEdit = if (profiles.size > 1) { { profileToDelete = profileItem; nameInput = "" } } else null,
+                                    onEdit = if (profiles.size > 1) { { guard { profileToDelete = profileItem; nameInput = "" } } } else null,
                                     onTap = if (!isActive && profileItem.id != null) {
                                         {
                                             FactoryProfileRepository.setActiveProfile(profileItem.id!!)

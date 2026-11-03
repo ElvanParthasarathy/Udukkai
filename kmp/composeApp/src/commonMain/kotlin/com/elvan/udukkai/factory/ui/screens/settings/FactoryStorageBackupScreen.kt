@@ -57,6 +57,7 @@ fun FactoryStorageBackupScreen(
 
     var showBackupConfirm by remember { mutableStateOf(false) }
     var showUndoConfirm by remember { mutableStateOf(false) }
+    val guard = rememberPinGuard(colors)
     // Bumped after a restore so the "go back" row appears at once
     var restoreTick by remember { mutableStateOf(0) }
     var isBackingUp by remember { mutableStateOf(false) }
@@ -232,7 +233,7 @@ fun FactoryStorageBackupScreen(
                         icon = MaterialSymbols.Rounded.Restore,
                         title = K.undoRestore.tr(),
                         description = undoRestoreDetails(backupService),
-                        onClick = { showUndoConfirm = true },
+                        onClick = { guard { showUndoConfirm = true } },
                         colors = colors
                     )
                 }
@@ -243,9 +244,11 @@ fun FactoryStorageBackupScreen(
                     title = K.shareBackupBtn.tr(),
                     description = "${K.backup.tr()} (${latestBackupMeta?.let { formatBytes(it.sizeBytes) } ?: "0 B"})",
                     onClick = {
-                        val ok = backupService.shareBackup(BackupSlot.LATEST)
-                        if (!ok) {
-                            ElvanSnackbar.show(backupFailedMsg)
+                        guard {
+                            val ok = backupService.shareBackup(BackupSlot.LATEST)
+                            if (!ok) {
+                                ElvanSnackbar.show(backupFailedMsg)
+                            }
                         }
                     },
                     colors = colors

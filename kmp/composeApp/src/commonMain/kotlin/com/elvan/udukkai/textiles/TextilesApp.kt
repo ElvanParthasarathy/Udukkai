@@ -1,5 +1,6 @@
 package com.elvan.udukkai.textiles
 
+import com.elvan.udukkai.ui.components.shell.AppLockGate
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -64,7 +65,7 @@ fun TextilesApp() {
                             }
                         )
                     } else {
-                        OnboardingGate(AppScope.TEXTILES) { TextilesHomeScreen() }
+                        AppLockGate(colors) { OnboardingGate(AppScope.TEXTILES) { TextilesHomeScreen() } }
                     }
 
                     ElvanBottomSheetHost(bottomSheetController)

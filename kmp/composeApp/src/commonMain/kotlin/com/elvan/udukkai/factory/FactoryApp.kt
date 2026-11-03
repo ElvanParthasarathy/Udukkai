@@ -1,5 +1,6 @@
 package com.elvan.udukkai.factory
 
+import com.elvan.udukkai.ui.components.shell.AppLockGate
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -64,7 +65,7 @@ fun FactoryApp() {
                             }
                         )
                     } else {
-                        OnboardingGate(AppScope.FACTORY) { FactoryHomeScreen() }
+                        AppLockGate(colors) { OnboardingGate(AppScope.FACTORY) { FactoryHomeScreen() } }
                     }
 
                     ElvanBottomSheetHost(bottomSheetController)

@@ -1,5 +1,6 @@
 package com.elvan.udukkai.ui.screens.settings
 
+import com.elvan.udukkai.ui.components.shell.rememberPinGuard
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -44,6 +45,7 @@ fun restoreFlow(colors: ShellColors, onRestored: () -> Unit): () -> Unit {
     val ff = LocalAppFontFamily.current
     val service = remember { getUdukkaiBackupService() }
     val scope = rememberCoroutineScope()
+    val guard = rememberPinGuard(colors)
 
     var checking by remember { mutableStateOf(false) }
     var working by remember { mutableStateOf(false) }
@@ -165,7 +167,7 @@ fun restoreFlow(colors: ShellColors, onRestored: () -> Unit): () -> Unit {
             cancelText = K.cancelBtn.tr(),
             confirmText = K.restoreReplace.tr(),
             onDismissRequest = { confirmReplace = null },
-            onConfirm = { run(path, preview.createdAt) },
+            onConfirm = { guard { run(path, preview.createdAt) } },
             confirmColor = Color(0xFFE53935),
             isConfirmFilled = true,
             customContent = {
