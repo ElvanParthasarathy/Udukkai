@@ -145,7 +145,7 @@ fun TextilesIdentityScreen(
                                 )
                                 if (tempImagePath != null) {
                                     Spacer(Modifier.height(12.dp))
-                                    LogoAdjuster(remember(tempImagePath) { logoPreviewPayload(profile, false, tempImagePath, false) }, "logo", tempLogoPlace, { tempLogoPlace = it }, K.logoSize.tr(), colors)
+                                    LogoAdjuster(remember(tempImagePath) { logoPreviewPayload(profile, false, tempImagePath, false) }, "logo", tempLogoPlace, LogoPlace.read(profile.printSettingsJson, "logo"), { tempLogoPlace = it }, K.logoSize.tr(), colors)
                                 }
                             }
                         }
@@ -201,7 +201,7 @@ fun TextilesIdentityScreen(
                                 )
                                 if (tempWideImagePath != null) {
                                     Spacer(Modifier.height(12.dp))
-                                    LogoAdjuster(remember(tempWideImagePath) { logoPreviewPayload(profile, true, tempWideImagePath, false) }, "wideLogo", tempWidePlace, { tempWidePlace = it }, K.wideLogoSize.tr(), colors)
+                                    LogoAdjuster(remember(tempWideImagePath) { logoPreviewPayload(profile, true, tempWideImagePath, false) }, "wideLogo", tempWidePlace, LogoPlace.read(profile.printSettingsJson, "wideLogo"), { tempWidePlace = it }, K.wideLogoSize.tr(), colors)
                                 }
                             }
                         }

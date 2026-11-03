@@ -36,6 +36,7 @@ import com.elvan.udukkai.theme.preventBrokenLigatures
 import com.elvan.udukkai.theme.rememberShellColors
 import com.elvan.udukkai.ui.components.shell.*
 import com.elvan.udukkai.ui.screens.settings.restoreFlow
+import com.elvan.udukkai.ui.screens.settings.undoRestoreDetails
 import com.elvan.udukkai.ui.navigation.AppSvgs
 import com.elvan.udukkai.ui.navigation.MaterialSymbols
 import kotlinx.coroutines.delay
@@ -222,12 +223,12 @@ fun TextilesStorageBackupScreen(
                     onClick = startRestore,
                     colors = colors
                 )
-                if (backupService.hasSafetySnapshot()) {
+                if (backupService.lastRestoreBackup() != null) {
                     ElvanSettingsDivider(colors = colors)
                     ElvanSettingsRow(
                         icon = MaterialSymbols.Rounded.Restore,
                         title = K.undoRestore.tr(),
-                        description = K.undoRestoreHint.tr(),
+                        description = undoRestoreDetails(backupService),
                         onClick = { showUndoConfirm = true },
                         colors = colors
                     )
@@ -423,7 +424,7 @@ fun TextilesStorageBackupScreen(
                 isRestoring = true
                 scope.launch {
                     delay(250)
-                    val success = backupService.restoreFromSlot(BackupSlot.SAFETY_VAULT)
+                    val success = backupService.undoLastRestore()
                     isRestoring = false
                     if (success) {
                         refreshAll()
@@ -435,7 +436,7 @@ fun TextilesStorageBackupScreen(
             },
             customContent = {
                 Text(
-                    text = K.undoRestoreHint.tr().preventBrokenLigatures(),
+                    text = (K.undoRestoreHint.tr() + "\n\n" + undoRestoreDetails(backupService)).preventBrokenLigatures(),
                     style = TextStyle(fontFamily = ff, fontSize = 13.sp, color = colors.textSecondary, lineHeight = 18.sp),
                     modifier = Modifier.padding(horizontal = 8.dp)
                 )

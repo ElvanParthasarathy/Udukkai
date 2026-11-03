@@ -12,7 +12,16 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.unit.dp
+import com.elvan.udukkai.ui.components.ExpressiveDotsLoader
 import androidx.compose.ui.viewinterop.AndroidView
 import org.json.JSONObject
 
@@ -34,8 +43,10 @@ actual fun BillHeaderPreview(payloadJson: String, settingsJson: String, modifier
         if (ready) web?.evaluateJavascript("UdukkaiPrint.previewSettings(${JSONObject.quote(settingsJson)})", null)
     }
 
+    // White paper with a loader until the template has drawn; the page itself stays hidden so it never shows half-drawn
+    Box(modifier.background(Color.White), contentAlignment = Alignment.Center) {
     AndroidView(
-        modifier = modifier,
+        modifier = Modifier.fillMaxSize().graphicsLayer { alpha = if (ready) 1f else 0f },
         factory = { ctx ->
             WebView(ctx).apply {
                 web = this
@@ -62,4 +73,6 @@ actual fun BillHeaderPreview(payloadJson: String, settingsJson: String, modifier
         },
         onRelease = { it.destroy() }
     )
+    if (!ready) ExpressiveDotsLoader(modifier = Modifier.padding(40.dp), color = Color(0xFF9E9E9E))
+    }
 }

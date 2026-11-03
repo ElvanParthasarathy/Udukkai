@@ -649,6 +649,30 @@ class AndroidUdukkaiBackupService : UdukkaiBackupService {
 
     // ── Restoring from a file the user picked ───────────────────────────────────────
 
+    private fun beforeRestoreFile(): File = File(getInternalBackupDir(), "udukkai_${modePrefix(currentMode())}_before_restore.db")
+
+    override fun lastRestoreBackup(): BackupItemMetadata? = metadataOf(beforeRestoreFile(), BackupSlot.SAFETY_VAULT)
+
+    override fun undoLastRestore(): Boolean {
+        val file = beforeRestoreFile()
+        if (!validateArchive(file)) return false
+        // A copy of the data as it is now is kept first, like any restore
+        if (!createSafetySnapshot()) return false
+        // Worked on a copy so the kept file is never open while the data is replaced
+        val work = File(AppContext.context.cacheDir, "undo_restore_${System.nanoTime()}.tmp")
+        return try {
+            file.copyTo(work, overwrite = true)
+            val done = unpackFromFile(work)
+            if (done) file.delete()
+            done
+        } catch (e: Exception) {
+            Log.e(tag, "Undoing the restore failed: ${e.message}", e)
+            false
+        } finally {
+            try { work.delete() } catch (_: Exception) {}
+        }
+    }
+
     private class AndroidMergeDb(private val db: android.database.sqlite.SQLiteDatabase) : MergeDb {
         override fun count(sql: String): Int = db.rawQuery(sql, null).use { if (it.moveToFirst()) it.getInt(0) else 0 }
 
@@ -763,6 +787,13 @@ class AndroidUdukkaiBackupService : UdukkaiBackupService {
         if (mode == RestoreMode.MERGE && categories.isEmpty()) return RestoreReport(ok = false, problem = BackupProblem.NOTHING_CHOSEN)
         // Nothing is changed until a copy of the current data is safe
         if (!createSafetySnapshot()) return RestoreReport(ok = false, problem = BackupProblem.NO_SAFETY_COPY)
+        // Kept apart from the safety vault, which syncing and backups overwrite: this is what "go back" brings back
+        try {
+            getFileForWriting(BackupSlot.SAFETY_VAULT).copyTo(beforeRestoreFile(), overwrite = true)
+        } catch (e: Exception) {
+            Log.e(tag, "Could not keep the copy for going back: ${e.message}")
+            return RestoreReport(ok = false, problem = BackupProblem.NO_SAFETY_COPY)
+        }
 
         if (mode == RestoreMode.REPLACE) {
             val done = unpackFromFile(archive)
@@ -823,6 +854,10 @@ class AndroidUdukkaiBackupService : UdukkaiBackupService {
 
     override fun getBackupMetadata(slot: BackupSlot): BackupItemMetadata? {
         val file = resolveExistingFileForReading(slot) ?: return null
+        return metadataOf(file, slot)
+    }
+
+    private fun metadataOf(file: File, slot: BackupSlot): BackupItemMetadata? {
         if (!file.exists() || file.length() < 60) return null
 
         val isValid = validateArchive(file)

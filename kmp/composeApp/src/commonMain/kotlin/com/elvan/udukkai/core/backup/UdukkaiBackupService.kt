@@ -114,6 +114,15 @@ interface UdukkaiBackupService {
     fun getTotalDatabaseSize(): Long
     fun getLiveStats(): DatabaseLiveStats
 
+    /**
+     * The copy of the data kept just before the last restore from a file (null if there was none). Unlike the safety vault
+     * it is not overwritten by syncing or backing up, only by the next restore.
+     */
+    fun lastRestoreBackup(): BackupItemMetadata? = null
+
+    /** Puts the data back as it was before the last restore from a file; a copy of the data as it is now is kept first. */
+    fun undoLastRestore(): Boolean = false
+
     /** Reads a backup file the user picked, without touching the app's data: it is checked and its contents counted. */
     fun inspectBackupFile(path: String): BackupPreview = BackupPreview(problem = BackupProblem.UNSUPPORTED)
 

@@ -75,11 +75,12 @@ fun logoPreviewPayload(profile: BusinessProfile, wide: Boolean, imagePath: Strin
 /**
  * Adjusts a logo against the real top of the bill: the React template's header (see [BillHeaderPreview]) with the logo
  * where it is printed, a joystick that moves it while it is held (the harder it is pushed, the faster) and a size
- * slider. [prefix] is "logo" or "wideLogo": the print settings keys are prefix + Scale / X / Y.
+ * slider. [prefix] is "logo" or "wideLogo": the print settings keys are prefix + Scale / X / Y. Reset goes back to [saved],
+ * the place and size the logo had when the editor was opened.
  * shortcut: the top is 130% so a bigger logo does not run into the bill number bar; raise it if the header gets room.
  */
 @Composable
-fun LogoAdjuster(payloadJson: String, prefix: String, place: LogoPlace, onPlace: (LogoPlace) -> Unit, title: String, colors: ShellColors) {
+fun LogoAdjuster(payloadJson: String, prefix: String, place: LogoPlace, saved: LogoPlace, onPlace: (LogoPlace) -> Unit, title: String, colors: ShellColors) {
     val ff = LocalAppFontFamily.current
     val latest by rememberUpdatedState(place)
 
@@ -104,13 +105,17 @@ fun LogoAdjuster(payloadJson: String, prefix: String, place: LogoPlace, onPlace:
                 K.resetLogo.tr(),
                 style = TextStyle(fontFamily = ff, fontSize = 13.sp, fontWeight = FontWeight.SemiBold),
                 color = colors.textPrimary,
-                modifier = Modifier.clip(CircleShape).clickable { onPlace(LogoPlace()) }.padding(horizontal = 12.dp, vertical = 8.dp)
+                modifier = Modifier.clip(CircleShape).clickable { onPlace(saved) }.padding(horizontal = 12.dp, vertical = 8.dp)
             )
         }
     }
 }
 
-/** A round pad: while a finger holds the knob off the centre, [onMove] gets a step (up to 4 sheet pixels) every frame in that direction; letting go centres it. */
+/**
+ * A round pad with a cross on it: the knob slides along the cross only, up, down, left or right (never across), and
+ * while it is held off the centre [onMove] gets a step (up to 1.5 sheet pixels) every frame in that direction;
+ * letting go centres it.
+ */
 @Composable
 private fun LogoJoystick(onMove: (Float, Float) -> Unit, colors: ShellColors) {
     val move by rememberUpdatedState(onMove)
@@ -118,7 +123,7 @@ private fun LogoJoystick(onMove: (Float, Float) -> Unit, colors: ShellColors) {
     LaunchedEffect(Unit) {
         while (true) {
             delay(16)
-            if (knob != Offset.Zero) move(knob.x * 4f, knob.y * 4f)
+            if (knob != Offset.Zero) move(knob.x * 1.5f, knob.y * 1.5f)
         }
     }
     val ring = colors.textPrimary.copy(alpha = 0.25f)
@@ -129,8 +134,14 @@ private fun LogoJoystick(onMove: (Float, Float) -> Unit, colors: ShellColors) {
                 val down = awaitFirstDown(requireUnconsumed = false)
                 fun set(p: Offset) {
                     val v = p - Offset(size.width / 2f, size.height / 2f)
-                    val len = v.getDistance()
-                    knob = (if (len > reach) v * (reach / len) else v) / reach
+                    // The stronger direction wins and the other is dropped: the knob stays on the cross
+                    val along = if (kotlin.math.abs(v.x) >= kotlin.math.abs(v.y)) Offset(v.x, 0f) else Offset(0f, v.y)
+                    val len = along.getDistance()
+                    knob = when {
+                        len < reach * 0.15f -> Offset.Zero
+                        len > reach -> along * (reach / len) / reach
+                        else -> along / reach
+                    }
                 }
                 set(down.position)
                 down.consume()

@@ -356,6 +356,7 @@ const buildPdf = async () => {
 // The top of a bill for the logo adjustment screen: the real template, shrunk to the screen width and cut off after
 // `cropPx` pixels of the paper. previewSettings() changes the print settings (logo size and place) and redraws at once.
 let previewState = null;
+let previewDrawQueued = false;
 const PREVIEW_PAPER_PX = 794;
 
 const fitPreview = (cropPx) => {
@@ -404,7 +405,10 @@ const previewSettings = (settings) => {
   if (!previewState) return;
   const s = typeof settings === 'string' ? JSON.parse(settings) : settings;
   previewState.data.profile.printSettings = { ...(previewState.data.profile.printSettings || {}), ...s };
-  drawPreview();
+  // Many changes can arrive between two screen frames while a finger drags: draw once per frame, with the latest
+  if (previewDrawQueued) return;
+  previewDrawQueued = true;
+  requestAnimationFrame(() => { previewDrawQueued = false; if (previewState) drawPreview(); });
 };
 
 window.UdukkaiPrint = { render, renderProps, buildPdf, printHtml, setTopInset, preview, previewSettings, version: TEMPLATE_VERSION };

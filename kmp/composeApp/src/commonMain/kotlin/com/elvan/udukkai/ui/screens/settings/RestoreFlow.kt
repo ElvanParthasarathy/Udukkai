@@ -16,6 +16,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.elvan.udukkai.core.backup.*
+import com.elvan.udukkai.core.platform.getPreferencesHelper
 import com.elvan.udukkai.core.utils.DateUtils
 import com.elvan.udukkai.localization.K
 import com.elvan.udukkai.localization.tr
@@ -51,6 +52,7 @@ fun restoreFlow(colors: ShellColors, onRestored: () -> Unit): () -> Unit {
     var chosen by remember { mutableStateOf(RestoreCategory.entries.toSet()) }
     var confirmReplace by remember { mutableStateOf<Pair<String, BackupPreview>?>(null) }
     var result by remember { mutableStateOf<RestoreReport?>(null) }
+    var resultFrom by remember { mutableStateOf(0L) }
 
     val problems = mapOf(
         BackupProblem.NOT_A_BACKUP to K.restoreNotABackup.tr(),
@@ -75,15 +77,20 @@ fun restoreFlow(colors: ShellColors, onRestored: () -> Unit): () -> Unit {
         RestoreCategory.ITEMS to p.items, RestoreCategory.BILLS to p.invoices + p.receipts
     )
 
-    fun run(path: String) {
+    fun run(path: String, savedOn: Long) {
         working = true
         scope.launch {
             val report = withContext(Dispatchers.Default) {
                 try { service.restoreFromFile(path, mode, chosen) } catch (_: Throwable) { RestoreReport(ok = false, problem = BackupProblem.FAILED) }
             }
             working = false
-            if (report.ok) onRestored()
+            if (report.ok) {
+                onRestored()
+                // Kept so the Backup settings can say which backup was restored last, and when
+                getPreferencesHelper().setString(LAST_RESTORE_KEY, "${System.currentTimeMillis()}|$savedOn")
+            }
             result = report
+            resultFrom = savedOn
         }
     }
 
@@ -115,7 +122,7 @@ fun restoreFlow(colors: ShellColors, onRestored: () -> Unit): () -> Unit {
             confirmText = K.restoreBtn.tr(),
             onDismissRequest = { picked = null },
             onConfirm = {
-                if (mode == RestoreMode.REPLACE) confirmReplace = path to preview else run(path)
+                if (mode == RestoreMode.REPLACE) confirmReplace = path to preview else run(path, preview.createdAt)
             },
             customContent = {
                 Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -158,7 +165,7 @@ fun restoreFlow(colors: ShellColors, onRestored: () -> Unit): () -> Unit {
             cancelText = K.cancelBtn.tr(),
             confirmText = K.restoreReplace.tr(),
             onDismissRequest = { confirmReplace = null },
-            onConfirm = { run(path) },
+            onConfirm = { run(path, preview.createdAt) },
             confirmColor = Color(0xFFE53935),
             isConfirmFilled = true,
             customContent = {
@@ -188,6 +195,8 @@ fun restoreFlow(colors: ShellColors, onRestored: () -> Unit): () -> Unit {
             customContent = {
                 Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                     if (report.ok) {
+                        Text("${K.restoredOnLabel.tr()} ${DateUtils.formatDateTime(System.currentTimeMillis())}", style = body.copy(fontWeight = FontWeight.SemiBold), color = colors.textPrimary)
+                        Text("${K.fromBackupSaved.tr()} ${DateUtils.formatDateTime(resultFrom)}", style = muted, color = colors.textPrimary.copy(alpha = 0.6f))
                         report.added.forEach { (category, added) ->
                             val kept = report.kept[category] ?: 0
                             Text(
@@ -208,6 +217,24 @@ fun restoreFlow(colors: ShellColors, onRestored: () -> Unit): () -> Unit {
     if (working) ElvanLoadingOverlay(text = restoringText, colors = colors)
 
     return { picker.launch() }
+}
+
+private const val LAST_RESTORE_KEY = "last_restore"
+
+/**
+ * What "Go back to before the last restore" would bring back, in words: when the copy was kept and what is in it, and
+ * which backup the last restore used and when it was made. Empty when there is no such copy.
+ */
+@Composable
+fun undoRestoreDetails(service: UdukkaiBackupService): String {
+    val meta = service.lastRestoreBackup() ?: return ""
+    val copy = "${K.undoCopyKept.tr()} ${DateUtils.formatDateTime(meta.lastModified)}  ·  " +
+        "${meta.invoiceCount} ${K.invoices.tr()}, ${meta.customerCount} ${K.customers.tr()}, ${meta.itemCount} ${K.items.tr()}"
+    val last = getPreferencesHelper().getString(LAST_RESTORE_KEY)?.split("|")
+    val at = last?.getOrNull(0)?.toLongOrNull()
+    val from = last?.getOrNull(1)?.toLongOrNull()
+    if (at == null || from == null) return copy
+    return copy + "\n${K.lastRestoreAt.tr()} ${DateUtils.formatDateTime(at)}, ${K.fromBackupSaved.tr()} ${DateUtils.formatDateTime(from)}"
 }
 
 @Composable

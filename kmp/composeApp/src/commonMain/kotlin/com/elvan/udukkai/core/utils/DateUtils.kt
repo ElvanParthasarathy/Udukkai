@@ -6,9 +6,11 @@ object DateUtils {
      */
     fun formatDate(millis: Long): String = formatEpochMillis(millis)
 
+    /** Date and time as the clock on the wall shows them (the phone's time zone), e.g. 03/11/2026 15:26. */
     fun formatDateTime(millis: Long): String {
-        val dateStr = formatEpochMillis(millis)
-        val totalSeconds = millis / 1000
+        val local = millis + java.util.TimeZone.getDefault().getOffset(millis)
+        val dateStr = formatEpochMillis(local)
+        val totalSeconds = local / 1000
         val minute = ((totalSeconds / 60) % 60).toInt()
         val hour = ((totalSeconds / 3600) % 24).toInt()
         val minStr = if (minute < 10) "0$minute" else "$minute"
