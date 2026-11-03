@@ -57,13 +57,13 @@ fun UllnuzhaivuThirai(
     var googleBusy by remember { mutableStateOf(false) }
     var message by remember { mutableStateOf<String?>(null) }
     var isError by remember { mutableStateOf(true) }
+    var showReset by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
 
     val notAllowedMsg = K.accountNotAllowed.tr()
     val failedMsg = K.signInFailedTryAgain.tr()
     val wrongMsg = K.wrongEmailOrPassword.tr()
     val enterEmailMsg = K.enterEmailFirst.tr()
-    val resetSentMsg = K.resetMailSent.tr()
     val requiredMsg = K.passwordRequired.tr()
     val busy = emailBusy || googleBusy
 
@@ -87,6 +87,11 @@ fun UllnuzhaivuThirai(
             handle(AuthManager.signInWithEmail(email, password), wrongMsg)
             emailBusy = false
         }
+    }
+
+    if (showReset) {
+        ResetPasswordPage(initialEmail = email, onBack = { showReset = false })
+        return
     }
 
     BoxWithConstraints(modifier = Modifier.fillMaxSize().windowInsetsPadding(WindowInsets.safeDrawing).imePadding()) {
@@ -154,20 +159,7 @@ fun UllnuzhaivuThirai(
                                 interactionSource = remember { MutableInteractionSource() },
                                 indication = ripple(color = NeramColors.textPrimary(), bounded = true),
                                 role = androidx.compose.ui.semantics.Role.Button
-                            ) {
-                                if (email.isBlank()) {
-                                    fail(enterEmailMsg)
-                                } else {
-                                    scope.launch {
-                                        if (platformSendPasswordReset(email)) {
-                                            message = resetSentMsg
-                                            isError = false
-                                        } else {
-                                            fail(notAllowedMsg)
-                                        }
-                                    }
-                                }
-                            }
+                            ) { showReset = true }
                             .padding(horizontal = 16.dp, vertical = 12.dp)
                     )
 
@@ -277,6 +269,97 @@ private fun GoogleButton(text: String, loading: Boolean, enabled: Boolean, onCli
                 Text("G", style = TextStyle(fontFamily = ElvanSansFontFamily, fontSize = 22.sp, fontWeight = FontWeight.Bold), color = Color(0xFFDB4437), modifier = Modifier.padding(end = 12.dp))
                 Text(text, style = TextStyle(fontFamily = ElvanSansFontFamily, fontSize = 16.sp, fontWeight = FontWeight.Medium), color = NeramColors.textPrimary())
             }
+        }
+    }
+}
+
+/**
+ * Forgot password: its own page in the log-in page's layout. The mail is sent only to the approved accounts, and the page
+ * says so plainly when it has gone, when the address is not one of them, or when there is no internet.
+ */
+@Composable
+private fun ResetPasswordPage(initialEmail: String, onBack: () -> Unit) {
+    var email by remember { mutableStateOf(initialEmail) }
+    var busy by remember { mutableStateOf(false) }
+    var sent by remember { mutableStateOf(false) }
+    var message by remember { mutableStateOf<String?>(null) }
+    val scope = rememberCoroutineScope()
+    val enterEmailMsg = K.enterEmailFirst.tr()
+    val notAllowedMsg = K.accountNotAllowed.tr()
+    val sentMsg = K.resetMailSent.tr()
+
+    fun send() {
+        if (email.isBlank()) { message = enterEmailMsg; return }
+        busy = true
+        message = null
+        scope.launch {
+            val ok = try { platformSendPasswordReset(email.trim()) } catch (_: Throwable) { false }
+            busy = false
+            if (ok) sent = true else message = notAllowedMsg
+        }
+    }
+
+    BoxWithConstraints(modifier = Modifier.fillMaxSize().windowInsetsPadding(WindowInsets.safeDrawing).imePadding()) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .heightIn(min = maxHeight)
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = 16.dp, vertical = 24.dp),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            NeramElement(delayIndex = 0) {
+                NeramHeader(title = K.resetPasswordTitle.tr(), subtitle = if (sent) sentMsg else K.resetPasswordHint.tr())
+            }
+
+            Spacer(Modifier.height(16.dp))
+
+            if (!sent) {
+                NeramElement(delayIndex = 1, modifier = Modifier.fillMaxWidth()) {
+                    Column(modifier = Modifier.fillMaxWidth()) {
+                        NeramField(
+                            value = email,
+                            onValueChange = { email = it; message = null },
+                            placeholder = K.emailAddress.tr(),
+                            contentType = androidx.compose.ui.autofill.ContentType.EmailAddress,
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email, imeAction = ImeAction.Done),
+                            keyboardActions = KeyboardActions(onDone = { send() })
+                        )
+                        message?.let {
+                            Spacer(Modifier.height(10.dp))
+                            Text(
+                                text = it,
+                                color = ErrorRed,
+                                style = TextStyle(fontFamily = ElvanSansFontFamily, fontSize = 13.sp, lineHeight = 18.sp),
+                                modifier = Modifier.padding(start = 16.dp)
+                            )
+                        }
+                    }
+                }
+
+                Spacer(Modifier.height(16.dp))
+
+                NeramElement(delayIndex = 2, modifier = Modifier.fillMaxWidth()) {
+                    NeramButton(text = K.sendResetLink.tr(), onClick = { send() }, loading = busy, enabled = !busy)
+                }
+                Spacer(Modifier.height(8.dp))
+            }
+
+            Text(
+                text = K.backToLogIn.tr(),
+                style = TextStyle(fontFamily = ElvanSansFontFamily, fontSize = 14.sp, fontWeight = FontWeight.Bold),
+                color = NeramColors.textSecondary(),
+                modifier = Modifier
+                    .clip(RoundedCornerShape(50))
+                    .clickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = ripple(color = NeramColors.textPrimary(), bounded = true),
+                        role = androidx.compose.ui.semantics.Role.Button,
+                        onClick = onBack
+                    )
+                    .padding(horizontal = 16.dp, vertical = 12.dp)
+            )
         }
     }
 }

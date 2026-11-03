@@ -108,14 +108,9 @@ fun LogoAdjuster(payloadJson: String, prefix: String, place: LogoPlace, saved: L
     }
     Spacer(Modifier.height(14.dp))
     Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(14.dp))
-            .background(colors.iconBg.copy(alpha = 0.4f))
-            .border(BorderStroke(1.dp, colors.textPrimary.copy(alpha = 0.08f)), RoundedCornerShape(14.dp))
-            .padding(12.dp),
+        modifier = Modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(14.dp)
+        horizontalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         LogoJoystick(onMove = { dx, dy -> onPlace(latest.moved(dx, dy)) }, colors = colors)
         Column(
@@ -140,9 +135,9 @@ fun LogoAdjuster(payloadJson: String, prefix: String, place: LogoPlace, saved: L
                     )
                     Box(
                         modifier = Modifier
-                            .clip(RoundedCornerShape(6.dp))
-                            .background(colors.surface)
-                            .padding(horizontal = 6.dp, vertical = 2.dp)
+                            .clip(CircleShape)
+                            .background(colors.iconBg)
+                            .padding(horizontal = 10.dp, vertical = 3.dp)
                     ) {
                         Text(
                             text = "${(place.scale * 100f).roundToInt()}%",
@@ -155,7 +150,7 @@ fun LogoAdjuster(payloadJson: String, prefix: String, place: LogoPlace, saved: L
                 Box(
                     modifier = Modifier
                         .clip(CircleShape)
-                        .background(colors.surface)
+                        .background(colors.iconBg)
                         .clickable { onPlace(saved) }
                         .padding(horizontal = 10.dp, vertical = 5.dp)
                 ) {
@@ -168,28 +163,7 @@ fun LogoAdjuster(payloadJson: String, prefix: String, place: LogoPlace, saved: L
                     )
                 }
             }
-            @OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
-            Slider(
-                value = place.scale,
-                onValueChange = { onPlace(latest.copy(scale = it)) },
-                valueRange = 0.5f..1.3f,
-                modifier = Modifier.fillMaxWidth().height(28.dp),
-                colors = androidx.compose.material3.SliderDefaults.colors(
-                    thumbColor = if (colors.isDark) Color.White else Color.Black,
-                    activeTrackColor = colors.textPrimary.copy(alpha = 0.7f),
-                    inactiveTrackColor = colors.textPrimary.copy(alpha = 0.15f)
-                ),
-                track = { sliderState ->
-                    androidx.compose.material3.SliderDefaults.Track(
-                        sliderState = sliderState,
-                        modifier = Modifier.height(4.dp),
-                        colors = androidx.compose.material3.SliderDefaults.colors(
-                            activeTrackColor = colors.textPrimary.copy(alpha = 0.7f),
-                            inactiveTrackColor = colors.textPrimary.copy(alpha = 0.15f)
-                        )
-                    )
-                }
-            )
+            LogoSlider(place.scale, 0.5f..1.3f, { onPlace(latest.copy(scale = it)) }, colors)
         }
     }
 }
@@ -214,8 +188,7 @@ private fun LogoJoystick(onMove: (Float, Float) -> Unit, colors: ShellColors) {
         Modifier
             .size(96.dp)
             .clip(CircleShape)
-            .background(colors.surface)
-            .border(BorderStroke(1.dp, colors.textPrimary.copy(alpha = 0.12f)), CircleShape)
+            .background(colors.iconBg)
             .pointerInput(Unit) {
             val reach = size.width / 2f * 0.7f
             awaitEachGesture {
@@ -309,5 +282,38 @@ fun LogoPlaceSection(profile: BusinessProfile, isFactory: Boolean, colors: Shell
                 }
             )
         }
+    }
+}
+
+/** Thin track, round thumb, in the app's own colours; tap or drag anywhere on it. */
+@Composable
+private fun LogoSlider(value: Float, range: ClosedFloatingPointRange<Float>, onChange: (Float) -> Unit, colors: ShellColors) {
+    val fraction = ((value - range.start) / (range.endInclusive - range.start)).coerceIn(0f, 1f)
+    val latest by rememberUpdatedState(onChange)
+    Canvas(
+        Modifier.fillMaxWidth().height(32.dp)
+            .pointerInput(Unit) {
+                awaitEachGesture {
+                    val down = awaitFirstDown(requireUnconsumed = false)
+                    val pad = 11.dp.toPx()
+                    fun at(x: Float) = latest(range.start + ((x - pad) / (size.width - 2 * pad)).coerceIn(0f, 1f) * (range.endInclusive - range.start))
+                    at(down.position.x)
+                    down.consume()
+                    while (true) {
+                        val change = awaitPointerEvent().changes.firstOrNull { it.id == down.id } ?: break
+                        if (!change.pressed) break
+                        at(change.position.x)
+                        change.consume()
+                    }
+                }
+            }
+    ) {
+        val pad = 11.dp.toPx()
+        val y = size.height / 2f
+        val x = pad + fraction * (size.width - 2 * pad)
+        val track = 4.dp.toPx()
+        drawLine(colors.textPrimary.copy(alpha = 0.18f), Offset(pad, y), Offset(size.width - pad, y), track, androidx.compose.ui.graphics.StrokeCap.Round)
+        drawLine(colors.textPrimary, Offset(pad, y), Offset(x, y), track, androidx.compose.ui.graphics.StrokeCap.Round)
+        drawCircle(colors.textPrimary, radius = 10.dp.toPx(), center = Offset(x, y))
     }
 }
