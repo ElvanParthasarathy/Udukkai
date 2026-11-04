@@ -13,7 +13,7 @@ class SettingsSearchTest {
     @Test
     fun findsByEnglishWordsAndKeywords() {
         assertEquals(SettingsRoute.StorageBackup, first("backup"))
-        assertEquals(SettingsRoute.AppLock, first("fingerprint"))
+        assertEquals(SettingsRoute.Security, first("sync"))
         assertEquals(SettingsRoute.TextilesIdentity, first("logo"))
         assertEquals(SettingsRoute.Address, first("pincode"))
         assertEquals(SettingsRoute.Bank, first("ifsc"))

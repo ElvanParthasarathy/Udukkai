@@ -132,7 +132,6 @@ fun TextilesSettingsScreen(
                 SettingsRoute.Privacy -> K.privacyPolicy.tr()
                 SettingsRoute.Terms -> K.termsOfUse.tr()
                 SettingsRoute.Licences -> K.openSourceLicences.tr()
-                SettingsRoute.AppLock -> K.appLock.tr()
                 SettingsRoute.About -> K.groupAbout.tr()
             }
 
@@ -184,7 +183,6 @@ fun TextilesSettingsScreen(
                     SettingsRoute.Privacy -> LegalScreen(LegalPage.PRIVACY, scrollState, colors)
                     SettingsRoute.Terms -> LegalScreen(LegalPage.TERMS, scrollState, colors)
                     SettingsRoute.Licences -> LegalScreen(LegalPage.LICENCES, scrollState, colors)
-                    SettingsRoute.AppLock -> AppLockSettingsScreen(scrollState = scrollState, colors = colors)
                     SettingsRoute.About -> AboutHubScreen(versionText = "Udukkai Textiles v1.0", onNavigate = { navigateTo(it) }, scrollState = scrollState, colors = colors)
                 }
             }
@@ -404,15 +402,7 @@ private fun TextilesSettingsHubContent(
                         colors = colors
                     )
 
-                    ElvanSettingsDivider(colors = colors)
 
-                    ElvanSettingsRow(
-                        icon = MaterialSymbols.Rounded.Lock,
-                        title = K.appLock.tr(),
-                        description = K.appLockRowHint.tr(),
-                        onClick = { onNavigate(SettingsRoute.AppLock) },
-                        colors = colors
-                    )
 
                     ElvanSettingsDivider(colors = colors)
 

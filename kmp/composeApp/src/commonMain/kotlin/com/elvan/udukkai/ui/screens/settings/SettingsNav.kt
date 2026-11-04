@@ -21,7 +21,6 @@ sealed interface SettingsRoute {
     data object Privacy : SettingsRoute
     data object Terms : SettingsRoute
     data object Licences : SettingsRoute
-    data object AppLock : SettingsRoute
     data object About : SettingsRoute
 
     companion object {
@@ -64,7 +63,6 @@ val SettingsRoute.name: String
         SettingsRoute.Privacy -> "Privacy"
         SettingsRoute.Terms -> "Terms"
         SettingsRoute.Licences -> "Licences"
-        SettingsRoute.AppLock -> "AppLock"
         SettingsRoute.About -> "About"
     }
 
@@ -86,7 +84,6 @@ fun settingsRouteFromName(name: String?): SettingsRoute = when (name) {
     "Privacy" -> SettingsRoute.Privacy
     "Terms" -> SettingsRoute.Terms
     "Licences" -> SettingsRoute.Licences
-    "AppLock" -> SettingsRoute.AppLock
     "About" -> SettingsRoute.About
     else -> SettingsRoute.Hub
 }

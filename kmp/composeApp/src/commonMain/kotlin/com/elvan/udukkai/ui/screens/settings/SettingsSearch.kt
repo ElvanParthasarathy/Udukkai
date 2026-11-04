@@ -78,7 +78,6 @@ fun settingsEntries(identity: SettingsRoute): List<SettingsEntry> = with(Materia
         SettingsEntry(SettingsRoute.Display, K.display, K.themeLightDarkAuto, K.groupApp, LightMode, listOf("theme", "dark", "light", "font", "colour", "color", "appearance", "text size")),
         SettingsEntry(SettingsRoute.Language, K.appLanguage, K.tamilEnglishAuto, K.groupApp, Translate, listOf("tamil", "english", "translate", "language")),
         SettingsEntry(SettingsRoute.StorageBackup, K.storageAndBackup, K.manageDatabasesBackups, K.groupData, Folder, listOf("backup", "restore", "export", "import", "file", "database", "undo", "merge", "replace", "storage")),
-        SettingsEntry(SettingsRoute.AppLock, K.appLock, K.appLockRowHint, K.groupData, Lock, listOf("pin", "fingerprint", "biometric", "password", "lock", "privacy", "forgot")),
         SettingsEntry(SettingsRoute.Security, K.security, K.syncLogoutClearData, K.groupData, Lock, listOf("sync", "sign out", "logout", "google", "account", "cloud", "clear data", "erase")),
         SettingsEntry(SettingsRoute.About, K.aboutAndLegal, K.aboutAndLegalHint, K.groupAbout, Info, listOf("about", "legal", "help")),
         SettingsEntry(SettingsRoute.AboutApp, K.aboutApp, null, K.groupAbout, Info, listOf("version", "about")),
