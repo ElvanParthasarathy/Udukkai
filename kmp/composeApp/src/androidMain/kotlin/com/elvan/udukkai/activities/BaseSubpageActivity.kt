@@ -157,12 +157,14 @@ abstract class BaseSubpageActivity : FragmentActivity() {
             return
         }
         CurrentActivity.activity = this
-        // Write THIS activity's current header state OUT to GlobalHeaderState.
-        // This ensures the next subpage opened from here reads the correct initial
-        // expanded/collapsed state. Direction: local → global (safe, no scroll reset).
-        // We never read global → local (that caused the original scroll-reset bug).
+        // Sync expand/collapse visual state: global → local.
+        // Safe now because ElvanShell.kt no longer calls scrollToItem(0,0) on this change —
+        // it only adjusts headerCollapsePx (the visual header height). Scroll is untouched.
+        // This keeps expand/collapse state connected across all pages.
         currentHeaderExpanded?.let { state ->
-            GlobalHeaderState.isExpanded = state.value
+            if (state.value != GlobalHeaderState.isExpanded) {
+                state.value = GlobalHeaderState.isExpanded
+            }
         }
     }
 
