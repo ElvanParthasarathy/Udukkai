@@ -59,9 +59,9 @@ fun AboutHubScreen(
             ElvanSettingsSection(colors = colors) {
                 ElvanSettingsRow(
                     icon = MaterialSymbols.Rounded.Info,
-                    title = K.version.tr(),
+                    title = K.aboutApp.tr(),
                     description = versionText,
-                    onClick = {},
+                    onClick = { onNavigate(SettingsRoute.AboutApp) },
                     colors = colors
                 )
             }

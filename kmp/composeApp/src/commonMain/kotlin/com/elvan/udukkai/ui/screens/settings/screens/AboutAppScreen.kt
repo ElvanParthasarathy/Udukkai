@@ -119,11 +119,11 @@ fun AboutAppScreen(
                 Spacer(modifier = Modifier.height(4.dp))
 
                 Text(
-                    text = K.elvanNavilStudioDesc.tr(),
+                    text = "Elvan Niril",
                     style = TextStyle(
                         fontFamily = ff,
                         fontSize = 13.5.sp,
-                        fontWeight = FontWeight.Normal
+                        fontWeight = FontWeight.Medium
                     ),
                     color = colors.textSecondary.copy(alpha = 0.85f)
                 )

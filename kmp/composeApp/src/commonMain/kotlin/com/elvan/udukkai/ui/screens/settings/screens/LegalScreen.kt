@@ -4,19 +4,23 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.elvan.udukkai.localization.K
 import com.elvan.udukkai.localization.LanguageManager
+import com.elvan.udukkai.localization.tr
 import com.elvan.udukkai.theme.Dimens
 import com.elvan.udukkai.theme.LocalAppFontFamily
 import com.elvan.udukkai.theme.ShellColors
 import com.elvan.udukkai.theme.rememberShellColors
+import com.elvan.udukkai.ui.components.shell.ElvanActionSheet
 import com.elvan.udukkai.ui.components.shell.ElvanSettingsDivider
 import com.elvan.udukkai.ui.components.shell.ElvanSettingsRow
 import com.elvan.udukkai.ui.components.shell.ElvanSettingsSection
@@ -27,43 +31,84 @@ enum class LegalPage { PRIVACY, TERMS, LICENCES }
 
 private data class Section(val heading: String, val body: String)
 
-/** A library entry in the open-source licences page with an optional URL to open. */
+/** A library entry in the open-source licences page with full license notice text. */
 private data class LicenceEntry(
     val name: String,
     val licenceType: String,
-    val url: String? = null
+    val fullText: String
 )
+
+private val apache2FullText = """
+Apache License
+Version 2.0, January 2004
+http://www.apache.org/licenses/
+
+TERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION
+
+1. Definitions.
+"License" shall mean the terms and conditions for use, reproduction, and distribution as defined by Sections 1 through 9 of this document.
+"Licensor" shall mean the copyright owner or entity authorized by the copyright owner that is granting the License.
+"Legal Entity" shall mean the union of the acting entity and all other entities that control, are controlled by, or are under common control with that entity.
+
+2. Grant of Copyright License.
+Subject to the terms and conditions of this License, each Contributor hereby grants to You a perpetual, worldwide, non-exclusive, no-charge, royalty-free, irrevocable copyright license to reproduce, prepare Derivative Works of, publicly display, publicly perform, sublicense, and distribute the Work and such Derivative Works in Source or Object form.
+
+3. Grant of Patent License.
+Subject to the terms and conditions of this License, each Contributor hereby grants to You a perpetual, worldwide, non-exclusive, no-charge, royalty-free, irrevocable patent license to make, have made, use, offer to sell, sell, import, and otherwise transfer the Work.
+
+4. Redistribution.
+You may reproduce and distribute copies of the Work or Derivative Works thereof in any medium, with or without modifications, and in Source or Object form, provided that You meet the following conditions:
+(a) You must give any other recipients of the Work or Derivative Works a copy of this License; and
+(b) You must cause any modified files to carry prominent notices stating that You changed the files; and
+(c) You must retain, in the Source form of any Derivative Works that You distribute, all copyright, patent, trademark, and attribution notices from the Source form of the Work; and
+(d) If the Work includes a "NOTICE" text file as part of its distribution, You must include a readable copy of the attribution notices contained within such NOTICE file.
+
+5. Submission of Contributions.
+Unless You explicitly state otherwise, any Contribution intentionally submitted for inclusion in the Work by You to the Licensor shall be under the terms and conditions of this License, without any additional terms or conditions.
+
+6. Trademarks.
+This License does not grant permission to use the trade names, trademarks, service marks, or product names of the Licensor, except as required for reasonable and customary use in describing the origin of the Work.
+
+7. Disclaimer of Warranty.
+Unless required by applicable law or agreed to in writing, Licensor provides the Work (and each Contributor provides its Contributions) on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied, including, without limitation, any warranties or conditions of TITLE, NON-INFRINGEMENT, MERCHANTABILITY, or FITNESS FOR A PARTICULAR PURPOSE.
+
+8. Limitation of Liability.
+In no event and under no legal theory, whether in tort (including negligence), contract, or otherwise, unless required by applicable law or agreed to in writing, shall any Contributor be liable to You for damages, including any direct, indirect, special, incidental, or consequential damages of any character arising as a result of this License or out of the use or inability to use the Work.
+
+9. Accepting Warranty or Additional Liability.
+While redistributing the Work or Derivative Works thereof, You may choose to offer, and charge a fee for, acceptance of support, warranty, indemnity, or other liability obligations and/or rights consistent with this License.
+""".trimIndent()
 
 private val licenceEntries = listOf(
     LicenceEntry(
         name = "Kotlin & Compose Multiplatform",
         licenceType = "Apache License 2.0",
-        url = "https://www.apache.org/licenses/LICENSE-2.0"
+        fullText = "Copyright 2010-2026 JetBrains s.r.o. and Kotlin Programming Language contributors.\nCopyright 2020-2026 JetBrains s.r.o. and Google LLC.\n\nLicensed under the Apache License, Version 2.0 (the \"License\"); you may not use this file except in compliance with the License. You may obtain a copy of the License at\n\n    http://www.apache.org/licenses/LICENSE-2.0\n\nUnless required by applicable law or agreed to in writing, software distributed under the License is distributed on an \"AS IS\" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License."
     ),
     LicenceEntry(
         name = "AndroidX (Activity, Core, Credentials, etc.)",
         licenceType = "Apache License 2.0",
-        url = "https://www.apache.org/licenses/LICENSE-2.0"
+        fullText = "Copyright (C) 2018-2026 The Android Open Source Project\n\nLicensed under the Apache License, Version 2.0 (the \"License\"); you may not use this file except in compliance with the License. You may obtain a copy of the License at\n\n    http://www.apache.org/licenses/LICENSE-2.0\n\nUnless required by applicable law or agreed to in writing, software distributed under the License is distributed on an \"AS IS\" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License."
     ),
     LicenceEntry(
         name = "Firebase & Google Play Services",
-        licenceType = "Apache License 2.0 + Firebase Terms",
-        url = "https://firebase.google.com/terms"
+        licenceType = "Apache License 2.0 + Terms",
+        fullText = "Copyright 2026 Google LLC\n\nLicensed under the Apache License, Version 2.0 (the \"License\"); you may not use this file except in compliance with the License. You may obtain a copy of the License at\n\n    http://www.apache.org/licenses/LICENSE-2.0\n\nSubject to the Google APIs Terms of Service and Firebase Terms of Service."
     ),
     LicenceEntry(
         name = "SQLite",
         licenceType = "Public Domain",
-        url = "https://www.sqlite.org/copyright.html"
+        fullText = "Public Domain Dedication\n\nAll of the code and documentation in SQLite has been dedicated to the public domain by the authors. All code authors, and representatives of the companies they work for, have signed affidavits dedicating their contributions to the public domain and originals of those signed affidavits are stored in a firesafe at the main offices of Hwaci.\n\nAnyone is free to copy, modify, publish, use, compile, sell, or distribute the original SQLite code, either in source code form or as a compiled binary, for any purpose, commercial or non-commercial, and by any means."
     ),
     LicenceEntry(
-        name = "React (printed bills renderer)",
+        name = "React (Printed Bills Renderer)",
         licenceType = "MIT License",
-        url = "https://github.com/facebook/react/blob/main/LICENSE"
+        fullText = "MIT License\n\nCopyright (c) Meta Platforms, Inc. and affiliates.\n\nPermission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the \"Software\"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE."
     ),
     LicenceEntry(
         name = "Apache License 2.0 — Full Text",
-        licenceType = "apache.org/licenses/LICENSE-2.0",
-        url = "https://www.apache.org/licenses/LICENSE-2.0"
+        licenceType = "Apache License 2.0",
+        fullText = apache2FullText
     )
 )
 
@@ -92,7 +137,7 @@ private fun sections(page: LegalPage, ta: Boolean): List<Section> = when (page) 
         Section("Backups", "Back up often and keep the backups in a safe place so that you do not lose data. A copy of your data is kept before every restore."),
         Section("Accounts", "Only approved accounts may use the app. You are responsible for keeping your account and your app lock safe.")
     )
-    LegalPage.LICENCES -> emptyList() // Rendered separately as tappable rows below
+    LegalPage.LICENCES -> emptyList()
 }
 
 /** Privacy policy, terms of use and open-source licences, in the app's language, inside the settings. */
@@ -103,7 +148,7 @@ fun LegalScreen(
     colors: ShellColors = rememberShellColors()
 ) {
     val ff = LocalAppFontFamily.current
-    val uriHandler = LocalUriHandler.current
+    var selectedLicence by remember { mutableStateOf<LicenceEntry?>(null) }
 
     LazyColumn(
         state = scrollState,
@@ -114,7 +159,7 @@ fun LegalScreen(
         item(key = "shell_top_spacer") { Spacer(modifier = Modifier.height(LocalElvanTopSpacerHeight.current)) }
 
         if (page == LegalPage.LICENCES) {
-            // ── Industry-standard tappable licence rows ──
+            // ── In-app interactive licence rows ──
             item(key = "licences_section") {
                 ElvanSettingsSection(colors = colors) {
                     licenceEntries.forEachIndexed { index, entry ->
@@ -122,7 +167,7 @@ fun LegalScreen(
                             icon = MaterialSymbols.Rounded.Code,
                             title = entry.name,
                             description = entry.licenceType,
-                            onClick = { entry.url?.let { uriHandler.openUri(it) } },
+                            onClick = { selectedLicence = entry },
                             colors = colors
                         )
                         if (index < licenceEntries.lastIndex) {
@@ -153,5 +198,46 @@ fun LegalScreen(
                 }
             }
         }
+    }
+
+    // ── In-app license full text viewer sheet ──
+    selectedLicence?.let { entry ->
+        ElvanActionSheet(
+            title = entry.name,
+            confirmText = "",
+            cancelText = K.done.tr(),
+            onDismissRequest = { selectedLicence = null },
+            onConfirm = { selectedLicence = null },
+            colors = colors,
+            customContent = {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(max = 380.dp)
+                        .verticalScroll(rememberScrollState())
+                        .padding(horizontal = 4.dp, vertical = 8.dp)
+                ) {
+                    Text(
+                        text = entry.licenceType,
+                        style = TextStyle(
+                            fontFamily = ff,
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.SemiBold
+                        ),
+                        color = colors.accent
+                    )
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Text(
+                        text = entry.fullText,
+                        style = TextStyle(
+                            fontFamily = ff,
+                            fontSize = 12.sp,
+                            lineHeight = 18.sp
+                        ),
+                        color = colors.textPrimary.copy(alpha = 0.8f)
+                    )
+                }
+            }
+        )
     }
 }
