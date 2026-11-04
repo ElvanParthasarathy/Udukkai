@@ -111,7 +111,6 @@ fun FactorySecuritySettingsScreen(
                     try {
                         AuthManager.logout()
                     } catch (_: Exception) {}
-                    delay(500)
                     showSignOutLoading = false
                     ElvanSnackbar.show(signOutSuccessMsg)
                 }

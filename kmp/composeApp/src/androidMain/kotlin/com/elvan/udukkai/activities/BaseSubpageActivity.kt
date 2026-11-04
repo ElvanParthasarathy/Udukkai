@@ -122,6 +122,11 @@ abstract class BaseSubpageActivity : FragmentActivity() {
                         LocalGlobalHeaderExpanded provides headerExpandedState,
                         LocalElvanBottomSheetController provides bottomSheetController
                     ) {
+                        androidx.compose.runtime.LaunchedEffect(com.elvan.udukkai.core.auth.AuthManager.isLoggedIn) {
+                            if (!com.elvan.udukkai.core.auth.AuthManager.isLoggedIn) {
+                                finish()
+                            }
+                        }
                         Box(
                             modifier = Modifier
                                 .fillMaxSize()
@@ -147,6 +152,10 @@ abstract class BaseSubpageActivity : FragmentActivity() {
 
     override fun onResume() {
         super.onResume()
+        if (!com.elvan.udukkai.core.auth.AuthManager.isLoggedIn) {
+            finish()
+            return
+        }
         CurrentActivity.activity = this
         currentHeaderExpanded?.let { state ->
             if (state.value != GlobalHeaderState.isExpanded) {

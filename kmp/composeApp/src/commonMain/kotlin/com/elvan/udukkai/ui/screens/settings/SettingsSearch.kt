@@ -131,7 +131,7 @@ private val PILL_OPEN_MARGIN = 16.dp
 @Composable
 private fun Modifier.floatingPill(colors: ShellColors, height: Dp = PILL_CLOSED_HEIGHT): Modifier = this
     .height(height)
-    .cssShadow(color = Color.Black, alpha = if (colors.isDark) 0.55f else 0.20f, blurRadius = 32.dp, offsetY = 12.dp)
+    .cssShadow(color = Color.Black, alpha = 0.05f, blurRadius = 16.dp, offsetY = 4.dp)
     .background(color = colors.floatingBg.copy(alpha = 0.88f), shape = CircleShape)
     .border(width = 0.5.dp, color = colors.floatingBorder.copy(alpha = if (colors.isDark) 0.15f else 0.6f), shape = CircleShape)
 

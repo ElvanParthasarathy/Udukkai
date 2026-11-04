@@ -86,6 +86,14 @@ actual fun platformSignOut() {
             CredentialManager.create(activity).clearCredentialState(androidx.credentials.ClearCredentialStateRequest())
         } catch (_: Exception) {}
     }
+    // Return all the way to launch/welcome page (MainActivity) and close all multi-window subpage activities
+    try {
+        val intent = android.content.Intent(activity, com.elvan.udukkai.MainActivity::class.java).apply {
+            addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK or android.content.Intent.FLAG_ACTIVITY_CLEAR_TASK)
+        }
+        activity.startActivity(intent)
+        activity.finish()
+    } catch (_: Exception) {}
 }
 
 actual suspend fun platformEmailSignIn(email: String, password: String): GoogleSignInResult {
