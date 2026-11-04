@@ -135,12 +135,10 @@ fun TextilesHomeScreen() {
         navigateToSubpage(ActiveSubpage.InvoiceEditor(copied))
     }
 
-    val copySuffix = " (${K.copyNoun.tr()})"
-
     val copyItemAndEdit: (ItemModel) -> Unit = { item ->
         val copied = item.copy(
             id = 0L,
-            name = item.name.mapValues { "${it.value}$copySuffix" },
+            name = item.name,
             createdAt = System.currentTimeMillis(),
             updatedAt = System.currentTimeMillis()
         )
@@ -152,7 +150,7 @@ fun TextilesHomeScreen() {
     val copyCustomerAndEdit: (CustomerModel) -> Unit = { merchant ->
         val copied = merchant.copy(
             id = 0L,
-            name = merchant.name.mapValues { "${it.value}$copySuffix" },
+            name = merchant.name,
             gstin = "",
             createdAt = System.currentTimeMillis(),
             updatedAt = System.currentTimeMillis()

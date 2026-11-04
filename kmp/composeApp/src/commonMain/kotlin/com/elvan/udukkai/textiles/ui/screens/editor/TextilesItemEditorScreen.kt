@@ -22,6 +22,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.elvan.udukkai.core.platform.AppBackHandler
+import com.elvan.udukkai.core.utils.DuplicateValidator
 import com.elvan.udukkai.data.model.ItemModel
 import com.elvan.udukkai.textiles.data.TextilesItemRepository
 import com.elvan.udukkai.textiles.data.TextilesProfileRepository
@@ -132,6 +133,7 @@ fun TextilesItemEditorScreen(
 
     val pageTitle = if (isEditing) K.editItem.tr() else K.createItem.tr()
     val nameRequiredMsg = K.itemNameRequired.tr()
+    val duplicateItemMsg = K.itemNameAlreadyExists.tr()
     val savedMsg = K.itemSavedSuccessfully.tr()
     val saveFailedMsg = K.couldNotSavePrefix.tr()
 
@@ -146,6 +148,18 @@ fun TextilesItemEditorScreen(
         val taxVal = variVeetham.toDoubleOrNull() ?: 0.0
 
         val companyIds = selectedCompanyOption.id?.let { listOf(it) } ?: emptyList()
+
+        if (DuplicateValidator.isDuplicateItem(
+                candidateNameMap = itemNameMap,
+                candidateCompanyIds = companyIds,
+                existingItems = TextilesItemRepository.items,
+                currentItemId = item?.id
+            )
+        ) {
+            validationError = duplicateItemMsg
+            ElvanSnackbar.show(duplicateItemMsg)
+            return
+        }
 
         val itemToSave = ItemModel(
             id = item?.id ?: 0L,

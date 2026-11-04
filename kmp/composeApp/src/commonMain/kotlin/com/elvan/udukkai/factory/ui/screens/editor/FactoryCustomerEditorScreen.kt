@@ -24,6 +24,7 @@ fun FactoryCustomerEditorScreen(
         secondaryLang = profile.secondaryLanguage.ifEmpty { "en" },
         allProfiles = FactoryProfileRepository.profiles,
         activeCompanyId = profile.id,
+        existingCustomers = FactoryCustomerRepository.customers,
         onSave = { FactoryCustomerRepository.save(it) },
         onBack = onBack
     )

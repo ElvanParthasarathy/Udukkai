@@ -13,6 +13,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.elvan.udukkai.core.platform.AppBackHandler
+import com.elvan.udukkai.core.utils.DuplicateValidator
 import com.elvan.udukkai.data.model.ItemModel
 import com.elvan.udukkai.factory.data.FactoryItemRepository
 import com.elvan.udukkai.factory.data.FactoryProfileRepository
@@ -104,6 +105,7 @@ fun FactoryItemEditorScreen(
 
     val pageTitle = if (isEditing) K.editItem.tr() else K.createItem.tr()
     val nameRequiredMsg = K.itemNameRequired.tr()
+    val duplicateItemMsg = K.itemNameAlreadyExists.tr()
     val savedMsg = K.itemSavedSuccessfully.tr()
     val saveFailedMsg = K.couldNotSavePrefix.tr()
 
@@ -115,6 +117,18 @@ fun FactoryItemEditorScreen(
         }
 
         val companyIds = selectedCompanyOption.id?.let { listOf(it) } ?: emptyList()
+
+        if (DuplicateValidator.isDuplicateItem(
+                candidateNameMap = itemNameMap,
+                candidateCompanyIds = companyIds,
+                existingItems = FactoryItemRepository.items,
+                currentItemId = item?.id
+            )
+        ) {
+            validationError = duplicateItemMsg
+            ElvanSnackbar.show(duplicateItemMsg)
+            return
+        }
 
         val itemToSave = ItemModel(
             id = item?.id ?: 0L,

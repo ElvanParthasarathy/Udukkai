@@ -71,6 +71,7 @@ fun CustomerEditorScreen(
     accentColor: Color? = null,
     allProfiles: List<BusinessProfile> = emptyList(),
     activeCompanyId: Long? = null,
+    existingCustomers: List<CustomerModel> = emptyList(),
     onSave: (CustomerModel) -> Long,
     onBack: () -> Unit
 ) {
@@ -172,7 +173,6 @@ fun CustomerEditorScreen(
         mutableStateOf(merchant != null && merchant.district.isNotEmpty() && initialPresetDistrict == null)
     }
 
-    var nameValidationError by remember { mutableStateOf<String?>(null) }
     var showDiscardDialog by remember { mutableStateOf(false) }
     var isExiting by remember { mutableStateOf(false) }
 
@@ -260,7 +260,7 @@ fun CustomerEditorScreen(
     fun handleSave() {
         val hasName = nameMap.values.any { it.trim().isNotBlank() }
         if (!hasName) {
-            nameValidationError = fillNameMsg
+            ElvanSnackbar.show(fillNameMsg)
             return
         }
 
@@ -351,27 +351,12 @@ fun CustomerEditorScreen(
                                 ElvanIrumozhiPulan(
                                     label = "${(if (isB2b) K.customerBusinessName else K.customerName).tr()} *",
                                     value = nameMap,
-                                    onChanged = {
-                                        nameMap = it
-                                        nameValidationError = null
-                                    },
+                                    onChanged = { nameMap = it },
                                     isBilingual = isBilingual,
                                     primaryLang = primaryLang,
                                     secondaryLang = secondaryLang,
                                     placeholder = K.customerName.tr()
                                 )
-
-                                if (nameValidationError != null) {
-                                    Text(
-                                        text = nameValidationError!!,
-                                        style = TextStyle(
-                                            fontFamily = ff,
-                                            fontSize = 12.sp,
-                                            color = MaterialTheme.colorScheme.error
-                                        ),
-                                        modifier = Modifier.padding(start = 4.dp)
-                                    )
-                                }
 
                                 if (isB2b) {
                                     ElvanIrumozhiPulan(
