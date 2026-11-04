@@ -120,16 +120,16 @@ object RecentSettingSearches {
     private fun save(list: List<String>) = getPreferencesHelper().setString(KEY, list.take(MAX).joinToString("\n"))
 }
 
-/** The search pill: comfortable, substantial floating pill (56dp high, 248dp wide), matching the navbar style. */
-private val PILL_HEIGHT = 56.dp
-private val PILL_FIELD_HEIGHT = 56.dp
+/** The search pill: comfortable, substantial floating pill (48dp high, 216dp wide closed; expands to 56dp high). */
+private val PILL_CLOSED_HEIGHT = 48.dp
+private val PILL_OPEN_HEIGHT = 56.dp
 
 /** The closed pill's width, and the room left at each side when it is open. */
-private val PILL_CLOSED_WIDTH = 248.dp
+private val PILL_CLOSED_WIDTH = 216.dp
 private val PILL_OPEN_MARGIN = 16.dp
 
 @Composable
-private fun Modifier.floatingPill(colors: ShellColors, height: Dp = PILL_HEIGHT): Modifier = this
+private fun Modifier.floatingPill(colors: ShellColors, height: Dp = PILL_CLOSED_HEIGHT): Modifier = this
     .height(height)
     .cssShadow(color = Color.Black, alpha = if (colors.isDark) 0.55f else 0.20f, blurRadius = 32.dp, offsetY = 12.dp)
     .background(color = colors.floatingBg.copy(alpha = 0.88f), shape = CircleShape)
@@ -142,17 +142,17 @@ fun SettingsSearchPill(colors: ShellColors, onClick: () -> Unit) {
     BoxWithConstraints(Modifier.fillMaxWidth().navigationBarsPaddingIfMobile().padding(bottom = Dimens.FloatingBarBottomGap), contentAlignment = Alignment.Center) {
         Row(
             Modifier.width(PILL_CLOSED_WIDTH.coerceAtMost(maxWidth - PILL_OPEN_MARGIN * 2))
-                .floatingPill(colors, height = PILL_HEIGHT)
+                .floatingPill(colors, height = PILL_CLOSED_HEIGHT)
                 .clip(CircleShape)
                 .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null, onClick = onClick)
                 .padding(start = 16.dp, end = 8.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Icon(MaterialSymbols.Rounded.Search, null, tint = colors.textSecondary, modifier = Modifier.size(20.dp))
+            Icon(MaterialSymbols.Rounded.Search, null, tint = colors.textSecondary, modifier = Modifier.size(19.dp))
             Spacer(Modifier.width(10.dp))
             Text(
                 K.searchWord.tr(),
-                style = TextStyle(fontFamily = ff, fontSize = 16.sp, color = colors.textSecondary.copy(alpha = 0.6f)),
+                style = TextStyle(fontFamily = ff, fontSize = 15.sp, color = colors.textSecondary.copy(alpha = 0.6f)),
                 maxLines = 1,
                 softWrap = false
             )
@@ -200,22 +200,25 @@ fun SettingsSearchOverlay(open: Boolean, entries: List<SettingsEntry>, colors: S
         val rise = with(LocalDensity.current) { (28.dp * (1f - p)).toPx() }
         val closedWidth = PILL_CLOSED_WIDTH.coerceAtMost(maxWidth - PILL_OPEN_MARGIN * 2)
         val openWidth = maxWidth - PILL_OPEN_MARGIN * 2
+        val currentWidth = closedWidth + (openWidth - closedWidth) * p
+        val currentHeight = PILL_CLOSED_HEIGHT + (PILL_OPEN_HEIGHT - PILL_CLOSED_HEIGHT) * p
         Box(Modifier.fillMaxSize().graphicsLayer { alpha = p; translationY = rise }) {
             SearchPage(query, { query = it }, recents, { recents = it }, results, colors, ::openResult, onClose)
         }
-        // The field is the pill itself: it starts at the pill's place and size and widens to the full field
+        // The field is the pill itself: it starts at the pill's place and size and smoothly grows to the full field
         SearchField(
             colors = colors, open = open, query = query, onQuery = { query = it },
             onSearch = { results.firstOrNull()?.let { openResult(it.route) } },
+            height = currentHeight,
             modifier = Modifier.align(Alignment.BottomCenter)
                 .padding(bottom = maxOf(imeBottom, navInset) + Dimens.FloatingBarBottomGap)
-                .width(closedWidth + (openWidth - closedWidth) * p)
+                .width(currentWidth)
         )
     }
 }
 
 @Composable
-private fun SearchField(colors: ShellColors, open: Boolean, query: String, onQuery: (String) -> Unit, onSearch: () -> Unit, modifier: Modifier) {
+private fun SearchField(colors: ShellColors, open: Boolean, query: String, onQuery: (String) -> Unit, onSearch: () -> Unit, height: Dp, modifier: Modifier) {
     val ff = LocalAppFontFamily.current
     val focus = remember { FocusRequester() }
     val focusManager = LocalFocusManager.current
@@ -223,16 +226,16 @@ private fun SearchField(colors: ShellColors, open: Boolean, query: String, onQue
     LaunchedEffect(open) {
         if (open) { delay(260); runCatching { focus.requestFocus() } } else focusManager.clearFocus()
     }
-    Row(modifier.floatingPill(colors, height = PILL_FIELD_HEIGHT).padding(start = 16.dp, end = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-        Icon(MaterialSymbols.Rounded.Search, null, tint = colors.textSecondary, modifier = Modifier.size(20.dp))
+    Row(modifier.floatingPill(colors, height = height).padding(start = 16.dp, end = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+        Icon(MaterialSymbols.Rounded.Search, null, tint = colors.textSecondary, modifier = Modifier.size(19.dp))
         Spacer(Modifier.width(10.dp))
         Box(Modifier.weight(1f), contentAlignment = Alignment.CenterStart) {
-            if (query.isEmpty()) Text(K.searchWord.tr(), style = TextStyle(fontFamily = ff, fontSize = 16.sp, color = colors.textSecondary.copy(alpha = 0.6f)))
+            if (query.isEmpty()) Text(K.searchWord.tr(), style = TextStyle(fontFamily = ff, fontSize = 15.sp, color = colors.textSecondary.copy(alpha = 0.6f)))
             BasicTextField(
                 value = query,
                 onValueChange = onQuery,
                 singleLine = true,
-                textStyle = TextStyle(fontFamily = ff, fontSize = 16.sp, color = colors.textPrimary),
+                textStyle = TextStyle(fontFamily = ff, fontSize = 15.sp, color = colors.textPrimary),
                 cursorBrush = SolidColor(colors.textPrimary),
                 keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
                 keyboardActions = KeyboardActions(onSearch = { onSearch() }),
@@ -241,7 +244,7 @@ private fun SearchField(colors: ShellColors, open: Boolean, query: String, onQue
         }
         if (query.isNotEmpty()) {
             Box(Modifier.size(36.dp).clip(CircleShape).clickable { onQuery("") }, contentAlignment = Alignment.Center) {
-                Icon(MaterialSymbols.Rounded.Close, null, tint = colors.textSecondary, modifier = Modifier.size(20.dp))
+                Icon(MaterialSymbols.Rounded.Close, null, tint = colors.textSecondary, modifier = Modifier.size(19.dp))
             }
         }
     }

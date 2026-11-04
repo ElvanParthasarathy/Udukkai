@@ -598,9 +598,6 @@ fun ElvanShell(
                             .align(Alignment.BottomCenter)
                             .fillMaxWidth()
                             .height(if (hasFloatingBar) (72.dp + 56.dp + 16.dp + navBarsPadding) else (72.dp + navBarsPadding))
-                            .graphicsLayer {
-                                alpha = effectiveNavOpacity
-                            }
                             .background(
                                 Brush.verticalGradient(
                                     0.0f to Color.Transparent,

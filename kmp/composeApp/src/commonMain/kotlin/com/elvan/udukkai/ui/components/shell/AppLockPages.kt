@@ -33,13 +33,15 @@ import com.elvan.udukkai.theme.LocalAppFontFamily
 import com.elvan.udukkai.theme.ShellColors
 import com.elvan.udukkai.theme.ShellDefaults
 import com.elvan.udukkai.ui.navigation.MaterialSymbols
+import com.elvan.udukkai.ui.screens.onboarding.components.AuthBackdrop
 import com.elvan.udukkai.ui.screens.onboarding.screens.ScreenLockRequiredScreen
 import kotlinx.coroutines.delay
 
 /**
  * The app lock gate. When enabled, it displays the native Udukkai lock screen
- * and immediately requests Android system credentials (Fingerprint / Face / Device PIN / Pattern)
- * with zero delay. If the device has no screen lock set, it shows a clean ScreenLockRequiredScreen.
+ * with auth backdrop shapes and immediately requests Android system credentials
+ * (Fingerprint / Face / Device PIN / Pattern) with zero delay.
+ * If the device has no screen lock set, it shows a clean ScreenLockRequiredScreen.
  */
 @Composable
 fun AppLockGate(colors: ShellColors, content: @Composable () -> Unit) {
@@ -96,9 +98,10 @@ fun AppLockGate(colors: ShellColors, content: @Composable () -> Unit) {
 }
 
 /**
- * Dedicated Native App Lock Screen matching Udukkai's dark/light aesthetic.
- * Replaces the splash screen with a clean lock container, app title, Pure Senthamizh subtitle,
- * and a biometric/PIN unlock action, with zero external branding or splash shapes.
+ * Dedicated Native App Lock Screen matching Udukkai's login/signup aesthetic.
+ * Features the genuine auth backdrop shapes, centered lock container, app title,
+ * Pure Senthamizh subtitle, and an interactive biometric/PIN unlock action,
+ * with zero external branding.
  */
 @Composable
 fun UdukkaiAppLockScreen(
@@ -112,13 +115,16 @@ fun UdukkaiAppLockScreen(
         modifier = modifier
             .fillMaxSize()
             .background(colors.background)
-            .windowInsetsPadding(WindowInsets.safeDrawing),
-        contentAlignment = Alignment.Center
     ) {
+        AuthBackdrop()
+
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center,
-            modifier = Modifier.padding(horizontal = 24.dp)
+            modifier = Modifier
+                .fillMaxSize()
+                .windowInsetsPadding(WindowInsets.safeDrawing)
+                .padding(horizontal = 24.dp)
         ) {
             // Elegant Lock Icon Container
             Box(
