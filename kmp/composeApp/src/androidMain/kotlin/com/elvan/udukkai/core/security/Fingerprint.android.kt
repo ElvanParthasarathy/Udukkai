@@ -44,3 +44,27 @@ actual fun authenticateFingerprint(title: String, cancelText: String, onResult: 
         onResult(false)
     }
 }
+
+actual fun openDeviceSecuritySettings() {
+    try {
+        // Direct intent to set up a new lock screen PIN / pattern / password
+        val intent = android.content.Intent(android.app.admin.DevicePolicyManager.ACTION_SET_NEW_PASSWORD).apply {
+            flags = android.content.Intent.FLAG_ACTIVITY_NEW_TASK
+        }
+        AppContext.context.startActivity(intent)
+    } catch (_: Exception) {
+        try {
+            val intent = android.content.Intent(android.provider.Settings.ACTION_SECURITY_SETTINGS).apply {
+                flags = android.content.Intent.FLAG_ACTIVITY_NEW_TASK
+            }
+            AppContext.context.startActivity(intent)
+        } catch (_: Exception) {
+            try {
+                val fallback = android.content.Intent(android.provider.Settings.ACTION_SETTINGS).apply {
+                    flags = android.content.Intent.FLAG_ACTIVITY_NEW_TASK
+                }
+                AppContext.context.startActivity(fallback)
+            } catch (_: Exception) {}
+        }
+    }
+}

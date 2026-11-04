@@ -83,12 +83,14 @@ internal fun NeramHeader(title: String, subtitle: String) {
     ) {
         Text(
             text = title,
+            modifier = Modifier.padding(horizontal = 8.dp),
             style = TextStyle(fontFamily = ElvanSansFontFamily, fontSize = 23.sp, fontWeight = FontWeight.Bold, color = NeramColors.textPrimary(), lineHeight = 29.sp),
             textAlign = TextAlign.Center
         )
         Spacer(Modifier.height(6.dp))
         Text(
             text = subtitle,
+            modifier = Modifier.padding(horizontal = 16.dp),
             style = TextStyle(fontFamily = ElvanSansFontFamily, fontSize = 13.sp, color = NeramColors.textSecondary(), lineHeight = 18.sp),
             textAlign = TextAlign.Center
         )

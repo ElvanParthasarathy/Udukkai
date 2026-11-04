@@ -27,7 +27,13 @@ import com.elvan.udukkai.theme.rememberShellColors
 import com.elvan.udukkai.ui.components.shell.ElvanBottomSheetController
 import com.elvan.udukkai.ui.components.shell.ElvanBottomSheetHost
 import com.elvan.udukkai.ui.components.shell.ElvanSnackbarHost
+import androidx.compose.runtime.mutableStateOf
 import com.elvan.udukkai.ui.components.shell.LocalElvanBottomSheetController
+import androidx.compose.runtime.MutableState
+import com.elvan.udukkai.ui.components.shell.GlobalHeaderState
+import com.elvan.udukkai.ui.components.shell.AppLockGate
+import com.elvan.udukkai.core.security.ScreenLockReceiver
+import com.elvan.udukkai.ui.components.shell.LocalGlobalHeaderExpanded
 import com.elvan.udukkai.updateSystemBarsAppearance
 
 /**
@@ -35,6 +41,7 @@ import com.elvan.udukkai.updateSystemBarsAppearance
  * Manages window lifecycle, system bar insets, edge-to-edge drawing, and app lock.
  */
 abstract class BaseSubpageActivity : FragmentActivity() {
+    private var currentHeaderExpanded: MutableState<Boolean>? = null
 
     val isFactory: Boolean get() = BuildConfig.FLAVOR == "factory"
 
@@ -45,6 +52,7 @@ abstract class BaseSubpageActivity : FragmentActivity() {
         super.onCreate(savedInstanceState)
         requestedOrientation = android.content.pm.ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
         AppContext.context = applicationContext
+        ScreenLockReceiver.register(applicationContext)
         CurrentActivity.activity = this
 
         val isSystemDark = (resources.configuration.uiMode and android.content.res.Configuration.UI_MODE_NIGHT_MASK) == android.content.res.Configuration.UI_MODE_NIGHT_YES
@@ -104,7 +112,14 @@ abstract class BaseSubpageActivity : FragmentActivity() {
                     val colors = rememberShellColors()
                     val bottomSheetController = remember { ElvanBottomSheetController() }
 
+                    val headerExpandedState = remember { mutableStateOf(GlobalHeaderState.isExpanded) }
+                    DisposableEffect(headerExpandedState) {
+                        currentHeaderExpanded = headerExpandedState
+                        onDispose { currentHeaderExpanded = null }
+                    }
+
                     CompositionLocalProvider(
+                        LocalGlobalHeaderExpanded provides headerExpandedState,
                         LocalElvanBottomSheetController provides bottomSheetController
                     ) {
                         Box(
@@ -112,7 +127,9 @@ abstract class BaseSubpageActivity : FragmentActivity() {
                                 .fillMaxSize()
                                 .background(colors.background)
                         ) {
-                            ScreenContent()
+                            AppLockGate(colors) {
+                                ScreenContent()
+                            }
                             ElvanBottomSheetHost(bottomSheetController)
                             ElvanSnackbarHost(colors = colors)
                         }
@@ -125,16 +142,21 @@ abstract class BaseSubpageActivity : FragmentActivity() {
     override fun onStart() {
         super.onStart()
         CurrentActivity.activity = this
-        AppLock.returned()
+        AppLock.onActivityStarted()
     }
 
     override fun onResume() {
         super.onResume()
         CurrentActivity.activity = this
+        currentHeaderExpanded?.let { state ->
+            if (state.value != GlobalHeaderState.isExpanded) {
+                state.value = GlobalHeaderState.isExpanded
+            }
+        }
     }
 
     override fun onStop() {
         super.onStop()
-        AppLock.left()
+        AppLock.onActivityStopped()
     }
 }

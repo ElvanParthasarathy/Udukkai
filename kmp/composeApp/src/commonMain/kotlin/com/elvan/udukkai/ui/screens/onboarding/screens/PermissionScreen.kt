@@ -43,7 +43,7 @@ fun AnumadhiKaavalarThirai(
             return@LaunchedEffect
         }
         while (true) {
-            delay(1000)
+            delay(300)
             if (isStoragePermissionGranted()) {
                 onPermissionGranted()
                 break
@@ -58,7 +58,7 @@ fun AnumadhiKaavalarThirai(
             modifier = Modifier
                 .fillMaxSize()
                 .windowInsetsPadding(WindowInsets.safeDrawing)
-                .padding(horizontal = 16.dp),
+                .padding(horizontal = 24.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Spacer(Modifier.weight(1f))
@@ -82,7 +82,7 @@ fun AnumadhiKaavalarThirai(
 
             Spacer(Modifier.height(24.dp))
 
-            NeramElement(delayIndex = 1) {
+            NeramElement(delayIndex = 1, modifier = Modifier.fillMaxWidth()) {
                 NeramHeader(title = K.storagePermissionRequired.tr(), subtitle = K.storagePermissionDesc.tr())
             }
 

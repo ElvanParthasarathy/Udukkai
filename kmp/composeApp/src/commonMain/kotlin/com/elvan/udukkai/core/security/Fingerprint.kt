@@ -9,3 +9,6 @@ expect fun fingerprintAvailable(): Boolean
  * false when cancelled or on error. Always called on the main thread.
  */
 expect fun authenticateFingerprint(title: String, cancelText: String, onResult: (Boolean) -> Unit)
+
+/** Opens the device's system Security Settings so the user can configure a screen lock (PIN/pattern/biometric). */
+expect fun openDeviceSecuritySettings()

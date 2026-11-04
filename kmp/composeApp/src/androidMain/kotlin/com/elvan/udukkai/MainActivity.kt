@@ -11,7 +11,13 @@ import androidx.fragment.app.FragmentActivity
 import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import com.elvan.udukkai.ui.components.shell.GlobalHeaderState
+import com.elvan.udukkai.ui.components.shell.LocalGlobalHeaderExpanded
 import androidx.core.view.WindowCompat
 import com.elvan.udukkai.factory.FactoryApp
 import com.elvan.udukkai.textiles.TextilesApp
@@ -47,11 +53,13 @@ fun updateSystemBarsAppearance(window: Window, isDark: Boolean) {
 }
 
 class MainActivity : FragmentActivity() {
+    private var currentHeaderExpanded: MutableState<Boolean>? = null
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         // Temporarily locked to portrait per user decision. Landscape mode preserved for future continuation (see LANDSCAPE_MODE_NOTES.md).
         requestedOrientation = android.content.pm.ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
         com.elvan.udukkai.core.platform.AppContext.context = applicationContext
+        com.elvan.udukkai.core.security.ScreenLockReceiver.register(applicationContext)
         com.elvan.udukkai.core.platform.CurrentActivity.activity = this
         com.elvan.udukkai.localization.LanguageManager.init()
         com.elvan.udukkai.theme.ThemeManager.init()
@@ -124,27 +132,42 @@ class MainActivity : FragmentActivity() {
 
                 onDispose {}
             }
-            if (isFactory) {
-                FactoryApp()
-            } else {
-                TextilesApp()
+            val headerExpandedState = remember { mutableStateOf(GlobalHeaderState.isExpanded) }
+            DisposableEffect(headerExpandedState) {
+                currentHeaderExpanded = headerExpandedState
+                onDispose { currentHeaderExpanded = null }
+            }
+
+            CompositionLocalProvider(
+                LocalGlobalHeaderExpanded provides headerExpandedState
+            ) {
+                if (isFactory) {
+                    FactoryApp()
+                } else {
+                    TextilesApp()
+                }
             }
         }
     }
 
     override fun onStop() {
         super.onStop()
-        com.elvan.udukkai.core.security.AppLock.left()
+        com.elvan.udukkai.core.security.AppLock.onActivityStopped()
     }
 
     override fun onStart() {
         super.onStart()
         com.elvan.udukkai.core.platform.CurrentActivity.activity = this
-        com.elvan.udukkai.core.security.AppLock.returned()
+        com.elvan.udukkai.core.security.AppLock.onActivityStarted()
     }
 
     override fun onResume() {
         super.onResume()
         com.elvan.udukkai.core.platform.CurrentActivity.activity = this
+        currentHeaderExpanded?.let { state ->
+            if (state.value != GlobalHeaderState.isExpanded) {
+                state.value = GlobalHeaderState.isExpanded
+            }
+        }
     }
 }

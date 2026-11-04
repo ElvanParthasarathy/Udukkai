@@ -7,6 +7,7 @@ import android.net.Uri
 import android.os.Build
 import android.os.Environment
 import android.provider.Settings
+import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 
 actual fun isStoragePermissionGranted(): Boolean {
@@ -15,15 +16,22 @@ actual fun isStoragePermissionGranted(): Boolean {
         Environment.isExternalStorageManager()
     } else {
         val ctx = AppContext.context
-        ContextCompat.checkSelfPermission(
+        val readGranted = ContextCompat.checkSelfPermission(
             ctx, Manifest.permission.READ_EXTERNAL_STORAGE
         ) == PackageManager.PERMISSION_GRANTED
+        val writeGranted = ContextCompat.checkSelfPermission(
+            ctx, Manifest.permission.WRITE_EXTERNAL_STORAGE
+        ) == PackageManager.PERMISSION_GRANTED
+        readGranted && writeGranted
     }
 }
+
+private var hasRequestedPermissionOnce = false
 
 actual fun requestStoragePermission() {
     if (!AppContext.isInitialized) return
     val ctx = AppContext.context
+    val activity = CurrentActivity.activity
     try {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
             val intent = Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION).apply {
@@ -32,15 +40,39 @@ actual fun requestStoragePermission() {
             }
             ctx.startActivity(intent)
         } else {
-            val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
-                data = Uri.parse("package:${ctx.packageName}")
-                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            if (activity != null) {
+                val shouldShowRationale = ActivityCompat.shouldShowRequestPermissionRationale(
+                    activity, Manifest.permission.WRITE_EXTERNAL_STORAGE
+                )
+                if (hasRequestedPermissionOnce && !shouldShowRationale) {
+                    val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                        data = Uri.parse("package:${ctx.packageName}")
+                        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                    }
+                    activity.startActivity(intent)
+                } else {
+                    hasRequestedPermissionOnce = true
+                    ActivityCompat.requestPermissions(
+                        activity,
+                        arrayOf(
+                            Manifest.permission.READ_EXTERNAL_STORAGE,
+                            Manifest.permission.WRITE_EXTERNAL_STORAGE
+                        ),
+                        1001
+                    )
+                }
+            } else {
+                val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                    data = Uri.parse("package:${ctx.packageName}")
+                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                }
+                ctx.startActivity(intent)
             }
-            ctx.startActivity(intent)
         }
     } catch (_: Exception) {
         try {
-            val intent = Intent(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION).apply {
+            val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                data = Uri.parse("package:${ctx.packageName}")
                 addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             }
             ctx.startActivity(intent)

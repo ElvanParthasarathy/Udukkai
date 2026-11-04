@@ -203,8 +203,7 @@ fun UdukkaiSplashScreen(
                         color = colors.textPrimary
                     )
                 }
-            }
-        }
+            }        }
 
         // Footer: Multilingual "Elvan Navil" branding signature
         Column(

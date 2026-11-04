@@ -36,7 +36,11 @@ import kotlinx.coroutines.launch
 
 val LocalElvanScrollState = compositionLocalOf<LazyListState?> { null }
 val LocalElvanTopSpacerHeight = compositionLocalOf<Dp> { 280.dp - Dimens.SectionSpacing }
-val LocalGlobalHeaderExpanded = compositionLocalOf<MutableState<Boolean>> { mutableStateOf(true) }
+object GlobalHeaderState {
+    var isExpanded: Boolean = true
+}
+
+val LocalGlobalHeaderExpanded = compositionLocalOf<MutableState<Boolean>> { mutableStateOf(GlobalHeaderState.isExpanded) }
 
 class ElvanShellController(
     val toggleHeader: () -> Unit = {},
@@ -104,8 +108,33 @@ fun ElvanShell(
     LaunchedEffect(headerCollapsePx, handoffShrinkOffsetPx) {
         if (headerCollapsePx >= handoffShrinkOffsetPx && globalHeaderExpanded.value) {
             globalHeaderExpanded.value = false
+            GlobalHeaderState.isExpanded = false
         } else if (headerCollapsePx == 0f && !globalHeaderExpanded.value) {
             globalHeaderExpanded.value = true
+            GlobalHeaderState.isExpanded = true
+        }
+    }
+
+    LaunchedEffect(globalHeaderExpanded.value) {
+        GlobalHeaderState.isExpanded = globalHeaderExpanded.value
+        if (!isCompactHeader) {
+            if (globalHeaderExpanded.value && headerCollapsePx > 0f) {
+                headerCollapsePx = 0f
+                if (scrollState.firstVisibleItemIndex > 0 || scrollState.firstVisibleItemScrollOffset > 0) {
+                    scrollState.scrollToItem(0, 0)
+                }
+            } else if (!globalHeaderExpanded.value && headerCollapsePx == 0f) {
+                headerCollapsePx = handoffShrinkOffsetPx
+            }
+        }
+    }
+
+    // When a new Activity opens, window insets resolve on frame 2, causing handoffShrinkOffsetPx
+    // to change. Snap headerCollapsePx to the updated value immediately and unconditionally
+    // so there is zero residual scroll offset visible on subpage entry.
+    LaunchedEffect(handoffShrinkOffsetPx) {
+        if (!isCompactHeader && !globalHeaderExpanded.value) {
+            headerCollapsePx = handoffShrinkOffsetPx
         }
     }
 
