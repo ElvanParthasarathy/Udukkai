@@ -225,7 +225,7 @@ fun ElvanShell(
                 }
 
                 // 4. Navbar hide/show logic matching Flutter One UI Physics
-                val reachedPill = !isItem0 || currentScrollOffset >= (collisionOffsetPx - with(density) { 4.dp.toPx() })
+                val reachedPill = !isItem0 || currentScrollOffset >= (handoffShrinkOffsetPx.coerceAtMost(collisionOffsetPx) - with(density) { 4.dp.toPx() })
                 if (delta > 2f && !isNavbarVisible) {
                     // Scrolling UP (finger moving down) -> Show immediately!
                     isNavbarVisible = true
@@ -279,7 +279,7 @@ fun ElvanShell(
                 }
 
                 if (available.y < -300f) {
-                    val reachedPill = !isItem0 || currentScrollOffset >= (collisionOffsetPx - with(density) { 4.dp.toPx() })
+                    val reachedPill = !isItem0 || currentScrollOffset >= (handoffShrinkOffsetPx.coerceAtMost(collisionOffsetPx) - with(density) { 4.dp.toPx() })
                     if (reachedPill && isNavbarVisible) {
                         isNavbarVisible = false
                     }
@@ -295,7 +295,7 @@ fun ElvanShell(
         }
     }
 
-    val isTruePill = currentScrollOffset >= (collisionOffsetPx - with(density) { 4.dp.toPx() })
+    val isTruePill = scrollState.firstVisibleItemIndex > 0 || currentScrollOffset >= (handoffShrinkOffsetPx.coerceAtMost(collisionOffsetPx) - with(density) { 4.dp.toPx() })
     LaunchedEffect(isTruePill) {
         if (!isTruePill && !isNavbarVisible) {
             isNavbarVisible = true
@@ -598,6 +598,9 @@ fun ElvanShell(
                             .align(Alignment.BottomCenter)
                             .fillMaxWidth()
                             .height(if (hasFloatingBar) (72.dp + 56.dp + 16.dp + navBarsPadding) else (72.dp + navBarsPadding))
+                            .graphicsLayer {
+                                alpha = effectiveNavOpacity
+                            }
                             .background(
                                 Brush.verticalGradient(
                                     0.0f to Color.Transparent,
@@ -614,6 +617,9 @@ fun ElvanShell(
                     modifier = Modifier
                         .align(Alignment.BottomCenter)
                         .fillMaxWidth()
+                        .graphicsLayer {
+                            alpha = effectiveNavOpacity
+                        }
                         .zIndex(100f),
                     contentAlignment = Alignment.BottomCenter
                 ) {
