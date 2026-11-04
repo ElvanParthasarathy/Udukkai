@@ -159,4 +159,10 @@ abstract class BaseSubpageActivity : FragmentActivity() {
         super.onStop()
         AppLock.onActivityStopped()
     }
+
+    @Deprecated("Deprecated in Java")
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: android.content.Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        com.elvan.udukkai.core.security.DeviceAuthHelper.onActivityResult(requestCode, resultCode)
+    }
 }

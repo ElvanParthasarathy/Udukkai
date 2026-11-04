@@ -1,5 +1,9 @@
 package com.elvan.udukkai.core.security
 
+import android.app.Activity
+import android.app.KeyguardManager
+import android.content.Context
+import android.os.Build
 import androidx.biometric.BiometricManager
 import androidx.biometric.BiometricManager.Authenticators.BIOMETRIC_STRONG
 import androidx.biometric.BiometricManager.Authenticators.DEVICE_CREDENTIAL
@@ -9,13 +13,44 @@ import androidx.fragment.app.FragmentActivity
 import com.elvan.udukkai.core.platform.AppContext
 import com.elvan.udukkai.core.platform.CurrentActivity
 
-private const val AUTHENTICATORS = BIOMETRIC_STRONG or DEVICE_CREDENTIAL
+object DeviceAuthHelper {
+    var pendingAuthCallback: ((Boolean) -> Unit)? = null
+    const val REQUEST_CODE_CONFIRM_CREDENTIAL = 9988
+
+    fun onActivityResult(requestCode: Int, resultCode: Int): Boolean {
+        if (requestCode == REQUEST_CODE_CONFIRM_CREDENTIAL) {
+            val cb = pendingAuthCallback
+            pendingAuthCallback = null
+            cb?.invoke(resultCode == Activity.RESULT_OK)
+            return true
+        }
+        return false
+    }
+}
 
 /** Whether this device has biometric or screen lock (PIN/pattern/password) set and available. */
-actual fun fingerprintAvailable(): Boolean = try {
-    BiometricManager.from(AppContext.context).canAuthenticate(AUTHENTICATORS) == BiometricManager.BIOMETRIC_SUCCESS
-} catch (_: Exception) {
-    false
+actual fun fingerprintAvailable(): Boolean {
+    if (!AppContext.isInitialized) return false
+    val ctx = AppContext.context
+    val km = ctx.getSystemService(Context.KEYGUARD_SERVICE) as? KeyguardManager
+    val hasDeviceLock = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+        km?.isDeviceSecure == true
+    } else {
+        km?.isKeyguardSecure == true
+    }
+    if (hasDeviceLock) return true
+
+    return try {
+        val bm = BiometricManager.from(ctx)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            bm.canAuthenticate(BIOMETRIC_STRONG or DEVICE_CREDENTIAL) == BiometricManager.BIOMETRIC_SUCCESS
+        } else {
+            @Suppress("DEPRECATION")
+            bm.canAuthenticate() == BiometricManager.BIOMETRIC_SUCCESS
+        }
+    } catch (_: Exception) {
+        false
+    }
 }
 
 /**
@@ -26,21 +61,61 @@ actual fun authenticateFingerprint(title: String, cancelText: String, onResult: 
     try {
         val activity = CurrentActivity.activity as? FragmentActivity
         if (activity == null || !fingerprintAvailable()) return onResult(false)
+
         val prompt = BiometricPrompt(activity, ContextCompat.getMainExecutor(activity), object : BiometricPrompt.AuthenticationCallback() {
             override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult) = onResult(true)
-            override fun onAuthenticationError(errorCode: Int, errString: CharSequence) = onResult(false)
+            override fun onAuthenticationError(errorCode: Int, errString: CharSequence) {
+                // If biometric prompt cannot be shown on Android 10 or device has only PIN/password,
+                // fall back to native KeyguardManager device credential confirmation
+                if (errorCode == BiometricPrompt.ERROR_NO_BIOMETRICS ||
+                    errorCode == BiometricPrompt.ERROR_HW_NOT_PRESENT ||
+                    errorCode == BiometricPrompt.ERROR_HW_UNAVAILABLE
+                ) {
+                    launchKeyguardConfirmation(activity, title, onResult)
+                } else {
+                    onResult(false)
+                }
+            }
             override fun onAuthenticationFailed() {
-                // Biometric mismatch; user can retry on sensor or tap device screen lock
+                // Biometric mismatch; user can retry on sensor or enter device credentials
             }
         })
-        val promptInfo = BiometricPrompt.PromptInfo.Builder()
+
+        val builder = BiometricPrompt.PromptInfo.Builder()
             .setTitle(title)
-            .setAllowedAuthenticators(AUTHENTICATORS)
             .setConfirmationRequired(false)
-            .build()
-        prompt.authenticate(promptInfo)
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            builder.setAllowedAuthenticators(BIOMETRIC_STRONG or DEVICE_CREDENTIAL)
+        } else {
+            @Suppress("DEPRECATION")
+            builder.setDeviceCredentialAllowed(true)
+        }
+
+        prompt.authenticate(builder.build())
     } catch (e: Exception) {
-        android.util.Log.e("Fingerprint", "Could not authenticate with system credentials: ${e.message}", e)
+        android.util.Log.e("Fingerprint", "BiometricPrompt failed, falling back: ${e.message}", e)
+        val activity = CurrentActivity.activity
+        if (activity != null) {
+            launchKeyguardConfirmation(activity, title, onResult)
+        } else {
+            onResult(false)
+        }
+    }
+}
+
+private fun launchKeyguardConfirmation(activity: Activity, title: String, onResult: (Boolean) -> Unit) {
+    try {
+        val km = activity.getSystemService(Context.KEYGUARD_SERVICE) as? KeyguardManager
+        val intent = km?.createConfirmDeviceCredentialIntent(title, "")
+        if (intent != null) {
+            DeviceAuthHelper.pendingAuthCallback = onResult
+            activity.startActivityForResult(intent, DeviceAuthHelper.REQUEST_CODE_CONFIRM_CREDENTIAL)
+        } else {
+            onResult(false)
+        }
+    } catch (e: Exception) {
+        android.util.Log.e("Fingerprint", "Keyguard fallback failed: ${e.message}", e)
         onResult(false)
     }
 }
