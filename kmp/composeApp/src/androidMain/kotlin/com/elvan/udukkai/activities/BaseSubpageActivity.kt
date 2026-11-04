@@ -157,11 +157,13 @@ abstract class BaseSubpageActivity : FragmentActivity() {
             return
         }
         CurrentActivity.activity = this
-        // Do NOT sync GlobalHeaderState back into this Activity's header state here.
-        // Each Activity manages its own independent header position. Syncing on resume
-        // was causing the scroll-reset bug: returning from a subpage (which resets its
-        // own header to expanded) would overwrite this Activity's collapsed state,
-        // triggering ElvanShell to scroll the list back to the top.
+        // Write THIS activity's current header state OUT to GlobalHeaderState.
+        // This ensures the next subpage opened from here reads the correct initial
+        // expanded/collapsed state. Direction: local → global (safe, no scroll reset).
+        // We never read global → local (that caused the original scroll-reset bug).
+        currentHeaderExpanded?.let { state ->
+            GlobalHeaderState.isExpanded = state.value
+        }
     }
 
     override fun onStop() {

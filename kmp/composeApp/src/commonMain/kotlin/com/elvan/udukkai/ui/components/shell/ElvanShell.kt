@@ -108,17 +108,15 @@ fun ElvanShell(
     LaunchedEffect(headerCollapsePx, handoffShrinkOffsetPx) {
         if (headerCollapsePx >= handoffShrinkOffsetPx && globalHeaderExpanded.value) {
             globalHeaderExpanded.value = false
-            // Only root pages (no back button) own the global singleton.
-            // Subpages must not overwrite it — they read it for their initial state only.
-            if (onBack == null) GlobalHeaderState.isExpanded = false
+            GlobalHeaderState.isExpanded = false
         } else if (headerCollapsePx == 0f && !globalHeaderExpanded.value) {
             globalHeaderExpanded.value = true
-            if (onBack == null) GlobalHeaderState.isExpanded = true
+            GlobalHeaderState.isExpanded = true
         }
     }
 
     LaunchedEffect(globalHeaderExpanded.value) {
-        if (onBack == null) GlobalHeaderState.isExpanded = globalHeaderExpanded.value
+        GlobalHeaderState.isExpanded = globalHeaderExpanded.value
         if (!isCompactHeader) {
             if (globalHeaderExpanded.value && headerCollapsePx > 0f) {
                 // Only snap the header visual — do NOT scroll the list to top.
