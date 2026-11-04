@@ -1,29 +1,30 @@
 package com.elvan.udukkai.ui.screens.settings.screens
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.elvan.udukkai.localization.K
 import com.elvan.udukkai.localization.LanguageManager
-import com.elvan.udukkai.localization.tr
 import com.elvan.udukkai.theme.Dimens
 import com.elvan.udukkai.theme.LocalAppFontFamily
 import com.elvan.udukkai.theme.ShellColors
 import com.elvan.udukkai.theme.rememberShellColors
-import com.elvan.udukkai.ui.components.shell.ElvanActionSheet
-import com.elvan.udukkai.ui.components.shell.ElvanSettingsDivider
-import com.elvan.udukkai.ui.components.shell.ElvanSettingsRow
-import com.elvan.udukkai.ui.components.shell.ElvanSettingsSection
 import com.elvan.udukkai.ui.components.shell.LocalElvanTopSpacerHeight
 import com.elvan.udukkai.ui.navigation.MaterialSymbols
 
@@ -31,11 +32,12 @@ enum class LegalPage { PRIVACY, TERMS, LICENCES }
 
 private data class Section(val heading: String, val body: String)
 
-/** A library entry in the open-source licences page with full license notice text. */
+/** An open-source licence notice with full legal text and official repository/spec link. */
 private data class LicenceEntry(
     val name: String,
     val licenceType: String,
-    val fullText: String
+    val fullText: String,
+    val linkUrl: String? = null
 )
 
 private val apache2FullText = """
@@ -83,32 +85,38 @@ private val licenceEntries = listOf(
     LicenceEntry(
         name = "Kotlin & Compose Multiplatform",
         licenceType = "Apache License 2.0",
-        fullText = "Copyright 2010-2026 JetBrains s.r.o. and Kotlin Programming Language contributors.\nCopyright 2020-2026 JetBrains s.r.o. and Google LLC.\n\nLicensed under the Apache License, Version 2.0 (the \"License\"); you may not use this file except in compliance with the License. You may obtain a copy of the License at\n\n    http://www.apache.org/licenses/LICENSE-2.0\n\nUnless required by applicable law or agreed to in writing, software distributed under the License is distributed on an \"AS IS\" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License."
+        fullText = "Copyright 2010-2026 JetBrains s.r.o. and Kotlin Programming Language contributors.\nCopyright 2020-2026 JetBrains s.r.o. and Google LLC.\n\nLicensed under the Apache License, Version 2.0 (the \"License\"); you may not use this file except in compliance with the License. You may obtain a copy of the License at\n\n    http://www.apache.org/licenses/LICENSE-2.0\n\nUnless required by applicable law or agreed to in writing, software distributed under the License is distributed on an \"AS IS\" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.",
+        linkUrl = "https://www.apache.org/licenses/LICENSE-2.0"
     ),
     LicenceEntry(
         name = "AndroidX (Activity, Core, Credentials, etc.)",
         licenceType = "Apache License 2.0",
-        fullText = "Copyright (C) 2018-2026 The Android Open Source Project\n\nLicensed under the Apache License, Version 2.0 (the \"License\"); you may not use this file except in compliance with the License. You may obtain a copy of the License at\n\n    http://www.apache.org/licenses/LICENSE-2.0\n\nUnless required by applicable law or agreed to in writing, software distributed under the License is distributed on an \"AS IS\" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License."
+        fullText = "Copyright (C) 2018-2026 The Android Open Source Project\n\nLicensed under the Apache License, Version 2.0 (the \"License\"); you may not use this file except in compliance with the License. You may obtain a copy of the License at\n\n    http://www.apache.org/licenses/LICENSE-2.0\n\nUnless required by applicable law or agreed to in writing, software distributed under the License is distributed on an \"AS IS\" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.",
+        linkUrl = "https://developer.android.com/jetpack/androidx"
     ),
     LicenceEntry(
         name = "Firebase & Google Play Services",
         licenceType = "Apache License 2.0 + Terms",
-        fullText = "Copyright 2026 Google LLC\n\nLicensed under the Apache License, Version 2.0 (the \"License\"); you may not use this file except in compliance with the License. You may obtain a copy of the License at\n\n    http://www.apache.org/licenses/LICENSE-2.0\n\nSubject to the Google APIs Terms of Service and Firebase Terms of Service."
+        fullText = "Copyright 2026 Google LLC\n\nLicensed under the Apache License, Version 2.0 (the \"License\"); you may not use this file except in compliance with the License. You may obtain a copy of the License at\n\n    http://www.apache.org/licenses/LICENSE-2.0\n\nSubject to the Google APIs Terms of Service and Firebase Terms of Service.",
+        linkUrl = "https://firebase.google.com/terms"
     ),
     LicenceEntry(
         name = "SQLite",
         licenceType = "Public Domain",
-        fullText = "Public Domain Dedication\n\nAll of the code and documentation in SQLite has been dedicated to the public domain by the authors. All code authors, and representatives of the companies they work for, have signed affidavits dedicating their contributions to the public domain and originals of those signed affidavits are stored in a firesafe at the main offices of Hwaci.\n\nAnyone is free to copy, modify, publish, use, compile, sell, or distribute the original SQLite code, either in source code form or as a compiled binary, for any purpose, commercial or non-commercial, and by any means."
+        fullText = "Public Domain Dedication\n\nAll of the code and documentation in SQLite has been dedicated to the public domain by the authors. All code authors, and representatives of the companies they work for, have signed affidavits dedicating their contributions to the public domain and originals of those signed affidavits are stored in a firesafe at the main offices of Hwaci.\n\nAnyone is free to copy, modify, publish, use, compile, sell, or distribute the original SQLite code, either in source code form or as a compiled binary, for any purpose, commercial or non-commercial, and by any means.",
+        linkUrl = "https://www.sqlite.org/copyright.html"
     ),
     LicenceEntry(
         name = "React (Printed Bills Renderer)",
         licenceType = "MIT License",
-        fullText = "MIT License\n\nCopyright (c) Meta Platforms, Inc. and affiliates.\n\nPermission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the \"Software\"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE."
+        fullText = "MIT License\n\nCopyright (c) Meta Platforms, Inc. and affiliates.\n\nPermission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the \"Software\"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.",
+        linkUrl = "https://github.com/facebook/react/blob/main/LICENSE"
     ),
     LicenceEntry(
         name = "Apache License 2.0 — Full Text",
         licenceType = "Apache License 2.0",
-        fullText = apache2FullText
+        fullText = apache2FullText,
+        linkUrl = "https://www.apache.org/licenses/LICENSE-2.0"
     )
 )
 
@@ -148,30 +156,91 @@ fun LegalScreen(
     colors: ShellColors = rememberShellColors()
 ) {
     val ff = LocalAppFontFamily.current
-    var selectedLicence by remember { mutableStateOf<LicenceEntry?>(null) }
+    val uriHandler = LocalUriHandler.current
 
     LazyColumn(
         state = scrollState,
         modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(start = Dimens.ContentPadding, end = Dimens.ContentPadding, bottom = Dimens.SubpageContentPaddingBottom),
-        verticalArrangement = Arrangement.spacedBy(if (page == LegalPage.LICENCES) Dimens.SectionSpacing else 20.dp)
+        verticalArrangement = Arrangement.spacedBy(if (page == LegalPage.LICENCES) 12.dp else 20.dp)
     ) {
         item(key = "shell_top_spacer") { Spacer(modifier = Modifier.height(LocalElvanTopSpacerHeight.current)) }
 
         if (page == LegalPage.LICENCES) {
-            // ── In-app interactive licence rows ──
-            item(key = "licences_section") {
-                ElvanSettingsSection(colors = colors) {
-                    licenceEntries.forEachIndexed { index, entry ->
-                        ElvanSettingsRow(
-                            icon = MaterialSymbols.Rounded.Code,
-                            title = entry.name,
-                            description = entry.licenceType,
-                            onClick = { selectedLicence = entry },
-                            colors = colors
+            // ── Unified single-view open-source licenses with direct tappable links ──
+            licenceEntries.forEachIndexed { index, entry ->
+                item(key = "licence_$index") {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(16.dp))
+                            .background(if (colors.isDark) Color(0xFF161616) else Color.White)
+                            .padding(18.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = entry.name,
+                                style = TextStyle(
+                                    fontFamily = ff,
+                                    fontSize = 15.sp,
+                                    fontWeight = FontWeight.Bold
+                                ),
+                                color = colors.textPrimary,
+                                modifier = Modifier.weight(1f, fill = false)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                text = entry.licenceType,
+                                style = TextStyle(
+                                    fontFamily = ff,
+                                    fontSize = 12.sp,
+                                    fontWeight = FontWeight.SemiBold
+                                ),
+                                color = colors.accent
+                            )
+                        }
+
+                        Text(
+                            text = entry.fullText,
+                            style = TextStyle(
+                                fontFamily = ff,
+                                fontSize = 12.5.sp,
+                                lineHeight = 18.sp
+                            ),
+                            color = colors.textPrimary.copy(alpha = 0.75f)
                         )
-                        if (index < licenceEntries.lastIndex) {
-                            ElvanSettingsDivider(colors = colors)
+
+                        if (entry.linkUrl != null) {
+                            Row(
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(8.dp))
+                                    .clickable { uriHandler.openUri(entry.linkUrl) }
+                                    .padding(vertical = 4.dp, horizontal = 2.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                            ) {
+                                Icon(
+                                    imageVector = MaterialSymbols.Rounded.ArrowForward,
+                                    contentDescription = null,
+                                    tint = colors.accent,
+                                    modifier = Modifier.size(13.dp)
+                                )
+                                Text(
+                                    text = entry.linkUrl,
+                                    style = TextStyle(
+                                        fontFamily = ff,
+                                        fontSize = 12.sp,
+                                        fontWeight = FontWeight.Medium,
+                                        textDecoration = TextDecoration.Underline
+                                    ),
+                                    color = colors.accent
+                                )
+                            }
                         }
                     }
                 }
@@ -198,46 +267,5 @@ fun LegalScreen(
                 }
             }
         }
-    }
-
-    // ── In-app license full text viewer sheet ──
-    selectedLicence?.let { entry ->
-        ElvanActionSheet(
-            title = entry.name,
-            confirmText = "",
-            cancelText = K.done.tr(),
-            onDismissRequest = { selectedLicence = null },
-            onConfirm = { selectedLicence = null },
-            colors = colors,
-            customContent = {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .heightIn(max = 380.dp)
-                        .verticalScroll(rememberScrollState())
-                        .padding(horizontal = 4.dp, vertical = 8.dp)
-                ) {
-                    Text(
-                        text = entry.licenceType,
-                        style = TextStyle(
-                            fontFamily = ff,
-                            fontSize = 13.sp,
-                            fontWeight = FontWeight.SemiBold
-                        ),
-                        color = colors.accent
-                    )
-                    Spacer(modifier = Modifier.height(12.dp))
-                    Text(
-                        text = entry.fullText,
-                        style = TextStyle(
-                            fontFamily = ff,
-                            fontSize = 12.sp,
-                            lineHeight = 18.sp
-                        ),
-                        color = colors.textPrimary.copy(alpha = 0.8f)
-                    )
-                }
-            }
-        )
     }
 }
