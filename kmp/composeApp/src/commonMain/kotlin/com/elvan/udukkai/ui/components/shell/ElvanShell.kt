@@ -119,10 +119,11 @@ fun ElvanShell(
         GlobalHeaderState.isExpanded = globalHeaderExpanded.value
         if (!isCompactHeader) {
             if (globalHeaderExpanded.value && headerCollapsePx > 0f) {
+                // Only snap the header visual — do NOT scroll the list to top.
+                // Scroll position is independently managed by the user's scroll gesture;
+                // forcing scrollToItem(0,0) here caused the scroll-reset bug when returning
+                // from a subpage Activity whose header was in expanded state.
                 headerCollapsePx = 0f
-                if (scrollState.firstVisibleItemIndex > 0 || scrollState.firstVisibleItemScrollOffset > 0) {
-                    scrollState.scrollToItem(0, 0)
-                }
             } else if (!globalHeaderExpanded.value && headerCollapsePx == 0f) {
                 headerCollapsePx = handoffShrinkOffsetPx
             }
