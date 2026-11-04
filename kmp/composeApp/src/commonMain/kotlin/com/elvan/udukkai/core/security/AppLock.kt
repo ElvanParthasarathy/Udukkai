@@ -23,12 +23,11 @@ object AppLock {
 
     private val prefs get() = getPreferencesHelper()
 
-    /** Whether App Lock (device screen lock protection) is enabled by the user. Mandatory (true) by default. */
-    fun isSet(): Boolean = prefs.getBoolean(KEY_ENABLED, true)
+    /** Whether App Lock (device screen lock protection) is enabled. Permanent (true) by design (banking standard). */
+    fun isSet(): Boolean = true
 
-    /** Enables or disables App Lock. */
+    /** Compatibility helper: App Lock is permanent and cannot be disabled. */
     fun setEnabled(enabled: Boolean) {
-        prefs.setBoolean(KEY_ENABLED, enabled)
         if (enabled) unlockedThisRun = true
     }
 
@@ -65,7 +64,6 @@ object AppLock {
     }
 
     internal fun clearForTests() {
-        prefs.setBoolean(KEY_ENABLED, false)
         unlockedThisRun = false
         leftAt = 0L
         activityCount = 0

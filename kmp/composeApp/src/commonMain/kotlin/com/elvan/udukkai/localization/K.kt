@@ -357,6 +357,8 @@ object K {
     const val unlockApp = "unlockApp"
     const val appLockHelpTitle = "appLockHelpTitle"
     const val appLockHelpDesc = "appLockHelpDesc"
+    const val appLockAlwaysActive = "appLockAlwaysActive"
+    const val appLockMandatoryDesc = "appLockMandatoryDesc"
     const val pinChange = "pinChange"
     const val pinChanged = "pinChanged"
     const val pinDigits4 = "pinDigits4"

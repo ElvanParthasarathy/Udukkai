@@ -340,6 +340,8 @@ val en: Map<String, String> = mapOf(
     K.unlockApp to "Unlock App",
     K.appLockHelpTitle to "Device Security",
     K.appLockHelpDesc to "Uses your device's fingerprint, face unlock, or screen lock (PIN/pattern) to protect your business records.",
+    K.appLockAlwaysActive to "Always active",
+    K.appLockMandatoryDesc to "To ensure the highest standard of security for your business accounts, app lock is permanently active and secured by your device credentials (fingerprint, pattern, or PIN).",
     K.pinChange to "Change PIN",
     K.pinChanged to "PIN changed",
     K.pinDigits4 to "4 digits",
