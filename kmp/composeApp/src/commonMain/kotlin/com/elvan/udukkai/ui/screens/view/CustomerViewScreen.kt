@@ -51,19 +51,33 @@ fun CustomerViewScreen(
     fun pick(map: Map<String, String>): String =
         map[primaryLang] ?: map[secondaryLang] ?: map.values.firstOrNull { it.isNotBlank() }.orEmpty()
 
+    fun second(map: Map<String, String>) = if (isBilingual) map[secondaryLang].orEmpty() else ""
+
     fun isDefaultCountry(v: String) = v == "India" || v == "இந்தியா"
+
+    fun formatDistrict(district: String, isTamil: Boolean): String {
+        val d = district.trim()
+        if (d.isEmpty() || d.contains("மாவட்டம்") || d.contains("District", ignoreCase = true)) return d
+        return if (isTamil) "$d மாவட்டம்" else "$d District"
+    }
+
+    val isPrimaryTa = primaryLang.lowercase().startsWith("ta")
+    val isSecondaryTa = secondaryLang.lowercase().startsWith("ta")
+
+    val d1 = formatDistrict(pick(merchant.district), isPrimaryTa)
+    val d2 = formatDistrict(second(merchant.district), isSecondaryTa)
+
     // Main language: whatever the customer has (it falls back to the other language when this one is empty)
     val addressLines = listOf(
         pick(merchant.address),
-        listOf(pick(merchant.city), pick(merchant.district)).filter { it.isNotBlank() }.joinToString(", "),
+        listOf(pick(merchant.city), d1).filter { it.isNotBlank() }.joinToString(", "),
         listOf(pick(merchant.state), merchant.pinCode).filter { it.isNotBlank() }.joinToString(" - "),
         pick(merchant.country).takeUnless { isDefaultCountry(it) }.orEmpty()
     )
     // Second language: only what is really written in it, as its own complete address
-    fun second(map: Map<String, String>) = if (isBilingual) map[secondaryLang].orEmpty() else ""
     val secondaryLines = listOf(
         second(merchant.address),
-        listOf(second(merchant.city), second(merchant.district)).filter { it.isNotBlank() }.joinToString(", "),
+        listOf(second(merchant.city), d2).filter { it.isNotBlank() }.joinToString(", "),
         listOf(second(merchant.state), merchant.pinCode).filter { it.isNotBlank() }.joinToString(" - "),
         second(merchant.country).takeUnless { isDefaultCountry(it) }.orEmpty()
     ).takeIf { lines -> lines.any { it.isNotBlank() } && lines != addressLines } ?: emptyList()

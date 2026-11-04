@@ -868,8 +868,13 @@ const SjsTheme = React.forwardRef(({ profile = {}, client = {}, details = {}, it
         const countryPrimary = getBilingualCountryName(rawCountry, { ...profile, returnOnlyPrimary: true });
         const country_tam = countryPrimary || (rawCountry === 'India' ? (profile?.primaryDataLanguage === 'English' ? 'India' : 'இந்தியா') : rawCountry);
 
-        const dist_eng = [getDynamicField(profile, 'maavattam', profile, false), getBilingualStateName(profile.maanilam, { ...profile, returnOnlySecondary: true, fallbackEnglishName: profile.maanilamEn }), country_eng].filter(Boolean).join(', ');
-        const dist_tam = [getDynamicField(profile, 'maavattam', profile, true), getBilingualStateName(profile.maanilam, { ...profile, returnOnlyPrimary: true }), country_tam].filter(Boolean).join(', ');
+        const formatBizDistrict = (d) => {
+          if (!d) return '';
+          const label = /[\u0B80-\u0BFF]/.test(d) ? 'மாவட்டம்' : 'District';
+          return (d.toLowerCase().includes('district') || d.includes('மாவட்டம்')) ? d : `${d} ${label}`;
+        };
+        const dist_eng = [formatBizDistrict(getDynamicField(profile, 'maavattam', profile, false)), getBilingualStateName(profile.maanilam, { ...profile, returnOnlySecondary: true, fallbackEnglishName: profile.maanilamEn }), country_eng].filter(Boolean).join(', ');
+        const dist_tam = [formatBizDistrict(getDynamicField(profile, 'maavattam', profile, true)), getBilingualStateName(profile.maanilam, { ...profile, returnOnlyPrimary: true }), country_tam].filter(Boolean).join(', ');
         const dist = dist_eng || dist_tam;
         // A single-language bill prints as before; a bilingual one a single language, English unless the rule says Tamil
         const contactLines = (profile?.enableBilingual === false ? [addr1, dist] : oneLang(profile, 'businessAddress', [addr1_tam && addr1_tam + pinSuffix, dist_tam], [addr1_eng && addr1_eng + pinSuffix, dist_eng])).flat().filter(Boolean);

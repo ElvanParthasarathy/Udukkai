@@ -71,6 +71,8 @@ export default function CoolieInvoiceBilingual({ bill }) {
     address_en: addressEn,
     city: cityTa,
     city_en: cityEn,
+    district: districtTa,
+    district_en: districtEn,
     customer_gstin: customerGstin,
     items = [],
     setharam_grams: setharamGrams,
@@ -100,8 +102,17 @@ export default function CoolieInvoiceBilingual({ bill }) {
   const subtotal = items.reduce((sum, item) => sum + calcItemAmount(item.coolie, item.kg), 0);
   const totalRs = Math.floor(subtotal + (parseFloat(courierRs) || 0) + (parseFloat(ahimsaSilkRs) || 0) + (parseFloat(customChargeRs) || 0));
 
+  const formatDistrict = (d) => {
+    if (!d) return '';
+    const label = /[\u0B80-\u0BFF]/.test(d) ? 'மாவட்டம்' : 'District';
+    return (d.toLowerCase().includes('district') || d.includes('மாவட்டம்')) ? d : `${d} ${label}`;
+  };
+
   // Customer / place: the Tamil value, with the English one under it when bilingual
-  const place = (a, c) => (a && c ? `${a}, ${c}` : (a || c || ''));
+  const place = (a, c, d) => {
+    const distStr = formatDistrict(d);
+    return [a, c, distStr].filter(Boolean).join(', ');
+  };
   const useEn = bi || isEng;
   const same = (a, b) => (a || '').trim().toLowerCase() === (b || '').trim().toLowerCase();
   // The (main language, second language) pair of a Tamil + English value
@@ -109,7 +120,7 @@ export default function CoolieInvoiceBilingual({ bill }) {
   // Customer name and address: a single-language bill prints its own language; a bilingual one a single language, English unless the rule says Tamil
   const one = (field, ta, en) => (bi ? oneLang(p, field, ...priSec(ta, en)) : (isEng ? (en || ta) : (ta || en)) || '');
   const customerName = one('customerName', customerNameTa, customerNameEn);
-  const customerPlace = one('customerAddress', place(addressTa, cityTa), place(addressEn, cityEn));
+  const customerPlace = one('customerAddress', place(addressTa, cityTa, districtTa), place(addressEn, cityEn, districtEn));
   const kg = !bi && !isEng ? 'கிலோ' : 'Kg';
 
   // Business
@@ -123,7 +134,8 @@ export default function CoolieInvoiceBilingual({ bill }) {
   const contactLines = (en) => {
     const line1 = en ? p.addressEn : p.address;
     const city = en ? p.cityEn : p.city;
-    const district = en ? p.districtEn : p.district;
+    const districtRaw = en ? p.districtEn : p.district;
+    const district = formatDistrict(districtRaw);
     const cityPin = [city, p.pincode].filter(Boolean).join(' - ');
     return { l1: [line1, cityPin].filter(Boolean).join(', '), l2: district || '' };
   };

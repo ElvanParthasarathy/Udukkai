@@ -99,10 +99,17 @@ export function normalizeReceiptProfile(p: any = {}) {
   const dist_ta = p.district || getDynamicField(p, 'maavattam', p, true);
   const pin = p.pin || p.pincode;
 
+  const formatDistrict = (d?: string) => {
+    if (!d) return '';
+    const label = /[\u0B80-\u0BFF]/.test(d) ? 'மாவட்டம்' : 'District';
+    return (d.toLowerCase().includes('district') || d.includes('மாவட்டம்')) ? d : `${d} ${label}`;
+  };
+
   const addrLines = (en: boolean) => {
     const l1_str = en ? (line1_en || line1_ta) : (line1_ta || line1_en);
     const c_str = en ? (city_en || city_ta) : (city_ta || city_en);
-    const d_str = en ? (dist_en || dist_ta) : (dist_ta || dist_en);
+    const d_raw = en ? (dist_en || dist_ta) : (dist_ta || dist_en);
+    const d_str = formatDistrict(d_raw);
     const cityPin = [c_str, pin].filter(Boolean).join(' - ');
     return {
       l1: [l1_str, cityPin].filter(Boolean).join(', ') || [l1_str, pin].filter(Boolean).join(', '),

@@ -358,6 +358,8 @@ export const toCoolieBillProps = (payload) => {
       address_en: str(c.address?.en),
       city: str(city.ta),
       city_en: str(city.en),
+      district: str(c.district?.ta),
+      district_en: str(c.district?.en),
       customer_gstin: str(c.gstin),
       items: (inv.items || []).map((it) => ({
         porul: str(it.name?.ta),

@@ -34,6 +34,7 @@ Trash/
 
 # AI assistant context
 .claude/
+CLAUDE.md
 
 # Kotlin Multiplatform & Android Build Artifacts
 .gradle/
@@ -50,3 +51,7 @@ local.properties
 # React company logos / signatures exported for KMP sample data (personal - keep local only).
 # Regenerate with: python -I kmp/tools/export_react_seed.py
 kmp/composeApp/src/commonMain/composeResources/files/seed/
+
+# Graphify
+graphify-out/
+
