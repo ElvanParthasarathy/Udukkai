@@ -113,10 +113,10 @@ fun UdukkaiAppLockScreen(
 ) {
     val ff = LocalAppFontFamily.current
     val isDark = colors.isDark
-    // Deep tone matching the app's background palette (0xFF1E1E1E, flat without outline)
-    val lockBg = if (isDark) Color(0xFF1E1E1E) else Color(0xFFE5E5EA)
-    val lockFg = colors.textPrimary
-    val lockRipple = if (isDark) Color.White.copy(alpha = 0.16f) else Color.Black.copy(alpha = 0.08f)
+    // Dark mode uses deep background gray (0xFF1E1E1E); Light mode uses crisp signature black (0xFF111111)
+    val lockBg = if (isDark) Color(0xFF1E1E1E) else Color(0xFF111111)
+    val lockFg = if (isDark) colors.textPrimary else Color.White
+    val lockRipple = Color.White.copy(alpha = if (isDark) 0.16f else 0.25f)
 
     Box(
         modifier = modifier
