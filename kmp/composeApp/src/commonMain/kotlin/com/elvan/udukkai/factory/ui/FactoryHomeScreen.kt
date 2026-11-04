@@ -41,6 +41,7 @@ import com.elvan.udukkai.factory.ui.screens.FactoryItemScreen
 import com.elvan.udukkai.factory.ui.screens.FactorySettingsScreen
 import com.elvan.udukkai.ui.screens.settings.SettingsRoute
 import com.elvan.udukkai.ui.screens.settings.openPlatformSettings
+import com.elvan.udukkai.ui.navigation.openPlatformSubpage
 import com.elvan.udukkai.factory.ui.screens.editor.FactoryCustomerEditorScreen
 import com.elvan.udukkai.factory.ui.screens.editor.FactoryInvoiceEditorScreen
 import com.elvan.udukkai.factory.ui.screens.editor.FactoryItemEditorScreen
@@ -90,7 +91,7 @@ fun FactoryHomeScreen() {
     val activeSubpage = subpageStack.lastOrNull()
     // The same page is never pushed twice on top of itself (a double tap would slide it in twice and need two Backs)
     val navigateToSubpage: (ActiveSubpage) -> Unit = { subpage ->
-        if (subpage is ActiveSubpage.Settings && openPlatformSettings()) {
+        if (openPlatformSubpage(subpage)) {
             // Handled natively by Activity on Android
         } else if (subpageStack.lastOrNull() != subpage) {
             if (isLandscapeMode && (subpage is ActiveSubpage.InvoiceView || subpage is ActiveSubpage.ItemView || subpage is ActiveSubpage.CustomerView || subpage is ActiveSubpage.ReceiptView)) {
