@@ -1,7 +1,5 @@
-﻿package com.elvan.udukkai.textiles.ui.screens.settings
+package com.elvan.udukkai.textiles.ui.screens.settings
 
-import com.elvan.udukkai.data.settings.BusinessProfile
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
@@ -14,72 +12,41 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
+import com.elvan.udukkai.textiles.data.TextilesProfileRepository
 import com.elvan.udukkai.localization.K
 import com.elvan.udukkai.localization.tr
 import com.elvan.udukkai.theme.Dimens
-import com.elvan.udukkai.theme.LocalAppFontFamily
 import com.elvan.udukkai.theme.ShellColors
 import com.elvan.udukkai.theme.ShellDefaults
 import com.elvan.udukkai.theme.rememberShellColors
 import com.elvan.udukkai.ui.components.shell.*
-import com.elvan.udukkai.textiles.data.TextilesProfileRepository
 import com.elvan.udukkai.ui.navigation.MaterialSymbols
+import com.elvan.udukkai.ui.screens.settings.SettingsRoute
 
 /**
- * Invoice Creation Settings Screen.
- * Provides unified bilingual billing configuration for both Factory (Kooli) and Textiles (Pattu):
- * - Primary billing language selection
- * - Secondary billing language selection (when bilingual is active)
- * - Bilingual billing toggle (iruMozhi)
- * - GST split presentation toggle (for Textiles / Goods mode)
- * - PDF color theme customization
+ * Invoice Creation Settings Screen for Textiles Edition.
+ * Shows Primary & Secondary billing languages outside, Bilingual Mode & GST switches,
+ * Bilingual Rules navigation, and Theme Color with explicit Save.
  */
 @Composable
 fun TextilesInvoiceCreationSettingsScreen(
+    onNavigate: (SettingsRoute) -> Unit = {},
     scrollState: LazyListState = rememberLazyListState(),
     colors: ShellColors = rememberShellColors()
 ) {
-    val isPattu = true
     val profile = TextilesProfileRepository.profile
-    val ff = LocalAppFontFamily.current
 
     var isEditingLanguages by remember { mutableStateOf(false) }
     var tempPrimaryLang by remember { mutableStateOf(profile.primaryLanguage) }
     var tempSecondaryLang by remember { mutableStateOf(profile.secondaryLanguage) }
 
-    val bottomSheet = LocalElvanBottomSheetController.current
-    val pdfThemeTitle = K.pdfTheme.tr()
     val saveSuccessMsg = K.profileSaved.tr()
-
-    val greenLabel = K.green.tr()
-    val purpleLabel = K.violet.tr()
     val tamilLabel = K.taCode.tr()
     val englishLabel = K.enCode.tr()
 
     fun getLanguageName(code: String): String {
         return if (code.lowercase().startsWith("ta")) tamilLabel else englishLabel
-    }
-
-    fun getThemeName(hex: String): String {
-        return when (hex.lowercase()) {
-            "#388e3c" -> greenLabel
-            "#6a1b9a" -> purpleLabel
-            else -> hex
-        }
-    }
-
-    fun parseColor(hex: String): Color {
-        return try {
-            val cleanHex = hex.removePrefix("#")
-            Color(cleanHex.toLong(16) or 0x00000000FF000000L)
-        } catch (_: Exception) {
-            Color(0xFF388E3C)
-        }
     }
 
     Box(modifier = Modifier.fillMaxSize()) {
@@ -98,7 +65,7 @@ fun TextilesInvoiceCreationSettingsScreen(
                 Spacer(modifier = Modifier.height(LocalElvanTopSpacerHeight.current))
             }
 
-            // ── Section 1: Billing Languages ──
+            // ── Section 1: Billing Languages (Primary & Secondary kept outside) ──
             item(key = "languages_section") {
                 ElvanSettingsSection(colors = colors) {
                     ElvanSettingsAnimatedExpand(
@@ -129,7 +96,7 @@ fun TextilesInvoiceCreationSettingsScreen(
                                                 Icon(
                                                     imageVector = MaterialSymbols.Rounded.Edit,
                                                     contentDescription = K.edit.tr(),
-                                                    tint = colors.textPrimary.copy(alpha = 0.6f),
+                                                    tint = colors.accent,
                                                     modifier = Modifier.size(20.dp)
                                                 )
                                             }
@@ -150,18 +117,19 @@ fun TextilesInvoiceCreationSettingsScreen(
                         },
                         editContent = {
                             ElvanSettingsEditContainer(
+                                title = K.selectLanguage.tr(),
                                 onCancel = { isEditingLanguages = false },
                                 onSave = {
-                                    val updated = profile.copy()
-                                    updated.primaryLanguage = tempPrimaryLang
-                                    updated.secondaryLanguage = tempSecondaryLang
+                                    val updated = profile.copy(
+                                        primaryLanguage = tempPrimaryLang,
+                                        secondaryLanguage = tempSecondaryLang
+                                    )
                                     TextilesProfileRepository.updateProfile(updated)
                                     isEditingLanguages = false
                                     ElvanSnackbar.show(saveSuccessMsg)
                                 },
                                 colors = colors
                             ) {
-                                // Primary Language Dropdown
                                 ElvanSettingsDropdown(
                                     label = K.primaryLanguage.tr(),
                                     value = tempPrimaryLang,
@@ -178,7 +146,6 @@ fun TextilesInvoiceCreationSettingsScreen(
 
                                 if (profile.isBilingual) {
                                     Spacer(modifier = Modifier.height(16.dp))
-                                    // Secondary Language Dropdown
                                     ElvanSettingsDropdown(
                                         label = K.secondaryLanguage.tr(),
                                         value = tempSecondaryLang,
@@ -199,7 +166,7 @@ fun TextilesInvoiceCreationSettingsScreen(
                 }
             }
 
-            // ── Section 2: Switches (Bilingual & GST) ──
+            // ── Section 2: Switches (Bilingual Mode & GST Splits) ──
             item(key = "switches_section") {
                 ElvanSettingsSection(colors = colors) {
                     // Bilingual Mode Toggle
@@ -219,40 +186,54 @@ fun TextilesInvoiceCreationSettingsScreen(
                         colors = colors
                     )
 
-                    // GST Split Toggle (Only for Goods / Pattu Mode)
-                    if (true) {
-                        ElvanSettingsDivider(colors = colors)
-                        ElvanSimpleSettingsRow(
-                            title = K.showGstSplitsInTable.tr(),
-                            trailing = {
-                                ElvanSettingsSwitch(
-                                    checked = profile.splitGst,
-                                    onCheckedChange = { isChecked ->
-                                        val updated = profile.copy(splitGst = isChecked)
-                                        TextilesProfileRepository.updateProfile(updated)
-                                        ElvanSnackbar.show(saveSuccessMsg)
-                                    },
-                                    colors = colors
-                                )
-                            },
+                    ElvanSettingsDivider(colors = colors)
+
+                    // GST Split Toggle (Goods / Pattu Mode)
+                    ElvanSimpleSettingsRow(
+                        title = K.showGstSplitsInTable.tr(),
+                        trailing = {
+                            ElvanSettingsSwitch(
+                                checked = profile.splitGst,
+                                onCheckedChange = { isChecked ->
+                                    val updated = profile.copy(splitGst = isChecked)
+                                    TextilesProfileRepository.updateProfile(updated)
+                                    ElvanSnackbar.show(saveSuccessMsg)
+                                },
+                                colors = colors
+                            )
+                        },
+                        colors = colors
+                    )
+                }
+            }
+
+            // ── Section 3: Bilingual Rules (Shown when bilingual mode is active) ──
+            if (profile.isBilingual) {
+                item(key = "bilingual_rules_nav") {
+                    ElvanSettingsSection(colors = colors) {
+                        ElvanSettingsRow(
+                            icon = MaterialSymbols.Rounded.Translate,
+                            title = K.languageRules.tr(),
+                            onClick = { onNavigate(SettingsRoute.BilingualRules) },
                             colors = colors
                         )
                     }
                 }
             }
 
-            if (profile.isBilingual) {
-                item(key = "language_rules_section") {
-                    com.elvan.udukkai.ui.screens.settings.LanguageRulesSection(profile, colors) { TextilesProfileRepository.updateProfile(it); ElvanSnackbar.show(saveSuccessMsg) }
+            // ── Section 4: PDF Theme Color (With explicit Save container) ──
+            item(key = "theme_section") {
+                com.elvan.udukkai.ui.screens.settings.ThemeColorSection(profile, colors) {
+                    TextilesProfileRepository.updateProfile(it)
                 }
             }
 
-            // ── Section 3: PDF Theme ──
-            item(key = "theme_section") {
-                com.elvan.udukkai.ui.screens.settings.ThemeColorSection(profile, colors) { TextilesProfileRepository.updateProfile(it); ElvanSnackbar.show(saveSuccessMsg) }
-            }
+            // ── Section 5: Logo Placement ──
             item(key = "logo_place_section") {
-                com.elvan.udukkai.ui.screens.settings.LogoPlaceSection(profile, false, colors) { TextilesProfileRepository.updateProfile(it); ElvanSnackbar.show(saveSuccessMsg) }
+                com.elvan.udukkai.ui.screens.settings.LogoPlaceSection(profile, false, colors) {
+                    TextilesProfileRepository.updateProfile(it)
+                    ElvanSnackbar.show(saveSuccessMsg)
+                }
             }
         }
     }

@@ -208,17 +208,24 @@ fun ElvanCardSecondLine(
     label: String,
     color: Color,
     labelColor: Color,
-    fontFamily: androidx.compose.ui.text.font.FontFamily?
+    fontFamily: androidx.compose.ui.text.font.FontFamily?,
+    isSelectionMode: Boolean = false
 ) {
     if (text.isBlank() && label.isBlank()) return
+    var measuredLines by remember { mutableStateOf<Int?>(null) }
     Spacer(modifier = Modifier.height(2.dp))
     Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.Top) {
         androidx.compose.material3.Text(
             text = text.preventBrokenLigatures(),
             modifier = Modifier.weight(1f),
             style = androidx.compose.ui.text.TextStyle(fontFamily = fontFamily, fontSize = 13.5.sp, color = color),
-            maxLines = 2,
-            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+            maxLines = measuredLines ?: 2,
+            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+            onTextLayout = { layoutResult ->
+                if (!isSelectionMode) {
+                    measuredLines = layoutResult.lineCount
+                }
+            }
         )
         if (label.isNotBlank()) {
             androidx.compose.material3.Text(

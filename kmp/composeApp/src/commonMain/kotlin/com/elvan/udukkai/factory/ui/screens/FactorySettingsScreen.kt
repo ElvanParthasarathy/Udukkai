@@ -124,6 +124,7 @@ fun FactorySettingsScreen(
                 SettingsRoute.Address -> K.address.tr()
                 SettingsRoute.Bank -> K.bank.tr()
                 SettingsRoute.InvoiceCreation -> K.createBtn.tr()
+                SettingsRoute.BilingualRules -> K.bilingualSettings.tr()
                 SettingsRoute.StorageBackup -> K.storageAndBackup.tr()
                 SettingsRoute.Security -> K.security.tr()
                 SettingsRoute.AboutDeveloper -> K.softwareDesigner.tr()
@@ -172,8 +173,15 @@ fun FactorySettingsScreen(
                         onUpdateProfile = { FactoryProfileRepository.updateProfile(it) }
                     )
                     SettingsRoute.InvoiceCreation -> FactoryInvoiceCreationSettingsScreen(
+                        onNavigate = { navigateTo(it) },
                         scrollState = scrollState,
                         colors = colors
+                    )
+                    SettingsRoute.BilingualRules -> BilingualRulesScreen(
+                        profile = FactoryProfileRepository.profile,
+                        colors = colors,
+                        scrollState = scrollState,
+                        onSave = { FactoryProfileRepository.updateProfile(it) }
                     )
                     SettingsRoute.StorageBackup -> FactoryStorageBackupScreen(scrollState = scrollState, colors = colors)
                     SettingsRoute.Security -> FactorySecuritySettingsScreen(scrollState = scrollState, colors = colors)
@@ -211,7 +219,8 @@ private fun FactorySettingsHubContent(
     val ff = LocalAppFontFamily.current
     val profile = FactoryProfileRepository.profile
 
-    val profileName = resolveCompanyItemLabel(profile).ifEmpty { "ஆலை" }
+    val defaultFirmTitle = K.udukkaiFactory.tr()
+    val profileName = resolveCompanyItemLabel(profile).ifEmpty { defaultFirmTitle }
 
     LazyColumn(
         state = scrollState,
@@ -219,7 +228,7 @@ private fun FactorySettingsHubContent(
         contentPadding = PaddingValues(
             bottom = Dimens.SubpageContentPaddingBottom + 72.dp
         ),
-        verticalArrangement = Arrangement.spacedBy(10.dp)
+        verticalArrangement = Arrangement.spacedBy(Dimens.SectionSpacing)
     ) {
         item(key = "shell_top_spacer") {
             Spacer(modifier = Modifier.height(LocalElvanTopSpacerHeight.current + 6.dp)) // keeps the top where it was while the gaps below are tighter
@@ -275,7 +284,7 @@ private fun FactorySettingsHubContent(
                             horizontalAlignment = Alignment.Start
                         ) {
                             Text(
-                                text = "ஆலை",
+                                text = defaultFirmTitle,
                                 style = TextStyle(
                                     fontFamily = ff,
                                     fontSize = 18.sp,
@@ -307,8 +316,6 @@ private fun FactorySettingsHubContent(
                 }
             }
         }
-
-        item(key = "group_business") { SettingsGroupTitle(K.groupBusiness.tr(), colors) }
 
         // Section 1: Business Identity & Finance
         item(key = "business_identity_section") {
@@ -345,8 +352,6 @@ private fun FactorySettingsHubContent(
             }
         }
 
-        item(key = "group_bills") { SettingsGroupTitle(K.groupBills.tr(), colors) }
-
         // Section 2: Invoicing & Interface
         item(key = "invoicing_interface_section") {
             ElvanSectionContainer {
@@ -362,8 +367,7 @@ private fun FactorySettingsHubContent(
             }
         }
 
-        item(key = "group_app") { SettingsGroupTitle(K.groupApp.tr(), colors) }
-
+        // Section 3: App Looks & Language
         item(key = "app_looks_section") {
             ElvanSectionContainer {
                 ElvanSettingsSection(colors = colors) {
@@ -388,9 +392,7 @@ private fun FactorySettingsHubContent(
             }
         }
 
-        item(key = "group_data") { SettingsGroupTitle(K.groupData.tr(), colors) }
-
-        // Section 3: Data & Security
+        // Section 4: Data & Security
         item(key = "data_security_section") {
             ElvanSectionContainer {
                 ElvanSettingsSection(colors = colors) {
@@ -401,8 +403,6 @@ private fun FactorySettingsHubContent(
                         onClick = { onNavigate(SettingsRoute.StorageBackup) },
                         colors = colors
                     )
-
-
 
                     ElvanSettingsDivider(colors = colors)
 
@@ -417,8 +417,7 @@ private fun FactorySettingsHubContent(
             }
         }
 
-        item(key = "group_about") { SettingsGroupTitle(K.groupAbout.tr(), colors) }
-
+        // Section 5: About & Legal
         item(key = "system_about_section") {
             ElvanSectionContainer {
                 ElvanSettingsSection(colors = colors) {

@@ -8,7 +8,7 @@ import androidx.compose.ui.graphics.Color
 import com.elvan.udukkai.data.settings.BusinessProfile
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.TextStyle
@@ -143,6 +143,7 @@ fun FactoryItemCard(
                     modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.Top
                 ) {
+                    var primaryLineCount by remember { mutableStateOf<Int?>(null) }
                     Column(
                         modifier = Modifier.weight(1f)
                     ) {
@@ -154,8 +155,13 @@ fun FactoryItemCard(
                                 fontWeight = FontWeight.Bold,
                                 color = colors.textPrimary
                             ),
-                            maxLines = 2,
-                            overflow = TextOverflow.Ellipsis
+                            maxLines = primaryLineCount ?: 2,
+                            overflow = TextOverflow.Ellipsis,
+                            onTextLayout = { layoutResult ->
+                                if (!isSelectionMode) {
+                                    primaryLineCount = layoutResult.lineCount
+                                }
+                            }
                         )
                         ItemSecondaryName(item, primary, isBilingual, primaryLang, secondaryLang, profiles, colors)
 
@@ -227,6 +233,7 @@ fun TextilesItemCard(
                     modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.Top
                 ) {
+                    var primaryLineCount by remember { mutableStateOf<Int?>(null) }
                     Column(
                         modifier = Modifier.weight(1f)
                     ) {
@@ -238,8 +245,13 @@ fun TextilesItemCard(
                                 fontWeight = FontWeight.Bold,
                                 color = colors.textPrimary
                             ),
-                            maxLines = 2,
-                            overflow = TextOverflow.Ellipsis
+                            maxLines = primaryLineCount ?: 2,
+                            overflow = TextOverflow.Ellipsis,
+                            onTextLayout = { layoutResult ->
+                                if (!isSelectionMode) {
+                                    primaryLineCount = layoutResult.lineCount
+                                }
+                            }
                         )
                         ItemSecondaryName(item, primary, isBilingual, primaryLang, secondaryLang, profiles, colors)
                     }

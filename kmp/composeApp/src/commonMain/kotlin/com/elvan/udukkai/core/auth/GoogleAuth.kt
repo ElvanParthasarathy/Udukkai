@@ -5,6 +5,7 @@ object AllowedAccounts {
     private val emails = setOf(
         "srijaipriyasilks@gmail.com",
         "vrmshreesarathy@gmail.com",
+        "elvanpartha@gmail.com",
         "elvanparthasarathy@gmail.com",
         "jaiprakashvp2006@gmail.com"
     )

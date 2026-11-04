@@ -75,6 +75,7 @@ fun settingsEntries(identity: SettingsRoute): List<SettingsEntry> = with(Materia
         SettingsEntry(SettingsRoute.Address, K.address, K.companyAddressDetails, K.groupBusiness, LocationOn, listOf("pincode", "pin code", "state", "district", "city", "street", "town")),
         SettingsEntry(SettingsRoute.Bank, K.bank, K.bankDetails, K.groupBusiness, CreditCard, listOf("ifsc", "account number", "upi", "branch", "qr")),
         SettingsEntry(SettingsRoute.InvoiceCreation, K.createBtn, K.pdfStylingOptions, K.groupBills, Description, listOf("invoice", "bill", "receipt", "print", "pdf", "header", "logo size", "logo place", "number", "prefix", "tax", "round off", "paper", "template", "style")),
+        SettingsEntry(SettingsRoute.BilingualRules, K.bilingualSettings, null, K.groupBills, Translate, listOf("bilingual", "rules", "language rules", "order", "business name", "customer", "signature")),
         SettingsEntry(SettingsRoute.Display, K.display, K.themeLightDarkAuto, K.groupApp, LightMode, listOf("theme", "dark", "light", "font", "colour", "color", "appearance", "text size")),
         SettingsEntry(SettingsRoute.Language, K.appLanguage, K.tamilEnglishAuto, K.groupApp, Translate, listOf("tamil", "english", "translate", "language")),
         SettingsEntry(SettingsRoute.StorageBackup, K.storageAndBackup, K.manageDatabasesBackups, K.groupData, Folder, listOf("backup", "restore", "export", "import", "file", "database", "undo", "merge", "replace", "storage")),

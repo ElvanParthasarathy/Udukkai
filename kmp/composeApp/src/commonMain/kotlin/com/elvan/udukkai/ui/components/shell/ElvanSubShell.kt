@@ -97,12 +97,12 @@ fun ElvanSectionTitle(
     colors: ShellColors = rememberShellColors()
 ) {
     Text(
-        text = title.uppercase(),
+        text = title,
         style = TextStyle(
             fontFamily = LocalAppFontFamily.current,
-            fontSize = 12.sp,
+            fontSize = 13.sp,
             fontWeight = FontWeight.SemiBold,
-            letterSpacing = 0.5.sp
+            letterSpacing = 0.3.sp
         ),
         color = colors.textSecondary.copy(alpha = 0.8f),
         modifier = modifier.padding(

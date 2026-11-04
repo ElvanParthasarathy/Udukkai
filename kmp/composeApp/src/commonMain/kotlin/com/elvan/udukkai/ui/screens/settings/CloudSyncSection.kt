@@ -126,7 +126,7 @@ fun CloudSyncSection(colors: ShellColors) {
     }
 
     // ── Account Management Section ──
-    ElvanSettingsSection(title = K.cloudSync.tr(), colors = colors) {
+    ElvanSettingsSection(colors = colors) {
         // Password Reset
         if (email != null) {
             ElvanSettingsRow(

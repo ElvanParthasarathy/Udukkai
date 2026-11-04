@@ -3,11 +3,12 @@ package com.elvan.udukkai.ui.screens.create.components
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.elvan.udukkai.theme.LocalAppFontFamily
@@ -17,15 +18,9 @@ import com.elvan.udukkai.theme.preventBrokenLigatures
 import com.elvan.udukkai.ui.navigation.MaterialSymbols
 
 /**
- * The text of a bill or receipt card. Nothing is cut short: the name and the "English name • place" line wrap
- * onto a second line when long, because the place tells apart one business in two towns.
- *
- *     Name                                   >
- *     English name • place
- *     SJPS-010  FY 26-27                Unpaid
- *     05/10/2026                       ₹97,545
- *
- * [below] holds an optional extra grey line (for example the bills a receipt pays).
+ * The text of a bill or receipt card.
+ * Preserves the exact line count before selection mode so neither 1-line cards
+ * wrap downwards nor 2-line cards shrink upwards when long-pressing.
  */
 @Composable
 fun DocCardText(
@@ -38,25 +33,47 @@ fun DocCardText(
     fy: String,
     status: String,
     textLines: Int,
+    isSelectionMode: Boolean = false,
     modifier: Modifier = Modifier,
     below: @Composable ColumnScope.() -> Unit = {}
 ) {
     val ff = LocalAppFontFamily.current
     val secondary = LocalShellColors.current.textSecondary
+
+    var primaryLineCount by remember { mutableStateOf<Int?>(null) }
+    var secondLineCount by remember { mutableStateOf<Int?>(null) }
+
     Column(modifier = modifier) {
         Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.Top) {
             Column(Modifier.weight(1f)) {
                 Text(
                     text = primary.preventBrokenLigatures(),
-                    style = TextStyle(fontFamily = ff, fontSize = 16.5.sp, fontWeight = FontWeight.ExtraBold, color = colors.textPrimary),
-                    maxLines = maxOf(2, textLines)
+                    style = TextStyle(
+                        fontFamily = ff,
+                        fontSize = 16.5.sp,
+                        fontWeight = FontWeight.ExtraBold,
+                        color = colors.textPrimary
+                    ),
+                    maxLines = primaryLineCount ?: maxOf(2, textLines),
+                    overflow = TextOverflow.Ellipsis,
+                    onTextLayout = { layoutResult ->
+                        if (!isSelectionMode) {
+                            primaryLineCount = layoutResult.lineCount
+                        }
+                    }
                 )
                 if (secondLine.isNotBlank()) {
                     Spacer(Modifier.height(2.dp))
                     Text(
                         text = secondLine.preventBrokenLigatures(),
                         style = TextStyle(fontFamily = ff, fontSize = 13.5.sp, color = secondary),
-                        maxLines = 2
+                        maxLines = secondLineCount ?: 2,
+                        overflow = TextOverflow.Ellipsis,
+                        onTextLayout = { layoutResult ->
+                            if (!isSelectionMode) {
+                                secondLineCount = layoutResult.lineCount
+                            }
+                        }
                     )
                 }
             }
@@ -77,7 +94,6 @@ fun DocCardText(
                         style = TextStyle(fontFamily = ff, fontSize = 13.5.sp, color = secondary),
                         maxLines = 1
                     )
-                    // The financial year, small and quiet beside the number
                     Text(
                         text = fy,
                         modifier = Modifier.padding(start = 8.dp),
@@ -92,7 +108,6 @@ fun DocCardText(
                 )
             }
             Spacer(Modifier.width(8.dp))
-            // Status over the amount, at the foot on the right
             Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(3.dp)) {
                 Text(
                     text = status.preventBrokenLigatures(),

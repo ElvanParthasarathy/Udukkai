@@ -68,14 +68,14 @@ fun ElvanSettingsSection(
         if (title != null) {
             val ff = LocalAppFontFamily.current
             Text(
-                text = title.uppercase(),
+                text = title,
                 style = TextStyle(
                     fontFamily = ff,
-                    fontSize = 12.sp,
+                    fontSize = 13.sp,
                     fontWeight = FontWeight.SemiBold,
-                    letterSpacing = 0.5.sp
+                    letterSpacing = 0.3.sp
                 ),
-                color = colors.textPrimary.copy(alpha = 0.5f),
+                color = colors.textPrimary.copy(alpha = 0.55f),
                 modifier = Modifier.padding(start = 20.dp, bottom = 8.dp)
             )
         }

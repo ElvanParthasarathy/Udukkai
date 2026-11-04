@@ -31,37 +31,24 @@ fun AboutHubScreen(
     ) {
         item(key = "shell_top_spacer") { Spacer(modifier = Modifier.height(LocalElvanTopSpacerHeight.current)) }
 
-        // ── Developer & Company ──
-        item(key = "about_people") {
+        // ── App Info, Developer & Studio (Joined in One Card) ──
+        item(key = "about_app_and_creators") {
             ElvanSettingsSection(colors = colors) {
-                // Developer
-                ElvanSettingsRow(
-                    icon = MaterialSymbols.Rounded.Person,
-                    title = K.softwareDesigner.tr(),
-                    description = "Elvan Parthasarathy",
-                    onClick = { onNavigate(SettingsRoute.AboutDeveloper) },
-                    colors = colors
-                )
-                ElvanSettingsDivider(colors = colors)
-                // Parent company — "Elvan Niril" is a brand name, always shown in English
-                ElvanSettingsRow(
-                    icon = MaterialSymbols.Rounded.BusinessCenter,
-                    title = "Elvan Niril",
-                    description = K.elvanNavilStudioDesc.tr(),
-                    onClick = { onNavigate(SettingsRoute.ElvanNavil) },
-                    colors = colors
-                )
-            }
-        }
-
-        // ── App info ──
-        item(key = "about_app_version") {
-            ElvanSettingsSection(colors = colors) {
+                // About App & Version
                 ElvanSettingsRow(
                     icon = MaterialSymbols.Rounded.Info,
                     title = K.aboutApp.tr(),
                     description = versionText,
                     onClick = { onNavigate(SettingsRoute.AboutApp) },
+                    colors = colors
+                )
+                ElvanSettingsDivider(colors = colors)
+                // Studio & Designer — Elvan Navil
+                ElvanSettingsRow(
+                    icon = MaterialSymbols.Rounded.BusinessCenter,
+                    title = K.elvanNavil.tr(),
+                    description = K.elvanNavilStudioDesc.tr(),
+                    onClick = { onNavigate(SettingsRoute.ElvanNavil) },
                     colors = colors
                 )
             }

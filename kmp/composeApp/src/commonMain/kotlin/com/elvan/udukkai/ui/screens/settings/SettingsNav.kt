@@ -12,6 +12,7 @@ sealed interface SettingsRoute {
     data object Address : SettingsRoute
     data object Bank : SettingsRoute
     data object InvoiceCreation : SettingsRoute
+    data object BilingualRules : SettingsRoute
     data object StorageBackup : SettingsRoute
     data object Security : SettingsRoute
     data object AboutDeveloper : SettingsRoute
@@ -33,7 +34,7 @@ sealed interface SettingsRoute {
 val SettingsRoute.depth: Int
     get() = when {
         this == SettingsRoute.Hub -> 0
-        this == SettingsRoute.ManageProfiles || this in SettingsRoute.aboutPages -> 2
+        this == SettingsRoute.ManageProfiles || this in SettingsRoute.aboutPages || this == SettingsRoute.BilingualRules -> 2
         else -> 1
     }
 
@@ -54,6 +55,7 @@ val SettingsRoute.name: String
         SettingsRoute.Address -> "Address"
         SettingsRoute.Bank -> "Bank"
         SettingsRoute.InvoiceCreation -> "InvoiceCreation"
+        SettingsRoute.BilingualRules -> "BilingualRules"
         SettingsRoute.StorageBackup -> "StorageBackup"
         SettingsRoute.Security -> "Security"
         SettingsRoute.AboutDeveloper -> "AboutDeveloper"
@@ -75,6 +77,7 @@ fun settingsRouteFromName(name: String?): SettingsRoute = when (name) {
     "Address" -> SettingsRoute.Address
     "Bank" -> SettingsRoute.Bank
     "InvoiceCreation" -> SettingsRoute.InvoiceCreation
+    "BilingualRules" -> SettingsRoute.BilingualRules
     "StorageBackup" -> SettingsRoute.StorageBackup
     "Security" -> SettingsRoute.Security
     "AboutDeveloper" -> SettingsRoute.AboutDeveloper

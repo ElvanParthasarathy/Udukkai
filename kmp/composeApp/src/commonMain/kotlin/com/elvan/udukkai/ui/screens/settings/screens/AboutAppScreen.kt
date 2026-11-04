@@ -7,55 +7,63 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
-import androidx.compose.ui.graphics.graphicsLayer
-import com.elvan.udukkai.ui.components.shell.ElvanSnackbar
-import kotlinx.coroutines.launch
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
-
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.elvan.udukkai.core.auth.AppScope
+import com.elvan.udukkai.core.auth.AuthManager
+import com.elvan.udukkai.core.utils.DateGroupUtils
 import com.elvan.udukkai.localization.K
+import com.elvan.udukkai.localization.LocalAppLanguage
 import com.elvan.udukkai.localization.tr
 import com.elvan.udukkai.theme.Dimens
 import com.elvan.udukkai.theme.LocalAppFontFamily
 import com.elvan.udukkai.theme.ShellColors
 import com.elvan.udukkai.theme.rememberShellColors
-import com.elvan.udukkai.ui.components.shell.ElvanSettingsDivider
-import com.elvan.udukkai.ui.components.shell.ElvanSettingsRow
-import com.elvan.udukkai.ui.components.shell.ElvanSettingsSection
-import com.elvan.udukkai.ui.components.shell.LocalElvanTopSpacerHeight
+import com.elvan.udukkai.ui.components.shell.*
 import com.elvan.udukkai.ui.navigation.MaterialSymbols
+import kotlinx.coroutines.launch
 
 /**
  * செயலி பற்றி திரை — About App Screen.
- * Adapted from Neram's AboutAppScreen.kt to use the CMP shell system.
+ * Purpose-built, distinct About App screen tailored specifically for Factory (ஆலை) vs Textiles (சவுளி).
+ * Brand: Udukkai · Studio: Elvan Navil · Designed & engineered by Elvan Parthasarathy.
  */
 @Composable
 fun AboutAppScreen(
     scrollState: LazyListState = rememberLazyListState(),
-    colors: ShellColors = rememberShellColors()
+    colors: ShellColors = rememberShellColors(),
+    isFactory: Boolean = (AuthManager.appScope == AppScope.FACTORY)
 ) {
     val ff = LocalAppFontFamily.current
+    val scope = rememberCoroutineScope()
     var taps by remember { mutableStateOf(0) }
     val spin = remember { Animatable(0f) }
-    val scope = rememberCoroutineScope()
+    val isTa = LocalAppLanguage.current.startsWith("ta")
+
+    val currentYear = remember {
+        DateGroupUtils.getDateComponents(System.currentTimeMillis()).year
+    }
+
+    val appNameText = if (isFactory) K.udukkaiFactory.tr() else K.udukkaiTextiles.tr()
+    val appSubtitleText = if (isFactory) {
+        if (isTa) "நெசவாலை மேலாண்மை மென்பொருள்" else "Weaving Factory Management System"
+    } else {
+        if (isTa) "சவுளி வணிக மேலாண்மை முறைமை" else "Textiles & Silk ERP Billing System"
+    }
 
     LazyColumn(
         state = scrollState,
@@ -71,47 +79,61 @@ fun AboutAppScreen(
             Spacer(modifier = Modifier.height(LocalElvanTopSpacerHeight.current))
         }
 
-        // ── App Header: Logo + Name + Tagline ──
+        // ── App Header: Emblem + Name + Subtitle + Studio + Version ──
         item(key = "app_header") {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(vertical = 16.dp),
+                    .padding(vertical = 12.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 val logoBg = if (colors.isDark) colors.textPrimary.copy(alpha = 0.08f)
-                else colors.textPrimary.copy(alpha = 0.06f)
+                else colors.textPrimary.copy(alpha = 0.05f)
 
-                // Easter egg: the logo spins when tapped, and the seventh tap brings a line about the weavers
+                // Easter egg: the logo spins smoothly when tapped; 7th tap triggers the weavers mantra
                 Box(
                     modifier = Modifier
-                        .size(88.dp)
+                        .size(92.dp)
                         .graphicsLayer { rotationZ = spin.value }
-                        .clip(RoundedCornerShape(24.dp))
+                        .clip(RoundedCornerShape(26.dp))
                         .background(logoBg)
-                        .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null) {
+                        .clickable(
+                            interactionSource = remember { MutableInteractionSource() },
+                            indication = null
+                        ) {
                             taps++
-                            scope.launch { spin.animateTo(spin.value + 360f, spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow)) }
-                            if (taps % 7 == 0) ElvanSnackbar.show("🧵 நூலோடு நூல் சேர்த்து நெய்தது · woven thread by thread")
+                            scope.launch {
+                                spin.animateTo(
+                                    spin.value + 360f,
+                                    spring(
+                                        dampingRatio = Spring.DampingRatioMediumBouncy,
+                                        stiffness = Spring.StiffnessLow
+                                    )
+                                )
+                            }
+                            if (taps % 7 == 0) {
+                                ElvanSnackbar.show("🧵 நூலோடு நூல் சேர்த்து நெய்தது · Woven thread by thread")
+                            }
                         },
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
-                        imageVector = MaterialSymbols.Rounded.Notes,
+                        imageVector = if (isFactory) MaterialSymbols.Mode.Coolie else MaterialSymbols.Mode.Silk,
                         contentDescription = K.aboutApp.tr(),
                         tint = colors.textPrimary,
-                        modifier = Modifier.size(50.dp)
+                        modifier = Modifier.size(46.dp)
                     )
                 }
 
-                Spacer(modifier = Modifier.height(10.dp))
+                Spacer(modifier = Modifier.height(14.dp))
 
                 Text(
-                    text = K.appName.tr(),
+                    text = appNameText,
                     style = TextStyle(
                         fontFamily = ff,
-                        fontSize = 24.sp,
-                        fontWeight = FontWeight.Bold
+                        fontSize = 25.sp,
+                        fontWeight = FontWeight.Bold,
+                        letterSpacing = (-0.5).sp
                     ),
                     color = colors.textPrimary
                 )
@@ -119,7 +141,7 @@ fun AboutAppScreen(
                 Spacer(modifier = Modifier.height(4.dp))
 
                 Text(
-                    text = "Elvan Niril",
+                    text = appSubtitleText,
                     style = TextStyle(
                         fontFamily = ff,
                         fontSize = 13.5.sp,
@@ -128,53 +150,160 @@ fun AboutAppScreen(
                     color = colors.textSecondary.copy(alpha = 0.85f)
                 )
 
-                Spacer(modifier = Modifier.height(4.dp))
+                Spacer(modifier = Modifier.height(6.dp))
 
                 Text(
-                    text = "v1.0.0",
+                    text = if (isTa) "எல்வன் நவில் · v1.0.0" else "Elvan Navil · v1.0.0",
                     style = TextStyle(
                         fontFamily = ff,
                         fontSize = 12.sp,
-                        fontWeight = FontWeight.Medium
+                        fontWeight = FontWeight.Normal
                     ),
                     color = colors.textSecondary.copy(alpha = 0.6f)
                 )
             }
         }
 
-        // ── Features Section ──
-        item(key = "features_section") {
+        // ── About App Dedicated Purpose Description ──
+        item(key = "about_description_section") {
             ElvanSettingsSection(colors = colors) {
-                ElvanSettingsRow(
-                    icon = MaterialSymbols.Rounded.Description,
-                    title = "${K.invoice.tr()} / ${K.receipt.tr()}",
-                    description = K.easyInvoiceReceiptCreation.tr(),
-                    onClick = {},
-                    colors = colors
-                )
-                ElvanSettingsDivider(colors = colors)
-                ElvanSettingsRow(
-                    icon = MaterialSymbols.Rounded.BusinessCenter,
-                    title = K.customers.tr(),
-                    description = K.customerDataManagement.tr(),
-                    onClick = {},
-                    colors = colors
-                )
-                ElvanSettingsDivider(colors = colors)
-                ElvanSettingsRow(
-                    icon = MaterialSymbols.Rounded.Inventory2,
-                    title = K.items.tr(),
-                    description = K.itemInventoryManagement.tr(),
-                    onClick = {},
-                    colors = colors
-                )
-                ElvanSettingsDivider(colors = colors)
-                ElvanSettingsRow(
-                    icon = MaterialSymbols.Rounded.Storage,
-                    title = K.unifiedDatabase.tr(),
-                    description = K.unifiedDatabaseDesc.tr(),
-                    onClick = {},
-                    colors = colors
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 20.dp, vertical = 18.dp)
+                ) {
+                    Text(
+                        text = if (isFactory) {
+                            if (isTa) {
+                                "விசைத்தறி மற்றும் கைத்தறி ஆலைகளின் அன்றாட உற்பத்தி, பாவு வழங்கல், நெசவுக் கூலிச் சீட்டுகள் மற்றும் கூலிப் பட்டியல் மேலாண்மைக்காகத் தனித்துவமாக வடிவமைக்கப்பட்ட மென்பொருள் முறைமை."
+                            } else {
+                                "A dedicated operational system crafted specifically for powerloom and handloom weaving factories to manage warp sizing, daily weaving production, loom wages, and job-work coolie bills."
+                            }
+                        } else {
+                            if (isTa) {
+                                "பட்டு, ஜரிகை மற்றும் சவுளி மொத்த/சில்லறை வணிகர்களுக்கான விரிவான விற்பனைப் பட்டியல், வாங்குநர்கள் கடன் கணக்கு ஏடு மற்றும் ஜிஎஸ்டி வரி மேலாண்மை மென்பொருள் முறைமை."
+                            } else {
+                                "A comprehensive commercial billing and ledger system crafted for silk, saree, and textile merchants to manage multi-firm sales, buyer ledgers, and GST invoicing."
+                            }
+                        },
+                        style = TextStyle(
+                            fontFamily = ff,
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Normal,
+                            lineHeight = 22.sp
+                        ),
+                        color = colors.textPrimary.copy(alpha = 0.9f)
+                    )
+                }
+            }
+        }
+
+        // ── Core Features Tailored to Factory or Textiles ──
+        item(key = "core_features_section") {
+            ElvanSettingsSection(colors = colors) {
+                if (isFactory) {
+                    // Factory Feature 1: Looms & Weaving Production
+                    ElvanSettingsRow(
+                        icon = MaterialSymbols.Rounded.Handyman,
+                        title = if (isTa) "தறிகள் & நெசவு உற்பத்தி" else "Looms & Weaving Production",
+                        description = if (isTa) "தறி ஒதுக்கீடு, பாவு வரவு-செலவு மற்றும் உற்பத்திப் பதிவு" else "Loom allocation, warp runs, and production output tracking",
+                        onClick = {},
+                        colors = colors
+                    )
+                    ElvanSettingsDivider(colors = colors)
+
+                    // Factory Feature 2: Coolie Wage Settlement
+                    ElvanSettingsRow(
+                        icon = MaterialSymbols.Rounded.Payments,
+                        title = if (isTa) "கூலிச் சீட்டு & பட்டுவாடா" else "Coolie Wage Settlements",
+                        description = if (isTa) "வாராந்திர நெசவுக் கூலி கணக்கீடு மற்றும் பட்டுவாடாச் சீட்டுகள்" else "Weekly coolie wage calculations and settlement slips",
+                        onClick = {},
+                        colors = colors
+                    )
+                    ElvanSettingsDivider(colors = colors)
+
+                    // Factory Feature 3: Factory Invoices & Receipts
+                    ElvanSettingsRow(
+                        icon = MaterialSymbols.Rounded.Description,
+                        title = if (isTa) "ஆலைப் பட்டியல் & பெறுகைகள்" else "Factory Bills & Receipts",
+                        description = if (isTa) "நெசவுக் கூலி ஜிஎஸ்டி பட்டியல்கள் மற்றும் கட்டணப் பெறுகைகள்" else "GST job-work invoices and payment receipts",
+                        onClick = {},
+                        colors = colors
+                    )
+                    ElvanSettingsDivider(colors = colors)
+
+                    // Factory Feature 4: Cloud Sync & Backups
+                    ElvanSettingsRow(
+                        icon = MaterialSymbols.Rounded.Sync,
+                        title = if (isTa) "மேகக் கணினி ஒத்திசைவு" else "Cloud Sync & Backups",
+                        description = if (isTa) "பாதுகாப்பான உள்ளூர் காப்புகள் மற்றும் சாதன ஒத்திசைவு" else "Secure local database backups and real-time device sync",
+                        onClick = {},
+                        colors = colors
+                    )
+                } else {
+                    // Textiles Feature 1: GST Tax Invoicing
+                    ElvanSettingsRow(
+                        icon = MaterialSymbols.Rounded.Description,
+                        title = if (isTa) "ஜிஎஸ்டி விற்பனைப் பட்டியல்" else "GST Tax Invoicing",
+                        description = if (isTa) "HSN குறியீடுகள், வரிப் பிரிப்புகள் மற்றும் அச்சிடும் பட்டியல் வடிவமைப்பு" else "HSN codes, tax splits, and custom bill print designs",
+                        onClick = {},
+                        colors = colors
+                    )
+                    ElvanSettingsDivider(colors = colors)
+
+                    // Textiles Feature 2: Customer Ledger & Khata
+                    ElvanSettingsRow(
+                        icon = MaterialSymbols.Rounded.BusinessCenter,
+                        title = if (isTa) "வாடிக்கையாளர் கணக்கு ஏடு" else "Customer Credit Ledger",
+                        description = if (isTa) "வாங்குவோர் நிலுவைத் தொகை, வரவு-பற்று மற்றும் கணக்கு அறிக்கை" else "Buyer balances, debit-credit tracking, and statement summaries",
+                        onClick = {},
+                        colors = colors
+                    )
+                    ElvanSettingsDivider(colors = colors)
+
+                    // Textiles Feature 3: Payment Receipts
+                    ElvanSettingsRow(
+                        icon = MaterialSymbols.Rounded.ReceiptFill,
+                        title = if (isTa) "கட்டணப் பெறுகைகள்" else "Payment Receipts",
+                        description = if (isTa) "நேரடிப் பணம், வங்கி, யுபிஐ ரசீதுகள் மற்றும் பட்டியல் வரவு கழித்தல்" else "Cash, Bank, and UPI receipts linked to pending bills",
+                        onClick = {},
+                        colors = colors
+                    )
+                    ElvanSettingsDivider(colors = colors)
+
+                    // Textiles Feature 4: Cloud Sync & Security
+                    ElvanSettingsRow(
+                        icon = MaterialSymbols.Rounded.Sync,
+                        title = if (isTa) "மேகக் கணினி ஒத்திசைவு" else "Cloud Sync & Security",
+                        description = if (isTa) "நிறுவனத் தரவுப் பாதுகாப்பு மற்றும் தானியங்கி சாதன ஒத்திசைவு" else "Multi-firm data protection and automatic device synchronization",
+                        onClick = {},
+                        colors = colors
+                    )
+                }
+            }
+        }
+
+        // ── Dynamic Copyright Year Footer ──
+        item(key = "about_footer") {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 10.dp, bottom = 20.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    text = if (isTa) {
+                        "© $currentYear எல்வன் நவில் · அனைத்து உரிமைகளும் காக்கப்பட்டவை"
+                    } else {
+                        "© $currentYear Elvan Navil · All rights reserved"
+                    },
+                    style = TextStyle(
+                        fontFamily = ff,
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Normal
+                    ),
+                    color = colors.textPrimary.copy(alpha = 0.38f),
+                    textAlign = TextAlign.Center
                 )
             }
         }

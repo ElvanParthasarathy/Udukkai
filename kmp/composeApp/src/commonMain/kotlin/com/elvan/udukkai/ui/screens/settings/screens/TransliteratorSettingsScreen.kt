@@ -7,9 +7,10 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import com.elvan.udukkai.ui.navigation.MaterialSymbols
-import androidx.compose.material3.*
+import androidx.compose.material3.Icon
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -19,17 +20,22 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.elvan.udukkai.core.navil.NavilMozhimaatri
+import com.elvan.udukkai.core.utils.DateGroupUtils
 import com.elvan.udukkai.localization.K
+import com.elvan.udukkai.localization.LocalAppLanguage
 import com.elvan.udukkai.localization.tr
 import com.elvan.udukkai.theme.Dimens
 import com.elvan.udukkai.theme.LocalAppFontFamily
 import com.elvan.udukkai.theme.ShellColors
 import com.elvan.udukkai.theme.rememberShellColors
 import com.elvan.udukkai.ui.components.shell.*
+import com.elvan.udukkai.ui.navigation.MaterialSymbols
 
 /**
- * எல்வன் நவில் பற்றி திரை — Elvan Navil About Screen.
- * Exact 1:1 match with Neram's ElvanNavilScreen.kt.
+ * எல்வன் நவில் & மென்பொருள் வடிவாளர் — Elvan Navil & Software Designer Screen.
+ * Unified showcase for Elvan Navil software studio and software designer Elvan Parthasarathy.
+ * Grounded in native digital craftsmanship, bilingual literature, and Tamil computing.
  */
 @Composable
 fun TransliteratorSettingsScreen(
@@ -39,10 +45,33 @@ fun TransliteratorSettingsScreen(
     val ff = LocalAppFontFamily.current
     val uriHandler = LocalUriHandler.current
 
+    val currentLang = LocalAppLanguage.current
+    val isTa = currentLang.startsWith("ta")
+    val isTanglish = currentLang == "ta-Latn"
+
+    fun t(taText: String, enText: String): String {
+        return if (isTanglish) {
+            NavilMozhimaatri.transliterate(taText)
+        } else if (isTa) {
+            taText
+        } else {
+            enText
+        }
+    }
+
+    val currentYear = remember {
+        DateGroupUtils.getDateComponents(System.currentTimeMillis()).year
+    }
+
+    val brandName = if (isTa && !isTanglish) "எல்வன் நவில்" else "Elvan Navil"
+    val studioDesc = t("மென்பொருள் படைப்பகம்", "Software Studio")
+
     LazyColumn(
         state = scrollState,
         modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(
+            start = Dimens.ContentPadding,
+            end = Dimens.ContentPadding,
             bottom = Dimens.SubpageContentPaddingBottom
         ),
         verticalArrangement = Arrangement.spacedBy(Dimens.SectionSpacing)
@@ -51,42 +80,55 @@ fun TransliteratorSettingsScreen(
             Spacer(modifier = Modifier.height(LocalElvanTopSpacerHeight.current))
         }
 
-        // Clean Brand Layout: Text alone at top and website pill button
-        item(key = "brand_content") {
-            ElvanSectionContainer {
+        // ── Brand Hero: Name + Designer & Studio Subtitle + Website Pill ──
+        item(key = "brand_hero") {
+            ElvanSettingsSection(colors = colors) {
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 24.dp, vertical = 32.dp),
+                        .padding(horizontal = 24.dp, vertical = 28.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Text(
-                        text = K.elvanNavil.tr(),
+                        text = brandName,
                         style = TextStyle(
                             fontFamily = ff,
                             fontSize = 26.sp,
-                            fontWeight = FontWeight.Bold
+                            fontWeight = FontWeight.Bold,
+                            letterSpacing = (-0.3).sp
                         ),
                         color = colors.textPrimary
                     )
 
-                    Spacer(modifier = Modifier.height(24.dp))
+                    Spacer(modifier = Modifier.height(6.dp))
 
-                    // Monochrome Pill Button for Website
+                    Text(
+                        text = studioDesc,
+                        style = TextStyle(
+                            fontFamily = ff,
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Medium
+                        ),
+                        color = colors.textSecondary.copy(alpha = 0.85f)
+                    )
+
+                    Spacer(modifier = Modifier.height(18.dp))
+
+                    // Minimalist Pill Button for Studio Website
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(6.dp),
                         modifier = Modifier
                             .clip(RoundedCornerShape(50))
-                            .background(colors.textPrimary.copy(alpha = 0.1f))
+                            .background(colors.textPrimary.copy(alpha = 0.08f))
                             .clickable { uriHandler.openUri("https://elvannavil.vercel.app") }
-                            .padding(horizontal = 22.dp, vertical = 11.dp)
+                            .padding(horizontal = 20.dp, vertical = 10.dp)
                     ) {
                         Text(
                             text = "elvannavil.vercel.app",
                             style = TextStyle(
                                 fontFamily = ff,
-                                fontSize = 14.sp,
+                                fontSize = 13.5.sp,
                                 fontWeight = FontWeight.SemiBold
                             ),
                             color = colors.textPrimary
@@ -95,43 +137,122 @@ fun TransliteratorSettingsScreen(
                             imageVector = MaterialSymbols.Rounded.ArrowForward,
                             contentDescription = null,
                             tint = colors.textPrimary,
-                            modifier = Modifier.size(16.dp)
+                            modifier = Modifier.size(15.dp)
                         )
                     }
                 }
             }
         }
 
-        // Footer: © All rights reserved and App Version
-        item(key = "footer") {
-            ElvanSectionContainer {
+        // ── Studio Introduction & Grounding Narrative ──
+        item(key = "studio_narrative") {
+            ElvanSettingsSection(colors = colors) {
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(top = 16.dp, bottom = 24.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
+                        .padding(horizontal = 20.dp, vertical = 18.dp)
                 ) {
                     Text(
-                        text = "${K.appName.tr()} v1.0.0",
+                        text = t(
+                            taText = "ஆரணி, தமிழ்நாடு, இந்தியாவில் இயங்கும் தனித்துவமான மென்பொருள் வடிவமைப்பு மற்றும் எண்மப் படைப்பகம். நேர்த்தியான சொந்த மென்பொருள்கள், இருமொழி இலக்கியம், தொழில் முறைமைகள் மற்றும் தொல்காப்பிய இலக்கண வழிப்பட்ட தமிழ்க் கணினித் தொழில்நுட்ப உருவாக்கத்தில் அர்ப்பணிப்பு கொண்டது.",
+                            enText = "An independent digital creation and software craft studio based in Arani, Tamil Nadu, India. Focused on native digital craftsmanship, bilingual literature, artisan business tools, and classical Tamil linguistic computing."
+                        ),
                         style = TextStyle(
                             fontFamily = ff,
-                            fontSize = 12.5.sp,
-                            fontWeight = FontWeight.Medium
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Normal,
+                            lineHeight = 22.sp
                         ),
-                        color = colors.textPrimary.copy(alpha = 0.45f)
-                    )
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text(
-                        text = K.allRightsReserved.tr(),
-                        style = TextStyle(
-                            fontFamily = ff,
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.Normal
-                        ),
-                        color = colors.textPrimary.copy(alpha = 0.35f),
-                        textAlign = TextAlign.Center
+                        color = colors.textPrimary.copy(alpha = 0.9f)
                     )
                 }
+            }
+        }
+
+        // ── Software Designer & Contact Details ──
+        item(key = "designer_and_contact") {
+            ElvanSettingsSection(colors = colors) {
+                // Software Designer / Portfolio
+                ElvanSettingsRow(
+                    icon = MaterialSymbols.Rounded.Person,
+                    title = K.softwareDesigner.tr(),
+                    description = "Elvan Parthasarathy",
+                    onClick = {
+                        uriHandler.openUri("https://jaiprakashpartha.vercel.app/")
+                    },
+                    colors = colors
+                )
+
+                ElvanSettingsDivider(colors = colors)
+
+                // Email
+                ElvanSettingsRow(
+                    icon = MaterialSymbols.Rounded.Email,
+                    title = K.email.tr(),
+                    description = "elvanpartha@gmail.com",
+                    onClick = {
+                        uriHandler.openUri("mailto:elvanpartha@gmail.com")
+                    },
+                    colors = colors
+                )
+
+                ElvanSettingsDivider(colors = colors)
+
+                // LinkedIn
+                ElvanSettingsRow(
+                    icon = MaterialSymbols.Rounded.Person,
+                    title = "LinkedIn",
+                    description = "linkedin.com/in/elvanparthasarathy",
+                    onClick = {
+                        uriHandler.openUri("https://www.linkedin.com/in/elvanparthasarathy")
+                    },
+                    colors = colors
+                )
+
+                ElvanSettingsDivider(colors = colors)
+
+                // GitHub
+                ElvanSettingsRow(
+                    icon = MaterialSymbols.Rounded.Code,
+                    title = "GitHub",
+                    description = "github.com/elvanparthasarathy",
+                    onClick = {
+                        uriHandler.openUri("https://github.com/elvanparthasarathy")
+                    },
+                    colors = colors
+                )
+
+                ElvanSettingsDivider(colors = colors)
+
+                // Location
+                ElvanSettingsRow(
+                    icon = MaterialSymbols.Rounded.LocationOn,
+                    title = K.location.tr(),
+                    description = K.chennaiTamilNadu.tr(),
+                    onClick = {},
+                    colors = colors
+                )
+            }
+        }
+
+        // ── Footer: Dynamic Year © All rights reserved ──
+        item(key = "footer") {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 10.dp, bottom = 20.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    text = "© $currentYear $brandName · ${t("அனைத்து உரிமைகளும் காக்கப்பட்டவை", "All rights reserved")}",
+                    style = TextStyle(
+                        fontFamily = ff,
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Normal
+                    ),
+                    color = colors.textPrimary.copy(alpha = 0.38f),
+                    textAlign = TextAlign.Center
+                )
             }
         }
     }

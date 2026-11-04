@@ -128,6 +128,7 @@ fun TextilesInvoiceCard(
                 fy = "FY ${BillNumbering.fyShort(invoice.invoiceDate)}",
                 status = statusText,
                 textLines = textLines,
+                isSelectionMode = isSelectionMode,
                 modifier = Modifier.weight(1f)
             )
         }

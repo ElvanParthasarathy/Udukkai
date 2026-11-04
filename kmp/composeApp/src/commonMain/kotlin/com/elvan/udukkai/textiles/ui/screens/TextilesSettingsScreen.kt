@@ -124,6 +124,7 @@ fun TextilesSettingsScreen(
                 SettingsRoute.Address -> K.address.tr()
                 SettingsRoute.Bank -> K.bank.tr()
                 SettingsRoute.InvoiceCreation -> K.createBtn.tr()
+                SettingsRoute.BilingualRules -> K.bilingualSettings.tr()
                 SettingsRoute.StorageBackup -> K.storageAndBackup.tr()
                 SettingsRoute.Security -> K.security.tr()
                 SettingsRoute.AboutDeveloper -> K.softwareDesigner.tr()
@@ -172,8 +173,15 @@ fun TextilesSettingsScreen(
                         onUpdateProfile = { TextilesProfileRepository.updateProfile(it) }
                     )
                     SettingsRoute.InvoiceCreation -> TextilesInvoiceCreationSettingsScreen(
+                        onNavigate = { navigateTo(it) },
                         scrollState = scrollState,
                         colors = colors
+                    )
+                    SettingsRoute.BilingualRules -> BilingualRulesScreen(
+                        profile = TextilesProfileRepository.profile,
+                        colors = colors,
+                        scrollState = scrollState,
+                        onSave = { TextilesProfileRepository.updateProfile(it) }
                     )
                     SettingsRoute.StorageBackup -> TextilesStorageBackupScreen(scrollState = scrollState, colors = colors)
                     SettingsRoute.Security -> TextilesSecuritySettingsScreen(scrollState = scrollState, colors = colors)
@@ -211,7 +219,8 @@ private fun TextilesSettingsHubContent(
     val ff = LocalAppFontFamily.current
     val profile = TextilesProfileRepository.profile
 
-    val profileName = resolveCompanyItemLabel(profile).ifEmpty { "சவுளி" }
+    val defaultFirmTitle = K.udukkaiTextiles.tr()
+    val profileName = resolveCompanyItemLabel(profile).ifEmpty { defaultFirmTitle }
 
     LazyColumn(
         state = scrollState,
@@ -219,7 +228,7 @@ private fun TextilesSettingsHubContent(
         contentPadding = PaddingValues(
             bottom = Dimens.SubpageContentPaddingBottom + 72.dp
         ),
-        verticalArrangement = Arrangement.spacedBy(10.dp)
+        verticalArrangement = Arrangement.spacedBy(Dimens.SectionSpacing)
     ) {
         item(key = "shell_top_spacer") {
             Spacer(modifier = Modifier.height(LocalElvanTopSpacerHeight.current + 6.dp)) // keeps the top where it was while the gaps below are tighter
@@ -275,7 +284,7 @@ private fun TextilesSettingsHubContent(
                             horizontalAlignment = Alignment.Start
                         ) {
                             Text(
-                                text = "சவுளி",
+                                text = defaultFirmTitle,
                                 style = TextStyle(
                                     fontFamily = ff,
                                     fontSize = 18.sp,
@@ -307,8 +316,6 @@ private fun TextilesSettingsHubContent(
                 }
             }
         }
-
-        item(key = "group_business") { SettingsGroupTitle(K.groupBusiness.tr(), colors) }
 
         // Section 1: Business Identity & Finance
         item(key = "business_identity_section") {
@@ -345,8 +352,6 @@ private fun TextilesSettingsHubContent(
             }
         }
 
-        item(key = "group_bills") { SettingsGroupTitle(K.groupBills.tr(), colors) }
-
         // Section 2: Invoicing & Interface
         item(key = "invoicing_interface_section") {
             ElvanSectionContainer {
@@ -362,8 +367,7 @@ private fun TextilesSettingsHubContent(
             }
         }
 
-        item(key = "group_app") { SettingsGroupTitle(K.groupApp.tr(), colors) }
-
+        // Section 3: App Looks & Language
         item(key = "app_looks_section") {
             ElvanSectionContainer {
                 ElvanSettingsSection(colors = colors) {
@@ -388,9 +392,7 @@ private fun TextilesSettingsHubContent(
             }
         }
 
-        item(key = "group_data") { SettingsGroupTitle(K.groupData.tr(), colors) }
-
-        // Section 3: Data & Security
+        // Section 4: Data & Security
         item(key = "data_security_section") {
             ElvanSectionContainer {
                 ElvanSettingsSection(colors = colors) {
@@ -401,8 +403,6 @@ private fun TextilesSettingsHubContent(
                         onClick = { onNavigate(SettingsRoute.StorageBackup) },
                         colors = colors
                     )
-
-
 
                     ElvanSettingsDivider(colors = colors)
 
@@ -417,8 +417,7 @@ private fun TextilesSettingsHubContent(
             }
         }
 
-        item(key = "group_about") { SettingsGroupTitle(K.groupAbout.tr(), colors) }
-
+        // Section 5: About & Legal
         item(key = "system_about_section") {
             ElvanSectionContainer {
                 ElvanSettingsSection(colors = colors) {
