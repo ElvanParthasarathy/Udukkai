@@ -15,7 +15,7 @@ import com.elvan.udukkai.ui.components.shell.*
 import com.elvan.udukkai.ui.navigation.MaterialSymbols
 import com.elvan.udukkai.ui.screens.settings.SettingsRoute
 
-/** About the app, who made it, and the legal pages: the second level of the settings (Settings, About, a page). */
+/** About the app, who made it, and the legal pages: the second level of the settings (Settings → About → a page). */
 @Composable
 fun AboutHubScreen(
     versionText: String,
@@ -30,22 +30,69 @@ fun AboutHubScreen(
         verticalArrangement = Arrangement.spacedBy(Dimens.SectionSpacing)
     ) {
         item(key = "shell_top_spacer") { Spacer(modifier = Modifier.height(LocalElvanTopSpacerHeight.current)) }
-        item(key = "about_app") {
+
+        // ── Developer & Company ──
+        item(key = "about_people") {
             ElvanSettingsSection(colors = colors) {
-                ElvanSettingsRow(icon = MaterialSymbols.Rounded.Info, title = K.aboutApp.tr(), description = versionText, onClick = { onNavigate(SettingsRoute.AboutApp) }, colors = colors)
+                // Developer
+                ElvanSettingsRow(
+                    icon = MaterialSymbols.Rounded.Person,
+                    title = K.softwareDesigner.tr(),
+                    description = "Elvan Parthasarathy",
+                    onClick = { onNavigate(SettingsRoute.AboutDeveloper) },
+                    colors = colors
+                )
                 ElvanSettingsDivider(colors = colors)
-                ElvanSettingsRow(icon = MaterialSymbols.Rounded.Person, title = K.softwareDesigner.tr(), description = "Elvan Parthasarathy", onClick = { onNavigate(SettingsRoute.AboutDeveloper) }, colors = colors)
-                ElvanSettingsDivider(colors = colors)
-                ElvanSettingsRow(icon = MaterialSymbols.Rounded.Code, title = K.aboutElvanNavil.tr(), description = "Pure Senthamizh Linguistic Engine", onClick = { onNavigate(SettingsRoute.ElvanNavil) }, colors = colors)
+                // Parent company — "Elvan Niril" is a brand name, always shown in English
+                ElvanSettingsRow(
+                    icon = MaterialSymbols.Rounded.BusinessCenter,
+                    title = "Elvan Niril",
+                    description = K.elvanNavilStudioDesc.tr(),
+                    onClick = { onNavigate(SettingsRoute.ElvanNavil) },
+                    colors = colors
+                )
             }
         }
+
+        // ── App info ──
+        item(key = "about_app_version") {
+            ElvanSettingsSection(colors = colors) {
+                ElvanSettingsRow(
+                    icon = MaterialSymbols.Rounded.Info,
+                    title = K.version.tr(),
+                    description = versionText,
+                    onClick = {},
+                    colors = colors
+                )
+            }
+        }
+
+        // ── Legal ──
         item(key = "about_legal") {
             ElvanSettingsSection(colors = colors) {
-                ElvanSettingsRow(icon = MaterialSymbols.Rounded.Lock, title = K.privacyPolicy.tr(), description = K.privacyPolicyHint.tr(), onClick = { onNavigate(SettingsRoute.Privacy) }, colors = colors)
+                ElvanSettingsRow(
+                    icon = MaterialSymbols.Rounded.Lock,
+                    title = K.privacyPolicy.tr(),
+                    description = K.privacyPolicyHint.tr(),
+                    onClick = { onNavigate(SettingsRoute.Privacy) },
+                    colors = colors
+                )
                 ElvanSettingsDivider(colors = colors)
-                ElvanSettingsRow(icon = MaterialSymbols.Rounded.Info, title = K.termsOfUse.tr(), description = K.termsOfUseHint.tr(), onClick = { onNavigate(SettingsRoute.Terms) }, colors = colors)
+                ElvanSettingsRow(
+                    icon = MaterialSymbols.Rounded.Info,
+                    title = K.termsOfUse.tr(),
+                    description = K.termsOfUseHint.tr(),
+                    onClick = { onNavigate(SettingsRoute.Terms) },
+                    colors = colors
+                )
                 ElvanSettingsDivider(colors = colors)
-                ElvanSettingsRow(icon = MaterialSymbols.Rounded.Code, title = K.openSourceLicences.tr(), description = K.openSourceLicencesHint.tr(), onClick = { onNavigate(SettingsRoute.Licences) }, colors = colors)
+                ElvanSettingsRow(
+                    icon = MaterialSymbols.Rounded.Code,
+                    title = K.openSourceLicences.tr(),
+                    description = K.openSourceLicencesHint.tr(),
+                    onClick = { onNavigate(SettingsRoute.Licences) },
+                    colors = colors
+                )
             }
         }
     }

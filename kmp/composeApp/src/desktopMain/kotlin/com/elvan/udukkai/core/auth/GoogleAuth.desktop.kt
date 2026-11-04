@@ -17,3 +17,7 @@ actual fun platformSignOut() {
 actual suspend fun platformEmailSignIn(email: String, password: String): GoogleSignInResult = platformGoogleSignIn()
 
 actual suspend fun platformSendPasswordReset(email: String): Boolean = true
+
+actual fun platformSignedInDisplayName(): String? = devEmail?.substringBefore("@")?.replace(".", " ")
+
+actual fun platformIsGoogleProvider(): Boolean = true

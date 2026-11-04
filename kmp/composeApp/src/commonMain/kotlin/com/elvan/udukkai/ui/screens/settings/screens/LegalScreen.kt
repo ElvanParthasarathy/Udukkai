@@ -7,6 +7,7 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -16,11 +17,55 @@ import com.elvan.udukkai.theme.Dimens
 import com.elvan.udukkai.theme.LocalAppFontFamily
 import com.elvan.udukkai.theme.ShellColors
 import com.elvan.udukkai.theme.rememberShellColors
+import com.elvan.udukkai.ui.components.shell.ElvanSettingsDivider
+import com.elvan.udukkai.ui.components.shell.ElvanSettingsRow
+import com.elvan.udukkai.ui.components.shell.ElvanSettingsSection
 import com.elvan.udukkai.ui.components.shell.LocalElvanTopSpacerHeight
+import com.elvan.udukkai.ui.navigation.MaterialSymbols
 
 enum class LegalPage { PRIVACY, TERMS, LICENCES }
 
 private data class Section(val heading: String, val body: String)
+
+/** A library entry in the open-source licences page with an optional URL to open. */
+private data class LicenceEntry(
+    val name: String,
+    val licenceType: String,
+    val url: String? = null
+)
+
+private val licenceEntries = listOf(
+    LicenceEntry(
+        name = "Kotlin & Compose Multiplatform",
+        licenceType = "Apache License 2.0",
+        url = "https://www.apache.org/licenses/LICENSE-2.0"
+    ),
+    LicenceEntry(
+        name = "AndroidX (Activity, Core, Credentials, etc.)",
+        licenceType = "Apache License 2.0",
+        url = "https://www.apache.org/licenses/LICENSE-2.0"
+    ),
+    LicenceEntry(
+        name = "Firebase & Google Play Services",
+        licenceType = "Apache License 2.0 + Firebase Terms",
+        url = "https://firebase.google.com/terms"
+    ),
+    LicenceEntry(
+        name = "SQLite",
+        licenceType = "Public Domain",
+        url = "https://www.sqlite.org/copyright.html"
+    ),
+    LicenceEntry(
+        name = "React (printed bills renderer)",
+        licenceType = "MIT License",
+        url = "https://github.com/facebook/react/blob/main/LICENSE"
+    ),
+    LicenceEntry(
+        name = "Apache License 2.0 — Full Text",
+        licenceType = "apache.org/licenses/LICENSE-2.0",
+        url = "https://www.apache.org/licenses/LICENSE-2.0"
+    )
+)
 
 private fun sections(page: LegalPage, ta: Boolean): List<Section> = when (page) {
     LegalPage.PRIVACY -> if (ta) listOf(
@@ -47,14 +92,7 @@ private fun sections(page: LegalPage, ta: Boolean): List<Section> = when (page) 
         Section("Backups", "Back up often and keep the backups in a safe place so that you do not lose data. A copy of your data is kept before every restore."),
         Section("Accounts", "Only approved accounts may use the app. You are responsible for keeping your account and your app lock safe.")
     )
-    LegalPage.LICENCES -> listOf(
-        Section("Kotlin and Compose Multiplatform", "Apache License 2.0"),
-        Section("AndroidX libraries (Activity, Core, Credentials and others)", "Apache License 2.0"),
-        Section("Firebase (Authentication, Realtime Database, Analytics) and Google Play services", "Apache License 2.0, and the Firebase and Google terms of service"),
-        Section("SQLite", "Public domain"),
-        Section("React (used to draw the printed bills)", "MIT License"),
-        Section("Full text of the Apache License 2.0", "https://www.apache.org/licenses/LICENSE-2.0")
-    )
+    LegalPage.LICENCES -> emptyList() // Rendered separately as tappable rows below
 }
 
 /** Privacy policy, terms of use and open-source licences, in the app's language, inside the settings. */
@@ -65,19 +103,53 @@ fun LegalScreen(
     colors: ShellColors = rememberShellColors()
 ) {
     val ff = LocalAppFontFamily.current
-    val list = sections(page, ta = LanguageManager.activeLanguageCode == "ta")
+    val uriHandler = LocalUriHandler.current
+
     LazyColumn(
         state = scrollState,
         modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(start = Dimens.ContentPadding, end = Dimens.ContentPadding, bottom = Dimens.SubpageContentPaddingBottom),
-        verticalArrangement = Arrangement.spacedBy(20.dp)
+        verticalArrangement = Arrangement.spacedBy(if (page == LegalPage.LICENCES) Dimens.SectionSpacing else 20.dp)
     ) {
         item(key = "shell_top_spacer") { Spacer(modifier = Modifier.height(LocalElvanTopSpacerHeight.current)) }
-        list.forEachIndexed { i, section ->
-            item(key = "legal_$i") {
-                Column(Modifier.fillMaxWidth().padding(horizontal = 6.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                    Text(section.heading, style = TextStyle(fontFamily = ff, fontSize = 15.sp, fontWeight = FontWeight.SemiBold), color = colors.textPrimary)
-                    Text(section.body, style = TextStyle(fontFamily = ff, fontSize = 14.sp, lineHeight = 21.sp), color = colors.textPrimary.copy(alpha = 0.7f))
+
+        if (page == LegalPage.LICENCES) {
+            // ── Industry-standard tappable licence rows ──
+            item(key = "licences_section") {
+                ElvanSettingsSection(colors = colors) {
+                    licenceEntries.forEachIndexed { index, entry ->
+                        ElvanSettingsRow(
+                            icon = MaterialSymbols.Rounded.Code,
+                            title = entry.name,
+                            description = entry.licenceType,
+                            onClick = { entry.url?.let { uriHandler.openUri(it) } },
+                            colors = colors
+                        )
+                        if (index < licenceEntries.lastIndex) {
+                            ElvanSettingsDivider(colors = colors)
+                        }
+                    }
+                }
+            }
+        } else {
+            val list = sections(page, ta = LanguageManager.activeLanguageCode == "ta")
+            list.forEachIndexed { i, section ->
+                item(key = "legal_$i") {
+                    Column(
+                        Modifier.fillMaxWidth().padding(horizontal = 6.dp),
+                        verticalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        Text(
+                            section.heading,
+                            style = TextStyle(fontFamily = ff, fontSize = 15.sp, fontWeight = FontWeight.SemiBold),
+                            color = colors.textPrimary
+                        )
+                        Text(
+                            section.body,
+                            style = TextStyle(fontFamily = ff, fontSize = 14.sp, lineHeight = 21.sp),
+                            color = colors.textPrimary.copy(alpha = 0.7f)
+                        )
+                    }
                 }
             }
         }

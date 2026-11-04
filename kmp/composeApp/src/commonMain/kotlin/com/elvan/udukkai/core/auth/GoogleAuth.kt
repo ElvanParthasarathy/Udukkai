@@ -33,3 +33,9 @@ expect suspend fun platformEmailSignIn(email: String, password: String): GoogleS
 
 /** Sends the password reset mail for an allowed email; true when it was sent. */
 expect suspend fun platformSendPasswordReset(email: String): Boolean
+
+/** Display name of the signed-in account (from Google profile), or null if not available. */
+expect fun platformSignedInDisplayName(): String?
+
+/** True if the signed-in account uses Google as its auth provider. */
+expect fun platformIsGoogleProvider(): Boolean

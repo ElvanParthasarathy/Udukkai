@@ -28,6 +28,14 @@ object AuthManager {
     var signedInEmail by mutableStateOf<String?>(null)
         private set
 
+    /** Display name from the signed-in account (Google profile name, or null for email-only accounts). */
+    var signedInDisplayName by mutableStateOf<String?>(null)
+        private set
+
+    /** True when the account is signed in via Google; false for email/password accounts. */
+    var isGoogleProvider by mutableStateOf(false)
+        private set
+
     /** Set by the onboarding gate; decides which database branch is synced. */
     var appScope: AppScope = AppScope.TEXTILES
 
@@ -46,6 +54,8 @@ object AuthManager {
         if (email != null && !AllowedAccounts.isAllowed(email)) platformSignOut()
         isLoggedIn = AllowedAccounts.isAllowed(email)
         signedInEmail = if (isLoggedIn) email else null
+        signedInDisplayName = if (isLoggedIn) platformSignedInDisplayName() else null
+        isGoogleProvider = if (isLoggedIn) platformIsGoogleProvider() else false
         refreshProfileStatus()
         if (isLoggedIn) {
             try {
@@ -66,6 +76,8 @@ object AuthManager {
         if (result is GoogleSignInResult.Success) {
             isLoggedIn = true
             signedInEmail = result.email
+            signedInDisplayName = platformSignedInDisplayName()
+            isGoogleProvider = platformIsGoogleProvider()
             try {
                 getFirebaseSyncManager().startSync(if (appScope == AppScope.FACTORY) "factory" else "textiles")
             } catch (_: Exception) {}
@@ -79,6 +91,8 @@ object AuthManager {
         if (result is GoogleSignInResult.Success) {
             isLoggedIn = true
             signedInEmail = result.email
+            signedInDisplayName = platformSignedInDisplayName()
+            isGoogleProvider = platformIsGoogleProvider()
             try {
                 getFirebaseSyncManager().startSync(if (appScope == AppScope.FACTORY) "factory" else "textiles")
             } catch (_: Exception) {}
@@ -89,6 +103,8 @@ object AuthManager {
     fun logout() {
         isLoggedIn = false
         signedInEmail = null
+        signedInDisplayName = null
+        isGoogleProvider = false
         try {
             getFirebaseSyncManager().stopSync()
         } catch (_: Exception) {}

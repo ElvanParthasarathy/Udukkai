@@ -123,3 +123,11 @@ actual suspend fun platformSendPasswordReset(email: String): Boolean {
         false
     }
 }
+
+actual fun platformSignedInDisplayName(): String? = try {
+    FirebaseAuth.getInstance().currentUser?.displayName
+} catch (_: Exception) { null }
+
+actual fun platformIsGoogleProvider(): Boolean = try {
+    FirebaseAuth.getInstance().currentUser?.providerData?.any { it.providerId == "google.com" } == true
+} catch (_: Exception) { false }
