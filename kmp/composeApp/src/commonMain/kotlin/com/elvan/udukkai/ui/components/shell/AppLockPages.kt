@@ -12,16 +12,18 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.ripple
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.elvan.udukkai.core.extensions.cssShadow
 import com.elvan.udukkai.core.platform.AppBackHandler
 import com.elvan.udukkai.core.security.AppLock
 import com.elvan.udukkai.core.security.authenticateFingerprint
@@ -100,8 +102,8 @@ fun AppLockGate(colors: ShellColors, content: @Composable () -> Unit) {
 /**
  * Dedicated Native App Lock Screen matching Udukkai's login/signup aesthetic.
  * Features the genuine auth backdrop shapes, centered lock container, app title,
- * Pure Senthamizh subtitle, and an interactive biometric/PIN unlock action,
- * with zero external branding.
+ * Pure Senthamizh subtitle, and an interactive biometric/PIN unlock action with tactile
+ * touch ripple feedback matching the welcome and security screens.
  */
 @Composable
 fun UdukkaiAppLockScreen(
@@ -110,6 +112,11 @@ fun UdukkaiAppLockScreen(
     modifier: Modifier = Modifier
 ) {
     val ff = LocalAppFontFamily.current
+    val isDark = colors.isDark
+    // Deep tone matching the app's background palette (0xFF1E1E1E, flat without outline)
+    val lockBg = if (isDark) Color(0xFF1E1E1E) else Color(0xFFE5E5EA)
+    val lockFg = colors.textPrimary
+    val lockRipple = if (isDark) Color.White.copy(alpha = 0.16f) else Color.Black.copy(alpha = 0.08f)
 
     Box(
         modifier = modifier
@@ -126,18 +133,23 @@ fun UdukkaiAppLockScreen(
                 .windowInsetsPadding(WindowInsets.safeDrawing)
                 .padding(horizontal = 24.dp)
         ) {
-            // Elegant Lock Icon Container
+            // Elegant Lock Icon Container with flat gray tone and pure ripple
             Box(
                 modifier = Modifier
                     .size(92.dp)
                     .clip(CircleShape)
-                    .background(colors.surface),
+                    .background(lockBg)
+                    .clickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = ripple(color = lockRipple, bounded = true),
+                        onClick = onUnlock
+                    ),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
                     imageVector = MaterialSymbols.Rounded.Lock,
                     contentDescription = null,
-                    tint = colors.textPrimary,
+                    tint = lockFg,
                     modifier = Modifier.size(42.dp)
                 )
             }
@@ -170,37 +182,37 @@ fun UdukkaiAppLockScreen(
 
             Spacer(Modifier.height(36.dp))
 
-            // Unlock Button
-            Surface(
+            // Unlock Button: flat gray, without outline, with pure ripple
+            Box(
                 modifier = Modifier
-                    .clip(RoundedCornerShape(999.dp))
+                    .clip(RoundedCornerShape(50))
+                    .background(lockBg)
                     .clickable(
                         interactionSource = remember { MutableInteractionSource() },
-                        indication = ShellDefaults.ripple(colors, bounded = true),
+                        indication = ripple(color = lockRipple, bounded = true),
                         onClick = onUnlock
-                    ),
-                shape = RoundedCornerShape(999.dp),
-                color = colors.surface,
-                shadowElevation = 0.dp
+                    )
+                    .padding(horizontal = 32.dp, vertical = 15.dp),
+                contentAlignment = Alignment.Center
             ) {
                 Row(
-                    modifier = Modifier.padding(horizontal = 28.dp, vertical = 14.dp),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
                     Icon(
                         imageVector = MaterialSymbols.Rounded.Lock,
                         contentDescription = null,
-                        tint = colors.textPrimary,
+                        tint = lockFg,
                         modifier = Modifier.size(20.dp)
                     )
                     Text(
                         text = K.unlockApp.tr(),
                         style = TextStyle(
                             fontFamily = ff,
-                            fontSize = 15.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            color = colors.textPrimary
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Bold,
+                            letterSpacing = 0.5.sp,
+                            color = lockFg
                         )
                     )
                 }
