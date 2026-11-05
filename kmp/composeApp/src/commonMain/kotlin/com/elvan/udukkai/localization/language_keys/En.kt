@@ -390,6 +390,8 @@ val en: Map<String, String> = mapOf(
     K.invoiceLogoPlace to "Logo on the invoice: position & size",
     K.receiptLogoPlace to "Logo on the receipt: position & size",
     K.logoPlaceRow to "Logo position & size",
+    K.logoSettings to "Logo Settings",
+    K.noLogoUploadedNotice to "No logo has been added yet. Add a logo under Business Identity to adjust its position and size.",
     K.wideLogoPlaceRow to "Wide logo position & size",
     K.wideLogoSize to "Size",
     K.signatoryNameTa to "Signatory name (Tamil)",

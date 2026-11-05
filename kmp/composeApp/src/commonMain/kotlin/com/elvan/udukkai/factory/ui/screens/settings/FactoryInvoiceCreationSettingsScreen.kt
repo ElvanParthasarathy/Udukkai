@@ -23,11 +23,15 @@ import com.elvan.udukkai.theme.rememberShellColors
 import com.elvan.udukkai.ui.components.shell.*
 import com.elvan.udukkai.ui.navigation.MaterialSymbols
 import com.elvan.udukkai.ui.screens.settings.SettingsRoute
+import com.elvan.udukkai.ui.screens.settings.ThemeColorSection
 
 /**
  * Invoice Creation Settings Screen for Factory Edition.
- * Shows Primary & Secondary billing languages outside, Bilingual Mode toggle,
- * Bilingual Rules navigation, and Theme Color with explicit Save.
+ * Order:
+ * 1. Billing Languages (Primary & Secondary kept outside)
+ * 2. PDF Theme Color (ThemeColorSection with 2-line layout & explicit Save)
+ * 3. Bilingual Settings navigation (subpage with One UI master toggle pill)
+ * 4. Logo Settings navigation (subpage for logo position & sizing)
  */
 @Composable
 fun FactoryInvoiceCreationSettingsScreen(
@@ -48,6 +52,8 @@ fun FactoryInvoiceCreationSettingsScreen(
     fun getLanguageName(code: String): String {
         return if (code.lowercase().startsWith("ta")) tamilLabel else englishLabel
     }
+
+    val hasLogo = profile.logo.isNotEmpty() || profile.wideLogo.isNotEmpty()
 
     Box(modifier = Modifier.fillMaxSize()) {
         LazyColumn(
@@ -166,53 +172,34 @@ fun FactoryInvoiceCreationSettingsScreen(
                 }
             }
 
-            // ── Section 2: Bilingual Mode Switch ──
-            item(key = "bilingual_switch_section") {
+            // ── Section 2: PDF Theme Color (Moved above Bilingual) ──
+            item(key = "theme_section") {
+                ThemeColorSection(profile, colors) {
+                    FactoryProfileRepository.updateProfile(it)
+                }
+            }
+
+            // ── Section 3: Bilingual Settings (Subpage nav row with chevron) ──
+            item(key = "bilingual_nav_section") {
                 ElvanSettingsSection(colors = colors) {
                     ElvanSimpleSettingsRow(
-                        title = K.bilingualMode.tr(),
-                        trailing = {
-                            ElvanSettingsSwitch(
-                                checked = profile.isBilingual,
-                                onCheckedChange = { isChecked ->
-                                    val updated = profile.copy(isBilingual = isChecked)
-                                    FactoryProfileRepository.updateProfile(updated)
-                                    ElvanSnackbar.show(saveSuccessMsg)
-                                },
-                                colors = colors
-                            )
-                        },
+                        title = K.bilingualSettings.tr(),
+                        description = if (profile.isBilingual) K.on.tr() else K.off.tr(),
+                        onClick = { onNavigate(SettingsRoute.BilingualRules) },
                         colors = colors
                     )
                 }
             }
 
-            // ── Section 3: Bilingual Rules (Shown when bilingual mode is active) ──
-            if (profile.isBilingual) {
-                item(key = "bilingual_rules_nav") {
-                    ElvanSettingsSection(colors = colors) {
-                        ElvanSettingsRow(
-                            icon = MaterialSymbols.Rounded.Translate,
-                            title = K.languageRules.tr(),
-                            onClick = { onNavigate(SettingsRoute.BilingualRules) },
-                            colors = colors
-                        )
-                    }
-                }
-            }
-
-            // ── Section 4: PDF Theme Color (With explicit Save container) ──
-            item(key = "theme_section") {
-                com.elvan.udukkai.ui.screens.settings.ThemeColorSection(profile, colors) {
-                    FactoryProfileRepository.updateProfile(it)
-                }
-            }
-
-            // ── Section 5: Logo Placement ──
-            item(key = "logo_place_section") {
-                com.elvan.udukkai.ui.screens.settings.LogoPlaceSection(profile, true, colors) {
-                    FactoryProfileRepository.updateProfile(it)
-                    ElvanSnackbar.show(saveSuccessMsg)
+            // ── Section 4: Logo Settings (Subpage nav row with chevron) ──
+            item(key = "logo_nav_section") {
+                ElvanSettingsSection(colors = colors) {
+                    ElvanSimpleSettingsRow(
+                        title = K.logoSettings.tr(),
+                        description = if (hasLogo) K.logoPlaceRow.tr() else K.noLogoUploadedNotice.tr(),
+                        onClick = { onNavigate(SettingsRoute.LogoSettings) },
+                        colors = colors
+                    )
                 }
             }
         }

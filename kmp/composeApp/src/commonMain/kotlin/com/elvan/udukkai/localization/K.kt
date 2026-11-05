@@ -407,6 +407,8 @@ object K {
     const val invoiceLogoPlace = "invoiceLogoPlace"
     const val receiptLogoPlace = "receiptLogoPlace"
     const val logoPlaceRow = "logoPlaceRow"
+    const val logoSettings = "logoSettings"
+    const val noLogoUploadedNotice = "noLogoUploadedNotice"
     const val wideLogoPlaceRow = "wideLogoPlaceRow"
     const val wideLogoSize = "wideLogoSize"
     const val signatoryNameTa = "signatoryNameTa"

@@ -35,3 +35,7 @@ actual fun DisableOverscroll(content: @androidx.compose.runtime.Composable () ->
 actual fun HideSystemBars(hidden: Boolean) {
     // No system bars on desktop
 }
+
+actual fun updatePlatformLauncher(languageCode: String) {
+    // No launcher alias on desktop
+}

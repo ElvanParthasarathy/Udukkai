@@ -125,6 +125,7 @@ fun FactorySettingsScreen(
                 SettingsRoute.Bank -> K.bank.tr()
                 SettingsRoute.InvoiceCreation -> K.createBtn.tr()
                 SettingsRoute.BilingualRules -> K.bilingualSettings.tr()
+                SettingsRoute.LogoSettings -> K.logoSettings.tr()
                 SettingsRoute.StorageBackup -> K.storageAndBackup.tr()
                 SettingsRoute.Security -> K.security.tr()
                 SettingsRoute.AboutDeveloper -> K.softwareDesigner.tr()
@@ -179,6 +180,13 @@ fun FactorySettingsScreen(
                     )
                     SettingsRoute.BilingualRules -> BilingualRulesScreen(
                         profile = FactoryProfileRepository.profile,
+                        colors = colors,
+                        scrollState = scrollState,
+                        onSave = { FactoryProfileRepository.updateProfile(it) }
+                    )
+                    SettingsRoute.LogoSettings -> LogoSettingsScreen(
+                        profile = FactoryProfileRepository.profile,
+                        isFactory = true,
                         colors = colors,
                         scrollState = scrollState,
                         onSave = { FactoryProfileRepository.updateProfile(it) }

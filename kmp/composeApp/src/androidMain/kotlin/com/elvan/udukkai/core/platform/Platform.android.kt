@@ -249,3 +249,43 @@ actual fun HideSystemBars(hidden: Boolean) {
         onDispose { controller?.show(androidx.core.view.WindowInsetsCompat.Type.systemBars()) }
     }
 }
+
+actual fun updatePlatformLauncher(languageCode: String) {
+    try {
+        val context = AppContext.context
+        val pm = context.packageManager
+        val pkg = context.packageName
+
+        val defaultActivity = "com.elvan.udukkai.MainActivity"
+        val tamilAlias = "com.elvan.udukkai.MainActivityTamil"
+        val tamilLatinAlias = "com.elvan.udukkai.MainActivityTamilLatin"
+
+        val targetComponent = when {
+            languageCode.startsWith("ta-Latn", ignoreCase = true) -> tamilLatinAlias
+            languageCode.startsWith("ta", ignoreCase = true) -> tamilAlias
+            else -> defaultActivity
+        }
+
+        val allComponents = listOf(defaultActivity, tamilAlias, tamilLatinAlias)
+
+        for (componentName in allComponents) {
+            val component = android.content.ComponentName(pkg, componentName)
+            val targetState = if (componentName == targetComponent) {
+                android.content.pm.PackageManager.COMPONENT_ENABLED_STATE_ENABLED
+            } else {
+                android.content.pm.PackageManager.COMPONENT_ENABLED_STATE_DISABLED
+            }
+
+            val currentState = pm.getComponentEnabledSetting(component)
+            if (currentState != targetState) {
+                pm.setComponentEnabledSetting(
+                    component,
+                    targetState,
+                    android.content.pm.PackageManager.DONT_KILL_APP
+                )
+            }
+        }
+    } catch (e: Exception) {
+        android.util.Log.e("LauncherManager", "Failed to update launcher name: ${e.message}")
+    }
+}

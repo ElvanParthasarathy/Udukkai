@@ -175,15 +175,15 @@ fun AboutAppScreen(
                     Text(
                         text = if (isFactory) {
                             if (isTa) {
-                                "விசைத்தறி மற்றும் கைத்தறி ஆலைகளின் அன்றாட உற்பத்தி, பாவு வழங்கல், நெசவுக் கூலிச் சீட்டுகள் மற்றும் கூலிப் பட்டியல் மேலாண்மைக்காகத் தனித்துவமாக வடிவமைக்கப்பட்ட மென்பொருள் முறைமை."
+                                "விசைத்தறி மற்றும் கைத்தறி ஆலைகளின் உற்பத்தி, நெசவுக் கூலிச் சீட்டுகள் மற்றும் கூலிப் பட்டியல் மேலாண்மைக்கான மென்பொருள் முறைமை."
                             } else {
-                                "A dedicated operational system crafted specifically for powerloom and handloom weaving factories to manage warp sizing, daily weaving production, loom wages, and job-work coolie bills."
+                                "A dedicated operational system crafted for powerloom and handloom weaving factories to manage production, loom wages, and coolie bills."
                             }
                         } else {
                             if (isTa) {
-                                "பட்டு, ஜரிகை மற்றும் சவுளி மொத்த/சில்லறை வணிகர்களுக்கான விரிவான விற்பனைப் பட்டியல், வாங்குநர்கள் கடன் கணக்கு ஏடு மற்றும் ஜிஎஸ்டி வரி மேலாண்மை மென்பொருள் முறைமை."
+                                "பட்டு, ஜரிகை மற்றும் சவுளி வணிகர்களுக்கான விற்பனைப் பட்டியல், வாடிக்கையாளர் கணக்கு ஏடு மற்றும் GST வரி முறைமை."
                             } else {
-                                "A comprehensive commercial billing and ledger system crafted for silk, saree, and textile merchants to manage multi-firm sales, buyer ledgers, and GST invoicing."
+                                "A commercial billing and ledger system crafted for silk and textile merchants to manage multi-firm sales, customer ledgers, and GST invoicing."
                             }
                         },
                         style = TextStyle(
@@ -226,7 +226,7 @@ fun AboutAppScreen(
                     ElvanSettingsRow(
                         icon = MaterialSymbols.Rounded.Description,
                         title = if (isTa) "ஆலைப் பட்டியல் & பெறுகைகள்" else "Factory Bills & Receipts",
-                        description = if (isTa) "நெசவுக் கூலி ஜிஎஸ்டி பட்டியல்கள் மற்றும் கட்டணப் பெறுகைகள்" else "GST job-work invoices and payment receipts",
+                        description = if (isTa) "நெசவுக் கூலி GST பட்டியல்கள் மற்றும் கட்டணப் பெறுகைகள்" else "GST job-work invoices and payment receipts",
                         onClick = {},
                         colors = colors
                     )
@@ -236,7 +236,7 @@ fun AboutAppScreen(
                     ElvanSettingsRow(
                         icon = MaterialSymbols.Rounded.Sync,
                         title = if (isTa) "மேகக் கணினி ஒத்திசைவு" else "Cloud Sync & Backups",
-                        description = if (isTa) "பாதுகாப்பான உள்ளூர் காப்புகள் மற்றும் சாதன ஒத்திசைவு" else "Secure local database backups and real-time device sync",
+                        description = if (isTa) "பாதுகாப்பான உள்ளூர் காப்புகள் மற்றும் சாதன ஒத்திசைவு" else "Secure local database backups and device sync",
                         onClick = {},
                         colors = colors
                     )
@@ -244,7 +244,7 @@ fun AboutAppScreen(
                     // Textiles Feature 1: GST Tax Invoicing
                     ElvanSettingsRow(
                         icon = MaterialSymbols.Rounded.Description,
-                        title = if (isTa) "ஜிஎஸ்டி விற்பனைப் பட்டியல்" else "GST Tax Invoicing",
+                        title = if (isTa) "GST விற்பனைப் பட்டியல்" else "GST Tax Invoicing",
                         description = if (isTa) "HSN குறியீடுகள், வரிப் பிரிப்புகள் மற்றும் அச்சிடும் பட்டியல் வடிவமைப்பு" else "HSN codes, tax splits, and custom bill print designs",
                         onClick = {},
                         colors = colors
@@ -292,11 +292,7 @@ fun AboutAppScreen(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(
-                    text = if (isTa) {
-                        "© $currentYear எல்வன் நவில் · அனைத்து உரிமைகளும் காக்கப்பட்டவை"
-                    } else {
-                        "© $currentYear Elvan Navil · All rights reserved"
-                    },
+                    text = "© $currentYear ${if (isTa) "எல்வன் நவில்" else "Elvan Navil"}",
                     style = TextStyle(
                         fontFamily = ff,
                         fontSize = 12.sp,

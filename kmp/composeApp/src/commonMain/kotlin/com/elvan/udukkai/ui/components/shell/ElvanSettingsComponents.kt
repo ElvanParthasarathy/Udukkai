@@ -838,6 +838,7 @@ fun ElvanSimpleSettingsRow(
     title: String,
     modifier: Modifier = Modifier,
     description: String? = null,
+    descriptionWidget: (@Composable () -> Unit)? = null,
     trailing: (@Composable () -> Unit)? = null,
     onClick: (() -> Unit)? = null,
     colors: ShellColors = rememberShellColors()
@@ -876,7 +877,10 @@ fun ElvanSimpleSettingsRow(
                     ),
                     color = colors.textPrimary
                 )
-                if (!description.isNullOrEmpty()) {
+                if (descriptionWidget != null) {
+                    Spacer(modifier = Modifier.height(3.dp))
+                    descriptionWidget()
+                } else if (!description.isNullOrEmpty()) {
                     Spacer(modifier = Modifier.height(2.dp))
                     Text(
                         text = description,
@@ -894,6 +898,14 @@ fun ElvanSimpleSettingsRow(
             if (trailing != null) {
                 Spacer(modifier = Modifier.width(16.dp))
                 trailing()
+            } else if (onClick != null) {
+                Spacer(modifier = Modifier.width(8.dp))
+                Icon(
+                    imageVector = MaterialSymbols.Rounded.ChevronRight,
+                    contentDescription = null,
+                    tint = colors.textPrimary.copy(alpha = 0.35f),
+                    modifier = Modifier.size(20.dp)
+                )
             }
         }
     }

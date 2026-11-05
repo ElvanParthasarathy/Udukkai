@@ -23,11 +23,16 @@ import com.elvan.udukkai.theme.rememberShellColors
 import com.elvan.udukkai.ui.components.shell.*
 import com.elvan.udukkai.ui.navigation.MaterialSymbols
 import com.elvan.udukkai.ui.screens.settings.SettingsRoute
+import com.elvan.udukkai.ui.screens.settings.ThemeColorSection
 
 /**
  * Invoice Creation Settings Screen for Textiles Edition.
- * Shows Primary & Secondary billing languages outside, Bilingual Mode & GST switches,
- * Bilingual Rules navigation, and Theme Color with explicit Save.
+ * Order:
+ * 1. Billing Languages (Primary & Secondary kept outside)
+ * 2. PDF Theme Color (ThemeColorSection with 2-line layout & explicit Save)
+ * 3. GST Splits switch (Goods / Pattu mode)
+ * 4. Bilingual Settings navigation (subpage with One UI master toggle pill)
+ * 5. Logo Settings navigation (subpage for logo position & sizing)
  */
 @Composable
 fun TextilesInvoiceCreationSettingsScreen(
@@ -48,6 +53,8 @@ fun TextilesInvoiceCreationSettingsScreen(
     fun getLanguageName(code: String): String {
         return if (code.lowercase().startsWith("ta")) tamilLabel else englishLabel
     }
+
+    val hasLogo = profile.logo.isNotEmpty() || profile.wideLogo.isNotEmpty()
 
     Box(modifier = Modifier.fillMaxSize()) {
         LazyColumn(
@@ -166,29 +173,16 @@ fun TextilesInvoiceCreationSettingsScreen(
                 }
             }
 
-            // ── Section 2: Switches (Bilingual Mode & GST Splits) ──
-            item(key = "switches_section") {
+            // ── Section 2: PDF Theme Color (Moved above Bilingual) ──
+            item(key = "theme_section") {
+                ThemeColorSection(profile, colors) {
+                    TextilesProfileRepository.updateProfile(it)
+                }
+            }
+
+            // ── Section 3: GST Split Switch (Goods / Pattu Mode) ──
+            item(key = "gst_split_section") {
                 ElvanSettingsSection(colors = colors) {
-                    // Bilingual Mode Toggle
-                    ElvanSimpleSettingsRow(
-                        title = K.bilingualMode.tr(),
-                        trailing = {
-                            ElvanSettingsSwitch(
-                                checked = profile.isBilingual,
-                                onCheckedChange = { isChecked ->
-                                    val updated = profile.copy(isBilingual = isChecked)
-                                    TextilesProfileRepository.updateProfile(updated)
-                                    ElvanSnackbar.show(saveSuccessMsg)
-                                },
-                                colors = colors
-                            )
-                        },
-                        colors = colors
-                    )
-
-                    ElvanSettingsDivider(colors = colors)
-
-                    // GST Split Toggle (Goods / Pattu Mode)
                     ElvanSimpleSettingsRow(
                         title = K.showGstSplitsInTable.tr(),
                         trailing = {
@@ -207,32 +201,27 @@ fun TextilesInvoiceCreationSettingsScreen(
                 }
             }
 
-            // ── Section 3: Bilingual Rules (Shown when bilingual mode is active) ──
-            if (profile.isBilingual) {
-                item(key = "bilingual_rules_nav") {
-                    ElvanSettingsSection(colors = colors) {
-                        ElvanSettingsRow(
-                            icon = MaterialSymbols.Rounded.Translate,
-                            title = K.languageRules.tr(),
-                            onClick = { onNavigate(SettingsRoute.BilingualRules) },
-                            colors = colors
-                        )
-                    }
+            // ── Section 4: Bilingual Settings (Subpage nav row with chevron) ──
+            item(key = "bilingual_nav_section") {
+                ElvanSettingsSection(colors = colors) {
+                    ElvanSimpleSettingsRow(
+                        title = K.bilingualSettings.tr(),
+                        description = if (profile.isBilingual) K.on.tr() else K.off.tr(),
+                        onClick = { onNavigate(SettingsRoute.BilingualRules) },
+                        colors = colors
+                    )
                 }
             }
 
-            // ── Section 4: PDF Theme Color (With explicit Save container) ──
-            item(key = "theme_section") {
-                com.elvan.udukkai.ui.screens.settings.ThemeColorSection(profile, colors) {
-                    TextilesProfileRepository.updateProfile(it)
-                }
-            }
-
-            // ── Section 5: Logo Placement ──
-            item(key = "logo_place_section") {
-                com.elvan.udukkai.ui.screens.settings.LogoPlaceSection(profile, false, colors) {
-                    TextilesProfileRepository.updateProfile(it)
-                    ElvanSnackbar.show(saveSuccessMsg)
+            // ── Section 5: Logo Settings (Subpage nav row with chevron) ──
+            item(key = "logo_nav_section") {
+                ElvanSettingsSection(colors = colors) {
+                    ElvanSimpleSettingsRow(
+                        title = K.logoSettings.tr(),
+                        description = if (hasLogo) K.logoPlaceRow.tr() else K.noLogoUploadedNotice.tr(),
+                        onClick = { onNavigate(SettingsRoute.LogoSettings) },
+                        colors = colors
+                    )
                 }
             }
         }

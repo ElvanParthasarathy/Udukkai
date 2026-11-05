@@ -153,6 +153,7 @@ class MainActivity : FragmentActivity() {
     override fun onStop() {
         super.onStop()
         com.elvan.udukkai.core.security.AppLock.onActivityStopped()
+        com.elvan.udukkai.core.platform.updatePlatformLauncher(com.elvan.udukkai.localization.LanguageManager.activeLanguageCode)
     }
 
     override fun onStart() {
@@ -169,6 +170,7 @@ class MainActivity : FragmentActivity() {
                 state.value = GlobalHeaderState.isExpanded
             }
         }
+        com.elvan.udukkai.core.platform.updatePlatformLauncher(com.elvan.udukkai.localization.LanguageManager.activeLanguageCode)
     }
 
     @Deprecated("Deprecated in Java")

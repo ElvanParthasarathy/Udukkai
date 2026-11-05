@@ -4,5 +4,8 @@
 -->
 <resources>
     <string name="app_name">Udukkai Textiles</string>
+    <string name="app_name_en">Udukkai Textiles</string>
+    <string name="app_name_ta">உடுக்கைச் சவுளி</string>
+    <string name="app_name_ta_latn">Udukkai Chavuli</string>
     <string name="app_description">GST Billing for Textile Manufacturers &amp; Wholesalers</string>
 </resources>

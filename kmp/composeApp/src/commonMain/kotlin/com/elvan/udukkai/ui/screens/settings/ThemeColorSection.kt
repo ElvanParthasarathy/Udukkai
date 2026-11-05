@@ -72,44 +72,50 @@ fun ThemeColorSection(profile: BusinessProfile, colors: ShellColors, onSave: (Bu
             displayContent = {
                 ElvanSimpleSettingsRow(
                     title = themeTitle,
-                    trailing = {
+                    descriptionWidget = {
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Box(
                                 modifier = Modifier
-                                    .size(16.dp)
+                                    .size(13.dp)
                                     .clip(CircleShape)
                                     .background(parseBillColor(current))
                             )
-                            Spacer(modifier = Modifier.width(8.dp))
+                            Spacer(modifier = Modifier.width(6.dp))
                             Text(
                                 text = nameOf(current),
-                                style = TextStyle(fontFamily = ff, fontSize = 14.sp, fontWeight = FontWeight.Medium),
-                                color = colors.textPrimary
+                                style = TextStyle(
+                                    fontFamily = ff,
+                                    fontSize = 12.5.sp,
+                                    fontWeight = FontWeight.Normal,
+                                    lineHeight = 16.sp
+                                ),
+                                color = colors.textPrimary.copy(alpha = 0.65f)
                             )
-                            Spacer(modifier = Modifier.width(12.dp))
-                            Surface(
-                                shape = CircleShape,
-                                color = colors.iconBg,
-                                modifier = Modifier
-                                    .size(40.dp)
-                                    .clip(CircleShape)
-                                    .clickable(
-                                        interactionSource = remember { MutableInteractionSource() },
-                                        indication = ShellDefaults.ripple(colors, bounded = true),
-                                        onClick = {
-                                            tempColor = current
-                                            isEditing = true
-                                        }
-                                    )
-                            ) {
-                                Box(contentAlignment = Alignment.Center) {
-                                    Icon(
-                                        imageVector = MaterialSymbols.Rounded.Edit,
-                                        contentDescription = K.edit.tr(),
-                                        tint = colors.accent,
-                                        modifier = Modifier.size(20.dp)
-                                    )
-                                }
+                        }
+                    },
+                    trailing = {
+                        Surface(
+                            shape = CircleShape,
+                            color = colors.iconBg,
+                            modifier = Modifier
+                                .size(40.dp)
+                                .clip(CircleShape)
+                                .clickable(
+                                    interactionSource = remember { MutableInteractionSource() },
+                                    indication = ShellDefaults.ripple(colors, bounded = true),
+                                    onClick = {
+                                        tempColor = current
+                                        isEditing = true
+                                    }
+                                )
+                        ) {
+                            Box(contentAlignment = Alignment.Center) {
+                                Icon(
+                                    imageVector = MaterialSymbols.Rounded.Edit,
+                                    contentDescription = K.edit.tr(),
+                                    tint = colors.accent,
+                                    modifier = Modifier.size(20.dp)
+                                )
                             }
                         }
                     },

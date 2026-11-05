@@ -28,3 +28,6 @@ expect fun DisableOverscroll(content: @androidx.compose.runtime.Composable () ->
 /** Hides the status and navigation bars of the current (dialog) window while [hidden], like a photo gallery. */
 @androidx.compose.runtime.Composable
 expect fun HideSystemBars(hidden: Boolean)
+
+/** Updates the launcher activity alias to match the given language code without restarting the app. */
+expect fun updatePlatformLauncher(languageCode: String)

@@ -5,4 +5,7 @@
 -->
 <resources>
     <string name="app_name">Udukkai Factory</string>
+    <string name="app_name_en">Udukkai Factory</string>
+    <string name="app_name_ta">உடுக்கை ஆலை</string>
+    <string name="app_name_ta_latn">Udukkai Aalai</string>
 </resources>

@@ -154,8 +154,8 @@ fun TransliteratorSettingsScreen(
                 ) {
                     Text(
                         text = t(
-                            taText = "ஆரணி, தமிழ்நாடு, இந்தியாவில் இயங்கும் தனித்துவமான மென்பொருள் வடிவமைப்பு மற்றும் எண்மப் படைப்பகம். நேர்த்தியான சொந்த மென்பொருள்கள், இருமொழி இலக்கியம், தொழில் முறைமைகள் மற்றும் தொல்காப்பிய இலக்கண வழிப்பட்ட தமிழ்க் கணினித் தொழில்நுட்ப உருவாக்கத்தில் அர்ப்பணிப்பு கொண்டது.",
-                            enText = "An independent digital creation and software craft studio based in Arani, Tamil Nadu, India. Focused on native digital craftsmanship, bilingual literature, artisan business tools, and classical Tamil linguistic computing."
+                            taText = "தனித்துவமான சொந்த மென்பொருள்கள், எண்மப் படைப்புகள் மற்றும் தமிழ்க் கணினித் தொழில்நுட்பங்களுக்கான தனிநபர் மென்பொருள் படைப்பக அடையாளம். நேர்த்தியான கைவினைத்திறன், இருமொழி இலக்கியம் மற்றும் நடைமுறைத் தொழில் முறைமை உருவாக்கத்தில் அர்ப்பணிப்பு கொண்டது.",
+                            enText = "An independent software craft label and digital creation imprint. Dedicated to purposeful digital craftsmanship, bilingual literature, artisan business tools, and classical Tamil linguistic computing."
                         ),
                         style = TextStyle(
                             fontFamily = ff,
@@ -244,7 +244,7 @@ fun TransliteratorSettingsScreen(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(
-                    text = "© $currentYear $brandName · ${t("அனைத்து உரிமைகளும் காக்கப்பட்டவை", "All rights reserved")}",
+                    text = "© $currentYear $brandName",
                     style = TextStyle(
                         fontFamily = ff,
                         fontSize = 12.sp,

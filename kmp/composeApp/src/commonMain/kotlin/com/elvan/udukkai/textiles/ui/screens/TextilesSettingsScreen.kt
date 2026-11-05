@@ -125,6 +125,7 @@ fun TextilesSettingsScreen(
                 SettingsRoute.Bank -> K.bank.tr()
                 SettingsRoute.InvoiceCreation -> K.createBtn.tr()
                 SettingsRoute.BilingualRules -> K.bilingualSettings.tr()
+                SettingsRoute.LogoSettings -> K.logoSettings.tr()
                 SettingsRoute.StorageBackup -> K.storageAndBackup.tr()
                 SettingsRoute.Security -> K.security.tr()
                 SettingsRoute.AboutDeveloper -> K.softwareDesigner.tr()
@@ -179,6 +180,13 @@ fun TextilesSettingsScreen(
                     )
                     SettingsRoute.BilingualRules -> BilingualRulesScreen(
                         profile = TextilesProfileRepository.profile,
+                        colors = colors,
+                        scrollState = scrollState,
+                        onSave = { TextilesProfileRepository.updateProfile(it) }
+                    )
+                    SettingsRoute.LogoSettings -> LogoSettingsScreen(
+                        profile = TextilesProfileRepository.profile,
+                        isFactory = false,
                         colors = colors,
                         scrollState = scrollState,
                         onSave = { TextilesProfileRepository.updateProfile(it) }
