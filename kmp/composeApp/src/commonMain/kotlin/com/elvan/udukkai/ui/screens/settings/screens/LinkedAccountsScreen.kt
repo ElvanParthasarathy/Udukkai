@@ -1,6 +1,7 @@
 package com.elvan.udukkai.ui.screens.settings.screens
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
@@ -35,12 +36,12 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 /**
- * கூகுள் இணைப்புத் திரை — Google Link Sub-page (Matching Neram Mobile).
- * - Circular avatar: Profile image if linked, blank circle if not linked.
- * - Internet-oriented loading feedback on open.
- * - Clean box with account logo and email.
- * - Link / Unlink actions without alarmist colors.
- * - Password status row with direct creation/change navigation.
+ * கூகுள் இணைப்புத் திரை — Google Link Screen (Matching Neram Mobile 1:1).
+ * - Removed redundant top header (no doubled avatar/email).
+ * - Google card: Profile avatar / "G" badge, title "Google", green-tinted connected badge.
+ * - Unlink action: Flat centered text row without button box.
+ * - Email & Password card: Green checkmark icons for verified email and configured password.
+ * - Internet-oriented loading experience.
  */
 @Composable
 fun LinkedAccountsScreen(
@@ -52,7 +53,7 @@ fun LinkedAccountsScreen(
     val scope = rememberCoroutineScope()
 
     val isGoogleLinked = AuthManager.isGoogleLinked
-    val googleEmail = AuthManager.googleEmail ?: AuthManager.signedInEmail ?: ""
+    val primaryEmail = AuthManager.googleEmail ?: AuthManager.signedInEmail ?: ""
     val hasPassword = AuthManager.hasPassword
 
     var isCheckingStatus by remember { mutableStateOf(true) }
@@ -94,100 +95,60 @@ fun LinkedAccountsScreen(
                         Spacer(modifier = Modifier.height(LocalElvanTopSpacerHeight.current))
                     }
 
-                    // ── Profile Circle Header (Image if linked, blank circle if unlinked) ──
-                    item(key = "google_avatar_header") {
-                        ElvanSectionContainer {
-                            Column(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(vertical = 16.dp),
-                                horizontalAlignment = Alignment.CenterHorizontally
-                            ) {
-                                Box(
-                                    modifier = Modifier
-                                        .size(72.dp)
-                                        .clip(CircleShape)
-                                        .background(colors.iconBg),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    if (isGoogleLinked) {
-                                        AccountAvatar(fallback = {
-                                            Icon(
-                                                imageVector = MaterialSymbols.Rounded.Person,
-                                                contentDescription = null,
-                                                tint = colors.textPrimary.copy(alpha = 0.6f),
-                                                modifier = Modifier.size(36.dp)
-                                            )
-                                        })
-                                    } else {
-                                        // Blank circle placeholder
-                                        Icon(
-                                            imageVector = MaterialSymbols.Rounded.Person,
-                                            contentDescription = null,
-                                            tint = colors.textPrimary.copy(alpha = 0.25f),
-                                            modifier = Modifier.size(36.dp)
-                                        )
-                                    }
-                                }
-
-                                Spacer(modifier = Modifier.height(12.dp))
-
-                                Text(
-                                    text = K.googleLink.tr(),
-                                    style = TextStyle(
-                                        fontFamily = ff,
-                                        fontSize = 17.sp,
-                                        fontWeight = FontWeight.SemiBold
-                                    ),
-                                    color = colors.textPrimary
-                                )
-
-                                Spacer(modifier = Modifier.height(4.dp))
-
-                                Text(
-                                    text = if (isGoogleLinked) googleEmail else K.notConnected.tr(),
-                                    style = TextStyle(
-                                        fontFamily = ff,
-                                        fontSize = 13.sp,
-                                        fontWeight = FontWeight.Normal
-                                    ),
-                                    color = colors.textPrimary.copy(alpha = 0.5f)
-                                )
-                            }
-                        }
-                    }
-
-                    // ── Google Account Box & Action (No section title above card) ──
+                    // ── Card 1: Google Account Box (Matching Neram 1:1) ──
                     item(key = "google_account_box") {
                         ElvanSectionContainer {
                             ElvanSettingsSection(colors = colors) {
-                                // Google Row in a box
                                 Row(
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .padding(horizontal = 16.dp, vertical = 14.dp),
+                                        .padding(horizontal = 16.dp, vertical = 16.dp),
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
-                                    Box(
-                                        modifier = Modifier
-                                            .size(36.dp)
-                                            .clip(CircleShape)
-                                            .background(colors.iconBg),
-                                        contentAlignment = Alignment.Center
-                                    ) {
-                                        Text(
-                                            text = "G",
-                                            style = TextStyle(
-                                                fontFamily = ff,
-                                                fontSize = 16.sp,
-                                                fontWeight = FontWeight.Bold
-                                            ),
-                                            color = colors.textPrimary
-                                        )
+                                    // Google Profile Image or "G" Fallback Badge
+                                    if (isGoogleLinked) {
+                                        Box(
+                                            modifier = Modifier
+                                                .size(36.dp)
+                                                .clip(CircleShape)
+                                                .background(colors.iconBg),
+                                            contentAlignment = Alignment.Center
+                                        ) {
+                                            AccountAvatar(fallback = {
+                                                Text(
+                                                    text = "G",
+                                                    style = TextStyle(
+                                                        fontFamily = ff,
+                                                        fontSize = 16.sp,
+                                                        fontWeight = FontWeight.Bold
+                                                    ),
+                                                    color = colors.textPrimary
+                                                )
+                                            })
+                                        }
+                                    } else {
+                                        Box(
+                                            modifier = Modifier
+                                                .size(36.dp)
+                                                .clip(CircleShape)
+                                                .background(colors.iconBg),
+                                            contentAlignment = Alignment.Center
+                                        ) {
+                                            Text(
+                                                text = "G",
+                                                style = TextStyle(
+                                                    fontFamily = ff,
+                                                    fontSize = 16.sp,
+                                                    fontWeight = FontWeight.Bold
+                                                ),
+                                                color = colors.textPrimary
+                                            )
+                                        }
                                     }
 
-                                    Spacer(modifier = Modifier.width(14.dp))
+                                    Spacer(modifier = Modifier.width(16.dp))
 
+                                    // Title only: "Google" (email is shown in Email section below)
                                     Column(modifier = Modifier.weight(1f)) {
                                         Text(
                                             text = "Google",
@@ -198,91 +159,92 @@ fun LinkedAccountsScreen(
                                             ),
                                             color = colors.textPrimary
                                         )
-                                        Text(
-                                            text = if (isGoogleLinked) googleEmail else K.notConnected.tr(),
-                                            style = TextStyle(fontFamily = ff, fontSize = 12.sp),
-                                            color = colors.textPrimary.copy(alpha = 0.5f),
-                                            maxLines = 1
-                                        )
                                     }
 
-                                    // Status Badge (Connected / Not Connected)
+                                    // Status Badge (Connected has green tint matching Neram)
                                     Surface(
                                         shape = RoundedCornerShape(20.dp),
-                                        color = if (isGoogleLinked) colors.accent.copy(alpha = 0.12f) else colors.iconBg
+                                        color = if (isGoogleLinked) colors.success.copy(alpha = 0.15f) else colors.iconBg
                                     ) {
                                         Text(
                                             text = if (isGoogleLinked) K.connected.tr() else K.notConnected.tr(),
                                             style = TextStyle(fontFamily = ff, fontSize = 11.5.sp, fontWeight = FontWeight.SemiBold),
-                                            color = if (isGoogleLinked) colors.accent else colors.textPrimary.copy(alpha = 0.6f),
+                                            color = if (isGoogleLinked) colors.success else colors.textPrimary.copy(alpha = 0.6f),
                                             modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
                                         )
                                     }
                                 }
 
-                                ElvanSettingsDivider(colors = colors)
-
-                                // Action Row (Unlink or Link)
+                                // Action Row: Matching Neram (Centered flat text row, NO button box)
                                 if (isGoogleLinked) {
-                                    Button(
-                                        onClick = { showUnlinkSheet = true },
+                                    ElvanSettingsDivider(colors = colors)
+                                    Surface(
                                         modifier = Modifier
                                             .fillMaxWidth()
-                                            .padding(16.dp)
-                                            .height(44.dp),
-                                        shape = RoundedCornerShape(50),
-                                        colors = ButtonDefaults.buttonColors(
-                                            containerColor = colors.iconBg,
-                                            contentColor = colors.danger
-                                        ),
-                                        elevation = ButtonDefaults.buttonElevation(0.dp),
-                                        enabled = !isUnlinking
+                                            .clickable { showUnlinkSheet = true },
+                                        color = Color.Transparent
                                     ) {
-                                        if (isUnlinking) {
-                                            ExpressiveLoadingIndicator(color = colors.danger, modifier = Modifier.size(18.dp))
-                                        } else {
-                                            Text(
-                                                text = K.disconnectGoogle.tr(),
-                                                style = TextStyle(fontFamily = ff, fontSize = 14.sp, fontWeight = FontWeight.Medium)
-                                            )
+                                        Row(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .padding(16.dp),
+                                            horizontalArrangement = Arrangement.Center,
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            if (isUnlinking) {
+                                                ExpressiveLoadingIndicator(color = colors.danger, modifier = Modifier.size(18.dp))
+                                            } else {
+                                                Text(
+                                                    text = K.disconnectGoogle.tr(),
+                                                    color = colors.danger,
+                                                    style = TextStyle(
+                                                        fontFamily = ff,
+                                                        fontSize = 14.sp,
+                                                        fontWeight = FontWeight.Medium
+                                                    )
+                                                )
+                                            }
                                         }
                                     }
                                 } else {
-                                    Button(
-                                        onClick = {
-                                            if (!isLinking) {
-                                                isLinking = true
-                                                scope.launch {
-                                                    val res = AuthManager.linkGoogle()
-                                                    isLinking = false
-                                                    if (res is GoogleSignInResult.Success) {
-                                                        ElvanSnackbar.show(connectedMsg)
-                                                    }
-                                                }
-                                            }
-                                        },
+                                    ElvanSettingsDivider(colors = colors)
+                                    Surface(
                                         modifier = Modifier
                                             .fillMaxWidth()
-                                            .padding(16.dp)
-                                            .height(44.dp),
-                                        shape = RoundedCornerShape(50),
-                                        colors = ButtonDefaults.buttonColors(
-                                            containerColor = if (colors.isDark) Color.White else Color.Black,
-                                            contentColor = if (colors.isDark) Color.Black else Color.White
-                                        ),
-                                        elevation = ButtonDefaults.buttonElevation(0.dp),
-                                        enabled = !isLinking
+                                            .clickable {
+                                                if (!isLinking) {
+                                                    isLinking = true
+                                                    scope.launch {
+                                                        val res = AuthManager.linkGoogle()
+                                                        isLinking = false
+                                                        if (res is GoogleSignInResult.Success) {
+                                                            ElvanSnackbar.show(connectedMsg)
+                                                        }
+                                                    }
+                                                }
+                                            },
+                                        color = Color.Transparent
                                     ) {
-                                        if (isLinking) {
-                                            ExpressiveLoadingIndicator(
-                                                color = if (colors.isDark) Color.Black else Color.White,
-                                                modifier = Modifier.size(18.dp)
-                                            )
-                                        } else {
-                                            Text(
-                                                text = K.linkGoogle.tr(),
-                                                style = TextStyle(fontFamily = ff, fontSize = 14.sp, fontWeight = FontWeight.Medium)
-                                            )
+                                        Row(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .padding(16.dp),
+                                            horizontalArrangement = Arrangement.Center,
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            if (isLinking) {
+                                                ExpressiveLoadingIndicator(color = colors.textPrimary, modifier = Modifier.size(18.dp))
+                                            } else {
+                                                Text(
+                                                    text = K.linkGoogle.tr(),
+                                                    color = colors.textPrimary,
+                                                    style = TextStyle(
+                                                        fontFamily = ff,
+                                                        fontSize = 14.sp,
+                                                        fontWeight = FontWeight.SemiBold
+                                                    )
+                                                )
+                                            }
                                         }
                                     }
                                 }
@@ -290,10 +252,30 @@ fun LinkedAccountsScreen(
                         }
                     }
 
-                    // ── Password Status Card (No section title above card) ──
-                    item(key = "password_status_card") {
+                    // ── Card 2: Email & Password Section (Matching Neram with green checkmarks) ──
+                    item(key = "email_password_section") {
                         ElvanSectionContainer {
                             ElvanSettingsSection(colors = colors) {
+                                // Email Row with Green Tick Mark
+                                ElvanSettingsRow(
+                                    icon = MaterialSymbols.Rounded.Email,
+                                    title = K.email.tr(),
+                                    description = primaryEmail,
+                                    onClick = {},
+                                    customTrailing = {
+                                        Icon(
+                                            imageVector = MaterialSymbols.Rounded.CheckCircle,
+                                            contentDescription = null,
+                                            tint = colors.success,
+                                            modifier = Modifier.size(20.dp)
+                                        )
+                                    },
+                                    colors = colors
+                                )
+
+                                ElvanSettingsDivider(colors = colors)
+
+                                // Password Row with Green Tick Mark (if set)
                                 ElvanSettingsRow(
                                     icon = MaterialSymbols.Rounded.Key,
                                     title = K.password.tr(),
@@ -305,13 +287,36 @@ fun LinkedAccountsScreen(
                                             onNavigate(SettingsRoute.CreatePassword)
                                         }
                                     },
+                                    customTrailing = {
+                                        if (hasPassword) {
+                                            Icon(
+                                                imageVector = MaterialSymbols.Rounded.CheckCircle,
+                                                contentDescription = null,
+                                                tint = colors.success,
+                                                modifier = Modifier.size(20.dp)
+                                            )
+                                        } else {
+                                            Surface(
+                                                shape = RoundedCornerShape(20.dp),
+                                                color = colors.iconBg,
+                                                modifier = Modifier.clickable { onNavigate(SettingsRoute.CreatePassword) }
+                                            ) {
+                                                Text(
+                                                    text = K.createBtn.tr(),
+                                                    style = TextStyle(fontFamily = ff, fontSize = 11.5.sp, fontWeight = FontWeight.SemiBold),
+                                                    color = colors.textPrimary,
+                                                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
+                                                )
+                                            }
+                                        }
+                                    },
                                     colors = colors
                                 )
                             }
                         }
                     }
 
-                    // ── Status Hint ──
+                    // ── Bottom Status Hint ──
                     item(key = "status_hint") {
                         ElvanSectionContainer {
                             Text(

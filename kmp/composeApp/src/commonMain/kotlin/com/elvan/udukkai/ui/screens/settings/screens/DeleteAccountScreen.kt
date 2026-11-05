@@ -188,7 +188,7 @@ fun DeleteAccountScreen(
                                                 password = it
                                                 errorMessage = null
                                             },
-                                            placeholder = K.enterCurrentPassword.tr(),
+                                            placeholder = K.currentPassword.tr(),
                                             isPassword = true,
                                             colors = colors
                                         )

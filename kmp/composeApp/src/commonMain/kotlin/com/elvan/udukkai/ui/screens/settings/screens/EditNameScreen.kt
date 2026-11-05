@@ -6,13 +6,11 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -31,10 +29,12 @@ import com.elvan.udukkai.ui.screens.settings.AccountAvatar
 import kotlinx.coroutines.launch
 
 /**
- * பெயர் திருத்தும் திரை — Dedicated Name Edit Sub-page.
+ * பெயர் திருத்தும் திரை — Dedicated Name Edit Sub-page matching Business Edit.
  * - Circular avatar preview at the top.
- * - Pill-shaped text field styled like the login screen (NeramField).
- * - Clear Save action with ExpressiveLoadingIndicator and Cancel button.
+ * - In-place animated expand container (ElvanSettingsAnimatedExpand):
+ *   - DisplayRow shows current name with an Edit button on the right.
+ *   - Tapping Edit expands the edit box with the text field and Cancel / Save buttons.
+ *   - Saving updates the name, displays the snackbar, and collapses smoothly back.
  */
 @Composable
 fun EditNameScreen(
@@ -45,8 +45,8 @@ fun EditNameScreen(
     val ff = LocalAppFontFamily.current
     val scope = rememberCoroutineScope()
 
-    val currentName = AuthManager.signedInDisplayName ?: ""
-    var nameInput by remember { mutableStateOf(currentName) }
+    var isEditing by remember { mutableStateOf(false) }
+    var tempDisplayName by remember { mutableStateOf(AuthManager.signedInDisplayName ?: "") }
     var isSaving by remember { mutableStateOf(false) }
 
     val nameSavedMsg = K.nameSaved.tr()
@@ -66,7 +66,7 @@ fun EditNameScreen(
                 Spacer(modifier = Modifier.height(LocalElvanTopSpacerHeight.current))
             }
 
-            // ── Profile Circle Header ──
+            // ── Top Profile Avatar Circle ──
             item(key = "avatar_header") {
                 ElvanSectionContainer {
                     Column(
@@ -95,7 +95,7 @@ fun EditNameScreen(
                         Spacer(modifier = Modifier.height(10.dp))
 
                         Text(
-                            text = if (nameInput.isNotBlank()) nameInput else K.userAccount.tr(),
+                            text = (AuthManager.signedInDisplayName ?: "").ifEmpty { K.userAccount.tr() },
                             style = TextStyle(
                                 fontFamily = ff,
                                 fontSize = 17.sp,
@@ -119,98 +119,51 @@ fun EditNameScreen(
                 }
             }
 
-            // ── Input Card ──
-            item(key = "name_input_card") {
+            // ── Business Edit Style: Animated Expand Container ──
+            item(key = "name_expand_card") {
                 ElvanSectionContainer {
                     ElvanSettingsSection(colors = colors) {
-                        Column(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 20.dp, vertical = 20.dp)
-                        ) {
-                            Text(
-                                text = K.displayName.tr(),
-                                style = TextStyle(
-                                    fontFamily = ff,
-                                    fontSize = 13.sp,
-                                    fontWeight = FontWeight.Normal
-                                ),
-                                color = colors.textPrimary.copy(alpha = 0.6f),
-                                modifier = Modifier.padding(start = 4.dp, bottom = 8.dp)
-                            )
-
-                            ElvanAuthTextField(
-                                value = nameInput,
-                                onValueChange = { nameInput = it },
-                                placeholder = K.enterDisplayName.tr(),
-                                colors = colors
-                            )
-
-                            Spacer(modifier = Modifier.height(24.dp))
-
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.End,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                TextButton(
-                                    onClick = onBack,
-                                    shape = RoundedCornerShape(50)
-                                ) {
-                                    Text(
-                                        text = K.cancelBtn.tr(),
-                                        style = TextStyle(
-                                            fontFamily = ff,
-                                            fontSize = 14.sp,
-                                            fontWeight = FontWeight.Medium
-                                        ),
-                                        color = colors.textPrimary.copy(alpha = 0.7f)
-                                    )
-                                }
-
-                                Spacer(modifier = Modifier.width(12.dp))
-
-                                Button(
-                                    onClick = {
-                                        if (nameInput.isNotBlank() && !isSaving) {
+                        ElvanSettingsAnimatedExpand(
+                            isEditing = isEditing,
+                            displayContent = {
+                                ElvanSettingsDisplayRow(
+                                    title = K.displayName.tr(),
+                                    primaryValue = (AuthManager.signedInDisplayName ?: "").ifEmpty { K.userAccount.tr() },
+                                    onEdit = {
+                                        tempDisplayName = AuthManager.signedInDisplayName ?: ""
+                                        isEditing = true
+                                    },
+                                    colors = colors
+                                )
+                            },
+                            editContent = {
+                                ElvanSettingsEditContainer(
+                                    title = K.displayName.tr(),
+                                    onCancel = { isEditing = false },
+                                    onSave = {
+                                        if (tempDisplayName.isNotBlank() && !isSaving) {
                                             isSaving = true
                                             scope.launch {
-                                                val res = AuthManager.updateDisplayName(nameInput.trim())
+                                                val res = AuthManager.updateDisplayName(tempDisplayName.trim())
                                                 isSaving = false
                                                 if (res.isSuccess) {
+                                                    isEditing = false
                                                     ElvanSnackbar.show(nameSavedMsg)
-                                                    onBack()
                                                 }
                                             }
                                         }
                                     },
-                                    modifier = Modifier.height(44.dp),
-                                    shape = RoundedCornerShape(50),
-                                    colors = ButtonDefaults.buttonColors(
-                                        containerColor = if (colors.isDark) Color.White else Color.Black,
-                                        contentColor = if (colors.isDark) Color.Black else Color.White
-                                    ),
-                                    elevation = ButtonDefaults.buttonElevation(0.dp),
-                                    enabled = nameInput.isNotBlank() && !isSaving
+                                    colors = colors
                                 ) {
-                                    if (isSaving) {
-                                        ExpressiveLoadingIndicator(
-                                            color = if (colors.isDark) Color.Black else Color.White,
-                                            modifier = Modifier.size(18.dp)
-                                        )
-                                    } else {
-                                        Text(
-                                            text = K.saveName.tr(),
-                                            style = TextStyle(
-                                                fontFamily = ff,
-                                                fontSize = 14.sp,
-                                                fontWeight = FontWeight.SemiBold
-                                            )
-                                        )
-                                    }
+                                    ElvanAuthTextField(
+                                        value = tempDisplayName,
+                                        onValueChange = { tempDisplayName = it },
+                                        placeholder = K.enterDisplayName.tr(),
+                                        colors = colors
+                                    )
                                 }
                             }
-                        }
+                        )
                     }
                 }
             }

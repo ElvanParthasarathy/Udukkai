@@ -157,7 +157,7 @@ fun ChangePasswordScreen(
                                             currentPassword = it
                                             errorMessage = null
                                         },
-                                        placeholder = K.enterCurrentPassword.tr(),
+                                        placeholder = K.currentPassword.tr(),
                                         isPassword = true,
                                         colors = colors
                                     )
@@ -259,7 +259,7 @@ fun ChangePasswordScreen(
                                     ElvanAuthTextField(
                                         value = newPassword,
                                         onValueChange = { newPassword = it; errorMessage = null },
-                                        placeholder = K.enterNewPassword.tr(),
+                                        placeholder = K.newPassword.tr(),
                                         isPassword = true,
                                         colors = colors
                                     )
@@ -269,7 +269,7 @@ fun ChangePasswordScreen(
                                     ElvanAuthTextField(
                                         value = confirmPassword,
                                         onValueChange = { confirmPassword = it; errorMessage = null },
-                                        placeholder = K.confirmNewPassword.tr(),
+                                        placeholder = K.confirmPassword.tr(),
                                         isPassword = true,
                                         colors = colors
                                     )

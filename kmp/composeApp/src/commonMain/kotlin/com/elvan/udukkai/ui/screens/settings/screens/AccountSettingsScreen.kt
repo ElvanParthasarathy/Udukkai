@@ -24,13 +24,12 @@ import com.elvan.udukkai.ui.screens.settings.AccountAvatar
 import com.elvan.udukkai.ui.screens.settings.SettingsRoute
 
 /**
- * கணக்கு அமைப்புகள் — Account Settings Screen.
- * Layout mirrors Neram Mobile's Account Settings:
- * - Top Profile Pill Card with avatar, name, and email.
- * - Card 1 (Personal Info): Name edit (navigates to EditName subpage), Email (no checkmark).
- * - Card 2 (Security & Sign-in): Google link ("கூகுள் இணைப்பு"), Password status, Sign Out with clean ActionSheet.
- * - Card 3 (Danger Zone): Delete account step-by-step wizard.
- * All section titles above cards are removed for a clean, minimalist UI.
+ * கணக்கு அமைப்புகள் — Account Settings Screen (Matching Neram Mobile).
+ * - Top Profile Pill Card showing avatar, display name, and email. Tapping opens Name Edit.
+ * - Redundant display name and email rows removed.
+ * - Card 1 (Security & Sign-in): Google link ("கூகுள் இணைப்பு"), Password status, Sign Out with clean ActionSheet.
+ * - Card 2 (Danger Zone): Delete account step-by-step wizard.
+ * - No section titles above cards for a minimalist UI.
  */
 @Composable
 fun AccountSettingsScreen(
@@ -88,34 +87,7 @@ fun AccountSettingsScreen(
                 }
             }
 
-            // ── Card 1: Personal Profile Rows (No title above card) ──
-            item(key = "personal_profile_card") {
-                ElvanSectionContainer {
-                    ElvanSettingsSection(colors = colors) {
-                        // Display Name Subpage Navigation
-                        ElvanSettingsRow(
-                            icon = MaterialSymbols.Rounded.Person,
-                            title = K.displayName.tr(),
-                            description = displayName.ifEmpty { K.userAccount.tr() },
-                            onClick = { onNavigate(SettingsRoute.EditName) },
-                            colors = colors
-                        )
-
-                        ElvanSettingsDivider(colors = colors)
-
-                        // Email Address Row (Clean, NO checkmark)
-                        ElvanSettingsRow(
-                            icon = MaterialSymbols.Rounded.Email,
-                            title = K.email.tr(),
-                            description = email.ifEmpty { K.notConnected.tr() },
-                            onClick = {},
-                            colors = colors
-                        )
-                    }
-                }
-            }
-
-            // ── Card 2: Security & Sign-in Rows (No title above card) ──
+            // ── Card 1: Security & Sign-in (No title above card) ──
             item(key = "security_signin_card") {
                 ElvanSectionContainer {
                     ElvanSettingsSection(colors = colors) {
@@ -159,7 +131,7 @@ fun AccountSettingsScreen(
                 }
             }
 
-            // ── Card 3: Danger Zone / Delete Account (No title above card) ──
+            // ── Card 2: Danger Zone / Delete Account (No title above card) ──
             item(key = "account_deletion_card") {
                 ElvanSectionContainer {
                     ElvanSettingsSection(colors = colors) {

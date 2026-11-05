@@ -36,6 +36,7 @@ data class ShellColors(
     val iconAccent: Color = accent,
     val error: Color = if (isDark) Color(0xFFFFB4AB) else Color(0xFFBA1A1A),
     val danger: Color = if (isDark) Color(0xFFFF5252) else Color(0xFFE53935),
+    val success: Color = if (isDark) Color(0xFF4CAF50) else Color(0xFF2E7D32),
     // Unified entity card icon colors (Pure Monochrome)
     val invoiceColor: Color = if (isDark) Color.White else Color.Black,
     val receiptColor: Color = if (isDark) Color.White else Color.Black,
