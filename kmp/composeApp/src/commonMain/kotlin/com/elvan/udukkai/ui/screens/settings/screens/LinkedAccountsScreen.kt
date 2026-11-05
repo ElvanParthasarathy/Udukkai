@@ -62,11 +62,7 @@ fun LinkedAccountsScreen(
         LazyColumn(
             state = scrollState,
             modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(
-                start = Dimens.ContentPadding,
-                end = Dimens.ContentPadding,
-                bottom = Dimens.SubpageContentPaddingBottom
-            ),
+            contentPadding = PaddingValues(bottom = Dimens.SubpageContentPaddingBottom),
             verticalArrangement = Arrangement.spacedBy(Dimens.SectionSpacing)
         ) {
             item(key = "shell_top_spacer") {
@@ -75,7 +71,8 @@ fun LinkedAccountsScreen(
 
             // ── Google Account Section ──
             item(key = "google_section") {
-                ElvanSettingsSection(colors = colors) {
+                ElvanSectionContainer {
+                    ElvanSettingsSection(colors = colors) {
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -225,10 +222,12 @@ fun LinkedAccountsScreen(
                     }
                 }
             }
+        }
 
             // ── Email & Password Section ──
             item(key = "email_password_section") {
-                ElvanSettingsSection(colors = colors) {
+                ElvanSectionContainer {
+                    ElvanSettingsSection(colors = colors) {
                     // Email row
                     ElvanSettingsRow(
                         icon = MaterialSymbols.Rounded.Email,
@@ -292,6 +291,7 @@ fun LinkedAccountsScreen(
                 }
             }
         }
+    }
 
         // ── Unlink Confirmation Dialog with Safety Check ──
         if (showUnlinkDialog) {

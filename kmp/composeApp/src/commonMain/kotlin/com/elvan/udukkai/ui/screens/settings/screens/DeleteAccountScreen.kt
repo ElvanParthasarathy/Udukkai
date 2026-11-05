@@ -58,11 +58,7 @@ fun DeleteAccountScreen(
         LazyColumn(
             state = scrollState,
             modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(
-                start = Dimens.ContentPadding,
-                end = Dimens.ContentPadding,
-                bottom = Dimens.SubpageContentPaddingBottom
-            ),
+            contentPadding = PaddingValues(bottom = Dimens.SubpageContentPaddingBottom),
             verticalArrangement = Arrangement.spacedBy(Dimens.SectionSpacing)
         ) {
             item(key = "shell_top_spacer") {
@@ -70,7 +66,8 @@ fun DeleteAccountScreen(
             }
 
             item(key = "warning_card") {
-                ElvanSettingsSection(colors = colors) {
+                ElvanSectionContainer {
+                    ElvanSettingsSection(colors = colors) {
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -228,4 +225,5 @@ fun DeleteAccountScreen(
             }
         }
     }
+}
 }

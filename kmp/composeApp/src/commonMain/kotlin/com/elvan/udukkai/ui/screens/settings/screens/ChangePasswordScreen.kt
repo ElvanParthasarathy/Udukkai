@@ -1,13 +1,10 @@
 package com.elvan.udukkai.ui.screens.settings.screens
 
-import androidx.compose.animation.*
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -36,10 +33,7 @@ import kotlinx.coroutines.launch
 
 /**
  * கடவுச்சொல் மாற்றும் திரை — Change Password Screen.
- * Two-step secure workflow:
- * Step 1: Verify current password
- * Step 2: Enter & confirm new password with live strength criteria
- * Step 3: Success confirmation
+ * Industry-standard single-screen secure workflow matching Samsung One UI design.
  */
 @Composable
 fun ChangePasswordScreen(
@@ -51,11 +45,11 @@ fun ChangePasswordScreen(
     val scope = rememberCoroutineScope()
     val enterCurrentPasswordMsg = K.enterCurrentPassword.tr()
     val incorrectPasswordMsg = K.incorrectPassword.tr()
-    val sendPasswordResetMsg = K.sendPasswordReset.tr()
-    val errorGeneric = K.error.tr()
-    val btnTextClr = if (colors.isDark) Color.Black else Color.White
+    val sendPasswordResetMsg = K.resetMailSent.tr()
+    val atLeast6CharsMsg = K.atLeast6Chars.tr()
+    val passwordsMatchMsg = K.passwordsMatch.tr()
+    val passwordUpdatedMsg = K.passwordUpdated.tr()
 
-    var step by remember { mutableIntStateOf(1) }
     var currentPassword by remember { mutableStateOf("") }
     var newPassword by remember { mutableStateOf("") }
     var confirmPassword by remember { mutableStateOf("") }
@@ -64,302 +58,244 @@ fun ChangePasswordScreen(
     var showNewPassword by remember { mutableStateOf(false) }
 
     var isProcessing by remember { mutableStateOf(false) }
+    var isSendingReset by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
 
     val passwordValid = newPassword.length >= 6
     val passwordsMatch = newPassword.isNotEmpty() && newPassword == confirmPassword
 
-    LaunchedEffect(step) {
-        if (step == 3) {
-            delay(1500)
-            onBack()
-        }
-    }
-
     Box(modifier = Modifier.fillMaxSize()) {
         LazyColumn(
             state = scrollState,
             modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(
-                start = Dimens.ContentPadding,
-                end = Dimens.ContentPadding,
-                bottom = Dimens.SubpageContentPaddingBottom
-            ),
+            contentPadding = PaddingValues(bottom = Dimens.SubpageContentPaddingBottom),
             verticalArrangement = Arrangement.spacedBy(Dimens.SectionSpacing)
         ) {
             item(key = "shell_top_spacer") {
                 Spacer(modifier = Modifier.height(LocalElvanTopSpacerHeight.current))
             }
 
-            item(key = "content_card") {
-                ElvanSettingsSection(colors = colors) {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 20.dp, vertical = 20.dp)
-                    ) {
-                        when (step) {
-                            1 -> {
-                                Text(
-                                    text = K.currentPassword.tr(),
-                                    style = TextStyle(
-                                        fontFamily = ff,
-                                        fontSize = 17.sp,
-                                        fontWeight = FontWeight.Bold
-                                    ),
-                                    color = colors.textPrimary
-                                )
+            item(key = "change_password_card") {
+                ElvanSectionContainer {
+                    ElvanSettingsSection(colors = colors) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 20.dp, vertical = 20.dp)
+                        ) {
+                            Text(
+                                text = K.changePassword.tr(),
+                                style = TextStyle(
+                                    fontFamily = ff,
+                                    fontSize = 17.sp,
+                                    fontWeight = FontWeight.Bold
+                                ),
+                                color = colors.textPrimary
+                            )
 
-                                Spacer(modifier = Modifier.height(4.dp))
+                            Spacer(modifier = Modifier.height(4.dp))
 
-                                Text(
-                                    text = K.confirmIdentityBeforeNewPassword.tr(),
-                                    style = TextStyle(
-                                        fontFamily = ff,
-                                        fontSize = 13.sp,
-                                        lineHeight = 18.sp
-                                    ),
-                                    color = colors.textPrimary.copy(alpha = 0.55f)
-                                )
+                            Text(
+                                text = K.confirmIdentityBeforeNewPassword.tr(),
+                                style = TextStyle(
+                                    fontFamily = ff,
+                                    fontSize = 13.sp,
+                                    lineHeight = 18.sp
+                                ),
+                                color = colors.textPrimary.copy(alpha = 0.55f)
+                            )
 
-                                Spacer(modifier = Modifier.height(20.dp))
+                            Spacer(modifier = Modifier.height(20.dp))
 
-                                ElvanSettingsTextField(
-                                    label = K.currentPassword.tr(),
-                                    value = currentPassword,
-                                    onValueChange = {
-                                        currentPassword = it
-                                        errorMessage = null
-                                    },
-                                    placeholder = K.enterCurrentPassword.tr(),
-                                    visualTransformation = if (showCurrentPassword) VisualTransformation.None else PasswordVisualTransformation(),
-                                    trailingIcon = {
-                                        Icon(
-                                            imageVector = if (showCurrentPassword) MaterialSymbols.Rounded.Visibility else MaterialSymbols.Rounded.VisibilityOff,
-                                            contentDescription = null,
-                                            tint = colors.textPrimary.copy(alpha = 0.45f),
-                                            modifier = Modifier
-                                                .size(20.dp)
-                                                .clickable { showCurrentPassword = !showCurrentPassword }
-                                        )
-                                    },
-                                    colors = colors
-                                )
-
-                                if (errorMessage != null) {
-                                    Spacer(modifier = Modifier.height(8.dp))
-                                    Text(
-                                        text = errorMessage!!,
-                                        style = TextStyle(
-                                            fontFamily = ff,
-                                            fontSize = 12.5.sp,
-                                            fontWeight = FontWeight.Medium
-                                        ),
-                                        color = colors.error,
-                                        modifier = Modifier.padding(start = 12.dp)
+                            // 1. Current Password
+                            ElvanSettingsTextField(
+                                label = K.currentPassword.tr(),
+                                value = currentPassword,
+                                onValueChange = {
+                                    currentPassword = it
+                                    errorMessage = null
+                                },
+                                placeholder = K.enterCurrentPassword.tr(),
+                                visualTransformation = if (showCurrentPassword) VisualTransformation.None else PasswordVisualTransformation(),
+                                trailingIcon = {
+                                    Icon(
+                                        imageVector = if (showCurrentPassword) MaterialSymbols.Rounded.Visibility else MaterialSymbols.Rounded.VisibilityOff,
+                                        contentDescription = null,
+                                        tint = colors.textPrimary.copy(alpha = 0.45f),
+                                        modifier = Modifier
+                                            .size(20.dp)
+                                            .clickable { showCurrentPassword = !showCurrentPassword }
                                     )
-                                }
+                                },
+                                colors = colors
+                            )
 
-                                Spacer(modifier = Modifier.height(24.dp))
+                            Spacer(modifier = Modifier.height(14.dp))
 
-                                Button(
-                                    onClick = {
-                                        if (currentPassword.isEmpty()) {
-                                            errorMessage = enterCurrentPasswordMsg
-                                            return@Button
-                                        }
-                                        isProcessing = true
-                                        scope.launch {
-                                            val dummyNew = currentPassword
-                                            val res = AuthManager.changePassword(currentPassword, dummyNew)
-                                            isProcessing = false
-                                            if (res.isSuccess) {
-                                                step = 2
-                                            } else {
-                                                errorMessage = incorrectPasswordMsg
-                                            }
-                                        }
-                                    },
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .height(48.dp),
-                                    shape = RoundedCornerShape(50),
-                                    colors = ButtonDefaults.buttonColors(
-                                        containerColor = colors.accent,
-                                        contentColor = btnTextClr
+                            // 2. New Password
+                            ElvanSettingsTextField(
+                                label = K.newPassword.tr(),
+                                value = newPassword,
+                                onValueChange = {
+                                    newPassword = it
+                                    errorMessage = null
+                                },
+                                placeholder = K.enterNewPassword.tr(),
+                                visualTransformation = if (showNewPassword) VisualTransformation.None else PasswordVisualTransformation(),
+                                trailingIcon = {
+                                    Icon(
+                                        imageVector = if (showNewPassword) MaterialSymbols.Rounded.Visibility else MaterialSymbols.Rounded.VisibilityOff,
+                                        contentDescription = null,
+                                        tint = colors.textPrimary.copy(alpha = 0.45f),
+                                        modifier = Modifier
+                                            .size(20.dp)
+                                            .clickable { showNewPassword = !showNewPassword }
+                                    )
+                                },
+                                colors = colors
+                            )
+
+                            Spacer(modifier = Modifier.height(14.dp))
+
+                            // 3. Confirm New Password
+                            ElvanSettingsTextField(
+                                label = K.confirmNewPassword.tr(),
+                                value = confirmPassword,
+                                onValueChange = {
+                                    confirmPassword = it
+                                    errorMessage = null
+                                },
+                                placeholder = K.confirmPassword.tr(),
+                                visualTransformation = if (showNewPassword) VisualTransformation.None else PasswordVisualTransformation(),
+                                colors = colors
+                            )
+
+                            // Error Display
+                            if (errorMessage != null) {
+                                Spacer(modifier = Modifier.height(10.dp))
+                                Text(
+                                    text = errorMessage!!,
+                                    style = TextStyle(
+                                        fontFamily = ff,
+                                        fontSize = 12.5.sp,
+                                        fontWeight = FontWeight.Medium
                                     ),
-                                    enabled = !isProcessing
-                                ) {
-                                    if (isProcessing) {
-                                        ExpressiveLoadingIndicator(color = btnTextClr, modifier = Modifier.size(18.dp))
-                                    } else {
-                                        Text(
-                                            text = K.verifyAndContinue.tr(),
-                                            style = TextStyle(fontFamily = ff, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
-                                        )
-                                    }
-                                }
+                                    color = colors.error,
+                                    modifier = Modifier.padding(start = 8.dp)
+                                )
+                            }
 
-                                Spacer(modifier = Modifier.height(14.dp))
+                            Spacer(modifier = Modifier.height(16.dp))
 
-                                TextButton(
-                                    onClick = {
-                                        val email = AuthManager.signedInEmail
-                                        if (!email.isNullOrEmpty()) {
-                                            scope.launch {
-                                                val ok = platformSendPasswordReset(email)
-                                                if (ok) {
-                                                    ElvanSnackbar.show(sendPasswordResetMsg)
-                                                }
-                                            }
-                                        }
-                                    },
-                                    modifier = Modifier.align(Alignment.CenterHorizontally)
-                                ) {
-                                    Text(
-                                        text = K.forgotPassword.tr(),
-                                        style = TextStyle(fontFamily = ff, fontSize = 13.5.sp, fontWeight = FontWeight.Medium),
-                                        color = colors.textPrimary.copy(alpha = 0.7f)
+                            // Live Criteria Indicators
+                            Surface(
+                                modifier = Modifier.fillMaxWidth(),
+                                shape = RoundedCornerShape(16.dp),
+                                color = colors.iconBg
+                            ) {
+                                Column(modifier = Modifier.padding(14.dp)) {
+                                    ChangePasswordValidationRow(
+                                        text = atLeast6CharsMsg,
+                                        satisfied = passwordValid,
+                                        colors = colors
+                                    )
+                                    Spacer(modifier = Modifier.height(6.dp))
+                                    ChangePasswordValidationRow(
+                                        text = passwordsMatchMsg,
+                                        satisfied = passwordsMatch,
+                                        colors = colors
                                     )
                                 }
                             }
 
-                            2 -> {
-                                Text(
-                                    text = K.newPassword.tr(),
-                                    style = TextStyle(
-                                        fontFamily = ff,
-                                        fontSize = 17.sp,
-                                        fontWeight = FontWeight.Bold
-                                    ),
-                                    color = colors.textPrimary
-                                )
+                            Spacer(modifier = Modifier.height(24.dp))
 
-                                Spacer(modifier = Modifier.height(18.dp))
-
-                                ElvanSettingsTextField(
-                                    label = K.newPassword.tr(),
-                                    value = newPassword,
-                                    onValueChange = { newPassword = it },
-                                    placeholder = K.enterNewPassword.tr(),
-                                    visualTransformation = if (showNewPassword) VisualTransformation.None else PasswordVisualTransformation(),
-                                    trailingIcon = {
-                                        Icon(
-                                            imageVector = if (showNewPassword) MaterialSymbols.Rounded.Visibility else MaterialSymbols.Rounded.VisibilityOff,
-                                            contentDescription = null,
-                                            tint = colors.textPrimary.copy(alpha = 0.45f),
-                                            modifier = Modifier
-                                                .size(20.dp)
-                                                .clickable { showNewPassword = !showNewPassword }
-                                        )
-                                    },
-                                    colors = colors
-                                )
-
-                                Spacer(modifier = Modifier.height(12.dp))
-
-                                ElvanSettingsTextField(
-                                    label = K.confirmNewPassword.tr(),
-                                    value = confirmPassword,
-                                    onValueChange = { confirmPassword = it },
-                                    placeholder = K.confirmPassword.tr(),
-                                    visualTransformation = if (showNewPassword) VisualTransformation.None else PasswordVisualTransformation(),
-                                    colors = colors
-                                )
-
-                                Spacer(modifier = Modifier.height(16.dp))
-
-                                // Validation Checklist
-                                Surface(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    shape = RoundedCornerShape(16.dp),
-                                    color = colors.iconBg
-                                ) {
-                                    Column(modifier = Modifier.padding(14.dp)) {
-                                        ValidationRow(
-                                            text = K.atLeast6Chars.tr(),
-                                            isValid = passwordValid,
-                                            colors = colors
-                                        )
-                                        Spacer(modifier = Modifier.height(8.dp))
-                                        ValidationRow(
-                                            text = K.passwordsMatch.tr(),
-                                            isValid = passwordsMatch,
-                                            colors = colors
-                                        )
+                            // Update Password Button (Standard Udukkai 50% Pill)
+                            Button(
+                                onClick = {
+                                    if (currentPassword.isBlank()) {
+                                        errorMessage = enterCurrentPasswordMsg
+                                        return@Button
                                     }
-                                }
-
-                                Spacer(modifier = Modifier.height(24.dp))
-
-                                Button(
-                                    onClick = {
-                                        isProcessing = true
-                                        scope.launch {
-                                            val res = AuthManager.changePassword(currentPassword, newPassword)
-                                            isProcessing = false
-                                            if (res.isSuccess) {
-                                                step = 3
-                                            } else {
-                                                errorMessage = res.exceptionOrNull()?.message ?: errorGeneric
-                                            }
+                                    if (newPassword.length < 6) {
+                                        errorMessage = atLeast6CharsMsg
+                                        return@Button
+                                    }
+                                    if (newPassword != confirmPassword) {
+                                        errorMessage = passwordsMatchMsg
+                                        return@Button
+                                    }
+                                    isProcessing = true
+                                    errorMessage = null
+                                    scope.launch {
+                                        val res = AuthManager.changePassword(currentPassword, newPassword)
+                                        isProcessing = false
+                                        if (res.isSuccess) {
+                                            ElvanSnackbar.show(passwordUpdatedMsg)
+                                            delay(350)
+                                            onBack()
+                                        } else {
+                                            errorMessage = incorrectPasswordMsg
                                         }
-                                    },
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .height(48.dp),
-                                    shape = RoundedCornerShape(50),
-                                    colors = ButtonDefaults.buttonColors(
-                                        containerColor = colors.accent,
-                                        contentColor = btnTextClr
-                                    ),
-                                    enabled = passwordValid && passwordsMatch && !isProcessing
-                                ) {
-                                    if (isProcessing) {
-                                        ExpressiveLoadingIndicator(color = btnTextClr, modifier = Modifier.size(18.dp))
-                                    } else {
-                                        Text(
-                                            text = K.updatePassword.tr(),
-                                            style = TextStyle(fontFamily = ff, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
-                                        )
                                     }
+                                },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(48.dp),
+                                shape = RoundedCornerShape(50),
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = if (colors.isDark) Color.White else Color.Black,
+                                    contentColor = if (colors.isDark) Color.Black else Color.White
+                                ),
+                                elevation = ButtonDefaults.buttonElevation(0.dp),
+                                enabled = !isProcessing
+                            ) {
+                                if (isProcessing) {
+                                    ExpressiveLoadingIndicator(
+                                        color = if (colors.isDark) Color.Black else Color.White,
+                                        modifier = Modifier.size(20.dp)
+                                    )
+                                } else {
+                                    Text(
+                                        text = K.updatePassword.tr(),
+                                        style = TextStyle(
+                                            fontFamily = ff,
+                                            fontSize = 15.sp,
+                                            fontWeight = FontWeight.SemiBold
+                                        )
+                                    )
                                 }
                             }
 
-                            3 -> {
-                                Column(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(vertical = 24.dp),
-                                    horizontalAlignment = Alignment.CenterHorizontally
-                                ) {
-                                    Surface(
-                                        modifier = Modifier.size(60.dp),
-                                        shape = CircleShape,
-                                        color = colors.accent.copy(alpha = 0.12f)
-                                    ) {
-                                        Box(contentAlignment = Alignment.Center) {
-                                            Icon(
-                                                imageVector = MaterialSymbols.Rounded.CheckCircle,
-                                                contentDescription = null,
-                                                tint = colors.accent,
-                                                modifier = Modifier.size(36.dp)
-                                            )
+                            Spacer(modifier = Modifier.height(14.dp))
+
+                            // Forgot Password Link
+                            TextButton(
+                                onClick = {
+                                    val email = AuthManager.signedInEmail
+                                    if (!email.isNullOrEmpty() && !isSendingReset) {
+                                        isSendingReset = true
+                                        scope.launch {
+                                            val ok = platformSendPasswordReset(email)
+                                            isSendingReset = false
+                                            if (ok) {
+                                                ElvanSnackbar.show(sendPasswordResetMsg)
+                                            }
                                         }
                                     }
-
-                                    Spacer(modifier = Modifier.height(16.dp))
-
-                                    Text(
-                                        text = K.passwordUpdated.tr(),
-                                        style = TextStyle(
-                                            fontFamily = ff,
-                                            fontSize = 18.sp,
-                                            fontWeight = FontWeight.Bold
-                                        ),
-                                        color = colors.textPrimary
-                                    )
-                                }
+                                },
+                                modifier = Modifier.align(Alignment.CenterHorizontally),
+                                enabled = !isSendingReset
+                            ) {
+                                Text(
+                                    text = K.forgotPassword.tr(),
+                                    style = TextStyle(
+                                        fontFamily = ff,
+                                        fontSize = 13.5.sp,
+                                        fontWeight = FontWeight.Medium
+                                    ),
+                                    color = colors.textPrimary.copy(alpha = 0.7f)
+                                )
                             }
                         }
                     }
@@ -370,28 +306,30 @@ fun ChangePasswordScreen(
 }
 
 @Composable
-private fun ValidationRow(
+private fun ChangePasswordValidationRow(
     text: String,
-    isValid: Boolean,
+    satisfied: Boolean,
     colors: ShellColors
 ) {
     val ff = LocalAppFontFamily.current
-    Row(verticalAlignment = Alignment.CenterVertically) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
         Icon(
-            imageVector = if (isValid) MaterialSymbols.Rounded.CheckCircle else MaterialSymbols.Rounded.Cancel,
+            imageVector = if (satisfied) MaterialSymbols.Rounded.CheckCircle else MaterialSymbols.Rounded.RadioButtonUnchecked,
             contentDescription = null,
-            tint = if (isValid) colors.accent else colors.textPrimary.copy(alpha = 0.35f),
+            tint = if (satisfied) colors.accent else colors.textPrimary.copy(alpha = 0.35f),
             modifier = Modifier.size(16.dp)
         )
-        Spacer(modifier = Modifier.width(8.dp))
         Text(
             text = text,
             style = TextStyle(
                 fontFamily = ff,
-                fontSize = 12.5.sp,
-                fontWeight = FontWeight.Normal
+                fontSize = 12.sp,
+                fontWeight = if (satisfied) FontWeight.SemiBold else FontWeight.Normal
             ),
-            color = if (isValid) colors.textPrimary else colors.textPrimary.copy(alpha = 0.5f)
+            color = if (satisfied) colors.textPrimary else colors.textPrimary.copy(alpha = 0.5f)
         )
     }
 }

@@ -28,7 +28,7 @@ import kotlinx.coroutines.launch
 /**
  * பயனர் கணக்கும் பாதுகாப்பும் — Account & Security Settings Screen.
  * Unified screen containing profile overview, linked accounts, password management,
- * cloud sync, sign-out, and account deletion with consistent One UI styling.
+ * cloud sync, sign-out, and account deletion with consistent Samsung One UI styling.
  */
 @Composable
 fun AccountSettingsScreen(
@@ -62,35 +62,33 @@ fun AccountSettingsScreen(
         LazyColumn(
             state = scrollState,
             modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(
-                start = Dimens.ContentPadding,
-                end = Dimens.ContentPadding,
-                bottom = Dimens.SubpageContentPaddingBottom
-            ),
+            contentPadding = PaddingValues(bottom = Dimens.SubpageContentPaddingBottom),
             verticalArrangement = Arrangement.spacedBy(Dimens.SectionSpacing)
         ) {
             item(key = "shell_top_spacer") {
                 Spacer(modifier = Modifier.height(LocalElvanTopSpacerHeight.current))
             }
 
-            // ── 1. User Profile Pill Card ──
+            // ── 1. User Profile Pill Card (Consistent with One UI Hub) ──
             item(key = "profile_pill") {
-                ElvanProfilePillCard(
-                    title = displayName.ifEmpty { K.userAccount.tr() },
-                    subtitle = email.ifEmpty { K.connected.tr() },
-                    iconWidget = {
-                        AccountAvatar(fallback = {
-                            Icon(
-                                imageVector = MaterialSymbols.Rounded.Person,
-                                contentDescription = null,
-                                tint = colors.textPrimary,
-                                modifier = Modifier.size(26.dp)
-                            )
-                        })
-                    },
-                    onClick = {},
-                    colors = colors
-                )
+                ElvanSectionContainer {
+                    ElvanProfilePillCard(
+                        title = displayName.ifEmpty { K.userAccount.tr() },
+                        subtitle = email.ifEmpty { K.connected.tr() },
+                        iconWidget = {
+                            AccountAvatar(fallback = {
+                                Icon(
+                                    imageVector = MaterialSymbols.Rounded.Person,
+                                    contentDescription = null,
+                                    tint = colors.textPrimary,
+                                    modifier = Modifier.size(26.dp)
+                                )
+                            })
+                        },
+                        onClick = {},
+                        colors = colors
+                    )
+                }
             }
 
             // ── 2. Account Credentials Section (Linked Accounts & Password) ──
