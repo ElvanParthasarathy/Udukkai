@@ -19,6 +19,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.elvan.udukkai.core.auth.AuthManager
+import com.elvan.udukkai.core.security.authenticateFingerprint
+import com.elvan.udukkai.core.security.fingerprintAvailable
 import com.elvan.udukkai.localization.K
 import com.elvan.udukkai.localization.tr
 import com.elvan.udukkai.theme.Dimens
@@ -36,6 +38,7 @@ import kotlinx.coroutines.launch
  * - Clear warning explaining irreversible data wipe.
  * - Explicit user confirmation checkbox.
  * - Password re-authentication for password-backed accounts.
+ * - Biometric scan requirement before executing irreversible wipe.
  * - Final confirmation step via ElvanActionSheet destructive bottom sheet.
  */
 @Composable
@@ -58,6 +61,8 @@ fun DeleteAccountScreen(
 
     val accountDeletedMsg = K.accountDeleted.tr()
     val errorGeneric = K.error.tr()
+    val biometricPromptTitle = K.biometricVerifyTitle.tr()
+    val cancelText = K.cancelBtn.tr()
 
     Box(modifier = Modifier.fillMaxSize()) {
         LazyColumn(
@@ -220,7 +225,7 @@ fun DeleteAccountScreen(
             }
         }
 
-        // ── Final Destructive Confirmation Action Sheet (Apple HIG Action Sheets) ──
+        // ── Final Destructive Confirmation Action Sheet with Biometric Gate ──
         if (showDeleteConfirmSheet) {
             ElvanActionSheet(
                 title = K.deletePermanentlyQuestion.tr(),
@@ -230,15 +235,30 @@ fun DeleteAccountScreen(
                 onDismissRequest = { showDeleteConfirmSheet = false },
                 onConfirm = {
                     showDeleteConfirmSheet = false
-                    isProcessing = true
-                    scope.launch {
-                        val res = AuthManager.deleteAccount(password.takeIf { hasPassword })
-                        isProcessing = false
-                        if (res.isSuccess) {
-                            ElvanSnackbar.show(accountDeletedMsg)
-                        } else {
-                            errorMessage = res.exceptionOrNull()?.message ?: errorGeneric
+                    val executeDelete = {
+                        isProcessing = true
+                        scope.launch {
+                            val res = AuthManager.deleteAccount(password.takeIf { hasPassword })
+                            isProcessing = false
+                            if (res.isSuccess) {
+                                ElvanSnackbar.show(accountDeletedMsg)
+                            } else {
+                                errorMessage = res.exceptionOrNull()?.message ?: errorGeneric
+                            }
                         }
+                    }
+
+                    if (fingerprintAvailable()) {
+                        authenticateFingerprint(
+                            title = biometricPromptTitle,
+                            cancelText = cancelText
+                        ) { authenticated ->
+                            if (authenticated) {
+                                executeDelete()
+                            }
+                        }
+                    } else {
+                        executeDelete()
                     }
                 },
                 colors = colors,

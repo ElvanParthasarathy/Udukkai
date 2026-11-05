@@ -13,8 +13,9 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.elvan.udukkai.core.auth.AuthManager
-import com.elvan.udukkai.core.auth.GoogleSignInResult
 import com.elvan.udukkai.core.backup.reloadAllRepositories
+import com.elvan.udukkai.core.security.authenticateFingerprint
+import com.elvan.udukkai.core.security.fingerprintAvailable
 import com.elvan.udukkai.core.sync.SyncStatus
 import com.elvan.udukkai.core.sync.getFirebaseSyncManager
 import com.elvan.udukkai.core.utils.DateUtils
@@ -33,13 +34,12 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 /**
- * கணக்கு திரை — Account Settings Screen.
- * Minimal, streamlined design matching Udukkai's Samsung One UI & Apple HIG design language:
- * - Top Profile Pill Card (ElvanProfilePillCard) matching Settings Hub.
- * - Card 1: Direct Credentials & Cloud Sync (Google Account, Password, Manual Sync).
- * - Card 2: Session & Danger Actions (Sign Out, Delete Account).
- * - Direct single-tap action sheets eliminating unnecessary sub-screen navigation steps.
- * - Strict Pure Senthamizh localization.
+ * கணக்கு திரை — Account Hub Settings Screen.
+ * Minimal, spacious navigation hub coordinating dedicated sub-settings:
+ * - Profile Pill Card (ElvanProfilePillCard) matching Settings Hub.
+ * - Card 1: Sub-settings navigation for Google Account, Password Studio, and Cloud Sync.
+ * - Card 2: Session management (Sign Out with ElvanActionSheet).
+ * - Card 3: Biometric-guarded Danger Zone for Account Deletion.
  */
 @Composable
 fun AccountSettingsScreen(
@@ -59,15 +59,11 @@ fun AccountSettingsScreen(
     val lastSync by sync.lastSyncTime
 
     var showSignOutConfirm by remember { mutableStateOf(false) }
-    var showUnlinkSheet by remember { mutableStateOf(false) }
-    var isLinking by remember { mutableStateOf(false) }
-    var isUnlinking by remember { mutableStateOf(false) }
     var isSyncing by remember { mutableStateOf(false) }
 
     val syncSuccessMsg = K.synced.tr()
-    val unlinkedSuccessMsg = K.googleAccountUnlinked.tr()
-    val failedUnlinkMsg = K.failedToUnlink.tr()
-    val connectedMsg = K.connected.tr()
+    val biometricPromptTitle = K.biometricVerifyTitle.tr()
+    val cancelText = K.cancelBtn.tr()
 
     val syncStatusDesc = when (syncStatus) {
         SyncStatus.SYNCED -> if (lastSync > 0L) "${K.lastSyncedAt.tr()}: ${DateUtils.formatDateTime(lastSync)}" else K.syncStatusSynced.tr()
@@ -88,7 +84,7 @@ fun AccountSettingsScreen(
                 Spacer(modifier = Modifier.height(LocalElvanTopSpacerHeight.current))
             }
 
-            // ── 1. Top Profile Pill Card (Matching Settings Hub 1:1) ──
+            // ── 1. Top Profile Pill Card ──
             item(key = "profile_pill") {
                 ElvanSectionContainer {
                     ElvanProfilePillCard(
@@ -110,54 +106,30 @@ fun AccountSettingsScreen(
                 }
             }
 
-            // ── 2. Credentials & Sync Card (Clean Grouped Section) ──
+            // ── 2. Credentials & Cloud Sync Sub-Settings Card ──
             item(key = "credentials_sync_card") {
                 ElvanSectionContainer {
                     ElvanSettingsSection(colors = colors) {
-                        // 1. Google Account Row (Direct Single-Tap Link/Unlink)
+                        // Google Account Subpage
                         ElvanSettingsRow(
                             icon = MaterialSymbols.Rounded.Link,
                             title = K.googleAccount.tr(),
                             description = if (isGoogleLinked) email.ifEmpty { K.connected.tr() } else K.notConnected.tr(),
-                            onClick = {
-                                if (isGoogleLinked) {
-                                    showUnlinkSheet = true
-                                } else if (!isLinking) {
-                                    isLinking = true
-                                    scope.launch {
-                                        val res = AuthManager.linkGoogle()
-                                        isLinking = false
-                                        if (res is GoogleSignInResult.Success) {
-                                            ElvanSnackbar.show(connectedMsg)
-                                        }
-                                    }
-                                }
-                            },
+                            onClick = { onNavigate(SettingsRoute.LinkedAccounts) },
                             customTrailing = {
-                                if (isLinking || isUnlinking) {
-                                    ExpressiveLoadingIndicator(color = colors.accent, modifier = Modifier.size(18.dp))
-                                } else if (isGoogleLinked) {
-                                    Icon(
-                                        imageVector = MaterialSymbols.Rounded.CheckCircle,
-                                        contentDescription = null,
-                                        tint = colors.accent,
-                                        modifier = Modifier.size(20.dp)
-                                    )
-                                } else {
-                                    Icon(
-                                        imageVector = MaterialSymbols.Rounded.ChevronRight,
-                                        contentDescription = null,
-                                        tint = colors.textTertiary,
-                                        modifier = Modifier.size(18.dp)
-                                    )
-                                }
+                                Icon(
+                                    imageVector = MaterialSymbols.Rounded.ChevronRight,
+                                    contentDescription = null,
+                                    tint = colors.textTertiary,
+                                    modifier = Modifier.size(18.dp)
+                                )
                             },
                             colors = colors
                         )
 
                         ElvanSettingsDivider(colors = colors)
 
-                        // 2. Password Row (Change or Create)
+                        // Password Studio Subpage
                         ElvanSettingsRow(
                             icon = MaterialSymbols.Rounded.Key,
                             title = K.password.tr(),
@@ -182,7 +154,7 @@ fun AccountSettingsScreen(
 
                         ElvanSettingsDivider(colors = colors)
 
-                        // 3. Cloud Sync Row (Instant Manual Sync)
+                        // Instant Cloud Sync
                         ElvanSettingsRow(
                             icon = MaterialSymbols.Rounded.Sync,
                             title = K.syncAppBtn.tr(),
@@ -221,11 +193,10 @@ fun AccountSettingsScreen(
                 }
             }
 
-            // ── 3. Session & Danger Actions Card ──
-            item(key = "session_danger_card") {
+            // ── 3. Session Section ──
+            item(key = "session_card") {
                 ElvanSectionContainer {
                     ElvanSettingsSection(colors = colors) {
-                        // Sign Out Row
                         ElvanSettingsRow(
                             icon = MaterialSymbols.Rounded.Logout,
                             title = K.logout.tr(),
@@ -243,20 +214,37 @@ fun AccountSettingsScreen(
                             },
                             colors = colors
                         )
+                    }
+                }
+            }
 
-                        ElvanSettingsDivider(colors = colors)
-
-                        // Delete Account Row
+            // ── 4. Danger Zone (Protected by Native Biometric Lock) ──
+            item(key = "danger_card") {
+                ElvanSectionContainer {
+                    ElvanSettingsSection(colors = colors) {
                         ElvanSettingsRow(
                             icon = MaterialSymbols.Rounded.DeleteForever,
                             title = K.deleteAccount.tr(),
                             description = K.deleteAccountDesc.tr(),
-                            onClick = { onNavigate(SettingsRoute.DeleteAccount) },
+                            onClick = {
+                                if (fingerprintAvailable()) {
+                                    authenticateFingerprint(
+                                        title = biometricPromptTitle,
+                                        cancelText = cancelText
+                                    ) { success ->
+                                        if (success) {
+                                            onNavigate(SettingsRoute.DeleteAccount)
+                                        }
+                                    }
+                                } else {
+                                    onNavigate(SettingsRoute.DeleteAccount)
+                                }
+                            },
                             titleColor = colors.error,
                             iconTint = colors.error,
                             customTrailing = {
                                 Icon(
-                                    imageVector = MaterialSymbols.Rounded.ChevronRight,
+                                    imageVector = MaterialSymbols.Rounded.Lock,
                                     contentDescription = null,
                                     tint = colors.error.copy(alpha = 0.5f),
                                     modifier = Modifier.size(18.dp)
@@ -269,73 +257,7 @@ fun AccountSettingsScreen(
             }
         }
 
-        // ── Direct Google Unlink Action Sheet (Apple HIG) ──
-        if (showUnlinkSheet) {
-            if (hasPassword) {
-                ElvanActionSheet(
-                    title = K.unlinkConfirm.tr(),
-                    cancelText = K.cancelBtn.tr(),
-                    confirmText = K.unlinkGoogle.tr(),
-                    confirmColor = colors.error,
-                    onDismissRequest = { showUnlinkSheet = false },
-                    onConfirm = {
-                        showUnlinkSheet = false
-                        isUnlinking = true
-                        scope.launch {
-                            val ok = AuthManager.unlinkGoogle()
-                            isUnlinking = false
-                            if (ok) {
-                                ElvanSnackbar.show(unlinkedSuccessMsg)
-                            } else {
-                                ElvanSnackbar.show(failedUnlinkMsg)
-                            }
-                        }
-                    },
-                    colors = colors,
-                    customContent = {
-                        Text(
-                            text = K.unlinkMessage.tr(),
-                            style = TextStyle(
-                                fontFamily = ff,
-                                fontSize = 13.5.sp,
-                                lineHeight = 19.sp
-                            ),
-                            color = colors.textPrimary.copy(alpha = 0.7f),
-                            textAlign = TextAlign.Center,
-                            modifier = Modifier.padding(horizontal = 8.dp)
-                        )
-                    }
-                )
-            } else {
-                ElvanActionSheet(
-                    title = K.createPasswordFirst.tr(),
-                    cancelText = K.cancelBtn.tr(),
-                    confirmText = K.createPassword.tr(),
-                    confirmColor = colors.accent,
-                    onDismissRequest = { showUnlinkSheet = false },
-                    onConfirm = {
-                        showUnlinkSheet = false
-                        onNavigate(SettingsRoute.CreatePassword)
-                    },
-                    colors = colors,
-                    customContent = {
-                        Text(
-                            text = K.createPasswordMsg.tr(),
-                            style = TextStyle(
-                                fontFamily = ff,
-                                fontSize = 13.5.sp,
-                                lineHeight = 19.sp
-                            ),
-                            color = colors.textPrimary.copy(alpha = 0.7f),
-                            textAlign = TextAlign.Center,
-                            modifier = Modifier.padding(horizontal = 8.dp)
-                        )
-                    }
-                )
-            }
-        }
-
-        // ── Sign Out Action Sheet (Apple HIG) ──
+        // ── Sign Out Action Sheet ──
         if (showSignOutConfirm) {
             ElvanActionSheet(
                 title = K.signOutConfirm.tr(),

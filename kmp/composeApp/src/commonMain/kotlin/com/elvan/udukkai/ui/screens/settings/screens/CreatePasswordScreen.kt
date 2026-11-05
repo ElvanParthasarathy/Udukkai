@@ -1,15 +1,21 @@
 package com.elvan.udukkai.ui.screens.settings.screens
 
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -31,8 +37,12 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 /**
- * கடவுச்சொல் உருவாக்கும் திரை — Create Password Screen.
- * For users who initially signed in with Google OAuth to establish email/password access.
+ * கடவுச்சொல் உருவாக்கும் திரை — Modern Password Creation Studio.
+ * Industry-grade password studio featuring:
+ * - Security key hero badge with clean, natural Senthamizh description.
+ * - Dynamic 4-segment animated Password Strength Meter (Weak, Medium, Strong).
+ * - Real-time requirement checklist with animated checkmark states.
+ * - Prominent full-width Save Password pill button with loading feedback.
  */
 @Composable
 fun CreatePasswordScreen(
@@ -42,20 +52,48 @@ fun CreatePasswordScreen(
 ) {
     val ff = LocalAppFontFamily.current
     val scope = rememberCoroutineScope()
-    val atLeast6CharsMsg = K.atLeast6Chars.tr()
-    val passwordsMatchMsg = K.passwordsMatch.tr()
-    val passwordCreatedMsg = K.passwordCreated.tr()
-    val errorGeneric = K.error.tr()
 
     var newPassword by remember { mutableStateOf("") }
     var confirmPassword by remember { mutableStateOf("") }
     var showPassword by remember { mutableStateOf(false) }
+    var showConfirmPassword by remember { mutableStateOf(false) }
 
     var isProcessing by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
 
-    val passwordValid = newPassword.length >= 6
+    val passwordCreatedMsg = K.passwordCreated.tr()
+    val errorGeneric = K.error.tr()
+
+    // ── Live Criteria Validation ──
+    val hasMinLength = newPassword.length >= 8
+    val hasLetters = newPassword.any { it.isLetter() }
+    val hasDigits = newPassword.any { it.isDigit() }
+    val hasMixedContent = hasLetters && hasDigits
     val passwordsMatch = newPassword.isNotEmpty() && newPassword == confirmPassword
+
+    // Password strength score (0 to 4)
+    val strengthScore = remember(newPassword) {
+        var score = 0
+        if (newPassword.length >= 6) score++
+        if (newPassword.length >= 8) score++
+        if (newPassword.any { it.isLetter() } && newPassword.any { it.isDigit() }) score++
+        if (newPassword.any { !it.isLetterOrDigit() } || newPassword.any { it.isUpperCase() }) score++
+        score
+    }
+
+    val strengthColor = when (strengthScore) {
+        0, 1 -> colors.error
+        2 -> Color(0xFFF59E0B) // Amber
+        else -> colors.accent
+    }
+
+    val strengthLabel = when (strengthScore) {
+        0, 1 -> K.passwordStrengthWeak.tr()
+        2 -> K.passwordStrengthMedium.tr()
+        else -> K.passwordStrengthStrong.tr()
+    }
+
+    val canSave = hasMinLength && hasMixedContent && passwordsMatch && !isProcessing
 
     Box(modifier = Modifier.fillMaxSize()) {
         LazyColumn(
@@ -68,50 +106,44 @@ fun CreatePasswordScreen(
                 Spacer(modifier = Modifier.height(LocalElvanTopSpacerHeight.current))
             }
 
-            item(key = "content_card") {
+            item(key = "password_studio_card") {
                 ElvanSectionContainer {
-                    ElvanSettingsSection(colors = colors) {
+                    Surface(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(24.dp)),
+                        shape = RoundedCornerShape(24.dp),
+                        color = colors.surface,
+                        shadowElevation = 0.dp
+                    ) {
                         Column(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(horizontal = 20.dp, vertical = 20.dp)
+                                .padding(horizontal = 20.dp, vertical = 24.dp)
                         ) {
-                            // Info Banner
-                            Surface(
-                                modifier = Modifier.fillMaxWidth(),
-                                shape = RoundedCornerShape(16.dp),
-                                color = colors.iconBg
+                            // Hero Security Key Icon
+                            Box(
+                                modifier = Modifier
+                                    .size(56.dp)
+                                    .clip(CircleShape)
+                                    .background(colors.iconBg),
+                                contentAlignment = Alignment.Center
                             ) {
-                                Row(
-                                    modifier = Modifier.padding(14.dp),
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Icon(
-                                        imageVector = MaterialSymbols.Rounded.Info,
-                                        contentDescription = null,
-                                        tint = colors.accent,
-                                        modifier = Modifier.size(24.dp)
-                                    )
-                                    Spacer(modifier = Modifier.width(12.dp))
-                                    Text(
-                                        text = K.signedInWithGoogleCreatePassword.tr(),
-                                        style = TextStyle(
-                                            fontFamily = ff,
-                                            fontSize = 13.sp,
-                                            lineHeight = 18.sp
-                                        ),
-                                        color = colors.textPrimary
-                                    )
-                                }
+                                Icon(
+                                    imageVector = MaterialSymbols.Rounded.Key,
+                                    contentDescription = null,
+                                    tint = colors.accent,
+                                    modifier = Modifier.size(28.dp)
+                                )
                             }
 
-                            Spacer(modifier = Modifier.height(20.dp))
+                            Spacer(modifier = Modifier.height(16.dp))
 
                             Text(
                                 text = K.createPasswordTitle.tr(),
                                 style = TextStyle(
                                     fontFamily = ff,
-                                    fontSize = 17.sp,
+                                    fontSize = 18.sp,
                                     fontWeight = FontWeight.Bold
                                 ),
                                 color = colors.textPrimary
@@ -120,18 +152,18 @@ fun CreatePasswordScreen(
                             Spacer(modifier = Modifier.height(4.dp))
 
                             Text(
-                                text = K.createPasswordMsg.tr(),
+                                text = "உங்கள் மின்னஞ்சல் மூலம் உள்நுழையப் புதிய கடவுச்சொல்லை அமைக்கவும்.",
                                 style = TextStyle(
                                     fontFamily = ff,
-                                    fontSize = 13.sp,
-                                    lineHeight = 18.sp
+                                    fontSize = 13.5.sp,
+                                    lineHeight = 19.sp
                                 ),
                                 color = colors.textPrimary.copy(alpha = 0.55f)
                             )
 
-                            Spacer(modifier = Modifier.height(20.dp))
+                            Spacer(modifier = Modifier.height(24.dp))
 
-                            // 1. New Password
+                            // 1. New Password Field
                             ElvanSettingsTextField(
                                 label = K.newPassword.tr(),
                                 value = newPassword,
@@ -154,9 +186,44 @@ fun CreatePasswordScreen(
                                 colors = colors
                             )
 
+                            // Password Strength Bar
+                            if (newPassword.isNotEmpty()) {
+                                Spacer(modifier = Modifier.height(10.dp))
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                ) {
+                                    for (i in 1..4) {
+                                        val active = strengthScore >= i
+                                        val barColor by animateColorAsState(
+                                            targetValue = if (active) strengthColor else colors.iconBg,
+                                            animationSpec = tween(200)
+                                        )
+                                        Box(
+                                            modifier = Modifier
+                                                .weight(1f)
+                                                .height(4.dp)
+                                                .clip(RoundedCornerShape(2.dp))
+                                                .background(barColor)
+                                        )
+                                    }
+                                    Spacer(modifier = Modifier.width(4.dp))
+                                    Text(
+                                        text = strengthLabel,
+                                        style = TextStyle(
+                                            fontFamily = ff,
+                                            fontSize = 11.5.sp,
+                                            fontWeight = FontWeight.SemiBold
+                                        ),
+                                        color = strengthColor
+                                    )
+                                }
+                            }
+
                             Spacer(modifier = Modifier.height(14.dp))
 
-                            // 2. Confirm Password
+                            // 2. Confirm Password Field
                             ElvanSettingsTextField(
                                 label = K.confirmNewPassword.tr(),
                                 value = confirmPassword,
@@ -165,7 +232,17 @@ fun CreatePasswordScreen(
                                     errorMessage = null
                                 },
                                 placeholder = K.confirmPassword.tr(),
-                                visualTransformation = if (showPassword) VisualTransformation.None else PasswordVisualTransformation(),
+                                visualTransformation = if (showConfirmPassword) VisualTransformation.None else PasswordVisualTransformation(),
+                                trailingIcon = {
+                                    Icon(
+                                        imageVector = if (showConfirmPassword) MaterialSymbols.Rounded.Visibility else MaterialSymbols.Rounded.VisibilityOff,
+                                        contentDescription = null,
+                                        tint = colors.textPrimary.copy(alpha = 0.45f),
+                                        modifier = Modifier
+                                            .size(20.dp)
+                                            .clickable { showConfirmPassword = !showConfirmPassword }
+                                    )
+                                },
                                 colors = colors
                             )
 
@@ -183,24 +260,30 @@ fun CreatePasswordScreen(
                                 )
                             }
 
-                            Spacer(modifier = Modifier.height(16.dp))
+                            Spacer(modifier = Modifier.height(20.dp))
 
-                            // Validation Checklist
+                            // Requirements Checklist Card
                             Surface(
                                 modifier = Modifier.fillMaxWidth(),
                                 shape = RoundedCornerShape(16.dp),
                                 color = colors.iconBg
                             ) {
                                 Column(modifier = Modifier.padding(14.dp)) {
-                                    CreatePasswordValidationRow(
-                                        text = atLeast6CharsMsg,
-                                        satisfied = passwordValid,
+                                    PasswordRequirementItem(
+                                        label = K.min8Chars.tr(),
+                                        isSatisfied = hasMinLength,
                                         colors = colors
                                     )
-                                    Spacer(modifier = Modifier.height(6.dp))
-                                    CreatePasswordValidationRow(
-                                        text = passwordsMatchMsg,
-                                        satisfied = passwordsMatch,
+                                    Spacer(modifier = Modifier.height(8.dp))
+                                    PasswordRequirementItem(
+                                        label = K.hasLetterAndNumber.tr(),
+                                        isSatisfied = hasMixedContent,
+                                        colors = colors
+                                    )
+                                    Spacer(modifier = Modifier.height(8.dp))
+                                    PasswordRequirementItem(
+                                        label = K.passwordsMatch.tr(),
+                                        isSatisfied = passwordsMatch,
                                         colors = colors
                                     )
                                 }
@@ -208,17 +291,9 @@ fun CreatePasswordScreen(
 
                             Spacer(modifier = Modifier.height(24.dp))
 
-                            // Set Password Button
+                            // Prominent Save Password Pill Button
                             Button(
                                 onClick = {
-                                    if (newPassword.length < 6) {
-                                        errorMessage = atLeast6CharsMsg
-                                        return@Button
-                                    }
-                                    if (newPassword != confirmPassword) {
-                                        errorMessage = passwordsMatchMsg
-                                        return@Button
-                                    }
                                     isProcessing = true
                                     errorMessage = null
                                     scope.launch {
@@ -242,7 +317,7 @@ fun CreatePasswordScreen(
                                     contentColor = if (colors.isDark) Color.Black else Color.White
                                 ),
                                 elevation = ButtonDefaults.buttonElevation(0.dp),
-                                enabled = !isProcessing
+                                enabled = canSave
                             ) {
                                 if (isProcessing) {
                                     ExpressiveLoadingIndicator(
@@ -251,11 +326,11 @@ fun CreatePasswordScreen(
                                     )
                                 } else {
                                     Text(
-                                        text = K.createPassword.tr(),
+                                        text = K.savePassword.tr(),
                                         style = TextStyle(
                                             fontFamily = ff,
                                             fontSize = 15.sp,
-                                            fontWeight = FontWeight.SemiBold
+                                            fontWeight = FontWeight.Bold
                                         )
                                     )
                                 }
@@ -269,9 +344,9 @@ fun CreatePasswordScreen(
 }
 
 @Composable
-private fun CreatePasswordValidationRow(
-    text: String,
-    satisfied: Boolean,
+private fun PasswordRequirementItem(
+    label: String,
+    isSatisfied: Boolean,
     colors: ShellColors
 ) {
     val ff = LocalAppFontFamily.current
@@ -280,19 +355,19 @@ private fun CreatePasswordValidationRow(
         horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         Icon(
-            imageVector = if (satisfied) MaterialSymbols.Rounded.CheckCircle else MaterialSymbols.Rounded.RadioButtonUnchecked,
+            imageVector = if (isSatisfied) MaterialSymbols.Rounded.CheckCircle else MaterialSymbols.Rounded.RadioButtonUnchecked,
             contentDescription = null,
-            tint = if (satisfied) colors.accent else colors.textPrimary.copy(alpha = 0.35f),
+            tint = if (isSatisfied) colors.accent else colors.textPrimary.copy(alpha = 0.3f),
             modifier = Modifier.size(16.dp)
         )
         Text(
-            text = text,
+            text = label,
             style = TextStyle(
                 fontFamily = ff,
-                fontSize = 12.sp,
-                fontWeight = if (satisfied) FontWeight.SemiBold else FontWeight.Normal
+                fontSize = 12.5.sp,
+                fontWeight = if (isSatisfied) FontWeight.SemiBold else FontWeight.Normal
             ),
-            color = if (satisfied) colors.textPrimary else colors.textPrimary.copy(alpha = 0.5f)
+            color = if (isSatisfied) colors.textPrimary else colors.textPrimary.copy(alpha = 0.5f)
         )
     }
 }
