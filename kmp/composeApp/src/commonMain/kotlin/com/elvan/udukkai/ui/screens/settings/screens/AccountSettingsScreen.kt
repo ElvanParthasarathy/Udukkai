@@ -25,11 +25,10 @@ import com.elvan.udukkai.ui.screens.settings.SettingsRoute
 
 /**
  * கணக்கு அமைப்புகள் — Account Settings Screen (Matching Neram Mobile).
- * - Top Profile Pill Card showing avatar, display name, and email. Tapping opens Name Edit.
- * - Redundant display name and email rows removed.
+ * - Top Profile Pill Card showing avatar, display name, and email. Tapping opens Name Edit subpage.
  * - Card 1 (Security & Sign-in): Google link ("கூகுள் இணைப்பு"), Password status, Sign Out with clean ActionSheet.
  * - Card 2 (Danger Zone): Delete account step-by-step wizard.
- * - No section titles above cards for a minimalist UI.
+ * - Minimalist monochrome UI without redundant duplicate headers.
  */
 @Composable
 fun AccountSettingsScreen(
@@ -57,7 +56,7 @@ fun AccountSettingsScreen(
                 Spacer(modifier = Modifier.height(LocalElvanTopSpacerHeight.current))
             }
 
-            // ── Top Profile Pill Card (Matching Neram) ──
+            // ── Top Profile Pill Card: Tapping opens Name Edit Sub-page ──
             item(key = "profile_pill_header") {
                 ElvanSectionContainer {
                     ElvanProfilePillCard(
@@ -91,7 +90,7 @@ fun AccountSettingsScreen(
             item(key = "security_signin_card") {
                 ElvanSectionContainer {
                     ElvanSettingsSection(colors = colors) {
-                        // Google Link Row ("கூகுள் இணைப்பு")
+                        // Google Link Row ("கூகுள் இணைப்பு" -> opens LinkedAccounts subpage)
                         ElvanSettingsRow(
                             icon = MaterialSymbols.Rounded.Link,
                             title = K.googleLink.tr(),

@@ -91,30 +91,6 @@ fun EditNameScreen(
                                 )
                             })
                         }
-
-                        Spacer(modifier = Modifier.height(10.dp))
-
-                        Text(
-                            text = (AuthManager.signedInDisplayName ?: "").ifEmpty { K.userAccount.tr() },
-                            style = TextStyle(
-                                fontFamily = ff,
-                                fontSize = 17.sp,
-                                fontWeight = FontWeight.SemiBold
-                            ),
-                            color = colors.textPrimary
-                        )
-
-                        Spacer(modifier = Modifier.height(4.dp))
-
-                        Text(
-                            text = AuthManager.signedInEmail ?: "",
-                            style = TextStyle(
-                                fontFamily = ff,
-                                fontSize = 13.sp,
-                                fontWeight = FontWeight.Normal
-                            ),
-                            color = colors.textPrimary.copy(alpha = 0.5f)
-                        )
                     }
                 }
             }

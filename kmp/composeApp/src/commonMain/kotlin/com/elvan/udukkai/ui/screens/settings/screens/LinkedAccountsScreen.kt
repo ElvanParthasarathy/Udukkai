@@ -161,15 +161,15 @@ fun LinkedAccountsScreen(
                                         )
                                     }
 
-                                    // Status Badge (Connected has green tint matching Neram)
+                                    // Status Badge (Monochrome)
                                     Surface(
                                         shape = RoundedCornerShape(20.dp),
-                                        color = if (isGoogleLinked) colors.success.copy(alpha = 0.15f) else colors.iconBg
+                                        color = colors.iconBg
                                     ) {
                                         Text(
                                             text = if (isGoogleLinked) K.connected.tr() else K.notConnected.tr(),
                                             style = TextStyle(fontFamily = ff, fontSize = 11.5.sp, fontWeight = FontWeight.SemiBold),
-                                            color = if (isGoogleLinked) colors.success else colors.textPrimary.copy(alpha = 0.6f),
+                                            color = if (isGoogleLinked) colors.textPrimary else colors.textPrimary.copy(alpha = 0.6f),
                                             modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
                                         )
                                     }
@@ -256,7 +256,7 @@ fun LinkedAccountsScreen(
                     item(key = "email_password_section") {
                         ElvanSectionContainer {
                             ElvanSettingsSection(colors = colors) {
-                                // Email Row with Green Tick Mark
+                                // Email Row with Monochrome Tick Mark
                                 ElvanSettingsRow(
                                     icon = MaterialSymbols.Rounded.Email,
                                     title = K.email.tr(),
@@ -266,7 +266,7 @@ fun LinkedAccountsScreen(
                                         Icon(
                                             imageVector = MaterialSymbols.Rounded.CheckCircle,
                                             contentDescription = null,
-                                            tint = colors.success,
+                                            tint = colors.textPrimary,
                                             modifier = Modifier.size(20.dp)
                                         )
                                     },
@@ -275,7 +275,7 @@ fun LinkedAccountsScreen(
 
                                 ElvanSettingsDivider(colors = colors)
 
-                                // Password Row with Green Tick Mark (if set)
+                                // Password Row with Monochrome Tick Mark (if set)
                                 ElvanSettingsRow(
                                     icon = MaterialSymbols.Rounded.Key,
                                     title = K.password.tr(),
@@ -292,7 +292,7 @@ fun LinkedAccountsScreen(
                                             Icon(
                                                 imageVector = MaterialSymbols.Rounded.CheckCircle,
                                                 contentDescription = null,
-                                                tint = colors.success,
+                                                tint = colors.textPrimary,
                                                 modifier = Modifier.size(20.dp)
                                             )
                                         } else {

@@ -36,17 +36,53 @@ object AuthManager {
     var isGoogleProvider by mutableStateOf(false)
         private set
 
+    var isGoogleLinked by mutableStateOf(false)
+        private set
+
+    var hasPassword by mutableStateOf(false)
+        private set
+
     val userPhotoUrl: String? get() = platformUserPhotoUrl()
-    val hasPassword: Boolean get() = platformHasPassword()
-    val isGoogleLinked: Boolean get() = platformIsGoogleLinked()
     val googleEmail: String? get() = platformGoogleEmail()
     val googlePhotoUrl: String? get() = platformGooglePhotoUrl()
 
-    suspend fun unlinkGoogle(): Boolean = platformUnlinkGoogle()
-    suspend fun linkGoogle(): GoogleSignInResult = platformLinkGoogle()
+    suspend fun unlinkGoogle(): Boolean {
+        val ok = platformUnlinkGoogle()
+        if (ok) {
+            isGoogleLinked = false
+        } else {
+            isGoogleLinked = platformIsGoogleLinked()
+        }
+        hasPassword = platformHasPassword()
+        return ok
+    }
+
+    suspend fun linkGoogle(): GoogleSignInResult {
+        val res = platformLinkGoogle()
+        if (res is GoogleSignInResult.Success) {
+            isGoogleLinked = true
+            hasPassword = platformHasPassword()
+        }
+        return res
+    }
+
     suspend fun verifyPassword(password: String): Result<Unit> = platformVerifyPassword(password)
-    suspend fun changePassword(current: String, new: String): Result<Unit> = platformChangePassword(current, new)
-    suspend fun createPassword(password: String): Result<Unit> = platformCreatePassword(password)
+
+    suspend fun changePassword(current: String, new: String): Result<Unit> {
+        val res = platformChangePassword(current, new)
+        if (res.isSuccess) {
+            hasPassword = true
+        }
+        return res
+    }
+
+    suspend fun createPassword(password: String): Result<Unit> {
+        val res = platformCreatePassword(password)
+        if (res.isSuccess) {
+            hasPassword = true
+        }
+        return res
+    }
     suspend fun deleteAccount(password: String? = null): Result<Unit> {
         val res = platformDeleteAccount(password)
         if (res.isSuccess) {
@@ -83,6 +119,8 @@ object AuthManager {
         signedInEmail = if (isLoggedIn) email else null
         signedInDisplayName = if (isLoggedIn) platformSignedInDisplayName() else null
         isGoogleProvider = if (isLoggedIn) platformIsGoogleProvider() else false
+        isGoogleLinked = if (isLoggedIn) platformIsGoogleLinked() else false
+        hasPassword = if (isLoggedIn) platformHasPassword() else false
         refreshProfileStatus()
         if (isLoggedIn) {
             try {
@@ -105,6 +143,8 @@ object AuthManager {
             signedInEmail = result.email
             signedInDisplayName = platformSignedInDisplayName()
             isGoogleProvider = platformIsGoogleProvider()
+            isGoogleLinked = platformIsGoogleLinked()
+            hasPassword = platformHasPassword()
             try {
                 getFirebaseSyncManager().startSync(if (appScope == AppScope.FACTORY) "factory" else "textiles")
             } catch (_: Exception) {}
@@ -120,6 +160,8 @@ object AuthManager {
             signedInEmail = result.email
             signedInDisplayName = platformSignedInDisplayName()
             isGoogleProvider = platformIsGoogleProvider()
+            isGoogleLinked = platformIsGoogleLinked()
+            hasPassword = platformHasPassword()
             try {
                 getFirebaseSyncManager().startSync(if (appScope == AppScope.FACTORY) "factory" else "textiles")
             } catch (_: Exception) {}
@@ -132,6 +174,8 @@ object AuthManager {
         signedInEmail = null
         signedInDisplayName = null
         isGoogleProvider = false
+        isGoogleLinked = false
+        hasPassword = false
         try {
             getFirebaseSyncManager().stopSync()
         } catch (_: Exception) {}

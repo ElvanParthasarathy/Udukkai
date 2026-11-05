@@ -155,6 +155,7 @@ actual fun platformGooglePhotoUrl(): String? = try {
 actual suspend fun platformUnlinkGoogle(): Boolean = try {
     val user = FirebaseAuth.getInstance().currentUser ?: return false
     user.unlink("google.com").await()
+    user.reload().await()
     true
 } catch (_: Exception) { false }
 
@@ -178,6 +179,7 @@ actual suspend fun platformLinkGoogle(): GoogleSignInResult {
         val auth = FirebaseAuth.getInstance()
         val user = auth.currentUser ?: return GoogleSignInResult.Failed
         user.linkWithCredential(GoogleAuthProvider.getCredential(google.idToken, null)).await()
+        user.reload().await()
         GoogleSignInResult.Success(google.id)
     } catch (_: GetCredentialCancellationException) {
         GoogleSignInResult.Cancelled
@@ -215,6 +217,7 @@ actual suspend fun platformCreatePassword(password: String): Result<Unit> = try 
     val email = user.email ?: throw IllegalStateException("No email attached to user")
     val credential = com.google.firebase.auth.EmailAuthProvider.getCredential(email, password)
     user.linkWithCredential(credential).await()
+    user.reload().await()
     Result.success(Unit)
 } catch (e: Exception) {
     Result.failure(e)
