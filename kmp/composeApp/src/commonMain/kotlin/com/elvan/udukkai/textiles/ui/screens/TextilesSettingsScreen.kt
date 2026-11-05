@@ -127,7 +127,7 @@ fun TextilesSettingsScreen(
                 SettingsRoute.InvoiceCreation -> K.createBtn.tr()
                 SettingsRoute.BilingualRules -> K.bilingualSettings.tr()
                 SettingsRoute.LogoSettings -> K.logoSettings.tr()
-                SettingsRoute.Account -> K.accountAndSecurity.tr()
+                SettingsRoute.Account -> K.security.tr()
                 SettingsRoute.LinkedAccounts -> K.linkedAccounts.tr()
                 SettingsRoute.ChangePassword -> K.changePassword.tr()
                 SettingsRoute.CreatePassword -> K.createPassword.tr()
