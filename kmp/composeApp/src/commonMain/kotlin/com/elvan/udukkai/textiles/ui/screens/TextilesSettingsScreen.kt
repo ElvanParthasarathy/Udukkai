@@ -144,74 +144,117 @@ fun TextilesSettingsScreen(
                 SettingsRoute.About -> K.groupAbout.tr()
             }
 
-            ElvanSubShell(
-                title = pageTitle,
-                onBack = handleBack,
-                scrollState = scrollState,
-                hasFloatingBar = route == SettingsRoute.Hub,
-                floatingBar = { if (route == SettingsRoute.Hub) SettingsSearchPill(colors) { searchOpen = true } }
-            ) {
+            val isSelfShelled = route in setOf(
+                SettingsRoute.Account,
+                SettingsRoute.Security,
+                SettingsRoute.EditName,
+                SettingsRoute.LinkedAccounts,
+                SettingsRoute.ChangePassword,
+                SettingsRoute.CreatePassword,
+                SettingsRoute.DeleteAccount
+            )
+
+            if (isSelfShelled) {
                 when (route) {
-                    SettingsRoute.Hub -> TextilesSettingsHubContent(
-                        onNavigate = { navigateTo(it) },
-                        scrollState = scrollState
-                    )
-                    SettingsRoute.Display -> DisplaySettingsScreen(scrollState = scrollState, colors = colors)
-                    SettingsRoute.Language -> LanguageSettingsScreen(scrollState = scrollState, colors = colors)
-                    SettingsRoute.Merchant -> TextilesMerchantSettingsScreen(
-                        onNavigateToManageProfiles = { navigateTo(SettingsRoute.ManageProfiles) },
-                        scrollState = scrollState,
-                        colors = colors
-                    )
-                    SettingsRoute.ManageProfiles -> TextilesManageProfilesScreen(
-                        onBack = { handleBack() },
-                        scrollState = scrollState,
-                        colors = colors
-                    )
-                    SettingsRoute.FactoryIdentity -> {}
-                    SettingsRoute.TextilesIdentity -> TextilesIdentityScreen(scrollState = scrollState, colors = colors)
-                    SettingsRoute.Address -> TextilesAddressSettingsScreen(
-                        scrollState = scrollState,
-                        colors = colors
-                    )
-                    SettingsRoute.Bank -> BankSettingsScreen(
-                        scrollState = scrollState,
-                        colors = colors,
-                        profile = TextilesProfileRepository.profile,
-                        onUpdateProfile = { TextilesProfileRepository.updateProfile(it) }
-                    )
-                    SettingsRoute.InvoiceCreation -> TextilesInvoiceCreationSettingsScreen(
+                    SettingsRoute.Account, SettingsRoute.Security -> AccountSettingsScreen(
+                        onBack = handleBack,
                         onNavigate = { navigateTo(it) },
                         scrollState = scrollState,
                         colors = colors
                     )
-                    SettingsRoute.BilingualRules -> BilingualRulesScreen(
-                        profile = TextilesProfileRepository.profile,
-                        colors = colors,
+                    SettingsRoute.EditName -> EditNameScreen(
+                        onBack = handleBack,
                         scrollState = scrollState,
-                        onSave = { TextilesProfileRepository.updateProfile(it) }
+                        colors = colors
                     )
-                    SettingsRoute.LogoSettings -> LogoSettingsScreen(
-                        profile = TextilesProfileRepository.profile,
-                        isFactory = false,
-                        colors = colors,
+                    SettingsRoute.LinkedAccounts -> LinkedAccountsScreen(
+                        onBack = handleBack,
+                        onNavigate = { navigateTo(it) },
                         scrollState = scrollState,
-                        onSave = { TextilesProfileRepository.updateProfile(it) }
+                        colors = colors
                     )
-                    SettingsRoute.StorageBackup -> TextilesStorageBackupScreen(scrollState = scrollState, colors = colors)
-                    SettingsRoute.Account, SettingsRoute.Security -> AccountSettingsScreen(onNavigate = { navigateTo(it) }, scrollState = scrollState, colors = colors)
-                    SettingsRoute.EditName -> EditNameScreen(onBack = { handleBack() }, scrollState = scrollState, colors = colors)
-                    SettingsRoute.LinkedAccounts -> LinkedAccountsScreen(onNavigate = { navigateTo(it) }, scrollState = scrollState, colors = colors)
-                    SettingsRoute.ChangePassword -> ChangePasswordScreen(onBack = { handleBack() }, scrollState = scrollState, colors = colors)
-                    SettingsRoute.CreatePassword -> CreatePasswordScreen(onBack = { handleBack() }, scrollState = scrollState, colors = colors)
-                    SettingsRoute.DeleteAccount -> DeleteAccountScreen(onBack = { handleBack() }, scrollState = scrollState, colors = colors)
-                    SettingsRoute.AboutDeveloper -> AboutDeveloperScreen(scrollState = scrollState, colors = colors)
-                    SettingsRoute.AboutApp -> AboutAppScreen(scrollState = scrollState, colors = colors)
-                    SettingsRoute.ElvanNavil -> TransliteratorSettingsScreen(scrollState = scrollState, colors = colors)
-                    SettingsRoute.Privacy -> LegalScreen(LegalPage.PRIVACY, scrollState, colors)
-                    SettingsRoute.Terms -> LegalScreen(LegalPage.TERMS, scrollState, colors)
-                    SettingsRoute.Licences -> LegalScreen(LegalPage.LICENCES, scrollState, colors)
-                    SettingsRoute.About -> AboutHubScreen(versionText = "Udukkai Textiles v1.0", onNavigate = { navigateTo(it) }, scrollState = scrollState, colors = colors)
+                    SettingsRoute.ChangePassword -> ChangePasswordScreen(
+                        onBack = handleBack,
+                        scrollState = scrollState,
+                        colors = colors
+                    )
+                    SettingsRoute.CreatePassword -> CreatePasswordScreen(
+                        onBack = handleBack,
+                        scrollState = scrollState,
+                        colors = colors
+                    )
+                    SettingsRoute.DeleteAccount -> DeleteAccountScreen(
+                        onBack = handleBack,
+                        scrollState = scrollState,
+                        colors = colors
+                    )
+                    else -> {}
+                }
+            } else {
+                ElvanSubShell(
+                    title = pageTitle,
+                    onBack = handleBack,
+                    scrollState = scrollState,
+                    hasFloatingBar = route == SettingsRoute.Hub,
+                    floatingBar = { if (route == SettingsRoute.Hub) SettingsSearchPill(colors) { searchOpen = true } }
+                ) {
+                    when (route) {
+                        SettingsRoute.Hub -> TextilesSettingsHubContent(
+                            onNavigate = { navigateTo(it) },
+                            scrollState = scrollState
+                        )
+                        SettingsRoute.Display -> DisplaySettingsScreen(scrollState = scrollState, colors = colors)
+                        SettingsRoute.Language -> LanguageSettingsScreen(scrollState = scrollState, colors = colors)
+                        SettingsRoute.Merchant -> TextilesMerchantSettingsScreen(
+                            onNavigateToManageProfiles = { navigateTo(SettingsRoute.ManageProfiles) },
+                            scrollState = scrollState,
+                            colors = colors
+                        )
+                        SettingsRoute.ManageProfiles -> TextilesManageProfilesScreen(
+                            onBack = { handleBack() },
+                            scrollState = scrollState,
+                            colors = colors
+                        )
+                        SettingsRoute.FactoryIdentity -> {}
+                        SettingsRoute.TextilesIdentity -> TextilesIdentityScreen(scrollState = scrollState, colors = colors)
+                        SettingsRoute.Address -> TextilesAddressSettingsScreen(
+                            scrollState = scrollState,
+                            colors = colors
+                        )
+                        SettingsRoute.Bank -> BankSettingsScreen(
+                            scrollState = scrollState,
+                            colors = colors,
+                            profile = TextilesProfileRepository.profile,
+                            onUpdateProfile = { TextilesProfileRepository.updateProfile(it) }
+                        )
+                        SettingsRoute.InvoiceCreation -> TextilesInvoiceCreationSettingsScreen(
+                            onNavigate = { navigateTo(it) },
+                            scrollState = scrollState,
+                            colors = colors
+                        )
+                        SettingsRoute.BilingualRules -> BilingualRulesScreen(
+                            profile = TextilesProfileRepository.profile,
+                            colors = colors,
+                            scrollState = scrollState,
+                            onSave = { TextilesProfileRepository.updateProfile(it) }
+                        )
+                        SettingsRoute.LogoSettings -> LogoSettingsScreen(
+                            profile = TextilesProfileRepository.profile,
+                            isFactory = false,
+                            colors = colors,
+                            scrollState = scrollState,
+                            onSave = { TextilesProfileRepository.updateProfile(it) }
+                        )
+                        SettingsRoute.StorageBackup -> TextilesStorageBackupScreen(scrollState = scrollState, colors = colors)
+                        SettingsRoute.AboutDeveloper -> AboutDeveloperScreen(scrollState = scrollState, colors = colors)
+                        SettingsRoute.AboutApp -> AboutAppScreen(scrollState = scrollState, colors = colors)
+                        SettingsRoute.ElvanNavil -> TransliteratorSettingsScreen(scrollState = scrollState, colors = colors)
+                        SettingsRoute.Privacy -> LegalScreen(LegalPage.PRIVACY, scrollState, colors)
+                        SettingsRoute.Terms -> LegalScreen(LegalPage.TERMS, scrollState, colors)
+                        SettingsRoute.Licences -> LegalScreen(LegalPage.LICENCES, scrollState, colors)
+                        SettingsRoute.About -> AboutHubScreen(versionText = "Udukkai Textiles v1.0", onNavigate = { navigateTo(it) }, scrollState = scrollState, colors = colors)
+                        else -> {}
+                    }
                 }
             }
         }

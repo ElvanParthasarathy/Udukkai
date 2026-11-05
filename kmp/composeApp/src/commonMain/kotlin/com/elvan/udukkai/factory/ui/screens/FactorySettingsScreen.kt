@@ -144,74 +144,117 @@ fun FactorySettingsScreen(
                 SettingsRoute.About -> K.groupAbout.tr()
             }
 
-            ElvanSubShell(
-                title = pageTitle,
-                onBack = handleBack,
-                scrollState = scrollState,
-                hasFloatingBar = route == SettingsRoute.Hub,
-                floatingBar = { if (route == SettingsRoute.Hub) SettingsSearchPill(colors) { searchOpen = true } }
-            ) {
+            val isSelfShelled = route in setOf(
+                SettingsRoute.Account,
+                SettingsRoute.Security,
+                SettingsRoute.EditName,
+                SettingsRoute.LinkedAccounts,
+                SettingsRoute.ChangePassword,
+                SettingsRoute.CreatePassword,
+                SettingsRoute.DeleteAccount
+            )
+
+            if (isSelfShelled) {
                 when (route) {
-                    SettingsRoute.Hub -> FactorySettingsHubContent(
-                        onNavigate = { navigateTo(it) },
-                        scrollState = scrollState
-                    )
-                    SettingsRoute.Display -> DisplaySettingsScreen(scrollState = scrollState, colors = colors)
-                    SettingsRoute.Language -> LanguageSettingsScreen(scrollState = scrollState, colors = colors)
-                    SettingsRoute.Merchant -> FactoryMerchantSettingsScreen(
-                        onNavigateToManageProfiles = { navigateTo(SettingsRoute.ManageProfiles) },
-                        scrollState = scrollState,
-                        colors = colors
-                    )
-                    SettingsRoute.ManageProfiles -> FactoryManageProfilesScreen(
-                        onBack = { handleBack() },
-                        scrollState = scrollState,
-                        colors = colors
-                    )
-                    SettingsRoute.FactoryIdentity -> FactoryIdentityScreen(scrollState = scrollState, colors = colors)
-                    SettingsRoute.TextilesIdentity -> {}
-                    SettingsRoute.Address -> FactoryAddressSettingsScreen(
-                        scrollState = scrollState,
-                        colors = colors
-                    )
-                    SettingsRoute.Bank -> BankSettingsScreen(
-                        scrollState = scrollState,
-                        colors = colors,
-                        profile = FactoryProfileRepository.profile,
-                        onUpdateProfile = { FactoryProfileRepository.updateProfile(it) }
-                    )
-                    SettingsRoute.InvoiceCreation -> FactoryInvoiceCreationSettingsScreen(
+                    SettingsRoute.Account, SettingsRoute.Security -> AccountSettingsScreen(
+                        onBack = handleBack,
                         onNavigate = { navigateTo(it) },
                         scrollState = scrollState,
                         colors = colors
                     )
-                    SettingsRoute.BilingualRules -> BilingualRulesScreen(
-                        profile = FactoryProfileRepository.profile,
-                        colors = colors,
+                    SettingsRoute.EditName -> EditNameScreen(
+                        onBack = handleBack,
                         scrollState = scrollState,
-                        onSave = { FactoryProfileRepository.updateProfile(it) }
+                        colors = colors
                     )
-                    SettingsRoute.LogoSettings -> LogoSettingsScreen(
-                        profile = FactoryProfileRepository.profile,
-                        isFactory = true,
-                        colors = colors,
+                    SettingsRoute.LinkedAccounts -> LinkedAccountsScreen(
+                        onBack = handleBack,
+                        onNavigate = { navigateTo(it) },
                         scrollState = scrollState,
-                        onSave = { FactoryProfileRepository.updateProfile(it) }
+                        colors = colors
                     )
-                    SettingsRoute.StorageBackup -> FactoryStorageBackupScreen(scrollState = scrollState, colors = colors)
-                    SettingsRoute.Account, SettingsRoute.Security -> AccountSettingsScreen(onNavigate = { navigateTo(it) }, scrollState = scrollState, colors = colors)
-                    SettingsRoute.EditName -> EditNameScreen(onBack = { handleBack() }, scrollState = scrollState, colors = colors)
-                    SettingsRoute.LinkedAccounts -> LinkedAccountsScreen(onNavigate = { navigateTo(it) }, scrollState = scrollState, colors = colors)
-                    SettingsRoute.ChangePassword -> ChangePasswordScreen(onBack = { handleBack() }, scrollState = scrollState, colors = colors)
-                    SettingsRoute.CreatePassword -> CreatePasswordScreen(onBack = { handleBack() }, scrollState = scrollState, colors = colors)
-                    SettingsRoute.DeleteAccount -> DeleteAccountScreen(onBack = { handleBack() }, scrollState = scrollState, colors = colors)
-                    SettingsRoute.AboutDeveloper -> AboutDeveloperScreen(scrollState = scrollState, colors = colors)
-                    SettingsRoute.AboutApp -> AboutAppScreen(scrollState = scrollState, colors = colors)
-                    SettingsRoute.ElvanNavil -> TransliteratorSettingsScreen(scrollState = scrollState, colors = colors)
-                    SettingsRoute.Privacy -> LegalScreen(LegalPage.PRIVACY, scrollState, colors)
-                    SettingsRoute.Terms -> LegalScreen(LegalPage.TERMS, scrollState, colors)
-                    SettingsRoute.Licences -> LegalScreen(LegalPage.LICENCES, scrollState, colors)
-                    SettingsRoute.About -> AboutHubScreen(versionText = "Udukkai Factory v1.0", onNavigate = { navigateTo(it) }, scrollState = scrollState, colors = colors)
+                    SettingsRoute.ChangePassword -> ChangePasswordScreen(
+                        onBack = handleBack,
+                        scrollState = scrollState,
+                        colors = colors
+                    )
+                    SettingsRoute.CreatePassword -> CreatePasswordScreen(
+                        onBack = handleBack,
+                        scrollState = scrollState,
+                        colors = colors
+                    )
+                    SettingsRoute.DeleteAccount -> DeleteAccountScreen(
+                        onBack = handleBack,
+                        scrollState = scrollState,
+                        colors = colors
+                    )
+                    else -> {}
+                }
+            } else {
+                ElvanSubShell(
+                    title = pageTitle,
+                    onBack = handleBack,
+                    scrollState = scrollState,
+                    hasFloatingBar = route == SettingsRoute.Hub,
+                    floatingBar = { if (route == SettingsRoute.Hub) SettingsSearchPill(colors) { searchOpen = true } }
+                ) {
+                    when (route) {
+                        SettingsRoute.Hub -> FactorySettingsHubContent(
+                            onNavigate = { navigateTo(it) },
+                            scrollState = scrollState
+                        )
+                        SettingsRoute.Display -> DisplaySettingsScreen(scrollState = scrollState, colors = colors)
+                        SettingsRoute.Language -> LanguageSettingsScreen(scrollState = scrollState, colors = colors)
+                        SettingsRoute.Merchant -> FactoryMerchantSettingsScreen(
+                            onNavigateToManageProfiles = { navigateTo(SettingsRoute.ManageProfiles) },
+                            scrollState = scrollState,
+                            colors = colors
+                        )
+                        SettingsRoute.ManageProfiles -> FactoryManageProfilesScreen(
+                            onBack = { handleBack() },
+                            scrollState = scrollState,
+                            colors = colors
+                        )
+                        SettingsRoute.FactoryIdentity -> FactoryIdentityScreen(scrollState = scrollState, colors = colors)
+                        SettingsRoute.TextilesIdentity -> {}
+                        SettingsRoute.Address -> FactoryAddressSettingsScreen(
+                            scrollState = scrollState,
+                            colors = colors
+                        )
+                        SettingsRoute.Bank -> BankSettingsScreen(
+                            scrollState = scrollState,
+                            colors = colors,
+                            profile = FactoryProfileRepository.profile,
+                            onUpdateProfile = { FactoryProfileRepository.updateProfile(it) }
+                        )
+                        SettingsRoute.InvoiceCreation -> FactoryInvoiceCreationSettingsScreen(
+                            onNavigate = { navigateTo(it) },
+                            scrollState = scrollState,
+                            colors = colors
+                        )
+                        SettingsRoute.BilingualRules -> BilingualRulesScreen(
+                            profile = FactoryProfileRepository.profile,
+                            colors = colors,
+                            scrollState = scrollState,
+                            onSave = { FactoryProfileRepository.updateProfile(it) }
+                        )
+                        SettingsRoute.LogoSettings -> LogoSettingsScreen(
+                            profile = FactoryProfileRepository.profile,
+                            isFactory = true,
+                            colors = colors,
+                            scrollState = scrollState,
+                            onSave = { FactoryProfileRepository.updateProfile(it) }
+                        )
+                        SettingsRoute.StorageBackup -> FactoryStorageBackupScreen(scrollState = scrollState, colors = colors)
+                        SettingsRoute.AboutDeveloper -> AboutDeveloperScreen(scrollState = scrollState, colors = colors)
+                        SettingsRoute.AboutApp -> AboutAppScreen(scrollState = scrollState, colors = colors)
+                        SettingsRoute.ElvanNavil -> TransliteratorSettingsScreen(scrollState = scrollState, colors = colors)
+                        SettingsRoute.Privacy -> LegalScreen(LegalPage.PRIVACY, scrollState, colors)
+                        SettingsRoute.Terms -> LegalScreen(LegalPage.TERMS, scrollState, colors)
+                        SettingsRoute.Licences -> LegalScreen(LegalPage.LICENCES, scrollState, colors)
+                        SettingsRoute.About -> AboutHubScreen(versionText = "Udukkai Factory v1.0", onNavigate = { navigateTo(it) }, scrollState = scrollState, colors = colors)
+                        else -> {}
+                    }
                 }
             }
         }

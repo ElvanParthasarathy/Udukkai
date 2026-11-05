@@ -45,6 +45,7 @@ import kotlinx.coroutines.launch
  */
 @Composable
 fun LinkedAccountsScreen(
+    onBack: () -> Unit = {},
     onNavigate: (SettingsRoute) -> Unit = {},
     scrollState: LazyListState = rememberLazyListState(),
     colors: ShellColors = rememberShellColors()
@@ -73,7 +74,7 @@ fun LinkedAccountsScreen(
 
     ElvanSubShell(
         title = K.googleLink.tr(),
-        onBack = { onNavigate(SettingsRoute.Account) },
+        onBack = onBack,
         scrollState = scrollState
     ) {
         Box(modifier = Modifier.fillMaxSize()) {

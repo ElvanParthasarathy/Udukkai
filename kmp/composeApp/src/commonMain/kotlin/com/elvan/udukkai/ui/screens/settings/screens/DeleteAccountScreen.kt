@@ -64,7 +64,12 @@ fun DeleteAccountScreen(
     val cancelText = K.cancelBtn.tr()
     val enterCurrentPasswordMsg = K.enterCurrentPassword.tr()
 
-    Box(modifier = Modifier.fillMaxSize()) {
+    ElvanSubShell(
+        title = K.deleteAccount.tr(),
+        onBack = onBack,
+        scrollState = scrollState
+    ) {
+        Box(modifier = Modifier.fillMaxSize()) {
         LazyColumn(
             state = scrollState,
             modifier = Modifier.fillMaxSize(),
@@ -402,4 +407,5 @@ fun DeleteAccountScreen(
             }
         }
     }
+}
 }

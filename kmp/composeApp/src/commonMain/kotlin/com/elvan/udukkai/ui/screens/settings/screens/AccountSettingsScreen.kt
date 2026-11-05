@@ -32,6 +32,7 @@ import com.elvan.udukkai.ui.screens.settings.SettingsRoute
  */
 @Composable
 fun AccountSettingsScreen(
+    onBack: () -> Unit = {},
     onNavigate: (SettingsRoute) -> Unit = {},
     scrollState: LazyListState = rememberLazyListState(),
     colors: ShellColors = rememberShellColors()
@@ -45,7 +46,12 @@ fun AccountSettingsScreen(
 
     var showSignOutConfirm by remember { mutableStateOf(false) }
 
-    Box(modifier = Modifier.fillMaxSize()) {
+    ElvanSubShell(
+        title = K.account.tr(),
+        onBack = onBack,
+        scrollState = scrollState
+    ) {
+        Box(modifier = Modifier.fillMaxSize()) {
         LazyColumn(
             state = scrollState,
             modifier = Modifier.fillMaxSize(),
@@ -175,4 +181,5 @@ fun AccountSettingsScreen(
             )
         }
     }
+}
 }
