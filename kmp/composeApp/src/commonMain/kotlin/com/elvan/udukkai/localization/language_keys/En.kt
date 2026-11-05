@@ -683,6 +683,10 @@ val en: Map<String, String> = mapOf(
     K.step1Consequences to "Step 1: Consequences",
     K.step2Verification to "Step 2: Verification",
     K.step3DeleteAccount to "Step 3: Confirm Deletion",
+    K.account to "Account",
+    K.googleLink to "Google Link",
+    K.returningToSecuritySettings to "Returning to security settings...",
+    K.createNewPassword to "Create New Password",
 )
 
 

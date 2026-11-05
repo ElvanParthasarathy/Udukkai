@@ -62,6 +62,9 @@ expect suspend fun platformUnlinkGoogle(): Boolean
 /** Links a Google account to the current user. */
 expect suspend fun platformLinkGoogle(): GoogleSignInResult
 
+/** Verifies the current password of the signed-in user without changing it. */
+expect suspend fun platformVerifyPassword(password: String): Result<Unit>
+
 /** Changes password for an email/password account after verifying current password. */
 expect suspend fun platformChangePassword(current: String, new: String): Result<Unit>
 

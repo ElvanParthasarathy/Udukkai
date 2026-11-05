@@ -684,6 +684,10 @@ val ta: Map<String, String> = mapOf(
     K.step1Consequences to "படி 1: விளைவுகள்",
     K.step2Verification to "படி 2: சரிபார்ப்பு",
     K.step3DeleteAccount to "படி 3: கணக்கு அழித்தல்",
+    K.account to "கணக்கு",
+    K.googleLink to "கூகுள் இணைப்பு",
+    K.returningToSecuritySettings to "பாதுகாப்பு அமைப்புகளுக்குத் திரும்புகிறது...",
+    K.createNewPassword to "புதிய கடவுச்சொல்லை உருவாக்கவும்",
 )
 
 /**

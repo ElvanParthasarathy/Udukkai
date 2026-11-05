@@ -1,6 +1,9 @@
 package com.elvan.udukkai.ui.screens.settings.screens
 
 import androidx.compose.animation.*
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.ui.draw.clip
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -72,15 +75,47 @@ fun DeleteAccountScreen(
                 Spacer(modifier = Modifier.height(LocalElvanTopSpacerHeight.current))
             }
 
+            // ── 3-Step Progress Dots Indicator ──
+            item(key = "progress_dots") {
+                ElvanSectionContainer {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 8.dp),
+                        horizontalArrangement = Arrangement.Center,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        repeat(3) { index ->
+                            val isActive = currentStep == index + 1
+                            val isPassed = currentStep > index + 1
+                            val width by animateDpAsState(
+                                targetValue = if (isActive) 22.dp else 7.dp,
+                                label = "DeleteDotWidth"
+                            )
+                            Box(
+                                modifier = Modifier
+                                    .height(7.dp)
+                                    .width(width)
+                                    .clip(RoundedCornerShape(100))
+                                    .background(
+                                        when {
+                                            isActive || isPassed -> if (colors.isDark) Color.White else Color.Black
+                                            else -> if (colors.isDark) Color.White.copy(alpha = 0.15f) else Color.Black.copy(alpha = 0.1f)
+                                        }
+                                    )
+                            )
+                            if (index < 2) Spacer(modifier = Modifier.width(6.dp))
+                        }
+                    }
+                }
+            }
+
             when (currentStep) {
                 // ── STEP 1: CONSEQUENCES (விளைவுகள்) ──
                 1 -> {
                     item(key = "step1_consequences") {
                         ElvanSectionContainer {
-                            ElvanSettingsSection(
-                                title = K.step1Consequences.tr(),
-                                colors = colors
-                            ) {
+                            ElvanSettingsSection(colors = colors) {
                                 Column(
                                     modifier = Modifier
                                         .fillMaxWidth()
@@ -129,35 +164,32 @@ fun DeleteAccountScreen(
                 2 -> {
                     item(key = "step2_verification") {
                         ElvanSectionContainer {
-                            ElvanSettingsSection(
-                                title = K.step2Verification.tr(),
-                                colors = colors
-                            ) {
+                            ElvanSettingsSection(colors = colors) {
                                 Column(
                                     modifier = Modifier
                                         .fillMaxWidth()
                                         .padding(horizontal = 20.dp, vertical = 20.dp)
                                 ) {
                                     if (hasPassword) {
-                                        ElvanSettingsTextField(
-                                            label = K.verifyIdentityForDeletion.tr(),
+                                        Text(
+                                            text = K.verifyIdentityForDeletion.tr(),
+                                            style = TextStyle(
+                                                fontFamily = ff,
+                                                fontSize = 13.sp,
+                                                fontWeight = FontWeight.Normal
+                                            ),
+                                            color = colors.textPrimary.copy(alpha = 0.6f),
+                                            modifier = Modifier.padding(start = 4.dp, bottom = 8.dp)
+                                        )
+
+                                        ElvanAuthTextField(
                                             value = password,
                                             onValueChange = {
                                                 password = it
                                                 errorMessage = null
                                             },
                                             placeholder = K.enterCurrentPassword.tr(),
-                                            visualTransformation = if (showPassword) VisualTransformation.None else PasswordVisualTransformation(),
-                                            trailingIcon = {
-                                                Icon(
-                                                    imageVector = if (showPassword) MaterialSymbols.Rounded.Visibility else MaterialSymbols.Rounded.VisibilityOff,
-                                                    contentDescription = null,
-                                                    tint = colors.textPrimary.copy(alpha = 0.45f),
-                                                    modifier = Modifier
-                                                        .size(20.dp)
-                                                        .clickable { showPassword = !showPassword }
-                                                )
-                                            },
+                                            isPassword = true,
                                             colors = colors
                                         )
 
@@ -250,10 +282,7 @@ fun DeleteAccountScreen(
                 3 -> {
                     item(key = "step3_confirmation") {
                         ElvanSectionContainer {
-                            ElvanSettingsSection(
-                                title = K.step3DeleteAccount.tr(),
-                                colors = colors
-                            ) {
+                            ElvanSettingsSection(colors = colors) {
                                 Column(
                                     modifier = Modifier
                                         .fillMaxWidth()

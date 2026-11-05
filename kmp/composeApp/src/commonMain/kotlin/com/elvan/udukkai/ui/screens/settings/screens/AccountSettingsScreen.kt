@@ -20,14 +20,17 @@ import com.elvan.udukkai.theme.ShellColors
 import com.elvan.udukkai.theme.rememberShellColors
 import com.elvan.udukkai.ui.components.shell.*
 import com.elvan.udukkai.ui.navigation.MaterialSymbols
+import com.elvan.udukkai.ui.screens.settings.AccountAvatar
 import com.elvan.udukkai.ui.screens.settings.SettingsRoute
-import kotlinx.coroutines.launch
 
 /**
- * கணக்கு மற்றும் பாதுகாப்பு அமைப்புகள் — Account & Security Hub.
- * - Personal Info: Display name with in-place animated edit container (matching Merchant settings).
- * - Security & Sign-in: Google account, Password, Sign out with clean ActionSheet.
- * - Account Management: Step-by-step account deletion sub-page.
+ * கணக்கு அமைப்புகள் — Account Settings Screen.
+ * Layout mirrors Neram Mobile's Account Settings:
+ * - Top Profile Pill Card with avatar, name, and email.
+ * - Card 1 (Personal Info): Name edit (navigates to EditName subpage), Email (no checkmark).
+ * - Card 2 (Security & Sign-in): Google link ("கூகுள் இணைப்பு"), Password status, Sign Out with clean ActionSheet.
+ * - Card 3 (Danger Zone): Delete account step-by-step wizard.
+ * All section titles above cards are removed for a clean, minimalist UI.
  */
 @Composable
 fun AccountSettingsScreen(
@@ -36,19 +39,13 @@ fun AccountSettingsScreen(
     colors: ShellColors = rememberShellColors()
 ) {
     val ff = LocalAppFontFamily.current
-    val scope = rememberCoroutineScope()
 
     val email = AuthManager.signedInEmail ?: ""
     val displayName = AuthManager.signedInDisplayName?.takeIf { it.isNotEmpty() } ?: email.substringBefore("@")
     val hasPassword = AuthManager.hasPassword
     val isGoogleLinked = AuthManager.isGoogleLinked
 
-    var isEditingName by remember { mutableStateOf(false) }
-    var tempDisplayName by remember { mutableStateOf(displayName) }
-    var isSavingName by remember { mutableStateOf(false) }
     var showSignOutConfirm by remember { mutableStateOf(false) }
-
-    val nameSavedMsg = K.nameSaved.tr()
 
     Box(modifier = Modifier.fillMaxSize()) {
         LazyColumn(
@@ -61,106 +58,79 @@ fun AccountSettingsScreen(
                 Spacer(modifier = Modifier.height(LocalElvanTopSpacerHeight.current))
             }
 
-            // ── 1. Personal Info Section (தனிநபர் தரவுகள்) ──
-            item(key = "personal_info_section") {
+            // ── Top Profile Pill Card (Matching Neram) ──
+            item(key = "profile_pill_header") {
                 ElvanSectionContainer {
-                    ElvanSettingsSection(
-                        title = K.personalInfo.tr(),
-                        colors = colors
-                    ) {
-                        // Display Name with in-place expand & edit (matching Merchant name edit)
-                        ElvanSettingsAnimatedExpand(
-                            isEditing = isEditingName,
-                            displayContent = {
-                                ElvanSettingsDisplayRow(
-                                    title = K.displayName.tr(),
-                                    primaryValue = displayName.ifEmpty { K.userAccount.tr() },
-                                    onEdit = {
-                                        tempDisplayName = displayName
-                                        isEditingName = true
-                                    },
-                                    colors = colors
+                    ElvanProfilePillCard(
+                        title = displayName.ifEmpty { K.userAccount.tr() },
+                        subtitle = email.ifEmpty { K.notConnected.tr() },
+                        onClick = { onNavigate(SettingsRoute.EditName) },
+                        iconWidget = {
+                            AccountAvatar(fallback = {
+                                Icon(
+                                    imageVector = MaterialSymbols.Rounded.Person,
+                                    contentDescription = null,
+                                    tint = colors.textPrimary,
+                                    modifier = Modifier.size(26.dp)
                                 )
-                            },
-                            editContent = {
-                                ElvanSettingsEditContainer(
-                                    title = K.displayName.tr(),
-                                    onCancel = { isEditingName = false },
-                                    onSave = {
-                                        if (!isSavingName && tempDisplayName.isNotBlank()) {
-                                            isSavingName = true
-                                            scope.launch {
-                                                val res = AuthManager.updateDisplayName(tempDisplayName.trim())
-                                                isSavingName = false
-                                                if (res.isSuccess) {
-                                                    isEditingName = false
-                                                    ElvanSnackbar.show(nameSavedMsg)
-                                                }
-                                            }
-                                        }
-                                    },
-                                    colors = colors
-                                ) {
-                                    ElvanSettingsTextField(
-                                        label = K.displayName.tr(),
-                                        value = tempDisplayName,
-                                        onValueChange = { tempDisplayName = it },
-                                        placeholder = K.enterDisplayName.tr(),
-                                        colors = colors
-                                    )
-                                }
-                            }
+                            })
+                        },
+                        trailing = {
+                            Icon(
+                                imageVector = MaterialSymbols.Rounded.ChevronRight,
+                                contentDescription = null,
+                                tint = colors.textTertiary,
+                                modifier = Modifier.size(20.dp)
+                            )
+                        },
+                        colors = colors
+                    )
+                }
+            }
+
+            // ── Card 1: Personal Profile Rows (No title above card) ──
+            item(key = "personal_profile_card") {
+                ElvanSectionContainer {
+                    ElvanSettingsSection(colors = colors) {
+                        // Display Name Subpage Navigation
+                        ElvanSettingsRow(
+                            icon = MaterialSymbols.Rounded.Person,
+                            title = K.displayName.tr(),
+                            description = displayName.ifEmpty { K.userAccount.tr() },
+                            onClick = { onNavigate(SettingsRoute.EditName) },
+                            colors = colors
                         )
 
                         ElvanSettingsDivider(colors = colors)
 
-                        // Email Address
+                        // Email Address Row (Clean, NO checkmark)
                         ElvanSettingsRow(
                             icon = MaterialSymbols.Rounded.Email,
                             title = K.email.tr(),
                             description = email.ifEmpty { K.notConnected.tr() },
                             onClick = {},
-                            customTrailing = {
-                                Icon(
-                                    imageVector = MaterialSymbols.Rounded.CheckCircle,
-                                    contentDescription = null,
-                                    tint = colors.textTertiary,
-                                    modifier = Modifier.size(18.dp)
-                                )
-                            },
                             colors = colors
                         )
                     }
                 }
             }
 
-            // ── 2. Security & Sign-in Section (பாதுகாப்பும் உள்நுழைவும்) ──
-            item(key = "security_signin_section") {
+            // ── Card 2: Security & Sign-in Rows (No title above card) ──
+            item(key = "security_signin_card") {
                 ElvanSectionContainer {
-                    ElvanSettingsSection(
-                        title = K.securityAndSignIn.tr(),
-                        colors = colors
-                    ) {
-                        // Google Account Subpage
+                    ElvanSettingsSection(colors = colors) {
+                        // Google Link Row ("கூகுள் இணைப்பு")
                         ElvanSettingsRow(
                             icon = MaterialSymbols.Rounded.Link,
-                            title = K.googleAccount.tr(),
+                            title = K.googleLink.tr(),
                             description = if (isGoogleLinked) email.ifEmpty { K.connected.tr() } else K.notConnected.tr(),
                             onClick = { onNavigate(SettingsRoute.LinkedAccounts) },
-                            customTrailing = {
-                                Icon(
-                                    imageVector = MaterialSymbols.Rounded.ChevronRight,
-                                    contentDescription = null,
-                                    tint = colors.textTertiary,
-                                    modifier = Modifier.size(18.dp)
-                                )
-                            },
                             colors = colors
                         )
 
                         ElvanSettingsDivider(colors = colors)
 
-                        // Password Subpage
+                        // Password Row
                         ElvanSettingsRow(
                             icon = MaterialSymbols.Rounded.Key,
                             title = K.password.tr(),
@@ -172,60 +142,32 @@ fun AccountSettingsScreen(
                                     onNavigate(SettingsRoute.CreatePassword)
                                 }
                             },
-                            customTrailing = {
-                                Icon(
-                                    imageVector = MaterialSymbols.Rounded.ChevronRight,
-                                    contentDescription = null,
-                                    tint = colors.textTertiary,
-                                    modifier = Modifier.size(18.dp)
-                                )
-                            },
                             colors = colors
                         )
 
                         ElvanSettingsDivider(colors = colors)
 
-                        // Sign Out (Direct action sheet without redundant screens)
+                        // Sign Out Row (Tapping card directly asks confirmation via ActionSheet)
                         ElvanSettingsRow(
                             icon = MaterialSymbols.Rounded.Logout,
                             title = K.logout.tr(),
                             description = K.logoutApplication.tr(),
                             onClick = { showSignOutConfirm = true },
-                            customTrailing = {
-                                Icon(
-                                    imageVector = MaterialSymbols.Rounded.ChevronRight,
-                                    contentDescription = null,
-                                    tint = colors.textTertiary,
-                                    modifier = Modifier.size(18.dp)
-                                )
-                            },
                             colors = colors
                         )
                     }
                 }
             }
 
-            // ── 3. Account Management Section (கணக்கு மேலாண்மை) ──
-            item(key = "account_management_section") {
+            // ── Card 3: Danger Zone / Delete Account (No title above card) ──
+            item(key = "account_deletion_card") {
                 ElvanSectionContainer {
-                    ElvanSettingsSection(
-                        title = K.accountManagement.tr(),
-                        colors = colors
-                    ) {
-                        // Delete Account (Opens Step-by-Step Sub-page)
+                    ElvanSettingsSection(colors = colors) {
                         ElvanSettingsRow(
                             icon = MaterialSymbols.Rounded.DeleteForever,
                             title = K.deleteAccount.tr(),
                             description = K.deleteAccountDesc.tr(),
                             onClick = { onNavigate(SettingsRoute.DeleteAccount) },
-                            customTrailing = {
-                                Icon(
-                                    imageVector = MaterialSymbols.Rounded.ChevronRight,
-                                    contentDescription = null,
-                                    tint = colors.textTertiary,
-                                    modifier = Modifier.size(18.dp)
-                                )
-                            },
                             colors = colors
                         )
                     }

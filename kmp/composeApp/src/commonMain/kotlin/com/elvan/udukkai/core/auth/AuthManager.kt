@@ -44,6 +44,7 @@ object AuthManager {
 
     suspend fun unlinkGoogle(): Boolean = platformUnlinkGoogle()
     suspend fun linkGoogle(): GoogleSignInResult = platformLinkGoogle()
+    suspend fun verifyPassword(password: String): Result<Unit> = platformVerifyPassword(password)
     suspend fun changePassword(current: String, new: String): Result<Unit> = platformChangePassword(current, new)
     suspend fun createPassword(password: String): Result<Unit> = platformCreatePassword(password)
     suspend fun deleteAccount(password: String? = null): Result<Unit> {

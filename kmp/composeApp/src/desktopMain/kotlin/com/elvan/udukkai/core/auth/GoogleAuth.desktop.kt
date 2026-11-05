@@ -36,6 +36,8 @@ actual suspend fun platformUnlinkGoogle(): Boolean = true
 
 actual suspend fun platformLinkGoogle(): GoogleSignInResult = GoogleSignInResult.Success(devEmail ?: "dev@udukkai.local")
 
+actual suspend fun platformVerifyPassword(password: String): Result<Unit> = Result.success(Unit)
+
 actual suspend fun platformChangePassword(current: String, new: String): Result<Unit> = Result.success(Unit)
 
 actual suspend fun platformCreatePassword(password: String): Result<Unit> = Result.success(Unit)

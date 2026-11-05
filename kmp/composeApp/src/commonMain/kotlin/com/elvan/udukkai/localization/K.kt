@@ -691,4 +691,8 @@ object K {
     const val step1Consequences = "step1Consequences"
     const val step2Verification = "step2Verification"
     const val step3DeleteAccount = "step3DeleteAccount"
+    const val account = "account"
+    const val googleLink = "googleLink"
+    const val returningToSecuritySettings = "returningToSecuritySettings"
+    const val createNewPassword = "createNewPassword"
 }

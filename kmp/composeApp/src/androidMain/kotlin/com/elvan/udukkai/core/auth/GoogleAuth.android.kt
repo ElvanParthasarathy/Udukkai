@@ -186,6 +186,17 @@ actual suspend fun platformLinkGoogle(): GoogleSignInResult {
     }
 }
 
+actual suspend fun platformVerifyPassword(password: String): Result<Unit> = try {
+    val auth = FirebaseAuth.getInstance()
+    val user = auth.currentUser ?: throw IllegalStateException("No authenticated user")
+    val email = user.email ?: throw IllegalStateException("No email attached to user")
+    val credential = com.google.firebase.auth.EmailAuthProvider.getCredential(email, password)
+    user.reauthenticate(credential).await()
+    Result.success(Unit)
+} catch (e: Exception) {
+    Result.failure(e)
+}
+
 actual suspend fun platformChangePassword(current: String, new: String): Result<Unit> = try {
     val auth = FirebaseAuth.getInstance()
     val user = auth.currentUser ?: throw IllegalStateException("No authenticated user")

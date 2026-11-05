@@ -17,6 +17,7 @@ sealed interface SettingsRoute {
     data object StorageBackup : SettingsRoute
     data object Security : SettingsRoute
     data object Account : SettingsRoute
+    data object EditName : SettingsRoute
     data object LinkedAccounts : SettingsRoute
     data object ChangePassword : SettingsRoute
     data object CreatePassword : SettingsRoute
@@ -40,7 +41,7 @@ sealed interface SettingsRoute {
 val SettingsRoute.depth: Int
     get() = when {
         this == SettingsRoute.Hub -> 0
-        this == SettingsRoute.ManageProfiles || this in SettingsRoute.aboutPages || this == SettingsRoute.BilingualRules || this == SettingsRoute.LogoSettings || this == SettingsRoute.LinkedAccounts || this == SettingsRoute.ChangePassword || this == SettingsRoute.CreatePassword || this == SettingsRoute.DeleteAccount -> 2
+        this == SettingsRoute.ManageProfiles || this in SettingsRoute.aboutPages || this == SettingsRoute.BilingualRules || this == SettingsRoute.LogoSettings || this == SettingsRoute.EditName || this == SettingsRoute.LinkedAccounts || this == SettingsRoute.ChangePassword || this == SettingsRoute.CreatePassword || this == SettingsRoute.DeleteAccount -> 2
         else -> 1
     }
 
@@ -66,6 +67,7 @@ val SettingsRoute.name: String
         SettingsRoute.StorageBackup -> "StorageBackup"
         SettingsRoute.Security -> "Security"
         SettingsRoute.Account -> "Account"
+        SettingsRoute.EditName -> "EditName"
         SettingsRoute.LinkedAccounts -> "LinkedAccounts"
         SettingsRoute.ChangePassword -> "ChangePassword"
         SettingsRoute.CreatePassword -> "CreatePassword"
@@ -94,6 +96,7 @@ fun settingsRouteFromName(name: String?): SettingsRoute = when (name) {
     "StorageBackup" -> SettingsRoute.StorageBackup
     "Security" -> SettingsRoute.Security
     "Account" -> SettingsRoute.Account
+    "EditName" -> SettingsRoute.EditName
     "LinkedAccounts" -> SettingsRoute.LinkedAccounts
     "ChangePassword" -> SettingsRoute.ChangePassword
     "CreatePassword" -> SettingsRoute.CreatePassword

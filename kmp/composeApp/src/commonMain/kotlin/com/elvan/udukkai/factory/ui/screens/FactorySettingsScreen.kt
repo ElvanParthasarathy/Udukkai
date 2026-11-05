@@ -127,7 +127,8 @@ fun FactorySettingsScreen(
                 SettingsRoute.InvoiceCreation -> K.createBtn.tr()
                 SettingsRoute.BilingualRules -> K.bilingualSettings.tr()
                 SettingsRoute.LogoSettings -> K.logoSettings.tr()
-                SettingsRoute.Account -> K.security.tr()
+                SettingsRoute.Account -> K.account.tr()
+                SettingsRoute.EditName -> K.editName.tr()
                 SettingsRoute.LinkedAccounts -> K.linkedAccounts.tr()
                 SettingsRoute.ChangePassword -> K.changePassword.tr()
                 SettingsRoute.CreatePassword -> K.createPassword.tr()
@@ -199,6 +200,7 @@ fun FactorySettingsScreen(
                     )
                     SettingsRoute.StorageBackup -> FactoryStorageBackupScreen(scrollState = scrollState, colors = colors)
                     SettingsRoute.Account, SettingsRoute.Security -> AccountSettingsScreen(onNavigate = { navigateTo(it) }, scrollState = scrollState, colors = colors)
+                    SettingsRoute.EditName -> EditNameScreen(onBack = { handleBack() }, scrollState = scrollState, colors = colors)
                     SettingsRoute.LinkedAccounts -> LinkedAccountsScreen(onNavigate = { navigateTo(it) }, scrollState = scrollState, colors = colors)
                     SettingsRoute.ChangePassword -> ChangePasswordScreen(onBack = { handleBack() }, scrollState = scrollState, colors = colors)
                     SettingsRoute.CreatePassword -> CreatePasswordScreen(onBack = { handleBack() }, scrollState = scrollState, colors = colors)
@@ -416,10 +418,10 @@ private fun FactorySettingsHubContent(
         item(key = "data_security_section") {
             ElvanSectionContainer {
                 ElvanSettingsSection(colors = colors) {
-                    // 1. Account & Security
+                    // 1. Account
                     ElvanSettingsRow(
                         icon = MaterialSymbols.Rounded.Person,
-                        title = K.accountAndSecurity.tr(),
+                        title = K.account.tr(),
                         description = AuthManager.signedInEmail?.ifEmpty { K.signInMethods.tr() } ?: K.signInMethods.tr(),
                         onClick = { onNavigate(SettingsRoute.Account) },
                         colors = colors

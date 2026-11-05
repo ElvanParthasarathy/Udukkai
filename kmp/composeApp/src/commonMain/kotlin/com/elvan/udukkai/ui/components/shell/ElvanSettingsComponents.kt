@@ -42,6 +42,10 @@ import com.elvan.udukkai.theme.ShellDefaults
 import com.elvan.udukkai.theme.rememberShellColors
 import com.elvan.udukkai.ui.navigation.MaterialSymbols
 import com.elvan.udukkai.theme.LocalShellColors
+import com.elvan.udukkai.core.extensions.cssShadow
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.foundation.text.KeyboardActions
 
 /**
  * ElvanSettingsSection — Groups rows inside a single rounded card with slit dividers.
@@ -912,4 +916,72 @@ fun ElvanSimpleSettingsRow(
         }
     }
 }
+
+/**
+ * ElvanAuthTextField — Pill-shaped input field matching the login screen style (NeramField):
+ * RoundedCornerShape(50), soft shadow in light mode, borderless, with optional password visibility toggle.
+ */
+@Composable
+fun ElvanAuthTextField(
+    value: String,
+    onValueChange: (String) -> Unit,
+    placeholder: String,
+    modifier: Modifier = Modifier,
+    isPassword: Boolean = false,
+    singleLine: Boolean = true,
+    keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
+    keyboardActions: KeyboardActions = KeyboardActions.Default,
+    colors: ShellColors = rememberShellColors()
+) {
+    var visible by remember { mutableStateOf(false) }
+    val ff = LocalAppFontFamily.current
+    val primary = colors.textPrimary
+    val secondary = colors.textPrimary.copy(alpha = 0.5f)
+    val bg = if (colors.isDark) Color(0xFF1E1E1E) else Color.White
+
+    TextField(
+        value = value,
+        onValueChange = onValueChange,
+        placeholder = {
+            Text(
+                placeholder,
+                style = TextStyle(fontFamily = ff, fontSize = 14.sp, color = secondary)
+            )
+        },
+        trailingIcon = if (isPassword) {
+            {
+                IconButton(onClick = { visible = !visible }) {
+                    Icon(
+                        imageVector = if (visible) MaterialSymbols.Rounded.VisibilityOff else MaterialSymbols.Rounded.Visibility,
+                        contentDescription = (if (visible) K.hidePassword else K.showPassword).tr(),
+                        tint = secondary,
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
+            }
+        } else null,
+        visualTransformation = if (isPassword && !visible) PasswordVisualTransformation() else VisualTransformation.None,
+        shape = RoundedCornerShape(50),
+        colors = TextFieldDefaults.colors(
+            focusedTextColor = primary,
+            unfocusedTextColor = primary,
+            focusedContainerColor = bg,
+            unfocusedContainerColor = bg,
+            cursorColor = primary,
+            focusedIndicatorColor = Color.Transparent,
+            unfocusedIndicatorColor = Color.Transparent
+        ),
+        textStyle = TextStyle(fontFamily = ff, fontSize = 15.sp, color = primary),
+        singleLine = singleLine,
+        keyboardOptions = keyboardOptions,
+        keyboardActions = keyboardActions,
+        modifier = modifier
+            .fillMaxWidth()
+            .then(
+                if (colors.isDark) Modifier
+                else Modifier.cssShadow(color = Color.Black, alpha = 0.08f, blurRadius = 8.dp, offsetY = 2.dp)
+            )
+    )
+}
+
 
