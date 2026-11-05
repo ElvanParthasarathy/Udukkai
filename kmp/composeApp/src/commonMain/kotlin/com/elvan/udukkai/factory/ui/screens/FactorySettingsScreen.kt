@@ -125,7 +125,6 @@ fun FactorySettingsScreen(
                 SettingsRoute.Address -> K.address.tr()
                 SettingsRoute.Bank -> K.bank.tr()
                 SettingsRoute.InvoiceCreation -> K.createBtn.tr()
-                SettingsRoute.Reports -> K.reports.tr()
                 SettingsRoute.BilingualRules -> K.bilingualSettings.tr()
                 SettingsRoute.LogoSettings -> K.logoSettings.tr()
                 SettingsRoute.Account -> K.accountAndSecurity.tr()
@@ -191,7 +190,6 @@ fun FactorySettingsScreen(
                         scrollState = scrollState,
                         onSave = { FactoryProfileRepository.updateProfile(it) }
                     )
-                    SettingsRoute.Reports -> FactoryReportsScreen(onBack = { handleBack() })
                     SettingsRoute.LogoSettings -> LogoSettingsScreen(
                         profile = FactoryProfileRepository.profile,
                         isFactory = true,
@@ -384,15 +382,7 @@ private fun FactorySettingsHubContent(
                         colors = colors
                     )
 
-                    ElvanSettingsDivider(colors = colors)
 
-                    ElvanSettingsRow(
-                        icon = MaterialSymbols.Rounded.EventList,
-                        title = K.reports.tr(),
-                        description = K.salesSummary.tr(),
-                        onClick = { onNavigate(SettingsRoute.Reports) },
-                        colors = colors
-                    )
                 }
             }
         }

@@ -1,13 +1,23 @@
 package com.elvan.udukkai.ui.screens.settings.screens
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.elvan.udukkai.core.auth.AuthManager
 import com.elvan.udukkai.core.backup.reloadAllRepositories
 import com.elvan.udukkai.core.sync.SyncStatus
@@ -16,8 +26,11 @@ import com.elvan.udukkai.core.utils.DateUtils
 import com.elvan.udukkai.localization.K
 import com.elvan.udukkai.localization.tr
 import com.elvan.udukkai.theme.Dimens
+import com.elvan.udukkai.theme.LocalAppFontFamily
 import com.elvan.udukkai.theme.ShellColors
+import com.elvan.udukkai.theme.preventBrokenLigatures
 import com.elvan.udukkai.theme.rememberShellColors
+import com.elvan.udukkai.ui.components.ExpressiveLoadingIndicator
 import com.elvan.udukkai.ui.components.shell.*
 import com.elvan.udukkai.ui.navigation.MaterialSymbols
 import com.elvan.udukkai.ui.screens.settings.AccountAvatar
@@ -27,8 +40,12 @@ import kotlinx.coroutines.launch
 
 /**
  * பயனர் கணக்கும் பாதுகாப்பும் — Account & Security Settings Screen.
- * Unified screen containing profile overview, linked accounts, password management,
- * cloud sync, sign-out, and account deletion with consistent Samsung One UI styling.
+ * Complete redesign grounded in Apple Human Interface Guidelines (managing-accounts.md, action-sheets.md)
+ * and Samsung One UI standards:
+ * - Prominent Hero Account Card with avatar, name, email, and authentication badge.
+ * - Grouped sections: Sign-in Methods, Cloud Sync, and Session / Account Actions.
+ * - Intentional destructive actions handled via ElvanActionSheet bottom confirmation sheet.
+ * - Strict Pure Senthamizh localization with zero Sanskrit words.
  */
 @Composable
 fun AccountSettingsScreen(
@@ -36,10 +53,12 @@ fun AccountSettingsScreen(
     scrollState: LazyListState = rememberLazyListState(),
     colors: ShellColors = rememberShellColors()
 ) {
+    val ff = LocalAppFontFamily.current
     val scope = rememberCoroutineScope()
     val email = AuthManager.signedInEmail ?: ""
     val displayName = AuthManager.signedInDisplayName?.takeIf { it.isNotEmpty() } ?: email.substringBefore("@")
     val hasPassword = AuthManager.hasPassword
+    val isGoogleLinked = AuthManager.isGoogleLinked
 
     val sync = remember { getFirebaseSyncManager() }
     val syncStatus by sync.syncStatus
@@ -69,44 +88,157 @@ fun AccountSettingsScreen(
                 Spacer(modifier = Modifier.height(LocalElvanTopSpacerHeight.current))
             }
 
-            // ── 1. User Profile Pill Card (Consistent with One UI Hub) ──
-            item(key = "profile_pill") {
+            // ── 1. Hero Account Card (Apple HIG Managing Accounts & One UI Header Card) ──
+            item(key = "hero_account_card") {
                 ElvanSectionContainer {
-                    ElvanProfilePillCard(
-                        title = displayName.ifEmpty { K.userAccount.tr() },
-                        subtitle = email.ifEmpty { K.connected.tr() },
-                        iconWidget = {
-                            AccountAvatar(fallback = {
-                                Icon(
-                                    imageVector = MaterialSymbols.Rounded.Person,
-                                    contentDescription = null,
-                                    tint = colors.textPrimary,
-                                    modifier = Modifier.size(26.dp)
+                    Surface(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(24.dp)),
+                        shape = RoundedCornerShape(24.dp),
+                        color = colors.surface,
+                        shadowElevation = 0.dp
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 20.dp, vertical = 20.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            // Circular Avatar
+                            Box(
+                                modifier = Modifier
+                                    .size(58.dp)
+                                    .clip(CircleShape)
+                                    .background(colors.iconBg),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                AccountAvatar(fallback = {
+                                    Icon(
+                                        imageVector = MaterialSymbols.Rounded.Person,
+                                        contentDescription = null,
+                                        tint = colors.textPrimary,
+                                        modifier = Modifier.size(30.dp)
+                                    )
+                                })
+                            }
+
+                            Spacer(modifier = Modifier.width(16.dp))
+
+                            // Name, Email, and Auth Badge
+                            Column(
+                                modifier = Modifier.weight(1f),
+                                horizontalAlignment = Alignment.Start
+                            ) {
+                                Text(
+                                    text = displayName.ifEmpty { K.userAccount.tr() }.preventBrokenLigatures(),
+                                    style = TextStyle(
+                                        fontFamily = ff,
+                                        fontSize = 17.sp,
+                                        fontWeight = FontWeight.SemiBold,
+                                        color = colors.textPrimary
+                                    ),
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
                                 )
-                            })
-                        },
-                        onClick = {},
-                        colors = colors
-                    )
+
+                                if (email.isNotEmpty()) {
+                                    Spacer(modifier = Modifier.height(2.dp))
+                                    Text(
+                                        text = email,
+                                        style = TextStyle(
+                                            fontFamily = ff,
+                                            fontSize = 13.sp,
+                                            fontWeight = FontWeight.Normal,
+                                            color = colors.textPrimary.copy(alpha = 0.55f)
+                                        ),
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis
+                                    )
+                                }
+
+                                Spacer(modifier = Modifier.height(8.dp))
+
+                                // Auth Method Chip
+                                Surface(
+                                    shape = RoundedCornerShape(12.dp),
+                                    color = colors.iconBg
+                                ) {
+                                    Row(
+                                        modifier = Modifier.padding(horizontal = 9.dp, vertical = 3.5.dp),
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Icon(
+                                            imageVector = if (isGoogleLinked) MaterialSymbols.Rounded.Person else MaterialSymbols.Rounded.Email,
+                                            contentDescription = null,
+                                            tint = colors.accent,
+                                            modifier = Modifier.size(13.dp)
+                                        )
+                                        Spacer(modifier = Modifier.width(5.dp))
+                                        Text(
+                                            text = if (isGoogleLinked) K.googleAccount.tr() else K.emailAccount.tr(),
+                                            style = TextStyle(
+                                                fontFamily = ff,
+                                                fontSize = 11.5.sp,
+                                                fontWeight = FontWeight.Medium
+                                            ),
+                                            color = colors.textPrimary.copy(alpha = 0.75f)
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
                 }
             }
 
-            // ── 2. Account Credentials Section (Linked Accounts & Password) ──
-            item(key = "account_credentials") {
+            // ── 2. Sign-in Methods Section (Grouped Lists & Tables HIG) ──
+            item(key = "signin_methods_section") {
                 ElvanSectionContainer {
-                    ElvanSettingsSection(colors = colors) {
-                        // Linked Accounts
+                    ElvanSettingsSection(
+                        title = K.signInMethods.tr(),
+                        colors = colors
+                    ) {
+                        // Linked Accounts Row
                         ElvanSettingsRow(
                             icon = MaterialSymbols.Rounded.Link,
                             title = K.linkedAccounts.tr(),
-                            description = if (AuthManager.isGoogleLinked) K.connected.tr() else K.notConnected.tr(),
+                            description = if (isGoogleLinked) K.connected.tr() else K.notConnected.tr(),
                             onClick = { onNavigate(SettingsRoute.LinkedAccounts) },
+                            customTrailing = {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    if (isGoogleLinked) {
+                                        Surface(
+                                            shape = RoundedCornerShape(12.dp),
+                                            color = colors.accent.copy(alpha = 0.12f)
+                                        ) {
+                                            Text(
+                                                text = K.connected.tr(),
+                                                style = TextStyle(
+                                                    fontFamily = ff,
+                                                    fontSize = 11.5.sp,
+                                                    fontWeight = FontWeight.SemiBold
+                                                ),
+                                                color = colors.accent,
+                                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
+                                            )
+                                        }
+                                        Spacer(modifier = Modifier.width(6.dp))
+                                    }
+                                    Icon(
+                                        imageVector = MaterialSymbols.Rounded.ChevronRight,
+                                        contentDescription = null,
+                                        tint = colors.textTertiary,
+                                        modifier = Modifier.size(18.dp)
+                                    )
+                                }
+                            },
                             colors = colors
                         )
 
                         ElvanSettingsDivider(colors = colors)
 
-                        // Password (Change or Create)
+                        // Password Row (Change or Create)
                         ElvanSettingsRow(
                             icon = MaterialSymbols.Rounded.Key,
                             title = if (hasPassword) K.changePassword.tr() else K.createPassword.tr(),
@@ -118,6 +250,14 @@ fun AccountSettingsScreen(
                                     onNavigate(SettingsRoute.CreatePassword)
                                 }
                             },
+                            customTrailing = {
+                                Icon(
+                                    imageVector = MaterialSymbols.Rounded.ChevronRight,
+                                    contentDescription = null,
+                                    tint = colors.textTertiary,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                            },
                             colors = colors
                         )
                     }
@@ -125,25 +265,42 @@ fun AccountSettingsScreen(
             }
 
             // ── 3. Cloud Sync Section ──
-            item(key = "cloud_sync") {
+            item(key = "cloud_sync_section") {
                 ElvanSectionContainer {
-                    ElvanSettingsSection(colors = colors) {
+                    ElvanSettingsSection(
+                        title = K.cloudSync.tr(),
+                        colors = colors
+                    ) {
                         ElvanSettingsRow(
                             icon = MaterialSymbols.Rounded.Sync,
                             title = K.syncAppBtn.tr(),
                             description = if (isSyncing) K.syncStatusSyncing.tr() else syncStatusDesc,
                             onClick = {
-                                isSyncing = true
-                                scope.launch {
-                                    try {
-                                        reloadAllRepositories()
-                                    } catch (_: Exception) {}
-                                    try {
-                                        sync.triggerManualSync()
-                                    } catch (_: Exception) {}
-                                    delay(600)
-                                    isSyncing = false
-                                    ElvanSnackbar.show(syncSuccessMsg)
+                                if (!isSyncing) {
+                                    isSyncing = true
+                                    scope.launch {
+                                        try {
+                                            reloadAllRepositories()
+                                        } catch (_: Exception) {}
+                                        try {
+                                            sync.triggerManualSync()
+                                        } catch (_: Exception) {}
+                                        delay(600)
+                                        isSyncing = false
+                                        ElvanSnackbar.show(syncSuccessMsg)
+                                    }
+                                }
+                            },
+                            customTrailing = {
+                                if (isSyncing) {
+                                    ExpressiveLoadingIndicator(color = colors.accent, modifier = Modifier.size(20.dp))
+                                } else {
+                                    Icon(
+                                        imageVector = MaterialSymbols.Rounded.Sync,
+                                        contentDescription = null,
+                                        tint = colors.textTertiary,
+                                        modifier = Modifier.size(20.dp)
+                                    )
                                 }
                             },
                             colors = colors
@@ -152,10 +309,14 @@ fun AccountSettingsScreen(
                 }
             }
 
-            // ── 4. Session Section (Sign Out) ──
-            item(key = "session_section") {
+            // ── 4. Session & Account Actions (Danger Zone) ──
+            item(key = "session_danger_section") {
                 ElvanSectionContainer {
-                    ElvanSettingsSection(colors = colors) {
+                    ElvanSettingsSection(
+                        title = K.session.tr(),
+                        colors = colors
+                    ) {
+                        // Sign Out Row (Destructive styling per Apple HIG)
                         ElvanSettingsRow(
                             icon = MaterialSymbols.Rounded.Logout,
                             title = K.logout.tr(),
@@ -163,16 +324,20 @@ fun AccountSettingsScreen(
                             onClick = { showSignOutConfirm = true },
                             titleColor = colors.error,
                             iconTint = colors.error,
+                            customTrailing = {
+                                Icon(
+                                    imageVector = MaterialSymbols.Rounded.ChevronRight,
+                                    contentDescription = null,
+                                    tint = colors.error.copy(alpha = 0.5f),
+                                    modifier = Modifier.size(18.dp)
+                                )
+                            },
                             colors = colors
                         )
-                    }
-                }
-            }
 
-            // ── 5. Danger Zone: Delete Account ──
-            item(key = "danger_zone") {
-                ElvanSectionContainer {
-                    ElvanSettingsSection(colors = colors) {
+                        ElvanSettingsDivider(colors = colors)
+
+                        // Delete Account Row (Destructive styling per Apple HIG & Google Play mandate)
                         ElvanSettingsRow(
                             icon = MaterialSymbols.Rounded.DeleteForever,
                             title = K.deleteAccount.tr(),
@@ -180,6 +345,14 @@ fun AccountSettingsScreen(
                             onClick = { onNavigate(SettingsRoute.DeleteAccount) },
                             titleColor = colors.error,
                             iconTint = colors.error,
+                            customTrailing = {
+                                Icon(
+                                    imageVector = MaterialSymbols.Rounded.ChevronRight,
+                                    contentDescription = null,
+                                    tint = colors.error.copy(alpha = 0.5f),
+                                    modifier = Modifier.size(18.dp)
+                                )
+                            },
                             colors = colors
                         )
                     }
@@ -187,19 +360,32 @@ fun AccountSettingsScreen(
             }
         }
 
-        // Sign Out Confirmation Action Sheet
+        // ── Sign Out Confirmation Action Sheet (Apple HIG Action Sheets) ──
         if (showSignOutConfirm) {
             ElvanActionSheet(
-                title = K.logout.tr(),
+                title = K.signOutConfirm.tr(),
                 cancelText = K.cancelBtn.tr(),
                 confirmText = K.logout.tr(),
+                confirmColor = colors.error,
                 onDismissRequest = { showSignOutConfirm = false },
                 onConfirm = {
                     showSignOutConfirm = false
                     AuthManager.logout()
                 },
                 colors = colors,
-                confirmColor = colors.error
+                customContent = {
+                    Text(
+                        text = K.signOutDesc.tr(),
+                        style = TextStyle(
+                            fontFamily = ff,
+                            fontSize = 13.5.sp,
+                            lineHeight = 18.sp
+                        ),
+                        color = colors.textPrimary.copy(alpha = 0.65f),
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.padding(horizontal = 8.dp)
+                    )
+                }
             )
         }
     }

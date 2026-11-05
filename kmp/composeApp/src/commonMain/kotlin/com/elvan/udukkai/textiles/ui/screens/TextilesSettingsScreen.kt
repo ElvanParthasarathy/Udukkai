@@ -23,7 +23,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.elvan.udukkai.core.platform.AppBackHandler
 import com.elvan.udukkai.core.auth.AuthManager
-import com.elvan.udukkai.textiles.ui.screens.TextilesReportsScreen
 import com.elvan.udukkai.textiles.data.TextilesProfileRepository
 import com.elvan.udukkai.localization.K
 import com.elvan.udukkai.localization.tr
@@ -126,7 +125,6 @@ fun TextilesSettingsScreen(
                 SettingsRoute.Address -> K.address.tr()
                 SettingsRoute.Bank -> K.bank.tr()
                 SettingsRoute.InvoiceCreation -> K.createBtn.tr()
-                SettingsRoute.Reports -> K.reports.tr()
                 SettingsRoute.BilingualRules -> K.bilingualSettings.tr()
                 SettingsRoute.LogoSettings -> K.logoSettings.tr()
                 SettingsRoute.Account -> K.accountAndSecurity.tr()
@@ -192,7 +190,6 @@ fun TextilesSettingsScreen(
                         scrollState = scrollState,
                         onSave = { TextilesProfileRepository.updateProfile(it) }
                     )
-                    SettingsRoute.Reports -> TextilesReportsScreen(onBack = { handleBack() })
                     SettingsRoute.LogoSettings -> LogoSettingsScreen(
                         profile = TextilesProfileRepository.profile,
                         isFactory = false,
@@ -385,15 +382,7 @@ private fun TextilesSettingsHubContent(
                         colors = colors
                     )
 
-                    ElvanSettingsDivider(colors = colors)
 
-                    ElvanSettingsRow(
-                        icon = MaterialSymbols.Rounded.EventList,
-                        title = K.reports.tr(),
-                        description = K.salesSummary.tr(),
-                        onClick = { onNavigate(SettingsRoute.Reports) },
-                        colors = colors
-                    )
                 }
             }
         }

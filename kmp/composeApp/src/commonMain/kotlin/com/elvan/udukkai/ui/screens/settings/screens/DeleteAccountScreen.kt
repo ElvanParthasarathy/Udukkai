@@ -15,6 +15,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.elvan.udukkai.core.auth.AuthManager
@@ -31,8 +32,11 @@ import kotlinx.coroutines.launch
 
 /**
  * கணக்கை நிரந்தரமாக அழிக்கும் திரை — Delete Account Screen.
- * Full compliance with Google Play Store account deletion mandate.
- * Multi-step confirmation, re-authentication, and permanent cloud database wipe.
+ * Full compliance with Google Play Store account deletion mandate and Apple HIG managing-accounts.md:
+ * - Clear warning explaining irreversible data wipe.
+ * - Explicit user confirmation checkbox.
+ * - Password re-authentication for password-backed accounts.
+ * - Final confirmation step via ElvanActionSheet destructive bottom sheet.
  */
 @Composable
 fun DeleteAccountScreen(
@@ -49,6 +53,7 @@ fun DeleteAccountScreen(
     var password by remember { mutableStateOf("") }
     var showPassword by remember { mutableStateOf(false) }
     var isProcessing by remember { mutableStateOf(false) }
+    var showDeleteConfirmSheet by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
 
     val accountDeletedMsg = K.accountDeleted.tr()
@@ -68,162 +73,189 @@ fun DeleteAccountScreen(
             item(key = "warning_card") {
                 ElvanSectionContainer {
                     ElvanSettingsSection(colors = colors) {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 20.dp, vertical = 20.dp)
-                    ) {
-                        // Warning Banner
-                        Surface(
-                            modifier = Modifier.fillMaxWidth(),
-                            shape = RoundedCornerShape(16.dp),
-                            color = colors.error.copy(alpha = 0.08f)
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 20.dp, vertical = 20.dp)
                         ) {
-                            Column(modifier = Modifier.padding(16.dp)) {
-                                Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Icon(
-                                        imageVector = MaterialSymbols.Rounded.Warning,
-                                        contentDescription = null,
-                                        tint = colors.error,
-                                        modifier = Modifier.size(24.dp)
-                                    )
-                                    Spacer(modifier = Modifier.width(10.dp))
+                            // Warning Banner
+                            Surface(
+                                modifier = Modifier.fillMaxWidth(),
+                                shape = RoundedCornerShape(16.dp),
+                                color = colors.error.copy(alpha = 0.08f)
+                            ) {
+                                Column(modifier = Modifier.padding(16.dp)) {
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        Icon(
+                                            imageVector = MaterialSymbols.Rounded.Warning,
+                                            contentDescription = null,
+                                            tint = colors.error,
+                                            modifier = Modifier.size(24.dp)
+                                        )
+                                        Spacer(modifier = Modifier.width(10.dp))
+                                        Text(
+                                            text = K.deleteAccount.tr(),
+                                            style = TextStyle(
+                                                fontFamily = ff,
+                                                fontSize = 16.sp,
+                                                fontWeight = FontWeight.Bold
+                                            ),
+                                            color = colors.error
+                                        )
+                                    }
+
+                                    Spacer(modifier = Modifier.height(10.dp))
+
                                     Text(
-                                        text = K.deleteAccount.tr(),
+                                        text = K.deleteAccountWarning.tr(),
                                         style = TextStyle(
                                             fontFamily = ff,
-                                            fontSize = 16.sp,
-                                            fontWeight = FontWeight.Bold
+                                            fontSize = 13.5.sp,
+                                            lineHeight = 19.sp
                                         ),
-                                        color = colors.error
+                                        color = colors.textPrimary.copy(alpha = 0.85f)
                                     )
                                 }
-
-                                Spacer(modifier = Modifier.height(10.dp))
-
-                                Text(
-                                    text = K.deleteAccountWarning.tr(),
-                                    style = TextStyle(
-                                        fontFamily = ff,
-                                        fontSize = 13.5.sp,
-                                        lineHeight = 19.sp
-                                    ),
-                                    color = colors.textPrimary.copy(alpha = 0.85f)
-                                )
                             }
-                        }
 
-                        Spacer(modifier = Modifier.height(20.dp))
-
-                        // Checkbox Confirmation
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clickable { understood = !understood },
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Checkbox(
-                                checked = understood,
-                                onCheckedChange = { understood = it },
-                                colors = CheckboxDefaults.colors(
-                                    checkedColor = colors.error,
-                                    checkmarkColor = Color.White
-                                )
-                            )
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text(
-                                text = K.iUnderstandConsequences.tr(),
-                                style = TextStyle(
-                                    fontFamily = ff,
-                                    fontSize = 13.sp,
-                                    fontWeight = FontWeight.Medium,
-                                    lineHeight = 18.sp
-                                ),
-                                color = colors.textPrimary
-                            )
-                        }
-
-                        // Password Input (if password user)
-                        if (hasPassword) {
                             Spacer(modifier = Modifier.height(20.dp))
 
-                            ElvanSettingsTextField(
-                                label = K.verifyIdentityForDeletion.tr(),
-                                value = password,
-                                onValueChange = {
-                                    password = it
-                                    errorMessage = null
-                                },
-                                placeholder = K.enterCurrentPassword.tr(),
-                                visualTransformation = if (showPassword) VisualTransformation.None else PasswordVisualTransformation(),
-                                trailingIcon = {
-                                    Icon(
-                                        imageVector = if (showPassword) MaterialSymbols.Rounded.Visibility else MaterialSymbols.Rounded.VisibilityOff,
-                                        contentDescription = null,
-                                        tint = colors.textPrimary.copy(alpha = 0.45f),
-                                        modifier = Modifier
-                                            .size(20.dp)
-                                            .clickable { showPassword = !showPassword }
+                            // Checkbox Confirmation
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable { understood = !understood },
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Checkbox(
+                                    checked = understood,
+                                    onCheckedChange = { understood = it },
+                                    colors = CheckboxDefaults.colors(
+                                        checkedColor = colors.error,
+                                        checkmarkColor = Color.White
                                     )
-                                },
-                                colors = colors
-                            )
-                        }
-
-                        if (errorMessage != null) {
-                            Spacer(modifier = Modifier.height(12.dp))
-                            Text(
-                                text = errorMessage!!,
-                                style = TextStyle(
-                                    fontFamily = ff,
-                                    fontSize = 12.5.sp,
-                                    fontWeight = FontWeight.Medium
-                                ),
-                                color = colors.error,
-                                modifier = Modifier.padding(start = 12.dp)
-                            )
-                        }
-
-                        Spacer(modifier = Modifier.height(24.dp))
-
-                        // Delete Account Action Button
-                        val canDelete = understood && (!hasPassword || password.isNotEmpty()) && !isProcessing
-                        Button(
-                            onClick = {
-                                isProcessing = true
-                                scope.launch {
-                                    val res = AuthManager.deleteAccount(password.takeIf { hasPassword })
-                                    isProcessing = false
-                                    if (res.isSuccess) {
-                                        ElvanSnackbar.show(accountDeletedMsg)
-                                    } else {
-                                        errorMessage = res.exceptionOrNull()?.message ?: errorGeneric
-                                    }
-                                }
-                            },
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(48.dp),
-                            shape = RoundedCornerShape(50),
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = colors.error,
-                                contentColor = Color.White
-                            ),
-                            enabled = canDelete
-                        ) {
-                            if (isProcessing) {
-                                ExpressiveLoadingIndicator(color = Color.White, modifier = Modifier.size(18.dp))
-                            } else {
-                                Text(
-                                    text = K.deleteAccountConfirm.tr(),
-                                    style = TextStyle(fontFamily = ff, fontSize = 14.sp, fontWeight = FontWeight.Bold)
                                 )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(
+                                    text = K.iUnderstandConsequences.tr(),
+                                    style = TextStyle(
+                                        fontFamily = ff,
+                                        fontSize = 13.sp,
+                                        fontWeight = FontWeight.Medium,
+                                        lineHeight = 18.sp
+                                    ),
+                                    color = colors.textPrimary
+                                )
+                            }
+
+                            // Password Input (if password user)
+                            if (hasPassword) {
+                                Spacer(modifier = Modifier.height(20.dp))
+
+                                ElvanSettingsTextField(
+                                    label = K.verifyIdentityForDeletion.tr(),
+                                    value = password,
+                                    onValueChange = {
+                                        password = it
+                                        errorMessage = null
+                                    },
+                                    placeholder = K.enterCurrentPassword.tr(),
+                                    visualTransformation = if (showPassword) VisualTransformation.None else PasswordVisualTransformation(),
+                                    trailingIcon = {
+                                        Icon(
+                                            imageVector = if (showPassword) MaterialSymbols.Rounded.Visibility else MaterialSymbols.Rounded.VisibilityOff,
+                                            contentDescription = null,
+                                            tint = colors.textPrimary.copy(alpha = 0.45f),
+                                            modifier = Modifier
+                                                .size(20.dp)
+                                                .clickable { showPassword = !showPassword }
+                                        )
+                                    },
+                                    colors = colors
+                                )
+                            }
+
+                            if (errorMessage != null) {
+                                Spacer(modifier = Modifier.height(12.dp))
+                                Text(
+                                    text = errorMessage!!,
+                                    style = TextStyle(
+                                        fontFamily = ff,
+                                        fontSize = 12.5.sp,
+                                        fontWeight = FontWeight.Medium
+                                    ),
+                                    color = colors.error,
+                                    modifier = Modifier.padding(start = 12.dp)
+                                )
+                            }
+
+                            Spacer(modifier = Modifier.height(24.dp))
+
+                            // Delete Account Action Button
+                            val canInitiateDelete = understood && (!hasPassword || password.isNotEmpty()) && !isProcessing
+                            Button(
+                                onClick = { showDeleteConfirmSheet = true },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(48.dp),
+                                shape = RoundedCornerShape(50),
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = colors.error,
+                                    contentColor = Color.White
+                                ),
+                                enabled = canInitiateDelete
+                            ) {
+                                if (isProcessing) {
+                                    ExpressiveLoadingIndicator(color = Color.White, modifier = Modifier.size(18.dp))
+                                } else {
+                                    Text(
+                                        text = K.deleteAccountConfirm.tr(),
+                                        style = TextStyle(fontFamily = ff, fontSize = 14.sp, fontWeight = FontWeight.Bold)
+                                    )
+                                }
                             }
                         }
                     }
                 }
             }
         }
+
+        // ── Final Destructive Confirmation Action Sheet (Apple HIG Action Sheets) ──
+        if (showDeleteConfirmSheet) {
+            ElvanActionSheet(
+                title = K.deletePermanentlyQuestion.tr(),
+                cancelText = K.cancelBtn.tr(),
+                confirmText = K.deleteBtn.tr(),
+                confirmColor = colors.error,
+                onDismissRequest = { showDeleteConfirmSheet = false },
+                onConfirm = {
+                    showDeleteConfirmSheet = false
+                    isProcessing = true
+                    scope.launch {
+                        val res = AuthManager.deleteAccount(password.takeIf { hasPassword })
+                        isProcessing = false
+                        if (res.isSuccess) {
+                            ElvanSnackbar.show(accountDeletedMsg)
+                        } else {
+                            errorMessage = res.exceptionOrNull()?.message ?: errorGeneric
+                        }
+                    }
+                },
+                colors = colors,
+                customContent = {
+                    Text(
+                        text = K.deletePermanentlyDesc.tr(),
+                        style = TextStyle(
+                            fontFamily = ff,
+                            fontSize = 13.5.sp,
+                            lineHeight = 19.sp
+                        ),
+                        color = colors.textPrimary.copy(alpha = 0.7f),
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.padding(horizontal = 8.dp)
+                    )
+                }
+            )
+        }
     }
-}
 }

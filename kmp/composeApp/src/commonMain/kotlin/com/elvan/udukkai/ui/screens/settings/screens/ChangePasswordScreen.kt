@@ -15,6 +15,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.elvan.udukkai.core.auth.AuthManager
@@ -33,7 +34,10 @@ import kotlinx.coroutines.launch
 
 /**
  * கடவுச்சொல் மாற்றும் திரை — Change Password Screen.
- * Industry-standard single-screen secure workflow matching Samsung One UI design.
+ * Industry-standard single-screen secure workflow matching Samsung One UI & Apple HIG:
+ * - Real-time password criteria feedback.
+ * - Expressive loaders during network authentication.
+ * - ElvanActionSheet for guided password reset dispatch.
  */
 @Composable
 fun ChangePasswordScreen(
@@ -59,6 +63,7 @@ fun ChangePasswordScreen(
 
     var isProcessing by remember { mutableStateOf(false) }
     var isSendingReset by remember { mutableStateOf(false) }
+    var showResetSheet by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
 
     val passwordValid = newPassword.length >= 6
@@ -271,36 +276,90 @@ fun ChangePasswordScreen(
 
                             // Forgot Password Link
                             TextButton(
-                                onClick = {
-                                    val email = AuthManager.signedInEmail
-                                    if (!email.isNullOrEmpty() && !isSendingReset) {
-                                        isSendingReset = true
-                                        scope.launch {
-                                            val ok = platformSendPasswordReset(email)
-                                            isSendingReset = false
-                                            if (ok) {
-                                                ElvanSnackbar.show(sendPasswordResetMsg)
-                                            }
-                                        }
-                                    }
-                                },
+                                onClick = { showResetSheet = true },
                                 modifier = Modifier.align(Alignment.CenterHorizontally),
                                 enabled = !isSendingReset
                             ) {
-                                Text(
-                                    text = K.forgotPassword.tr(),
-                                    style = TextStyle(
-                                        fontFamily = ff,
-                                        fontSize = 13.5.sp,
-                                        fontWeight = FontWeight.Medium
-                                    ),
-                                    color = colors.textPrimary.copy(alpha = 0.7f)
-                                )
+                                if (isSendingReset) {
+                                    ExpressiveLoadingIndicator(color = colors.accent, modifier = Modifier.size(16.dp))
+                                } else {
+                                    Text(
+                                        text = K.forgotPassword.tr(),
+                                        style = TextStyle(
+                                            fontFamily = ff,
+                                            fontSize = 13.5.sp,
+                                            fontWeight = FontWeight.Medium
+                                        ),
+                                        color = colors.textPrimary.copy(alpha = 0.7f)
+                                    )
+                                }
                             }
                         }
                     }
                 }
             }
+        }
+
+        // ── Password Reset Confirmation Action Sheet ──
+        if (showResetSheet) {
+            val email = AuthManager.signedInEmail ?: ""
+            ElvanActionSheet(
+                title = K.resetPasswordTitle.tr(),
+                cancelText = K.cancelBtn.tr(),
+                confirmText = K.sendResetLink.tr(),
+                confirmColor = colors.accent,
+                isConfirmFilled = true,
+                onDismissRequest = { showResetSheet = false },
+                onConfirm = {
+                    showResetSheet = false
+                    if (email.isNotEmpty()) {
+                        isSendingReset = true
+                        scope.launch {
+                            val ok = platformSendPasswordReset(email)
+                            isSendingReset = false
+                            if (ok) {
+                                ElvanSnackbar.show(sendPasswordResetMsg)
+                            }
+                        }
+                    }
+                },
+                colors = colors,
+                customContent = {
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        modifier = Modifier.padding(horizontal = 12.dp)
+                    ) {
+                        Text(
+                            text = K.sendResetEmailTo.tr(),
+                            style = TextStyle(
+                                fontFamily = ff,
+                                fontSize = 13.5.sp,
+                                lineHeight = 18.sp
+                            ),
+                            color = colors.textPrimary.copy(alpha = 0.65f),
+                            textAlign = TextAlign.Center
+                        )
+                        if (email.isNotEmpty()) {
+                            Spacer(modifier = Modifier.height(10.dp))
+                            Surface(
+                                shape = RoundedCornerShape(12.dp),
+                                color = colors.iconBg
+                            ) {
+                                Text(
+                                    text = email,
+                                    style = TextStyle(
+                                        fontFamily = ff,
+                                        fontSize = 13.5.sp,
+                                        fontWeight = FontWeight.SemiBold
+                                    ),
+                                    color = colors.textPrimary,
+                                    modifier = Modifier.padding(horizontal = 14.dp, vertical = 6.dp)
+                                )
+                            }
+                        }
+                    }
+                }
+            )
         }
     }
 }
