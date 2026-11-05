@@ -38,6 +38,7 @@ fun GreetingPill(
     profile: BusinessProfile,
     allProfiles: List<BusinessProfile>,
     defaultTitle: String,
+    appTitle: String? = null,
     modifier: Modifier = Modifier,
     showWelcomeMessage: Boolean? = null,
     onProfileChanging: ((Long) -> Unit)? = null,
@@ -133,7 +134,7 @@ fun GreetingPill(
                             horizontalAlignment = Alignment.Start
                         ) {
                             Text(
-                                text = K.welcomeToUdukkai.tr().preventBrokenLigatures(),
+                                text = (appTitle ?: K.appName.tr()).preventBrokenLigatures(),
                                 style = TextStyle(
                                     fontFamily = ff,
                                     fontSize = 18.sp,
@@ -210,7 +211,7 @@ fun GreetingPill(
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Text(
-                                    text = K.vanakkam.tr().preventBrokenLigatures(),
+                                    text = (appTitle ?: K.vanakkam.tr()).preventBrokenLigatures(),
                                     style = TextStyle(
                                         fontFamily = ff,
                                         fontSize = 18.sp,

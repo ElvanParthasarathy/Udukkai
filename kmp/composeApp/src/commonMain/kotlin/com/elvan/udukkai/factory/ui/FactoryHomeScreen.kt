@@ -64,6 +64,7 @@ import com.elvan.udukkai.ui.navigation.NavTab
 import com.elvan.udukkai.ui.screens.home.desktop.DesktopSideBar
 import com.elvan.udukkai.ui.screens.create.components.CreateDateFilterSheet
 import com.elvan.udukkai.factory.ui.screens.FactoryRecycleBinScreen
+import com.elvan.udukkai.factory.ui.screens.FactoryReportsScreen
 import com.elvan.udukkai.factory.ui.screens.editor.FactoryReceiptEditorScreen
 import com.elvan.udukkai.factory.ui.screens.factoryCustomerActivity
 import com.elvan.udukkai.factory.ui.screens.factoryItemActivity
@@ -319,8 +320,9 @@ fun FactoryHomeScreen() {
                         onBack = popSubpage
                     )
                 }
-                // GST reports belong to Textiles; Coolie bills carry no tax
-                is ActiveSubpage.Reports -> Unit
+                is ActiveSubpage.Reports -> {
+                    FactoryReportsScreen(onBack = popSubpage)
+                }
                 is ActiveSubpage.RecycleBin -> {
                     FactoryRecycleBinScreen(
                         onBack = popSubpage
@@ -814,6 +816,7 @@ fun FactoryHomeScreen() {
                                         onInvoiceClick = { invoice ->
                                             navigateToSubpage(ActiveSubpage.InvoiceView(invoice))
                                         },
+                                        onOpenReports = { navigateToSubpage(ActiveSubpage.Reports) },
                                         onManageProfiles = {
                                             if (!openPlatformSettings(SettingsRoute.ManageProfiles)) {
                                                 navigateToSubpage(ActiveSubpage.Settings)

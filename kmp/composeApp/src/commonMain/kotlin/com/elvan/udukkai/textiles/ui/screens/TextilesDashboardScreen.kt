@@ -74,6 +74,7 @@ fun TextilesDashboardScreen(
                     profile = TextilesProfileRepository.profile,
                     allProfiles = TextilesProfileRepository.profiles,
                     defaultTitle = "சவுளி",
+                    appTitle = if (com.elvan.udukkai.localization.LanguageManager.currentLanguage == com.elvan.udukkai.localization.Language.ENGLISH) "Udukkai Textiles" else "உடுக்கைச் சவுளி",
                     onProfileChanging = { newProfileId ->
                         scope.launch {
                             isSwitchingCompany = true

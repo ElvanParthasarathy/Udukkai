@@ -12,6 +12,7 @@ sealed interface SettingsRoute {
     data object Address : SettingsRoute
     data object Bank : SettingsRoute
     data object InvoiceCreation : SettingsRoute
+    data object Reports : SettingsRoute
     data object BilingualRules : SettingsRoute
     data object LogoSettings : SettingsRoute
     data object StorageBackup : SettingsRoute
@@ -61,6 +62,7 @@ val SettingsRoute.name: String
         SettingsRoute.Address -> "Address"
         SettingsRoute.Bank -> "Bank"
         SettingsRoute.InvoiceCreation -> "InvoiceCreation"
+        SettingsRoute.Reports -> "Reports"
         SettingsRoute.BilingualRules -> "BilingualRules"
         SettingsRoute.LogoSettings -> "LogoSettings"
         SettingsRoute.StorageBackup -> "StorageBackup"
@@ -89,6 +91,7 @@ fun settingsRouteFromName(name: String?): SettingsRoute = when (name) {
     "Address" -> SettingsRoute.Address
     "Bank" -> SettingsRoute.Bank
     "InvoiceCreation" -> SettingsRoute.InvoiceCreation
+    "Reports" -> SettingsRoute.Reports
     "BilingualRules" -> SettingsRoute.BilingualRules
     "LogoSettings" -> SettingsRoute.LogoSettings
     "StorageBackup" -> SettingsRoute.StorageBackup

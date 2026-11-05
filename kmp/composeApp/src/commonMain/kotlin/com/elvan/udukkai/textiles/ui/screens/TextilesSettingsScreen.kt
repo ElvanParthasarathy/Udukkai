@@ -22,6 +22,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.elvan.udukkai.core.platform.AppBackHandler
+import com.elvan.udukkai.core.auth.AuthManager
+import com.elvan.udukkai.textiles.ui.screens.TextilesReportsScreen
 import com.elvan.udukkai.textiles.data.TextilesProfileRepository
 import com.elvan.udukkai.localization.K
 import com.elvan.udukkai.localization.tr
@@ -124,6 +126,7 @@ fun TextilesSettingsScreen(
                 SettingsRoute.Address -> K.address.tr()
                 SettingsRoute.Bank -> K.bank.tr()
                 SettingsRoute.InvoiceCreation -> K.createBtn.tr()
+                SettingsRoute.Reports -> K.reports.tr()
                 SettingsRoute.BilingualRules -> K.bilingualSettings.tr()
                 SettingsRoute.LogoSettings -> K.logoSettings.tr()
                 SettingsRoute.Account -> K.userAccount.tr()
@@ -189,6 +192,7 @@ fun TextilesSettingsScreen(
                         scrollState = scrollState,
                         onSave = { TextilesProfileRepository.updateProfile(it) }
                     )
+                    SettingsRoute.Reports -> TextilesReportsScreen(onBack = { handleBack() })
                     SettingsRoute.LogoSettings -> LogoSettingsScreen(
                         profile = TextilesProfileRepository.profile,
                         isFactory = false,
@@ -381,6 +385,16 @@ private fun TextilesSettingsHubContent(
                         onClick = { onNavigate(SettingsRoute.InvoiceCreation) },
                         colors = colors
                     )
+
+                    ElvanSettingsDivider(colors = colors)
+
+                    ElvanSettingsRow(
+                        icon = MaterialSymbols.Rounded.EventList,
+                        title = K.reports.tr(),
+                        description = K.salesSummary.tr(),
+                        onClick = { onNavigate(SettingsRoute.Reports) },
+                        colors = colors
+                    )
                 }
             }
         }
@@ -414,6 +428,32 @@ private fun TextilesSettingsHubContent(
         item(key = "data_security_section") {
             ElvanSectionContainer {
                 ElvanSettingsSection(colors = colors) {
+                    // 1. User Account
+                    ElvanSettingsRow(
+                        icon = MaterialSymbols.Rounded.Person,
+                        title = K.userAccount.tr(),
+                        description = AuthManager.signedInEmail?.ifEmpty { K.signInMethods.tr() } ?: K.signInMethods.tr(),
+                        onClick = { onNavigate(SettingsRoute.Account) },
+                        colors = colors
+                    )
+
+                    ElvanSettingsDivider(colors = colors)
+
+                    // 2. Password (Change or Create)
+                    ElvanSettingsRow(
+                        icon = MaterialSymbols.Rounded.Key,
+                        title = if (AuthManager.hasPassword) K.changePassword.tr() else K.createPassword.tr(),
+                        description = if (AuthManager.hasPassword) K.passwordSet.tr() else K.noPasswordSet.tr(),
+                        onClick = {
+                            if (AuthManager.hasPassword) onNavigate(SettingsRoute.ChangePassword)
+                            else onNavigate(SettingsRoute.CreatePassword)
+                        },
+                        colors = colors
+                    )
+
+                    ElvanSettingsDivider(colors = colors)
+
+                    // 3. Storage & Backup
                     ElvanSettingsRow(
                         icon = MaterialSymbols.Rounded.Folder,
                         title = K.storageAndBackup.tr(),
@@ -424,6 +464,7 @@ private fun TextilesSettingsHubContent(
 
                     ElvanSettingsDivider(colors = colors)
 
+                    // 4. Security & Cloud Sync
                     ElvanSettingsRow(
                         icon = MaterialSymbols.Rounded.Lock,
                         title = K.security.tr(),

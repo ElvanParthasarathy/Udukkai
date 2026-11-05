@@ -36,7 +36,8 @@ fun FactoryDashboardScreen(
     onSeeAllReceipts: (() -> Unit)? = null,
     isRefreshing: Boolean = false,
     onInvoiceClick: (InvoiceModel) -> Unit = {},
-    onManageProfiles: (() -> Unit)? = null
+    onManageProfiles: (() -> Unit)? = null,
+    onOpenReports: (() -> Unit)? = null
 ) {
     val colors = rememberShellColors()
 
@@ -73,6 +74,7 @@ fun FactoryDashboardScreen(
                     profile = FactoryProfileRepository.profile,
                     allProfiles = FactoryProfileRepository.profiles,
                     defaultTitle = "ஆலை",
+                    appTitle = if (com.elvan.udukkai.localization.LanguageManager.currentLanguage == com.elvan.udukkai.localization.Language.ENGLISH) "Udukkai Factory" else "உடுக்கை ஆலை",
                     onProfileChanging = { newProfileId ->
                         scope.launch {
                             isSwitchingCompany = true
@@ -140,7 +142,8 @@ fun FactoryDashboardScreen(
                             value = CurrencyUtils.formatInr(overallTotal),
                             colors = colors,
                             modifier = Modifier.weight(1f),
-                            isFullWidth = false
+                            isFullWidth = false,
+                            onClick = onOpenReports
                         )
                     }
                 }
