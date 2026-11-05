@@ -134,7 +134,7 @@ fun GreetingPill(
                             horizontalAlignment = Alignment.Start
                         ) {
                             Text(
-                                text = (appTitle ?: K.appName.tr()).preventBrokenLigatures(),
+                                text = K.welcomeToUdukkai.tr().preventBrokenLigatures(),
                                 style = TextStyle(
                                     fontFamily = ff,
                                     fontSize = 18.sp,
