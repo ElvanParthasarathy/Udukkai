@@ -667,6 +667,9 @@ val ta: Map<String, String> = mapOf(
     K.emailPassword to "மின்னஞ்சல் & கடவுச்சொல்",
     K.noPasswordSet to "கடவுச்சொல் அமைக்கப்படவில்லை",
     K.passwordSet to "கடவுச்சொல் அமைக்கப்பட்டுள்ளது",
+    K.passwordsDoNotMatch to "கடவுச்சொற்கள் ஒன்றாக இல்லை",
+    K.googleLinkedDesc to "உங்கள் கூகுள் கணக்கு இணைக்கப்பட்டுள்ளது. கூகுள் மூலம் உள்நுழையலாம் அல்லது பிரிக்கலாம்.",
+    K.googleUnlinkedDesc to "விரைவாக உள்நுழையக் கூகுள் கணக்கை இணைக்கவும்.",
 )
 
 /**

@@ -666,6 +666,9 @@ val en: Map<String, String> = mapOf(
     K.emailPassword to "Email & Password",
     K.noPasswordSet to "No password set",
     K.passwordSet to "Password set",
+    K.passwordsDoNotMatch to "Passwords do not match",
+    K.googleLinkedDesc to "Your Google account is linked. You can sign in with Google or unlink it.",
+    K.googleUnlinkedDesc to "Link your Google account for quick sign-in.",
 )
 
 

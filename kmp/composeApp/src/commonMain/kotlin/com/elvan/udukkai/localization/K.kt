@@ -674,4 +674,7 @@ object K {
     const val emailPassword = "emailPassword"
     const val noPasswordSet = "noPasswordSet"
     const val passwordSet = "passwordSet"
+    const val passwordsDoNotMatch = "passwordsDoNotMatch"
+    const val googleLinkedDesc = "googleLinkedDesc"
+    const val googleUnlinkedDesc = "googleUnlinkedDesc"
 }

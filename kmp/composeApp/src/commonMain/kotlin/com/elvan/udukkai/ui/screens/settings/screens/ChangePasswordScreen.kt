@@ -1,20 +1,15 @@
 package com.elvan.udukkai.ui.screens.settings.screens
 
-import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.core.tween
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -38,12 +33,9 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 /**
- * கடவுச்சொல் மாற்றும் திரை — Change Password Screen.
- * Enhanced Password Studio matching CreatePasswordScreen:
- * - Current password verification.
- * - Dynamic 4-segment animated Password Strength Meter.
- * - Live requirement checklist with animated checkmark states.
- * - ElvanActionSheet for guided password reset dispatch.
+ * கடவுச்சொல் மாற்றும் திரை — Clean Change Password Screen.
+ * Single card with current/new/confirm fields, quiet footer hint,
+ * and forgot password link with ElvanActionSheet for reset dispatch.
  */
 @Composable
 fun ChangePasswordScreen(
@@ -71,34 +63,10 @@ fun ChangePasswordScreen(
     var showResetSheet by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
 
-    // ── Live Criteria Validation ──
+    // Validation
     val hasMinLength = newPassword.length >= 8
-    val hasLetters = newPassword.any { it.isLetter() }
-    val hasDigits = newPassword.any { it.isDigit() }
-    val hasMixedContent = hasLetters && hasDigits
+    val hasMixedContent = newPassword.any { it.isLetter() } && newPassword.any { it.isDigit() }
     val passwordsMatch = newPassword.isNotEmpty() && newPassword == confirmPassword
-
-    val strengthScore = remember(newPassword) {
-        var score = 0
-        if (newPassword.length >= 6) score++
-        if (newPassword.length >= 8) score++
-        if (newPassword.any { it.isLetter() } && newPassword.any { it.isDigit() }) score++
-        if (newPassword.any { !it.isLetterOrDigit() } || newPassword.any { it.isUpperCase() }) score++
-        score
-    }
-
-    val strengthColor = when (strengthScore) {
-        0, 1 -> colors.error
-        2 -> Color(0xFFF59E0B) // Amber
-        else -> colors.accent
-    }
-
-    val strengthLabel = when (strengthScore) {
-        0, 1 -> K.passwordStrengthWeak.tr()
-        2 -> K.passwordStrengthMedium.tr()
-        else -> K.passwordStrengthStrong.tr()
-    }
-
     val canUpdate = currentPassword.isNotBlank() && hasMinLength && hasMixedContent && passwordsMatch && !isProcessing
 
     Box(modifier = Modifier.fillMaxSize()) {
@@ -112,63 +80,15 @@ fun ChangePasswordScreen(
                 Spacer(modifier = Modifier.height(LocalElvanTopSpacerHeight.current))
             }
 
+            // ── Password Fields Card ──
             item(key = "change_password_card") {
                 ElvanSectionContainer {
-                    Surface(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clip(RoundedCornerShape(24.dp)),
-                        shape = RoundedCornerShape(24.dp),
-                        color = colors.surface,
-                        shadowElevation = 0.dp
-                    ) {
+                    ElvanSettingsSection(colors = colors) {
                         Column(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(horizontal = 20.dp, vertical = 24.dp)
+                                .padding(horizontal = 20.dp, vertical = 20.dp)
                         ) {
-                            // Hero Key Icon
-                            Box(
-                                modifier = Modifier
-                                    .size(56.dp)
-                                    .clip(CircleShape)
-                                    .background(colors.iconBg),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Icon(
-                                    imageVector = MaterialSymbols.Rounded.Key,
-                                    contentDescription = null,
-                                    tint = colors.accent,
-                                    modifier = Modifier.size(28.dp)
-                                )
-                            }
-
-                            Spacer(modifier = Modifier.height(16.dp))
-
-                            Text(
-                                text = K.changePassword.tr(),
-                                style = TextStyle(
-                                    fontFamily = ff,
-                                    fontSize = 18.sp,
-                                    fontWeight = FontWeight.Bold
-                                ),
-                                color = colors.textPrimary
-                            )
-
-                            Spacer(modifier = Modifier.height(4.dp))
-
-                            Text(
-                                text = K.confirmIdentityBeforeNewPassword.tr(),
-                                style = TextStyle(
-                                    fontFamily = ff,
-                                    fontSize = 13.5.sp,
-                                    lineHeight = 19.sp
-                                ),
-                                color = colors.textPrimary.copy(alpha = 0.55f)
-                            )
-
-                            Spacer(modifier = Modifier.height(24.dp))
-
                             // 1. Current Password
                             ElvanSettingsTextField(
                                 label = K.currentPassword.tr(),
@@ -217,41 +137,6 @@ fun ChangePasswordScreen(
                                 colors = colors
                             )
 
-                            // Password Strength Bar
-                            if (newPassword.isNotEmpty()) {
-                                Spacer(modifier = Modifier.height(10.dp))
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(6.dp)
-                                ) {
-                                    for (i in 1..4) {
-                                        val active = strengthScore >= i
-                                        val barColor by animateColorAsState(
-                                            targetValue = if (active) strengthColor else colors.iconBg,
-                                            animationSpec = tween(200)
-                                        )
-                                        Box(
-                                            modifier = Modifier
-                                                .weight(1f)
-                                                .height(4.dp)
-                                                .clip(RoundedCornerShape(2.dp))
-                                                .background(barColor)
-                                        )
-                                    }
-                                    Spacer(modifier = Modifier.width(4.dp))
-                                    Text(
-                                        text = strengthLabel,
-                                        style = TextStyle(
-                                            fontFamily = ff,
-                                            fontSize = 11.5.sp,
-                                            fontWeight = FontWeight.SemiBold
-                                        ),
-                                        color = strengthColor
-                                    )
-                                }
-                            }
-
                             Spacer(modifier = Modifier.height(14.dp))
 
                             // 3. Confirm Password
@@ -277,6 +162,7 @@ fun ChangePasswordScreen(
                                 colors = colors
                             )
 
+                            // Error message
                             if (errorMessage != null) {
                                 Spacer(modifier = Modifier.height(10.dp))
                                 Text(
@@ -287,37 +173,23 @@ fun ChangePasswordScreen(
                                         fontWeight = FontWeight.Medium
                                     ),
                                     color = colors.error,
-                                    modifier = Modifier.padding(start = 8.dp)
+                                    modifier = Modifier.padding(start = 4.dp)
                                 )
                             }
 
-                            Spacer(modifier = Modifier.height(20.dp))
-
-                            // Requirements Checklist Card
-                            Surface(
-                                modifier = Modifier.fillMaxWidth(),
-                                shape = RoundedCornerShape(16.dp),
-                                color = colors.iconBg
-                            ) {
-                                Column(modifier = Modifier.padding(14.dp)) {
-                                    ChangePasswordRequirementItem(
-                                        label = K.min8Chars.tr(),
-                                        isSatisfied = hasMinLength,
-                                        colors = colors
-                                    )
-                                    Spacer(modifier = Modifier.height(8.dp))
-                                    ChangePasswordRequirementItem(
-                                        label = K.hasLetterAndNumber.tr(),
-                                        isSatisfied = hasMixedContent,
-                                        colors = colors
-                                    )
-                                    Spacer(modifier = Modifier.height(8.dp))
-                                    ChangePasswordRequirementItem(
-                                        label = K.passwordsMatch.tr(),
-                                        isSatisfied = passwordsMatch,
-                                        colors = colors
-                                    )
-                                }
+                            // Mismatch hint
+                            if (confirmPassword.isNotEmpty() && !passwordsMatch) {
+                                Spacer(modifier = Modifier.height(8.dp))
+                                Text(
+                                    text = K.passwordsDoNotMatch.tr(),
+                                    style = TextStyle(
+                                        fontFamily = ff,
+                                        fontSize = 12.sp,
+                                        fontWeight = FontWeight.Normal
+                                    ),
+                                    color = colors.error.copy(alpha = 0.8f),
+                                    modifier = Modifier.padding(start = 4.dp)
+                                )
                             }
 
                             Spacer(modifier = Modifier.height(24.dp))
@@ -371,7 +243,7 @@ fun ChangePasswordScreen(
                                 }
                             }
 
-                            Spacer(modifier = Modifier.height(14.dp))
+                            Spacer(modifier = Modifier.height(12.dp))
 
                             // Forgot Password Link
                             TextButton(
@@ -395,6 +267,22 @@ fun ChangePasswordScreen(
                             }
                         }
                     }
+                }
+            }
+
+            // ── Quiet Footer Hint ──
+            item(key = "requirements_hint") {
+                ElvanSectionContainer {
+                    Text(
+                        text = "${K.min8Chars.tr()} · ${K.hasLetterAndNumber.tr()}",
+                        style = TextStyle(
+                            fontFamily = ff,
+                            fontSize = 12.5.sp,
+                            lineHeight = 17.sp
+                        ),
+                        color = colors.textPrimary.copy(alpha = 0.4f),
+                        modifier = Modifier.padding(horizontal = 20.dp)
+                    )
                 }
             }
         }
@@ -460,34 +348,5 @@ fun ChangePasswordScreen(
                 }
             )
         }
-    }
-}
-
-@Composable
-private fun ChangePasswordRequirementItem(
-    label: String,
-    isSatisfied: Boolean,
-    colors: ShellColors
-) {
-    val ff = LocalAppFontFamily.current
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
-        Icon(
-            imageVector = if (isSatisfied) MaterialSymbols.Rounded.CheckCircle else MaterialSymbols.Rounded.RadioButtonUnchecked,
-            contentDescription = null,
-            tint = if (isSatisfied) colors.accent else colors.textPrimary.copy(alpha = 0.3f),
-            modifier = Modifier.size(16.dp)
-        )
-        Text(
-            text = label,
-            style = TextStyle(
-                fontFamily = ff,
-                fontSize = 12.5.sp,
-                fontWeight = if (isSatisfied) FontWeight.SemiBold else FontWeight.Normal
-            ),
-            color = if (isSatisfied) colors.textPrimary else colors.textPrimary.copy(alpha = 0.5f)
-        )
     }
 }
