@@ -677,4 +677,12 @@ object K {
     const val passwordsDoNotMatch = "passwordsDoNotMatch"
     const val googleLinkedDesc = "googleLinkedDesc"
     const val googleUnlinkedDesc = "googleUnlinkedDesc"
+    const val editName = "editName"
+    const val displayName = "displayName"
+    const val enterDisplayName = "enterDisplayName"
+    const val nameSaved = "nameSaved"
+    const val saveName = "saveName"
+    const val signOutTitle = "signOutTitle"
+    const val signOutPageDesc = "signOutPageDesc"
+    const val signOutBtn = "signOutBtn"
 }

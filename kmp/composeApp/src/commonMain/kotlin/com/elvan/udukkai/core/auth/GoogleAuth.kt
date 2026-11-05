@@ -70,3 +70,6 @@ expect suspend fun platformCreatePassword(password: String): Result<Unit>
 
 /** Permanently deletes the user account from Firebase Auth. */
 expect suspend fun platformDeleteAccount(password: String? = null): Result<Unit>
+
+/** Updates the display name of the signed-in Firebase user. */
+expect suspend fun platformUpdateDisplayName(name: String): Result<Unit>

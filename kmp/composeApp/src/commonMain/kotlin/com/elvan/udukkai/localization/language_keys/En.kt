@@ -669,6 +669,14 @@ val en: Map<String, String> = mapOf(
     K.passwordsDoNotMatch to "Passwords do not match",
     K.googleLinkedDesc to "Your Google account is linked. You can sign in with Google or unlink it.",
     K.googleUnlinkedDesc to "Link your Google account for quick sign-in.",
+    K.editName to "Edit Name",
+    K.displayName to "Display Name",
+    K.enterDisplayName to "Enter your name",
+    K.nameSaved to "Name saved",
+    K.saveName to "Save",
+    K.signOutTitle to "Sign Out",
+    K.signOutPageDesc to "You will be signed out of this device. Your data is safely backed up.",
+    K.signOutBtn to "Sign Out",
 )
 
 

@@ -222,3 +222,15 @@ actual suspend fun platformDeleteAccount(password: String?): Result<Unit> = try 
 } catch (e: Exception) {
     Result.failure(e)
 }
+
+actual suspend fun platformUpdateDisplayName(name: String): Result<Unit> = try {
+    val user = FirebaseAuth.getInstance().currentUser
+        ?: throw IllegalStateException("No authenticated user")
+    val profileUpdates = com.google.firebase.auth.UserProfileChangeRequest.Builder()
+        .setDisplayName(name.trim())
+        .build()
+    user.updateProfile(profileUpdates).await()
+    Result.success(Unit)
+} catch (e: Exception) {
+    Result.failure(e)
+}

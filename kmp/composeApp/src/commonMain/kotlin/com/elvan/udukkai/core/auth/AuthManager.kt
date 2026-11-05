@@ -54,6 +54,14 @@ object AuthManager {
         return res
     }
 
+    suspend fun updateDisplayName(name: String): Result<Unit> {
+        val res = platformUpdateDisplayName(name)
+        if (res.isSuccess) {
+            signedInDisplayName = name.trim().ifEmpty { null }
+        }
+        return res
+    }
+
     /** Set by the onboarding gate; decides which database branch is synced. */
     var appScope: AppScope = AppScope.TEXTILES
 
