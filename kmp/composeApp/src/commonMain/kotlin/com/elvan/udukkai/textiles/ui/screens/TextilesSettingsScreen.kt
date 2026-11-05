@@ -129,13 +129,13 @@ fun TextilesSettingsScreen(
                 SettingsRoute.Reports -> K.reports.tr()
                 SettingsRoute.BilingualRules -> K.bilingualSettings.tr()
                 SettingsRoute.LogoSettings -> K.logoSettings.tr()
-                SettingsRoute.Account -> K.userAccount.tr()
+                SettingsRoute.Account -> K.accountAndSecurity.tr()
                 SettingsRoute.LinkedAccounts -> K.linkedAccounts.tr()
                 SettingsRoute.ChangePassword -> K.changePassword.tr()
                 SettingsRoute.CreatePassword -> K.createPassword.tr()
                 SettingsRoute.DeleteAccount -> K.deleteAccount.tr()
                 SettingsRoute.StorageBackup -> K.storageAndBackup.tr()
-                SettingsRoute.Security -> K.security.tr()
+                SettingsRoute.Security -> K.accountAndSecurity.tr()
                 SettingsRoute.AboutDeveloper -> K.softwareDesigner.tr()
                 SettingsRoute.AboutApp -> K.aboutApp.tr()
                 SettingsRoute.ElvanNavil -> K.aboutElvanNavil.tr()
@@ -201,8 +201,7 @@ fun TextilesSettingsScreen(
                         onSave = { TextilesProfileRepository.updateProfile(it) }
                     )
                     SettingsRoute.StorageBackup -> TextilesStorageBackupScreen(scrollState = scrollState, colors = colors)
-                    SettingsRoute.Security -> TextilesSecuritySettingsScreen(onNavigate = { navigateTo(it) }, scrollState = scrollState, colors = colors)
-                    SettingsRoute.Account -> AccountSettingsScreen(onNavigate = { navigateTo(it) }, scrollState = scrollState, colors = colors)
+                    SettingsRoute.Account, SettingsRoute.Security -> AccountSettingsScreen(onNavigate = { navigateTo(it) }, scrollState = scrollState, colors = colors)
                     SettingsRoute.LinkedAccounts -> LinkedAccountsScreen(onNavigate = { navigateTo(it) }, scrollState = scrollState, colors = colors)
                     SettingsRoute.ChangePassword -> ChangePasswordScreen(onBack = { handleBack() }, scrollState = scrollState, colors = colors)
                     SettingsRoute.CreatePassword -> CreatePasswordScreen(onBack = { handleBack() }, scrollState = scrollState, colors = colors)
@@ -428,10 +427,10 @@ private fun TextilesSettingsHubContent(
         item(key = "data_security_section") {
             ElvanSectionContainer {
                 ElvanSettingsSection(colors = colors) {
-                    // 1. User Account
+                    // 1. Account & Security
                     ElvanSettingsRow(
                         icon = MaterialSymbols.Rounded.Person,
-                        title = K.userAccount.tr(),
+                        title = K.accountAndSecurity.tr(),
                         description = AuthManager.signedInEmail?.ifEmpty { K.signInMethods.tr() } ?: K.signInMethods.tr(),
                         onClick = { onNavigate(SettingsRoute.Account) },
                         colors = colors
@@ -439,37 +438,12 @@ private fun TextilesSettingsHubContent(
 
                     ElvanSettingsDivider(colors = colors)
 
-                    // 2. Password (Change or Create)
-                    ElvanSettingsRow(
-                        icon = MaterialSymbols.Rounded.Key,
-                        title = if (AuthManager.hasPassword) K.changePassword.tr() else K.createPassword.tr(),
-                        description = if (AuthManager.hasPassword) K.passwordSet.tr() else K.noPasswordSet.tr(),
-                        onClick = {
-                            if (AuthManager.hasPassword) onNavigate(SettingsRoute.ChangePassword)
-                            else onNavigate(SettingsRoute.CreatePassword)
-                        },
-                        colors = colors
-                    )
-
-                    ElvanSettingsDivider(colors = colors)
-
-                    // 3. Storage & Backup
+                    // 2. Storage & Backup
                     ElvanSettingsRow(
                         icon = MaterialSymbols.Rounded.Folder,
                         title = K.storageAndBackup.tr(),
                         description = K.manageDatabasesBackups.tr(),
                         onClick = { onNavigate(SettingsRoute.StorageBackup) },
-                        colors = colors
-                    )
-
-                    ElvanSettingsDivider(colors = colors)
-
-                    // 4. Security & Cloud Sync
-                    ElvanSettingsRow(
-                        icon = MaterialSymbols.Rounded.Lock,
-                        title = K.security.tr(),
-                        description = K.syncLogoutClearData.tr(),
-                        onClick = { onNavigate(SettingsRoute.Security) },
                         colors = colors
                     )
                 }

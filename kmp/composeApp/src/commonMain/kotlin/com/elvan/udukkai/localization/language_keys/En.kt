@@ -609,6 +609,7 @@ val en: Map<String, String> = mapOf(
     K.a11yNewProfile to "New business",
     K.a11ySwitchCompany to "Switch business",
     K.userAccount to "User Account",
+    K.accountAndSecurity to "Account & Security",
     K.linkedAccounts to "Linked Accounts",
     K.linkedAccountsDesc to "Google and email/password sign-in",
     K.signInMethods to "Sign-in Methods",

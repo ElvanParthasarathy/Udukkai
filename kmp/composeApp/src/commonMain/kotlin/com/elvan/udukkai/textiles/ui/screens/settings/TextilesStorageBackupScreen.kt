@@ -131,12 +131,10 @@ fun TextilesStorageBackupScreen(
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(20.dp)
+                        .padding(horizontal = 20.dp, vertical = 18.dp)
                 ) {
                     Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 14.dp),
+                        modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.Bottom
                     ) {
@@ -186,13 +184,28 @@ fun TextilesStorageBackupScreen(
             }
         }
 
-        item(key = "cloud_sync") {
-            com.elvan.udukkai.ui.screens.settings.CloudSyncSection(colors = colors)
-        }
-
         // ── 2. Storage Actions Section ──
         item {
+            val sync = remember { com.elvan.udukkai.core.sync.getFirebaseSyncManager() }
+            val syncStatus by sync.syncStatus
+            val lastSync by sync.lastSyncTime
+            val syncStatusText = when (syncStatus) {
+                com.elvan.udukkai.core.sync.SyncStatus.SYNCED -> K.syncStatusSynced.tr()
+                com.elvan.udukkai.core.sync.SyncStatus.SYNCING -> K.syncStatusSyncing.tr()
+                com.elvan.udukkai.core.sync.SyncStatus.OFFLINE -> K.syncStatusOffline.tr()
+                com.elvan.udukkai.core.sync.SyncStatus.ERROR, com.elvan.udukkai.core.sync.SyncStatus.GUARD_TRIGGERED -> K.syncStatusError.tr()
+                com.elvan.udukkai.core.sync.SyncStatus.IDLE -> K.syncStatusIdle.tr()
+            }
+
             ElvanSettingsSection(colors = colors) {
+                ElvanSettingsRow(
+                    icon = MaterialSymbols.Rounded.Sync,
+                    title = syncStatusText,
+                    description = if (lastSync > 0L) "${K.lastSyncedAt.tr()}: ${DateUtils.formatDateTime(lastSync)}" else null,
+                    onClick = { sync.triggerManualSync() },
+                    colors = colors
+                )
+                ElvanSettingsDivider(colors = colors)
                 ElvanSettingsRow(
                     icon = MaterialSymbols.Rounded.Folder,
                     title = K.storageUsed.tr(),
@@ -333,7 +346,7 @@ fun TextilesStorageBackupScreen(
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(horizontal = 16.dp, vertical = 14.dp)
+                            .padding(horizontal = 20.dp, vertical = 14.dp)
                     ) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Surface(

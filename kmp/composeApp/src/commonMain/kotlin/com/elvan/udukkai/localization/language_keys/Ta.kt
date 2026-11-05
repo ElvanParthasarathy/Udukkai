@@ -610,6 +610,7 @@ val ta: Map<String, String> = mapOf(
     K.a11yNewProfile to "புதிய நிறுவனம்",
     K.a11ySwitchCompany to "நிறுவனத்தை மாற்று",
     K.userAccount to "பயனர் கணக்கு",
+    K.accountAndSecurity to "பயனர் கணக்கும் பாதுகாப்பும்",
     K.linkedAccounts to "இணைக்கப்பட்ட கணக்குகள்",
     K.linkedAccountsDesc to "கூகுள் மற்றும் மின்னஞ்சல்/கடவுச்சொல்",
     K.signInMethods to "உள்நுழைவு முறைகள்",
