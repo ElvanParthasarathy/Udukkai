@@ -39,3 +39,12 @@ actual fun HideSystemBars(hidden: Boolean) {
 actual fun updatePlatformLauncher(languageCode: String) {
     // No launcher alias on desktop
 }
+
+actual fun isNetworkAvailable(): Boolean {
+    return try {
+        val interfaces = java.net.NetworkInterface.getNetworkInterfaces()
+        interfaces.asSequence().any { it.isUp && !it.isLoopback }
+    } catch (_: Exception) {
+        true
+    }
+}

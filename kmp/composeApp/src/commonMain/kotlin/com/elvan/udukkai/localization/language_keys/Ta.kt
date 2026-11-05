@@ -688,6 +688,9 @@ val ta: Map<String, String> = mapOf(
     K.googleLink to "கூகுள் இணைப்பு",
     K.returningToSecuritySettings to "பாதுகாப்பு அமைப்புகளுக்குத் திரும்புகிறது...",
     K.createNewPassword to "புதிய கடவுச்சொல்லை உருவாக்கவும்",
+    K.noInternetConnection to "இணைய இணைப்பு இல்லை",
+    K.noInternetDesc to "உங்கள் இணைய இணைப்பைச் சரிபார்த்து மீண்டும் முயற்சிக்கவும்",
+    K.retryBtn to "மீண்டும் முயற்சி செய்",
 )
 
 /**

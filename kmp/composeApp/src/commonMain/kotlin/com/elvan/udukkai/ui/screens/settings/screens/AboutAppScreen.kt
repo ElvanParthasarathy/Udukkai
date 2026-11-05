@@ -36,6 +36,10 @@ import com.elvan.udukkai.theme.rememberShellColors
 import com.elvan.udukkai.ui.components.shell.*
 import com.elvan.udukkai.ui.navigation.MaterialSymbols
 import kotlinx.coroutines.launch
+import migrate.composeapp.generated.resources.Res
+import migrate.composeapp.generated.resources.factory_logo_vector
+import migrate.composeapp.generated.resources.textiles_logo_vector
+import org.jetbrains.compose.resources.painterResource
 
 /**
  * செயலி பற்றி திரை — About App Screen.
@@ -118,10 +122,10 @@ fun AboutAppScreen(
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
-                        imageVector = if (isFactory) MaterialSymbols.Mode.Coolie else MaterialSymbols.Mode.Silk,
+                        painter = painterResource(if (isFactory) Res.drawable.factory_logo_vector else Res.drawable.textiles_logo_vector),
                         contentDescription = K.aboutApp.tr(),
                         tint = colors.textPrimary,
-                        modifier = Modifier.size(46.dp)
+                        modifier = Modifier.size(120.dp)
                     )
                 }
 

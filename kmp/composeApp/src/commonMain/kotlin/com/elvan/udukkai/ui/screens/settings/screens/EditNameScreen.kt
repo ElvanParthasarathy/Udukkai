@@ -25,12 +25,10 @@ import com.elvan.udukkai.theme.rememberShellColors
 import com.elvan.udukkai.ui.components.ExpressiveLoadingIndicator
 import com.elvan.udukkai.ui.components.shell.*
 import com.elvan.udukkai.ui.navigation.MaterialSymbols
-import com.elvan.udukkai.ui.screens.settings.AccountAvatar
 import kotlinx.coroutines.launch
 
 /**
  * பெயர் திருத்தும் திரை — Dedicated Name Edit Sub-page matching Business Edit.
- * - Circular avatar preview at the top.
  * - In-place animated expand container (ElvanSettingsAnimatedExpand):
  *   - DisplayRow shows current name with an Edit button on the right.
  *   - Tapping Edit expands the edit box with the text field and Cancel / Save buttons.
@@ -64,35 +62,6 @@ fun EditNameScreen(
         ) {
             item(key = "shell_top_spacer") {
                 Spacer(modifier = Modifier.height(LocalElvanTopSpacerHeight.current))
-            }
-
-            // ── Top Profile Avatar Circle ──
-            item(key = "avatar_header") {
-                ElvanSectionContainer {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 16.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .size(72.dp)
-                                .clip(CircleShape)
-                                .background(colors.iconBg),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            AccountAvatar(fallback = {
-                                Icon(
-                                    imageVector = MaterialSymbols.Rounded.Person,
-                                    contentDescription = null,
-                                    tint = colors.textPrimary.copy(alpha = 0.6f),
-                                    modifier = Modifier.size(36.dp)
-                                )
-                            })
-                        }
-                    }
-                }
             }
 
             // ── Business Edit Style: Animated Expand Container ──

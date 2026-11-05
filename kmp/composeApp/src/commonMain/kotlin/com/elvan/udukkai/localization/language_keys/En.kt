@@ -687,6 +687,9 @@ val en: Map<String, String> = mapOf(
     K.googleLink to "Google Link",
     K.returningToSecuritySettings to "Returning to security settings...",
     K.createNewPassword to "Create New Password",
+    K.noInternetConnection to "No Internet Connection",
+    K.noInternetDesc to "Please check your internet connection and try again",
+    K.retryBtn to "Retry",
 )
 
 

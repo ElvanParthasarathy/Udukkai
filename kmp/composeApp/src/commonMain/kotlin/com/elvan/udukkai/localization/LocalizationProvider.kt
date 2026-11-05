@@ -63,9 +63,6 @@ object LanguageManager {
         } catch (_: Exception) {
             currentLanguage = Language.SYSTEM
         }
-        try {
-            com.elvan.udukkai.core.platform.updatePlatformLauncher(activeLanguageCode)
-        } catch (_: Exception) {}
     }
 
     fun setLanguage(language: Language) {
@@ -73,9 +70,6 @@ object LanguageManager {
         try {
             val value = if (language == Language.SYSTEM) "system" else language.code
             getPreferencesHelper().setString(PREF_KEY_LANGUAGE, value)
-        } catch (_: Exception) {}
-        try {
-            com.elvan.udukkai.core.platform.updatePlatformLauncher(activeLanguageCode)
         } catch (_: Exception) {}
     }
 

@@ -27,13 +27,16 @@ import com.elvan.udukkai.theme.Dimens
 import com.elvan.udukkai.theme.LocalAppFontFamily
 import com.elvan.udukkai.theme.ShellColors
 import com.elvan.udukkai.theme.rememberShellColors
+import com.elvan.udukkai.ui.components.ExpressiveContainedLoader
 import com.elvan.udukkai.ui.components.ExpressiveLoadingIndicator
 import com.elvan.udukkai.ui.components.shell.*
 import com.elvan.udukkai.ui.navigation.MaterialSymbols
 import com.elvan.udukkai.ui.screens.settings.AccountAvatar
 import com.elvan.udukkai.ui.screens.settings.SettingsRoute
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 /**
  * கூகுள் இணைப்புத் திரை — Google Link Screen (Matching Neram Mobile 1:1).
@@ -58,6 +61,8 @@ fun LinkedAccountsScreen(
     val hasPassword = AuthManager.hasPassword
 
     var isCheckingStatus by remember { mutableStateOf(true) }
+    var isOnline by remember { mutableStateOf(true) }
+    var retryTrigger by remember { mutableStateOf(0) }
     var showUnlinkSheet by remember { mutableStateOf(false) }
     var isLinking by remember { mutableStateOf(false) }
     var isUnlinking by remember { mutableStateOf(false) }
@@ -67,8 +72,13 @@ fun LinkedAccountsScreen(
     val connectedMsg = K.connected.tr()
 
     // Internet-oriented loading experience on enter
-    LaunchedEffect(Unit) {
-        delay(250)
+    LaunchedEffect(retryTrigger) {
+        isCheckingStatus = true
+        val online = withContext(Dispatchers.IO) {
+            com.elvan.udukkai.core.platform.isNetworkAvailable()
+        }
+        delay(200)
+        isOnline = online
         isCheckingStatus = false
     }
 
@@ -83,7 +93,81 @@ fun LinkedAccountsScreen(
                     modifier = Modifier.fillMaxSize(),
                     contentAlignment = Alignment.Center
                 ) {
-                    ExpressiveLoadingIndicator(color = colors.textPrimary, modifier = Modifier.size(28.dp))
+                    ExpressiveContainedLoader(
+                        modifier = Modifier.size(48.dp),
+                        containerColor = colors.surface,
+                        indicatorColor = colors.textPrimary
+                    )
+                }
+            } else if (!isOnline) {
+                LazyColumn(
+                    state = scrollState,
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = PaddingValues(bottom = Dimens.SubpageContentPaddingBottom),
+                    verticalArrangement = Arrangement.spacedBy(Dimens.SectionSpacing)
+                ) {
+                    item(key = "shell_top_spacer") {
+                        Spacer(modifier = Modifier.height(LocalElvanTopSpacerHeight.current))
+                    }
+
+                    item(key = "offline_card") {
+                        ElvanSectionContainer {
+                            ElvanSettingsSection(colors = colors) {
+                                Column(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(horizontal = 24.dp, vertical = 32.dp),
+                                    horizontalAlignment = Alignment.CenterHorizontally,
+                                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = MaterialSymbols.Rounded.WifiOff,
+                                        contentDescription = null,
+                                        tint = colors.textSecondary,
+                                        modifier = Modifier.size(40.dp)
+                                    )
+                                    Text(
+                                        text = K.noInternetConnection.tr(),
+                                        style = TextStyle(
+                                            fontFamily = ff,
+                                            fontSize = 16.sp,
+                                            fontWeight = FontWeight.SemiBold,
+                                            lineHeight = 22.sp
+                                        ),
+                                        color = colors.textPrimary,
+                                        textAlign = TextAlign.Center
+                                    )
+                                    Text(
+                                        text = K.noInternetDesc.tr(),
+                                        style = TextStyle(
+                                            fontFamily = ff,
+                                            fontSize = 13.sp,
+                                            lineHeight = 18.sp
+                                        ),
+                                        color = colors.textSecondary,
+                                        textAlign = TextAlign.Center
+                                    )
+                                    Spacer(modifier = Modifier.height(6.dp))
+                                    Surface(
+                                        shape = RoundedCornerShape(12.dp),
+                                        color = colors.textPrimary,
+                                        modifier = Modifier.clickable { retryTrigger++ }
+                                    ) {
+                                        Text(
+                                            text = K.retryBtn.tr(),
+                                            color = colors.surface,
+                                            style = TextStyle(
+                                                fontFamily = ff,
+                                                fontSize = 14.sp,
+                                                fontWeight = FontWeight.SemiBold
+                                            ),
+                                            modifier = Modifier.padding(horizontal = 24.dp, vertical = 10.dp)
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
                 }
             } else {
                 LazyColumn(

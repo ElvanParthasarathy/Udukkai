@@ -52,6 +52,12 @@ fun ElvanSubShell(
         }
     }
 
+    androidx.compose.runtime.DisposableEffect(Unit) {
+        onDispose {
+            ElvanSnackbar.dismiss()
+        }
+    }
+
     ElvanShell(
         title = title,
         onBack = onBack,

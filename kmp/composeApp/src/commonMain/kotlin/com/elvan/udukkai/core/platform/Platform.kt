@@ -31,3 +31,6 @@ expect fun HideSystemBars(hidden: Boolean)
 
 /** Updates the launcher activity alias to match the given language code without restarting the app. */
 expect fun updatePlatformLauncher(languageCode: String)
+
+/** Returns true if the device currently has an active internet connection. */
+expect fun isNetworkAvailable(): Boolean

@@ -173,6 +173,16 @@ abstract class BaseSubpageActivity : FragmentActivity() {
         AppLock.onActivityStopped()
     }
 
+    override fun finish() {
+        com.elvan.udukkai.ui.components.shell.ElvanSnackbar.dismiss()
+        super.finish()
+    }
+
+    override fun onDestroy() {
+        com.elvan.udukkai.ui.components.shell.ElvanSnackbar.dismiss()
+        super.onDestroy()
+    }
+
     @Deprecated("Deprecated in Java")
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: android.content.Intent?) {
         super.onActivityResult(requestCode, resultCode, data)

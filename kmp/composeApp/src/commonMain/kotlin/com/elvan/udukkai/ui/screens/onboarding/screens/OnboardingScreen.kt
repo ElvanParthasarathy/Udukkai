@@ -32,6 +32,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.elvan.udukkai.theme.ElvanSansFontFamily
 import com.elvan.udukkai.core.auth.AllowedAccounts
+import com.elvan.udukkai.core.auth.AppScope
 import com.elvan.udukkai.core.auth.AuthManager
 import com.elvan.udukkai.core.auth.GoogleSignInResult
 import com.elvan.udukkai.core.auth.platformSendPasswordReset
@@ -40,6 +41,10 @@ import com.elvan.udukkai.localization.tr
 import com.elvan.udukkai.ui.components.ExpressiveLoadingIndicator
 import com.elvan.udukkai.ui.navigation.MaterialSymbols
 import kotlinx.coroutines.launch
+import migrate.composeapp.generated.resources.Res
+import migrate.composeapp.generated.resources.factory_logo_vector
+import migrate.composeapp.generated.resources.textiles_logo_vector
+import org.jetbrains.compose.resources.painterResource
 
 private val ErrorRed = Color(0xFFBA1A1A)
 
@@ -106,7 +111,20 @@ fun UllnuzhaivuThirai(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             NeramElement(delayIndex = 0) {
-                NeramHeader(title = K.udukkai.tr(), subtitle = K.loginToAccessApp.tr())
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    val isFactory = (AuthManager.appScope == AppScope.FACTORY)
+                    Icon(
+                        painter = painterResource(if (isFactory) Res.drawable.factory_logo_vector else Res.drawable.textiles_logo_vector),
+                        contentDescription = null,
+                        tint = NeramColors.textPrimary(),
+                        modifier = Modifier.size(110.dp)
+                    )
+                    Spacer(Modifier.height(18.dp))
+                    NeramHeader(
+                        title = if (isFactory) K.udukkaiFactory.tr() else K.udukkaiTextiles.tr(),
+                        subtitle = K.loginToAccessApp.tr()
+                    )
+                }
             }
 
             Spacer(Modifier.height(16.dp))

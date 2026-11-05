@@ -695,4 +695,7 @@ object K {
     const val googleLink = "googleLink"
     const val returningToSecuritySettings = "returningToSecuritySettings"
     const val createNewPassword = "createNewPassword"
+    const val noInternetConnection = "noInternetConnection"
+    const val noInternetDesc = "noInternetDesc"
+    const val retryBtn = "retryBtn"
 }

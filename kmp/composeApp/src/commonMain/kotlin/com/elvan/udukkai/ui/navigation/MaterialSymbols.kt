@@ -483,6 +483,7 @@ object MaterialSymbols {
         val Key: ImageVector get() = LibSymbols.RoundedFilled.Key
         val CheckCircle: ImageVector get() = LibSymbols.RoundedFilled.Check_circle
         val Warning: ImageVector get() = LibSymbols.RoundedFilled.Error
+        val WifiOff: ImageVector get() = LibSymbols.Rounded.Wifi_off
     }
 
     /**

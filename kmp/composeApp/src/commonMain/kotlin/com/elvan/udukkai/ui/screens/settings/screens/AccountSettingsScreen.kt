@@ -1,5 +1,6 @@
 package com.elvan.udukkai.ui.screens.settings.screens
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
@@ -17,18 +18,25 @@ import com.elvan.udukkai.localization.tr
 import com.elvan.udukkai.theme.Dimens
 import com.elvan.udukkai.theme.LocalAppFontFamily
 import com.elvan.udukkai.theme.ShellColors
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.text.font.FontWeight
 import com.elvan.udukkai.theme.rememberShellColors
+import com.elvan.udukkai.ui.components.ExpressiveContainedLoader
 import com.elvan.udukkai.ui.components.shell.*
 import com.elvan.udukkai.ui.navigation.MaterialSymbols
 import com.elvan.udukkai.ui.screens.settings.AccountAvatar
 import com.elvan.udukkai.ui.screens.settings.SettingsRoute
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.withContext
 
 /**
  * கணக்கு அமைப்புகள் — Account Settings Screen (Matching Neram Mobile).
  * - Top Profile Pill Card showing avatar, display name, and email. Tapping opens Name Edit subpage.
  * - Card 1 (Security & Sign-in): Google link ("கூகுள் இணைப்பு"), Password status, Sign Out with clean ActionSheet.
  * - Card 2 (Danger Zone): Delete account step-by-step wizard.
- * - Minimalist monochrome UI without redundant duplicate headers.
+ * - Minimalist monochrome UI with expressive contained page loader and pure Tamil offline state.
  */
 @Composable
 fun AccountSettingsScreen(
@@ -44,7 +52,20 @@ fun AccountSettingsScreen(
     val hasPassword = AuthManager.hasPassword
     val isGoogleLinked = AuthManager.isGoogleLinked
 
+    var isCheckingStatus by remember { mutableStateOf(true) }
+    var isOnline by remember { mutableStateOf(true) }
+    var retryTrigger by remember { mutableStateOf(0) }
     var showSignOutConfirm by remember { mutableStateOf(false) }
+
+    LaunchedEffect(retryTrigger) {
+        isCheckingStatus = true
+        val online = withContext(Dispatchers.IO) {
+            com.elvan.udukkai.core.platform.isNetworkAvailable()
+        }
+        delay(200)
+        isOnline = online
+        isCheckingStatus = false
+    }
 
     ElvanSubShell(
         title = K.account.tr(),
@@ -52,134 +73,217 @@ fun AccountSettingsScreen(
         scrollState = scrollState
     ) {
         Box(modifier = Modifier.fillMaxSize()) {
-        LazyColumn(
-            state = scrollState,
-            modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(bottom = Dimens.SubpageContentPaddingBottom),
-            verticalArrangement = Arrangement.spacedBy(Dimens.SectionSpacing)
-        ) {
-            item(key = "shell_top_spacer") {
-                Spacer(modifier = Modifier.height(LocalElvanTopSpacerHeight.current))
-            }
-
-            // ── Top Profile Pill Card: Tapping opens Name Edit Sub-page ──
-            item(key = "profile_pill_header") {
-                ElvanSectionContainer {
-                    ElvanProfilePillCard(
-                        title = displayName.ifEmpty { K.userAccount.tr() },
-                        subtitle = email.ifEmpty { K.notConnected.tr() },
-                        onClick = { onNavigate(SettingsRoute.EditName) },
-                        iconWidget = {
-                            AccountAvatar(fallback = {
-                                Icon(
-                                    imageVector = MaterialSymbols.Rounded.Person,
-                                    contentDescription = null,
-                                    tint = colors.textPrimary,
-                                    modifier = Modifier.size(26.dp)
-                                )
-                            })
-                        },
-                        trailing = {
-                            Icon(
-                                imageVector = MaterialSymbols.Rounded.ChevronRight,
-                                contentDescription = null,
-                                tint = colors.textTertiary,
-                                modifier = Modifier.size(20.dp)
-                            )
-                        },
-                        colors = colors
+            if (isCheckingStatus) {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    ExpressiveContainedLoader(
+                        modifier = Modifier.size(48.dp),
+                        containerColor = colors.surface,
+                        indicatorColor = colors.textPrimary
                     )
                 }
-            }
+            } else if (!isOnline) {
+                LazyColumn(
+                    state = scrollState,
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = PaddingValues(bottom = Dimens.SubpageContentPaddingBottom),
+                    verticalArrangement = Arrangement.spacedBy(Dimens.SectionSpacing)
+                ) {
+                    item(key = "shell_top_spacer") {
+                        Spacer(modifier = Modifier.height(LocalElvanTopSpacerHeight.current))
+                    }
 
-            // ── Card 1: Security & Sign-in (No title above card) ──
-            item(key = "security_signin_card") {
-                ElvanSectionContainer {
-                    ElvanSettingsSection(colors = colors) {
-                        // Google Link Row ("கூகுள் இணைப்பு" -> opens LinkedAccounts subpage)
-                        ElvanSettingsRow(
-                            icon = MaterialSymbols.Rounded.Link,
-                            title = K.googleLink.tr(),
-                            description = if (isGoogleLinked) email.ifEmpty { K.connected.tr() } else K.notConnected.tr(),
-                            onClick = { onNavigate(SettingsRoute.LinkedAccounts) },
-                            colors = colors
-                        )
-
-                        ElvanSettingsDivider(colors = colors)
-
-                        // Password Row
-                        ElvanSettingsRow(
-                            icon = MaterialSymbols.Rounded.Key,
-                            title = K.password.tr(),
-                            description = if (hasPassword) K.passwordSet.tr() else K.noPasswordSet.tr(),
-                            onClick = {
-                                if (hasPassword) {
-                                    onNavigate(SettingsRoute.ChangePassword)
-                                } else {
-                                    onNavigate(SettingsRoute.CreatePassword)
+                    item(key = "offline_card") {
+                        ElvanSectionContainer {
+                            ElvanSettingsSection(colors = colors) {
+                                Column(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(horizontal = 24.dp, vertical = 32.dp),
+                                    horizontalAlignment = Alignment.CenterHorizontally,
+                                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = MaterialSymbols.Rounded.WifiOff,
+                                        contentDescription = null,
+                                        tint = colors.textSecondary,
+                                        modifier = Modifier.size(40.dp)
+                                    )
+                                    Text(
+                                        text = K.noInternetConnection.tr(),
+                                        style = TextStyle(
+                                            fontFamily = ff,
+                                            fontSize = 16.sp,
+                                            fontWeight = FontWeight.SemiBold,
+                                            lineHeight = 22.sp
+                                        ),
+                                        color = colors.textPrimary,
+                                        textAlign = TextAlign.Center
+                                    )
+                                    Text(
+                                        text = K.noInternetDesc.tr(),
+                                        style = TextStyle(
+                                            fontFamily = ff,
+                                            fontSize = 13.sp,
+                                            lineHeight = 18.sp
+                                        ),
+                                        color = colors.textSecondary,
+                                        textAlign = TextAlign.Center
+                                    )
+                                    Spacer(modifier = Modifier.height(6.dp))
+                                    Surface(
+                                        shape = RoundedCornerShape(12.dp),
+                                        color = colors.textPrimary,
+                                        modifier = Modifier.clickable { retryTrigger++ }
+                                    ) {
+                                        Text(
+                                            text = K.retryBtn.tr(),
+                                            color = colors.surface,
+                                            style = TextStyle(
+                                                fontFamily = ff,
+                                                fontSize = 14.sp,
+                                                fontWeight = FontWeight.SemiBold
+                                            ),
+                                            modifier = Modifier.padding(horizontal = 24.dp, vertical = 10.dp)
+                                        )
+                                    }
                                 }
-                            },
-                            colors = colors
-                        )
+                            }
+                        }
+                    }
+                }
+            } else {
+                LazyColumn(
+                    state = scrollState,
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = PaddingValues(bottom = Dimens.SubpageContentPaddingBottom),
+                    verticalArrangement = Arrangement.spacedBy(Dimens.SectionSpacing)
+                ) {
+                    item(key = "shell_top_spacer") {
+                        Spacer(modifier = Modifier.height(LocalElvanTopSpacerHeight.current))
+                    }
 
-                        ElvanSettingsDivider(colors = colors)
+                    // ── Top Profile Pill Card: Tapping opens Name Edit Sub-page ──
+                    item(key = "profile_pill_header") {
+                        ElvanSectionContainer {
+                            ElvanProfilePillCard(
+                                title = displayName.ifEmpty { K.userAccount.tr() },
+                                subtitle = email.ifEmpty { K.notConnected.tr() },
+                                onClick = { onNavigate(SettingsRoute.EditName) },
+                                iconWidget = {
+                                    AccountAvatar(fallback = {
+                                        Icon(
+                                            imageVector = MaterialSymbols.Rounded.Person,
+                                            contentDescription = null,
+                                            tint = colors.textPrimary,
+                                            modifier = Modifier.size(26.dp)
+                                        )
+                                    })
+                                },
+                                trailing = {
+                                    Icon(
+                                        imageVector = MaterialSymbols.Rounded.ChevronRight,
+                                        contentDescription = null,
+                                        tint = colors.textTertiary,
+                                        modifier = Modifier.size(20.dp)
+                                    )
+                                },
+                                colors = colors
+                            )
+                        }
+                    }
 
-                        // Sign Out Row (Tapping card directly asks confirmation via ActionSheet)
-                        ElvanSettingsRow(
-                            icon = MaterialSymbols.Rounded.Logout,
-                            title = K.logout.tr(),
-                            description = K.logoutApplication.tr(),
-                            onClick = { showSignOutConfirm = true },
-                            colors = colors
-                        )
+                    // ── Card 1: Security & Sign-in (No title above card) ──
+                    item(key = "security_signin_card") {
+                        ElvanSectionContainer {
+                            ElvanSettingsSection(colors = colors) {
+                                // Google Link Row ("கூகுள் இணைப்பு" -> opens LinkedAccounts subpage)
+                                ElvanSettingsRow(
+                                    icon = MaterialSymbols.Rounded.Link,
+                                    title = K.googleLink.tr(),
+                                    description = if (isGoogleLinked) email.ifEmpty { K.connected.tr() } else K.notConnected.tr(),
+                                    onClick = { onNavigate(SettingsRoute.LinkedAccounts) },
+                                    colors = colors
+                                )
+
+                                ElvanSettingsDivider(colors = colors)
+
+                                // Password Row
+                                ElvanSettingsRow(
+                                    icon = MaterialSymbols.Rounded.Key,
+                                    title = K.password.tr(),
+                                    description = if (hasPassword) K.passwordSet.tr() else K.noPasswordSet.tr(),
+                                    onClick = {
+                                        if (hasPassword) {
+                                            onNavigate(SettingsRoute.ChangePassword)
+                                        } else {
+                                            onNavigate(SettingsRoute.CreatePassword)
+                                        }
+                                    },
+                                    colors = colors
+                                )
+
+                                ElvanSettingsDivider(colors = colors)
+
+                                // Sign Out Row (Tapping card directly asks confirmation via ActionSheet)
+                                ElvanSettingsRow(
+                                    icon = MaterialSymbols.Rounded.Logout,
+                                    title = K.logout.tr(),
+                                    description = K.logoutApplication.tr(),
+                                    onClick = { showSignOutConfirm = true },
+                                    colors = colors
+                                )
+                            }
+                        }
+                    }
+
+                    // ── Card 2: Danger Zone / Delete Account (No title above card) ──
+                    item(key = "account_deletion_card") {
+                        ElvanSectionContainer {
+                            ElvanSettingsSection(colors = colors) {
+                                ElvanSettingsRow(
+                                    icon = MaterialSymbols.Rounded.DeleteForever,
+                                    title = K.deleteAccount.tr(),
+                                    description = K.deleteAccountDesc.tr(),
+                                    onClick = { onNavigate(SettingsRoute.DeleteAccount) },
+                                    colors = colors
+                                )
+                            }
+                        }
                     }
                 }
             }
 
-            // ── Card 2: Danger Zone / Delete Account (No title above card) ──
-            item(key = "account_deletion_card") {
-                ElvanSectionContainer {
-                    ElvanSettingsSection(colors = colors) {
-                        ElvanSettingsRow(
-                            icon = MaterialSymbols.Rounded.DeleteForever,
-                            title = K.deleteAccount.tr(),
-                            description = K.deleteAccountDesc.tr(),
-                            onClick = { onNavigate(SettingsRoute.DeleteAccount) },
-                            colors = colors
+            // ── Clean Sign Out Action Sheet (No Redundant Email) ──
+            if (showSignOutConfirm) {
+                ElvanActionSheet(
+                    title = K.signOutConfirm.tr(),
+                    cancelText = K.cancelBtn.tr(),
+                    confirmText = K.logout.tr(),
+                    confirmColor = colors.textPrimary,
+                    onDismissRequest = { showSignOutConfirm = false },
+                    onConfirm = {
+                        showSignOutConfirm = false
+                        AuthManager.logout()
+                    },
+                    colors = colors,
+                    customContent = {
+                        Text(
+                            text = K.signOutPageDesc.tr(),
+                            style = TextStyle(
+                                fontFamily = ff,
+                                fontSize = 13.sp,
+                                lineHeight = 18.sp
+                            ),
+                            color = colors.textPrimary.copy(alpha = 0.65f),
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier.padding(horizontal = 12.dp)
                         )
                     }
-                }
+                )
             }
-        }
-
-        // ── Clean Sign Out Action Sheet (No Redundant Email) ──
-        if (showSignOutConfirm) {
-            ElvanActionSheet(
-                title = K.signOutConfirm.tr(),
-                cancelText = K.cancelBtn.tr(),
-                confirmText = K.logout.tr(),
-                confirmColor = colors.textPrimary,
-                onDismissRequest = { showSignOutConfirm = false },
-                onConfirm = {
-                    showSignOutConfirm = false
-                    AuthManager.logout()
-                },
-                colors = colors,
-                customContent = {
-                    Text(
-                        text = K.signOutPageDesc.tr(),
-                        style = TextStyle(
-                            fontFamily = ff,
-                            fontSize = 13.sp,
-                            lineHeight = 18.sp
-                        ),
-                        color = colors.textPrimary.copy(alpha = 0.65f),
-                        textAlign = TextAlign.Center,
-                        modifier = Modifier.padding(horizontal = 12.dp)
-                    )
-                }
-            )
         }
     }
-}
 }

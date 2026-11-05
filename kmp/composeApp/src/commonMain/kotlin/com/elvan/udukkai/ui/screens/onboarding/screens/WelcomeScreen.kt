@@ -18,12 +18,18 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.elvan.udukkai.core.auth.AppScope
+import com.elvan.udukkai.core.auth.AuthManager
 import com.elvan.udukkai.core.extensions.cssShadow
 import com.elvan.udukkai.localization.K
 import com.elvan.udukkai.localization.tr
 import com.elvan.udukkai.theme.ElvanSansFontFamily
 import com.elvan.udukkai.theme.ThemeManager
 import com.elvan.udukkai.ui.navigation.MaterialSymbols
+import migrate.composeapp.generated.resources.Res
+import migrate.composeapp.generated.resources.factory_logo_vector
+import migrate.composeapp.generated.resources.textiles_logo_vector
+import org.jetbrains.compose.resources.painterResource
 
 /** Welcome page laid out like Neram's: the logo floating in the middle, the Get Started button at the bottom. */
 @Composable
@@ -31,8 +37,6 @@ fun WelcomeScreen(
     onNavigateToLogin: () -> Unit
 ) {
     val dark = ThemeManager.isDark()
-    val logoBg = if (dark) Color.White else Color(0xFF111111)
-    val logoTint = if (dark) Color.Black else Color.White
 
     val infinite = rememberInfiniteTransition(label = "logo_float")
     val floatOffset by infinite.animateFloat(
@@ -57,23 +61,16 @@ fun WelcomeScreen(
         Spacer(Modifier.weight(1f))
 
         NeramElement(delayIndex = 0) {
-            Box(
+            val isFactory = (AuthManager.appScope == AppScope.FACTORY)
+            Icon(
+                painter = painterResource(if (isFactory) Res.drawable.factory_logo_vector else Res.drawable.textiles_logo_vector),
+                contentDescription = null,
+                tint = NeramColors.textPrimary(),
                 modifier = Modifier
                     .offset(y = (if (moving) floatOffset else 0f).dp)
                     .scale(if (moving) pulse else 1f)
-                    .size(140.dp)
-                    .cssShadow(color = NeramColors.textPrimary(), alpha = if (dark) 0.15f else 0.10f, blurRadius = 40.dp, offsetY = 20.dp)
-                    .clip(RoundedCornerShape(40.dp))
-                    .background(logoBg, RoundedCornerShape(40.dp)),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    imageVector = MaterialSymbols.Rounded.DatabaseFill,
-                    contentDescription = null,
-                    tint = logoTint,
-                    modifier = Modifier.size(72.dp)
-                )
-            }
+                    .size(160.dp)
+            )
         }
 
         Spacer(Modifier.height(24.dp))

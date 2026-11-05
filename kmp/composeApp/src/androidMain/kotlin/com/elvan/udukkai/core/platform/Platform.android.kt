@@ -251,41 +251,19 @@ actual fun HideSystemBars(hidden: Boolean) {
 }
 
 actual fun updatePlatformLauncher(languageCode: String) {
-    try {
-        val context = AppContext.context
-        val pm = context.packageManager
-        val pkg = context.packageName
+    // Calling pm.setComponentEnabledSetting dynamically while the app is active
+    // causes the Android OS to terminate the task/process. To prevent closing the app
+    // when changing language, we avoid toggling launcher activity-alias while running.
+}
 
-        val defaultActivity = "com.elvan.udukkai.MainActivity"
-        val tamilAlias = "com.elvan.udukkai.MainActivityTamil"
-        val tamilLatinAlias = "com.elvan.udukkai.MainActivityTamilLatin"
-
-        val targetComponent = when {
-            languageCode.startsWith("ta-Latn", ignoreCase = true) -> tamilLatinAlias
-            languageCode.startsWith("ta", ignoreCase = true) -> tamilAlias
-            else -> defaultActivity
-        }
-
-        val allComponents = listOf(defaultActivity, tamilAlias, tamilLatinAlias)
-
-        for (componentName in allComponents) {
-            val component = android.content.ComponentName(pkg, componentName)
-            val targetState = if (componentName == targetComponent) {
-                android.content.pm.PackageManager.COMPONENT_ENABLED_STATE_ENABLED
-            } else {
-                android.content.pm.PackageManager.COMPONENT_ENABLED_STATE_DISABLED
-            }
-
-            val currentState = pm.getComponentEnabledSetting(component)
-            if (currentState != targetState) {
-                pm.setComponentEnabledSetting(
-                    component,
-                    targetState,
-                    android.content.pm.PackageManager.DONT_KILL_APP
-                )
-            }
-        }
-    } catch (e: Exception) {
-        android.util.Log.e("LauncherManager", "Failed to update launcher name: ${e.message}")
+actual fun isNetworkAvailable(): Boolean {
+    return try {
+        val cm = AppContext.context.getSystemService(android.content.Context.CONNECTIVITY_SERVICE) as? android.net.ConnectivityManager
+            ?: return false
+        val activeNetwork = cm.activeNetwork ?: return false
+        val capabilities = cm.getNetworkCapabilities(activeNetwork) ?: return false
+        capabilities.hasCapability(android.net.NetworkCapabilities.NET_CAPABILITY_INTERNET)
+    } catch (_: Exception) {
+        false
     }
 }
