@@ -131,3 +131,94 @@ actual fun platformSignedInDisplayName(): String? = try {
 actual fun platformIsGoogleProvider(): Boolean = try {
     FirebaseAuth.getInstance().currentUser?.providerData?.any { it.providerId == "google.com" } == true
 } catch (_: Exception) { false }
+
+actual fun platformUserPhotoUrl(): String? = try {
+    FirebaseAuth.getInstance().currentUser?.photoUrl?.toString()
+} catch (_: Exception) { null }
+
+actual fun platformHasPassword(): Boolean = try {
+    FirebaseAuth.getInstance().currentUser?.providerData?.any { it.providerId == "password" } == true
+} catch (_: Exception) { false }
+
+actual fun platformIsGoogleLinked(): Boolean = try {
+    FirebaseAuth.getInstance().currentUser?.providerData?.any { it.providerId == "google.com" } == true
+} catch (_: Exception) { false }
+
+actual fun platformGoogleEmail(): String? = try {
+    FirebaseAuth.getInstance().currentUser?.providerData?.find { it.providerId == "google.com" }?.email
+} catch (_: Exception) { null }
+
+actual fun platformGooglePhotoUrl(): String? = try {
+    FirebaseAuth.getInstance().currentUser?.providerData?.find { it.providerId == "google.com" }?.photoUrl?.toString()
+} catch (_: Exception) { null }
+
+actual suspend fun platformUnlinkGoogle(): Boolean = try {
+    val user = FirebaseAuth.getInstance().currentUser ?: return false
+    user.unlink("google.com").await()
+    true
+} catch (_: Exception) { false }
+
+actual suspend fun platformLinkGoogle(): GoogleSignInResult {
+    val activity = CurrentActivity.activity ?: return GoogleSignInResult.Failed
+    val clientId = webClientId() ?: return GoogleSignInResult.Failed
+    return try {
+        val option = GetGoogleIdOption.Builder()
+            .setFilterByAuthorizedAccounts(false)
+            .setServerClientId(clientId)
+            .setAutoSelectEnabled(false)
+            .build()
+        val request = GetCredentialRequest.Builder().addCredentialOption(option).build()
+        val credential = CredentialManager.create(activity).getCredential(activity, request).credential
+        if (credential !is CustomCredential || credential.type != GoogleIdTokenCredential.TYPE_GOOGLE_ID_TOKEN_CREDENTIAL) {
+            return GoogleSignInResult.Failed
+        }
+        val google = GoogleIdTokenCredential.createFrom(credential.data)
+        if (!AllowedAccounts.isAllowed(google.id)) return GoogleSignInResult.NotAllowed(google.id)
+
+        val auth = FirebaseAuth.getInstance()
+        val user = auth.currentUser ?: return GoogleSignInResult.Failed
+        user.linkWithCredential(GoogleAuthProvider.getCredential(google.idToken, null)).await()
+        GoogleSignInResult.Success(google.id)
+    } catch (_: GetCredentialCancellationException) {
+        GoogleSignInResult.Cancelled
+    } catch (_: Exception) {
+        GoogleSignInResult.Failed
+    }
+}
+
+actual suspend fun platformChangePassword(current: String, new: String): Result<Unit> = try {
+    val auth = FirebaseAuth.getInstance()
+    val user = auth.currentUser ?: throw IllegalStateException("No authenticated user")
+    val email = user.email ?: throw IllegalStateException("No email attached to user")
+    val credential = com.google.firebase.auth.EmailAuthProvider.getCredential(email, current)
+    user.reauthenticate(credential).await()
+    user.updatePassword(new).await()
+    Result.success(Unit)
+} catch (e: Exception) {
+    Result.failure(e)
+}
+
+actual suspend fun platformCreatePassword(password: String): Result<Unit> = try {
+    val auth = FirebaseAuth.getInstance()
+    val user = auth.currentUser ?: throw IllegalStateException("No authenticated user")
+    val email = user.email ?: throw IllegalStateException("No email attached to user")
+    val credential = com.google.firebase.auth.EmailAuthProvider.getCredential(email, password)
+    user.linkWithCredential(credential).await()
+    Result.success(Unit)
+} catch (e: Exception) {
+    Result.failure(e)
+}
+
+actual suspend fun platformDeleteAccount(password: String?): Result<Unit> = try {
+    val auth = FirebaseAuth.getInstance()
+    val user = auth.currentUser ?: throw IllegalStateException("No authenticated user")
+    if (!password.isNullOrBlank() && user.email != null) {
+        val credential = com.google.firebase.auth.EmailAuthProvider.getCredential(user.email!!, password)
+        user.reauthenticate(credential).await()
+    }
+    user.delete().await()
+    platformSignOut()
+    Result.success(Unit)
+} catch (e: Exception) {
+    Result.failure(e)
+}

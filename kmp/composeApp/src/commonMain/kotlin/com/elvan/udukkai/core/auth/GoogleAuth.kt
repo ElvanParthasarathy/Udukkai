@@ -40,3 +40,33 @@ expect fun platformSignedInDisplayName(): String?
 
 /** True if the signed-in account uses Google as its auth provider. */
 expect fun platformIsGoogleProvider(): Boolean
+
+/** Photo URL of the signed-in account (e.g. Google profile photo), or null. */
+expect fun platformUserPhotoUrl(): String?
+
+/** True if the user account has a password-based credential set. */
+expect fun platformHasPassword(): Boolean
+
+/** True if the user account has Google linked. */
+expect fun platformIsGoogleLinked(): Boolean
+
+/** Google email associated with the linked Google account, if any. */
+expect fun platformGoogleEmail(): String?
+
+/** Google photo URL associated with the linked Google account, if any. */
+expect fun platformGooglePhotoUrl(): String?
+
+/** Unlinks the Google provider from the current user account. Returns true on success. */
+expect suspend fun platformUnlinkGoogle(): Boolean
+
+/** Links a Google account to the current user. */
+expect suspend fun platformLinkGoogle(): GoogleSignInResult
+
+/** Changes password for an email/password account after verifying current password. */
+expect suspend fun platformChangePassword(current: String, new: String): Result<Unit>
+
+/** Creates an email/password credential for a user signed in via Google. */
+expect suspend fun platformCreatePassword(password: String): Result<Unit>
+
+/** Permanently deletes the user account from Firebase Auth. */
+expect suspend fun platformDeleteAccount(password: String? = null): Result<Unit>

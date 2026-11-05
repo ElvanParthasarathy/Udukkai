@@ -79,11 +79,16 @@ fun BilingualRulesScreen(
             // ── Top One UI Master Switch Pill ──
             item(key = "master_toggle_pill") {
                 ElvanSettingsSection(
-                    borderRadius = 26.dp,
+                    borderRadius = 32.dp,
                     colors = colors
                 ) {
                     ElvanSimpleSettingsRow(
                         title = if (profile.isBilingual) onText else offText,
+                        onClick = {
+                            val updated = profile.copy(isBilingual = !profile.isBilingual)
+                            onSave(updated)
+                            ElvanSnackbar.show(saveSuccessMsg)
+                        },
                         trailing = {
                             ElvanSettingsSwitch(
                                 checked = profile.isBilingual,

@@ -479,6 +479,10 @@ object MaterialSymbols {
         val ScaleFill: ImageVector get() = LibSymbols.RoundedFilled.Scale
         val Balance: ImageVector get() = LibSymbols.Rounded.Balance
         val BalanceFill: ImageVector get() = LibSymbols.RoundedFilled.Balance
+        val Link: ImageVector get() = LibSymbols.RoundedFilled.Add_link
+        val Key: ImageVector get() = LibSymbols.RoundedFilled.Key
+        val CheckCircle: ImageVector get() = LibSymbols.RoundedFilled.Check_circle
+        val Warning: ImageVector get() = LibSymbols.RoundedFilled.Error
     }
 
     /**

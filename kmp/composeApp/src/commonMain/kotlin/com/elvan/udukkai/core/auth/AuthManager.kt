@@ -36,6 +36,24 @@ object AuthManager {
     var isGoogleProvider by mutableStateOf(false)
         private set
 
+    val userPhotoUrl: String? get() = platformUserPhotoUrl()
+    val hasPassword: Boolean get() = platformHasPassword()
+    val isGoogleLinked: Boolean get() = platformIsGoogleLinked()
+    val googleEmail: String? get() = platformGoogleEmail()
+    val googlePhotoUrl: String? get() = platformGooglePhotoUrl()
+
+    suspend fun unlinkGoogle(): Boolean = platformUnlinkGoogle()
+    suspend fun linkGoogle(): GoogleSignInResult = platformLinkGoogle()
+    suspend fun changePassword(current: String, new: String): Result<Unit> = platformChangePassword(current, new)
+    suspend fun createPassword(password: String): Result<Unit> = platformCreatePassword(password)
+    suspend fun deleteAccount(password: String? = null): Result<Unit> {
+        val res = platformDeleteAccount(password)
+        if (res.isSuccess) {
+            logout()
+        }
+        return res
+    }
+
     /** Set by the onboarding gate; decides which database branch is synced. */
     var appScope: AppScope = AppScope.TEXTILES
 

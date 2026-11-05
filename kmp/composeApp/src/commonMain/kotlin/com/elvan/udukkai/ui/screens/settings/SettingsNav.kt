@@ -16,6 +16,11 @@ sealed interface SettingsRoute {
     data object LogoSettings : SettingsRoute
     data object StorageBackup : SettingsRoute
     data object Security : SettingsRoute
+    data object Account : SettingsRoute
+    data object LinkedAccounts : SettingsRoute
+    data object ChangePassword : SettingsRoute
+    data object CreatePassword : SettingsRoute
+    data object DeleteAccount : SettingsRoute
     data object AboutDeveloper : SettingsRoute
     data object AboutApp : SettingsRoute
     data object ElvanNavil : SettingsRoute
@@ -35,7 +40,7 @@ sealed interface SettingsRoute {
 val SettingsRoute.depth: Int
     get() = when {
         this == SettingsRoute.Hub -> 0
-        this == SettingsRoute.ManageProfiles || this in SettingsRoute.aboutPages || this == SettingsRoute.BilingualRules || this == SettingsRoute.LogoSettings -> 2
+        this == SettingsRoute.ManageProfiles || this in SettingsRoute.aboutPages || this == SettingsRoute.BilingualRules || this == SettingsRoute.LogoSettings || this == SettingsRoute.LinkedAccounts || this == SettingsRoute.ChangePassword || this == SettingsRoute.CreatePassword || this == SettingsRoute.DeleteAccount -> 2
         else -> 1
     }
 
@@ -60,6 +65,11 @@ val SettingsRoute.name: String
         SettingsRoute.LogoSettings -> "LogoSettings"
         SettingsRoute.StorageBackup -> "StorageBackup"
         SettingsRoute.Security -> "Security"
+        SettingsRoute.Account -> "Account"
+        SettingsRoute.LinkedAccounts -> "LinkedAccounts"
+        SettingsRoute.ChangePassword -> "ChangePassword"
+        SettingsRoute.CreatePassword -> "CreatePassword"
+        SettingsRoute.DeleteAccount -> "DeleteAccount"
         SettingsRoute.AboutDeveloper -> "AboutDeveloper"
         SettingsRoute.AboutApp -> "AboutApp"
         SettingsRoute.ElvanNavil -> "ElvanNavil"
@@ -83,6 +93,11 @@ fun settingsRouteFromName(name: String?): SettingsRoute = when (name) {
     "LogoSettings" -> SettingsRoute.LogoSettings
     "StorageBackup" -> SettingsRoute.StorageBackup
     "Security" -> SettingsRoute.Security
+    "Account" -> SettingsRoute.Account
+    "LinkedAccounts" -> SettingsRoute.LinkedAccounts
+    "ChangePassword" -> SettingsRoute.ChangePassword
+    "CreatePassword" -> SettingsRoute.CreatePassword
+    "DeleteAccount" -> SettingsRoute.DeleteAccount
     "AboutDeveloper" -> SettingsRoute.AboutDeveloper
     "AboutApp" -> SettingsRoute.AboutApp
     "ElvanNavil" -> SettingsRoute.ElvanNavil

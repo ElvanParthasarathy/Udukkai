@@ -22,12 +22,15 @@ import com.elvan.udukkai.ui.navigation.MaterialSymbols
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
+import com.elvan.udukkai.ui.screens.settings.SettingsRoute
+
 /**
  * Textiles Security Settings Screen (சவுளி பாதுகாப்பு அமைப்புகள்).
  * Dedicated to Udukkai Textiles with zero cross-app dependencies.
  */
 @Composable
 fun TextilesSecuritySettingsScreen(
+    onNavigate: (SettingsRoute) -> Unit = {},
     scrollState: LazyListState = rememberLazyListState(),
     colors: ShellColors = rememberShellColors()
 ) {
@@ -37,8 +40,6 @@ fun TextilesSecuritySettingsScreen(
     var showSignOutConfirm by remember { mutableStateOf(false) }
     var showSignOutLoading by remember { mutableStateOf(false) }
     val guard = rememberPinGuard(colors)
-
-
 
     val syncSuccessMsg = K.synced.tr()
     val signOutSuccessMsg = K.signedOutSuccessfully.tr()
@@ -59,39 +60,100 @@ fun TextilesSecuritySettingsScreen(
             Spacer(modifier = Modifier.height(LocalElvanTopSpacerHeight.current))
         }
 
-        item {
-            ElvanSettingsSection(colors = colors) {
-                // 1. Sync App (Orunginai Cheyali)
-                ElvanSettingsRow(
-                    icon = MaterialSymbols.Rounded.Sync,
-                    title = K.syncAppBtn.tr(),
-                    description = K.syncRecentChanges.tr(),
-                    onClick = {
-                        showSyncLoading = true
-                        scope.launch {
-                            try {
-                                reloadTextilesRepositories()
-                            } catch (_: Exception) {}
-                            try {
-                                com.elvan.udukkai.core.sync.getFirebaseSyncManager().triggerManualSync()
-                            } catch (_: Exception) {}
-                            delay(600)
-                            showSyncLoading = false
-                            ElvanSnackbar.show(syncSuccessMsg)
-                        }
-                    },
-                    colors = colors
-                )
-                ElvanSettingsDivider(colors = colors)
+        // Section 1: User Account & Sign-in Methods
+        item(key = "account_credentials_section") {
+            ElvanSectionContainer {
+                ElvanSettingsSection(colors = colors) {
+                    ElvanSettingsRow(
+                        icon = MaterialSymbols.Rounded.Person,
+                        title = K.userAccount.tr(),
+                        description = AuthManager.signedInEmail?.ifEmpty { K.signInMethods.tr() } ?: K.signInMethods.tr(),
+                        onClick = { onNavigate(SettingsRoute.Account) },
+                        colors = colors
+                    )
+                    ElvanSettingsDivider(colors = colors)
+                    ElvanSettingsRow(
+                        icon = MaterialSymbols.Rounded.Link,
+                        title = K.linkedAccounts.tr(),
+                        description = if (AuthManager.isGoogleLinked) K.connected.tr() else K.notConnected.tr(),
+                        onClick = { onNavigate(SettingsRoute.LinkedAccounts) },
+                        colors = colors
+                    )
+                    ElvanSettingsDivider(colors = colors)
+                    if (AuthManager.hasPassword) {
+                        ElvanSettingsRow(
+                            icon = MaterialSymbols.Rounded.Lock,
+                            title = K.changePassword.tr(),
+                            description = K.passwordSet.tr(),
+                            onClick = { onNavigate(SettingsRoute.ChangePassword) },
+                            colors = colors
+                        )
+                    } else {
+                        ElvanSettingsRow(
+                            icon = MaterialSymbols.Rounded.Lock,
+                            title = K.createPassword.tr(),
+                            description = K.noPasswordSet.tr(),
+                            onClick = { onNavigate(SettingsRoute.CreatePassword) },
+                            colors = colors
+                        )
+                    }
+                }
+            }
+        }
 
-                // 2. Sign Out (Veliyaeru)
-                ElvanSettingsRow(
-                    icon = MaterialSymbols.Rounded.Logout,
-                    title = K.logout.tr(),
-                    description = K.logoutApplication.tr(),
-                    onClick = { guard { showSignOutConfirm = true } },
-                    colors = colors
-                )
+        // Section 2: Sync & Session
+        item(key = "sync_session_section") {
+            ElvanSectionContainer {
+                ElvanSettingsSection(colors = colors) {
+                    // 1. Sync App (Orunginai Cheyali)
+                    ElvanSettingsRow(
+                        icon = MaterialSymbols.Rounded.Sync,
+                        title = K.syncAppBtn.tr(),
+                        description = K.syncRecentChanges.tr(),
+                        onClick = {
+                            showSyncLoading = true
+                            scope.launch {
+                                try {
+                                    reloadTextilesRepositories()
+                                } catch (_: Exception) {}
+                                try {
+                                    com.elvan.udukkai.core.sync.getFirebaseSyncManager().triggerManualSync()
+                                } catch (_: Exception) {}
+                                delay(600)
+                                showSyncLoading = false
+                                ElvanSnackbar.show(syncSuccessMsg)
+                            }
+                        },
+                        colors = colors
+                    )
+                    ElvanSettingsDivider(colors = colors)
+
+                    // 2. Sign Out (Veliyaeru)
+                    ElvanSettingsRow(
+                        icon = MaterialSymbols.Rounded.Logout,
+                        title = K.logout.tr(),
+                        description = K.logoutApplication.tr(),
+                        onClick = { guard { showSignOutConfirm = true } },
+                        colors = colors
+                    )
+                }
+            }
+        }
+
+        // Section 3: Danger Zone / Delete Account
+        item(key = "danger_zone_section") {
+            ElvanSectionContainer {
+                ElvanSettingsSection(colors = colors) {
+                    ElvanSettingsRow(
+                        icon = MaterialSymbols.Rounded.DeleteForever,
+                        title = K.deleteAccount.tr(),
+                        description = K.deleteAccountDesc.tr(),
+                        onClick = { onNavigate(SettingsRoute.DeleteAccount) },
+                        titleColor = colors.error,
+                        iconTint = colors.error,
+                        colors = colors
+                    )
+                }
             }
         }
     }

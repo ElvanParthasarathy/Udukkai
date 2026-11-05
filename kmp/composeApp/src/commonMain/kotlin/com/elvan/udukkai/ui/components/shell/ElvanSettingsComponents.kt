@@ -676,6 +676,7 @@ fun ElvanSettingsTextField(
     maxLines: Int = if (singleLine) 1 else 6,
     maxLength: Int? = null,
     readOnly: Boolean = false,
+    visualTransformation: androidx.compose.ui.text.input.VisualTransformation = androidx.compose.ui.text.input.VisualTransformation.None,
     onClick: (() -> Unit)? = null,
     trailingIcon: (@Composable () -> Unit)? = null,
     colors: ShellColors = rememberShellColors()
@@ -794,6 +795,7 @@ fun ElvanSettingsTextField(
                             minLines = minLines,
                             maxLines = maxLines,
                             keyboardOptions = keyboardOptions,
+                            visualTransformation = visualTransformation,
                             textStyle = TextStyle(
                                 fontFamily = ff,
                                 fontSize = 14.sp,
