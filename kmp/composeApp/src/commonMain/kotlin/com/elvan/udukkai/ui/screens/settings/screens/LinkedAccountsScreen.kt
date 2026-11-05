@@ -30,8 +30,11 @@ import com.elvan.udukkai.ui.screens.settings.SettingsRoute
 import kotlinx.coroutines.launch
 
 /**
- * கூகுள் கணக்குத் திரை — Google Account Management.
- * Shows current link status clearly. Explicit "இணை" / "பிரி" button — no guessing.
+ * கூகுள் கணக்குத் திரை — Google Account Sub-page.
+ * Calm, minimal layout:
+ * - Status row showing connected email or not connected.
+ * - Restrained action button (clean secondary button for unlink, monochrome for link).
+ * - Quiet helper description. Zero aggressive red.
  */
 @Composable
 fun LinkedAccountsScreen(
@@ -65,7 +68,7 @@ fun LinkedAccountsScreen(
                 Spacer(modifier = Modifier.height(LocalElvanTopSpacerHeight.current))
             }
 
-            // ── Status Row ──
+            // ── Google Account Status Card ──
             item(key = "status_row") {
                 ElvanSectionContainer {
                     ElvanSettingsSection(colors = colors) {
@@ -79,15 +82,15 @@ fun LinkedAccountsScreen(
                                     Icon(
                                         imageVector = MaterialSymbols.Rounded.CheckCircle,
                                         contentDescription = null,
-                                        tint = colors.accent,
-                                        modifier = Modifier.size(20.dp)
+                                        tint = colors.textTertiary,
+                                        modifier = Modifier.size(18.dp)
                                     )
                                 } else {
                                     Icon(
                                         imageVector = MaterialSymbols.Rounded.RadioButtonUnchecked,
                                         contentDescription = null,
                                         tint = colors.textTertiary,
-                                        modifier = Modifier.size(20.dp)
+                                        modifier = Modifier.size(18.dp)
                                     )
                                 }
                             },
@@ -97,11 +100,11 @@ fun LinkedAccountsScreen(
                 }
             }
 
-            // ── Explicit Action Button ──
+            // ── Action Button (Restrained, Monochrome / Secondary) ──
             item(key = "action_btn") {
                 ElvanSectionContainer {
                     if (isGoogleLinked) {
-                        // Unlink — clearly labelled, clearly red
+                        // Unlink: Calm secondary pill button matching app theme
                         Button(
                             onClick = { showUnlinkSheet = true },
                             modifier = Modifier
@@ -109,23 +112,23 @@ fun LinkedAccountsScreen(
                                 .height(48.dp),
                             shape = RoundedCornerShape(50),
                             colors = ButtonDefaults.buttonColors(
-                                containerColor = colors.error,
-                                contentColor = Color.White
+                                containerColor = colors.iconBg,
+                                contentColor = colors.textPrimary
                             ),
                             elevation = ButtonDefaults.buttonElevation(0.dp),
                             enabled = !isUnlinking
                         ) {
                             if (isUnlinking) {
-                                ExpressiveLoadingIndicator(color = Color.White, modifier = Modifier.size(20.dp))
+                                ExpressiveLoadingIndicator(color = colors.textPrimary, modifier = Modifier.size(18.dp))
                             } else {
                                 Text(
                                     text = K.unlinkGoogle.tr(),
-                                    style = TextStyle(fontFamily = ff, fontSize = 15.sp, fontWeight = FontWeight.Bold)
+                                    style = TextStyle(fontFamily = ff, fontSize = 14.5.sp, fontWeight = FontWeight.Medium)
                                 )
                             }
                         }
                     } else {
-                        // Link — clearly labelled, standard monochrome
+                        // Link: Standard monochrome pill button
                         Button(
                             onClick = {
                                 if (!isLinking) {
@@ -153,12 +156,12 @@ fun LinkedAccountsScreen(
                             if (isLinking) {
                                 ExpressiveLoadingIndicator(
                                     color = if (colors.isDark) Color.Black else Color.White,
-                                    modifier = Modifier.size(20.dp)
+                                    modifier = Modifier.size(18.dp)
                                 )
                             } else {
                                 Text(
                                     text = K.linkGoogle.tr(),
-                                    style = TextStyle(fontFamily = ff, fontSize = 15.sp, fontWeight = FontWeight.Bold)
+                                    style = TextStyle(fontFamily = ff, fontSize = 14.5.sp, fontWeight = FontWeight.Medium)
                                 )
                             }
                         }
@@ -166,12 +169,12 @@ fun LinkedAccountsScreen(
                 }
             }
 
-            // ── Quiet Status Description ──
+            // ── Subtle Description ──
             item(key = "status_hint") {
                 ElvanSectionContainer {
                     Text(
                         text = if (isGoogleLinked) K.googleLinkedDesc.tr() else K.googleUnlinkedDesc.tr(),
-                        style = TextStyle(fontFamily = ff, fontSize = 12.5.sp, lineHeight = 17.sp),
+                        style = TextStyle(fontFamily = ff, fontSize = 12.sp, lineHeight = 16.sp),
                         color = colors.textPrimary.copy(alpha = 0.45f),
                         modifier = Modifier.padding(horizontal = 20.dp)
                     )
@@ -186,7 +189,7 @@ fun LinkedAccountsScreen(
                     title = K.unlinkConfirm.tr(),
                     cancelText = K.cancelBtn.tr(),
                     confirmText = K.unlinkGoogle.tr(),
-                    confirmColor = colors.error,
+                    confirmColor = colors.textPrimary,
                     onDismissRequest = { showUnlinkSheet = false },
                     onConfirm = {
                         showUnlinkSheet = false
@@ -202,7 +205,7 @@ fun LinkedAccountsScreen(
                     customContent = {
                         Text(
                             text = K.unlinkMessage.tr(),
-                            style = TextStyle(fontFamily = ff, fontSize = 13.5.sp, lineHeight = 19.sp),
+                            style = TextStyle(fontFamily = ff, fontSize = 13.5.sp, lineHeight = 18.sp),
                             color = colors.textPrimary.copy(alpha = 0.7f),
                             textAlign = TextAlign.Center,
                             modifier = Modifier.padding(horizontal = 8.dp)
@@ -224,7 +227,7 @@ fun LinkedAccountsScreen(
                     customContent = {
                         Text(
                             text = K.createPasswordMsg.tr(),
-                            style = TextStyle(fontFamily = ff, fontSize = 13.5.sp, lineHeight = 19.sp),
+                            style = TextStyle(fontFamily = ff, fontSize = 13.5.sp, lineHeight = 18.sp),
                             color = colors.textPrimary.copy(alpha = 0.7f),
                             textAlign = TextAlign.Center,
                             modifier = Modifier.padding(horizontal = 8.dp)

@@ -9,29 +9,23 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.elvan.udukkai.core.auth.AuthManager
-import com.elvan.udukkai.core.backup.reloadAllRepositories
-import com.elvan.udukkai.core.security.authenticateFingerprint
-import com.elvan.udukkai.core.security.fingerprintAvailable
-import com.elvan.udukkai.core.sync.SyncStatus
-import com.elvan.udukkai.core.sync.getFirebaseSyncManager
-import com.elvan.udukkai.core.utils.DateUtils
 import com.elvan.udukkai.localization.K
 import com.elvan.udukkai.localization.tr
 import com.elvan.udukkai.theme.Dimens
 import com.elvan.udukkai.theme.ShellColors
 import com.elvan.udukkai.theme.rememberShellColors
-import com.elvan.udukkai.ui.components.ExpressiveLoadingIndicator
 import com.elvan.udukkai.ui.components.shell.*
 import com.elvan.udukkai.ui.navigation.MaterialSymbols
 import com.elvan.udukkai.ui.screens.settings.AccountAvatar
 import com.elvan.udukkai.ui.screens.settings.SettingsRoute
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 
 /**
- * கணக்கு திரை — Account Hub Settings Screen.
- * Clean navigation hub: profile pill, credentials & sync card,
- * sign-out sub-page row, biometric-guarded delete row.
+ * கணக்கு மற்றும் பாதுகாப்பு அமைப்புகள் — Account & Security Hub.
+ * Calm, minimal layout inspired by Google Account & Apple HIG:
+ * 1. Personal Info: Display name (with edit sub-page) & Email.
+ * 2. Security & Sign-in: Google account, Password, Sign out sub-pages.
+ * 3. Account Management: Step-by-step account deletion sub-page.
+ * All items navigate to sub-pages with clean neutral styling (no jarring red).
  */
 @Composable
 fun AccountSettingsScreen(
@@ -39,28 +33,10 @@ fun AccountSettingsScreen(
     scrollState: LazyListState = rememberLazyListState(),
     colors: ShellColors = rememberShellColors()
 ) {
-    val scope = rememberCoroutineScope()
     val email = AuthManager.signedInEmail ?: ""
     val displayName = AuthManager.signedInDisplayName?.takeIf { it.isNotEmpty() } ?: email.substringBefore("@")
     val hasPassword = AuthManager.hasPassword
     val isGoogleLinked = AuthManager.isGoogleLinked
-
-    val sync = remember { getFirebaseSyncManager() }
-    val syncStatus by sync.syncStatus
-    val lastSync by sync.lastSyncTime
-    var isSyncing by remember { mutableStateOf(false) }
-
-    val syncSuccessMsg = K.synced.tr()
-    val biometricPromptTitle = K.biometricVerifyTitle.tr()
-    val cancelText = K.cancelBtn.tr()
-
-    val syncStatusDesc = when (syncStatus) {
-        SyncStatus.SYNCED -> if (lastSync > 0L) "${K.lastSyncedAt.tr()}: ${DateUtils.formatDateTime(lastSync)}" else K.syncStatusSynced.tr()
-        SyncStatus.SYNCING -> K.syncStatusSyncing.tr()
-        SyncStatus.OFFLINE -> K.syncStatusOffline.tr()
-        SyncStatus.ERROR, SyncStatus.GUARD_TRIGGERED -> K.syncStatusError.tr()
-        SyncStatus.IDLE -> if (lastSync > 0L) "${K.lastSyncedAt.tr()}: ${DateUtils.formatDateTime(lastSync)}" else K.syncStatusIdle.tr()
-    }
 
     LazyColumn(
         state = scrollState,
@@ -72,32 +48,60 @@ fun AccountSettingsScreen(
             Spacer(modifier = Modifier.height(LocalElvanTopSpacerHeight.current))
         }
 
-        // ── 1. Profile Pill ──
-        item(key = "profile_pill") {
+        // ── 1. Personal Info Section (தனிநபர் தரவுகள்) ──
+        item(key = "personal_info_section") {
             ElvanSectionContainer {
-                ElvanProfilePillCard(
-                    title = displayName.ifEmpty { K.userAccount.tr() },
-                    subtitle = email.ifEmpty { K.connected.tr() },
-                    iconWidget = {
-                        AccountAvatar(fallback = {
-                            Icon(
-                                imageVector = MaterialSymbols.Rounded.Person,
-                                contentDescription = null,
-                                tint = colors.textPrimary,
-                                modifier = Modifier.size(26.dp)
-                            )
-                        })
-                    },
-                    onClick = { onNavigate(SettingsRoute.EditName) },
+                ElvanSettingsSection(
+                    title = K.personalInfo.tr(),
                     colors = colors
-                )
+                ) {
+                    // Display Name (opens EditName sub-page)
+                    ElvanSettingsRow(
+                        icon = MaterialSymbols.Rounded.Person,
+                        title = K.displayName.tr(),
+                        description = displayName.ifEmpty { K.userAccount.tr() },
+                        onClick = { onNavigate(SettingsRoute.EditName) },
+                        customTrailing = {
+                            Icon(
+                                imageVector = MaterialSymbols.Rounded.ChevronRight,
+                                contentDescription = null,
+                                tint = colors.textTertiary,
+                                modifier = Modifier.size(18.dp)
+                            )
+                        },
+                        colors = colors
+                    )
+
+                    ElvanSettingsDivider(colors = colors)
+
+                    // Email Address (Informational)
+                    ElvanSettingsRow(
+                        icon = MaterialSymbols.Rounded.Email,
+                        title = K.email.tr(),
+                        description = email.ifEmpty { K.notConnected.tr() },
+                        onClick = {},
+                        customTrailing = {
+                            Icon(
+                                imageVector = MaterialSymbols.Rounded.CheckCircle,
+                                contentDescription = null,
+                                tint = colors.textTertiary,
+                                modifier = Modifier.size(18.dp)
+                            )
+                        },
+                        colors = colors
+                    )
+                }
             }
         }
 
-        // ── 2. Credentials & Cloud Sync ──
-        item(key = "credentials_sync_card") {
+        // ── 2. Security & Sign-in Section (பாதுகாப்பும் உள்நுழைவும்) ──
+        item(key = "security_signin_section") {
             ElvanSectionContainer {
-                ElvanSettingsSection(colors = colors) {
+                ElvanSettingsSection(
+                    title = K.securityAndSignIn.tr(),
+                    colors = colors
+                ) {
+                    // Google Account Subpage
                     ElvanSettingsRow(
                         icon = MaterialSymbols.Rounded.Link,
                         title = K.googleAccount.tr(),
@@ -116,13 +120,17 @@ fun AccountSettingsScreen(
 
                     ElvanSettingsDivider(colors = colors)
 
+                    // Password Subpage
                     ElvanSettingsRow(
                         icon = MaterialSymbols.Rounded.Key,
                         title = K.password.tr(),
                         description = if (hasPassword) K.passwordSet.tr() else K.noPasswordSet.tr(),
                         onClick = {
-                            if (hasPassword) onNavigate(SettingsRoute.ChangePassword)
-                            else onNavigate(SettingsRoute.CreatePassword)
+                            if (hasPassword) {
+                                onNavigate(SettingsRoute.ChangePassword)
+                            } else {
+                                onNavigate(SettingsRoute.CreatePassword)
+                            }
                         },
                         customTrailing = {
                             Icon(
@@ -137,56 +145,17 @@ fun AccountSettingsScreen(
 
                     ElvanSettingsDivider(colors = colors)
 
-                    ElvanSettingsRow(
-                        icon = MaterialSymbols.Rounded.Sync,
-                        title = K.syncAppBtn.tr(),
-                        description = if (isSyncing) K.syncStatusSyncing.tr() else syncStatusDesc,
-                        onClick = {
-                            if (!isSyncing) {
-                                isSyncing = true
-                                scope.launch {
-                                    try { reloadAllRepositories() } catch (_: Exception) {}
-                                    try { sync.triggerManualSync() } catch (_: Exception) {}
-                                    delay(600)
-                                    isSyncing = false
-                                    ElvanSnackbar.show(syncSuccessMsg)
-                                }
-                            }
-                        },
-                        customTrailing = {
-                            if (isSyncing) {
-                                ExpressiveLoadingIndicator(color = colors.accent, modifier = Modifier.size(18.dp))
-                            } else {
-                                Icon(
-                                    imageVector = MaterialSymbols.Rounded.Sync,
-                                    contentDescription = null,
-                                    tint = colors.textTertiary,
-                                    modifier = Modifier.size(20.dp)
-                                )
-                            }
-                        },
-                        colors = colors
-                    )
-                }
-            }
-        }
-
-        // ── 3. Sign Out — dedicated sub-page ──
-        item(key = "signout_card") {
-            ElvanSectionContainer {
-                ElvanSettingsSection(colors = colors) {
+                    // Sign Out Subpage (Standard neutral row)
                     ElvanSettingsRow(
                         icon = MaterialSymbols.Rounded.Logout,
                         title = K.logout.tr(),
                         description = K.logoutApplication.tr(),
                         onClick = { onNavigate(SettingsRoute.SignOut) },
-                        titleColor = colors.error,
-                        iconTint = colors.error,
                         customTrailing = {
                             Icon(
                                 imageVector = MaterialSymbols.Rounded.ChevronRight,
                                 contentDescription = null,
-                                tint = colors.error.copy(alpha = 0.5f),
+                                tint = colors.textTertiary,
                                 modifier = Modifier.size(18.dp)
                             )
                         },
@@ -196,33 +165,24 @@ fun AccountSettingsScreen(
             }
         }
 
-        // ── 4. Delete Account — biometric-guarded sub-page ──
-        item(key = "danger_card") {
+        // ── 3. Account Management Section (கணக்கு மேலாண்மை) ──
+        item(key = "account_management_section") {
             ElvanSectionContainer {
-                ElvanSettingsSection(colors = colors) {
+                ElvanSettingsSection(
+                    title = K.accountManagement.tr(),
+                    colors = colors
+                ) {
+                    // Delete Account Subpage (Standard neutral row)
                     ElvanSettingsRow(
                         icon = MaterialSymbols.Rounded.DeleteForever,
                         title = K.deleteAccount.tr(),
                         description = K.deleteAccountDesc.tr(),
-                        onClick = {
-                            if (fingerprintAvailable()) {
-                                authenticateFingerprint(
-                                    title = biometricPromptTitle,
-                                    cancelText = cancelText
-                                ) { success ->
-                                    if (success) onNavigate(SettingsRoute.DeleteAccount)
-                                }
-                            } else {
-                                onNavigate(SettingsRoute.DeleteAccount)
-                            }
-                        },
-                        titleColor = colors.error,
-                        iconTint = colors.error,
+                        onClick = { onNavigate(SettingsRoute.DeleteAccount) },
                         customTrailing = {
                             Icon(
-                                imageVector = MaterialSymbols.Rounded.Lock,
+                                imageVector = MaterialSymbols.Rounded.ChevronRight,
                                 contentDescription = null,
-                                tint = colors.error.copy(alpha = 0.5f),
+                                tint = colors.textTertiary,
                                 modifier = Modifier.size(18.dp)
                             )
                         },

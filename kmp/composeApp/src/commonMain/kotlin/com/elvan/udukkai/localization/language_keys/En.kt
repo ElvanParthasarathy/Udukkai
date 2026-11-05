@@ -677,6 +677,12 @@ val en: Map<String, String> = mapOf(
     K.signOutTitle to "Sign Out",
     K.signOutPageDesc to "You will be signed out of this device. Your data is safely backed up.",
     K.signOutBtn to "Sign Out",
+    K.personalInfo to "Personal Info",
+    K.securityAndSignIn to "Security & sign-in",
+    K.accountManagement to "Account management",
+    K.step1Consequences to "Step 1: Consequences",
+    K.step2Verification to "Step 2: Verification",
+    K.step3DeleteAccount to "Step 3: Confirm Deletion",
 )
 
 

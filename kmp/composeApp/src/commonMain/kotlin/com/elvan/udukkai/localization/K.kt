@@ -685,4 +685,10 @@ object K {
     const val signOutTitle = "signOutTitle"
     const val signOutPageDesc = "signOutPageDesc"
     const val signOutBtn = "signOutBtn"
+    const val personalInfo = "personalInfo"
+    const val securityAndSignIn = "securityAndSignIn"
+    const val accountManagement = "accountManagement"
+    const val step1Consequences = "step1Consequences"
+    const val step2Verification = "step2Verification"
+    const val step3DeleteAccount = "step3DeleteAccount"
 }

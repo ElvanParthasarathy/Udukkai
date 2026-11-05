@@ -10,6 +10,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -33,13 +34,11 @@ import com.elvan.udukkai.ui.navigation.MaterialSymbols
 import kotlinx.coroutines.launch
 
 /**
- * கணக்கை நிரந்தரமாக அழிக்கும் திரை — Delete Account Screen.
- * Full compliance with Google Play Store account deletion mandate and Apple HIG managing-accounts.md:
- * - Clear warning explaining irreversible data wipe.
- * - Explicit user confirmation checkbox.
- * - Password re-authentication for password-backed accounts.
- * - Biometric scan requirement before executing irreversible wipe.
- * - Final confirmation step via ElvanActionSheet destructive bottom sheet.
+ * கணக்கை நிரந்தரமாக அழிக்கும் திரை — Step-by-Step Account Deletion Sub-page.
+ * Minimal, restrained layout without alarmist neon colors:
+ * - Step 1: Clear consequence explanation + confirmation checkbox.
+ * - Step 2: Verification (Password input if password-backed, biometric ready).
+ * - Step 3: Calm monochrome action button + final confirmation sheet.
  */
 @Composable
 fun DeleteAccountScreen(
@@ -64,6 +63,8 @@ fun DeleteAccountScreen(
     val biometricPromptTitle = K.biometricVerifyTitle.tr()
     val cancelText = K.cancelBtn.tr()
 
+    val canInitiateDelete = understood && (!hasPassword || password.isNotEmpty()) && !isProcessing
+
     Box(modifier = Modifier.fillMaxSize()) {
         LazyColumn(
             state = scrollState,
@@ -75,69 +76,45 @@ fun DeleteAccountScreen(
                 Spacer(modifier = Modifier.height(LocalElvanTopSpacerHeight.current))
             }
 
-            item(key = "warning_card") {
+            // ── Step 1: Consequences (படி 1: விளைவுகள்) ──
+            item(key = "step1_card") {
                 ElvanSectionContainer {
-                    ElvanSettingsSection(colors = colors) {
+                    ElvanSettingsSection(
+                        title = K.step1Consequences.tr(),
+                        colors = colors
+                    ) {
                         Column(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(horizontal = 20.dp, vertical = 20.dp)
+                                .padding(horizontal = 20.dp, vertical = 16.dp)
                         ) {
-                            // Warning Banner
-                            Surface(
-                                modifier = Modifier.fillMaxWidth(),
-                                shape = RoundedCornerShape(16.dp),
-                                color = colors.error.copy(alpha = 0.08f)
-                            ) {
-                                Column(modifier = Modifier.padding(16.dp)) {
-                                    Row(verticalAlignment = Alignment.CenterVertically) {
-                                        Icon(
-                                            imageVector = MaterialSymbols.Rounded.Warning,
-                                            contentDescription = null,
-                                            tint = colors.error,
-                                            modifier = Modifier.size(24.dp)
-                                        )
-                                        Spacer(modifier = Modifier.width(10.dp))
-                                        Text(
-                                            text = K.deleteAccount.tr(),
-                                            style = TextStyle(
-                                                fontFamily = ff,
-                                                fontSize = 16.sp,
-                                                fontWeight = FontWeight.Bold
-                                            ),
-                                            color = colors.error
-                                        )
-                                    }
+                            Text(
+                                text = K.deleteAccountWarning.tr(),
+                                style = TextStyle(
+                                    fontFamily = ff,
+                                    fontSize = 12.5.sp,
+                                    lineHeight = 18.sp
+                                ),
+                                color = colors.textPrimary.copy(alpha = 0.65f)
+                            )
 
-                                    Spacer(modifier = Modifier.height(10.dp))
-
-                                    Text(
-                                        text = K.deleteAccountWarning.tr(),
-                                        style = TextStyle(
-                                            fontFamily = ff,
-                                            fontSize = 13.5.sp,
-                                            lineHeight = 19.sp
-                                        ),
-                                        color = colors.textPrimary.copy(alpha = 0.85f)
-                                    )
-                                }
-                            }
-
-                            Spacer(modifier = Modifier.height(20.dp))
+                            Spacer(modifier = Modifier.height(14.dp))
 
                             // Checkbox Confirmation
                             Row(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .clickable { understood = !understood },
+                                    .clip(RoundedCornerShape(8.dp))
+                                    .clickable { understood = !understood }
+                                    .padding(vertical = 4.dp),
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Checkbox(
                                     checked = understood,
                                     onCheckedChange = { understood = it },
                                     colors = CheckboxDefaults.colors(
-                                        checkedColor = colors.error,
-                                        checkmarkColor = Color.White
+                                        checkedColor = if (colors.isDark) Color.White else Color.Black,
+                                        checkmarkColor = if (colors.isDark) Color.Black else Color.White
                                     )
                                 )
                                 Spacer(modifier = Modifier.width(8.dp))
@@ -146,17 +123,29 @@ fun DeleteAccountScreen(
                                     style = TextStyle(
                                         fontFamily = ff,
                                         fontSize = 13.sp,
-                                        fontWeight = FontWeight.Medium,
-                                        lineHeight = 18.sp
+                                        fontWeight = FontWeight.Medium
                                     ),
                                     color = colors.textPrimary
                                 )
                             }
+                        }
+                    }
+                }
+            }
 
-                            // Password Input (if password user)
-                            if (hasPassword) {
-                                Spacer(modifier = Modifier.height(20.dp))
-
+            // ── Step 2: Verification (படி 2: சரிபார்ப்பு) ──
+            if (hasPassword) {
+                item(key = "step2_card") {
+                    ElvanSectionContainer {
+                        ElvanSettingsSection(
+                            title = K.step2Verification.tr(),
+                            colors = colors
+                        ) {
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 20.dp, vertical = 16.dp)
+                            ) {
                                 ElvanSettingsTextField(
                                     label = K.verifyIdentityForDeletion.tr(),
                                     value = password,
@@ -178,26 +167,38 @@ fun DeleteAccountScreen(
                                     },
                                     colors = colors
                                 )
+
+                                if (errorMessage != null) {
+                                    Spacer(modifier = Modifier.height(8.dp))
+                                    Text(
+                                        text = errorMessage!!,
+                                        style = TextStyle(
+                                            fontFamily = ff,
+                                            fontSize = 12.sp,
+                                            fontWeight = FontWeight.Medium
+                                        ),
+                                        color = colors.error,
+                                        modifier = Modifier.padding(start = 4.dp)
+                                    )
+                                }
                             }
+                        }
+                    }
+                }
+            }
 
-                            if (errorMessage != null) {
-                                Spacer(modifier = Modifier.height(12.dp))
-                                Text(
-                                    text = errorMessage!!,
-                                    style = TextStyle(
-                                        fontFamily = ff,
-                                        fontSize = 12.5.sp,
-                                        fontWeight = FontWeight.Medium
-                                    ),
-                                    color = colors.error,
-                                    modifier = Modifier.padding(start = 12.dp)
-                                )
-                            }
-
-                            Spacer(modifier = Modifier.height(24.dp))
-
-                            // Delete Account Action Button
-                            val canInitiateDelete = understood && (!hasPassword || password.isNotEmpty()) && !isProcessing
+            // ── Step 3: Deletion Action (படி 3: கணக்கு அழித்தல்) ──
+            item(key = "step3_card") {
+                ElvanSectionContainer {
+                    ElvanSettingsSection(
+                        title = K.step3DeleteAccount.tr(),
+                        colors = colors
+                    ) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 20.dp, vertical = 16.dp)
+                        ) {
                             Button(
                                 onClick = { showDeleteConfirmSheet = true },
                                 modifier = Modifier
@@ -205,17 +206,25 @@ fun DeleteAccountScreen(
                                     .height(48.dp),
                                 shape = RoundedCornerShape(50),
                                 colors = ButtonDefaults.buttonColors(
-                                    containerColor = colors.error,
-                                    contentColor = Color.White
+                                    containerColor = if (colors.isDark) Color.White else Color.Black,
+                                    contentColor = if (colors.isDark) Color.Black else Color.White
                                 ),
+                                elevation = ButtonDefaults.buttonElevation(0.dp),
                                 enabled = canInitiateDelete
                             ) {
                                 if (isProcessing) {
-                                    ExpressiveLoadingIndicator(color = Color.White, modifier = Modifier.size(18.dp))
+                                    ExpressiveLoadingIndicator(
+                                        color = if (colors.isDark) Color.Black else Color.White,
+                                        modifier = Modifier.size(18.dp)
+                                    )
                                 } else {
                                     Text(
                                         text = K.deleteAccountConfirm.tr(),
-                                        style = TextStyle(fontFamily = ff, fontSize = 14.sp, fontWeight = FontWeight.Bold)
+                                        style = TextStyle(
+                                            fontFamily = ff,
+                                            fontSize = 14.5.sp,
+                                            fontWeight = FontWeight.Medium
+                                        )
                                     )
                                 }
                             }
@@ -225,13 +234,13 @@ fun DeleteAccountScreen(
             }
         }
 
-        // ── Final Destructive Confirmation Action Sheet with Biometric Gate ──
+        // ── Final Destructive Confirmation Action Sheet ──
         if (showDeleteConfirmSheet) {
             ElvanActionSheet(
                 title = K.deletePermanentlyQuestion.tr(),
                 cancelText = K.cancelBtn.tr(),
                 confirmText = K.deleteBtn.tr(),
-                confirmColor = colors.error,
+                confirmColor = colors.textPrimary,
                 onDismissRequest = { showDeleteConfirmSheet = false },
                 onConfirm = {
                     showDeleteConfirmSheet = false
@@ -268,7 +277,7 @@ fun DeleteAccountScreen(
                         style = TextStyle(
                             fontFamily = ff,
                             fontSize = 13.5.sp,
-                            lineHeight = 19.sp
+                            lineHeight = 18.sp
                         ),
                         color = colors.textPrimary.copy(alpha = 0.7f),
                         textAlign = TextAlign.Center,

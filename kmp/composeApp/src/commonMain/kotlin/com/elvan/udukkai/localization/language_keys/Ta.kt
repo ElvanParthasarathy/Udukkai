@@ -678,6 +678,12 @@ val ta: Map<String, String> = mapOf(
     K.signOutTitle to "வெளியேறு",
     K.signOutPageDesc to "இந்த சாதனத்திலிருந்து வெளியேறுவீர்கள். உங்கள் தரவுகள் பாதுகாப்பாக காப்புப் பிரதி எடுக்கப்பட்டுள்ளன.",
     K.signOutBtn to "வெளியேறு",
+    K.personalInfo to "தனிநபர் தரவுகள்",
+    K.securityAndSignIn to "பாதுகாப்பும் உள்நுழைவும்",
+    K.accountManagement to "கணக்கு மேலாண்மை",
+    K.step1Consequences to "படி 1: விளைவுகள்",
+    K.step2Verification to "படி 2: சரிபார்ப்பு",
+    K.step3DeleteAccount to "படி 3: கணக்கு அழித்தல்",
 )
 
 /**
