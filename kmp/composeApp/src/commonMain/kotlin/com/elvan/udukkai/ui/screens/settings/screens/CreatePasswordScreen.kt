@@ -1,5 +1,6 @@
 package com.elvan.udukkai.ui.screens.settings.screens
 
+import androidx.compose.animation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
@@ -33,7 +34,9 @@ import kotlinx.coroutines.launch
 
 /**
  * கடவுச்சொல் உருவாக்கும் திரை — Clean Native Password Creation.
- * Minimal, integrated card with seamless inline rows and quiet footer requirement hints.
+ * - Internet-oriented loading experience.
+ * - Shows status card ("No password set").
+ * - Minimal, integrated card with seamless inline rows and quiet footer requirement hints.
  */
 @Composable
 fun CreatePasswordScreen(
@@ -44,6 +47,7 @@ fun CreatePasswordScreen(
     val ff = LocalAppFontFamily.current
     val scope = rememberCoroutineScope()
 
+    var isCheckingStatus by remember { mutableStateOf(true) }
     var newPassword by remember { mutableStateOf("") }
     var confirmPassword by remember { mutableStateOf("") }
     var showPassword by remember { mutableStateOf(false) }
@@ -61,134 +65,172 @@ fun CreatePasswordScreen(
     val passwordsMatch = newPassword.isNotEmpty() && newPassword == confirmPassword
     val canSave = hasMinLength && hasMixedContent && passwordsMatch && !isProcessing
 
+    // Internet-oriented loading feel
+    LaunchedEffect(Unit) {
+        delay(350)
+        isCheckingStatus = false
+    }
+
     Box(modifier = Modifier.fillMaxSize()) {
-        LazyColumn(
-            state = scrollState,
-            modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(bottom = Dimens.SubpageContentPaddingBottom),
-            verticalArrangement = Arrangement.spacedBy(Dimens.SectionSpacing)
-        ) {
-            item(key = "shell_top_spacer") {
-                Spacer(modifier = Modifier.height(LocalElvanTopSpacerHeight.current))
+        if (isCheckingStatus) {
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                ExpressiveLoadingIndicator(color = colors.textPrimary, modifier = Modifier.size(28.dp))
             }
-
-            // ── Seamless Password Input Card ──
-            item(key = "password_card") {
-                ElvanSectionContainer {
-                    ElvanSettingsSection(colors = colors) {
-                        // 1. New Password Row
-                        PasswordInlineInputRow(
-                            label = K.newPassword.tr(),
-                            value = newPassword,
-                            onValueChange = {
-                                newPassword = it
-                                errorMessage = null
-                            },
-                            placeholder = K.enterNewPassword.tr(),
-                            isPasswordVisible = showPassword,
-                            onToggleVisibility = { showPassword = !showPassword },
-                            colors = colors
-                        )
-
-                        ElvanSettingsDivider(colors = colors)
-
-                        // 2. Confirm Password Row
-                        PasswordInlineInputRow(
-                            label = K.confirmNewPassword.tr(),
-                            value = confirmPassword,
-                            onValueChange = {
-                                confirmPassword = it
-                                errorMessage = null
-                            },
-                            placeholder = K.confirmPassword.tr(),
-                            isPasswordVisible = showConfirmPassword,
-                            onToggleVisibility = { showConfirmPassword = !showConfirmPassword },
-                            colors = colors
-                        )
-                    }
+        } else {
+            LazyColumn(
+                state = scrollState,
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(bottom = Dimens.SubpageContentPaddingBottom),
+                verticalArrangement = Arrangement.spacedBy(Dimens.SectionSpacing)
+            ) {
+                item(key = "shell_top_spacer") {
+                    Spacer(modifier = Modifier.height(LocalElvanTopSpacerHeight.current))
                 }
-            }
 
-            // ── Error / Mismatch feedback ──
-            if (errorMessage != null || (confirmPassword.isNotEmpty() && !passwordsMatch)) {
-                item(key = "error_text") {
+                // ── Status Section ("No password set") ──
+                item(key = "status_section") {
                     ElvanSectionContainer {
-                        Text(
-                            text = errorMessage ?: K.passwordsDoNotMatch.tr(),
-                            style = TextStyle(
-                                fontFamily = ff,
-                                fontSize = 12.sp,
-                                fontWeight = FontWeight.Normal
-                            ),
-                            color = colors.error,
-                            modifier = Modifier.padding(horizontal = 20.dp)
-                        )
-                    }
-                }
-            }
-
-            // ── Save Button ──
-            item(key = "save_btn") {
-                ElvanSectionContainer {
-                    Button(
-                        onClick = {
-                            isProcessing = true
-                            errorMessage = null
-                            scope.launch {
-                                val res = AuthManager.createPassword(newPassword)
-                                isProcessing = false
-                                if (res.isSuccess) {
-                                    ElvanSnackbar.show(passwordCreatedMsg)
-                                    delay(300)
-                                    onBack()
-                                } else {
-                                    errorMessage = errorGeneric
-                                }
-                            }
-                        },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(48.dp),
-                        shape = RoundedCornerShape(50),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = if (colors.isDark) Color.White else Color.Black,
-                            contentColor = if (colors.isDark) Color.Black else Color.White
-                        ),
-                        elevation = ButtonDefaults.buttonElevation(0.dp),
-                        enabled = canSave
-                    ) {
-                        if (isProcessing) {
-                            ExpressiveLoadingIndicator(
-                                color = if (colors.isDark) Color.Black else Color.White,
-                                modifier = Modifier.size(18.dp)
-                            )
-                        } else {
-                            Text(
-                                text = K.savePassword.tr(),
-                                style = TextStyle(
-                                    fontFamily = ff,
-                                    fontSize = 14.5.sp,
-                                    fontWeight = FontWeight.Medium
-                                )
+                        ElvanSettingsSection(colors = colors) {
+                            ElvanSettingsRow(
+                                icon = MaterialSymbols.Rounded.Key,
+                                title = K.password.tr(),
+                                description = K.noPasswordSet.tr(),
+                                onClick = {},
+                                customTrailing = {
+                                    Icon(
+                                        imageVector = MaterialSymbols.Rounded.RadioButtonUnchecked,
+                                        contentDescription = null,
+                                        tint = colors.textTertiary,
+                                        modifier = Modifier.size(18.dp)
+                                    )
+                                },
+                                colors = colors
                             )
                         }
                     }
                 }
-            }
 
-            // ── Quiet Requirements Footer ──
-            item(key = "requirements_hint") {
-                ElvanSectionContainer {
-                    Text(
-                        text = "${K.min8Chars.tr()} · ${K.hasLetterAndNumber.tr()}",
-                        style = TextStyle(
-                            fontFamily = ff,
-                            fontSize = 12.sp,
-                            lineHeight = 16.sp
-                        ),
-                        color = colors.textPrimary.copy(alpha = 0.4f),
-                        modifier = Modifier.padding(horizontal = 20.dp)
-                    )
+                // ── Seamless Password Input Card ──
+                item(key = "password_card") {
+                    ElvanSectionContainer {
+                        ElvanSettingsSection(colors = colors) {
+                            // 1. New Password Row
+                            PasswordInlineInputRow(
+                                label = K.newPassword.tr(),
+                                value = newPassword,
+                                onValueChange = {
+                                    newPassword = it
+                                    errorMessage = null
+                                },
+                                placeholder = K.enterNewPassword.tr(),
+                                isPasswordVisible = showPassword,
+                                onToggleVisibility = { showPassword = !showPassword },
+                                colors = colors
+                            )
+
+                            ElvanSettingsDivider(colors = colors)
+
+                            // 2. Confirm Password Row
+                            PasswordInlineInputRow(
+                                label = K.confirmNewPassword.tr(),
+                                value = confirmPassword,
+                                onValueChange = {
+                                    confirmPassword = it
+                                    errorMessage = null
+                                },
+                                placeholder = K.confirmPassword.tr(),
+                                isPasswordVisible = showConfirmPassword,
+                                onToggleVisibility = { showConfirmPassword = !showConfirmPassword },
+                                colors = colors
+                            )
+                        }
+                    }
+                }
+
+                // ── Error / Mismatch feedback ──
+                if (errorMessage != null || (confirmPassword.isNotEmpty() && !passwordsMatch)) {
+                    item(key = "error_text") {
+                        ElvanSectionContainer {
+                            Text(
+                                text = errorMessage ?: K.passwordsDoNotMatch.tr(),
+                                style = TextStyle(
+                                    fontFamily = ff,
+                                    fontSize = 12.sp,
+                                    fontWeight = FontWeight.Normal
+                                ),
+                                color = colors.error,
+                                modifier = Modifier.padding(horizontal = 20.dp)
+                            )
+                        }
+                    }
+                }
+
+                // ── Save Button ──
+                item(key = "save_btn") {
+                    ElvanSectionContainer {
+                        Button(
+                            onClick = {
+                                isProcessing = true
+                                errorMessage = null
+                                scope.launch {
+                                    val res = AuthManager.createPassword(newPassword)
+                                    isProcessing = false
+                                    if (res.isSuccess) {
+                                        ElvanSnackbar.show(passwordCreatedMsg)
+                                        delay(300)
+                                        onBack()
+                                    } else {
+                                        errorMessage = errorGeneric
+                                    }
+                                }
+                            },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(48.dp),
+                            shape = RoundedCornerShape(50),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = if (colors.isDark) Color.White else Color.Black,
+                                contentColor = if (colors.isDark) Color.Black else Color.White
+                            ),
+                            elevation = ButtonDefaults.buttonElevation(0.dp),
+                            enabled = canSave
+                        ) {
+                            if (isProcessing) {
+                                ExpressiveLoadingIndicator(
+                                    color = if (colors.isDark) Color.Black else Color.White,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                            } else {
+                                Text(
+                                    text = K.savePassword.tr(),
+                                    style = TextStyle(
+                                        fontFamily = ff,
+                                        fontSize = 14.5.sp,
+                                        fontWeight = FontWeight.Medium
+                                    )
+                                )
+                            }
+                        }
+                    }
+                }
+
+                // ── Quiet Requirements Footer ──
+                item(key = "requirements_hint") {
+                    ElvanSectionContainer {
+                        Text(
+                            text = "${K.min8Chars.tr()} · ${K.hasLetterAndNumber.tr()}",
+                            style = TextStyle(
+                                fontFamily = ff,
+                                fontSize = 12.sp,
+                                lineHeight = 16.sp
+                            ),
+                            color = colors.textPrimary.copy(alpha = 0.4f),
+                            modifier = Modifier.padding(horizontal = 20.dp)
+                        )
+                    }
                 }
             }
         }

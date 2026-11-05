@@ -21,8 +21,6 @@ sealed interface SettingsRoute {
     data object ChangePassword : SettingsRoute
     data object CreatePassword : SettingsRoute
     data object DeleteAccount : SettingsRoute
-    data object SignOut : SettingsRoute
-    data object EditName : SettingsRoute
     data object AboutDeveloper : SettingsRoute
     data object AboutApp : SettingsRoute
     data object ElvanNavil : SettingsRoute
@@ -42,7 +40,7 @@ sealed interface SettingsRoute {
 val SettingsRoute.depth: Int
     get() = when {
         this == SettingsRoute.Hub -> 0
-        this == SettingsRoute.ManageProfiles || this in SettingsRoute.aboutPages || this == SettingsRoute.BilingualRules || this == SettingsRoute.LogoSettings || this == SettingsRoute.LinkedAccounts || this == SettingsRoute.ChangePassword || this == SettingsRoute.CreatePassword || this == SettingsRoute.DeleteAccount || this == SettingsRoute.SignOut || this == SettingsRoute.EditName -> 2
+        this == SettingsRoute.ManageProfiles || this in SettingsRoute.aboutPages || this == SettingsRoute.BilingualRules || this == SettingsRoute.LogoSettings || this == SettingsRoute.LinkedAccounts || this == SettingsRoute.ChangePassword || this == SettingsRoute.CreatePassword || this == SettingsRoute.DeleteAccount -> 2
         else -> 1
     }
 
@@ -72,8 +70,6 @@ val SettingsRoute.name: String
         SettingsRoute.ChangePassword -> "ChangePassword"
         SettingsRoute.CreatePassword -> "CreatePassword"
         SettingsRoute.DeleteAccount -> "DeleteAccount"
-        SettingsRoute.SignOut -> "SignOut"
-        SettingsRoute.EditName -> "EditName"
         SettingsRoute.AboutDeveloper -> "AboutDeveloper"
         SettingsRoute.AboutApp -> "AboutApp"
         SettingsRoute.ElvanNavil -> "ElvanNavil"
@@ -102,8 +98,6 @@ fun settingsRouteFromName(name: String?): SettingsRoute = when (name) {
     "ChangePassword" -> SettingsRoute.ChangePassword
     "CreatePassword" -> SettingsRoute.CreatePassword
     "DeleteAccount" -> SettingsRoute.DeleteAccount
-    "SignOut" -> SettingsRoute.SignOut
-    "EditName" -> SettingsRoute.EditName
     "AboutDeveloper" -> SettingsRoute.AboutDeveloper
     "AboutApp" -> SettingsRoute.AboutApp
     "ElvanNavil" -> SettingsRoute.ElvanNavil

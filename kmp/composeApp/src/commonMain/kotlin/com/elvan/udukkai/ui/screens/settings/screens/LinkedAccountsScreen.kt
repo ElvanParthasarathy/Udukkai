@@ -1,14 +1,18 @@
 package com.elvan.udukkai.ui.screens.settings.screens
 
+import androidx.compose.animation.*
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -26,15 +30,16 @@ import com.elvan.udukkai.theme.rememberShellColors
 import com.elvan.udukkai.ui.components.ExpressiveLoadingIndicator
 import com.elvan.udukkai.ui.components.shell.*
 import com.elvan.udukkai.ui.navigation.MaterialSymbols
+import com.elvan.udukkai.ui.screens.settings.AccountAvatar
 import com.elvan.udukkai.ui.screens.settings.SettingsRoute
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 /**
  * கூகுள் கணக்குத் திரை — Google Account Sub-page.
- * Calm, minimal layout:
- * - Status row showing connected email or not connected.
- * - Restrained action button (clean secondary button for unlink, monochrome for link).
- * - Quiet helper description. Zero aggressive red.
+ * - Circular avatar: Profile image if linked, blank circle if not linked.
+ * - Internet-oriented loading feedback.
+ * - Clear link / unlink actions without alarmist styling.
  */
 @Composable
 fun LinkedAccountsScreen(
@@ -49,6 +54,7 @@ fun LinkedAccountsScreen(
     val googleEmail = AuthManager.googleEmail ?: AuthManager.signedInEmail ?: ""
     val hasPassword = AuthManager.hasPassword
 
+    var isCheckingStatus by remember { mutableStateOf(true) }
     var showUnlinkSheet by remember { mutableStateOf(false) }
     var isLinking by remember { mutableStateOf(false) }
     var isUnlinking by remember { mutableStateOf(false) }
@@ -57,127 +63,173 @@ fun LinkedAccountsScreen(
     val failedUnlinkMsg = K.failedToUnlink.tr()
     val connectedMsg = K.connected.tr()
 
-    Box(modifier = Modifier.fillMaxSize()) {
-        LazyColumn(
-            state = scrollState,
-            modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(bottom = Dimens.SubpageContentPaddingBottom),
-            verticalArrangement = Arrangement.spacedBy(Dimens.SectionSpacing)
-        ) {
-            item(key = "shell_top_spacer") {
-                Spacer(modifier = Modifier.height(LocalElvanTopSpacerHeight.current))
-            }
+    // Internet-oriented loading experience on enter
+    LaunchedEffect(Unit) {
+        delay(350)
+        isCheckingStatus = false
+    }
 
-            // ── Google Account Status Card ──
-            item(key = "status_row") {
-                ElvanSectionContainer {
-                    ElvanSettingsSection(colors = colors) {
-                        ElvanSettingsRow(
-                            icon = MaterialSymbols.Rounded.Link,
-                            title = K.googleAccount.tr(),
-                            description = if (isGoogleLinked) googleEmail else K.notConnected.tr(),
-                            onClick = {},
-                            customTrailing = {
+    Box(modifier = Modifier.fillMaxSize()) {
+        if (isCheckingStatus) {
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                ExpressiveLoadingIndicator(color = colors.textPrimary, modifier = Modifier.size(28.dp))
+            }
+        } else {
+            LazyColumn(
+                state = scrollState,
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(bottom = Dimens.SubpageContentPaddingBottom),
+                verticalArrangement = Arrangement.spacedBy(Dimens.SectionSpacing)
+            ) {
+                item(key = "shell_top_spacer") {
+                    Spacer(modifier = Modifier.height(LocalElvanTopSpacerHeight.current))
+                }
+
+                // ── Profile Circle (Image if linked, blank circle if unlinked) ──
+                item(key = "google_avatar_header") {
+                    ElvanSectionContainer {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 16.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(72.dp)
+                                    .clip(CircleShape)
+                                    .background(colors.iconBg),
+                                contentAlignment = Alignment.Center
+                            ) {
                                 if (isGoogleLinked) {
+                                    AccountAvatar(fallback = {
+                                        Icon(
+                                            imageVector = MaterialSymbols.Rounded.Person,
+                                            contentDescription = null,
+                                            tint = colors.textPrimary.copy(alpha = 0.6f),
+                                            modifier = Modifier.size(36.dp)
+                                        )
+                                    })
+                                } else {
+                                    // Blank circle placeholder
                                     Icon(
-                                        imageVector = MaterialSymbols.Rounded.CheckCircle,
+                                        imageVector = MaterialSymbols.Rounded.Person,
                                         contentDescription = null,
-                                        tint = colors.textTertiary,
+                                        tint = colors.textPrimary.copy(alpha = 0.25f),
+                                        modifier = Modifier.size(36.dp)
+                                    )
+                                }
+                            }
+
+                            Spacer(modifier = Modifier.height(12.dp))
+
+                            Text(
+                                text = K.googleAccount.tr(),
+                                style = TextStyle(
+                                    fontFamily = ff,
+                                    fontSize = 17.sp,
+                                    fontWeight = FontWeight.Medium
+                                ),
+                                color = colors.textPrimary
+                            )
+
+                            Spacer(modifier = Modifier.height(4.dp))
+
+                            Text(
+                                text = if (isGoogleLinked) googleEmail else K.notConnected.tr(),
+                                style = TextStyle(
+                                    fontFamily = ff,
+                                    fontSize = 13.sp,
+                                    fontWeight = FontWeight.Normal
+                                ),
+                                color = colors.textPrimary.copy(alpha = 0.5f)
+                            )
+                        }
+                    }
+                }
+
+                // ── Action Section ──
+                item(key = "action_btn") {
+                    ElvanSectionContainer {
+                        if (isGoogleLinked) {
+                            // Unlink button: Calm secondary styling
+                            Button(
+                                onClick = { showUnlinkSheet = true },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(48.dp),
+                                shape = RoundedCornerShape(50),
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = colors.iconBg,
+                                    contentColor = colors.textPrimary
+                                ),
+                                elevation = ButtonDefaults.buttonElevation(0.dp),
+                                enabled = !isUnlinking
+                            ) {
+                                if (isUnlinking) {
+                                    ExpressiveLoadingIndicator(color = colors.textPrimary, modifier = Modifier.size(18.dp))
+                                } else {
+                                    Text(
+                                        text = K.unlinkGoogle.tr(),
+                                        style = TextStyle(fontFamily = ff, fontSize = 14.5.sp, fontWeight = FontWeight.Medium)
+                                    )
+                                }
+                            }
+                        } else {
+                            // Link button: Standard monochrome
+                            Button(
+                                onClick = {
+                                    if (!isLinking) {
+                                        isLinking = true
+                                        scope.launch {
+                                            val res = AuthManager.linkGoogle()
+                                            isLinking = false
+                                            if (res is GoogleSignInResult.Success) {
+                                                ElvanSnackbar.show(connectedMsg)
+                                            }
+                                        }
+                                    }
+                                },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(48.dp),
+                                shape = RoundedCornerShape(50),
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = if (colors.isDark) Color.White else Color.Black,
+                                    contentColor = if (colors.isDark) Color.Black else Color.White
+                                ),
+                                elevation = ButtonDefaults.buttonElevation(0.dp),
+                                enabled = !isLinking
+                            ) {
+                                if (isLinking) {
+                                    ExpressiveLoadingIndicator(
+                                        color = if (colors.isDark) Color.Black else Color.White,
                                         modifier = Modifier.size(18.dp)
                                     )
                                 } else {
-                                    Icon(
-                                        imageVector = MaterialSymbols.Rounded.RadioButtonUnchecked,
-                                        contentDescription = null,
-                                        tint = colors.textTertiary,
-                                        modifier = Modifier.size(18.dp)
+                                    Text(
+                                        text = K.linkGoogle.tr(),
+                                        style = TextStyle(fontFamily = ff, fontSize = 14.5.sp, fontWeight = FontWeight.Medium)
                                     )
                                 }
-                            },
-                            colors = colors
+                            }
+                        }
+                    }
+                }
+
+                // ── Quiet Hint ──
+                item(key = "status_hint") {
+                    ElvanSectionContainer {
+                        Text(
+                            text = if (isGoogleLinked) K.googleLinkedDesc.tr() else K.googleUnlinkedDesc.tr(),
+                            style = TextStyle(fontFamily = ff, fontSize = 12.sp, lineHeight = 16.sp),
+                            color = colors.textPrimary.copy(alpha = 0.45f),
+                            modifier = Modifier.padding(horizontal = 20.dp)
                         )
                     }
-                }
-            }
-
-            // ── Action Button (Restrained, Monochrome / Secondary) ──
-            item(key = "action_btn") {
-                ElvanSectionContainer {
-                    if (isGoogleLinked) {
-                        // Unlink: Calm secondary pill button matching app theme
-                        Button(
-                            onClick = { showUnlinkSheet = true },
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(48.dp),
-                            shape = RoundedCornerShape(50),
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = colors.iconBg,
-                                contentColor = colors.textPrimary
-                            ),
-                            elevation = ButtonDefaults.buttonElevation(0.dp),
-                            enabled = !isUnlinking
-                        ) {
-                            if (isUnlinking) {
-                                ExpressiveLoadingIndicator(color = colors.textPrimary, modifier = Modifier.size(18.dp))
-                            } else {
-                                Text(
-                                    text = K.unlinkGoogle.tr(),
-                                    style = TextStyle(fontFamily = ff, fontSize = 14.5.sp, fontWeight = FontWeight.Medium)
-                                )
-                            }
-                        }
-                    } else {
-                        // Link: Standard monochrome pill button
-                        Button(
-                            onClick = {
-                                if (!isLinking) {
-                                    isLinking = true
-                                    scope.launch {
-                                        val res = AuthManager.linkGoogle()
-                                        isLinking = false
-                                        if (res is GoogleSignInResult.Success) {
-                                            ElvanSnackbar.show(connectedMsg)
-                                        }
-                                    }
-                                }
-                            },
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(48.dp),
-                            shape = RoundedCornerShape(50),
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = if (colors.isDark) Color.White else Color.Black,
-                                contentColor = if (colors.isDark) Color.Black else Color.White
-                            ),
-                            elevation = ButtonDefaults.buttonElevation(0.dp),
-                            enabled = !isLinking
-                        ) {
-                            if (isLinking) {
-                                ExpressiveLoadingIndicator(
-                                    color = if (colors.isDark) Color.Black else Color.White,
-                                    modifier = Modifier.size(18.dp)
-                                )
-                            } else {
-                                Text(
-                                    text = K.linkGoogle.tr(),
-                                    style = TextStyle(fontFamily = ff, fontSize = 14.5.sp, fontWeight = FontWeight.Medium)
-                                )
-                            }
-                        }
-                    }
-                }
-            }
-
-            // ── Subtle Description ──
-            item(key = "status_hint") {
-                ElvanSectionContainer {
-                    Text(
-                        text = if (isGoogleLinked) K.googleLinkedDesc.tr() else K.googleUnlinkedDesc.tr(),
-                        style = TextStyle(fontFamily = ff, fontSize = 12.sp, lineHeight = 16.sp),
-                        color = colors.textPrimary.copy(alpha = 0.45f),
-                        modifier = Modifier.padding(horizontal = 20.dp)
-                    )
                 }
             }
         }

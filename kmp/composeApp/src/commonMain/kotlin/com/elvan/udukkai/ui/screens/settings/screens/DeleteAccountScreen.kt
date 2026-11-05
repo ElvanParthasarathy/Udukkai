@@ -1,5 +1,6 @@
 package com.elvan.udukkai.ui.screens.settings.screens
 
+import androidx.compose.animation.*
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -10,7 +11,6 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -34,11 +34,10 @@ import com.elvan.udukkai.ui.navigation.MaterialSymbols
 import kotlinx.coroutines.launch
 
 /**
- * கணக்கை நிரந்தரமாக அழிக்கும் திரை — Step-by-Step Account Deletion Sub-page.
- * Minimal, restrained layout without alarmist neon colors:
- * - Step 1: Clear consequence explanation + confirmation checkbox.
- * - Step 2: Verification (Password input if password-backed, biometric ready).
- * - Step 3: Calm monochrome action button + final confirmation sheet.
+ * கணக்கை நிரந்தரமாக அழிக்கும் திரை — Step-by-Step Account Deletion Flow (NO Checkboxes).
+ * - Step 1: Warning and consequence details with a clean "Continue" button.
+ * - Step 2: Identity verification (Password re-auth or biometric scan) with "Verify & Continue".
+ * - Step 3: Final confirmation step with permanent deletion trigger.
  */
 @Composable
 fun DeleteAccountScreen(
@@ -50,20 +49,17 @@ fun DeleteAccountScreen(
     val scope = rememberCoroutineScope()
 
     val hasPassword = AuthManager.hasPassword
-
-    var understood by remember { mutableStateOf(false) }
+    var currentStep by remember { mutableStateOf(1) } // 1, 2, or 3
     var password by remember { mutableStateOf("") }
     var showPassword by remember { mutableStateOf(false) }
     var isProcessing by remember { mutableStateOf(false) }
-    var showDeleteConfirmSheet by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
 
     val accountDeletedMsg = K.accountDeleted.tr()
     val errorGeneric = K.error.tr()
     val biometricPromptTitle = K.biometricVerifyTitle.tr()
     val cancelText = K.cancelBtn.tr()
-
-    val canInitiateDelete = understood && (!hasPassword || password.isNotEmpty()) && !isProcessing
+    val enterCurrentPasswordMsg = K.enterCurrentPassword.tr()
 
     Box(modifier = Modifier.fillMaxSize()) {
         LazyColumn(
@@ -76,215 +72,305 @@ fun DeleteAccountScreen(
                 Spacer(modifier = Modifier.height(LocalElvanTopSpacerHeight.current))
             }
 
-            // ── Step 1: Consequences (படி 1: விளைவுகள்) ──
-            item(key = "step1_card") {
-                ElvanSectionContainer {
-                    ElvanSettingsSection(
-                        title = K.step1Consequences.tr(),
-                        colors = colors
-                    ) {
-                        Column(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 20.dp, vertical = 16.dp)
-                        ) {
-                            Text(
-                                text = K.deleteAccountWarning.tr(),
-                                style = TextStyle(
-                                    fontFamily = ff,
-                                    fontSize = 12.5.sp,
-                                    lineHeight = 18.sp
-                                ),
-                                color = colors.textPrimary.copy(alpha = 0.65f)
-                            )
-
-                            Spacer(modifier = Modifier.height(14.dp))
-
-                            // Checkbox Confirmation
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .clip(RoundedCornerShape(8.dp))
-                                    .clickable { understood = !understood }
-                                    .padding(vertical = 4.dp),
-                                verticalAlignment = Alignment.CenterVertically
+            when (currentStep) {
+                // ── STEP 1: CONSEQUENCES (விளைவுகள்) ──
+                1 -> {
+                    item(key = "step1_consequences") {
+                        ElvanSectionContainer {
+                            ElvanSettingsSection(
+                                title = K.step1Consequences.tr(),
+                                colors = colors
                             ) {
-                                Checkbox(
-                                    checked = understood,
-                                    onCheckedChange = { understood = it },
-                                    colors = CheckboxDefaults.colors(
-                                        checkedColor = if (colors.isDark) Color.White else Color.Black,
-                                        checkmarkColor = if (colors.isDark) Color.Black else Color.White
-                                    )
-                                )
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Text(
-                                    text = K.iUnderstandConsequences.tr(),
-                                    style = TextStyle(
-                                        fontFamily = ff,
-                                        fontSize = 13.sp,
-                                        fontWeight = FontWeight.Medium
-                                    ),
-                                    color = colors.textPrimary
-                                )
-                            }
-                        }
-                    }
-                }
-            }
-
-            // ── Step 2: Verification (படி 2: சரிபார்ப்பு) ──
-            if (hasPassword) {
-                item(key = "step2_card") {
-                    ElvanSectionContainer {
-                        ElvanSettingsSection(
-                            title = K.step2Verification.tr(),
-                            colors = colors
-                        ) {
-                            Column(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(horizontal = 20.dp, vertical = 16.dp)
-                            ) {
-                                ElvanSettingsTextField(
-                                    label = K.verifyIdentityForDeletion.tr(),
-                                    value = password,
-                                    onValueChange = {
-                                        password = it
-                                        errorMessage = null
-                                    },
-                                    placeholder = K.enterCurrentPassword.tr(),
-                                    visualTransformation = if (showPassword) VisualTransformation.None else PasswordVisualTransformation(),
-                                    trailingIcon = {
-                                        Icon(
-                                            imageVector = if (showPassword) MaterialSymbols.Rounded.Visibility else MaterialSymbols.Rounded.VisibilityOff,
-                                            contentDescription = null,
-                                            tint = colors.textPrimary.copy(alpha = 0.45f),
-                                            modifier = Modifier
-                                                .size(20.dp)
-                                                .clickable { showPassword = !showPassword }
-                                        )
-                                    },
-                                    colors = colors
-                                )
-
-                                if (errorMessage != null) {
-                                    Spacer(modifier = Modifier.height(8.dp))
+                                Column(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(horizontal = 20.dp, vertical = 20.dp)
+                                ) {
                                     Text(
-                                        text = errorMessage!!,
+                                        text = K.deleteAccountWarning.tr(),
                                         style = TextStyle(
                                             fontFamily = ff,
-                                            fontSize = 12.sp,
-                                            fontWeight = FontWeight.Medium
+                                            fontSize = 13.sp,
+                                            lineHeight = 19.sp
                                         ),
-                                        color = colors.error,
-                                        modifier = Modifier.padding(start = 4.dp)
+                                        color = colors.textPrimary.copy(alpha = 0.7f)
                                     )
+
+                                    Spacer(modifier = Modifier.height(24.dp))
+
+                                    Button(
+                                        onClick = { currentStep = 2 },
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .height(48.dp),
+                                        shape = RoundedCornerShape(50),
+                                        colors = ButtonDefaults.buttonColors(
+                                            containerColor = if (colors.isDark) Color.White else Color.Black,
+                                            contentColor = if (colors.isDark) Color.Black else Color.White
+                                        ),
+                                        elevation = ButtonDefaults.buttonElevation(0.dp)
+                                    ) {
+                                        Text(
+                                            text = K.continueBtn.tr(),
+                                            style = TextStyle(
+                                                fontFamily = ff,
+                                                fontSize = 14.5.sp,
+                                                fontWeight = FontWeight.Medium
+                                            )
+                                        )
+                                    }
                                 }
                             }
                         }
                     }
                 }
-            }
 
-            // ── Step 3: Deletion Action (படி 3: கணக்கு அழித்தல்) ──
-            item(key = "step3_card") {
-                ElvanSectionContainer {
-                    ElvanSettingsSection(
-                        title = K.step3DeleteAccount.tr(),
-                        colors = colors
-                    ) {
-                        Column(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 20.dp, vertical = 16.dp)
-                        ) {
-                            Button(
-                                onClick = { showDeleteConfirmSheet = true },
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(48.dp),
-                                shape = RoundedCornerShape(50),
-                                colors = ButtonDefaults.buttonColors(
-                                    containerColor = if (colors.isDark) Color.White else Color.Black,
-                                    contentColor = if (colors.isDark) Color.Black else Color.White
-                                ),
-                                elevation = ButtonDefaults.buttonElevation(0.dp),
-                                enabled = canInitiateDelete
+                // ── STEP 2: VERIFICATION (அடையாளச் சரிபார்ப்பு) ──
+                2 -> {
+                    item(key = "step2_verification") {
+                        ElvanSectionContainer {
+                            ElvanSettingsSection(
+                                title = K.step2Verification.tr(),
+                                colors = colors
                             ) {
-                                if (isProcessing) {
-                                    ExpressiveLoadingIndicator(
-                                        color = if (colors.isDark) Color.Black else Color.White,
-                                        modifier = Modifier.size(18.dp)
-                                    )
-                                } else {
+                                Column(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(horizontal = 20.dp, vertical = 20.dp)
+                                ) {
+                                    if (hasPassword) {
+                                        ElvanSettingsTextField(
+                                            label = K.verifyIdentityForDeletion.tr(),
+                                            value = password,
+                                            onValueChange = {
+                                                password = it
+                                                errorMessage = null
+                                            },
+                                            placeholder = K.enterCurrentPassword.tr(),
+                                            visualTransformation = if (showPassword) VisualTransformation.None else PasswordVisualTransformation(),
+                                            trailingIcon = {
+                                                Icon(
+                                                    imageVector = if (showPassword) MaterialSymbols.Rounded.Visibility else MaterialSymbols.Rounded.VisibilityOff,
+                                                    contentDescription = null,
+                                                    tint = colors.textPrimary.copy(alpha = 0.45f),
+                                                    modifier = Modifier
+                                                        .size(20.dp)
+                                                        .clickable { showPassword = !showPassword }
+                                                )
+                                            },
+                                            colors = colors
+                                        )
+
+                                        if (errorMessage != null) {
+                                            Spacer(modifier = Modifier.height(8.dp))
+                                            Text(
+                                                text = errorMessage!!,
+                                                style = TextStyle(
+                                                    fontFamily = ff,
+                                                    fontSize = 12.sp,
+                                                    fontWeight = FontWeight.Medium
+                                                ),
+                                                color = colors.error,
+                                                modifier = Modifier.padding(start = 4.dp)
+                                            )
+                                        }
+                                    } else {
+                                        Text(
+                                            text = K.confirmIdentityBeforeNewPassword.tr(),
+                                            style = TextStyle(
+                                                fontFamily = ff,
+                                                fontSize = 13.sp,
+                                                lineHeight = 18.sp
+                                            ),
+                                            color = colors.textPrimary.copy(alpha = 0.7f)
+                                        )
+                                    }
+
+                                    Spacer(modifier = Modifier.height(24.dp))
+
+                                    Button(
+                                        onClick = {
+                                            if (!hasPassword || password.isNotBlank()) {
+                                                currentStep = 3
+                                            } else {
+                                                errorMessage = enterCurrentPasswordMsg
+                                            }
+                                        },
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .height(48.dp),
+                                        shape = RoundedCornerShape(50),
+                                        colors = ButtonDefaults.buttonColors(
+                                            containerColor = if (colors.isDark) Color.White else Color.Black,
+                                            contentColor = if (colors.isDark) Color.Black else Color.White
+                                        ),
+                                        elevation = ButtonDefaults.buttonElevation(0.dp),
+                                        enabled = !hasPassword || password.isNotBlank()
+                                    ) {
+                                        Text(
+                                            text = K.verifyAndContinue.tr(),
+                                            style = TextStyle(
+                                                fontFamily = ff,
+                                                fontSize = 14.5.sp,
+                                                fontWeight = FontWeight.Medium
+                                            )
+                                        )
+                                    }
+
+                                    Spacer(modifier = Modifier.height(10.dp))
+
+                                    Button(
+                                        onClick = { currentStep = 1 },
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .height(44.dp),
+                                        shape = RoundedCornerShape(50),
+                                        colors = ButtonDefaults.buttonColors(
+                                            containerColor = colors.iconBg,
+                                            contentColor = colors.textPrimary
+                                        ),
+                                        elevation = ButtonDefaults.buttonElevation(0.dp)
+                                    ) {
+                                        Text(
+                                            text = K.cancelBtn.tr(),
+                                            style = TextStyle(
+                                                fontFamily = ff,
+                                                fontSize = 14.sp,
+                                                fontWeight = FontWeight.Normal
+                                            )
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // ── STEP 3: FINAL DELETION CONFIRMATION (இறுதி அழிப்பு) ──
+                3 -> {
+                    item(key = "step3_confirmation") {
+                        ElvanSectionContainer {
+                            ElvanSettingsSection(
+                                title = K.step3DeleteAccount.tr(),
+                                colors = colors
+                            ) {
+                                Column(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(horizontal = 20.dp, vertical = 20.dp)
+                                ) {
                                     Text(
-                                        text = K.deleteAccountConfirm.tr(),
+                                        text = K.deletePermanentlyDesc.tr(),
                                         style = TextStyle(
                                             fontFamily = ff,
-                                            fontSize = 14.5.sp,
-                                            fontWeight = FontWeight.Medium
-                                        )
+                                            fontSize = 13.sp,
+                                            lineHeight = 19.sp
+                                        ),
+                                        color = colors.textPrimary.copy(alpha = 0.7f)
                                     )
+
+                                    if (errorMessage != null) {
+                                        Spacer(modifier = Modifier.height(8.dp))
+                                        Text(
+                                            text = errorMessage!!,
+                                            style = TextStyle(
+                                                fontFamily = ff,
+                                                fontSize = 12.sp,
+                                                fontWeight = FontWeight.Medium
+                                            ),
+                                            color = colors.error,
+                                            modifier = Modifier.padding(start = 4.dp)
+                                        )
+                                    }
+
+                                    Spacer(modifier = Modifier.height(24.dp))
+
+                                    Button(
+                                        onClick = {
+                                            val executeDelete = {
+                                                isProcessing = true
+                                                scope.launch {
+                                                    val res = AuthManager.deleteAccount(password.takeIf { hasPassword })
+                                                    isProcessing = false
+                                                    if (res.isSuccess) {
+                                                        ElvanSnackbar.show(accountDeletedMsg)
+                                                    } else {
+                                                        errorMessage = res.exceptionOrNull()?.message ?: errorGeneric
+                                                    }
+                                                }
+                                            }
+
+                                            if (fingerprintAvailable()) {
+                                                authenticateFingerprint(
+                                                    title = biometricPromptTitle,
+                                                    cancelText = cancelText
+                                                ) { authenticated ->
+                                                    if (authenticated) {
+                                                        executeDelete()
+                                                    }
+                                                }
+                                            } else {
+                                                executeDelete()
+                                            }
+                                        },
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .height(48.dp),
+                                        shape = RoundedCornerShape(50),
+                                        colors = ButtonDefaults.buttonColors(
+                                            containerColor = if (colors.isDark) Color.White else Color.Black,
+                                            contentColor = if (colors.isDark) Color.Black else Color.White
+                                        ),
+                                        elevation = ButtonDefaults.buttonElevation(0.dp),
+                                        enabled = !isProcessing
+                                    ) {
+                                        if (isProcessing) {
+                                            ExpressiveLoadingIndicator(
+                                                color = if (colors.isDark) Color.Black else Color.White,
+                                                modifier = Modifier.size(18.dp)
+                                            )
+                                        } else {
+                                            Text(
+                                                text = K.deleteAccountConfirm.tr(),
+                                                style = TextStyle(
+                                                    fontFamily = ff,
+                                                    fontSize = 14.5.sp,
+                                                    fontWeight = FontWeight.Medium
+                                                )
+                                            )
+                                        }
+                                    }
+
+                                    Spacer(modifier = Modifier.height(10.dp))
+
+                                    Button(
+                                        onClick = { currentStep = 2 },
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .height(44.dp),
+                                        shape = RoundedCornerShape(50),
+                                        colors = ButtonDefaults.buttonColors(
+                                            containerColor = colors.iconBg,
+                                            contentColor = colors.textPrimary
+                                        ),
+                                        elevation = ButtonDefaults.buttonElevation(0.dp),
+                                        enabled = !isProcessing
+                                    ) {
+                                        Text(
+                                            text = K.cancelBtn.tr(),
+                                            style = TextStyle(
+                                                fontFamily = ff,
+                                                fontSize = 14.sp,
+                                                fontWeight = FontWeight.Normal
+                                            )
+                                        )
+                                    }
                                 }
                             }
                         }
                     }
                 }
             }
-        }
-
-        // ── Final Destructive Confirmation Action Sheet ──
-        if (showDeleteConfirmSheet) {
-            ElvanActionSheet(
-                title = K.deletePermanentlyQuestion.tr(),
-                cancelText = K.cancelBtn.tr(),
-                confirmText = K.deleteBtn.tr(),
-                confirmColor = colors.textPrimary,
-                onDismissRequest = { showDeleteConfirmSheet = false },
-                onConfirm = {
-                    showDeleteConfirmSheet = false
-                    val executeDelete = {
-                        isProcessing = true
-                        scope.launch {
-                            val res = AuthManager.deleteAccount(password.takeIf { hasPassword })
-                            isProcessing = false
-                            if (res.isSuccess) {
-                                ElvanSnackbar.show(accountDeletedMsg)
-                            } else {
-                                errorMessage = res.exceptionOrNull()?.message ?: errorGeneric
-                            }
-                        }
-                    }
-
-                    if (fingerprintAvailable()) {
-                        authenticateFingerprint(
-                            title = biometricPromptTitle,
-                            cancelText = cancelText
-                        ) { authenticated ->
-                            if (authenticated) {
-                                executeDelete()
-                            }
-                        }
-                    } else {
-                        executeDelete()
-                    }
-                },
-                colors = colors,
-                customContent = {
-                    Text(
-                        text = K.deletePermanentlyDesc.tr(),
-                        style = TextStyle(
-                            fontFamily = ff,
-                            fontSize = 13.5.sp,
-                            lineHeight = 18.sp
-                        ),
-                        color = colors.textPrimary.copy(alpha = 0.7f),
-                        textAlign = TextAlign.Center,
-                        modifier = Modifier.padding(horizontal = 8.dp)
-                    )
-                }
-            )
         }
     }
 }
