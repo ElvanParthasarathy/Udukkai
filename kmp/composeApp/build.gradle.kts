@@ -129,8 +129,8 @@ android {
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
-            // Without keystore.properties the release build is signed with the debug key (local testing only)
-            signingConfig = signingConfigs.getByName("debug")
+            // Use the official release keystore if present, fallback to debug key
+            signingConfig = signingConfigs.findByName("release") ?: signingConfigs.getByName("debug")
         }
     }
     compileOptions {
