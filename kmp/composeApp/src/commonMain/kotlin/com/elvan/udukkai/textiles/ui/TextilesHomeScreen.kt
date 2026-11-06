@@ -471,10 +471,15 @@ fun TextilesHomeScreen() {
                         else -> emptySet()
                     }
                     val isAllSelected = selectedItemIds.isNotEmpty() && allSelectionIds.isNotEmpty() && selectedItemIds.size == allSelectionIds.size
+                    val updateBanner = com.elvan.udukkai.core.update.rememberAppUpdateBanner()
+                    val activeBanners = remember(updateBanner, selectedTab) {
+                        if (selectedTab == NavTab.Home && updateBanner != null) listOf(updateBanner) else emptyList()
+                    }
 
                     ElvanShell(
                         scrollState = currentScrollState,
                         title = selectedTab.getLocalizedHeader(),
+                        banners = activeBanners,
                         showNavbar = !isLandscape && !isWideScreen,
                         hasActions = (!isSearchActive && !isSelectionMode) && (selectedTab != NavTab.Home || !isLandscape),
                         leadingActions = if (isLandscape && !isSearchActive && !isSelectionMode) {

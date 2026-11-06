@@ -69,6 +69,7 @@ fun ElvanShell(
     onCancelSelection: () -> Unit = {},
     showBottomFade: Boolean = true,
     hasFloatingBar: Boolean = false,
+    banners: List<ShellBanner> = emptyList(),
     overlay: @Composable () -> Unit = {},
     floatingBar: @Composable () -> Unit = {},
     content: @Composable () -> Unit
@@ -440,7 +441,8 @@ fun ElvanShell(
                         onBack = onBack,
                         hasActions = if (isSelectionMode) false else hasActions,
                         actions = actions,
-                        isSelectionMode = isSelectionMode
+                        isSelectionMode = isSelectionMode,
+                        banners = banners
                     )
                 }
 
