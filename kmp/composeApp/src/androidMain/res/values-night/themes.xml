@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:tools="http://schemas.android.com/tools">
     <style name="Theme.Udukkai" parent="@android:style/Theme.Material.NoActionBar">
         <item name="android:windowBackground">#000000</item>
@@ -8,5 +8,10 @@
         <item name="android:windowLightNavigationBar" tools:targetApi="o">false</item>
         <item name="android:enforceStatusBarContrast" tools:targetApi="q">false</item>
         <item name="android:enforceNavigationBarContrast" tools:targetApi="q">false</item>
+
+        <!-- Android 12+ (API 31+) Native Splash Screen: Standard 1 -->
+        <item name="android:windowSplashScreenBackground" tools:targetApi="s">#000000</item>
+        <item name="android:windowSplashScreenAnimatedIcon" tools:targetApi="s">@drawable/ic_splash_icon</item>
+        <item name="android:windowSplashScreenIconBackgroundColor" tools:targetApi="s">@android:color/transparent</item>
     </style>
 </resources>
