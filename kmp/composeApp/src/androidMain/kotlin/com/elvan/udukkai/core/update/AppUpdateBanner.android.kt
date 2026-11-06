@@ -12,6 +12,7 @@ actual fun rememberAppUpdateBanner(): ShellBanner? {
     if (dismissedSessionUpdateId == available.version) return null
 
     val isTa = LocalAppLanguage.current.startsWith("ta")
+    val isPlay = AppUpdate.isPlayStoreChannel()
     var showSheet by remember { mutableStateOf(false) }
 
     if (showSheet) {
@@ -24,8 +25,16 @@ actual fun rememberAppUpdateBanner(): ShellBanner? {
     return ShellBanner(
         id = available.version,
         badge = if (isTa) "✦ புதுப்பிப்பு" else "✦ UPDATE",
-        title = if (isTa) "புதிய பதிப்பு v${available.version} கிடைத்துள்ளது" else "New update v${available.version} available",
-        message = if (isTa) "ஒரு தொடுதலில் பின்னணியில் நிறுவ தட்டவும்" else "Tap to install seamlessly in background",
+        title = if (isPlay) {
+            if (isTa) "Google Play வழியே புதிய பதிப்பு v${available.version} கிடைத்துள்ளது" else "New update v${available.version} available on Google Play"
+        } else {
+            if (isTa) "புதிய பதிப்பு v${available.version} கிடைத்துள்ளது" else "New update v${available.version} available"
+        },
+        message = if (isPlay) {
+            if (isTa) "Google Play வழியே புதுப்பிக்கத் தட்டவும்" else "Tap to update via Google Play"
+        } else {
+            if (isTa) "ஒரு தொடுதலில் பின்னணியில் நிறுவ தட்டவும்" else "Tap to install seamlessly in background"
+        },
         actionText = if (isTa) "புதுப்பி" else "Update",
         onClick = { showSheet = true },
         onDismiss = { dismissedSessionUpdateId = available.version }

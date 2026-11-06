@@ -218,6 +218,7 @@ fun WhatsNewSheet(
                 val btnBg = if (isFailed) colors.error else if (isDark) Color.White else Color(0xFF1D1D1F)
                 val btnText = if (isFailed) Color.White else if (isDark) Color.Black else Color.White
 
+                val isPlay = AppUpdate.isPlayStoreChannel()
                 Button(
                     onClick = { AppUpdate.install(context) },
                     shape = RoundedCornerShape(50),
@@ -232,6 +233,7 @@ fun WhatsNewSheet(
                     Text(
                         text = when {
                             isFailed -> if (isTa) "மீண்டும் முயல்க" else "Try Again"
+                            isPlay -> if (isTa) "Google Play வழியே புதுப்பிக்குக" else "Update on Google Play"
                             else -> if (isTa) "இப்போதே புதுப்பி" else "Update Now"
                         },
                         fontFamily = ff,

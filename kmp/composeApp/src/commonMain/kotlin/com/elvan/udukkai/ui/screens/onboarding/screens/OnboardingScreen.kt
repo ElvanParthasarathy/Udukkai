@@ -117,7 +117,9 @@ fun UllnuzhaivuThirai(
                         painter = painterResource(if (isFactory) Res.drawable.factory_logo_vector else Res.drawable.textiles_logo_vector),
                         contentDescription = null,
                         tint = Color.Unspecified,
-                        modifier = Modifier.size(110.dp)
+                        modifier = Modifier
+                            .size(110.dp)
+                            .clip(RoundedCornerShape(28.dp))
                     )
                     Spacer(Modifier.height(18.dp))
                     NeramHeader(

@@ -116,12 +116,47 @@ object AppUpdate {
             Log.i(TAG, "Update check: latest ${latest?.version ?: "none"}, current ${BuildConfig.VERSION_NAME}")
             if (phase == Phase.Downloading || phase == Phase.Installing) return@launch
             if (newer != available) { available = newer; phase = Phase.Ready }
-            if (newer != null && !isMetered()) apkFor(newer)
+            if (newer != null && !isMetered() && !isPlayStoreChannel()) apkFor(newer)
+        }
+    }
+
+    fun isPlayStoreChannel(): Boolean {
+        if (BuildConfig.IS_PLAY_STORE_BUILD) return true
+        return try {
+            val installer = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                app.packageManager.getInstallSourceInfo(app.packageName).installingPackageName
+            } else {
+                @Suppress("DEPRECATION")
+                app.packageManager.getInstallerPackageName(app.packageName)
+            }
+            installer == "com.android.vending"
+        } catch (_: Exception) {
+            false
+        }
+    }
+
+    fun openPlayStore(context: Context) {
+        val pkg = app.packageName
+        try {
+            val intent = Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=$pkg")).apply {
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
+                setPackage("com.android.vending")
+            }
+            context.startActivity(intent)
+        } catch (_: Exception) {
+            context.startActivity(
+                Intent(Intent.ACTION_VIEW, Uri.parse("https://play.google.com/store/apps/details?id=$pkg"))
+                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            )
         }
     }
 
     fun install(context: Context) {
         val release = available ?: return
+        if (isPlayStoreChannel()) {
+            openPlayStore(context)
+            return
+        }
         if (phase == Phase.Downloading || phase == Phase.Installing) return
         if (!app.packageManager.canRequestPackageInstalls()) {
             awaitingPermission = true

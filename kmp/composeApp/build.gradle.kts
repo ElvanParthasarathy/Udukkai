@@ -81,6 +81,8 @@ android {
         targetSdk = libs.versions.android.targetSdk.get().toInt()
         versionCode = 8
         versionName = "1.0.6"
+        val isPlayStore = project.hasProperty("playStore") || (project.findProperty("playStore")?.toString() == "true")
+        buildConfigField("Boolean", "IS_PLAY_STORE_BUILD", isPlayStore.toString())
     }
 
     // ── Flavor dimensions ─────────────────────────────────────────────────────
