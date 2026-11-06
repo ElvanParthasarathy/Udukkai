@@ -8,3 +8,8 @@ import com.elvan.udukkai.ui.components.shell.ShellBanner
  */
 @Composable
 expect fun rememberAppUpdateBanner(): ShellBanner?
+
+/**
+ * Triggers an immediate check for application updates in the background.
+ */
+expect fun triggerAppUpdateCheck()

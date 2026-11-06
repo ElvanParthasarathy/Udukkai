@@ -31,3 +31,8 @@ actual fun rememberAppUpdateBanner(): ShellBanner? {
         onDismiss = { dismissedSessionUpdateId = available.version }
     )
 }
+
+actual fun triggerAppUpdateCheck() {
+    dismissedSessionUpdateId = null
+    AppUpdate.checkNow()
+}

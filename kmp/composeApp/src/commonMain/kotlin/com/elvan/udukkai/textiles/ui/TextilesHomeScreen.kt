@@ -28,6 +28,8 @@ import com.elvan.udukkai.data.model.ReceiptModel
 import com.elvan.udukkai.data.model.InvoiceModel
 import com.elvan.udukkai.data.model.ItemModel
 import com.elvan.udukkai.data.model.CustomerModel
+import com.elvan.udukkai.core.update.triggerAppUpdateCheck
+import com.elvan.udukkai.core.sync.getFirebaseSyncManager
 import com.elvan.udukkai.textiles.data.TextilesCustomerRepository
 import com.elvan.udukkai.core.print.PrintPayload
 import com.elvan.udukkai.textiles.data.TextilesInvoiceRepository
@@ -794,6 +796,8 @@ fun TextilesHomeScreen() {
                                     onRefresh = {
                                         scope.launch {
                                             isRefreshing = true
+                                            triggerAppUpdateCheck()
+                                            getFirebaseSyncManager().triggerManualSync()
                                             TextilesInvoiceRepository.loadAll()
                                             TextilesReceiptRepository.loadAll()
                                             TextilesProfileRepository.refreshFromDatabase()
@@ -836,6 +840,8 @@ fun TextilesHomeScreen() {
                                     onRefresh = {
                                         scope.launch {
                                             isRefreshing = true
+                                            triggerAppUpdateCheck()
+                                            getFirebaseSyncManager().triggerManualSync()
                                             TextilesInvoiceRepository.loadAll()
                                             TextilesReceiptRepository.loadAll()
                                             delay(700)
@@ -881,6 +887,8 @@ fun TextilesHomeScreen() {
                                     onRefresh = {
                                         scope.launch {
                                             isRefreshing = true
+                                            triggerAppUpdateCheck()
+                                            getFirebaseSyncManager().triggerManualSync()
                                             TextilesItemRepository.loadAll()
                                             delay(700)
                                             isRefreshing = false
@@ -907,6 +915,8 @@ fun TextilesHomeScreen() {
                                     onRefresh = {
                                         scope.launch {
                                             isRefreshing = true
+                                            triggerAppUpdateCheck()
+                                            getFirebaseSyncManager().triggerManualSync()
                                             TextilesCustomerRepository.loadAll()
                                             delay(700)
                                             isRefreshing = false

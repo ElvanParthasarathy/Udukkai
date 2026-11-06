@@ -79,8 +79,8 @@ android {
         // applicationId is set per-flavor
         minSdk = libs.versions.android.minSdk.get().toInt()
         targetSdk = libs.versions.android.targetSdk.get().toInt()
-        versionCode = 6
-        versionName = "1.0.4"
+        versionCode = 7
+        versionName = "1.0.5"
     }
 
     // ── Flavor dimensions ─────────────────────────────────────────────────────
@@ -125,6 +125,9 @@ android {
         }
     }
     buildTypes {
+        getByName("debug") {
+            signingConfig = signingConfigs.findByName("release") ?: signingConfigs.getByName("debug")
+        }
         getByName("release") {
             isMinifyEnabled = true
             isShrinkResources = true

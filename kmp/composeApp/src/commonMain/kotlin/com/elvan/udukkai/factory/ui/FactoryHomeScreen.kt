@@ -28,6 +28,8 @@ import com.elvan.udukkai.data.model.ReceiptModel
 import com.elvan.udukkai.data.model.InvoiceModel
 import com.elvan.udukkai.data.model.ItemModel
 import com.elvan.udukkai.data.model.CustomerModel
+import com.elvan.udukkai.core.update.triggerAppUpdateCheck
+import com.elvan.udukkai.core.sync.getFirebaseSyncManager
 import com.elvan.udukkai.factory.data.FactoryCustomerRepository
 import com.elvan.udukkai.core.print.PrintPayload
 import com.elvan.udukkai.factory.data.FactoryInvoiceRepository
@@ -796,6 +798,8 @@ fun FactoryHomeScreen() {
                                     onRefresh = {
                                         scope.launch {
                                             isRefreshing = true
+                                            triggerAppUpdateCheck()
+                                            getFirebaseSyncManager().triggerManualSync()
                                             FactoryInvoiceRepository.loadAll()
                                             FactoryReceiptRepository.loadAll()
                                             FactoryProfileRepository.refreshFromDatabase()
@@ -838,6 +842,8 @@ fun FactoryHomeScreen() {
                                     onRefresh = {
                                         scope.launch {
                                             isRefreshing = true
+                                            triggerAppUpdateCheck()
+                                            getFirebaseSyncManager().triggerManualSync()
                                             FactoryInvoiceRepository.loadAll()
                                             FactoryReceiptRepository.loadAll()
                                             delay(700)
@@ -883,6 +889,8 @@ fun FactoryHomeScreen() {
                                     onRefresh = {
                                         scope.launch {
                                             isRefreshing = true
+                                            triggerAppUpdateCheck()
+                                            getFirebaseSyncManager().triggerManualSync()
                                             FactoryItemRepository.loadAll()
                                             delay(700)
                                             isRefreshing = false
@@ -909,6 +917,8 @@ fun FactoryHomeScreen() {
                                     onRefresh = {
                                         scope.launch {
                                             isRefreshing = true
+                                            triggerAppUpdateCheck()
+                                            getFirebaseSyncManager().triggerManualSync()
                                             FactoryCustomerRepository.loadAll()
                                             delay(700)
                                             isRefreshing = false
