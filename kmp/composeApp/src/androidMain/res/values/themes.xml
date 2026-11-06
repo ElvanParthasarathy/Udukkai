@@ -9,9 +9,8 @@
         <item name="android:enforceStatusBarContrast" tools:targetApi="q">false</item>
         <item name="android:enforceNavigationBarContrast" tools:targetApi="q">false</item>
 
-        <!-- Android 12+ (API 31+) Native Splash Screen: Standard 1 -->
+        <!-- Default Android 12+ (API 31+) Native Splash Screen: Raw App Icon -->
         <item name="android:windowSplashScreenBackground" tools:targetApi="s">#F5F5F7</item>
-        <item name="android:windowSplashScreenAnimatedIcon" tools:targetApi="s">@drawable/ic_splash_icon</item>
-        <item name="android:windowSplashScreenIconBackgroundColor" tools:targetApi="s">@android:color/transparent</item>
+        <item name="android:windowSplashScreenAnimatedIcon" tools:targetApi="s">@mipmap/ic_launcher</item>
     </style>
 </resources>
