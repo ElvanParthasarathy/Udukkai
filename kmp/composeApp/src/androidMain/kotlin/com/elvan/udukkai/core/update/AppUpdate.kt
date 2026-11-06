@@ -301,28 +301,52 @@ object AppUpdate {
         }
         progress = 0f
         val part = File(dir(), file.name + ".part")
-        val url = URL(release.apkUrl)
-        val conn = url.openConnection() as HttpURLConnection
-        conn.setRequestProperty("User-Agent", "Udukkai/${BuildConfig.VERSION_NAME}")
-        conn.connect()
-        check(conn.responseCode in 200..299) { "HTTP ${conn.responseCode}" }
+        if (part.exists()) part.delete()
+
+        var currentUrl = release.apkUrl
+        var conn: HttpURLConnection
+        var redirects = 0
+        while (true) {
+            val url = URL(currentUrl)
+            conn = url.openConnection() as HttpURLConnection
+            conn.instanceFollowRedirects = true
+            conn.setRequestProperty("User-Agent", "Udukkai/${BuildConfig.VERSION_NAME}")
+            conn.connectTimeout = 30000
+            conn.readTimeout = 30000
+            conn.connect()
+            val code = conn.responseCode
+            if (code in 300..399) {
+                val location = conn.getHeaderField("Location") ?: error("Redirect without Location")
+                conn.disconnect()
+                currentUrl = location
+                redirects++
+                if (redirects > 5) error("Too many redirects")
+            } else {
+                check(code in 200..299) { "HTTP $code from $currentUrl" }
+                break
+            }
+        }
+
         val total = release.size.takeIf { it > 0 } ?: conn.contentLength.toLong()
         val digest = MessageDigest.getInstance("SHA-256")
         var read = 0L
-        part.outputStream().use { out ->
-            conn.inputStream.use { input ->
-                val buffer = ByteArray(64 * 1024)
-                while (true) {
-                    val n = input.read(buffer)
-                    if (n < 0) break
-                    out.write(buffer, 0, n)
-                    digest.update(buffer, 0, n)
-                    read += n
-                    if (total > 0) progress = (read.toFloat() / total).coerceIn(0f, 1f)
+        try {
+            part.outputStream().use { out ->
+                conn.inputStream.use { input ->
+                    val buffer = ByteArray(64 * 1024)
+                    while (true) {
+                        val n = input.read(buffer)
+                        if (n < 0) break
+                        out.write(buffer, 0, n)
+                        digest.update(buffer, 0, n)
+                        read += n
+                        if (total > 0) progress = (read.toFloat() / total).coerceIn(0f, 1f)
+                    }
                 }
             }
+        } finally {
+            conn.disconnect()
         }
-        conn.disconnect()
         check(release.size <= 0 || read == release.size) { "Received $read bytes, expected ${release.size}" }
         release.sha256?.let { check(digest.digest().hex() == it) { "SHA-256 mismatch" } }
         check(part.renameTo(file)) { "Failed to rename ${part.name}" }

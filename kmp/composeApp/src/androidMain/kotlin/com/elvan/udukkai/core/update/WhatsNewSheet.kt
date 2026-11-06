@@ -4,7 +4,6 @@ import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -15,8 +14,6 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.drawBehind
-import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
@@ -99,62 +96,150 @@ fun WhatsNewSheet(
                 Modifier.fillMaxWidth(),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                release.notes.forEach { note ->
-                    if (release.notes.size > 1) {
-                        Text(
-                            text = "v${note.version}",
-                            fontFamily = ff,
-                            fontWeight = FontWeight.SemiBold,
-                            fontSize = 14.sp,
-                            color = colors.accent
-                        )
-                    }
-                    note.sections.forEach { section ->
-                        NoteSectionBlock(section, isTa)
+                if (release.notes.isEmpty()) {
+                    Text(
+                        text = if (isTa) "செயலி மேம்பாடுகள் மற்றும் பிழைத் திருத்தங்கள் சேர்க்கப்பட்டுள்ளன." else "Performance improvements and bug fixes included.",
+                        fontFamily = ff,
+                        fontSize = 14.5.sp,
+                        lineHeight = 21.sp,
+                        color = colors.textPrimary
+                    )
+                } else {
+                    release.notes.forEach { note ->
+                        if (release.notes.size > 1) {
+                            Text(
+                                text = "v${note.version}",
+                                fontFamily = ff,
+                                fontWeight = FontWeight.SemiBold,
+                                fontSize = 14.sp,
+                                color = colors.accent
+                            )
+                        }
+                        if (note.sections.isNotEmpty()) {
+                            note.sections.forEach { section ->
+                                NoteSectionBlock(section, isTa)
+                            }
+                        } else if (note.body.isNotBlank()) {
+                            Text(
+                                text = note.body,
+                                fontFamily = ff,
+                                fontSize = 14.5.sp,
+                                lineHeight = 21.sp,
+                                color = colors.textPrimary
+                            )
+                        }
                     }
                 }
             }
 
-            Spacer(Modifier.height(24.dp))
+            Spacer(Modifier.height(28.dp))
 
-            // Action button with progress animation
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(52.dp)
-                    .clip(RoundedCornerShape(16.dp))
-                    .background(if (phase == AppUpdate.Phase.Failed) colors.error else colors.accent)
-                    .clickable(
-                        interactionSource = remember { MutableInteractionSource() },
-                        indication = null
+            // Action area with solid indication & matching capsule button
+            if (phase == AppUpdate.Phase.Downloading) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 4.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    // Solid Progress Track & Fill
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(8.dp)
+                            .clip(RoundedCornerShape(50))
+                            .background(colors.textSecondary.copy(alpha = 0.15f))
                     ) {
-                        AppUpdate.install(context)
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth(fraction = AppUpdate.progress.coerceIn(0.02f, 1f))
+                                .fillMaxHeight()
+                                .clip(RoundedCornerShape(50))
+                                .background(colors.accent)
+                        )
                     }
-                    .drawBehind {
-                        if (phase == AppUpdate.Phase.Downloading) {
-                            drawRect(
-                                Color.White.copy(alpha = 0.28f),
-                                size = Size(size.width * AppUpdate.progress, size.height)
-                            )
-                        }
-                    },
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = when (phase) {
-                        AppUpdate.Phase.Ready -> if (isTa) "இப்போதே புதுப்பி" else "Update Now"
-                        AppUpdate.Phase.Downloading -> {
-                            val pct = (AppUpdate.progress * 100).toInt()
-                            if (isTa) "பதிவிறக்குகிறது ($pct%)" else "Downloading ($pct%)"
-                        }
-                        AppUpdate.Phase.Installing -> if (isTa) "நிறுவுகிறது..." else "Installing..."
-                        AppUpdate.Phase.Failed -> if (isTa) "மீண்டும் முயல்க" else "Try Again"
-                    },
-                    color = Color.White,
-                    fontFamily = ff,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 16.sp
-                )
+
+                    // Progress info
+                    val pct = (AppUpdate.progress * 100).toInt()
+                    val mbRead = (AppUpdate.progress * (release.size.toFloat() / (1024 * 1024))).let { (it * 10).toInt() / 10f }
+                    val mbTotal = (release.size.toFloat() / (1024 * 1024)).let { (it * 10).toInt() / 10f }
+                    val sizeText = if (mbTotal > 0f) " ($mbRead MB / $mbTotal MB)" else ""
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = if (isTa) "பதிவிறக்குகிறது$sizeText..." else "Downloading$sizeText...",
+                            fontFamily = ff,
+                            fontWeight = FontWeight.Medium,
+                            fontSize = 13.sp,
+                            color = colors.textSecondary
+                        )
+                        Text(
+                            text = "$pct%",
+                            fontFamily = ff,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 13.sp,
+                            color = colors.textPrimary
+                        )
+                    }
+                }
+            } else if (phase == AppUpdate.Phase.Installing) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 4.dp),
+                    verticalArrangement = Arrangement.spacedBy(10.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    LinearProgressIndicator(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(6.dp)
+                            .clip(RoundedCornerShape(50)),
+                        color = colors.accent,
+                        trackColor = colors.textSecondary.copy(alpha = 0.15f)
+                    )
+                    Text(
+                        text = if (isTa) "பின்னணியில் அமைதியாக நிறுவுகிறது..." else "Installing silently in background...",
+                        fontFamily = ff,
+                        fontWeight = FontWeight.SemiBold,
+                        fontSize = 14.sp,
+                        color = colors.textPrimary
+                    )
+                }
+            } else {
+                // Matching One UI Capsule Button
+                val isDark = colors.isDark
+                val isFailed = phase == AppUpdate.Phase.Failed
+                val btnBg = if (isFailed) colors.error else if (isDark) Color.White else Color(0xFF1D1D1F)
+                val btnText = if (isFailed) Color.White else if (isDark) Color.Black else Color.White
+
+                Button(
+                    onClick = { AppUpdate.install(context) },
+                    shape = RoundedCornerShape(50),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = btnBg,
+                        contentColor = btnText
+                    ),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(48.dp)
+                ) {
+                    Text(
+                        text = when {
+                            isFailed -> if (isTa) "மீண்டும் முயல்க" else "Try Again"
+                            else -> if (isTa) "இப்போதே புதுப்பி" else "Update Now"
+                        },
+                        fontFamily = ff,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 15.sp,
+                        color = btnText
+                    )
+                }
             }
 
             Spacer(Modifier.height(32.dp))
@@ -237,12 +322,12 @@ fun UpdateActionPill(
             Icon(
                 imageVector = MaterialSymbols.Rounded.Download,
                 contentDescription = if (isTa) "புதுப்பிப்பு" else "Update",
-                tint = Color.White,
+                tint = if (colors.isDark) Color.Black else Color.White,
                 modifier = Modifier.size(16.dp)
             )
             Text(
                 text = if (isTa) "புதுப்பிப்பு உள்ளது" else "Update",
-                color = Color.White,
+                color = if (colors.isDark) Color.Black else Color.White,
                 fontWeight = FontWeight.Bold,
                 fontSize = 13.sp
             )
