@@ -65,7 +65,7 @@ fun WelcomeScreen(
             Icon(
                 painter = painterResource(if (isFactory) Res.drawable.factory_logo_vector else Res.drawable.textiles_logo_vector),
                 contentDescription = null,
-                tint = NeramColors.textPrimary(),
+                tint = Color.Unspecified,
                 modifier = Modifier
                     .offset(y = (if (moving) floatOffset else 0f).dp)
                     .scale(if (moving) pulse else 1f)

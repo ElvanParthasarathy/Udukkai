@@ -17,6 +17,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -91,16 +92,12 @@ fun AboutAppScreen(
                     .padding(vertical = 12.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                val logoBg = if (colors.isDark) colors.textPrimary.copy(alpha = 0.08f)
-                else colors.textPrimary.copy(alpha = 0.05f)
-
                 // Easter egg: the logo spins smoothly when tapped; 7th tap triggers the weavers mantra
                 Box(
                     modifier = Modifier
-                        .size(92.dp)
+                        .size(100.dp)
                         .graphicsLayer { rotationZ = spin.value }
                         .clip(RoundedCornerShape(26.dp))
-                        .background(logoBg)
                         .clickable(
                             interactionSource = remember { MutableInteractionSource() },
                             indication = null
@@ -124,8 +121,8 @@ fun AboutAppScreen(
                     Icon(
                         painter = painterResource(if (isFactory) Res.drawable.factory_logo_vector else Res.drawable.textiles_logo_vector),
                         contentDescription = K.aboutApp.tr(),
-                        tint = colors.textPrimary,
-                        modifier = Modifier.size(120.dp)
+                        tint = Color.Unspecified,
+                        modifier = Modifier.size(100.dp)
                     )
                 }
 
