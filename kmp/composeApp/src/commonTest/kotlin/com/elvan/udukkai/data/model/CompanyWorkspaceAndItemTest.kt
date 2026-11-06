@@ -1,7 +1,9 @@
 package com.elvan.udukkai.data.model
 
 import com.elvan.udukkai.factory.data.FactoryInvoiceRepository
+import com.elvan.udukkai.factory.data.FactoryReceiptRepository
 import com.elvan.udukkai.textiles.data.TextilesInvoiceRepository
+import com.elvan.udukkai.textiles.data.TextilesReceiptRepository
 import com.elvan.udukkai.localization.BillingLanguage
 import com.elvan.udukkai.localization.PrintLanguageManager
 import kotlin.test.Test
@@ -481,5 +483,37 @@ class CompanyWorkspaceAndItemTest {
         assertEquals("TXT-003", TextilesInvoiceRepository.getNextInvoiceNumber(companyId, "TXT", day("20/03/2027")))
         assertEquals("TXT-001", TextilesInvoiceRepository.getNextInvoiceNumber(companyId, "TXT", day("01/04/2027")))
         TextilesInvoiceRepository.invoices = emptyList()
+    }
+
+    @Test
+    fun testReceiptNumberCountsPerFinancialYear() {
+        val companyId = 10L
+        val day = { d: String -> com.elvan.udukkai.core.utils.DateUtils.parseToEpochMillis(d)!! }
+        TextilesReceiptRepository.receipts = listOf(
+            ReceiptModel(id = 501L, receiptNumber = "RCP/TXT/01", companyId = companyId, receiptDate = day("10/05/2026"), vanakkam = 1),
+            ReceiptModel(id = 502L, receiptNumber = "RCP/TXT/02", companyId = companyId, receiptDate = day("12/05/2026"), vanakkam = 2),
+        )
+        // The same number is taken in its own year only
+        assertTrue(TextilesReceiptRepository.isReceiptNumberDuplicate("RCP/TXT/01", companyId, date = day("01/06/2026")))
+        assertFalse(TextilesReceiptRepository.isReceiptNumberDuplicate("RCP/TXT/01", companyId, date = day("01/04/2027")))
+        // The next number continues in this year and starts again in the next
+        assertEquals(3, TextilesReceiptRepository.getNextVanakkam(companyId, day("20/03/2027")))
+        assertEquals(1, TextilesReceiptRepository.getNextVanakkam(companyId, day("01/04/2027")))
+        TextilesReceiptRepository.receipts = emptyList()
+    }
+
+    @Test
+    fun testFactoryReceiptNumberCountsPerFinancialYear() {
+        val companyId = 10L
+        val day = { d: String -> com.elvan.udukkai.core.utils.DateUtils.parseToEpochMillis(d)!! }
+        FactoryReceiptRepository.receipts = listOf(
+            ReceiptModel(id = 601L, receiptNumber = "RCP/FAC/01", companyId = companyId, receiptDate = day("10/05/2026"), vanakkam = 1),
+            ReceiptModel(id = 602L, receiptNumber = "RCP/FAC/02", companyId = companyId, receiptDate = day("12/05/2026"), vanakkam = 2),
+        )
+        assertTrue(FactoryReceiptRepository.isReceiptNumberDuplicate("RCP/FAC/01", companyId, date = day("01/06/2026")))
+        assertFalse(FactoryReceiptRepository.isReceiptNumberDuplicate("RCP/FAC/01", companyId, date = day("01/04/2027")))
+        assertEquals(3, FactoryReceiptRepository.getNextVanakkam(companyId, day("20/03/2027")))
+        assertEquals(1, FactoryReceiptRepository.getNextVanakkam(companyId, day("01/04/2027")))
+        FactoryReceiptRepository.receipts = emptyList()
     }
 }

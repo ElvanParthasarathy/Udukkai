@@ -45,6 +45,9 @@ kotlin {
             implementation("com.caverock:androidsvg-aar:1.4")
             // PDFium based PDF viewer (document preview)
             implementation("com.github.mhiew:android-pdf-viewer:3.2.0-beta.3")
+            // Google Play in-app updates (mandatory immediate update for Play Store builds)
+            implementation("com.google.android.play:app-update:2.1.0")
+            implementation("com.google.android.play:app-update-ktx:2.1.0")
         }
         commonMain.dependencies {
             implementation(compose.runtime)

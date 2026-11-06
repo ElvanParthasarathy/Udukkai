@@ -177,6 +177,19 @@ private fun ReceiptDetailsScreen(
                                     color = colors.textPrimary
                                 )
                             )
+                            val fy = receipt.finYear.ifEmpty { DateUtils.financialYearLabel(receipt.receiptDate) }
+                            if (fy.isNotBlank()) {
+                                Spacer(modifier = Modifier.height(2.dp))
+                                Text(
+                                    text = "${K.thisFinYear.tr()}: $fy".preventBrokenLigatures(),
+                                    style = TextStyle(
+                                        fontFamily = ff,
+                                        fontSize = 12.sp,
+                                        fontWeight = FontWeight.Normal,
+                                        color = colors.textSecondary
+                                    )
+                                )
+                            }
                             if (receipt.paymentMode.isNotBlank()) {
                                 Spacer(modifier = Modifier.height(6.dp))
                                 Box(

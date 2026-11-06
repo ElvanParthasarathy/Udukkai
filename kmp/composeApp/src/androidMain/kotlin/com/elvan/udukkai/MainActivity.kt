@@ -65,6 +65,7 @@ class MainActivity : FragmentActivity() {
         com.elvan.udukkai.theme.ThemeManager.init()
         com.elvan.udukkai.theme.FontManager.init()
         com.elvan.udukkai.core.update.AppUpdate.init(this)
+        com.elvan.udukkai.core.update.PlayStoreUpdateHelper.init(this)
 
         val isFactory = BuildConfig.FLAVOR == "factory"
         if (isFactory) {
@@ -168,6 +169,7 @@ class MainActivity : FragmentActivity() {
         com.elvan.udukkai.core.platform.CurrentActivity.activity = this
         com.elvan.udukkai.core.update.AppUpdate.checkIfDue()
         com.elvan.udukkai.core.update.AppUpdate.onWindowResumed(this)
+        com.elvan.udukkai.core.update.PlayStoreUpdateHelper.onResume(this)
         currentHeaderExpanded?.let { state ->
             if (state.value != GlobalHeaderState.isExpanded) {
                 state.value = GlobalHeaderState.isExpanded
@@ -180,5 +182,6 @@ class MainActivity : FragmentActivity() {
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: android.content.Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
         com.elvan.udukkai.core.security.DeviceAuthHelper.onActivityResult(requestCode, resultCode)
+        com.elvan.udukkai.core.update.PlayStoreUpdateHelper.onActivityResult(this, requestCode, resultCode)
     }
 }

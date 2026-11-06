@@ -131,6 +131,7 @@ fun TextilesReceiptEditorScreen(
     var receiptDate by remember { mutableStateOf(receipt?.receiptDate ?: System.currentTimeMillis()) }
     var vanakkam by remember { mutableStateOf(receipt?.vanakkam ?: 1) }
     var receiptNumber by remember { mutableStateOf(receipt?.receiptNumber.orEmpty()) }
+    var isReceiptNumberOverridden by remember { mutableStateOf(false) }
 
     // Payment Details
     var thogai by remember {
@@ -165,21 +166,21 @@ fun TextilesReceiptEditorScreen(
     val selectCompanyProfileMsg = K.selectCompanyProfile.tr()
 
     // Helper: auto-calculate receipt number
-    fun generateReceiptNumber(profile: BusinessProfile?) {
+    fun generateReceiptNumber(profile: BusinessProfile?, date: Long = receiptDate) {
         if (isEditing) return
         val bizShort = profile?.shortName?.trim()?.ifEmpty { null }
             ?: profile?.businessName?.get("en")?.split(" ")?.mapNotNull { it.firstOrNull()?.uppercaseChar() }?.joinToString("")?.take(4)?.ifEmpty { null }
             ?: "BIZ"
 
-        val nextSeq = com.elvan.udukkai.textiles.data.TextilesReceiptRepository.getNextVanakkam(profile?.id)
+        val nextSeq = com.elvan.udukkai.textiles.data.TextilesReceiptRepository.getNextVanakkam(profile?.id, date)
         vanakkam = nextSeq
         receiptNumber = com.elvan.udukkai.textiles.data.TextilesReceiptRepository.formatReceiptNumber(bizShort, nextSeq)
     }
 
     // Auto-generate receipt number on profile selection if new
     LaunchedEffect(selectedCompanyId) {
-        if (!isEditing && receiptNumber.isEmpty() && selectedCompanyId != null) {
-            generateReceiptNumber(selectedProfile)
+        if (!isEditing && (!isReceiptNumberOverridden || receiptNumber.isEmpty()) && selectedCompanyId != null) {
+            generateReceiptNumber(selectedProfile, receiptDate)
         }
     }
 
@@ -300,7 +301,7 @@ fun TextilesReceiptEditorScreen(
         }
 
         // Duplicate check
-        val isDuplicate = com.elvan.udukkai.textiles.data.TextilesReceiptRepository.isReceiptNumberDuplicate(receiptNumber, selectedCompanyId, receipt?.id)
+        val isDuplicate = com.elvan.udukkai.textiles.data.TextilesReceiptRepository.isReceiptNumberDuplicate(receiptNumber, selectedCompanyId, receipt?.id, receiptDate)
         if (isDuplicate) {
             ElvanSnackbar.show("$receiptNumber - $duplicateMsg")
             return
@@ -553,8 +554,13 @@ fun TextilesReceiptEditorScreen(
                                 ElvanEditorLabel(label = K.receiptDate.tr())
                                 InvoiceDateField(
                                     selectedDate = receiptDate,
-                                    onDateChanged = {
-                                        receiptDate = it
+                                    onDateChanged = { newDate ->
+                                        val oldFy = DateUtils.financialYearStart(receiptDate)
+                                        val newFy = DateUtils.financialYearStart(newDate)
+                                        receiptDate = newDate
+                                        if (!isEditing && !isReceiptNumberOverridden && oldFy != newFy) {
+                                            generateReceiptNumber(selectedProfile, newDate)
+                                        }
                                         hasUnsavedChanges = true
                                     },
                                     isReadOnly = false
@@ -626,6 +632,7 @@ fun TextilesReceiptEditorScreen(
                                 initialFullNumber = receiptNumber,
                                 onFullNumberChanged = {
                                     receiptNumber = it
+                                    isReceiptNumberOverridden = true
                                     hasUnsavedChanges = true
                                 },
                                 onDirty = { hasUnsavedChanges = true },

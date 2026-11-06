@@ -244,7 +244,19 @@ const PAYMENT_MODES = {
   other: 'Other',
 };
 
+const getFinYearFromDate = (d?: string | number) => {
+  if (!d) return '';
+  const date = new Date(d);
+  if (isNaN(date.getTime())) return '';
+  const month = date.getMonth();
+  const year = date.getFullYear();
+  const start = month >= 3 ? year : year - 1;
+  const end = (start + 1) % 100;
+  return `${start}-${end < 10 ? '0' : ''}${end}`;
+};
+
 const toReactReceipt = (r, lang) => ({
+  finYear: str(r.finYear) || getFinYearFromDate(r.receiptDate),
   receiptNo: str(r.receiptNumber),
   date: str(r.receiptDate),
   amount: Number(r.amount) || 0,

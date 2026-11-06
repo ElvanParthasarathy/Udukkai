@@ -14,7 +14,8 @@ class SettingsSearchTest {
     fun findsByEnglishWordsAndKeywords() {
         assertEquals(SettingsRoute.StorageBackup, first("backup"))
         assertEquals(SettingsRoute.Security, first("sync"))
-        assertEquals(SettingsRoute.TextilesIdentity, first("logo"))
+        assertEquals(SettingsRoute.TextilesIdentity, first("gstin"))
+        assertEquals(SettingsRoute.LogoSettings, first("logo"))
         assertEquals(SettingsRoute.Address, first("pincode"))
         assertEquals(SettingsRoute.Bank, first("ifsc"))
     }

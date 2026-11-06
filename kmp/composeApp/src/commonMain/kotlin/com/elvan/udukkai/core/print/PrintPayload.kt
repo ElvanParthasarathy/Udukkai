@@ -119,6 +119,7 @@ object PrintPayload {
                 obj {
                     field("receiptNumber", receipt.receiptNumber)
                     field("receiptDate", isoDate(receipt.receiptDate))
+                    field("finYear", receipt.finYear.ifEmpty { DateUtils.financialYearLabel(receipt.receiptDate) })
                     field("amount", receipt.amount)
                     field("paymentMode", receipt.paymentMode)
                     field("transactionNumber", receipt.transactionNumber.orEmpty())

@@ -44,4 +44,7 @@ actual fun rememberAppUpdateBanner(): ShellBanner? {
 actual fun triggerAppUpdateCheck() {
     dismissedSessionUpdateId = null
     AppUpdate.checkNow()
+    com.elvan.udukkai.core.platform.CurrentActivity.activity?.let { activity ->
+        PlayStoreUpdateHelper.checkForAppUpdate(activity)
+    }
 }

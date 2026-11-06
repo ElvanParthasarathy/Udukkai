@@ -55,3 +55,6 @@ kmp/composeApp/src/commonMain/composeResources/files/seed/
 # Graphify
 graphify-out/
 
+
+*.apk
+!react/Elvan-Niril.apk

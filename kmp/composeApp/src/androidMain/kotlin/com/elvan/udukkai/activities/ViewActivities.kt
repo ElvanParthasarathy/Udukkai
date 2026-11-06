@@ -222,6 +222,7 @@ class ItemViewActivity : BaseSubpageActivity() {
                 ?: initialItem ?: return
             ItemViewScreen(
                 item = currentItem,
+                isCoolie = true,
                 activity = factoryItemActivity(currentItem),
                 onBillClick = { id ->
                     FactoryInvoiceRepository.invoices.find { it.id == id }?.let {

@@ -28,6 +28,8 @@ const copyPrintFonts = () => ({
     for (const f of PRINT_FONTS) {
       fs.copyFileSync(path.resolve(__dirname, 'podhu/fonts', f), path.join(dest, f))
     }
+    fs.writeFileSync(path.join(outDir, 'version.txt'), '22
+')
   },
 })
 

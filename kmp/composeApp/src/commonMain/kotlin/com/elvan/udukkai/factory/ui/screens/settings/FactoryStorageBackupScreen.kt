@@ -37,7 +37,6 @@ import com.elvan.udukkai.theme.rememberShellColors
 import com.elvan.udukkai.ui.components.shell.*
 import com.elvan.udukkai.ui.screens.settings.restoreFlow
 import com.elvan.udukkai.ui.screens.settings.undoRestoreDetails
-import com.elvan.udukkai.ui.navigation.AppSvgs
 import com.elvan.udukkai.ui.navigation.MaterialSymbols
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -356,7 +355,7 @@ fun FactoryStorageBackupScreen(
                             ) {
                                 Box(contentAlignment = Alignment.Center) {
                                     Icon(
-                                        imageVector = AppSvgs.coolieMode,
+                                        imageVector = MaterialSymbols.Rounded.BusinessCenter,
                                         contentDescription = null,
                                         tint = colors.textPrimary,
                                         modifier = Modifier.size(18.dp)

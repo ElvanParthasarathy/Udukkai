@@ -4,6 +4,8 @@ import com.elvan.udukkai.data.model.CustomerModel
 import com.elvan.udukkai.data.model.CustomerSnapshot
 import com.elvan.udukkai.data.model.InvoiceDisplayOptions
 import com.elvan.udukkai.data.model.InvoiceModel
+import com.elvan.udukkai.data.model.ReceiptModel
+import com.elvan.udukkai.core.utils.DateUtils
 import com.elvan.udukkai.data.settings.BusinessProfile
 import com.elvan.udukkai.factory.ui.screens.editor.FactoryAdditionalCharge
 import com.elvan.udukkai.factory.ui.screens.editor.FactoryCalculation
@@ -141,5 +143,22 @@ class BillFieldsTest {
         assertTrue(factory.contains("\"address\":{\"ta\":\"12 தெரு\",\"en\":\"12 Main Street\"}"))
         assertTrue(factory.contains("\"customerAddress\":{}"))
         assertTrue(factory.contains("\"city\":{}"))
+    }
+    @Test
+    fun receipt_carries_financial_year() {
+        val receipt = ReceiptModel(
+            receiptNumber = "RCP/BIZ/01",
+            finYear = "2026-27",
+            amount = 5000.0,
+            receiptDate = DateUtils.parseToEpochMillis("15/05/2026")!!
+        )
+        val json = PrintPayload.forReceipt(
+            receipt = receipt,
+            profile = profile,
+            invoiceNumbers = listOf("VRM-001"),
+            isCoolie = false,
+            appLanguage = "ta"
+        )
+        assertTrue(json.contains("\"finYear\":\"2026-27\""), "finYear not in receipt payload: $json")
     }
 }

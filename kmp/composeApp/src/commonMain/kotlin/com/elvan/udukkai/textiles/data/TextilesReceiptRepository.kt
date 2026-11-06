@@ -9,6 +9,7 @@ import com.elvan.udukkai.core.backup.AutoBackupManager
 import com.elvan.udukkai.core.finance.YearLock
 import com.elvan.udukkai.data.database.getTextilesDatabaseHelper
 import com.elvan.udukkai.data.model.ReceiptInvoiceLinkModel
+import com.elvan.udukkai.core.utils.DateUtils
 import com.elvan.udukkai.core.utils.SearchHelper
 import com.elvan.udukkai.data.model.ReceiptModel
 import com.elvan.udukkai.data.model.InvoiceModel
@@ -19,10 +20,10 @@ import com.elvan.udukkai.data.model.InvoiceModel
 object TextilesReceiptRepository {
 
     var receipts by mutableStateOf<List<ReceiptModel>>(emptyList())
-        private set
+        internal set
 
     var deletedReceipts by mutableStateOf<List<ReceiptModel>>(emptyList())
-        private set
+        internal set
 
     var searchQuery by mutableStateOf("")
 
@@ -236,9 +237,11 @@ object TextilesReceiptRepository {
     fun getPaidAmounts(invoiceIds: List<Long>): Map<Long, Double> =
         getTextilesDatabaseHelper().getPaidAmountsForInvoices(invoiceIds)
 
-    fun getNextVanakkam(companyId: Long?): Int {
+    fun getNextVanakkam(companyId: Long?, date: Long = System.currentTimeMillis()): Int {
+        val fy = DateUtils.financialYearStart(date)
         val matching = (receipts + deletedReceipts).filter {
-            if (companyId != null) it.companyId == companyId else true
+            (if (companyId != null) it.companyId == companyId else true) &&
+            DateUtils.financialYearStart(it.receiptDate) == fy
         }
         if (matching.isEmpty()) return 1
         val maxVanakkam = matching.maxOfOrNull { it.vanakkam } ?: 0
@@ -260,12 +263,16 @@ object TextilesReceiptRepository {
     fun isReceiptNumberDuplicate(
         patruEn: String,
         companyId: Long?,
-        excludeId: Long? = null
+        excludeId: Long? = null,
+        date: Long? = null
     ): Boolean {
         val target = patruEn.trim().uppercase()
+        if (target.isBlank()) return false
+        val fy = date?.let { DateUtils.financialYearStart(it) }
         return (receipts + deletedReceipts).any { r ->
             (excludeId == null || r.id != excludeId) &&
             (companyId == null || r.companyId == companyId) &&
+            (fy == null || DateUtils.financialYearStart(r.receiptDate) == fy) &&
             r.receiptNumber.trim().uppercase() == target
         }
     }
