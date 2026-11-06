@@ -64,6 +64,7 @@ class MainActivity : FragmentActivity() {
         com.elvan.udukkai.localization.LanguageManager.init()
         com.elvan.udukkai.theme.ThemeManager.init()
         com.elvan.udukkai.theme.FontManager.init()
+        com.elvan.udukkai.core.update.AppUpdate.init(this)
 
         val isFactory = BuildConfig.FLAVOR == "factory"
         if (isFactory) {
@@ -165,6 +166,8 @@ class MainActivity : FragmentActivity() {
     override fun onResume() {
         super.onResume()
         com.elvan.udukkai.core.platform.CurrentActivity.activity = this
+        com.elvan.udukkai.core.update.AppUpdate.checkIfDue()
+        com.elvan.udukkai.core.update.AppUpdate.onWindowResumed(this)
         currentHeaderExpanded?.let { state ->
             if (state.value != GlobalHeaderState.isExpanded) {
                 state.value = GlobalHeaderState.isExpanded

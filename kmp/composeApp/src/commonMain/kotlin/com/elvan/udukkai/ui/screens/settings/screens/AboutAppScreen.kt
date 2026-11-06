@@ -165,6 +165,11 @@ fun AboutAppScreen(
             }
         }
 
+        // ── Software In-App Update Section ──
+        item(key = "about_software_update_section") {
+            PlatformUpdateSection(colors = colors)
+        }
+
         // ── About App Dedicated Purpose Description ──
         item(key = "about_description_section") {
             ElvanSettingsSection(colors = colors) {
