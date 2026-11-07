@@ -210,30 +210,22 @@ fun CustomerEditorScreen(
     val currentCompanyId = selectedCompanyOption.id
     val companyChanged = merchant != null && initialCompanyId != currentCompanyId
 
-    val hasChanges = remember(
-        nameMap, billGstin, extra, fullPhone, email, countryMap, stateMap, districtMap,
-        cityMap, addressMap, pinCode, isCustomCountry, isCustomState, isCustomDistrict, companyChanged
-    ) {
-        if (merchant == null) {
-            nameMap.values.any { it.isNotBlank() } || billGstin.isNotBlank() || extra.isNotEmpty() || fullPhone.isNotBlank() ||
-                email.isNotBlank() ||
-                countryMap.values.any { it.isNotBlank() } ||
-                stateMap.values.any { it.isNotBlank() } ||
-                districtMap.values.any { it.isNotBlank() } ||
-                cityMap.values.any { it.isNotBlank() } ||
-                addressMap.values.any { it.isNotBlank() } ||
-                pinCode.isNotBlank() || companyChanged
-        } else {
-            nameMap != merchant.name || billGstin != merchant.gstin || extra != merchant.extra || fullPhone != merchant.phone ||
-                email != merchant.email || countryMap != merchant.country || stateMap != merchant.state ||
-                districtMap != merchant.district || cityMap != merchant.city || addressMap != merchant.address ||
-                pinCode != merchant.pinCode || companyChanged
-        }
+    // What the form holds once it has settled after opening (it fills in some defaults by itself, e.g. the country):
+    // "changed" means different from that, not from what was stored
+    val currentState = listOf<Any?>(nameMap, billGstin, extra, fullPhone, email, countryMap, stateMap, districtMap, cityMap, addressMap, pinCode)
+    val latestState by rememberUpdatedState(currentState)
+    var openedWith by remember { mutableStateOf<List<Any?>?>(null) }
+    LaunchedEffect(Unit) {
+        withFrameNanos { }
+        kotlinx.coroutines.delay(250)
+        openedWith = latestState
     }
+    val hasChanges = openedWith?.let { currentState != it } ?: false
+    val hasChangesOrCompany = hasChanges || companyChanged
 
     val handleBackAttempt: () -> Unit = {
         if (!isExiting) {
-            if (hasChanges) {
+            if (hasChangesOrCompany) {
                 showDiscardDialog = true
             } else {
                 isExiting = true

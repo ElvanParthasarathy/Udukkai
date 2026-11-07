@@ -321,33 +321,34 @@ fun TextilesItemEditorScreen(
 }
 
 private val GST_PRESETS = listOf("0", "5", "12", "18", "28")
+private const val GST_CUSTOM = "custom"
 
-/** Pick a GST rate from the usual slabs, or choose Custom and type any rate. Nothing is selected until the user chooses. */
-@OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
+/** Same tap-to-open sheet as the other fields: pick a GST slab, or Custom and a box to type any rate. Nothing is chosen until the user chooses. */
 @Composable
 private fun GstRatePicker(value: String, onValueChange: (String) -> Unit, label: String, customLabel: String) {
-    val colors = com.elvan.udukkai.theme.rememberShellColors()
-    val ff = com.elvan.udukkai.theme.LocalAppFontFamily.current
     var custom by remember { mutableStateOf(value.isNotBlank() && value !in GST_PRESETS) }
-    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        Text(label, style = androidx.compose.ui.text.TextStyle(fontFamily = ff, fontSize = 13.sp, fontWeight = androidx.compose.ui.text.font.FontWeight.Medium), color = colors.textPrimary.copy(alpha = 0.6f), modifier = Modifier.padding(start = 16.dp))
-        androidx.compose.foundation.layout.FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            @Composable
-            fun chip(text: String, selected: Boolean, onClick: () -> Unit) {
-                val bg by androidx.compose.animation.animateColorAsState(if (selected) colors.textPrimary else colors.iconBg, androidx.compose.animation.core.tween(220), label = "gstChipBg")
-                val fg by androidx.compose.animation.animateColorAsState(if (selected) colors.background else colors.textPrimary, androidx.compose.animation.core.tween(220), label = "gstChipFg")
-                androidx.compose.material3.Surface(onClick = onClick, shape = androidx.compose.foundation.shape.RoundedCornerShape(100.dp), color = bg) {
-                    Text(text, style = androidx.compose.ui.text.TextStyle(fontFamily = ff, fontSize = 14.sp, fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold), color = fg, modifier = Modifier.padding(horizontal = 18.dp, vertical = 10.dp))
-                }
-            }
-            GST_PRESETS.forEach { rate -> chip("$rate%", !custom && value == rate) { custom = false; onValueChange(rate) } }
-            chip(customLabel, custom) { custom = true; if (value in GST_PRESETS) onValueChange("") }
-        }
+    val selected = when {
+        custom -> GST_CUSTOM
+        value in GST_PRESETS -> value
+        else -> null
+    }
+    Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+        ElvanEditorDropdown<String>(
+            label = label,
+            value = selected,
+            items = GST_PRESETS + GST_CUSTOM,
+            onSelected = {
+                if (it == GST_CUSTOM) { custom = true; if (value in GST_PRESETS) onValueChange("") }
+                else { custom = false; onValueChange(it) }
+            },
+            itemLabelBuilder = { if (it == GST_CUSTOM) customLabel else "$it%" }
+        )
         androidx.compose.animation.AnimatedVisibility(visible = custom) {
             ElvanEditorTextField(
                 value = value,
                 onValueChange = { onValueChange(it.filter { c -> c.isDigit() || c == '.' }) },
                 placeholder = "e.g. 3 or 7.5",
+                suffixText = "%",
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
             )
         }

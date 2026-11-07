@@ -1,3 +1,5 @@
+> **Legacy.** This Flutter app is an earlier generation and is no longer maintained. The maintained app is the Kotlin Multiplatform project in [`../kmp/`](../kmp/) (see the root README).
+
 # elvan_niril
 
 A new Flutter project.

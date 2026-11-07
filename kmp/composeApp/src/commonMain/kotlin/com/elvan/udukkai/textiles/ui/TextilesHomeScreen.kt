@@ -506,7 +506,6 @@ fun TextilesHomeScreen() {
                                     }
                                     val settingsLabel = K.settings.tr()
                                     val meetpagamLabel = K.recycleBin.tr()
-                                    val thaerndheduLabel = K.select.tr()
                                     val menuItems = buildList {
                                         add(
                                             ElvanPopupMenuItem(
@@ -530,19 +529,6 @@ fun TextilesHomeScreen() {
                                                 }
                                             )
                                         )
-                                        if (selectedTab != NavTab.Home) {
-                                            add(
-                                                ElvanPopupMenuItem(
-                                                    title = thaerndheduLabel,
-                                                    icon = MaterialSymbols.Rounded.CheckCircleFill,
-                                                    onClick = {
-                                                        ElvanMenuState.isMenuOpen = false
-                                                        menuExpanded = false
-                                                        isSelectionMode = true
-                                                    }
-                                                )
-                                            )
-                                        }
                                     }
                                     ElvanPopupMenu(
                                         expanded = menuExpanded,
@@ -615,7 +601,6 @@ fun TextilesHomeScreen() {
                                 }
                                 val settingsLabel = K.settings.tr()
                                 val meetpagamLabel = K.recycleBin.tr()
-                                val thaerndheduLabel = K.select.tr()
                                 val menuItems = buildList {
                                     add(
                                         ElvanPopupMenuItem(
@@ -639,19 +624,6 @@ fun TextilesHomeScreen() {
                                             }
                                         )
                                     )
-                                    if (selectedTab != NavTab.Home) {
-                                        add(
-                                            ElvanPopupMenuItem(
-                                                title = thaerndheduLabel,
-                                                icon = MaterialSymbols.Rounded.CheckCircleFill,
-                                                onClick = {
-                                                    ElvanMenuState.isMenuOpen = false
-                                                    menuExpanded = false
-                                                    isSelectionMode = true
-                                                }
-                                            )
-                                        )
-                                    }
                                 }
                                     ElvanPopupMenu(
                                         expanded = menuExpanded,
@@ -670,9 +642,17 @@ fun TextilesHomeScreen() {
 
 androidx.compose.animation.AnimatedContent(
                                 targetState = isSelectionMode,
+                                // Apple-style morph: the old pill softly shrinks and fades while the new one grows out of the same
+                                // spot on a spring, overlapping, instead of one sliding away and the other sliding in
                                 transitionSpec = {
-                                    (androidx.compose.animation.slideInVertically(androidx.compose.animation.core.tween(280)) { it / 2 } + androidx.compose.animation.fadeIn(androidx.compose.animation.core.tween(220, delayMillis = 40)))
-                                        .togetherWith(androidx.compose.animation.slideOutVertically(androidx.compose.animation.core.tween(220)) { it / 2 } + androidx.compose.animation.fadeOut(androidx.compose.animation.core.tween(160)))
+                                    val origin = androidx.compose.ui.graphics.TransformOrigin(0.5f, 1f)
+                                    (androidx.compose.animation.fadeIn(androidx.compose.animation.core.tween(280, delayMillis = 50)) +
+                                        androidx.compose.animation.scaleIn(androidx.compose.animation.core.spring(dampingRatio = 0.82f, stiffness = 380f), initialScale = 0.86f, transformOrigin = origin))
+                                        .togetherWith(
+                                            androidx.compose.animation.fadeOut(androidx.compose.animation.core.tween(170)) +
+                                                androidx.compose.animation.scaleOut(androidx.compose.animation.core.tween(230), targetScale = 0.92f, transformOrigin = origin)
+                                        )
+                                        .using(androidx.compose.animation.SizeTransform(clip = false))
                                 },
                                 label = "bottomBarSwap"
                             ) { selecting ->

@@ -109,6 +109,7 @@ fun ElvanShell(
         }
 
     LaunchedEffect(headerCollapsePx, handoffShrinkOffsetPx) {
+        if (collapsedOnly) return@LaunchedEffect
         if (headerCollapsePx >= handoffShrinkOffsetPx && globalHeaderExpanded.value) {
             globalHeaderExpanded.value = false
             GlobalHeaderState.isExpanded = false
@@ -119,6 +120,7 @@ fun ElvanShell(
     }
 
     LaunchedEffect(globalHeaderExpanded.value) {
+        if (collapsedOnly) return@LaunchedEffect
         GlobalHeaderState.isExpanded = globalHeaderExpanded.value
         if (!isCompactHeader) {
             if (globalHeaderExpanded.value && headerCollapsePx > 0f) {
@@ -523,7 +525,11 @@ fun ElvanShell(
                         onSelectAll = onSelectAll,
                         onCancelSelection = onCancelSelection,
                         isPinnedAlways = true,
-                        leadingActions = leadingActions
+                        leadingActions = leadingActions,
+                        scrollLift = if (collapsedOnly) {
+                            val past = scrollState.firstVisibleItemIndex > 0 || scrollState.firstVisibleItemScrollOffset > 0
+                            if (past) (scrollState.firstVisibleItemScrollOffset / with(density) { 28.dp.toPx() }).coerceIn(0f, 1f).let { if (scrollState.firstVisibleItemIndex > 0) 1f else it } else 0f
+                        } else null
                     )
                 }
             }

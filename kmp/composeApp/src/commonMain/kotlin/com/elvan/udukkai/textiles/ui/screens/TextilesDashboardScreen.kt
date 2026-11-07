@@ -148,6 +148,12 @@ fun TextilesDashboardScreen(
                     }
                 }
 
+                item(key = "financial_year") {
+                    Box(Modifier.fillMaxWidth().padding(horizontal = Dimens.ContentPadding)) {
+                        com.elvan.udukkai.ui.screens.home.components.FinancialYearCard(colors)
+                    }
+                }
+
                 // 3. Recent Activity Header
                 item(key = "recent_activity_header") {
                     RecentActivityHeader(

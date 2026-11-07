@@ -83,11 +83,13 @@ fun ElvanCollapsedBar(
     onSelectAll: () -> Unit = {},
     onCancelSelection: () -> Unit = {},
     isPinnedAlways: Boolean = false,
-    leadingActions: (@Composable RowScope.() -> Unit)? = null
+    leadingActions: (@Composable RowScope.() -> Unit)? = null,
+    /** View pages: 0 at the top (plain chevron + title), 1 once scrolled (chevron in its circle, title gone). */
+    scrollLift: Float? = null
 ) {
     val statusBarHeight = com.elvan.udukkai.core.platform.getStatusBarTopPadding()
     val isDesktop = com.elvan.udukkai.core.platform.currentPlatform == com.elvan.udukkai.core.platform.PlatformType.DESKTOP
-    val ceiling = if (isDesktop) 16.dp else if (isPinnedAlways) statusBarHeight + 8.dp else statusBarHeight + 20.dp
+    val ceiling = if (isDesktop) 16.dp else if (isPinnedAlways && scrollLift == null) statusBarHeight + 8.dp else statusBarHeight + 20.dp
     val density = LocalDensity.current
     val ceilingPx = with(density) { ceiling.toPx() }
 
@@ -100,7 +102,7 @@ fun ElvanCollapsedBar(
     val finalTopDp = with(density) { finalTopPx.toDp() }
 
     val liftStartOffsetPx = collisionOffsetPx - with(density) { 4.dp.toPx() }
-    val liftProgress = if (isPinnedAlways) 1.0f else if (scrollOffset > liftStartOffsetPx) {
+    val liftProgress = if (scrollLift != null) scrollLift else if (isPinnedAlways) 1.0f else if (scrollOffset > liftStartOffsetPx) {
         ((scrollOffset - liftStartOffsetPx) / with(density) { 12.dp.toPx() }).coerceIn(0f, 1f)
     } else {
         0f
@@ -119,9 +121,12 @@ fun ElvanCollapsedBar(
     ) {
         AnimatedContent(
             targetState = isSelectionMode,
+            // Apple-style morph, like the bottom bar: the old controls shrink and fade while the new ones grow in on a spring
             transitionSpec = {
-                fadeIn(animationSpec = tween(220, easing = CubicBezierEasing(0.0f, 0.0f, 0.2f, 1.0f))) togetherWith
-                fadeOut(animationSpec = tween(160, easing = CubicBezierEasing(0.4f, 0.0f, 1.0f, 1.0f)))
+                (fadeIn(animationSpec = tween(260, delayMillis = 50, easing = CubicBezierEasing(0.0f, 0.0f, 0.2f, 1.0f))) +
+                    androidx.compose.animation.scaleIn(androidx.compose.animation.core.spring(dampingRatio = 0.82f, stiffness = 380f), initialScale = 0.88f)) togetherWith
+                    (fadeOut(animationSpec = tween(160, easing = CubicBezierEasing(0.4f, 0.0f, 1.0f, 1.0f))) +
+                        androidx.compose.animation.scaleOut(tween(220), targetScale = 0.94f))
             },
             label = "selectionBarCrossfade",
             modifier = Modifier.fillMaxWidth()
@@ -266,7 +271,7 @@ fun ElvanCollapsedBar(
                                     modifier = Modifier
                                         .padding(start = if (onBack != null || leadingActions != null) 12.dp else 8.dp, end = if (hasActions) 8.dp else 0.dp)
                                         .graphicsLayer {
-                                            this.alpha = liftProgress
+                                            this.alpha = if (scrollLift != null) 1f - scrollLift else liftProgress
                                         }
                                 )
                             }

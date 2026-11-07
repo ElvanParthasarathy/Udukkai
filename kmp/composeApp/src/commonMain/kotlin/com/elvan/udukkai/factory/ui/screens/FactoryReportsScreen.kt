@@ -15,8 +15,10 @@ import androidx.compose.ui.unit.sp
 import com.elvan.udukkai.core.platform.AppBackHandler
 import kotlin.math.round
 import com.elvan.udukkai.core.utils.CurrencyUtils
+import com.elvan.udukkai.core.export.SalesRow
 import com.elvan.udukkai.core.utils.DateUtils
 import com.elvan.udukkai.data.model.InvoiceModel
+import com.elvan.udukkai.factory.data.FactoryProfileRepository
 import com.elvan.udukkai.localization.K
 import com.elvan.udukkai.localization.tr
 import com.elvan.udukkai.factory.data.FactoryCustomerRepository
@@ -69,6 +71,26 @@ fun FactoryReportsScreen(onBack: () -> Unit) {
     val numbers = lines.map { it.invoiceNumber }.sorted()
     val total = lines.sumOf { it.totalAmount }
 
+    // Save as Excel, like the React app's sales report: nothing is written until the user taps Save in the system dialog
+    val savedMsg = K.excelSaved.tr()
+    val failedMsg = K.excelFailed.tr()
+    val saver = com.elvan.udukkai.ui.components.shell.rememberFileSaver { ok -> com.elvan.udukkai.ui.components.shell.ElvanSnackbar.show(if (ok) savedMsg else failedMsg) }
+    val profile = FactoryProfileRepository.profile
+    val primaryLang = profile.primaryLanguage.ifEmpty { "ta" }
+    val secondaryLang = profile.secondaryLanguage.ifEmpty { "en" }
+    fun bilingual(a: String, b: String) = if (profile.isBilingual && b.isNotBlank() && b != a) a + "\n" + b else a.ifBlank { b }
+    fun clientName(inv: InvoiceModel) = bilingual(inv.customerName[primaryLang].orEmpty().ifBlank { inv.customerName.values.firstOrNull().orEmpty() }, inv.customerName[secondaryLang].orEmpty())
+    fun exportExcel() {
+        val periodKey = when (period) {
+            2 -> "FY_" + (fyStart / 12).toString() + "-" + (((fyStart / 12) + 1) % 100).toString().padStart(2, '0')
+            else -> range.first.let { m -> (m / 12).toString() + "-" + (m % 12 + 1).toString().padStart(2, '0') }
+        }
+        val title = bilingual(profile.getPrimary("businessName"), profile.getSecondary("niruvanathinPeyar")).ifBlank { profile.shortName }
+        val bytes = com.elvan.udukkai.core.export.SalesReportExcel.build(title, "Sales Report - " + periodKey.replace('_', ' '), lines.sortedBy { it.invoiceDate }.map { l -> SalesRow(l.invoiceNumber, clientName(l), DateUtils.formatEpochMillis(l.invoiceDate), l.totalAmount, 0.0, l.totalAmount) }, withTax = false)
+        saver.save("Sales_Report_$periodKey.xlsx", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", bytes)
+    }
+
+
     val listState = rememberLazyListState()
     ElvanSubShell(title = K.reports.tr(), onBack = onBack, scrollState = listState) {
         LazyColumn(
@@ -118,6 +140,20 @@ fun FactoryReportsScreen(onBack: () -> Unit) {
                 item(key = "numbers") {
                     ElvanSettingsSection(colors = colors) {
                         FactoryReportRow(K.firstToLast.tr(), "${numbers.first()} – ${numbers.last()}", colors)
+                    }
+                }
+            }
+
+            if (lines.isNotEmpty()) {
+                item(key = "export") {
+                    com.elvan.udukkai.ui.components.shell.ElvanSettingsSection(colors = colors) {
+                        com.elvan.udukkai.ui.components.shell.ElvanSettingsRow(
+                            icon = com.elvan.udukkai.ui.navigation.MaterialSymbols.Rounded.Download,
+                            title = K.exportExcel.tr(),
+                            description = K.exportExcelDesc.tr(),
+                            onClick = { exportExcel() },
+                            colors = colors
+                        )
                     }
                 }
             }

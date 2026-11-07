@@ -65,10 +65,8 @@ fun ElvanCommonCard(
     val isDark = colors.isDark
 
     val defaultBg = LocalShellColors.current.surface
-    val selectedBg = if (isDark) Color.White.copy(alpha = 0.06f) else Color.Black.copy(alpha = 0.04f)
-    val bgColor by androidx.compose.animation.animateColorAsState(
-        if (isSelected) selectedBg else defaultBg, tween(420, easing = CubicBezierEasing(0.2f, 0f, 0f, 1f)), label = "cardSelectedBg"
-    )
+    // A selected card only gets its tick (no tint, no flash): select-all stays calm
+    val bgColor = defaultBg
 
     val interactionSource = remember { MutableInteractionSource() }
     val isPressed by interactionSource.collectIsPressedAsState()
@@ -96,7 +94,7 @@ fun ElvanCommonCard(
                 if (onClick != null || onLongClick != null) {
                     Modifier.combinedClickable(
                         interactionSource = interactionSource,
-                        indication = if (isSelectionMode) null else remember(colors.isDark) { SmoothPressIndication(if (colors.isDark) Color.White else Color.Black) },
+                        indication = if (isSelectionMode) null else ripple(bounded = true, color = colors.ripple),
                         onClick = { onClick?.invoke() },
                         onLongClick = onLongClick
                     )

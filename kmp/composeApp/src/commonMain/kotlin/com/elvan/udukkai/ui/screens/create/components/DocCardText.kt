@@ -97,8 +97,12 @@ fun DocCardText(
                     maxLines = 1
                 )
                 Text(
+                    text = "•",
+                    modifier = Modifier.padding(horizontal = 7.dp),
+                    style = TextStyle(fontFamily = ff, fontSize = 13.sp, color = LocalShellColors.current.textTertiary)
+                )
+                Text(
                     text = date.preventBrokenLigatures(),
-                    modifier = Modifier.padding(start = 10.dp),
                     style = TextStyle(fontFamily = ff, fontSize = 13.sp, color = secondary),
                     maxLines = 1
                 )
