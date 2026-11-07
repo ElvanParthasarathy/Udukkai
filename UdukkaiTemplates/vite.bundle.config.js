@@ -7,6 +7,7 @@ import path from 'path'
 
 const root = path.resolve(import.meta.dirname, 'src/bridge')
 const outDir = path.resolve(import.meta.dirname, 'dist-bundle')
+const kmpPrintDir = path.resolve(import.meta.dirname, '../kmp/composeApp/src/androidMain/assets/print')
 
 // The app keys its saved PDFs on this, so a bundle with the same look never makes them rebuild.
 const writeVersion = () => ({
@@ -14,6 +15,13 @@ const writeVersion = () => ({
   closeBundle() {
     const v = /'([^']+)'/.exec(fs.readFileSync(path.join(root, 'version.ts'), 'utf8'))[1]
     fs.writeFileSync(path.join(outDir, 'version.txt'), v)
+    if (fs.existsSync(kmpPrintDir)) {
+      const kmpAssets = path.join(kmpPrintDir, 'assets')
+      if (fs.existsSync(kmpAssets)) {
+        fs.rmSync(kmpAssets, { recursive: true, force: true })
+      }
+      fs.cpSync(outDir, kmpPrintDir, { recursive: true })
+    }
   },
 })
 

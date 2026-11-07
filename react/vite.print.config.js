@@ -1,12 +1,12 @@
-// Builds the print-only bundle consumed by the KMP app.
-// Output: kmp/composeApp/src/androidMain/assets/print/ (index.html + assets + fonts)
+// Legacy print bundle config. Note: Active production bundle is in UdukkaiTemplates.
+// Output: react/dist-print/
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import { nodePolyfills } from 'vite-plugin-node-polyfills'
 import fs from 'fs'
 import path from 'path'
 
-const outDir = path.resolve(__dirname, '../kmp/composeApp/src/androidMain/assets/print')
+const outDir = path.resolve(__dirname, 'dist-print')
 
 // Only the fonts the global stylesheet (vadivam.css) actually references.
 const PRINT_FONTS = [
