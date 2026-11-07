@@ -20,6 +20,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
@@ -144,12 +145,14 @@ private fun Modifier.floatingPill(colors: ShellColors, height: Dp = PILL_CLOSED_
 
 /** The search pill kept at the bottom of the settings page: comfortable, elegant floating search pill. */
 @Composable
-fun SettingsSearchPill(colors: ShellColors, onVoice: ((String) -> Unit)? = null, onClick: () -> Unit) {
+fun SettingsSearchPill(colors: ShellColors, onVoice: ((String) -> Unit)? = null, hidden: Boolean = false, onClick: () -> Unit) {
     val ff = LocalAppFontFamily.current
     val voice = com.elvan.udukkai.ui.components.shell.rememberVoiceInput { onVoice?.invoke(it) }
     BoxWithConstraints(Modifier.fillMaxWidth().navigationBarsPaddingIfMobile().padding(bottom = Dimens.FloatingBarBottomGap), contentAlignment = Alignment.Center) {
         Row(
-            Modifier.width(PILL_CLOSED_WIDTH.coerceAtMost(maxWidth - PILL_OPEN_MARGIN * 2))
+            // While the search page is opening or closing its own field takes the pill's place: two mics would flicker
+            Modifier.alpha(if (hidden) 0f else 1f)
+                .width(PILL_CLOSED_WIDTH.coerceAtMost(maxWidth - PILL_OPEN_MARGIN * 2))
                 .floatingPill(colors, height = PILL_CLOSED_HEIGHT)
                 .clip(CircleShape)
                 .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null, onClick = onClick)
@@ -183,7 +186,7 @@ fun SettingsSearchPill(colors: ShellColors, onVoice: ((String) -> Unit)? = null,
  * stays at the bottom, above the keyboard.
  */
 @Composable
-fun SettingsSearchOverlay(open: Boolean, entries: List<SettingsEntry>, colors: ShellColors, onOpen: (SettingsRoute) -> Unit, onClose: () -> Unit, initialQuery: String = "") {
+fun SettingsSearchOverlay(open: Boolean, entries: List<SettingsEntry>, colors: ShellColors, onOpen: (SettingsRoute) -> Unit, onClose: () -> Unit, initialQuery: String = "", onActive: (Boolean) -> Unit = {}) {
     val progress = remember { Animatable(0f) }
     var query by remember { mutableStateOf("") }
     var recents by remember { mutableStateOf(RecentSettingSearches.all()) }
@@ -199,7 +202,9 @@ fun SettingsSearchOverlay(open: Boolean, entries: List<SettingsEntry>, colors: S
     LaunchedEffect(open) {
         progress.animateTo(if (open) 1f else 0f, tween(if (open) 320 else 260, easing = CubicBezierEasing(0.2f, 0f, 0f, 1f)))
     }
-    if (!open && progress.value == 0f) return
+    val active = open || progress.value > 0f
+    LaunchedEffect(active) { onActive(active) }
+    if (!active) return
     val p = progress.value
     val imeBottom = getImeBottomPadding()
     // One continuous value from the keyboard down to the navigation bar, so nothing jumps when the keyboard closes

@@ -52,6 +52,7 @@ fun TextilesSettingsScreen(
     var navState by remember { mutableStateOf(SettingsNavState(initialRoute, 0)) }
     var searchOpen by remember { mutableStateOf(false) }
     var voiceQuery by remember { mutableStateOf("") }
+    var searchActive by remember { mutableStateOf(false) }
     val colors = rememberShellColors()
 
     val hubScrollState = rememberLazyListState()
@@ -197,7 +198,7 @@ fun TextilesSettingsScreen(
                     onBack = handleBack,
                     scrollState = scrollState,
                     hasFloatingBar = route == SettingsRoute.Hub,
-                    floatingBar = { if (route == SettingsRoute.Hub) SettingsSearchPill(colors, onVoice = { voiceQuery = it; searchOpen = true }) { voiceQuery = ""; searchOpen = true } }
+                    floatingBar = { if (route == SettingsRoute.Hub) SettingsSearchPill(colors, onVoice = { voiceQuery = it; searchOpen = true }, hidden = searchActive) { voiceQuery = ""; searchOpen = true } }
                 ) {
                     when (route) {
                         SettingsRoute.Hub -> TextilesSettingsHubContent(
@@ -270,7 +271,8 @@ fun TextilesSettingsScreen(
                 searchOpen = false
             },
             onClose = { searchOpen = false },
-            initialQuery = voiceQuery
+            initialQuery = voiceQuery,
+            onActive = { searchActive = it }
         )
     }
 }

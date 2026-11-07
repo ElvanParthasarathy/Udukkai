@@ -566,6 +566,7 @@ val ta: Map<String, String> = mapOf(
     K.signInWithGoogle to "Google மூலம் உள்நுழை",
     K.googleEmailMismatch to "இந்தக் கணக்கின் மின்னஞ்சலுடன் ஒத்த Google கணக்கைத் தேர்ந்தெடுக்கவும். வேறு மின்னஞ்சலுக்கு, இந்தக் கணக்கை நீக்கி மீண்டும் பதிவு செய்யவும்.",
     K.noBillsInPeriod to "இந்தக் காலத்தில் பட்டியல்கள் இல்லை.",
+    K.disconnectBtn to "நீக்கு",
     K.pauseBtn to "இடைநிறுத்து",
     K.resumeBtn to "தொடர்",
     K.accountNotAllowed to "இந்த Google கணக்குக்கு இந்தச் செயலியைப் பயன்படுத்த அனுமதி இல்லை.",

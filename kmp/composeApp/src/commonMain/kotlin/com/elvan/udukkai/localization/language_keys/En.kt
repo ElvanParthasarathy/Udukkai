@@ -565,6 +565,7 @@ val en: Map<String, String> = mapOf(
     K.signInWithGoogle to "Sign in with Google",
     K.googleEmailMismatch to "Choose the Google account with the same email as this account. To use a different email, delete this account and sign up again.",
     K.noBillsInPeriod to "No bills in this period.",
+    K.disconnectBtn to "Disconnect",
     K.pauseBtn to "Pause",
     K.resumeBtn to "Resume",
     K.accountNotAllowed to "This Google account is not allowed to use this app.",

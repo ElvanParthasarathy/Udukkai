@@ -424,7 +424,7 @@ fun LinkedAccountsScreen(
                     ElvanActionSheet(
                         title = K.unlinkConfirm.tr(),
                         cancelText = K.cancelBtn.tr(),
-                        confirmText = K.disconnectGoogle.tr(),
+                        confirmText = K.disconnectBtn.tr(),
                         confirmColor = colors.danger,
                         onDismissRequest = { showUnlinkSheet = false },
                         onConfirm = {

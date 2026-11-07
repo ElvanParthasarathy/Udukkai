@@ -587,6 +587,7 @@ object K {
     const val signInWithGoogle = "signInWithGoogle"
     const val accountNotAllowed = "accountNotAllowed"
     const val pauseBtn = "pauseBtn"
+    const val disconnectBtn = "disconnectBtn"
     const val noBillsInPeriod = "noBillsInPeriod"
     const val resumeBtn = "resumeBtn"
     const val googleEmailMismatch = "googleEmailMismatch"
