@@ -279,8 +279,9 @@ fun TextilesStorageBackupScreen(
             val businessItems = remember(profiles, fallback) {
                 val list = mutableListOf<TextilesBusinessDisplayItem>()
                 if (profiles.isEmpty()) {
-                    val name = bilingualBusinessName(fallback.getPrimary("businessName"), fallback.getSecondary("niruvanathinPeyar")).ifBlank { fallback.shortName }.ifBlank { appBadge }
+                    val name = fallback.getPrimary("businessName").ifBlank { fallback.shortName }.ifBlank { appBadge }
 
+                    val secondName = fallback.getSecondary("niruvanathinPeyar").trim().takeIf { it != name }.orEmpty()
                     val town = fallback.city.values.firstOrNull { it.isNotBlank() }
                     val subtitleText = town.orEmpty()
 
@@ -292,6 +293,7 @@ fun TextilesStorageBackupScreen(
                     list.add(
                         TextilesBusinessDisplayItem(
                             name = name,
+                            secondName = secondName,
                             subtitle = subtitleText,
                             invoiceCount = invCount,
                             receiptCount = recCount,
@@ -301,10 +303,11 @@ fun TextilesStorageBackupScreen(
                     )
                 } else {
                     profiles.forEachIndexed { index, p ->
-                        val bName = bilingualBusinessName(p.getPrimary("businessName"), p.getSecondary("niruvanathinPeyar")).ifBlank { p.shortName }.ifBlank {
+                        val bName = p.getPrimary("businessName").ifBlank { p.shortName }.ifBlank {
                             "$companyLabel ${index + 1}"
                         }
 
+                        val secondName = p.getSecondary("niruvanathinPeyar").trim().takeIf { it != bName }.orEmpty()
                         val town = p.city.values.firstOrNull { it.isNotBlank() }
                         val sub = town.orEmpty()
 
@@ -316,6 +319,7 @@ fun TextilesStorageBackupScreen(
                         list.add(
                             TextilesBusinessDisplayItem(
                                 name = bName,
+                                secondName = secondName,
                                 subtitle = sub,
                                 invoiceCount = invC,
                                 receiptCount = recC,
@@ -360,21 +364,22 @@ fun TextilesStorageBackupScreen(
                             Column(modifier = Modifier.weight(1f)) {
                                 Text(
                                     text = item.name.preventBrokenLigatures(),
-                                    style = TextStyle(
-                                        fontFamily = ff,
-                                        fontSize = 15.sp,
-                                        fontWeight = FontWeight.SemiBold,
-                                        color = colors.textPrimary
-                                    )
+                                    style = TextStyle(fontFamily = ff, fontSize = 16.5.sp, fontWeight = FontWeight.ExtraBold, color = colors.textPrimary)
                                 )
-                                Text(
-                                    text = item.subtitle.preventBrokenLigatures(),
-                                    style = TextStyle(
-                                        fontFamily = ff,
-                                        fontSize = 12.sp,
-                                        color = colors.textSecondary
+                                if (item.secondName.isNotBlank()) {
+                                    Spacer(Modifier.height(2.dp))
+                                    Text(
+                                        text = item.secondName.preventBrokenLigatures(),
+                                        style = TextStyle(fontFamily = ff, fontSize = 13.5.sp, color = colors.textSecondary)
                                     )
-                                )
+                                }
+                                if (item.subtitle.isNotBlank()) {
+                                    Spacer(Modifier.height(2.dp))
+                                    Text(
+                                        text = item.subtitle.preventBrokenLigatures(),
+                                        style = TextStyle(fontFamily = ff, fontSize = 13.5.sp, color = colors.textSecondary.copy(alpha = 0.7f))
+                                    )
+                                }
                             }
                         }
 
@@ -472,6 +477,7 @@ fun TextilesStorageBackupScreen(
 
 private data class TextilesBusinessDisplayItem(
     val name: String,
+    val secondName: String,
     val subtitle: String,
     val invoiceCount: Int,
     val receiptCount: Int,
@@ -479,6 +485,3 @@ private data class TextilesBusinessDisplayItem(
     val itemCount: Int
 )
 
-/** Full business name in both languages (identical or blank parts dropped), not the app's own name. */
-private fun bilingualBusinessName(primary: String, secondary: String): String =
-    listOf(primary, secondary).map { it.trim() }.filter { it.isNotEmpty() }.distinct().joinToString(" · ")

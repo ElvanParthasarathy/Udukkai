@@ -144,8 +144,9 @@ private fun Modifier.floatingPill(colors: ShellColors, height: Dp = PILL_CLOSED_
 
 /** The search pill kept at the bottom of the settings page: comfortable, elegant floating search pill. */
 @Composable
-fun SettingsSearchPill(colors: ShellColors, onClick: () -> Unit) {
+fun SettingsSearchPill(colors: ShellColors, onVoice: ((String) -> Unit)? = null, onClick: () -> Unit) {
     val ff = LocalAppFontFamily.current
+    val voice = com.elvan.udukkai.ui.components.shell.rememberVoiceInput { onVoice?.invoke(it) }
     BoxWithConstraints(Modifier.fillMaxWidth().navigationBarsPaddingIfMobile().padding(bottom = Dimens.FloatingBarBottomGap), contentAlignment = Alignment.Center) {
         Row(
             Modifier.width(PILL_CLOSED_WIDTH.coerceAtMost(maxWidth - PILL_OPEN_MARGIN * 2))
@@ -161,8 +162,15 @@ fun SettingsSearchPill(colors: ShellColors, onClick: () -> Unit) {
                 K.searchWord.tr(),
                 style = TextStyle(fontFamily = ff, fontSize = 15.5.sp, color = colors.textSecondary.copy(alpha = 0.6f)),
                 maxLines = 1,
-                softWrap = false
+                softWrap = false,
+                modifier = Modifier.weight(1f)
             )
+            // Voice typing right on the pill: speaks, then the search page opens with the words in it
+            if (onVoice != null && voice != null) {
+                Box(Modifier.size(36.dp).clip(CircleShape).clickable { voice() }, contentAlignment = Alignment.Center) {
+                    Icon(MaterialSymbols.Rounded.Mic, null, tint = colors.textSecondary, modifier = Modifier.size(20.dp))
+                }
+            }
         }
     }
 }
@@ -175,14 +183,14 @@ fun SettingsSearchPill(colors: ShellColors, onClick: () -> Unit) {
  * stays at the bottom, above the keyboard.
  */
 @Composable
-fun SettingsSearchOverlay(open: Boolean, entries: List<SettingsEntry>, colors: ShellColors, onOpen: (SettingsRoute) -> Unit, onClose: () -> Unit) {
+fun SettingsSearchOverlay(open: Boolean, entries: List<SettingsEntry>, colors: ShellColors, onOpen: (SettingsRoute) -> Unit, onClose: () -> Unit, initialQuery: String = "") {
     val progress = remember { Animatable(0f) }
     var query by remember { mutableStateOf("") }
     var recents by remember { mutableStateOf(RecentSettingSearches.all()) }
     val focusManager = LocalFocusManager.current
     val results = remember(query, entries) { searchSettings(entries, query) }
     // Each time the page opens it starts clean
-    LaunchedEffect(open) { if (open) { query = ""; recents = RecentSettingSearches.all() } }
+    LaunchedEffect(open) { if (open) { query = initialQuery; recents = RecentSettingSearches.all() } }
     fun openResult(route: SettingsRoute) {
         RecentSettingSearches.add(query)
         focusManager.clearFocus()
