@@ -70,12 +70,13 @@ fun ElvanBulkProgressSheet(
                     gapSize = 0.dp,
                     drawStopIndicator = {}
                 )
-                Spacer(Modifier.height(10.dp))
-                Text(
-                    text = "$percent%",
-                    style = TextStyle(fontFamily = ff, fontSize = 12.sp, fontWeight = FontWeight.Medium),
-                    color = colors.textPrimary.copy(alpha = 0.55f)
-                )
+                Spacer(Modifier.height(8.dp))
+                // Like Samsung My Files: the count on the left edge, the percentage on the right edge
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                    val small = TextStyle(fontFamily = ff, fontSize = 12.sp, fontWeight = FontWeight.Medium)
+                    Text(text = "$done/${ids.size}", style = small, color = colors.textPrimary.copy(alpha = 0.55f))
+                    Text(text = "$percent%", style = small, color = colors.textPrimary.copy(alpha = 0.55f))
+                }
             }
         }
     )
