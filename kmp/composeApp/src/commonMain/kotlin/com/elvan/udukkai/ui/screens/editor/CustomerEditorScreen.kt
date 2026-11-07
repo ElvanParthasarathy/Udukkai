@@ -355,7 +355,7 @@ fun CustomerEditorScreen(
                                     isBilingual = isBilingual,
                                     primaryLang = primaryLang,
                                     secondaryLang = secondaryLang,
-                                    placeholder = K.customerName.tr()
+                                    placeholder = ""
                                 )
 
                                 if (isB2b) {
@@ -366,7 +366,7 @@ fun CustomerEditorScreen(
                                         isBilingual = isBilingual,
                                         primaryLang = primaryLang,
                                         secondaryLang = secondaryLang,
-                                        placeholder = K.businessOwnerName.tr()
+                                        placeholder = ""
                                     )
                                     if (ownerMap.values.any { it.isNotBlank() }) {
                                         ElvanEditorDropdown<String>(

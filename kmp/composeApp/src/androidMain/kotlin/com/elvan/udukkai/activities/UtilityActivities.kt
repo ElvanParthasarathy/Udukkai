@@ -5,6 +5,7 @@ import android.content.Intent
 import androidx.compose.runtime.Composable
 import com.elvan.udukkai.factory.ui.screens.FactoryRecycleBinScreen
 import com.elvan.udukkai.textiles.ui.screens.TextilesRecycleBinScreen
+import com.elvan.udukkai.factory.ui.screens.FactoryReportsScreen
 import com.elvan.udukkai.textiles.ui.screens.TextilesReportsScreen
 
 class RecycleBinActivity : BaseSubpageActivity() {
@@ -28,7 +29,7 @@ class ReportsActivity : BaseSubpageActivity() {
     @Composable
     override fun ScreenContent() {
         if (isFactory) {
-            finish()
+            FactoryReportsScreen(onBack = { finish() })
         } else {
             TextilesReportsScreen(onBack = { finish() })
         }

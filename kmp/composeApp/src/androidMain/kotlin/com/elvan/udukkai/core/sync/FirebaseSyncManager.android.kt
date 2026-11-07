@@ -75,7 +75,7 @@ class AndroidFirebaseSyncManager : FirebaseSyncManager {
     private var databaseInstance: FirebaseDatabase? = null
     private var isPersistenceSet = false
     private val activeListeners = mutableMapOf<DatabaseReference, ValueEventListener>()
-    private var isApplyingRemoteChange = false
+    @Volatile private var isApplyingRemoteChange = false
 
     private fun getDatabase(): FirebaseDatabase? {
         if (databaseInstance != null) return databaseInstance
@@ -88,6 +88,7 @@ class AndroidFirebaseSyncManager : FirebaseSyncManager {
                 FirebaseApp.initializeApp(AppContext.context)
                 Log.i(tag, "FirebaseApp initialized.")
             }
+            installAppCheck()
 
             // A config downloaded before the database existed has no address: use the known one
             val db = if (FirebaseApp.getInstance().options.databaseUrl.isNullOrBlank()) {
@@ -111,6 +112,20 @@ class AndroidFirebaseSyncManager : FirebaseSyncManager {
         } catch (e: Exception) {
             Log.e(tag, "Failed to initialize Firebase Realtime Database: ${e.message}", e)
             null
+        }
+    }
+
+    /** Proves to Firebase that the request comes from this genuine app (Play Integrity; a debug token while developing). */
+    private fun installAppCheck() {
+        try {
+            val factory = if (com.elvan.udukkai.BuildConfig.DEBUG) {
+                com.google.firebase.appcheck.debug.DebugAppCheckProviderFactory.getInstance()
+            } else {
+                com.google.firebase.appcheck.playintegrity.PlayIntegrityAppCheckProviderFactory.getInstance()
+            }
+            com.google.firebase.appcheck.FirebaseAppCheck.getInstance().installAppCheckProviderFactory(factory)
+        } catch (e: Exception) {
+            Log.w(tag, "App Check could not start: ${e.message}")
         }
     }
 

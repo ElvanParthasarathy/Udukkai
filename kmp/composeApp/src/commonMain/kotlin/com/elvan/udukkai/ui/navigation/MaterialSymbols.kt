@@ -398,6 +398,7 @@ object MaterialSymbols {
         val SaveFill: ImageVector get() = LibSymbols.RoundedFilled.Save
         val VisibilityOff: ImageVector get() = LibSymbols.Rounded.Visibility_off
         val Close: ImageVector get() = LibSymbols.Rounded.Close
+        val Mic: ImageVector get() = LibSymbols.Rounded.Mic
         val Cancel: ImageVector get() = LibSymbols.RoundedFilled.Cancel
         val Check: ImageVector get() = LibSymbols.Rounded.Check
         val Add: ImageVector get() = LibSymbols.Rounded.Add

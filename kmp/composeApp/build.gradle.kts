@@ -34,6 +34,9 @@ kotlin {
             implementation(project.dependencies.platform(libs.firebase.bom))
             implementation(libs.firebase.database)
             implementation(libs.firebase.auth)
+            // App Check: only genuine installs of this app may talk to Firebase once enforcement is on in the console
+            implementation(libs.firebase.appcheck.playintegrity)
+            implementation(libs.firebase.appcheck.debug)
             // The real Material 3 expressive loaders (as in Neram)
             implementation("androidx.compose.material3:material3:1.5.0-alpha12")
             // Sign in with Google (Credential Manager)

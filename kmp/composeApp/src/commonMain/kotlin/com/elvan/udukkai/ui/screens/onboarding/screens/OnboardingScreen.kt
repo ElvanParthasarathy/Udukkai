@@ -78,7 +78,7 @@ fun UllnuzhaivuThirai(
     fun handle(result: GoogleSignInResult, failure: String) {
         when (result) {
             is GoogleSignInResult.Success -> onLoginSuccess()
-            is GoogleSignInResult.NotAllowed -> fail(notAllowedMsg)
+            is GoogleSignInResult.NotAllowed, is GoogleSignInResult.EmailMismatch -> fail(notAllowedMsg)
             GoogleSignInResult.Cancelled -> {}
             GoogleSignInResult.Failed -> fail(failure)
         }

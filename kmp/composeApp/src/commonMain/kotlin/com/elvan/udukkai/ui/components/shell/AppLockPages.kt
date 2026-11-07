@@ -158,7 +158,7 @@ fun UdukkaiAppLockScreen(
 
             // App Name
             Text(
-                text = "உடுக்கை",
+                text = K.appName.tr(),
                 style = TextStyle(
                     fontFamily = ff,
                     fontSize = 28.sp,

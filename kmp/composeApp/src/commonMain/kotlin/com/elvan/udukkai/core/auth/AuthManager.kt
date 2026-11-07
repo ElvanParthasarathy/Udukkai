@@ -42,6 +42,10 @@ object AuthManager {
     var hasPassword by mutableStateOf(false)
         private set
 
+    /** Bumped whenever the account picture may have changed, so the avatar reloads it. */
+    var photoVersion by mutableStateOf(0)
+        private set
+
     val userPhotoUrl: String? get() = platformUserPhotoUrl()
     val googleEmail: String? get() = platformGoogleEmail()
     val googlePhotoUrl: String? get() = platformGooglePhotoUrl()
@@ -62,6 +66,8 @@ object AuthManager {
         if (res is GoogleSignInResult.Success) {
             isGoogleLinked = true
             hasPassword = platformHasPassword()
+            signedInDisplayName = platformSignedInDisplayName()
+            photoVersion++
         }
         return res
     }

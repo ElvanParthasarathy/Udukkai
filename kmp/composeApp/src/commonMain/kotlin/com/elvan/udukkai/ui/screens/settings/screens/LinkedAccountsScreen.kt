@@ -70,6 +70,7 @@ fun LinkedAccountsScreen(
     val unlinkedSuccessMsg = K.googleAccountUnlinked.tr()
     val failedUnlinkMsg = K.failedToUnlink.tr()
     val connectedMsg = K.connected.tr()
+    val mismatchMsg = K.googleEmailMismatch.tr()
 
     // Internet-oriented loading experience on enter
     LaunchedEffect(retryTrigger) {
@@ -302,8 +303,10 @@ fun LinkedAccountsScreen(
                                                     scope.launch {
                                                         val res = AuthManager.linkGoogle()
                                                         isLinking = false
-                                                        if (res is GoogleSignInResult.Success) {
-                                                            ElvanSnackbar.show(connectedMsg)
+                                                        when (res) {
+                                                            is GoogleSignInResult.Success -> ElvanSnackbar.show(connectedMsg)
+                                                            is GoogleSignInResult.EmailMismatch -> ElvanSnackbar.show(mismatchMsg)
+                                                            else -> {}
                                                         }
                                                     }
                                                 }
@@ -384,7 +387,7 @@ fun LinkedAccountsScreen(
                                             Surface(
                                                 shape = RoundedCornerShape(20.dp),
                                                 color = colors.iconBg,
-                                                modifier = Modifier.clickable { onNavigate(SettingsRoute.CreatePassword) }
+                                                onClick = { onNavigate(SettingsRoute.CreatePassword) }
                                             ) {
                                                 Text(
                                                     text = K.createBtn.tr(),

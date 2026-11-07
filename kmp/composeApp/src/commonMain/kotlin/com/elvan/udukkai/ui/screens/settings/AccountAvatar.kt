@@ -28,6 +28,7 @@ import org.jetbrains.compose.resources.decodeToImageBitmap
 /** The account picture once per app run and account, so each screen shows it at once and none starts a download of its own. */
 private object AccountPhotoHolder {
     var email: String? = null
+    var version = 0
     var photo by mutableStateOf<ImageBitmap?>(null)
     var checked by mutableStateOf(false)
 }
@@ -37,12 +38,15 @@ private object AccountPhotoHolder {
 @Composable
 fun AccountAvatar(fallback: @Composable () -> Unit) {
     val email = AuthManager.signedInEmail
-    val current = AccountPhotoHolder.photo.takeIf { AccountPhotoHolder.email == email }
-    val loading = email != null && !(AccountPhotoHolder.email == email && AccountPhotoHolder.checked)
+    val version = AuthManager.photoVersion
+    val same = AccountPhotoHolder.email == email && AccountPhotoHolder.version == version
+    val current = AccountPhotoHolder.photo.takeIf { same }
+    val loading = email != null && !(same && AccountPhotoHolder.checked)
 
-    LaunchedEffect(email) {
-        if (AccountPhotoHolder.email != email) {
+    LaunchedEffect(email, version) {
+        if (!same) {
             AccountPhotoHolder.email = email
+            AccountPhotoHolder.version = version
             AccountPhotoHolder.photo = null
             AccountPhotoHolder.checked = false
         }

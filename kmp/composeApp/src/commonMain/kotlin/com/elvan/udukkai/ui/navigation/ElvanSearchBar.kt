@@ -168,6 +168,28 @@ fun ElvanSearchBar(
                         )
                     }
 
+                    val voice = com.elvan.udukkai.ui.components.shell.rememberVoiceInput { onQueryChange(it) }
+                    if (query.isEmpty() && voice != null) {
+                        Box(
+                            modifier = Modifier
+                                .size(36.dp)
+                                .clip(CircleShape)
+                                .clickable(
+                                    interactionSource = remember { MutableInteractionSource() },
+                                    indication = ripple(bounded = true, radius = 18.dp),
+                                    onClick = voice
+                                ),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = MaterialSymbols.Rounded.Mic,
+                                contentDescription = null,
+                                tint = colors.textSecondary,
+                                modifier = Modifier.size(22.dp)
+                            )
+                        }
+                    }
+
                     Box(
                         modifier = Modifier
                             .size(36.dp)

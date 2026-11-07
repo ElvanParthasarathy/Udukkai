@@ -56,6 +56,10 @@ fun ElvanActionSheet(
     colors: ShellColors = rememberShellColors(),
     confirmColor: Color? = null,
     isConfirmFilled: Boolean = false,
+    /** Confirm runs [onConfirm] without closing the sheet (e.g. Pause/Resume on a progress sheet). */
+    keepOpenOnConfirm: Boolean = false,
+    /** False: only the Cancel button closes the sheet (tap outside, back and drag do nothing). */
+    dismissible: Boolean = true,
     tertiaryText: String? = null,
     onTertiary: (() -> Unit)? = null,
     tertiaryColor: Color? = null,
@@ -125,11 +129,11 @@ fun ElvanActionSheet(
     val isDesktop = currentPlatform == PlatformType.DESKTOP
 
     Dialog(
-        onDismissRequest = { dismiss() },
+        onDismissRequest = { if (dismissible) dismiss() },
         properties = DialogProperties(
             usePlatformDefaultWidth = false,
-            dismissOnBackPress = true,
-            dismissOnClickOutside = true
+            dismissOnBackPress = dismissible,
+            dismissOnClickOutside = dismissible
         )
     ) {
         ConfigureDialogWindow(isDark = isDark, clearDim = true)
@@ -150,7 +154,7 @@ fun ElvanActionSheet(
                     interactionSource = remember { MutableInteractionSource() },
                     indication = null
                 ) {
-                    dismiss()
+                    if (dismissible) dismiss()
                 },
         ) {
             val isLandscape = maxWidth > maxHeight && !isDesktop
@@ -199,7 +203,7 @@ fun ElvanActionSheet(
                             state = draggableState,
                             orientation = Orientation.Vertical,
                             onDragStopped = { velocity ->
-                                if (dragOffsetY > 80f || velocity > 600f) {
+                                if (dismissible && (dragOffsetY > 80f || velocity > 600f)) {
                                     dismiss()
                                 } else {
                                     snapBackDrag()
@@ -287,7 +291,9 @@ fun ElvanActionSheet(
                                             fontSize = 16.sp,
                                             fontWeight = FontWeight.SemiBold
                                         ),
-                                        color = colors.textPrimary.copy(alpha = 0.6f)
+                                        color = colors.textPrimary.copy(alpha = 0.6f),
+                                    textAlign = TextAlign.Center,
+                                    modifier = Modifier.fillMaxWidth()
                                     )
                                 }
 
@@ -295,7 +301,7 @@ fun ElvanActionSheet(
                                 if (isConfirmFilled) {
                                     Button(
                                         onClick = {
-                                            dismiss { onConfirm() }
+                                            if (keepOpenOnConfirm) onConfirm() else dismiss { onConfirm() }
                                         },
                                         modifier = Modifier
                                             .weight(1f)
@@ -318,7 +324,7 @@ fun ElvanActionSheet(
                                 } else {
                                     TextButton(
                                         onClick = {
-                                            dismiss { onConfirm() }
+                                            if (keepOpenOnConfirm) onConfirm() else dismiss { onConfirm() }
                                         },
                                         modifier = Modifier
                                             .weight(1f)
@@ -332,7 +338,10 @@ fun ElvanActionSheet(
                                                 fontSize = 16.sp,
                                                 fontWeight = FontWeight.Bold
                                             ),
-                                            color = mainColor
+                                            color = mainColor,
+                                            textAlign = TextAlign.Center,
+                                            maxLines = 1,
+                                            modifier = Modifier.fillMaxWidth()
                                         )
                                     }
                                 }
@@ -347,7 +356,7 @@ fun ElvanActionSheet(
                             if (isConfirmFilled) {
                                 Button(
                                     onClick = {
-                                        dismiss { onConfirm() }
+                                        if (keepOpenOnConfirm) onConfirm() else dismiss { onConfirm() }
                                     },
                                     modifier = Modifier
                                         .fillMaxWidth()
@@ -370,7 +379,7 @@ fun ElvanActionSheet(
                             } else {
                                 TextButton(
                                     onClick = {
-                                        dismiss { onConfirm() }
+                                        if (keepOpenOnConfirm) onConfirm() else dismiss { onConfirm() }
                                     },
                                     modifier = Modifier
                                         .fillMaxWidth()

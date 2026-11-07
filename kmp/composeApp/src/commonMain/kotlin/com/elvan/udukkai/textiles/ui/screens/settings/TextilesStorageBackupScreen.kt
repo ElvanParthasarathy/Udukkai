@@ -279,14 +279,10 @@ fun TextilesStorageBackupScreen(
             val businessItems = remember(profiles, fallback) {
                 val list = mutableListOf<TextilesBusinessDisplayItem>()
                 if (profiles.isEmpty()) {
-                    val name = fallback.shortName.ifBlank {
-                        fallback.getPrimary("businessName")
-                    }.ifBlank {
-                        fallback.getSecondary("niruvanathinPeyar")
-                    }.ifBlank { appBadge }
+                    val name = bilingualBusinessName(fallback.getPrimary("businessName"), fallback.getSecondary("niruvanathinPeyar")).ifBlank { fallback.shortName }.ifBlank { appBadge }
 
                     val town = fallback.city.values.firstOrNull { it.isNotBlank() }
-                    val subtitleText = if (!town.isNullOrBlank()) "$appBadge • $town" else appBadge
+                    val subtitleText = town.orEmpty()
 
                     val invCount = TextilesInvoiceRepository.invoices.count { (fallback.id == null || it.companyId == fallback.id) && !it.isDeleted }
                     val recCount = TextilesReceiptRepository.receipts.count { (fallback.id == null || it.companyId == fallback.id) && !it.isDeleted }
@@ -305,16 +301,12 @@ fun TextilesStorageBackupScreen(
                     )
                 } else {
                     profiles.forEachIndexed { index, p ->
-                        val bName = p.shortName.ifBlank {
-                            p.getPrimary("businessName")
-                        }.ifBlank {
-                            p.getSecondary("niruvanathinPeyar")
-                        }.ifBlank {
+                        val bName = bilingualBusinessName(p.getPrimary("businessName"), p.getSecondary("niruvanathinPeyar")).ifBlank { p.shortName }.ifBlank {
                             "$companyLabel ${index + 1}"
                         }
 
                         val town = p.city.values.firstOrNull { it.isNotBlank() }
-                        val sub = if (!town.isNullOrBlank()) "$appBadge • $town" else appBadge
+                        val sub = town.orEmpty()
 
                         val invC = TextilesInvoiceRepository.invoices.count { (p.id == null || it.companyId == p.id) && !it.isDeleted }
                         val recC = TextilesReceiptRepository.receipts.count { (p.id == null || it.companyId == p.id) && !it.isDeleted }
@@ -486,3 +478,7 @@ private data class TextilesBusinessDisplayItem(
     val customerCount: Int,
     val itemCount: Int
 )
+
+/** Full business name in both languages (identical or blank parts dropped), not the app's own name. */
+private fun bilingualBusinessName(primary: String, secondary: String): String =
+    listOf(primary, secondary).map { it.trim() }.filter { it.isNotEmpty() }.distinct().joinToString(" · ")

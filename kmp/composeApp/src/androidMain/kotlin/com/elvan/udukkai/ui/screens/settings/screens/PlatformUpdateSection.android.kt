@@ -1,11 +1,15 @@
 package com.elvan.udukkai.ui.screens.settings.screens
 
+import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.*
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import com.elvan.udukkai.BuildConfig
 import com.elvan.udukkai.core.update.AppUpdate
 import com.elvan.udukkai.core.update.WhatsNewSheet
 import com.elvan.udukkai.localization.LocalAppLanguage
 import com.elvan.udukkai.theme.ShellColors
+import com.elvan.udukkai.ui.components.ExpressiveLoadingIndicator
 import com.elvan.udukkai.ui.components.shell.ElvanSettingsRow
 import com.elvan.udukkai.ui.components.shell.ElvanSettingsSection
 import com.elvan.udukkai.ui.navigation.MaterialSymbols
@@ -31,10 +35,13 @@ actual fun PlatformUpdateSection(colors: ShellColors) {
             onClick = {
                 if (available != null) {
                     showWhatsNew = true
-                } else {
+                } else if (!checking) {
                     AppUpdate.checkNow()
                 }
             },
+            customTrailing = if (checking) {
+                { ExpressiveLoadingIndicator(color = colors.textPrimary, modifier = Modifier.size(20.dp)) }
+            } else null,
             colors = colors
         )
     }

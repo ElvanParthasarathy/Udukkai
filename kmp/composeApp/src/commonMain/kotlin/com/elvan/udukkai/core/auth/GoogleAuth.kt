@@ -17,6 +17,8 @@ object AllowedAccounts {
 sealed class GoogleSignInResult {
     data class Success(val email: String) : GoogleSignInResult()
     data class NotAllowed(val email: String) : GoogleSignInResult()
+    /** The chosen Google account has a different email than this account; linking it is refused. */
+    data class EmailMismatch(val email: String) : GoogleSignInResult()
     data object Cancelled : GoogleSignInResult()
     data object Failed : GoogleSignInResult()
 }

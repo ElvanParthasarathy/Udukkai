@@ -233,6 +233,7 @@ private fun SearchField(colors: ShellColors, open: Boolean, query: String, onQue
     LaunchedEffect(open) {
         if (open) { delay(260); runCatching { focus.requestFocus() } } else focusManager.clearFocus()
     }
+    val voice = com.elvan.udukkai.ui.components.shell.rememberVoiceInput { onQuery(it) }
     Row(modifier.floatingPill(colors, height = height).padding(start = 16.dp, end = 8.dp), verticalAlignment = Alignment.CenterVertically) {
         Icon(MaterialSymbols.Rounded.Search, null, tint = colors.textSecondary, modifier = Modifier.size(20.dp))
         Spacer(Modifier.width(10.dp))
@@ -252,6 +253,10 @@ private fun SearchField(colors: ShellColors, open: Boolean, query: String, onQue
         if (query.isNotEmpty()) {
             Box(Modifier.size(36.dp).clip(CircleShape).clickable { onQuery("") }, contentAlignment = Alignment.Center) {
                 Icon(MaterialSymbols.Rounded.Close, null, tint = colors.textSecondary, modifier = Modifier.size(19.dp))
+            }
+        } else if (voice != null) {
+            Box(Modifier.size(36.dp).clip(CircleShape).clickable { voice() }, contentAlignment = Alignment.Center) {
+                Icon(MaterialSymbols.Rounded.Mic, null, tint = colors.textSecondary, modifier = Modifier.size(20.dp))
             }
         }
     }

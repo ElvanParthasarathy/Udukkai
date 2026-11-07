@@ -178,8 +178,17 @@ actual suspend fun platformLinkGoogle(): GoogleSignInResult {
 
         val auth = FirebaseAuth.getInstance()
         val user = auth.currentUser ?: return GoogleSignInResult.Failed
+        // One account, one email: a Google account with another email would silently split the identity
+        if (!google.id.trim().equals(user.email?.trim(), ignoreCase = true)) return GoogleSignInResult.EmailMismatch(google.id)
         user.linkWithCredential(GoogleAuthProvider.getCredential(google.idToken, null)).await()
+        // Take the name and picture of the Google account just linked
+        val profile = com.google.firebase.auth.UserProfileChangeRequest.Builder()
+            .setDisplayName(google.displayName ?: user.displayName)
+            .setPhotoUri(google.profilePictureUri ?: user.photoUrl)
+            .build()
+        user.updateProfile(profile).await()
         user.reload().await()
+        try { java.io.File(AppContext.context.filesDir, "account_photo.jpg").delete() } catch (_: Exception) {}
         GoogleSignInResult.Success(google.id)
     } catch (_: GetCredentialCancellationException) {
         GoogleSignInResult.Cancelled

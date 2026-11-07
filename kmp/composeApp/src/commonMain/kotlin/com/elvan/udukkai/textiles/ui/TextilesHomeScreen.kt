@@ -78,6 +78,9 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
+/** A running bulk delete: what tab it came from and the ids still to be handled. */
+private class BulkDelete(val tab: NavTab, val segment: Int, val ids: List<Long>)
+
 @Composable
 fun TextilesHomeScreen() {
         val ff = LocalAppFontFamily.current
@@ -112,6 +115,7 @@ fun TextilesHomeScreen() {
     var isSelectionMode by remember { mutableStateOf(false) }
     var selectedItemIds by remember { mutableStateOf<Set<Long>>(emptySet()) }
     var showBulkDeleteConfirm by remember { mutableStateOf(false) }
+    var bulkDelete by remember { mutableStateOf<BulkDelete?>(null) }
     var closedYearEdit by remember { mutableStateOf<com.elvan.udukkai.data.model.InvoiceModel?>(null) }
     var showDateFilterSheet by remember { mutableStateOf(false) }
 
@@ -1100,40 +1104,56 @@ fun TextilesHomeScreen() {
                 confirmText = K.deleteBtn.tr(),
                 confirmColor = Color(0xFFBA1A1A),
                 onConfirm = {
-                    when (selectedTab) {
-                        NavTab.Items -> {
-                            selectedItemIds.forEach { TextilesItemRepository.delete(it) }
-                            ElvanSnackbar.show(itemDeletedMsg)
-                        }
-                        NavTab.Customers -> {
-                            selectedItemIds.forEach { TextilesCustomerRepository.delete(it) }
-                            ElvanSnackbar.show(customerDeletedMsg)
-                        }
-                        NavTab.Create -> {
-                            if (uruvakkuSegment == 0) {
-                                val deleted = selectedItemIds.count { TextilesInvoiceRepository.delete(it) }
-                                if (deleted > 0) ElvanSnackbar.show("$deleted $invoicesLabel $erasingLabel")
-                                // Bills that have a receipt are paid and stay
-                                if (deleted < selectedItemIds.size) {
-                                    val inLockedYear = TextilesInvoiceRepository.invoices.any { it.id in selectedItemIds && TextilesInvoiceRepository.isLocked(it) }
-                                    ElvanSnackbar.show(if (inLockedYear) booksLockedMsg else invoiceHasReceiptsMsg)
-                                }
-                            } else {
-                                val deleted = selectedItemIds.count { TextilesReceiptRepository.delete(it) }
-                                if (deleted > 0) ElvanSnackbar.show("$deleted $receiptsLabel $erasingLabel")
-                                if (deleted < selectedItemIds.size) ElvanSnackbar.show(booksLockedMsg)
-                            }
-                        }
-                        else -> {}
-                    }
-                    isSelectionMode = false
-                    selectedItemIds = emptySet()
+                    bulkDelete = BulkDelete(selectedTab, uruvakkuSegment, selectedItemIds.toList())
                     showBulkDeleteConfirm = false
                 },
                 onDismissRequest = {
                     showBulkDeleteConfirm = false
                 },
                 colors = colors
+            )
+        }
+
+        bulkDelete?.let { job ->
+            val label = when (job.tab) {
+                NavTab.Items -> K.itemDeleted.tr()
+                NavTab.Customers -> K.customerDeleted.tr()
+                NavTab.Create -> if (job.segment == 0) K.invoices.tr() else K.receipts.tr()
+                else -> ""
+            }
+            ElvanBulkProgressSheet(
+                title = "${job.ids.size} $label",
+                ids = job.ids,
+                colors = colors,
+                process = { id ->
+                    when (job.tab) {
+                        NavTab.Items -> TextilesItemRepository.delete(id)
+                        NavTab.Customers -> TextilesCustomerRepository.delete(id)
+                        NavTab.Create -> if (job.segment == 0) TextilesInvoiceRepository.delete(id) else TextilesReceiptRepository.delete(id)
+                        else -> false
+                    }
+                },
+                onFinished = { deleted ->
+                    when (job.tab) {
+                        NavTab.Items -> ElvanSnackbar.show(itemDeletedMsg)
+                        NavTab.Customers -> ElvanSnackbar.show(customerDeletedMsg)
+                        NavTab.Create -> if (job.segment == 0) {
+                            if (deleted > 0) ElvanSnackbar.show("$deleted $invoicesLabel $erasingLabel")
+                            // Bills that have a receipt are paid and stay
+                            if (deleted < job.ids.size) {
+                                val inLockedYear = TextilesInvoiceRepository.invoices.any { it.id in job.ids && TextilesInvoiceRepository.isLocked(it) }
+                                ElvanSnackbar.show(if (inLockedYear) booksLockedMsg else invoiceHasReceiptsMsg)
+                            }
+                        } else {
+                            if (deleted > 0) ElvanSnackbar.show("$deleted $receiptsLabel $erasingLabel")
+                            if (deleted < job.ids.size) ElvanSnackbar.show(booksLockedMsg)
+                        }
+                        else -> {}
+                    }
+                    isSelectionMode = false
+                    selectedItemIds = emptySet()
+                    bulkDelete = null
+                }
             )
         }
 
