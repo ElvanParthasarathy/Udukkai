@@ -94,7 +94,7 @@ fun TextilesItemScreen(
         val isLandscape = maxWidth > maxHeight
         LazyColumn(
             state = scrollState,
-            modifier = Modifier.fillMaxSize().dragSelect(scrollState, isSelectionMode, selectedItemIds, { onToggleSelect?.invoke(it) }) { key -> key.toString().substringAfterLast('_').toLongOrNull() },
+            modifier = Modifier.fillMaxSize().dragSelect(scrollState) { onItemLongClick?.invoke(it) },
             contentPadding = PaddingValues(
                 start = Dimens.ContentPadding,
                 end = Dimens.ContentPadding,

@@ -1,5 +1,6 @@
 package com.elvan.udukkai.factory.ui.screens
 
+import com.elvan.udukkai.ui.components.dragSelect
 import com.elvan.udukkai.ui.components.ExpressiveDotsLoader
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -57,7 +58,7 @@ fun FactoryCustomerScreen(
         val isLandscape = maxWidth > maxHeight
         LazyColumn(
             state = scrollState,
-            modifier = Modifier.fillMaxSize(),
+            modifier = Modifier.fillMaxSize().dragSelect(scrollState) { onCustomerLongClick?.invoke(it) },
             contentPadding = PaddingValues(
                 start = Dimens.ContentPadding,
                 end = Dimens.ContentPadding,
