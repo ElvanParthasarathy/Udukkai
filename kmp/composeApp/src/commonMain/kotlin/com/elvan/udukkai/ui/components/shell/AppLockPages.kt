@@ -49,9 +49,8 @@ import kotlinx.coroutines.delay
 fun AppLockGate(colors: ShellColors, content: @Composable () -> Unit) {
     val unlocked = AppLock.unlockedThisRun
     val isSet = AppLock.isSet()
-    // Debug builds (developer testing) never lock; release builds always do
-    val locked = isSet && !unlocked && !com.elvan.udukkai.core.platform.isDebugBuild
-    var appShown by remember { mutableStateOf(!locked) }
+    val locked = isSet && !unlocked
+    var appShown by remember { mutableStateOf(!isSet || unlocked) }
     LaunchedEffect(locked) { if (!locked) appShown = true }
 
     var hasLock by remember { mutableStateOf(fingerprintAvailable()) }

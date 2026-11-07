@@ -54,8 +54,25 @@ fun updateSystemBarsAppearance(window: Window, isDark: Boolean) {
 
 class MainActivity : FragmentActivity() {
     private var currentHeaderExpanded: MutableState<Boolean>? = null
+
+    /**
+     * Developer switch for debug builds only (ignored in release): the lock screen stays, but
+     * `adb shell am start -n <pkg>/com.elvan.udukkai.MainActivity --ez dev_skip_lock true` unlocks it.
+     */
+    private fun devSkipLock(intent: android.content.Intent?) {
+        if (BuildConfig.DEBUG && intent?.getBooleanExtra("dev_skip_lock", false) == true) {
+            com.elvan.udukkai.core.security.AppLock.unlockedThisRun = true
+        }
+    }
+
+    override fun onNewIntent(intent: android.content.Intent) {
+        super.onNewIntent(intent)
+        devSkipLock(intent)
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        devSkipLock(intent)
         // Temporarily locked to portrait per user decision. Landscape mode preserved for future continuation (see LANDSCAPE_MODE_NOTES.md).
         requestedOrientation = android.content.pm.ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
         com.elvan.udukkai.core.platform.AppContext.context = applicationContext
