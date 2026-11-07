@@ -158,6 +158,16 @@ private fun DocumentPreview(
             } else {
                 ExpressiveContainedLoader(modifier = Modifier.size(48.dp), containerColor = colors.surface, indicatorColor = colors.textSecondary)
             }
+            // A changed bill is made again: fade a loader over the old page instead of letting it change suddenly
+            androidx.compose.animation.AnimatedVisibility(
+                visible = controller.isRefreshing,
+                enter = androidx.compose.animation.fadeIn(androidx.compose.animation.core.tween(220)),
+                exit = androidx.compose.animation.fadeOut(androidx.compose.animation.core.tween(320))
+            ) {
+                Box(Modifier.fillMaxSize().background(colors.background.copy(alpha = 0.88f)), contentAlignment = Alignment.Center) {
+                    ExpressiveContainedLoader(modifier = Modifier.size(48.dp), containerColor = colors.surface, indicatorColor = colors.textPrimary)
+                }
+            }
         }
     }
 }

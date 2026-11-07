@@ -381,11 +381,14 @@ fun CustomerEditorScreen(
                                         label = "GSTIN",
                                         placeholder = "33AAAAA0000A1Z5"
                                     )
+                                    // The PAN is inside the GSTIN, so it fills itself in and cannot be edited
                                     BillRules.gstinPan(gstin)?.let { pan ->
-                                        Text(
-                                            text = "PAN $pan",
-                                            style = TextStyle(fontFamily = ff, fontSize = 12.sp, color = colors.textPrimary.copy(alpha = 0.6f)),
-                                            modifier = Modifier.padding(start = 4.dp)
+                                        ElvanEditorTextField(
+                                            value = pan,
+                                            onValueChange = {},
+                                            label = K.panNumber.tr(),
+                                            enabled = false,
+                                            readOnly = true
                                         )
                                     }
                                 }

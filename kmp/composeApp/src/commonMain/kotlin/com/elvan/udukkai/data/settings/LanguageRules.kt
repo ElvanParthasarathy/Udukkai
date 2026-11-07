@@ -75,17 +75,3 @@ object PrintNumbers {
         return MiniJson.stringify(all)
     }
 }
-
-/**
- * The business's own HSN / SAC code (what it sells), kept in the profile's print settings under "hsnCode", so it syncs
- * with the profile without a new database column.
- */
-object ProfileHsn {
-    fun get(printSettingsJson: String): String = (MiniJson.parseObject(printSettingsJson)["hsnCode"] as? String).orEmpty()
-
-    fun set(printSettingsJson: String, hsn: String): String {
-        val all = MiniJson.parseObject(printSettingsJson).toMutableMap()
-        if (hsn.isBlank()) all.remove("hsnCode") else all["hsnCode"] = hsn.trim()
-        return MiniJson.stringify(all)
-    }
-}

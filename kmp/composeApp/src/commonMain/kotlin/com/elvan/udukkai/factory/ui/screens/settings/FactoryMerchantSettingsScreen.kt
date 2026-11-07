@@ -54,9 +54,9 @@ fun FactoryMerchantSettingsScreen(
     var tempSecondary by remember { mutableStateOf("") }
     var showExtraPhone by remember { mutableStateOf(false) }
 
-    val isPattu = false
     val isBilingual = profile.isBilingual
     val invalidPanMsg = K.invalidPan.tr()
+    val invalidGstinMsg = K.invalidGstin.tr()
     val saveSuccessMsg = K.profileSaved.tr()
     val defaultProfileName = K.activeCompany.tr()
     val selectCompanyTitle = K.selectCompany.tr()
@@ -442,8 +442,8 @@ fun FactoryMerchantSettingsScreen(
                     }
                 )
 
-                // 6. GSTIN (Pattu only)
-                if (isPattu) {
+                // 6. GSTIN (as in Textiles)
+                run {
                     ElvanSettingsDivider(colors = colors)
 
                     ElvanSettingsAnimatedExpand(
@@ -464,8 +464,16 @@ fun FactoryMerchantSettingsScreen(
                                 title = K.gstinTaxId.tr(),
                                 onCancel = { editingSection = null },
                                 onSave = {
-                                    saveField {
-                                        profile.gstin = tempPrimary.uppercase()
+                                    val inIndia = profile.country.values.all { it.isBlank() } ||
+                                        profile.country.values.any { it.contains("india", ignoreCase = true) || it.contains("இந்தியா") }
+                                    if (tempPrimary.isNotBlank() && inIndia && !com.elvan.udukkai.core.utils.BillRules.isValidGstin(tempPrimary)) {
+                                        ElvanSnackbar.show(invalidGstinMsg)
+                                    } else {
+                                        saveField {
+                                            profile.gstin = tempPrimary.uppercase()
+                                            // The PAN is inside a valid GSTIN
+                                            com.elvan.udukkai.core.utils.BillRules.gstinPan(tempPrimary)?.let { profile.pan = it }
+                                        }
                                     }
                                 },
                                 colors = colors
@@ -517,42 +525,6 @@ fun FactoryMerchantSettingsScreen(
                                 onValueChange = { tempPrimary = it.uppercase() },
                                 keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Characters),
                                 maxLength = 10,
-                                colors = colors
-                            )
-                        }
-                    }
-                )
-
-                // 8. HSN / SAC code of what the business sells
-                ElvanSettingsDivider(colors = colors)
-                ElvanSettingsAnimatedExpand(
-                    isEditing = editingSection == "hsn",
-                    displayContent = {
-                        ElvanSettingsDisplayRow(
-                            title = K.hsnSacCode.tr(),
-                            primaryValue = com.elvan.udukkai.data.settings.ProfileHsn.get(profile.printSettingsJson),
-                            onEdit = {
-                                tempPrimary = com.elvan.udukkai.data.settings.ProfileHsn.get(profile.printSettingsJson)
-                                editingSection = "hsn"
-                            },
-                            colors = colors
-                        )
-                    },
-                    editContent = {
-                        ElvanSettingsEditContainer(
-                            title = K.hsnSacCode.tr(),
-                            onCancel = { editingSection = null },
-                            onSave = {
-                                saveField { profile.printSettingsJson = com.elvan.udukkai.data.settings.ProfileHsn.set(profile.printSettingsJson, tempPrimary) }
-                            },
-                            colors = colors
-                        ) {
-                            ElvanSettingsTextField(
-                                label = K.hsnSacCode.tr(),
-                                value = tempPrimary,
-                                onValueChange = { tempPrimary = it.filter { c -> c.isDigit() } },
-                                keyboardOptions = KeyboardOptions(keyboardType = androidx.compose.ui.text.input.KeyboardType.Number),
-                                maxLength = 8,
                                 colors = colors
                             )
                         }

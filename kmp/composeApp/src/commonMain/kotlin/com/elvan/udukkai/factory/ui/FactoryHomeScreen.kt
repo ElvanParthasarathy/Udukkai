@@ -124,8 +124,9 @@ fun FactoryHomeScreen() {
         selectedItemIds = newSet
     }
     val onStartSelection: (Long) -> Unit = { id ->
+        // Holding another card while selecting adds it (the drag that follows adds the ones it passes)
+        selectedItemIds = if (isSelectionMode) selectedItemIds + id else setOf(id)
         isSelectionMode = true
-        selectedItemIds = setOf(id)
     }
 
     val copyInvoiceAndEdit: (InvoiceModel) -> Unit = { invoice ->

@@ -1,5 +1,6 @@
 package com.elvan.udukkai.factory.ui.screens
 
+import com.elvan.udukkai.factory.data.FactoryReceiptRepository
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -72,10 +73,8 @@ fun FactoryReportsScreen(onBack: () -> Unit) {
     val total = lines.sumOf { it.totalAmount }
 
     // Save as Excel, like the React app's sales report: nothing is written until the user taps Save in the system dialog
-    val savedMsg = K.excelSaved.tr()
-    val failedMsg = K.excelFailed.tr()
-    val saver = com.elvan.udukkai.ui.components.shell.rememberFileSaver { ok -> com.elvan.udukkai.ui.components.shell.ElvanSnackbar.show(if (ok) savedMsg else failedMsg) }
     val profile = FactoryProfileRepository.profile
+    val exporter = com.elvan.udukkai.ui.components.shell.rememberReportExporter(com.elvan.udukkai.core.print.billBusinessFolder(profile))
     val primaryLang = profile.primaryLanguage.ifEmpty { "ta" }
     val secondaryLang = profile.secondaryLanguage.ifEmpty { "en" }
     fun bilingual(a: String, b: String) = if (profile.isBilingual && b.isNotBlank() && b != a) a + "\n" + b else a.ifBlank { b }
@@ -87,7 +86,7 @@ fun FactoryReportsScreen(onBack: () -> Unit) {
         }
         val title = bilingual(profile.getPrimary("businessName"), profile.getSecondary("niruvanathinPeyar")).ifBlank { profile.shortName }
         val bytes = com.elvan.udukkai.core.export.SalesReportExcel.build(title, "Sales Report - " + periodKey.replace('_', ' '), lines.sortedBy { it.invoiceDate }.map { l -> SalesRow(l.invoiceNumber, clientName(l), DateUtils.formatEpochMillis(l.invoiceDate), l.totalAmount, 0.0, l.totalAmount) }, withTax = false)
-        saver.save("Sales_Report_$periodKey.xlsx", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", bytes)
+        exporter.save("Sales_Report_$periodKey", "xlsx", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", bytes)
     }
 
 
@@ -117,6 +116,14 @@ fun FactoryReportsScreen(onBack: () -> Unit) {
                     colors = colors,
                     isFullWidth = true,
                     modifier = Modifier.fillMaxWidth()
+                )
+            }
+
+            item(key = "financial_year") {
+                com.elvan.udukkai.ui.screens.home.components.FinancialYearSection(
+                    colors,
+                    (FactoryInvoiceRepository.invoices.map { com.elvan.udukkai.core.utils.DateUtils.financialYearStart(it.invoiceDate) } +
+                        FactoryReceiptRepository.receipts.map { com.elvan.udukkai.core.utils.DateUtils.financialYearStart(it.receiptDate) }).toSet()
                 )
             }
 

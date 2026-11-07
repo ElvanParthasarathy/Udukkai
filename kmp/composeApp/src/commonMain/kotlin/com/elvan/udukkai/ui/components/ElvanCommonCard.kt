@@ -74,7 +74,7 @@ fun ElvanCommonCard(
     // As on iOS: the card sinks a little under the finger and springs back with a soft bounce when let go
     // (after a long press too, as it turns into a selected card)
     val scale by animateFloatAsState(
-        targetValue = if (isPressed && !isSelectionMode && (onClick != null || onLongClick != null)) 0.975f else 1.0f,
+        targetValue = if (isPressed && (onClick != null || onLongClick != null)) 0.975f else 1.0f,
         animationSpec = if (isPressed) tween(100) else spring(dampingRatio = 0.55f, stiffness = 500f),
         label = "pothuAttaiPressScale"
     )
@@ -94,7 +94,7 @@ fun ElvanCommonCard(
                 if (onClick != null || onLongClick != null) {
                     Modifier.combinedClickable(
                         interactionSource = interactionSource,
-                        indication = if (isSelectionMode) null else ripple(bounded = true, color = colors.ripple),
+                        indication = ripple(bounded = true, color = colors.ripple),
                         onClick = { onClick?.invoke() },
                         onLongClick = onLongClick
                     )

@@ -1,5 +1,6 @@
 package com.elvan.udukkai.textiles.ui.screens
 
+import com.elvan.udukkai.textiles.data.TextilesReceiptRepository
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -105,10 +106,8 @@ fun TextilesReportsScreen(onBack: () -> Unit) {
     val total = lines.sumOf { it.invoice.totalAmount }
 
     // Save as Excel, like the React app's sales report: nothing is written until the user taps Save in the system dialog
-    val savedMsg = K.excelSaved.tr()
-    val failedMsg = K.excelFailed.tr()
-    val saver = com.elvan.udukkai.ui.components.shell.rememberFileSaver { ok -> com.elvan.udukkai.ui.components.shell.ElvanSnackbar.show(if (ok) savedMsg else failedMsg) }
     val profile = TextilesProfileRepository.profile
+    val exporter = com.elvan.udukkai.ui.components.shell.rememberReportExporter(com.elvan.udukkai.core.print.billBusinessFolder(profile))
     val primaryLang = profile.primaryLanguage.ifEmpty { "ta" }
     val secondaryLang = profile.secondaryLanguage.ifEmpty { "en" }
     fun bilingual(a: String, b: String) = if (profile.isBilingual && b.isNotBlank() && b != a) a + "\n" + b else a.ifBlank { b }
@@ -120,7 +119,7 @@ fun TextilesReportsScreen(onBack: () -> Unit) {
         }
         val title = bilingual(profile.getPrimary("businessName"), profile.getSecondary("niruvanathinPeyar")).ifBlank { profile.shortName }
         val bytes = com.elvan.udukkai.core.export.SalesReportExcel.build(title, "Sales Report - " + periodKey.replace('_', ' '), lines.sortedBy { it.invoice.invoiceDate }.map { l -> SalesRow(l.invoice.invoiceNumber, clientName(l.invoice), DateUtils.formatEpochMillis(l.invoice.invoiceDate), l.taxable, l.cgst + l.sgst + l.igst, l.invoice.totalAmount) }, withTax = true)
-        saver.save("Sales_Report_$periodKey.xlsx", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", bytes)
+        exporter.save("Sales_Report_$periodKey", "xlsx", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", bytes)
     }
 
     val b2b = lines.filter { it.hasGstin }
@@ -152,12 +151,12 @@ fun TextilesReportsScreen(onBack: () -> Unit) {
     fun exportB2b() {
         val title = bilingual(profile.getPrimary("businessName"), profile.getSecondary("niruvanathinPeyar")).ifBlank { profile.shortName }
         val bytes = com.elvan.udukkai.core.export.GstrExcel.b2b(title, "GSTR-1 B2B - " + periodKeyText().replace('_', ' '), b2b.sortedBy { it.invoice.invoiceDate }.map { gstBill(it) })
-        saver.save("GSTR1_B2B_${periodKeyText()}.xlsx", xlsxMime, bytes)
+        exporter.save("GSTR1_B2B_${periodKeyText()}", "xlsx", xlsxMime, bytes)
     }
     fun exportHsn() {
         val title = bilingual(profile.getPrimary("businessName"), profile.getSecondary("niruvanathinPeyar")).ifBlank { profile.shortName }
         val bytes = com.elvan.udukkai.core.export.GstrExcel.hsn(title, "HSN Summary - " + periodKeyText().replace('_', ' '), lines.sortedBy { it.invoice.invoiceDate }.map { gstBill(it) })
-        saver.save("GSTR1_HSN_${periodKeyText()}.xlsx", xlsxMime, bytes)
+        exporter.save("GSTR1_HSN_${periodKeyText()}", "xlsx", xlsxMime, bytes)
     }
 
     // One scroll state for the list and the shell, so the large title collapses with the page instead of the rows passing under it
@@ -187,6 +186,14 @@ fun TextilesReportsScreen(onBack: () -> Unit) {
                     colors = colors,
                     isFullWidth = true,
                     modifier = Modifier.fillMaxWidth()
+                )
+            }
+
+            item(key = "financial_year") {
+                com.elvan.udukkai.ui.screens.home.components.FinancialYearSection(
+                    colors,
+                    (TextilesInvoiceRepository.invoices.map { com.elvan.udukkai.core.utils.DateUtils.financialYearStart(it.invoiceDate) } +
+                        TextilesReceiptRepository.receipts.map { com.elvan.udukkai.core.utils.DateUtils.financialYearStart(it.receiptDate) }).toSet()
                 )
             }
 

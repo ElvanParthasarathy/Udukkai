@@ -30,6 +30,10 @@ class DocumentPrintController {
     var isBusy by mutableStateOf(false)
         internal set
 
+    /** True while a bill that is already on screen is being made again after it was changed, so the old page is not shown as if current. */
+    var isRefreshing by mutableStateOf(false)
+        internal set
+
     /** Current zoom level of the shown sheet (1 = fitted to the screen). */
     var zoomScale by mutableStateOf(1f)
 

@@ -409,6 +409,13 @@ export default function PodhuReceiptPaper({
                   </div>
                 )}
 
+                {receipt.note && (
+                  <div className="receipt-row">
+                    <span className="receipt-label" style={{ color: norm.themeColor }}>{renderKey('noteLabel', 'Note:', 'குறிப்பு:')}</span>
+                    <span className="receipt-value">{receipt.note}</span>
+                  </div>
+                )}
+
                 {/* Center Amount and Words */}
                 <div style={{ marginTop: 'auto', marginBottom: 'auto', paddingLeft: '8px', paddingRight: '8px' }}>
                   <div className="receipt-amount" style={{ color: norm.themeColor, backgroundColor: norm.themeColor ? `${norm.themeColor}15` : '#e8f5e9' }}>
@@ -430,13 +437,6 @@ export default function PodhuReceiptPaper({
                     })()}
                   </div>
                 </div>
-
-                {receipt.note && (
-                  <div className="receipt-row">
-                    <span className="receipt-label" style={{ color: norm.themeColor }}>{renderKey('noteLabel', 'Note:', 'குறிப்பு:')}</span>
-                    <span className="receipt-value">{receipt.note}</span>
-                  </div>
-                )}
 
                 {/* Footer: Clean stationery layout matching invoice */}
                 <div style={{ display: 'flex', flexDirection: 'column', marginTop: 'auto', marginBottom: '14px', paddingLeft: '8px', paddingRight: '8px' }}>

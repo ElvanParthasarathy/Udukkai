@@ -253,6 +253,7 @@ private class PrintBridge(
         if (released) return
         val key = cacheKey(context, payloadJson, controller.options)
         wantKey = key
+        if (controller.pdfPath != null && key != currentKey) controller.isRefreshing = true
         val file = File(cacheDir(context), "$key.pdf")
         if (file.exists() && file.length() > 0) {
             publish(key, file)
@@ -398,6 +399,7 @@ private class PrintBridge(
     private fun failExport() {
         exporting = false
         controller.isBusy = false
+        controller.isRefreshing = false
         pendingAction = null
         controller.notice = PrintNotice(PrintNoticeKind.Failed)
     }
@@ -405,6 +407,7 @@ private class PrintBridge(
     // The PDF for [key] is ready: show it and run a waiting action
     private fun publish(key: String, file: File) {
         if (currentKey == key && currentFile == file) {
+            controller.isRefreshing = false
             runPending()
             return
         }
@@ -421,6 +424,7 @@ private class PrintBridge(
                 currentFile = file
                 currentPages = pages
                 controller.pdfPath = file.absolutePath
+                controller.isRefreshing = false
                 controller.markReady()
                 pruneCache(context)
                 runPending()
