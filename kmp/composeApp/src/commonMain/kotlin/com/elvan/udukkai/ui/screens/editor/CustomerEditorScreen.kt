@@ -210,18 +210,8 @@ fun CustomerEditorScreen(
     val currentCompanyId = selectedCompanyOption.id
     val companyChanged = merchant != null && initialCompanyId != currentCompanyId
 
-    // What the form holds once it has settled after opening (it fills in some defaults by itself, e.g. the country):
-    // "changed" means different from that, not from what was stored
-    val currentState = listOf<Any?>(nameMap, billGstin, extra, fullPhone, email, countryMap, stateMap, districtMap, cityMap, addressMap, pinCode)
-    val latestState by rememberUpdatedState(currentState)
-    var openedWith by remember { mutableStateOf<List<Any?>?>(null) }
-    LaunchedEffect(Unit) {
-        withFrameNanos { }
-        kotlinx.coroutines.delay(250)
-        openedWith = latestState
-    }
-    val hasChanges = openedWith?.let { currentState != it } ?: false
-    val hasChangesOrCompany = hasChanges || companyChanged
+    val hasChanges = rememberSettledChange(listOf(nameMap, billGstin, extra, fullPhone, email, countryMap, stateMap, districtMap, cityMap, addressMap, pinCode, selectedCompanyOption.id))
+    val hasChangesOrCompany = hasChanges
 
     val handleBackAttempt: () -> Unit = {
         if (!isExiting) {

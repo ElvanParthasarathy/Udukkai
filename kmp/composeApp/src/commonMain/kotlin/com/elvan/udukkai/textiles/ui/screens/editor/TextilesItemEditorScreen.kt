@@ -105,16 +105,7 @@ fun TextilesItemEditorScreen(
     val currentCompanyId = selectedCompanyOption.id
     val companyChanged = item != null && initialCompanyId != currentCompanyId
 
-    val hasChanges = remember(itemNameMap, hsnCode, price, variVeetham, quantityType, companyChanged) {
-        if (item == null) {
-            itemNameMap.values.any { it.isNotBlank() } || hsnCode.isNotBlank() || price.isNotBlank() || companyChanged
-        } else {
-            itemNameMap != item.name || hsnCode != item.hsnCode ||
-                (price.toDoubleOrNull() ?: 0.0) != item.price ||
-                (variVeetham.toDoubleOrNull() ?: 0.0) != item.taxRate ||
-                quantityType != item.quantityType || companyChanged
-        }
-    }
+    val hasChanges = com.elvan.udukkai.ui.screens.editor.rememberSettledChange(listOf(itemNameMap, hsnCode, price, variVeetham, quantityType, selectedCompanyOption.id))
 
     val handleBackAttempt: () -> Unit = {
         if (!isExiting) {

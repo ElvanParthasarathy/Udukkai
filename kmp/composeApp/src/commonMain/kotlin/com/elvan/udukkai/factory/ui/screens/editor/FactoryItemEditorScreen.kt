@@ -80,13 +80,7 @@ fun FactoryItemEditorScreen(
     val currentCompanyId = selectedCompanyOption.id
     val companyChanged = item != null && initialCompanyId != currentCompanyId
 
-    val hasChanges = remember(itemNameMap, companyChanged) {
-        if (item == null) {
-            itemNameMap.values.any { it.isNotBlank() } || companyChanged
-        } else {
-            itemNameMap != item.name || companyChanged
-        }
-    }
+    val hasChanges = com.elvan.udukkai.ui.screens.editor.rememberSettledChange(listOf(itemNameMap, selectedCompanyOption.id))
 
     val handleBackAttempt: () -> Unit = {
         if (!isExiting) {
