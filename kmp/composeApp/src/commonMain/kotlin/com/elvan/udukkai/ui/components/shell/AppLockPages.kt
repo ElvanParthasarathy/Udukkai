@@ -46,7 +46,7 @@ import kotlinx.coroutines.delay
  * If the device has no screen lock set, it shows a clean ScreenLockRequiredScreen.
  */
 @Composable
-fun AppLockGate(colors: ShellColors, content: @Composable () -> Unit) {
+fun AppLockGate(colors: ShellColors, appNameKey: String = K.appName, content: @Composable () -> Unit) {
     val unlocked = AppLock.unlockedThisRun
     val isSet = AppLock.isSet()
     val locked = isSet && !unlocked
@@ -85,7 +85,8 @@ fun AppLockGate(colors: ShellColors, content: @Composable () -> Unit) {
             if (hasLock) {
                 UdukkaiAppLockScreen(
                     colors = colors,
-                    onUnlock = { askAuth() }
+                    onUnlock = { askAuth() },
+                    appNameKey = appNameKey
                 )
                 LaunchedEffect(Unit) {
                     askAuth()
@@ -109,7 +110,8 @@ fun AppLockGate(colors: ShellColors, content: @Composable () -> Unit) {
 fun UdukkaiAppLockScreen(
     colors: ShellColors,
     onUnlock: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    appNameKey: String = K.appName
 ) {
     val ff = LocalAppFontFamily.current
     val isDark = colors.isDark
@@ -158,7 +160,7 @@ fun UdukkaiAppLockScreen(
 
             // App Name
             Text(
-                text = K.appName.tr(),
+                text = appNameKey.tr(),
                 style = TextStyle(
                     fontFamily = ff,
                     fontSize = 28.sp,

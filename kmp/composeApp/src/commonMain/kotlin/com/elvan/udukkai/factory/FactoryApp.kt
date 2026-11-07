@@ -1,5 +1,6 @@
 package com.elvan.udukkai.factory
 
+import com.elvan.udukkai.localization.K
 import com.elvan.udukkai.ui.components.shell.AppLockGate
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -65,7 +66,7 @@ fun FactoryApp() {
                             }
                         )
                     } else {
-                        AppLockGate(colors) { OnboardingGate(AppScope.FACTORY) { FactoryHomeScreen() } }
+                        AppLockGate(colors, appNameKey = K.udukkaiFactory) { OnboardingGate(AppScope.FACTORY) { FactoryHomeScreen() } }
                     }
 
                     ElvanBottomSheetHost(bottomSheetController)

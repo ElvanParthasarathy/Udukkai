@@ -132,7 +132,7 @@ abstract class BaseSubpageActivity : FragmentActivity() {
                                 .fillMaxSize()
                                 .background(colors.background)
                         ) {
-                            AppLockGate(colors) {
+                            AppLockGate(colors, appNameKey = if (isFactory) com.elvan.udukkai.localization.K.udukkaiFactory else com.elvan.udukkai.localization.K.udukkaiTextiles) {
                                 ScreenContent()
                             }
                             ElvanBottomSheetHost(bottomSheetController)

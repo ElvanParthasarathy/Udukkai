@@ -1,5 +1,6 @@
 package com.elvan.udukkai.textiles
 
+import com.elvan.udukkai.localization.K
 import com.elvan.udukkai.ui.components.shell.AppLockGate
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -65,7 +66,7 @@ fun TextilesApp() {
                             }
                         )
                     } else {
-                        AppLockGate(colors) { OnboardingGate(AppScope.TEXTILES) { TextilesHomeScreen() } }
+                        AppLockGate(colors, appNameKey = K.udukkaiTextiles) { OnboardingGate(AppScope.TEXTILES) { TextilesHomeScreen() } }
                     }
 
                     ElvanBottomSheetHost(bottomSheetController)
