@@ -18,7 +18,12 @@ class FinancialYearsTest {
         assertEquals(2023, DateUtils.financialYearStart(day("29/02/2024")))
         assertEquals("2023-24", DateUtils.financialYearLabel(day("15/08/2023")))
         assertEquals("23-24", BillNumbering.fyShort(day("15/08/2023")))
+
         assertEquals("99-00", BillNumbering.fyShort(day("10/10/2099")))
+        assertEquals("2023-24", DateUtils.normalizeFinYear("2023-24", day("15/08/2023")))
+        assertEquals("2023-24", DateUtils.normalizeFinYear("2023", day("15/08/2023")))
+        assertEquals("2023-24", DateUtils.normalizeFinYear("23-24", day("15/08/2023")))
+        assertEquals("2023-24", DateUtils.normalizeFinYear("", day("15/08/2023")))
     }
 
     @Test

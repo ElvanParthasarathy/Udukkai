@@ -1,3 +1,4 @@
+import { normalizeFy } from "../lib/finYear";
 // @ts-nocheck
 import React, { useRef, useState, useEffect } from 'react';
 import { useLanguage } from '../lib/mozhi/LanguageContext';
@@ -369,7 +370,7 @@ export default function PodhuReceiptPaper({
 
                 <div className="receipt-row">
                   <span className="receipt-label" style={{ color: norm.themeColor }}>{renderKey('finYearLabel', 'Financial Year:', 'நிதியாண்டு:')}</span>
-                  <span className="receipt-value">{receipt.finYear || (receipt.date ? getFinYear(receipt.date) : '')}</span>
+                  <span className="receipt-value">{normalizeFy(receipt.finYear, receipt.date)}</span>
                 </div>
 
                 <div className="receipt-row">

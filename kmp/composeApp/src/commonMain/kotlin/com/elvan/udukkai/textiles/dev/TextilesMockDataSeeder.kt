@@ -296,7 +296,7 @@ object TextilesMockDataSeeder {
                     companyId = profileId,
                     receiptNumber = receiptNo,
                     vanakkam = vanakkamNum,
-                    finYear = "2026",
+                    finYear = "2026-27",
                     customerId = matchedCust?.id,
                     customerName = mapOf("ta" to clientName, "en" to ((r["clientNameEn"] as? String) ?: clientName)),
                     receiptDate = dateMillis,

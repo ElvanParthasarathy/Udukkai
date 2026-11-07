@@ -15,3 +15,16 @@ export const fyFull = (date: unknown): string => {
   const short = fyLabel(date);
   return short ? `20${short.slice(0, 2)}-${short.slice(3)}` : '';
 };
+
+/** Normalizes any financial year representation ("2026", "2026-27", "26-27", or empty) to "2026-27". */
+export const normalizeFy = (fy: unknown, date?: unknown): string => {
+  const s = String(fy ?? '').trim();
+  if (/^\d{4}-\d{2}$/.test(s)) return s;
+  if (/^\d{2}-\d{2}$/.test(s)) return `20${s}`;
+  const y = Number(s);
+  if (!isNaN(y) && y >= 1900 && y <= 2100) {
+    const end = (y + 1) % 100;
+    return `${y}-${end < 10 ? '0' : ''}${end}`;
+  }
+  return date ? fyFull(date) : '';
+};

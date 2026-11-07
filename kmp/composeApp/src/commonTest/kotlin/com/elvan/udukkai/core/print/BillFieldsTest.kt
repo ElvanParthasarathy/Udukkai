@@ -160,5 +160,14 @@ class BillFieldsTest {
             appLanguage = "ta"
         )
         assertTrue(json.contains("\"finYear\":\"2026-27\""), "finYear not in receipt payload: $json")
+        // Legacy 4-digit format "2026" also normalizes to "2026-27"
+        val legacy = receipt.copy(finYear = "2026")
+        val jsonLegacy = PrintPayload.forReceipt(legacy, profile, listOf("VRM-001"), false, "ta")
+        assertTrue(jsonLegacy.contains("\"finYear\":\"2026-27\""), "legacy finYear not normalized: $jsonLegacy")
+
+        // Empty finYear also normalizes from date
+        val emptyFy = receipt.copy(finYear = "")
+        val jsonEmpty = PrintPayload.forReceipt(emptyFy, profile, listOf("VRM-001"), false, "ta")
+        assertTrue(jsonEmpty.contains("\"finYear\":\"2026-27\""), "empty finYear not derived: $jsonEmpty")
     }
 }

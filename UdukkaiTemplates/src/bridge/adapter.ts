@@ -1,3 +1,4 @@
+import { normalizeFy } from "../lib/finYear";
 // @ts-nocheck
 // Translates the KMP app's payload (English field names, language-code maps
 // like { ta: '...', en: '...' }) into the exact props the React print
@@ -256,7 +257,7 @@ const getFinYearFromDate = (d?: string | number) => {
 };
 
 const toReactReceipt = (r, lang) => ({
-  finYear: str(r.finYear) || getFinYearFromDate(r.receiptDate),
+  finYear: normalizeFy(r.finYear, r.receiptDate),
   receiptNo: str(r.receiptNumber),
   date: str(r.receiptDate),
   amount: Number(r.amount) || 0,

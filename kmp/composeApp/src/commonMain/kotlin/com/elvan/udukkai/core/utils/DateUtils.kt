@@ -72,4 +72,16 @@ object DateUtils {
         val start = financialYearStart(millis)
         return "$start-${((start + 1) % 100).toString().padStart(2, '0')}"
     }
+
+    /** Normalizes a financial year string (e.g. "2026", "26-27", or "") into full label like "2026-27". */
+    fun normalizeFinYear(fy: String, dateMillis: Long): String {
+        val trimmed = fy.trim()
+        if (trimmed.matches(Regex("^\\d{4}-\\d{2}$"))) return trimmed
+        if (trimmed.matches(Regex("^\\d{2}-\\d{2}$"))) return "20$trimmed"
+        val year = trimmed.toIntOrNull()
+        if (year != null && year in 1900..2100) {
+            return "$year-${((year + 1) % 100).toString().padStart(2, '0')}"
+        }
+        return financialYearLabel(dateMillis)
+    }
 }

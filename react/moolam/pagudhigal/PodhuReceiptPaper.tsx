@@ -72,6 +72,18 @@ const getFinYear = (d?: string | number | Date): string => {
   return `${start}-${end < 10 ? '0' : ''}${end}`;
 };
 
+const normalizeFinYear = (fy?: string, d?: string | number | Date): string => {
+  const s = String(fy || '').trim();
+  if (/^\d{4}-\d{2}$/.test(s)) return s;
+  if (/^\d{2}-\d{2}$/.test(s)) return `20${s}`;
+  const y = Number(s);
+  if (!isNaN(y) && y >= 1900 && y <= 2100) {
+    const end = (y + 1) % 100;
+    return `${y}-${end < 10 ? '0' : ''}${end}`;
+  }
+  return getFinYear(d);
+};
+
 export function normalizeReceiptProfile(p: any = {}) {
   const isBilingual = p.enableBilingual !== false;
   const isTamilPrimary = p.primaryDataLanguage === 'Tamil' || (!p.primaryDataLanguage && p.receiptLanguage !== 'en');
@@ -624,7 +636,7 @@ export default function PodhuReceiptPaper({
 
                 <div className="receipt-row">
                   <span className="receipt-label" style={{ color: norm.themeColor }}>{renderKey('finYearLabel', 'Financial Year:', 'நிதியாண்டு:')}</span>
-                  <span className="receipt-value">{receipt.finYear || (receipt.date ? getFinYear(receipt.date) : '')}</span>
+                  <span className="receipt-value">{normalizeFinYear(receipt.finYear, receipt.date)}</span>
                 </div>
 
                 <div className="receipt-row">

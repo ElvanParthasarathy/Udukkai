@@ -177,7 +177,7 @@ private fun ReceiptDetailsScreen(
                                     color = colors.textPrimary
                                 )
                             )
-                            val fy = receipt.finYear.ifEmpty { DateUtils.financialYearLabel(receipt.receiptDate) }
+                            val fy = DateUtils.normalizeFinYear(receipt.finYear, receipt.receiptDate)
                             if (fy.isNotBlank()) {
                                 Spacer(modifier = Modifier.height(2.dp))
                                 Text(
