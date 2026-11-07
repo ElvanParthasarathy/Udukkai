@@ -1,7 +1,10 @@
 package com.elvan.udukkai.ui.components.shell
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.Text
+import androidx.compose.ui.draw.clip
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -13,7 +16,6 @@ import com.elvan.udukkai.localization.K
 import com.elvan.udukkai.localization.tr
 import com.elvan.udukkai.theme.LocalAppFontFamily
 import com.elvan.udukkai.theme.ShellColors
-import com.elvan.udukkai.ui.components.ExpressiveContainedLoader
 import kotlinx.coroutines.delay
 
 /**
@@ -58,17 +60,20 @@ fun ElvanBulkProgressSheet(
         onDismissRequest = { cancelled = true },
         colors = colors,
         customContent = {
-            // Minimal: the app's own loader with the percentage quietly below it
+            // Minimal: a Material 3 linear bar with the percentage quietly below it
             Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
-                ExpressiveContainedLoader(
-                    modifier = Modifier.size(48.dp),
-                    containerColor = colors.iconBg,
-                    indicatorColor = colors.textPrimary
+                LinearProgressIndicator(
+                    progress = { if (ids.isEmpty()) 1f else done.toFloat() / ids.size },
+                    modifier = Modifier.fillMaxWidth().height(6.dp).clip(RoundedCornerShape(100)),
+                    color = colors.textPrimary,
+                    trackColor = colors.textPrimary.copy(alpha = 0.10f),
+                    gapSize = 0.dp,
+                    drawStopIndicator = {}
                 )
                 Spacer(Modifier.height(10.dp))
                 Text(
                     text = "$percent%",
-                    style = TextStyle(fontFamily = ff, fontSize = 13.sp, fontWeight = FontWeight.Medium),
+                    style = TextStyle(fontFamily = ff, fontSize = 12.sp, fontWeight = FontWeight.Medium),
                     color = colors.textPrimary.copy(alpha = 0.55f)
                 )
             }

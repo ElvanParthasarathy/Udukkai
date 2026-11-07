@@ -32,33 +32,6 @@ import com.elvan.udukkai.ui.components.shell.LocalElvanTopSpacerHeight
 import com.elvan.udukkai.ui.screens.create.components.ElvanPillShifter
 import com.elvan.udukkai.ui.screens.create.components.PillShifterItem
 
-/** Tax figures of one factory bill, read from the stored bill. */
-private data class FactoryReportLine(
-    val invoice: InvoiceModel,
-    val taxable: Double,
-    val cgst: Double,
-    val sgst: Double,
-    val igst: Double,
-    val hasGstin: Boolean
-)
-
-private fun numberIn(json: String, key: String): Double =
-    Regex(""""$key"\s*:\s*([-+0-9.eE]+)""").find(json)?.groupValues?.get(1)?.toDoubleOrNull() ?: 0.0
-
-private fun factoryReportLine(invoice: InvoiceModel): FactoryReportLine {
-    var cgst = numberIn(invoice.taxDataJson, "cgst")
-    var sgst = numberIn(invoice.taxDataJson, "sgst")
-    val igst = numberIn(invoice.taxDataJson, "igst")
-    // A bill saved without a split is shown as intra-state: half CGST, half SGST
-    if (cgst + sgst + igst == 0.0 && invoice.taxAmount > 0.0) {
-        cgst = round(invoice.taxAmount * 100.0 / 2.0) / 100.0
-        sgst = invoice.taxAmount - cgst
-    }
-    val tax = cgst + sgst + igst
-    val gstin = invoice.customerId?.let { FactoryCustomerRepository.getById(it)?.gstin }.orEmpty()
-    return FactoryReportLine(invoice, (invoice.totalAmount - tax).coerceAtLeast(0.0), cgst, sgst, igst, gstin.isNotBlank())
-}
-
 /** Month (year * 12 + month) of a bill date; the financial year runs April to March. */
 private fun monthIndex(millis: Long): Int {
     val parts = DateUtils.formatEpochMillis(millis).split("/")
@@ -93,16 +66,8 @@ fun FactoryReportsScreen(onBack: () -> Unit) {
 
     val lines = FactoryInvoiceRepository.activeCompanyInvoices
         .filter { it.invoiceType != "proforma" && monthIndex(it.invoiceDate) in range }
-        .map { factoryReportLine(it) }
-    val numbers = lines.map { it.invoice.invoiceNumber }.sorted()
-
-    val taxable = lines.sumOf { it.taxable }
-    val cgst = lines.sumOf { it.cgst }
-    val sgst = lines.sumOf { it.sgst }
-    val igst = lines.sumOf { it.igst }
-    val total = lines.sumOf { it.invoice.totalAmount }
-    val b2b = lines.filter { it.hasGstin }
-    val b2c = lines.filter { !it.hasGstin }
+    val numbers = lines.map { it.invoiceNumber }.sorted()
+    val total = lines.sumOf { it.totalAmount }
 
     val listState = rememberLazyListState()
     ElvanSubShell(title = K.reports.tr(), onBack = onBack, scrollState = listState) {
@@ -136,7 +101,7 @@ fun FactoryReportsScreen(onBack: () -> Unit) {
             if (lines.isEmpty()) {
                 item(key = "empty") {
                     Text(
-                        text = K.noInvoicesInPeriod.tr(),
+                        text = K.noBillsInPeriod.tr(),
                         style = TextStyle(fontFamily = ff, fontSize = 14.sp, textAlign = TextAlign.Center),
                         color = colors.textSecondary,
                         modifier = Modifier.fillMaxWidth().padding(vertical = 32.dp)
@@ -147,27 +112,7 @@ fun FactoryReportsScreen(onBack: () -> Unit) {
                     ElvanSettingsSection(title = K.salesSummary.tr(), colors = colors) {
                         FactoryReportRow(K.invoices.tr(), "${lines.size}", colors)
                         ElvanSettingsDivider(colors = colors)
-                        FactoryReportRow(K.taxableValue.tr(), CurrencyUtils.formatInr(taxable), colors)
-                        ElvanSettingsDivider(colors = colors)
-                        FactoryReportRow(K.totalTax.tr(), CurrencyUtils.formatInr(cgst + sgst + igst), colors)
-                        ElvanSettingsDivider(colors = colors)
                         FactoryReportRow(K.grandTotal.tr(), CurrencyUtils.formatInr(total), colors, bold = true)
-                    }
-                }
-                item(key = "tax") {
-                    ElvanSettingsSection(title = K.taxBreakup.tr(), colors = colors) {
-                        FactoryReportRow(K.cgstLabel.tr(), CurrencyUtils.formatInr(cgst), colors)
-                        ElvanSettingsDivider(colors = colors)
-                        FactoryReportRow(K.sgstLabel.tr(), CurrencyUtils.formatInr(sgst), colors)
-                        ElvanSettingsDivider(colors = colors)
-                        FactoryReportRow(K.igstLabel.tr(), CurrencyUtils.formatInr(igst), colors)
-                    }
-                }
-                item(key = "split") {
-                    ElvanSettingsSection(colors = colors) {
-                        FactoryReportRow("${K.b2bSales.tr()} (${b2b.size})", CurrencyUtils.formatInr(b2b.sumOf { it.invoice.totalAmount }), colors)
-                        ElvanSettingsDivider(colors = colors)
-                        FactoryReportRow("${K.b2cSales.tr()} (${b2c.size})", CurrencyUtils.formatInr(b2c.sumOf { it.invoice.totalAmount }), colors)
                     }
                 }
                 item(key = "numbers") {
