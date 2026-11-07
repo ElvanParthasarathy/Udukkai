@@ -211,6 +211,8 @@ object AppUpdate {
     }
 
     internal fun onUpdated(context: Context) {
+        // The receiver can run before init() (right after an update, in a fresh process)
+        if (!::prefs.isInitialized) prefs = context.applicationContext.getSharedPreferences("udukkai_update", Context.MODE_PRIVATE)
         val version = prefs.getString(KEY_INSTALLING, null) ?: return
         val prompted = prefs.getBoolean(KEY_PROMPTED, false)
         prefs.edit().remove(KEY_INSTALLING).remove(KEY_PROMPTED).apply()

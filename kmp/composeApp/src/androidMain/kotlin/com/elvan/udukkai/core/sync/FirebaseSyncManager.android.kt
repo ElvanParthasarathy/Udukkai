@@ -75,6 +75,9 @@ class AndroidFirebaseSyncManager : FirebaseSyncManager {
     private var databaseInstance: FirebaseDatabase? = null
     private var isPersistenceSet = false
     private val activeListeners = mutableMapOf<DatabaseReference, ValueEventListener>()
+    /** "collection:id" of records deleted for good on this phone: an older cloud snapshot must not bring them back. */
+    private val removedLocally = java.util.concurrent.ConcurrentHashMap.newKeySet<String>()
+
     @Volatile private var isApplyingRemoteChange = false
 
     private fun getDatabase(): FirebaseDatabase? {
@@ -423,6 +426,8 @@ class AndroidFirebaseSyncManager : FirebaseSyncManager {
                 remoteIds.add(id(remote))
                 val mine = localById[id(remote)]
                 // A record deleted for good here long ago is not brought back from the cloud
+                // Deleted for good on this phone a moment ago: an older snapshot must not revive it
+                if (mine == null && removedLocally.contains("${kind.name.lowercase()}:${id(remote)}")) continue
                 val oldTombstone = mine == null && isDeleted(remote) && (deletedAt(remote) ?: Long.MAX_VALUE) < purgeLimit
                 if (!oldTombstone && (mine == null || updated(remote) > updated(mine))) {
                     batch.add(remote)
@@ -707,6 +712,7 @@ class AndroidFirebaseSyncManager : FirebaseSyncManager {
     }
 
     override fun pushRemove(collection: String, id: Long, scope: String) {
+        removedLocally.add("$collection:$id")
         if (!isSyncAllowed()) return
         val db = getDatabase() ?: return
         val root = db.getReference(getPrefix(scope))
