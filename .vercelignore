@@ -1,0 +1,12 @@
+kmp
+flutter
+archive
+UdukkaiTemplates
+language-rule-tests
+graphify-out
+scripts
+*.apk
+react/android
+react/electron
+react/dist
+react/dev-dist
