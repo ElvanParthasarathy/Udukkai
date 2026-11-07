@@ -343,7 +343,7 @@ fun TextilesStorageBackupScreen(
                             .fillMaxWidth()
                             .padding(horizontal = 20.dp, vertical = 14.dp)
                     ) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
+                        Row(verticalAlignment = Alignment.Top) {
                             Surface(
                                 shape = CircleShape,
                                 color = colors.iconBg,
@@ -364,20 +364,15 @@ fun TextilesStorageBackupScreen(
                             Column(modifier = Modifier.weight(1f)) {
                                 Text(
                                     text = item.name.preventBrokenLigatures(),
-                                    style = TextStyle(fontFamily = ff, fontSize = 16.5.sp, fontWeight = FontWeight.ExtraBold, color = colors.textPrimary)
+                                    style = TextStyle(fontFamily = ff, fontSize = 16.5.sp, fontWeight = FontWeight.SemiBold, color = colors.textPrimary)
                                 )
-                                if (item.secondName.isNotBlank()) {
+                                // English name and the town on one line, as on the home card
+                                val secondLine = listOf(item.secondName, item.subtitle).filter { it.isNotBlank() }.joinToString(" • ")
+                                if (secondLine.isNotBlank()) {
                                     Spacer(Modifier.height(2.dp))
                                     Text(
-                                        text = item.secondName.preventBrokenLigatures(),
+                                        text = secondLine.preventBrokenLigatures(),
                                         style = TextStyle(fontFamily = ff, fontSize = 13.5.sp, color = colors.textSecondary)
-                                    )
-                                }
-                                if (item.subtitle.isNotBlank()) {
-                                    Spacer(Modifier.height(2.dp))
-                                    Text(
-                                        text = item.subtitle.preventBrokenLigatures(),
-                                        style = TextStyle(fontFamily = ff, fontSize = 13.5.sp, color = colors.textSecondary.copy(alpha = 0.7f))
                                     )
                                 }
                             }
