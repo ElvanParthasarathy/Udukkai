@@ -280,6 +280,30 @@ object TextilesCalculation {
             "}"
     }
 
+    /** One bill line's tax, split the way the bill totals are (same discounts, same rounding), for the GST summaries. */
+    data class ItemTax(val item: TextilesItem, val taxable: Double, val cgst: Double, val sgst: Double, val igst: Double)
+
+    fun itemTaxLines(
+        items: List<TextilesItem>,
+        globalDiscountValue: Double,
+        globalDiscountType: String,
+        interState: Boolean,
+        taxInclusive: Boolean
+    ): List<ItemTax> {
+        fun itemDiscount(i: TextilesItem): Double { val amount = i.quantity * i.price; return if (i.discountType == "%") amount * (i.discount / 100.0) else i.discount }
+        val afterItems = items.map { (it.quantity * it.price - itemDiscount(it)).coerceAtLeast(0.0) }
+        val subtotal = afterItems.sum()
+        val globalAmount = if (globalDiscountType == "%") subtotal * (globalDiscountValue / 100.0) else globalDiscountValue
+        return items.mapIndexed { idx, item ->
+            val weight = if (subtotal > 0) afterItems[idx] / subtotal else 0.0
+            val net = (afterItems[idx] - globalAmount * weight).coerceAtLeast(0.0)
+            val taxable = if (taxInclusive && item.taxRate > 0) net / (1.0 + item.taxRate / 100.0) else net
+            val tax = if (taxInclusive && item.taxRate > 0) round2(net - taxable) else round2(net * item.taxRate / 100.0)
+            if (interState) ItemTax(item, taxable, 0.0, 0.0, tax)
+            else { val c = round2(tax / 2.0); ItemTax(item, taxable, c, round2(tax - c), 0.0) }
+        }
+    }
+
     fun preferencesFromJson(json: String?): TextilesPreferences {
         if (json.isNullOrBlank() || json.trim() == "{}" || json.trim() == "null") {
             return TextilesPreferences()

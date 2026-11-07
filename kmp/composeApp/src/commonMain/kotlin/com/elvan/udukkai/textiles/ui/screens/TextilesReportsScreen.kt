@@ -126,6 +126,40 @@ fun TextilesReportsScreen(onBack: () -> Unit) {
     val b2b = lines.filter { it.hasGstin }
     val b2c = lines.filter { !it.hasGstin }
 
+    // The GST summaries (GSTR-1 B2B table and HSN summary) of the bills of this period
+    fun periodKeyText() = when (period) {
+        2 -> "FY_" + (fyStart / 12).toString() + "-" + (((fyStart / 12) + 1) % 100).toString().padStart(2, '0')
+        else -> range.first.let { m -> (m / 12).toString() + "-" + (m % 12 + 1).toString().padStart(2, '0') }
+    }
+    fun gstBill(l: ReportLine): com.elvan.udukkai.core.export.GstBill {
+        val inv = l.invoice
+        val cust = inv.customerId?.let { TextilesCustomerRepository.getById(it) }
+        val prefs = com.elvan.udukkai.textiles.ui.screens.editor.TextilesCalculation.preferencesFromJson(inv.customPreferencesJson)
+        val inclusive = Regex(""""taxInclusive"\s*:\s*true""").containsMatchIn(inv.customPreferencesJson)
+        val inter = l.igst > 0.0
+        val taxLines = com.elvan.udukkai.textiles.ui.screens.editor.TextilesCalculation.itemTaxLines(
+            com.elvan.udukkai.textiles.ui.screens.editor.TextilesCalculation.itemsFromJson(inv.itemsJson),
+            inv.globalDiscountValue.takeIf { it > 0 } ?: prefs.globalDiscountValue, inv.globalDiscountType.ifEmpty { prefs.globalDiscountType }, inter, inclusive
+        )
+        return com.elvan.udukkai.core.export.GstBill(
+            number = inv.invoiceNumber, date = DateUtils.formatEpochMillis(inv.invoiceDate), gstin = cust?.gstin.orEmpty(),
+            customer = clientName(inv), total = inv.totalAmount, placeOfSupply = prefs.placeOfSupply, interState = inter,
+            taxable = l.taxable, cgst = l.cgst, sgst = l.sgst, igst = l.igst,
+            lines = taxLines.map { t -> com.elvan.udukkai.core.export.GstLine(t.item.hsnCode, t.item.itemName.ifBlank { t.item.itemNameEn }, t.item.unit, t.item.quantity, t.item.taxRate, t.taxable, t.cgst, t.sgst, t.igst) }
+        )
+    }
+    val xlsxMime = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    fun exportB2b() {
+        val title = bilingual(profile.getPrimary("businessName"), profile.getSecondary("niruvanathinPeyar")).ifBlank { profile.shortName }
+        val bytes = com.elvan.udukkai.core.export.GstrExcel.b2b(title, "GSTR-1 B2B - " + periodKeyText().replace('_', ' '), b2b.sortedBy { it.invoice.invoiceDate }.map { gstBill(it) })
+        saver.save("GSTR1_B2B_${periodKeyText()}.xlsx", xlsxMime, bytes)
+    }
+    fun exportHsn() {
+        val title = bilingual(profile.getPrimary("businessName"), profile.getSecondary("niruvanathinPeyar")).ifBlank { profile.shortName }
+        val bytes = com.elvan.udukkai.core.export.GstrExcel.hsn(title, "HSN Summary - " + periodKeyText().replace('_', ' '), lines.sortedBy { it.invoice.invoiceDate }.map { gstBill(it) })
+        saver.save("GSTR1_HSN_${periodKeyText()}.xlsx", xlsxMime, bytes)
+    }
+
     // One scroll state for the list and the shell, so the large title collapses with the page instead of the rows passing under it
     val listState = rememberLazyListState()
     ElvanSubShell(title = K.reports.tr(), onBack = onBack, scrollState = listState) {
@@ -208,6 +242,22 @@ fun TextilesReportsScreen(onBack: () -> Unit) {
                             title = K.exportExcel.tr(),
                             description = K.exportExcelDesc.tr(),
                             onClick = { exportExcel() },
+                            colors = colors
+                        )
+                        com.elvan.udukkai.ui.components.shell.ElvanSettingsDivider(colors = colors)
+                        com.elvan.udukkai.ui.components.shell.ElvanSettingsRow(
+                            icon = com.elvan.udukkai.ui.navigation.MaterialSymbols.Rounded.Download,
+                            title = K.exportB2b.tr(),
+                            description = K.exportB2bDesc.tr(),
+                            onClick = { exportB2b() },
+                            colors = colors
+                        )
+                        com.elvan.udukkai.ui.components.shell.ElvanSettingsDivider(colors = colors)
+                        com.elvan.udukkai.ui.components.shell.ElvanSettingsRow(
+                            icon = com.elvan.udukkai.ui.navigation.MaterialSymbols.Rounded.Download,
+                            title = K.exportHsn.tr(),
+                            description = K.exportHsnDesc.tr(),
+                            onClick = { exportHsn() },
                             colors = colors
                         )
                     }

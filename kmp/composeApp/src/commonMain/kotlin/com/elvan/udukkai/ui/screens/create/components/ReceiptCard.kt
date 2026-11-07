@@ -75,7 +75,8 @@ fun ReceiptCard(
     }
 
     val paymentModeText = if (primaryLang.lowercase().startsWith("en") && enLabel.isNotEmpty()) enLabel else taLabel
-    val linkedInvoicesText = linkedInvoiceNumbers.joinToString(", ")
+    // Short on the card: the first two bill numbers and how many more (the receipt itself lists them all)
+    val linkedInvoicesText = linkedInvoiceNumbers.take(2).joinToString(", ") + if (linkedInvoiceNumbers.size > 2) "  +${linkedInvoiceNumbers.size - 2}" else ""
 
     ElvanCommonCard(
         onClick = onClick,

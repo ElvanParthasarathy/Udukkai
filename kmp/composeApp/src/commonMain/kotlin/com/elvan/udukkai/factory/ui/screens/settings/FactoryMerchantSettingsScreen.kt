@@ -522,6 +522,42 @@ fun FactoryMerchantSettingsScreen(
                         }
                     }
                 )
+
+                // 8. HSN / SAC code of what the business sells
+                ElvanSettingsDivider(colors = colors)
+                ElvanSettingsAnimatedExpand(
+                    isEditing = editingSection == "hsn",
+                    displayContent = {
+                        ElvanSettingsDisplayRow(
+                            title = K.hsnSacCode.tr(),
+                            primaryValue = com.elvan.udukkai.data.settings.ProfileHsn.get(profile.printSettingsJson),
+                            onEdit = {
+                                tempPrimary = com.elvan.udukkai.data.settings.ProfileHsn.get(profile.printSettingsJson)
+                                editingSection = "hsn"
+                            },
+                            colors = colors
+                        )
+                    },
+                    editContent = {
+                        ElvanSettingsEditContainer(
+                            title = K.hsnSacCode.tr(),
+                            onCancel = { editingSection = null },
+                            onSave = {
+                                saveField { profile.printSettingsJson = com.elvan.udukkai.data.settings.ProfileHsn.set(profile.printSettingsJson, tempPrimary) }
+                            },
+                            colors = colors
+                        ) {
+                            ElvanSettingsTextField(
+                                label = K.hsnSacCode.tr(),
+                                value = tempPrimary,
+                                onValueChange = { tempPrimary = it.filter { c -> c.isDigit() } },
+                                keyboardOptions = KeyboardOptions(keyboardType = androidx.compose.ui.text.input.KeyboardType.Number),
+                                maxLength = 8,
+                                colors = colors
+                            )
+                        }
+                    }
+                )
             }
         }
     }
