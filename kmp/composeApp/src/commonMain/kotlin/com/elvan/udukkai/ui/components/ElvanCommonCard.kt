@@ -67,7 +67,7 @@ fun ElvanCommonCard(
     val defaultBg = LocalShellColors.current.surface
     val selectedBg = if (isDark) Color.White.copy(alpha = 0.06f) else Color.Black.copy(alpha = 0.04f)
     val bgColor by androidx.compose.animation.animateColorAsState(
-        if (isSelected) selectedBg else defaultBg, tween(180), label = "cardSelectedBg"
+        if (isSelected) selectedBg else defaultBg, tween(420, easing = CubicBezierEasing(0.2f, 0f, 0f, 1f)), label = "cardSelectedBg"
     )
 
     val interactionSource = remember { MutableInteractionSource() }
@@ -96,7 +96,7 @@ fun ElvanCommonCard(
                 if (onClick != null || onLongClick != null) {
                     Modifier.combinedClickable(
                         interactionSource = interactionSource,
-                        indication = if (isSelectionMode) null else ripple(bounded = true, color = colors.ripple),
+                        indication = if (isSelectionMode) null else remember(colors.isDark) { SmoothPressIndication(if (colors.isDark) Color.White else Color.Black) },
                         onClick = { onClick?.invoke() },
                         onLongClick = onLongClick
                     )
@@ -177,7 +177,7 @@ fun ElvanCheckMark(
 ) {
     val on by androidx.compose.animation.core.animateFloatAsState(
         if (selected) 1f else 0f,
-        tween(240, easing = CubicBezierEasing(0.2f, 0f, 0f, 1f)),
+        tween(460, easing = CubicBezierEasing(0.34f, 1.35f, 0.64f, 1f)),
         label = "checkMark"
     )
     val tint = androidx.compose.ui.graphics.lerp(idleTint, selectedTint, on)
@@ -199,8 +199,8 @@ fun ElvanCheckMark(
 }
 
 /**
- * The grey line under a card's name. When the record belongs to certain businesses only, their short label sits at
- * the right end of this line instead of taking a line of its own.
+ * The grey line under a card's name. When the record belongs to certain businesses only, their short label sits
+ * a small line of its own below the name.
  */
 @Composable
 fun ElvanCardSecondLine(
@@ -214,25 +214,29 @@ fun ElvanCardSecondLine(
     if (text.isBlank() && label.isBlank()) return
     var measuredLines by remember { mutableStateOf<Int?>(null) }
     Spacer(modifier = Modifier.height(2.dp))
-    Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.Top) {
-        androidx.compose.material3.Text(
-            text = text.preventBrokenLigatures(),
-            modifier = Modifier.weight(1f),
-            style = androidx.compose.ui.text.TextStyle(fontFamily = fontFamily, fontSize = 13.5.sp, color = color),
-            maxLines = measuredLines ?: 2,
-            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
-            onTextLayout = { layoutResult ->
-                if (!isSelectionMode) {
-                    measuredLines = layoutResult.lineCount
+    // The business tag goes on a line of its own under the name: at the right end it squeezed a long name into "..."
+    Column(modifier = Modifier.fillMaxWidth()) {
+        if (text.isNotBlank()) {
+            androidx.compose.material3.Text(
+                text = text.preventBrokenLigatures(),
+                modifier = Modifier.fillMaxWidth(),
+                style = androidx.compose.ui.text.TextStyle(fontFamily = fontFamily, fontSize = 13.5.sp, color = color),
+                maxLines = measuredLines ?: 2,
+                overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+                onTextLayout = { layoutResult ->
+                    if (!isSelectionMode) {
+                        measuredLines = layoutResult.lineCount
+                    }
                 }
-            }
-        )
+            )
+        }
         if (label.isNotBlank()) {
+            if (text.isNotBlank()) Spacer(modifier = Modifier.height(2.dp))
             androidx.compose.material3.Text(
                 text = label.preventBrokenLigatures(),
-                modifier = Modifier.padding(start = 8.dp, top = 1.dp),
                 style = androidx.compose.ui.text.TextStyle(fontFamily = fontFamily, fontSize = 12.5.sp, fontWeight = androidx.compose.ui.text.font.FontWeight.Medium, color = labelColor),
-                maxLines = 1
+                maxLines = 1,
+                overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
             )
         }
     }

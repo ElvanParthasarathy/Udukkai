@@ -147,7 +147,8 @@ fun TextilesInvoiceEditorScreen(
         return if (p != null && p.shortName.isNotEmpty()) p.shortName else "INV"
     }
 
-    val initialPrefix = computePrefix(selectedProfile)
+    // A copied or converted proforma that has no number yet starts in the proforma series
+    val initialPrefix = if (invoice?.invoiceType == "proforma") com.elvan.udukkai.core.finance.BillNumbering.proformaBase(selectedProfile.shortName) else computePrefix(selectedProfile)
     var invoiceNumber by remember {
         mutableStateOf(
             invoice?.invoiceNumber?.ifEmpty {
@@ -613,7 +614,7 @@ fun TextilesInvoiceEditorScreen(
                             } else {
                                 "INV-"
                             }
-                            val legacyPrefix = if (invoiceType == "proforma") "EST-" else profilePrefix
+                            val legacyPrefix = if (invoiceType == "proforma") com.elvan.udukkai.core.finance.BillNumbering.proformaBase(selectedProfile.shortName) + "-" else profilePrefix
                             val currentDocPrefix = legacyPrefix
 
                             // Invoice Number with pencil edit pill
@@ -639,7 +640,7 @@ fun TextilesInvoiceEditorScreen(
                                     invoiceDate = it
                                     // A new year can mean a new number series
                                     if (!isInvoiceNumberOverridden) {
-                                        invoiceNumber = TextilesInvoiceRepository.getNextInvoiceNumber(selectedCompanyId, if (invoiceType == "proforma") "EST" else selectedProfile.shortName.ifEmpty { "INV" }, it)
+                                        invoiceNumber = TextilesInvoiceRepository.getNextInvoiceNumber(selectedCompanyId, if (invoiceType == "proforma") com.elvan.udukkai.core.finance.BillNumbering.proformaBase(selectedProfile.shortName) else selectedProfile.shortName.ifEmpty { "INV" }, it)
                                     }
                                     hasUnsavedChanges = true
                                 },
@@ -671,7 +672,7 @@ fun TextilesInvoiceEditorScreen(
                                 invoiceType = invoiceType,
                                 onChanged = { newType ->
                                     invoiceType = newType
-                                    val pfx = if (newType == "proforma") "EST" else (selectedProfile.shortName.ifEmpty { "INV" })
+                                    val pfx = if (newType == "proforma") com.elvan.udukkai.core.finance.BillNumbering.proformaBase(selectedProfile.shortName) else (selectedProfile.shortName.ifEmpty { "INV" })
                                     if (!isInvoiceNumberOverridden) {
                                         invoiceNumber = TextilesInvoiceRepository.getNextInvoiceNumber(selectedCompanyId, pfx)
                                     }

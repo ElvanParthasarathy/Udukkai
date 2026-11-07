@@ -9,6 +9,12 @@ object BillNumbering {
     /** "VRM-007": the short number every bill shows. The year is kept apart, the pair is what must be unique. */
     fun format(base: String, serial: Int) = "$base-" + serial.toString().padStart(3, '0')
 
+    /**
+     * The number series of proforma (estimate) invoices: "PF/SJPS", so the first one is "PF/SJPS-001". It has its own
+     * counter, apart from the tax invoices (a proforma is not a sale), and starts again each financial year like them.
+     */
+    fun proformaBase(shortName: String): String = "PF/" + shortName.trim().ifEmpty { "INV" }
+
     private val TRAILING_DIGITS = Regex("(\\d+)$")
 
     fun serialOf(number: String): Int? = TRAILING_DIGITS.find(number.trim())?.groupValues?.get(1)?.toIntOrNull()

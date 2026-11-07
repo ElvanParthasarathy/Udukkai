@@ -68,7 +68,7 @@ fun TextilesItemEditorScreen(
         mutableStateOf(
             if (item != null) {
                 if (item.taxRate % 1.0 == 0.0) item.taxRate.toLong().toString() else item.taxRate.toString()
-            } else "5"
+            } else "" // no default: the rate is picked or typed on purpose
         )
     }
     var quantityType by remember { mutableStateOf(item?.quantityType?.ifEmpty { "quantity" } ?: "quantity") }
@@ -136,6 +136,7 @@ fun TextilesItemEditorScreen(
     val duplicateItemMsg = K.itemNameAlreadyExists.tr()
     val savedMsg = K.itemSavedSuccessfully.tr()
     val saveFailedMsg = K.couldNotSavePrefix.tr()
+    val gstRateRequiredMsg = K.gstRateRequired.tr()
 
     fun handleSave() {
         val hasName = (if (isBilingual) listOf(primaryLang, secondaryLang) else listOf(primaryLang)).all { !itemNameMap[it].isNullOrBlank() }
@@ -144,8 +145,13 @@ fun TextilesItemEditorScreen(
             return
         }
 
+        val taxVal = variVeetham.toDoubleOrNull()
+        if (taxVal == null || taxVal < 0.0 || taxVal > 100.0) {
+            validationError = gstRateRequiredMsg
+            ElvanSnackbar.show(gstRateRequiredMsg)
+            return
+        }
         val priceVal = price.toDoubleOrNull() ?: 0.0
-        val taxVal = variVeetham.toDoubleOrNull() ?: 0.0
 
         val companyIds = selectedCompanyOption.id?.let { listOf(it) } ?: emptyList()
 
@@ -288,12 +294,11 @@ fun TextilesItemEditorScreen(
                                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
                                 )
 
-                                ElvanEditorTextField(
+                                GstRatePicker(
                                     value = variVeetham,
                                     onValueChange = { variVeetham = it },
-                                    label = "${K.taxRate.tr()} (%)",
-                                    placeholder = "5",
-                                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                                    label = "${K.taxRate.tr()} (%) *",
+                                    customLabel = K.customBtn.tr()
                                 )
                             }
                         }
@@ -312,5 +317,39 @@ fun TextilesItemEditorScreen(
                 onBack()
             }
         )
+    }
+}
+
+private val GST_PRESETS = listOf("0", "5", "12", "18", "28")
+
+/** Pick a GST rate from the usual slabs, or choose Custom and type any rate. Nothing is selected until the user chooses. */
+@OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
+@Composable
+private fun GstRatePicker(value: String, onValueChange: (String) -> Unit, label: String, customLabel: String) {
+    val colors = com.elvan.udukkai.theme.rememberShellColors()
+    val ff = com.elvan.udukkai.theme.LocalAppFontFamily.current
+    var custom by remember { mutableStateOf(value.isNotBlank() && value !in GST_PRESETS) }
+    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        Text(label, style = androidx.compose.ui.text.TextStyle(fontFamily = ff, fontSize = 13.sp, fontWeight = androidx.compose.ui.text.font.FontWeight.Medium), color = colors.textPrimary.copy(alpha = 0.6f), modifier = Modifier.padding(start = 16.dp))
+        androidx.compose.foundation.layout.FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            @Composable
+            fun chip(text: String, selected: Boolean, onClick: () -> Unit) {
+                val bg by androidx.compose.animation.animateColorAsState(if (selected) colors.textPrimary else colors.iconBg, androidx.compose.animation.core.tween(220), label = "gstChipBg")
+                val fg by androidx.compose.animation.animateColorAsState(if (selected) colors.background else colors.textPrimary, androidx.compose.animation.core.tween(220), label = "gstChipFg")
+                androidx.compose.material3.Surface(onClick = onClick, shape = androidx.compose.foundation.shape.RoundedCornerShape(100.dp), color = bg) {
+                    Text(text, style = androidx.compose.ui.text.TextStyle(fontFamily = ff, fontSize = 14.sp, fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold), color = fg, modifier = Modifier.padding(horizontal = 18.dp, vertical = 10.dp))
+                }
+            }
+            GST_PRESETS.forEach { rate -> chip("$rate%", !custom && value == rate) { custom = false; onValueChange(rate) } }
+            chip(customLabel, custom) { custom = true; if (value in GST_PRESETS) onValueChange("") }
+        }
+        androidx.compose.animation.AnimatedVisibility(visible = custom) {
+            ElvanEditorTextField(
+                value = value,
+                onValueChange = { onValueChange(it.filter { c -> c.isDigit() || c == '.' }) },
+                placeholder = "e.g. 3 or 7.5",
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
+            )
+        }
     }
 }
