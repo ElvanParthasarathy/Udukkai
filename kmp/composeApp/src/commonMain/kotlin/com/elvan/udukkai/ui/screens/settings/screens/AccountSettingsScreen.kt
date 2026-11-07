@@ -57,6 +57,9 @@ fun AccountSettingsScreen(
     var retryTrigger by remember { mutableStateOf(0) }
     var showSignOutConfirm by remember { mutableStateOf(false) }
 
+    // Opening the account page also syncs it: the latest name and picture of the account
+    LaunchedEffect(Unit) { AuthManager.refreshAccount() }
+
     LaunchedEffect(retryTrigger) {
         isCheckingStatus = true
         val online = withContext(Dispatchers.IO) {

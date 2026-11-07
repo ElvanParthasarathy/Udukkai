@@ -77,4 +77,7 @@ expect suspend fun platformCreatePassword(password: String): Result<Unit>
 expect suspend fun platformDeleteAccount(password: String? = null): Result<Unit>
 
 /** Updates the display name of the signed-in Firebase user. */
+/** Reloads the signed-in account from Firebase and brings its name and picture in line with the Google account. */
+expect suspend fun platformRefreshAccount()
+
 expect suspend fun platformUpdateDisplayName(name: String): Result<Unit>

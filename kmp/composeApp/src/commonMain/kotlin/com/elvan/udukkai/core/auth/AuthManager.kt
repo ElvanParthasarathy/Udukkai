@@ -1,5 +1,6 @@
 package com.elvan.udukkai.core.auth
 
+import kotlinx.coroutines.launch
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -49,6 +50,20 @@ object AuthManager {
     val userPhotoUrl: String? get() = platformUserPhotoUrl()
     val googleEmail: String? get() = platformGoogleEmail()
     val googlePhotoUrl: String? get() = platformGooglePhotoUrl()
+
+    private val background = kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.SupervisorJob() + kotlinx.coroutines.Dispatchers.Default)
+
+    /** Pulls the latest name, picture and sign-in methods of the account from Firebase into the app. */
+    suspend fun refreshAccount() {
+        if (!isLoggedIn) return
+        val photoBefore = platformUserPhotoUrl()
+        platformRefreshAccount()
+        signedInDisplayName = platformSignedInDisplayName()
+        isGoogleProvider = platformIsGoogleProvider()
+        isGoogleLinked = platformIsGoogleLinked()
+        hasPassword = platformHasPassword()
+        if (platformUserPhotoUrl() != photoBefore) photoVersion++
+    }
 
     suspend fun unlinkGoogle(): Boolean {
         val ok = platformUnlinkGoogle()
@@ -132,6 +147,8 @@ object AuthManager {
             try {
                 getFirebaseSyncManager().startSync(if (appScope == AppScope.FACTORY) "factory" else "textiles")
             } catch (_: Exception) {}
+            // Latest name and picture, without holding the first screen back
+            background.launch { refreshAccount() }
         }
     }
 
@@ -151,6 +168,7 @@ object AuthManager {
             isGoogleProvider = platformIsGoogleProvider()
             isGoogleLinked = platformIsGoogleLinked()
             hasPassword = platformHasPassword()
+            photoVersion++
             try {
                 getFirebaseSyncManager().startSync(if (appScope == AppScope.FACTORY) "factory" else "textiles")
             } catch (_: Exception) {}

@@ -33,6 +33,39 @@ private fun webClientId(): String? {
     return if (id == 0) null else context.getString(id)
 }
 
+private const val NAME_SNAPSHOT_KEY = "google_name_snapshot"
+
+private fun accountPrefs() = AppContext.context.getSharedPreferences("udukkai_account", android.content.Context.MODE_PRIVATE)
+
+/**
+ * Brings the Firebase profile in line with the Google account: the picture always, the name too unless the user
+ * typed a name of their own (then it no longer matches the last Google name we saw).
+ */
+private suspend fun syncGoogleProfile(user: com.google.firebase.auth.FirebaseUser, googleName: String?, googlePhoto: android.net.Uri?) {
+    val lastGoogleName = accountPrefs().getString(NAME_SNAPSHOT_KEY, null)
+    val followsGoogle = user.displayName.isNullOrBlank() || user.displayName == lastGoogleName
+    val name = if (followsGoogle && !googleName.isNullOrBlank()) googleName else user.displayName
+    val photoChanged = googlePhoto != null && googlePhoto != user.photoUrl
+    if (photoChanged || name != user.displayName) {
+        val update = com.google.firebase.auth.UserProfileChangeRequest.Builder()
+            .setDisplayName(name)
+            .setPhotoUri(googlePhoto ?: user.photoUrl)
+            .build()
+        user.updateProfile(update).await()
+        if (photoChanged) try { java.io.File(AppContext.context.filesDir, "account_photo.jpg").delete() } catch (_: Exception) {}
+    }
+    if (!googleName.isNullOrBlank()) accountPrefs().edit().putString(NAME_SNAPSHOT_KEY, googleName).apply()
+}
+
+actual suspend fun platformRefreshAccount() {
+    try {
+        val user = FirebaseAuth.getInstance().currentUser ?: return
+        user.reload().await()
+        val google = user.providerData.firstOrNull { it.providerId == "google.com" } ?: return
+        syncGoogleProfile(user, google.displayName, google.photoUrl)
+    } catch (_: Exception) {}
+}
+
 actual suspend fun platformGoogleSignIn(): GoogleSignInResult {
     val activity = CurrentActivity.activity ?: return GoogleSignInResult.Failed
     val clientId = webClientId() ?: return GoogleSignInResult.Failed
@@ -58,6 +91,8 @@ actual suspend fun platformGoogleSignIn(): GoogleSignInResult {
             auth.signOut()
             return GoogleSignInResult.NotAllowed(email ?: google.id)
         }
+        // The latest name and picture of the account just chosen
+        try { syncGoogleProfile(user!!, google.displayName, google.profilePictureUri) } catch (_: Exception) {}
         GoogleSignInResult.Success(email!!)
     } catch (_: GetCredentialCancellationException) {
         GoogleSignInResult.Cancelled
@@ -182,13 +217,8 @@ actual suspend fun platformLinkGoogle(): GoogleSignInResult {
         if (!google.id.trim().equals(user.email?.trim(), ignoreCase = true)) return GoogleSignInResult.EmailMismatch(google.id)
         user.linkWithCredential(GoogleAuthProvider.getCredential(google.idToken, null)).await()
         // Take the name and picture of the Google account just linked
-        val profile = com.google.firebase.auth.UserProfileChangeRequest.Builder()
-            .setDisplayName(google.displayName ?: user.displayName)
-            .setPhotoUri(google.profilePictureUri ?: user.photoUrl)
-            .build()
-        user.updateProfile(profile).await()
+        syncGoogleProfile(user, google.displayName, google.profilePictureUri)
         user.reload().await()
-        try { java.io.File(AppContext.context.filesDir, "account_photo.jpg").delete() } catch (_: Exception) {}
         GoogleSignInResult.Success(google.id)
     } catch (_: GetCredentialCancellationException) {
         GoogleSignInResult.Cancelled

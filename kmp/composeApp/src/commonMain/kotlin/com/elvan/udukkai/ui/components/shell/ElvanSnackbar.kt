@@ -45,7 +45,7 @@ object ElvanSnackbar {
 
 /**
  * Floating pill toast host matching Flutter's ElvanSnackbar appearance:
- * - Rounded pill shape (100.dp)
+ * - Rounded pill for one line, rounded square for several lines; slightly translucent
  * - Contrast surface color (onSurface background, surface text)
  * - Auto-dismiss after 2.5 seconds
  */
@@ -89,9 +89,11 @@ fun ElvanSnackbarHost(
             exit = fadeOut() + slideOutVertically { it / 2 }
         ) {
             if (message != null) {
+                // Pill for one line; a rounded square for several lines (a pill would swallow the corners of long text)
+                var multiLine by remember(message) { mutableStateOf(false) }
                 Surface(
-                    shape = RoundedCornerShape(100),
-                    color = colors.textPrimary,
+                    shape = if (multiLine) RoundedCornerShape(20.dp) else RoundedCornerShape(100),
+                    color = colors.textPrimary.copy(alpha = 0.9f),
                     shadowElevation = 8.dp,
                     modifier = Modifier
                         .padding(horizontal = 24.dp)
@@ -106,7 +108,8 @@ fun ElvanSnackbarHost(
                             color = colors.background,
                             textAlign = TextAlign.Center
                         ),
-                        modifier = Modifier.padding(horizontal = 24.dp, vertical = 12.dp)
+                        modifier = Modifier.padding(horizontal = 24.dp, vertical = 12.dp),
+                        onTextLayout = { multiLine = it.lineCount > 1 }
                     )
                 }
             }
