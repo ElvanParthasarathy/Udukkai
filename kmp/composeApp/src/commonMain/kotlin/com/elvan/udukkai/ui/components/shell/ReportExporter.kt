@@ -40,7 +40,6 @@ fun rememberReportExporter(businessFolder: String): ReportExporter {
             title = K.excelSaved.tr(),
             cancelText = K.close.tr(),
             confirmText = K.openBtn.tr(),
-            isConfirmFilled = true,
             onDismissRequest = { exporter.saved = null },
             onConfirm = { if (!openSavedReport(report)) ElvanSnackbar.show(noAppMsg) },
             colors = colors,

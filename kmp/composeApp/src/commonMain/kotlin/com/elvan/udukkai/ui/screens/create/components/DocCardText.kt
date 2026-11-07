@@ -85,8 +85,6 @@ fun DocCardText(
             )
         }
 
-        // Receipts list the bills they settled right under the name
-        below()
         Spacer(Modifier.height(8.dp))
         // Number and date on one line (status at the right edge), the financial year and the amount on the line below
         Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
@@ -114,6 +112,8 @@ fun DocCardText(
                 maxLines = 1
             )
         }
+        // Receipts list the bills they settled right under the receipt number
+        below()
         Spacer(Modifier.height(2.dp))
         Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
             Text(

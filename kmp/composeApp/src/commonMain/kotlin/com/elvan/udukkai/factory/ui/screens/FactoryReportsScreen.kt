@@ -119,14 +119,6 @@ fun FactoryReportsScreen(onBack: () -> Unit) {
                 )
             }
 
-            item(key = "financial_year") {
-                com.elvan.udukkai.ui.screens.home.components.FinancialYearSection(
-                    colors,
-                    (FactoryInvoiceRepository.invoices.map { com.elvan.udukkai.core.utils.DateUtils.financialYearStart(it.invoiceDate) } +
-                        FactoryReceiptRepository.receipts.map { com.elvan.udukkai.core.utils.DateUtils.financialYearStart(it.receiptDate) }).toSet()
-                )
-            }
-
             if (lines.isEmpty()) {
                 item(key = "empty") {
                     Text(
@@ -171,6 +163,18 @@ fun FactoryReportsScreen(onBack: () -> Unit) {
                     style = TextStyle(fontFamily = ff, fontSize = 12.sp),
                     color = colors.textTertiary,
                     modifier = Modifier.padding(horizontal = 20.dp)
+                )
+            }
+
+            item(key = "financial_year") {
+                com.elvan.udukkai.ui.screens.home.components.FinancialYearSection(
+                    colors,
+                    (FactoryInvoiceRepository.invoices.map { com.elvan.udukkai.core.utils.DateUtils.financialYearStart(it.invoiceDate) } +
+                        FactoryReceiptRepository.receipts.map { com.elvan.udukkai.core.utils.DateUtils.financialYearStart(it.receiptDate) }).toSet(),
+                    nextBill = FactoryInvoiceRepository.getNextInvoiceNumber(profile.id, profile.shortName.ifEmpty { "INV" }),
+                    nextReceipt = FactoryReceiptRepository.formatReceiptNumber(profile.shortName, FactoryReceiptRepository.getNextVanakkam(profile.id)),
+                    firstBill = com.elvan.udukkai.core.finance.BillNumbering.format(profile.shortName.ifEmpty { "INV" }, 1),
+                    firstReceipt = FactoryReceiptRepository.formatReceiptNumber(profile.shortName, 1)
                 )
             }
         }

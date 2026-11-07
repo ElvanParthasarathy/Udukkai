@@ -1,5 +1,6 @@
 package com.elvan.udukkai.core.export
 
+import android.content.ContentUris
 import android.content.ContentValues
 import android.content.Intent
 import android.net.Uri
@@ -9,9 +10,6 @@ import android.provider.MediaStore
 import android.util.Log
 import com.elvan.udukkai.BuildConfig
 import com.elvan.udukkai.core.platform.AppContext
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
 
 actual fun saveReport(baseName: String, extension: String, mimeType: String, bytes: ByteArray, businessFolder: String): SavedReport? {
     // Public Documents without a storage permission needs MediaStore (Android 10+), as for the bill PDFs
@@ -19,18 +17,24 @@ actual fun saveReport(baseName: String, extension: String, mimeType: String, byt
     return try {
         val app = if (BuildConfig.FLAVOR == "factory") "Udukkai Factory" else "Udukkai Textiles"
         val folder = "${Environment.DIRECTORY_DOCUMENTS}/Udukkai/$app/$businessFolder/Reports"
-        val stamp = SimpleDateFormat("yyyyMMdd-HHmmss", Locale.US).format(Date())
-        val name = "${baseName}_$stamp.$extension"
+        val name = "$baseName.$extension"
         val resolver = AppContext.context.contentResolver
-        val uri = resolver.insert(
-            MediaStore.Files.getContentUri("external"),
+        val collection = MediaStore.Files.getContentUri("external")
+        // One file per report and period: saving again replaces it with the latest figures
+        val existing = resolver.query(
+            collection, arrayOf(MediaStore.MediaColumns._ID),
+            "${MediaStore.MediaColumns.RELATIVE_PATH}=? AND ${MediaStore.MediaColumns.DISPLAY_NAME}=?",
+            arrayOf("$folder/", name), null
+        )?.use { if (it.moveToFirst()) ContentUris.withAppendedId(collection, it.getLong(0)) else null }
+        val uri = existing ?: resolver.insert(
+            collection,
             ContentValues().apply {
                 put(MediaStore.MediaColumns.DISPLAY_NAME, name)
                 put(MediaStore.MediaColumns.MIME_TYPE, mimeType)
                 put(MediaStore.MediaColumns.RELATIVE_PATH, "$folder/")
             }
         ) ?: return null
-        resolver.openOutputStream(uri)?.use { it.write(bytes) } ?: return null
+        resolver.openOutputStream(uri, "wt")?.use { it.write(bytes) } ?: return null
         SavedReport(uri.toString(), name, folder, mimeType)
     } catch (e: Exception) {
         Log.e("ReportStore", "Saving $baseName failed: ${e.message}", e)

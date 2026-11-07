@@ -25,10 +25,11 @@ private const val DAY = 24L * 60 * 60 * 1000
 /**
  * Everything about the financial year in one place (the Reports page): the running year and its days left, when the
  * numbers start again, whether the years before it can still be changed or are closed, and how long deleted items are kept.
- * [dataYears] are the starting years (2026 for 2026-27) of the years that have bills or receipts.
+ * [dataYears] are the starting years (2026 for 2026-27) of the years that have bills or receipts. [nextBill] and
+ * [nextReceipt] are the numbers the next save gets; [firstBill] and [firstReceipt] are the first ones of the new year.
  */
 @Composable
-fun FinancialYearSection(colors: ShellColors, dataYears: Set<Int>) {
+fun FinancialYearSection(colors: ShellColors, dataYears: Set<Int>, nextBill: String, nextReceipt: String, firstBill: String, firstReceipt: String) {
     val ff = LocalAppFontFamily.current
     val now = remember { System.currentTimeMillis() }
     val status = remember { FinancialYearStatus.of(now) }
@@ -51,8 +52,20 @@ fun FinancialYearSection(colors: ShellColors, dataYears: Set<Int>) {
         row(K.fyPeriod.tr(), "01/04/$current – 31/03/${current + 1}")
         ElvanSettingsDivider(colors = colors)
         row(K.fyDaysLeft.tr(), "${status.daysLeft}")
+    }
+
+    ElvanSettingsSection(title = K.fyNumbersTitle.tr(), colors = colors) {
+        row(K.fyNextBill.tr(), nextBill, bold = true)
         ElvanSettingsDivider(colors = colors)
-        row(K.fyNumbersRestart.tr(), status.nextStart + " · 001")
+        row(K.fyNextReceipt.tr(), nextReceipt, bold = true)
+        ElvanSettingsDivider(colors = colors)
+        row(K.fyFromDate.tr().replace("%s", status.nextStart), firstBill + "\n" + firstReceipt)
+        Text(
+            K.fyNumbersNote.tr(),
+            style = TextStyle(fontFamily = ff, fontSize = 12.5.sp, lineHeight = 18.sp),
+            color = colors.textSecondary,
+            modifier = Modifier.padding(start = 20.dp, end = 20.dp, top = 2.dp, bottom = 14.dp)
+        )
     }
 
     ElvanSettingsSection(title = K.fyYearsTitle.tr(), colors = colors) {
@@ -69,11 +82,8 @@ fun FinancialYearSection(colors: ShellColors, dataYears: Set<Int>) {
     }
 
     ElvanSettingsSection(title = K.fyDeletionTitle.tr(), colors = colors) {
-        Text(
-            K.fyDeletionRule.tr(),
-            style = TextStyle(fontFamily = ff, fontSize = 13.sp, lineHeight = 19.sp),
-            color = colors.textSecondary,
-            modifier = Modifier.padding(horizontal = 20.dp, vertical = 14.dp)
-        )
+        row(K.recycleBin.tr(), K.fyBinDays.tr())
+        ElvanSettingsDivider(colors = colors)
+        row(K.fyYearCloses.tr(), K.fyCloseDay.tr())
     }
 }
