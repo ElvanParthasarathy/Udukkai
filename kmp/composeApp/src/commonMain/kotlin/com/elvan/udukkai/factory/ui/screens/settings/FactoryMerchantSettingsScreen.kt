@@ -56,6 +56,7 @@ fun FactoryMerchantSettingsScreen(
 
     val isPattu = false
     val isBilingual = profile.isBilingual
+    val invalidPanMsg = K.invalidPan.tr()
     val saveSuccessMsg = K.profileSaved.tr()
     val defaultProfileName = K.activeCompany.tr()
     val selectCompanyTitle = K.selectCompany.tr()
@@ -481,6 +482,46 @@ fun FactoryMerchantSettingsScreen(
                         }
                     )
                 }
+
+                // 7. PAN (printed with the bank details)
+                ElvanSettingsDivider(colors = colors)
+                ElvanSettingsAnimatedExpand(
+                    isEditing = editingSection == "pan",
+                    displayContent = {
+                        ElvanSettingsDisplayRow(
+                            title = K.panNumber.tr(),
+                            primaryValue = profile.pan,
+                            onEdit = {
+                                tempPrimary = profile.pan
+                                editingSection = "pan"
+                            },
+                            colors = colors
+                        )
+                    },
+                    editContent = {
+                        ElvanSettingsEditContainer(
+                            title = K.panNumber.tr(),
+                            onCancel = { editingSection = null },
+                            onSave = {
+                                if (tempPrimary.isNotBlank() && !com.elvan.udukkai.core.utils.BillRules.isValidPan(tempPrimary)) {
+                                    ElvanSnackbar.show(invalidPanMsg)
+                                } else {
+                                    saveField { profile.pan = tempPrimary.trim().uppercase() }
+                                }
+                            },
+                            colors = colors
+                        ) {
+                            ElvanSettingsTextField(
+                                label = K.panNumber.tr(),
+                                value = tempPrimary,
+                                onValueChange = { tempPrimary = it.uppercase() },
+                                keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Characters),
+                                maxLength = 10,
+                                colors = colors
+                            )
+                        }
+                    }
+                )
             }
         }
     }

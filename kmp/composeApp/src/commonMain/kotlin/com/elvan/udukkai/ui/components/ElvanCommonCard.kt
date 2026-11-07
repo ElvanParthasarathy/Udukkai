@@ -55,6 +55,8 @@ fun ElvanCommonCard(
     onClick: (() -> Unit)? = null,
     onLongClick: (() -> Unit)? = null,
     isSelected: Boolean = false,
+    /** While cards are being selected a tap only ticks the card: no ripple and no press dip, so select-all stays calm. */
+    isSelectionMode: Boolean = false,
     padding: PaddingValues = PaddingValues(16.dp),
     borderRadius: Dp = 24.dp,
     content: @Composable () -> Unit
@@ -74,7 +76,7 @@ fun ElvanCommonCard(
     // As on iOS: the card sinks a little under the finger and springs back with a soft bounce when let go
     // (after a long press too, as it turns into a selected card)
     val scale by animateFloatAsState(
-        targetValue = if (isPressed && (onClick != null || onLongClick != null)) 0.975f else 1.0f,
+        targetValue = if (isPressed && !isSelectionMode && (onClick != null || onLongClick != null)) 0.975f else 1.0f,
         animationSpec = if (isPressed) tween(100) else spring(dampingRatio = 0.55f, stiffness = 500f),
         label = "pothuAttaiPressScale"
     )
@@ -94,7 +96,7 @@ fun ElvanCommonCard(
                 if (onClick != null || onLongClick != null) {
                     Modifier.combinedClickable(
                         interactionSource = interactionSource,
-                        indication = ripple(bounded = true, color = colors.ripple),
+                        indication = if (isSelectionMode) null else ripple(bounded = true, color = colors.ripple),
                         onClick = { onClick?.invoke() },
                         onLongClick = onLongClick
                     )
@@ -124,21 +126,19 @@ fun ElvanCardSelector(
 
     AnimatedVisibility(
         visible = isSelectionMode,
+        // One calm ease for the whole list: a spring made every card lurch at a different moment
         enter = expandHorizontally(
-            animationSpec = spring(
-                dampingRatio = Spring.DampingRatioLowBouncy,
-                stiffness = Spring.StiffnessMediumLow
-            ),
+            animationSpec = tween(300, easing = CubicBezierEasing(0.2f, 0f, 0f, 1f)),
             expandFrom = Alignment.Start
         ) + fadeIn(
-            animationSpec = tween(220, easing = CubicBezierEasing(0.0f, 0.0f, 0.2f, 1.0f))
+            animationSpec = tween(260, delayMillis = 40, easing = CubicBezierEasing(0.0f, 0.0f, 0.2f, 1.0f))
         ),
         // Out on a firm spring too (no bounce), so the content slides back left fluidly instead of on a stiff curve
         exit = shrinkHorizontally(
-            animationSpec = spring(dampingRatio = Spring.DampingRatioNoBouncy, stiffness = Spring.StiffnessMedium),
+            animationSpec = tween(260, easing = CubicBezierEasing(0.2f, 0f, 0f, 1f)),
             shrinkTowards = Alignment.Start
         ) + fadeOut(
-            animationSpec = tween(120)
+            animationSpec = tween(140)
         ),
         modifier = modifier
     ) {
@@ -177,7 +177,7 @@ fun ElvanCheckMark(
 ) {
     val on by androidx.compose.animation.core.animateFloatAsState(
         if (selected) 1f else 0f,
-        tween(180, easing = CubicBezierEasing(0.2f, 0f, 0f, 1f)),
+        tween(240, easing = CubicBezierEasing(0.2f, 0f, 0f, 1f)),
         label = "checkMark"
     )
     val tint = androidx.compose.ui.graphics.lerp(idleTint, selectedTint, on)
@@ -190,7 +190,7 @@ fun ElvanCheckMark(
             MaterialSymbols.Rounded.CheckCircleFill, null, tint = tint,
             modifier = Modifier.matchParentSize().graphicsLayer {
                 alpha = on
-                val pop = 0.8f + 0.2f * on
+                val pop = 0.6f + 0.4f * on
                 scaleX = pop
                 scaleY = pop
             }

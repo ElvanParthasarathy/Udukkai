@@ -670,7 +670,15 @@ fun FactoryHomeScreen() {
                         navbar = {
                             val shellController = LocalElvanShellController.current
 
-                            if (isSelectionMode) {
+androidx.compose.animation.AnimatedContent(
+                                targetState = isSelectionMode,
+                                transitionSpec = {
+                                    (androidx.compose.animation.slideInVertically(androidx.compose.animation.core.tween(280)) { it / 2 } + androidx.compose.animation.fadeIn(androidx.compose.animation.core.tween(220, delayMillis = 40)))
+                                        .togetherWith(androidx.compose.animation.slideOutVertically(androidx.compose.animation.core.tween(220)) { it / 2 } + androidx.compose.animation.fadeOut(androidx.compose.animation.core.tween(160)))
+                                },
+                                label = "bottomBarSwap"
+                            ) { selecting ->
+                                                        if (selecting) {
                                 val canCopyTab = selectedTab == NavTab.Items ||
                                                  selectedTab == NavTab.Customers ||
                                                  (selectedTab == NavTab.Create && uruvakkuSegment == 0)
@@ -791,6 +799,7 @@ fun FactoryHomeScreen() {
                                         colors = colors
                                     )
                                 }
+                            }
                             }
                         }
                     ) {

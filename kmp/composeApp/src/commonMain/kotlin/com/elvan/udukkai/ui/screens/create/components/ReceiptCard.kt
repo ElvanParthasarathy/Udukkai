@@ -81,6 +81,7 @@ fun ReceiptCard(
         onClick = onClick,
         onLongClick = onLongClick,
         isSelected = isSelected,
+        isSelectionMode = isSelectionMode,
         modifier = modifier,
         padding = PaddingValues(16.dp),
         borderRadius = 24.dp

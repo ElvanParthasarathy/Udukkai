@@ -110,7 +110,7 @@ fun FactoryItemEditorScreen(
     val saveFailedMsg = K.couldNotSavePrefix.tr()
 
     fun handleSave() {
-        val hasName = itemNameMap.values.any { it.trim().isNotBlank() }
+        val hasName = (if (isBilingual) listOf(primaryLang, secondaryLang) else listOf(primaryLang)).all { !itemNameMap[it].isNullOrBlank() }
         if (!hasName) {
             validationError = nameRequiredMsg
             return

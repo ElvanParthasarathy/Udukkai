@@ -11,13 +11,12 @@ class AppLockTest {
     }
 
     @Test
-    fun locksAgainOnlyAfterAMinuteAway() {
+    fun leavingTheAppDoesNotLockButScreenOffDoes() {
         AppLock.unlockedThisRun = true
         AppLock.left(1_000)
-        AppLock.returned(31_000)
+        AppLock.returned(600_000)
         assertTrue(AppLock.unlockedThisRun)
-        AppLock.left(1_000)
-        AppLock.returned(62_000)
+        AppLock.onScreenOff()
         assertFalse(AppLock.unlockedThisRun)
     }
 }

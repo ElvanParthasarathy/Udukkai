@@ -8,12 +8,11 @@ import com.elvan.udukkai.core.platform.getPreferencesHelper
 /**
  * System App Lock manager. Protects business records using the device's native screen lock
  * (Fingerprint, Face unlock, or Phone PIN/Pattern).
- * Enabled by default. Asks for system authentication when opened and
- * when returning after a minute away or after the screen turned off.
+ * Enabled by default. Asks for system authentication when the app is opened fresh and
+ * when the screen has turned off since; switching to another app and back does not lock it.
  */
 object AppLock {
     private const val KEY_ENABLED = "app_lock_system_enabled"
-    private const val AWAY_MS = 60_000L
 
     /** True while system authentication has passed and the app was not away for long. */
     var unlockedThisRun by mutableStateOf(false)
@@ -57,9 +56,8 @@ object AppLock {
     /** The app went out of sight. */
     fun left(now: Long = System.currentTimeMillis()) { leftAt = now }
 
-    /** The app is back in sight: locks again if away for more than a minute. */
+    /** The app is back in sight. Leaving the app alone never locks it: only the screen turning off does (see [onScreenOff]). */
     fun returned(now: Long = System.currentTimeMillis()) {
-        if (leftAt > 0L && now - leftAt > AWAY_MS) unlockedThisRun = false
         leftAt = 0L
     }
 

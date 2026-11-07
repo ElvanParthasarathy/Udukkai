@@ -85,42 +85,44 @@ fun DocCardText(
             )
         }
 
+        // Receipts list the bills they settled right under the name
+        below()
         Spacer(Modifier.height(8.dp))
-        Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.Bottom) {
-            Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(
-                        text = number,
-                        style = TextStyle(fontFamily = ff, fontSize = 13.5.sp, color = secondary),
-                        maxLines = 1
-                    )
-                    Text(
-                        text = fy,
-                        modifier = Modifier.padding(start = 8.dp),
-                        style = TextStyle(fontFamily = ff, fontSize = 12.5.sp, color = LocalShellColors.current.textTertiary),
-                        maxLines = 1
-                    )
-                }
+        // Number and date on one line (status at the right edge), the financial year and the amount on the line below
+        Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+            Row(modifier = Modifier.weight(1f), verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    text = number,
+                    style = TextStyle(fontFamily = ff, fontSize = 13.5.sp, color = secondary),
+                    maxLines = 1
+                )
                 Text(
                     text = date.preventBrokenLigatures(),
+                    modifier = Modifier.padding(start = 10.dp),
                     style = TextStyle(fontFamily = ff, fontSize = 13.sp, color = secondary),
                     maxLines = 1
                 )
             }
             Spacer(Modifier.width(8.dp))
-            Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(3.dp)) {
-                Text(
-                    text = status.preventBrokenLigatures(),
-                    style = TextStyle(fontFamily = ff, fontSize = 12.sp, color = secondary),
-                    maxLines = 1
-                )
-                Text(
-                    text = amount,
-                    style = TextStyle(fontFamily = ff, fontSize = if (amount.length > 11) 13.sp else 15.sp, fontWeight = FontWeight.ExtraBold, color = colors.textPrimary),
-                    maxLines = 1
-                )
-            }
+            Text(
+                text = status.preventBrokenLigatures(),
+                style = TextStyle(fontFamily = ff, fontSize = 12.sp, color = secondary),
+                maxLines = 1
+            )
         }
-        below()
+        Spacer(Modifier.height(2.dp))
+        Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+            Text(
+                text = fy,
+                modifier = Modifier.weight(1f),
+                style = TextStyle(fontFamily = ff, fontSize = 12.5.sp, color = LocalShellColors.current.textTertiary),
+                maxLines = 1
+            )
+            Text(
+                text = amount,
+                style = TextStyle(fontFamily = ff, fontSize = if (amount.length > 11) 13.sp else 15.sp, fontWeight = FontWeight.ExtraBold, color = colors.textPrimary),
+                maxLines = 1
+            )
+        }
     }
 }

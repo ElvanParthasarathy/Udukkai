@@ -258,7 +258,8 @@ fun CustomerEditorScreen(
     val showBusinessLabel = K.showBusinessOnly.tr()
 
     fun handleSave() {
-        val hasName = nameMap.values.any { it.trim().isNotBlank() }
+        // Every starred name field that is shown must be filled: both languages when the business is bilingual
+        val hasName = (if (isBilingual) listOf(primaryLang, secondaryLang) else listOf(primaryLang)).all { !nameMap[it].isNullOrBlank() }
         if (!hasName) {
             ElvanSnackbar.show(fillNameMsg)
             return
@@ -307,12 +308,13 @@ fun CustomerEditorScreen(
         title = pageTitle,
         onBack = handleBackAttempt,
         scrollState = scrollState,
-        hasActions = false,
-        actions = {},
+        hasActions = true,
+        actions = {
+            // Save sits at the top, as in the item editor
+            ElvanActionButton(label = K.saveBtn.tr(), onClick = { handleSave() })
+        },
         showBottomFade = false,
-        floatingBar = {
-            ElvanEditorBottomBar(label = K.saveBtn.tr(), onClick = { handleSave() }, accentColor = editorAccent)
-        }
+        floatingBar = {}
     ) {
         Box(modifier = Modifier.fillMaxSize()) {
             CompositionLocalProvider(LocalEditorAccentColor provides editorAccent) {

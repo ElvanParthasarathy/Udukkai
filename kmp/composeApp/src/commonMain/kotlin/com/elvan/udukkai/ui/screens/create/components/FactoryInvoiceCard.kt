@@ -94,6 +94,7 @@ fun FactoryInvoiceCard(
         onClick = onClick,
         onLongClick = onLongClick,
         isSelected = isSelected,
+        isSelectionMode = isSelectionMode,
         modifier = modifier.semantics(mergeDescendants = true) { contentDescription = spoken },
         padding = PaddingValues(16.dp),
         borderRadius = 24.dp

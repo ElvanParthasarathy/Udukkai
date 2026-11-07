@@ -72,6 +72,8 @@ fun ElvanShell(
     banners: List<ShellBanner> = emptyList(),
     overlay: @Composable () -> Unit = {},
     floatingBar: @Composable () -> Unit = {},
+    /** View pages: the header stays small (title beside the back button), it never grows into the big heading. */
+    collapsedOnly: Boolean = false,
     content: @Composable () -> Unit
 ) {
     val colors = rememberShellColors()
@@ -87,7 +89,7 @@ fun ElvanShell(
 
     BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
         val isLandscape = maxWidth > maxHeight
-        val isCompactHeader = isLandscape || isDesktop || !useNewDesign
+        val isCompactHeader = isLandscape || isDesktop || !useNewDesign || collapsedOnly
 
         val pillHeight = 50.dp
         val ceiling = if (isDesktop) 16.dp else if (isLandscape) statusBarHeight + 8.dp else statusBarHeight + 20.dp

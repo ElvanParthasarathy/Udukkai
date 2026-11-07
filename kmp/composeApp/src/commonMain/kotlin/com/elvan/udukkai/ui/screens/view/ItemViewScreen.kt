@@ -98,13 +98,22 @@ fun ItemViewScreen(
             }
 
             item(key = "companies") {
-                ViewInfoSection(
+                // The companies the item is for, one per line in a box of their own (no duplicate label beside the value)
+                ViewAddressBox(
                     title = K.companies.tr(),
-                    rows = listOf(K.companies.tr() to availability) +
-                        if (isCoolie) emptyList()
-                        else item.companyPrices.map { (id, price) -> "${companyName(id)} ${K.sellingRate.tr()}" to CurrencyUtils.formatInr(price) },
+                    lines = if (item.companyIds.isEmpty()) listOf(availability) else item.companyIds.map { companyName(it) },
                     colors = colors
                 )
+            }
+
+            if (!isCoolie && item.companyPrices.isNotEmpty()) {
+                item(key = "company_prices") {
+                    ViewInfoSection(
+                        title = K.sellingRate.tr(),
+                        rows = item.companyPrices.map { (id, price) -> companyName(id) to CurrencyUtils.formatInr(price) },
+                        colors = colors
+                    )
+                }
             }
 
             item(key = "bills") {

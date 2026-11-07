@@ -113,6 +113,7 @@ fun FactoryItemCard(
         onClick = onClick,
         onLongClick = onLongClick,
         isSelected = isSelectionMode && isSelected,
+        isSelectionMode = isSelectionMode,
         padding = PaddingValues(
             horizontal = Dimens.CardPaddingHorizontal,
             vertical = Dimens.CardPaddingVertical
@@ -203,6 +204,7 @@ fun TextilesItemCard(
         onClick = onClick,
         onLongClick = onLongClick,
         isSelected = isSelectionMode && isSelected,
+        isSelectionMode = isSelectionMode,
         padding = PaddingValues(
             horizontal = Dimens.CardPaddingHorizontal,
             vertical = Dimens.CardPaddingVertical

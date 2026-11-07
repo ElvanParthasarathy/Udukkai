@@ -42,6 +42,7 @@ fun ElvanSubShell(
     hasFloatingBar: Boolean = false,
     overlay: @Composable () -> Unit = {},
     floatingBar: @Composable () -> Unit = {},
+    collapsedOnly: Boolean = false,
     content: @Composable () -> Unit
 ) {
     val colors = rememberShellColors()
@@ -71,6 +72,7 @@ fun ElvanSubShell(
         actions = actions,
         navbar = {},
         floatingBar = floatingBar,
+        collapsedOnly = collapsedOnly,
         content = content
     )
 }

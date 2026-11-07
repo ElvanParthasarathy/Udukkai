@@ -432,9 +432,10 @@ export default function PodhuReceiptPaper({
                 </div>
 
                 {receipt.note && (
-                  <p style={{ fontSize: '0.85rem', color: '#64748b', paddingLeft: '8px', paddingRight: '8px' }}>
-                    {renderKey('noteLabel', 'Note:', 'குறிப்பு:')} {receipt.note}
-                  </p>
+                  <div className="receipt-row">
+                    <span className="receipt-label" style={{ color: norm.themeColor }}>{renderKey('noteLabel', 'Note:', 'குறிப்பு:')}</span>
+                    <span className="receipt-value">{receipt.note}</span>
+                  </div>
                 )}
 
                 {/* Footer: Clean stationery layout matching invoice */}

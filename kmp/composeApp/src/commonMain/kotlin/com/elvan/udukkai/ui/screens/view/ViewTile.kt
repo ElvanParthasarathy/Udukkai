@@ -202,6 +202,7 @@ fun ViewTile(
                 onBack = onBack,
                 scrollState = scrollState,
                 showBottomFade = true,
+                collapsedOnly = true,
                 floatingBar = {
                     ElvanViewActionBar(
                         onEdit = onEdit,
