@@ -70,7 +70,8 @@ fun ElvanActionSheet(
     val isDark = colors.isDark
     // Frosted where the phone blurs the screen behind; just slightly see-through where it cannot, so text stays clear of what is behind
     val glass = remember { com.elvan.udukkai.core.platform.dialogBlurAvailable() }
-    val cardBg = (if (isDark) Color(0xFF161616) else Color(0xFFFAFAFA)).copy(alpha = if (glass) 0.86f else 0.95f)
+    // A picker is read closely, so its card is the sheet's colour without the see-through
+    val cardBg = (if (isDark) Color(0xFF161616) else Color(0xFFFAFAFA)).copy(alpha = if (pickerCard) 1f else if (glass) 0.86f else 0.95f)
     val mainColor = confirmColor ?: colors.accent
 
     val coroutineScope = rememberCoroutineScope()
