@@ -28,6 +28,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.elvan.udukkai.core.platform.getNavBarHeightIgnoringVisibility
 import com.elvan.udukkai.core.utils.CurrencyUtils
+import com.elvan.udukkai.theme.Dimens
 import com.elvan.udukkai.theme.LocalAppFontFamily
 import com.elvan.udukkai.theme.preventBrokenLigatures
 import com.elvan.udukkai.theme.rememberShellColors
@@ -57,7 +58,7 @@ val LocalDocListState = compositionLocalOf<LazyListState?> { null }
 /** The scrolling page, under the same collapsing, fading header as the customer page. */
 @Composable
 fun DocPage(
-    horizontalPadding: Dp = 16.dp,
+    horizontalPadding: Dp = Dimens.ContentPadding,
     content: LazyListScope.() -> Unit
 ) {
     LazyColumn(
