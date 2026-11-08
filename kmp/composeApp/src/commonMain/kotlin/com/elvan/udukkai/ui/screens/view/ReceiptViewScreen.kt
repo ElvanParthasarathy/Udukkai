@@ -37,7 +37,7 @@ fun ReceiptViewScreen(
     val activeProfile = (if (receipt.companyId != null) allProfiles.find { it.id == receipt.companyId } else null) ?: profile
     val payload = remember(receipt, activeProfile) { printPayload?.invoke(activeProfile) }
     PreviewScreen(
-        title = K.receipt.tr() + " #" + receipt.receiptNumber,
+        title = receipt.receiptNumber,
         onBack = onBack,
         onEdit = onEdit,
         printPayload = payload,

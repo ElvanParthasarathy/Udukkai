@@ -89,14 +89,17 @@ fun DocStatusHeader(tone: DocTone, label: String, amount: Double, note: String? 
         if (tone != DocTone.Neutral) {
             Box(
                 Modifier.size(52.dp).clip(CircleShape).background(
-                    androidx.compose.ui.graphics.Brush.linearGradient(listOf(androidx.compose.ui.graphics.lerp(tint, Color.White, 0.30f), tint))
+                    androidx.compose.ui.graphics.Brush.linearGradient(
+                        if (colors.isDark) listOf(androidx.compose.ui.graphics.lerp(tint, Color.White, 0.25f), tint)
+                        else listOf(androidx.compose.ui.graphics.lerp(tint, Color.Black, 0.12f), androidx.compose.ui.graphics.lerp(tint, Color.Black, 0.38f)) // deeper than the white-ish card, so the badge and its icon stand out
+                    )
                 ),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
                     imageVector = if (tone == DocTone.Paid) MaterialSymbols.Rounded.Check else MaterialSymbols.Rounded.Schedule,
                     contentDescription = null,
-                    tint = Color.White,
+                    tint = if (colors.isDark) Color(0xFF0B1210) else Color.White,
                     modifier = Modifier.size(28.dp)
                 )
             }
@@ -138,15 +141,11 @@ fun DocCustomerCard(name: String, secondName: String, town: String, onClick: (()
             .padding(horizontal = 18.dp, vertical = 16.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Box(
-            Modifier.size(44.dp).clip(CircleShape).background(colors.iconBg),
-            contentAlignment = Alignment.Center
-        ) {
-            Text(
-                text = (secondName.ifBlank { name }).trim().take(1).uppercase().ifEmpty { "?" },
-                style = TextStyle(fontFamily = ff, fontSize = 18.sp, fontWeight = FontWeight.Bold, color = colors.textPrimary)
-            )
-        }
+        // The same customer icon as the customer cards
+        com.elvan.udukkai.ui.components.ElvanCardLeadingIcon(
+            icon = MaterialSymbols.Rounded.Person,
+            tint = colors.textPrimary // mono here, not the purple of the list cards
+        )
         Spacer(Modifier.width(14.dp))
         Column(Modifier.weight(1f)) {
             Text(name.preventBrokenLigatures(), style = TextStyle(fontFamily = ff, fontSize = 16.sp, fontWeight = FontWeight.Bold, color = colors.textPrimary), maxLines = 2, overflow = TextOverflow.Ellipsis)
@@ -251,7 +250,12 @@ fun DocPrimaryButton(icon: ImageVector, label: String, onClick: () -> Unit) {
             .fillMaxWidth()
             .clip(RoundedCornerShape(50))
             .background(colors.textPrimary)
-            .clickable(onClick = onClick)
+            .clickable(
+                interactionSource = androidx.compose.runtime.remember { androidx.compose.foundation.interaction.MutableInteractionSource() },
+                indication = androidx.compose.material3.ripple(color = colors.background.copy(alpha = 0.35f), bounded = true), // the text colour: black on white, white on black
+                role = androidx.compose.ui.semantics.Role.Button,
+                onClick = onClick
+            )
             .padding(vertical = 15.dp),
         horizontalArrangement = Arrangement.Center,
         verticalAlignment = Alignment.CenterVertically

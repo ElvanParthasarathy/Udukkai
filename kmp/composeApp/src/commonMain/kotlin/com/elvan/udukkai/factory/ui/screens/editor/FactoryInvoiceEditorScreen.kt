@@ -151,7 +151,7 @@ fun FactoryInvoiceEditorScreen(
     val secondaryLang = selectedProfile.secondaryLanguage.ifEmpty { "en" }
 
     fun computePrefix(p: BusinessProfile?): String {
-        return if (p != null && p.shortName.isNotEmpty()) p.shortName else "CB"
+        return com.elvan.udukkai.core.finance.BillNumbering.invoiceBase(p?.shortName)
     }
 
     val initialPrefix = computePrefix(selectedProfile)
@@ -481,6 +481,10 @@ fun FactoryInvoiceEditorScreen(
     }
 
     val handleSave: () -> Unit = {
+        // A number left empty (or only the series prefix, "PF/SJPS-") is numbered automatically, in the series of the bill's type
+        if (invoiceNumber.isBlank() || invoiceNumber.trim().let { it.endsWith("-") || it.endsWith("/") }) {
+            invoiceNumber = FactoryInvoiceRepository.getNextInvoiceNumber(selectedCompanyId, computePrefix(selectedProfile), invoiceDate)
+        }
         if (!isProfileConfigured) {
             ElvanSnackbar.show(companyRequiredMsg)
         } else if (selectedCustomerId == null && selectedCustomerNameMap.isEmpty()) {
@@ -615,7 +619,7 @@ fun FactoryInvoiceEditorScreen(
                                 selectedCustomerAddressMap = emptyMap()
                                 hasUnsavedChanges = true
                             },
-                            onRequestAddNewCustomer = { showAddCustomerEditor = true }
+                            onRequestAddNewCustomer = { if (!com.elvan.udukkai.ui.navigation.openPlatformSubpage(com.elvan.udukkai.ui.navigation.ActiveSubpage.MerchantEditor(null))) showAddCustomerEditor = true }
                         )
                     }
                 }
@@ -704,7 +708,7 @@ fun FactoryInvoiceEditorScreen(
                                                     hasUnsavedChanges = true
                                                 },
                                                 onDirty = { hasUnsavedChanges = true },
-                                                onRequestAddNewItem = { showAddItemEditor = true },
+                                                onRequestAddNewItem = { if (!com.elvan.udukkai.ui.navigation.openPlatformSubpage(com.elvan.udukkai.ui.navigation.ActiveSubpage.ItemEditor(null))) showAddItemEditor = true },
                                                 onAddNewItem = null,
                                                 onAddNewCharge = null
                                             )

@@ -144,7 +144,7 @@ fun TextilesInvoiceEditorScreen(
     val isProfileConfigured = profiles.isNotEmpty() && selectedCompanyId != null
 
     fun computePrefix(p: BusinessProfile?): String {
-        return if (p != null && p.shortName.isNotEmpty()) p.shortName else "INV"
+        return com.elvan.udukkai.core.finance.BillNumbering.invoiceBase(p?.shortName)
     }
 
     // A copied or converted proforma that has no number yet starts in the proforma series
@@ -157,6 +157,7 @@ fun TextilesInvoiceEditorScreen(
         )
     }
     var isInvoiceNumberOverridden by remember { mutableStateOf(isEditing) }
+    var numberTyped by remember { mutableStateOf(false) } // only a number the user typed is kept when the type changes
     var showAddItemEditor by remember { mutableStateOf(false) }
     var showAddCustomerEditor by remember { mutableStateOf(false) }
 
@@ -452,6 +453,10 @@ fun TextilesInvoiceEditorScreen(
     }
 
     val handleSave: () -> Unit = {
+        // A number left empty (or only the series prefix, "PF/SJPS-") is numbered automatically, in the series of the bill's type
+        if (invoiceNumber.isBlank() || invoiceNumber.trim().let { it.endsWith("-") || it.endsWith("/") }) {
+            invoiceNumber = TextilesInvoiceRepository.getNextInvoiceNumber(selectedCompanyId, if (invoiceType == "proforma") com.elvan.udukkai.core.finance.BillNumbering.proformaBase(selectedProfile.shortName) else computePrefix(selectedProfile), invoiceDate)
+        }
         if (!isProfileConfigured) {
             ElvanSnackbar.show(companyRequiredMsg)
         } else if (selectedCustomerId == null && selectedCustomerNameMap.isEmpty()) {
@@ -596,7 +601,7 @@ fun TextilesInvoiceEditorScreen(
                                 customerState = ""
                                 hasUnsavedChanges = true
                             },
-                            onRequestAddNewCustomer = { showAddCustomerEditor = true }
+                            onRequestAddNewCustomer = { if (!com.elvan.udukkai.ui.navigation.openPlatformSubpage(com.elvan.udukkai.ui.navigation.ActiveSubpage.MerchantEditor(null))) showAddCustomerEditor = true }
                         )
                     }
                 }
@@ -609,11 +614,7 @@ fun TextilesInvoiceEditorScreen(
                             modifier = Modifier.fillMaxWidth(),
                             verticalArrangement = Arrangement.spacedBy(24.dp)
                         ) {
-                            val profilePrefix = if (selectedProfile.shortName.isNotEmpty()) {
-                                "${selectedProfile.shortName}-"
-                            } else {
-                                "INV-"
-                            }
+                            val profilePrefix = computePrefix(selectedProfile) + "-"
                             val legacyPrefix = if (invoiceType == "proforma") com.elvan.udukkai.core.finance.BillNumbering.proformaBase(selectedProfile.shortName) + "-" else profilePrefix
                             val currentDocPrefix = legacyPrefix
 
@@ -625,6 +626,7 @@ fun TextilesInvoiceEditorScreen(
                                 onFullNumberChanged = {
                                     invoiceNumber = it
                                     isInvoiceNumberOverridden = true
+                                    numberTyped = true
                                     hasUnsavedChanges = true
                                 },
                                 onDirty = { hasUnsavedChanges = true },
@@ -640,7 +642,7 @@ fun TextilesInvoiceEditorScreen(
                                     invoiceDate = it
                                     // A new year can mean a new number series
                                     if (!isInvoiceNumberOverridden) {
-                                        invoiceNumber = TextilesInvoiceRepository.getNextInvoiceNumber(selectedCompanyId, if (invoiceType == "proforma") com.elvan.udukkai.core.finance.BillNumbering.proformaBase(selectedProfile.shortName) else selectedProfile.shortName.ifEmpty { "INV" }, it)
+                                        invoiceNumber = TextilesInvoiceRepository.getNextInvoiceNumber(selectedCompanyId, if (invoiceType == "proforma") com.elvan.udukkai.core.finance.BillNumbering.proformaBase(selectedProfile.shortName) else computePrefix(selectedProfile), it)
                                     }
                                     hasUnsavedChanges = true
                                 },
@@ -672,9 +674,11 @@ fun TextilesInvoiceEditorScreen(
                                 invoiceType = invoiceType,
                                 onChanged = { newType ->
                                     invoiceType = newType
-                                    val pfx = if (newType == "proforma") com.elvan.udukkai.core.finance.BillNumbering.proformaBase(selectedProfile.shortName) else (selectedProfile.shortName.ifEmpty { "INV" })
-                                    if (!isInvoiceNumberOverridden) {
-                                        invoiceNumber = TextilesInvoiceRepository.getNextInvoiceNumber(selectedCompanyId, pfx)
+                                    val pfx = if (newType == "proforma") com.elvan.udukkai.core.finance.BillNumbering.proformaBase(selectedProfile.shortName) else computePrefix(selectedProfile)
+                                    if (!numberTyped) {
+                                        val original = invoice?.invoiceNumber?.takeIf { it.isNotBlank() && newType == invoice.invoiceType }
+                                        invoiceNumber = original ?: TextilesInvoiceRepository.getNextInvoiceNumber(selectedCompanyId, pfx, invoiceDate)
+                                        isInvoiceNumberOverridden = true
                                     }
                                     hasUnsavedChanges = true
                                 }
@@ -725,7 +729,7 @@ fun TextilesInvoiceEditorScreen(
                                                     hasUnsavedChanges = true
                                                 },
                                                 onDirty = { hasUnsavedChanges = true },
-                                                onRequestAddNewItem = { showAddItemEditor = true }
+                                                onRequestAddNewItem = { if (!com.elvan.udukkai.ui.navigation.openPlatformSubpage(com.elvan.udukkai.ui.navigation.ActiveSubpage.ItemEditor(null))) showAddItemEditor = true }
                                             )
                                         }
                                     }

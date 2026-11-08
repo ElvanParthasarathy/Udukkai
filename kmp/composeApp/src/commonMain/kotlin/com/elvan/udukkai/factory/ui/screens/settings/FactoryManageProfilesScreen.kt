@@ -1,6 +1,8 @@
 package com.elvan.udukkai.factory.ui.screens.settings
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.ui.draw.clip
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
@@ -120,18 +122,27 @@ fun FactoryManageProfilesScreen(
         }
 
         if (profiles.size < 5) {
-            FloatingActionButton(
-                onClick = { showNewProfileSheet = true },
-                shape = RoundedCornerShape(16.dp),
-                containerColor = colors.link,
-                contentColor = Color.White,
+            // Mono (not blue) add button: clip then clickable so the ripple stays inside the rounded square
+            val addInk = if (colors.isDark) Color.Black else Color.White
+            Box(
                 modifier = Modifier
                     .align(Alignment.BottomEnd)
                     .padding(bottom = 48.dp, end = 20.dp)
+                    .size(56.dp)
+                    .clip(RoundedCornerShape(16.dp))
+                    .background(colors.accent)
+                    .clickable(
+                        interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() },
+                        indication = androidx.compose.material3.ripple(color = addInk.copy(alpha = 0.35f), bounded = true),
+                        role = androidx.compose.ui.semantics.Role.Button,
+                        onClick = { showNewProfileSheet = true }
+                    ),
+                contentAlignment = Alignment.Center
             ) {
                 Icon(
                     imageVector = MaterialSymbols.Rounded.Add,
                     contentDescription = K.a11yNewProfile.tr(),
+                    tint = addInk,
                     modifier = Modifier.size(24.dp)
                 )
             }

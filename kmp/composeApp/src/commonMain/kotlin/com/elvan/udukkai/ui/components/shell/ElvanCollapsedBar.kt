@@ -50,18 +50,22 @@ fun ElvanTopBarIconButton(
     size: Dp = 38.dp,
     content: @Composable () -> Unit
 ) {
-    Box(
-        modifier = modifier
-            .size(size)
-            .clip(CircleShape)
-            .clickable(
+    // Takes [size] in the layout (so icons keep their tight spacing), but the touch circle is 6dp bigger all round: the
+    // 50dp of the floating pill it sits in, so the ripple reaches the pill's edge. Touches count within [size].
+    Box(modifier = modifier.size(size), contentAlignment = Alignment.Center) {
+        Box(
+            modifier = Modifier
+                .requiredSize(size + 12.dp)
+                .clip(CircleShape)
+                .clickable(
                 interactionSource = remember { MutableInteractionSource() },
-                indication = ripple(bounded = true, radius = size / 2),
+                indication = com.elvan.udukkai.theme.ShellDefaults.ripple(com.elvan.udukkai.theme.rememberShellColors(), bounded = true),
                 onClick = onClick
-            ),
-        contentAlignment = Alignment.Center
-    ) {
-        content()
+                ),
+            contentAlignment = Alignment.Center
+        ) {
+            content()
+        }
     }
 }
 

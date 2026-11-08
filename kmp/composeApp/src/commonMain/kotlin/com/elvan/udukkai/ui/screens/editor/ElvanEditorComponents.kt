@@ -69,9 +69,9 @@ fun rememberCompanyOptions(
     primaryLang: String,
     secondaryLang: String
 ): List<CompanyOption> {
-    val allCompaniesTitle = if (primaryLang == "ta") "எல்லா நிறுவனங்கள்" else "All Companies"
+    val allCompaniesTitle = if (primaryLang == "ta") "அனைத்து நிறுவனங்களும்" else "All Companies"
     val allCompaniesSub = if (isBilingual) {
-        if (primaryLang == "ta") "All Companies" else "எல்லா நிறுவனங்கள்"
+        if (primaryLang == "ta") "All Companies" else "அனைத்து நிறுவனங்களும்"
     } else null
 
     return remember(profiles, isBilingual, primaryLang, secondaryLang) {
@@ -183,16 +183,13 @@ fun ElvanEditorDisabledOverlay(
     modifier: Modifier = Modifier,
     content: @Composable BoxScope.() -> Unit
 ) {
+    // The dimmed sections fade up when the customer is chosen instead of popping from grey to full
+    val dim by androidx.compose.animation.core.animateFloatAsState(if (disabled) 0.38f else 1f, androidx.compose.animation.core.tween(250), label = "editorDim")
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .then(
-                if (disabled) {
-                    Modifier
-                        .alpha(0.38f)
-                        .focusProperties { canFocus = false }
-                } else Modifier
-            )
+            .alpha(dim)
+            .then(if (disabled) Modifier.focusProperties { canFocus = false } else Modifier)
     ) {
         content()
         if (disabled) {
@@ -661,8 +658,8 @@ fun ElvanIrumozhiPulan(
         // Secondary Field (shown only when bilingual mode is enabled in Settings)
         AnimatedVisibility(
             visible = isBilingual,
-            enter = expandVertically() + fadeIn(),
-            exit = shrinkVertically() + fadeOut()
+            enter = expandVertically(expandFrom = Alignment.Top) + fadeIn(),
+            exit = shrinkVertically(shrinkTowards = Alignment.Top) + fadeOut()
         ) {
             key(secondaryLang) {
                 ElvanEditorTextField(
@@ -912,4 +909,24 @@ fun ElvanEditorBottomBar(
         actions = actions,
         modifier = modifier
     )
+}
+
+/**
+ * A field that appears or goes away with a choice (a "Custom" entry, a reference number): it grows from the top and fades,
+ * on the same spring as the saved-details box. The 16dp gap above it lives inside, so put it in a Column right after the
+ * field it follows (not directly in a spacedBy column): hidden, it then leaves no extra space.
+ */
+@Composable
+fun ElvanEditorReveal(visible: Boolean, gapBelow: Boolean = false, content: @Composable () -> Unit) {
+    val spec = androidx.compose.animation.core.spring<androidx.compose.ui.unit.IntSize>(
+        stiffness = androidx.compose.animation.core.Spring.StiffnessMediumLow,
+        dampingRatio = androidx.compose.animation.core.Spring.DampingRatioNoBouncy
+    )
+    AnimatedVisibility(
+        visible = visible,
+        enter = expandVertically(expandFrom = Alignment.Top, animationSpec = spec) + fadeIn(),
+        exit = shrinkVertically(shrinkTowards = Alignment.Top, animationSpec = spec) + fadeOut()
+    ) {
+        Box(Modifier.fillMaxWidth().padding(top = if (gapBelow) 0.dp else 16.dp, bottom = if (gapBelow) 16.dp else 0.dp)) { content() }
+    }
 }

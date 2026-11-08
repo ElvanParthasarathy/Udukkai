@@ -1,6 +1,17 @@
 package com.elvan.udukkai.textiles.ui.screens.editor
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.layout.*
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -37,7 +48,7 @@ fun TextilesTotalsField(
     ) {
         Column(
             modifier = Modifier.fillMaxWidth(),
-            verticalArrangement = Arrangement.spacedBy(6.dp)
+            verticalArrangement = Arrangement.spacedBy(0.dp) // rows carry their own 6dp so a hidden row leaves no gap
         ) {
             // Subtotal
             TotalsRow(
@@ -45,51 +56,17 @@ fun TextilesTotalsField(
                 amount = totals.subtotal
             )
 
-            // Discount (if any)
-            if (totals.totalDiscount > 0) {
-                TotalsRow(
-                    label = K.discount.tr(),
-                    amount = -totals.totalDiscount,
-                    textColor = Color(0xFFE53935)
-                )
-            }
-
-            // CGST
-            if (totals.cgst > 0) {
-                TotalsRow(
-                    label = "CGST",
-                    amount = totals.cgst
-                )
-            }
-
-            // SGST
-            if (totals.sgst > 0) {
-                TotalsRow(
-                    label = "SGST",
-                    amount = totals.sgst
-                )
-            }
-
-            // IGST
-            if (totals.igst > 0) {
-                TotalsRow(
-                    label = "IGST",
-                    amount = totals.igst
-                )
-            }
-
-            // Round-off
-            if (totals.roundOff != 0.0) {
-                TotalsRow(
-                    label = K.roundOff.tr(),
-                    amount = totals.roundOff
-                )
-            }
+            // Rows come and go with the customer (GST or not, same state or not): they grow and shrink like the saved-details box
+            AnimatedTotalsRow(visible = totals.totalDiscount > 0, label = K.discount.tr(), amount = -totals.totalDiscount, textColor = Color(0xFFE53935))
+            AnimatedTotalsRow(visible = totals.cgst > 0, label = "CGST", amount = totals.cgst)
+            AnimatedTotalsRow(visible = totals.sgst > 0, label = "SGST", amount = totals.sgst)
+            AnimatedTotalsRow(visible = totals.igst > 0, label = "IGST", amount = totals.igst)
+            AnimatedTotalsRow(visible = totals.roundOff != 0.0, label = K.roundOff.tr(), amount = totals.roundOff)
 
             HorizontalDivider(
                 thickness = 1.dp,
                 color = colors.textPrimary.copy(alpha = 0.08f),
-                modifier = Modifier.padding(vertical = 4.dp)
+                modifier = Modifier.padding(top = 10.dp, bottom = 10.dp)
             )
 
             // Grand Total
@@ -118,6 +95,21 @@ fun TextilesTotalsField(
                 )
             }
         }
+    }
+}
+
+@Composable
+private fun AnimatedTotalsRow(visible: Boolean, label: String, amount: Double, textColor: Color? = null) {
+    // Keeps the last real amount so the row does not show 0 while it shrinks away
+    var shown by remember { mutableStateOf(amount) }
+    if (visible) shown = amount
+    val spec = spring<androidx.compose.ui.unit.IntSize>(stiffness = Spring.StiffnessMediumLow, dampingRatio = Spring.DampingRatioNoBouncy)
+    AnimatedVisibility(
+        visible = visible,
+        enter = expandVertically(animationSpec = spec) + fadeIn(),
+        exit = shrinkVertically(animationSpec = spec) + fadeOut()
+    ) {
+        Box(Modifier.padding(top = 6.dp)) { TotalsRow(label = label, amount = shown, textColor = textColor) }
     }
 }
 

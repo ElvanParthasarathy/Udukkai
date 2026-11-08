@@ -1,10 +1,7 @@
 package com.elvan.udukkai.ui.components.shell
 
 import androidx.compose.animation.core.Animatable
-import androidx.compose.animation.core.CubicBezierEasing
 import androidx.compose.animation.core.spring
-import androidx.compose.animation.core.tween
-import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -20,14 +17,14 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Popup
 import androidx.compose.ui.window.PopupProperties
-import androidx.compose.ui.layout.onGloballyPositioned
-import androidx.compose.ui.layout.positionInRoot
 import com.elvan.udukkai.core.extensions.cssShadow
 import com.elvan.udukkai.theme.LocalAppFontFamily
 import com.elvan.udukkai.theme.ShellColors
@@ -39,9 +36,9 @@ object ElvanMenuState {
 
 /**
  * ElvanPopupMenu for Udukkai.
- * Spawns directly on top of the 3-dot icon button, scales from 20% to 100%
- * with an easeOutCubic curve anchored at the top-right corner, and uses
- * frosted translucent styling with 24dp rounded corners.
+ * Anchored strictly at the top-right corner (or bottom-right when upward),
+ * scales diagonally towards bottom-left with a pure Apple-style physical spring bounce,
+ * and collapses back into the top-right corner with a smooth bezier curve.
  */
 class ElvanPopupMenuItem(
     val title: String,
@@ -68,8 +65,7 @@ fun ElvanPopupMenu(
         }
     }
 
-    // As on iOS: the menu grows out of the button on a spring and settles with a slight overshoot, then shrinks back
-    // into it quickly when closed (it stays on screen until that has played)
+    // Pure Apple spring: natural physical overshoot that settles organically into place
     val progress = remember { Animatable(0f) }
     var mounted by remember { mutableStateOf(false) }
     val haptics = com.elvan.udukkai.ui.components.rememberHaptics()
@@ -77,9 +73,10 @@ fun ElvanPopupMenu(
         if (expanded) {
             haptics.click()
             mounted = true
-            progress.animateTo(1f, spring(dampingRatio = 0.78f, stiffness = 420f))
+            progress.animateTo(1f, spring(dampingRatio = 0.7f, stiffness = 300f))
         } else if (mounted) {
-            progress.animateTo(0f, tween(140, easing = CubicBezierEasing(0.4f, 0f, 1f, 1f)))
+            // A spring back along the same diagonal (not a timed curve), so a close starts gently and picks up from an unfinished open
+            progress.animateTo(0f, spring(dampingRatio = 0.82f, stiffness = 380f, visibilityThreshold = 0.02f))
             mounted = false
         }
     }
@@ -87,7 +84,12 @@ fun ElvanPopupMenu(
     // Where the button is, so the menu opens at the same spot when it is drawn in the page layer
     var anchor by remember { mutableStateOf(androidx.compose.ui.geometry.Rect.Zero) }
     androidx.compose.foundation.layout.Spacer(
-        Modifier.size(0.dp).onGloballyPositioned { c -> c.parentLayoutCoordinates?.let { val at = it.positionInRoot(); anchor = androidx.compose.ui.geometry.Rect(at.x, at.y, at.x + it.size.width, at.y + it.size.height) } }
+        Modifier.size(0.dp).onGloballyPositioned { c ->
+            c.parentLayoutCoordinates?.let {
+                val at = it.positionInRoot()
+                anchor = androidx.compose.ui.geometry.Rect(at.x, at.y, at.x + it.size.width, at.y + it.size.height)
+            }
+        }
     )
 
     val host = LocalMenuHost.current
@@ -101,13 +103,17 @@ fun ElvanPopupMenu(
             modifier = modifier
                 .graphicsLayer {
                     val p = progress.value
-                    scaleX = 0.5f + 0.5f * p
-                    scaleY = 0.5f + 0.5f * p
-                    transformOrigin = TransformOrigin(1f, if (upward) 1f else 0f) // Anchored at the corner where the button is
-                    alpha = (p * 2.5f).coerceIn(0f, 1f)
+                    // Natural unified spring scale: continuous from start to finish with no artificial piecewise jumps
+                    scaleX = 0.3f + 0.7f * p
+                    scaleY = 0.3f + 0.7f * p
+                    // Pinned to the centre of the 24dp corner's curve (where the 3-dot sits), not the sharp corner, which is outside the rounded panel
+                    val corner = 24.dp.toPx()
+                    transformOrigin = if (size.width > 0f && size.height > 0f) {
+                        TransformOrigin(1f - corner / size.width, if (upward) 1f - corner / size.height else corner / size.height)
+                    } else TransformOrigin(1f, if (upward) 1f else 0f)
+                    alpha = (p * 2.8f).coerceIn(0f, 1f)
                 }
-                .cssShadow(color = Color.Black, alpha = 0.05f, borderRadius = 24.dp, blurRadius = 16.dp, offsetY = 4.dp) // the navigation bar's shadow
-                // Frosted glass over the page; plain translucent where there is no page to blur
+                .cssShadow(color = Color.Black, alpha = 0.05f, borderRadius = 24.dp, blurRadius = 16.dp, offsetY = 4.dp)
                 .frostedGlass(RoundedCornerShape(24.dp), colors, fallbackAlpha = 0.94f)
                 .border(
                     width = 0.5.dp,
@@ -116,9 +122,10 @@ fun ElvanPopupMenu(
                 )
                 .clip(RoundedCornerShape(24.dp))
                 .width(IntrinsicSize.Max)
-                // Taps on the menu stay on the menu
                 .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null) {}
-        ) { MenuRows(items, colors, progress.value, onDismissRequest) }
+        ) {
+            MenuRows(items, colors, progress.value, onDismissRequest)
+        }
     }
 
     if (host != null) {
@@ -126,7 +133,6 @@ fun ElvanPopupMenu(
             SideEffect { if (host.content != null && host.onDismiss === dismissKey) host.content = null }
             return
         }
-        val density = androidx.compose.ui.platform.LocalDensity.current
         val content: @Composable () -> Unit = {
             var origin by remember { mutableStateOf(androidx.compose.ui.geometry.Offset.Zero) }
             androidx.compose.ui.layout.Layout(
@@ -135,7 +141,6 @@ fun ElvanPopupMenu(
             ) { measurables, constraints ->
                 val placeable = measurables.first().measure(constraints.copy(minWidth = 0, minHeight = 0))
                 layout(constraints.maxWidth, constraints.maxHeight) {
-                    // Same spot as the old popup: top right of the button (opening down), or above it (opening up)
                     val right = anchor.right - origin.x + (if (upward) -24f else 8f)
                     val x = (right - placeable.width).toInt().coerceIn(0, (constraints.maxWidth - placeable.width).coerceAtLeast(0))
                     val y = if (upward) (anchor.bottom - origin.y - 28f - placeable.height).toInt()
@@ -169,7 +174,6 @@ private var dismissKey: (() -> Unit)? = null
 @Composable
 private fun MenuRows(items: List<ElvanPopupMenuItem>, colors: ShellColors, progress: Float, onDismissRequest: () -> Unit) {
     Column(
-        // The rows come in just behind the panel, so the menu reads as growing first, then filling
         modifier = Modifier.fillMaxWidth().graphicsLayer {
             alpha = ((progress - 0.25f) / 0.6f).coerceIn(0f, 1f)
             translationY = (1f - progress.coerceIn(0f, 1f)) * -6.dp.toPx()

@@ -214,7 +214,7 @@ fun GreetingPill(
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Text(
-                                    text = (appTitle ?: K.vanakkam.tr()).preventBrokenLigatures(),
+                                    text = K.vanakkam.tr().preventBrokenLigatures(),
                                     style = TextStyle(
                                         fontFamily = ff,
                                         fontSize = 18.sp,

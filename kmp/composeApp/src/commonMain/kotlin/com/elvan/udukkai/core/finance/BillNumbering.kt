@@ -13,7 +13,10 @@ object BillNumbering {
      * The number series of proforma (estimate) invoices: "PF/SJPS", so the first one is "PF/SJPS-001". It has its own
      * counter, apart from the tax invoices (a proforma is not a sale), and starts again each financial year like them.
      */
-    fun proformaBase(shortName: String): String = "PF/" + shortName.trim().ifEmpty { "INV" }
+    fun proformaBase(shortName: String?): String = "PF/" + invoiceBase(shortName)
+
+    /** The tax-invoice series: the short business name, or "INV" when it is missing, empty or only spaces. */
+    fun invoiceBase(shortName: String?): String = shortName.orEmpty().trim().ifEmpty { "INV" }
 
     private val TRAILING_DIGITS = Regex("(\\d+)$")
 

@@ -128,7 +128,7 @@ val ta: Map<String, String> = mapOf(
     K.subtotal to "இடைமொத்தம்",
     K.clientNameSearch to "வாங்குநர் பெயர்",
     K.businessDetails to "வாங்குநர் தரவுகள்",
-    K.vanakkam to "வணக்கம்!",
+    K.vanakkam to "வணக்கம்",
     K.draft to "வரைவு",
     K.placeOfSupply to "வழங்கல் இடம்",
     K.logout to "வெளியேறு",

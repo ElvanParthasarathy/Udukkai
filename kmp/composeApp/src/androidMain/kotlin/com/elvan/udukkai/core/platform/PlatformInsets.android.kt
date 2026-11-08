@@ -14,9 +14,20 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 
+private var lastKnownStatusBar = 0.dp
+
+/**
+ * A new Activity gets its insets a few frames late, so its first frames would lay out for a 0dp status bar and then jump.
+ * Until they arrive the height from the previous Activity is used. A bar that is merely hidden still reports its size
+ * through the "ignoring visibility" inset, so full-screen pages keep their real 0.
+ */
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
-actual fun getStatusBarTopPadding(): Dp =
-    WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
+actual fun getStatusBarTopPadding(): Dp {
+    val real = WindowInsets.statusBarsIgnoringVisibility.asPaddingValues().calculateTopPadding()
+    if (real > 0.dp) lastKnownStatusBar = real else return lastKnownStatusBar
+    return WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
+}
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable

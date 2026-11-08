@@ -228,7 +228,8 @@ fun CustomerEditorScreen(
         handleBackAttempt()
     }
 
-    val pageTitle = if (isEditing) K.editCustomer.tr() else K.createCustomer.tr()
+    val editedAtOpen = remember { isEditing } // the title is fixed when the page opens, so saving never flips it mid-transition
+    val pageTitle = if (editedAtOpen) K.edit.tr() else K.createCustomer.tr()
     val saveSuccessMsg = K.customerSavedSuccessfully.tr()
     val fillNameMsg = K.customerNameRequired.tr()
     val invalidGstinMsg = K.invalidGstin.tr()
@@ -342,7 +343,14 @@ fun CustomerEditorScreen(
                                     placeholder = ""
                                 )
 
-                                if (isB2b) {
+                                // Business-only fields grow and shrink like the saved-details box; the 16dp gaps live inside the animated parts
+                                Column(Modifier.fillMaxWidth()) {
+                                androidx.compose.animation.AnimatedVisibility(
+                                    visible = isB2b,
+                                    enter = androidx.compose.animation.expandVertically(expandFrom = Alignment.Top, animationSpec = androidx.compose.animation.core.spring<androidx.compose.ui.unit.IntSize>(stiffness = androidx.compose.animation.core.Spring.StiffnessMediumLow, dampingRatio = androidx.compose.animation.core.Spring.DampingRatioNoBouncy)) + androidx.compose.animation.fadeIn(),
+                                    exit = androidx.compose.animation.shrinkVertically(shrinkTowards = Alignment.Top, animationSpec = androidx.compose.animation.core.spring<androidx.compose.ui.unit.IntSize>(stiffness = androidx.compose.animation.core.Spring.StiffnessMediumLow, dampingRatio = androidx.compose.animation.core.Spring.DampingRatioNoBouncy)) + androidx.compose.animation.fadeOut()
+                                ) {
+                                  Column(Modifier.fillMaxWidth().padding(bottom = 16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
                                     ElvanIrumozhiPulan(
                                         label = K.businessOwnerName.tr(),
                                         value = ownerMap,
@@ -361,6 +369,7 @@ fun CustomerEditorScreen(
                                             itemLabelBuilder = { when (it) { SHOW_BOTH -> showBothLabel; SHOW_OWNER -> showOwnerLabel; else -> showBusinessLabel } }
                                         )
                                     }
+                                  }
                                 }
 
                                 if (allProfiles.isNotEmpty()) {
@@ -374,7 +383,12 @@ fun CustomerEditorScreen(
                                     )
                                 }
 
-                                if (isB2b) {
+                                androidx.compose.animation.AnimatedVisibility(
+                                    visible = isB2b,
+                                    enter = androidx.compose.animation.expandVertically(expandFrom = Alignment.Top, animationSpec = androidx.compose.animation.core.spring<androidx.compose.ui.unit.IntSize>(stiffness = androidx.compose.animation.core.Spring.StiffnessMediumLow, dampingRatio = androidx.compose.animation.core.Spring.DampingRatioNoBouncy)) + androidx.compose.animation.fadeIn(),
+                                    exit = androidx.compose.animation.shrinkVertically(shrinkTowards = Alignment.Top, animationSpec = androidx.compose.animation.core.spring<androidx.compose.ui.unit.IntSize>(stiffness = androidx.compose.animation.core.Spring.StiffnessMediumLow, dampingRatio = androidx.compose.animation.core.Spring.DampingRatioNoBouncy)) + androidx.compose.animation.fadeOut()
+                                ) {
+                                  Column(Modifier.fillMaxWidth().padding(top = 16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
                                     ElvanEditorTextField(
                                         value = gstin,
                                         onValueChange = { gstin = it.uppercase() },
@@ -391,6 +405,8 @@ fun CustomerEditorScreen(
                                             readOnly = true
                                         )
                                     }
+                                  }
+                                }
                                 }
                             }
                         }
@@ -409,6 +425,7 @@ fun CustomerEditorScreen(
                                 val presetCountry = worldCountries.filter { it.en != "Custom" && it.ta != "தனிப்பயன்" }
                                     .firstOrNull { it.en.equals(countryMap["en"], ignoreCase = true) || it.ta == countryMap["ta"] }
 
+                                Column(Modifier.fillMaxWidth()) {
                                 ElvanEditorDropdown<LocationName>(
                                     label = K.country.tr(),
                                     value = if (isCustomCountry) worldCountries.last() else presetCountry,
@@ -445,7 +462,7 @@ fun CustomerEditorScreen(
                                     }
                                 )
 
-                                if (isCustomCountry) {
+                                ElvanEditorReveal(isCustomCountry) {
                                     ElvanIrumozhiPulan(
                                         label = "${K.country.tr()} (${K.customBtn.tr()})",
                                         value = countryMap,
@@ -456,11 +473,13 @@ fun CustomerEditorScreen(
                                         placeholder = K.country.tr()
                                     )
                                 }
+                                }
 
                                 if (isIndia) {
                                     val presetState = indianStates.filter { it.en != "Custom" && it.ta != "தனிப்பயன்" }
                                         .firstOrNull { it.en.equals(stateMap["en"], ignoreCase = true) || it.ta == stateMap["ta"] }
 
+                                    Column(Modifier.fillMaxWidth()) {
                                     ElvanEditorDropdown<LocationName>(
                                         label = K.state.tr(),
                                         value = if (isCustomState) indianStates.last() else presetState,
@@ -494,7 +513,7 @@ fun CustomerEditorScreen(
                                         }
                                     )
 
-                                    if (isCustomState) {
+                                    ElvanEditorReveal(isCustomState) {
                                         ElvanIrumozhiPulan(
                                             label = "${K.state.tr()} (${K.customBtn.tr()})",
                                             value = stateMap,
@@ -505,11 +524,13 @@ fun CustomerEditorScreen(
                                             placeholder = K.state.tr()
                                         )
                                     }
+                                    }
 
                                     if (isTamilNadu) {
                                         val presetDistrict = tamilNaduDistricts.filter { it.en != "Custom" && it.ta != "தனிப்பயன்" }
                                             .firstOrNull { it.en.equals(districtMap["en"], ignoreCase = true) || it.ta == districtMap["ta"] }
 
+                                        Column(Modifier.fillMaxWidth()) {
                                         ElvanEditorDropdown<LocationName>(
                                             label = K.district.tr(),
                                             value = if (isCustomDistrict) tamilNaduDistricts.last() else presetDistrict,
@@ -537,7 +558,7 @@ fun CustomerEditorScreen(
                                             }
                                         )
 
-                                        if (isCustomDistrict) {
+                                        ElvanEditorReveal(isCustomDistrict) {
                                             ElvanIrumozhiPulan(
                                                 label = "${K.district.tr()} (${K.customBtn.tr()})",
                                                 value = districtMap,
@@ -547,6 +568,7 @@ fun CustomerEditorScreen(
                                                 secondaryLang = secondaryLang,
                                                 placeholder = K.district.tr()
                                             )
+                                        }
                                         }
                                     } else {
                                         ElvanIrumozhiPulan(

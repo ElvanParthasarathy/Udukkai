@@ -271,7 +271,7 @@ object TextilesReceiptRepository {
     }
 
     fun formatReceiptNumber(bizShort: String, vanakkam: Int): String {
-        val short = bizShort.trim().ifEmpty { "BIZ" }
+        val short = bizShort.trim().ifEmpty { "INV" }
         val padded = if (vanakkam < 10) "0$vanakkam" else vanakkam.toString()
         return "RCP/$short/$padded"
     }

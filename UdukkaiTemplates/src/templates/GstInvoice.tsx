@@ -595,7 +595,7 @@ const SjsTheme = React.forwardRef(({ profile = {}, client = {}, details = {}, it
         <div className="inv-words" style={{ padding: '0.75rem 0.5rem', borderRight: '1px solid #e2e8f0', flex: 1, display: 'flex', flexDirection: 'column' }}>
           {fyFull(details?.invoiceDate) && (
             <div style={{ marginBottom: '0.2rem', color: '#64748b', fontWeight: 400, fontSize: '0.8rem' }}>
-              {renderLabel('Financial Year', 'நிதியாண்டு').replace(' / ', ' • ')}: <span style={{ fontWeight: 600, color: '#334155' }}>{fyFull(details?.invoiceDate)}</span>
+              {renderLabel('Financial Year', 'பொருளாண்டு').replace(' / ', ' • ')}: <span style={{ fontWeight: 600, color: '#334155' }}>{fyFull(details?.invoiceDate)}</span>
             </div>
           )}
           {options?.measureMode !== 'weight' && (

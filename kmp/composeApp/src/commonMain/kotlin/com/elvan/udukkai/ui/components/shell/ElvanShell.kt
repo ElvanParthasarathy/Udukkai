@@ -169,12 +169,15 @@ fun ElvanShell(
     } else {
         with(density) { expandedHeight.toPx() }
     }
-    val currentScrollOffset = (headerCollapsePx + rawScrollOffset).coerceAtMost(with(density) { expandedHeight.toPx() })
+    // Never past the handoff point: when the insets arrive the point moves up, and the saved value only catches up a frame
+    // later (LaunchedEffect above). Unclamped, that frame reads as "scrolled under the bar": the title vanishes and the circle pops in.
+    val collapsePx = headerCollapsePx.coerceAtMost(handoffShrinkOffsetPx)
+    val currentScrollOffset = (collapsePx + rawScrollOffset).coerceAtMost(with(density) { expandedHeight.toPx() })
 
     val topSpacerHeight = if (isCompactHeader) {
         ceiling + pillHeight + 10.dp
     } else {
-        (expandedHeight - Dimens.SectionSpacing - with(density) { headerCollapsePx.toDp() }).coerceAtLeast(0.dp)
+        (expandedHeight - Dimens.SectionSpacing - with(density) { collapsePx.toDp() }).coerceAtLeast(0.dp)
     }
 
     var isHeaderExpanded by remember(scrollState) {

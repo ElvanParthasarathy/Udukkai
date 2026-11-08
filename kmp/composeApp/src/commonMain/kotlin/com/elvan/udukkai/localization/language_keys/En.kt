@@ -127,7 +127,7 @@ val en: Map<String, String> = mapOf(
     K.subtotal to "Subtotal",
     K.clientNameSearch to "Client Name",
     K.businessDetails to "Business Details",
-    K.vanakkam to "Vanakkam!",
+    K.vanakkam to "Vanakkam",
     K.draft to "Draft",
     K.placeOfSupply to "Place of Supply",
     K.logout to "Logout",

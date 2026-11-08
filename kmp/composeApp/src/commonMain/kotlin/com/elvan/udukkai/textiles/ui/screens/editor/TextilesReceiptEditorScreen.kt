@@ -45,6 +45,7 @@ import com.elvan.udukkai.ui.screens.editor.ElvanEditorSection
 import com.elvan.udukkai.ui.screens.editor.LocalEditorAccentColor
 import com.elvan.udukkai.ui.screens.editor.ElvanEditorDropdown
 import com.elvan.udukkai.ui.screens.editor.ElvanEditorLabel
+import com.elvan.udukkai.ui.screens.editor.ElvanEditorReveal
 import com.elvan.udukkai.ui.screens.editor.ElvanEditorTextField
 import com.elvan.udukkai.ui.screens.editor.ElvanEditorDisabledOverlay
 import com.elvan.udukkai.ui.screens.editor.receipt.components.ReceiptInvoiceSelectionSheet
@@ -173,8 +174,7 @@ fun TextilesReceiptEditorScreen(
     fun generateReceiptNumber(profile: BusinessProfile?, date: Long = receiptDate) {
         if (isEditing) return
         val bizShort = profile?.shortName?.trim()?.ifEmpty { null }
-            ?: profile?.businessName?.get("en")?.split(" ")?.mapNotNull { it.firstOrNull()?.uppercaseChar() }?.joinToString("")?.take(4)?.ifEmpty { null }
-            ?: "BIZ"
+            ?: "INV"
 
         val nextSeq = com.elvan.udukkai.textiles.data.TextilesReceiptRepository.getNextVanakkam(profile?.id, date)
         vanakkam = nextSeq
@@ -625,10 +625,10 @@ fun TextilesReceiptEditorScreen(
                                 }
                             }
 
-                            val bizPrefix = if (selectedProfile.shortName.isNotEmpty()) {
-                                "RCP/${selectedProfile.shortName}/"
+                            val bizPrefix = if (selectedProfile.shortName.isNotBlank()) {
+                                "RCP/${selectedProfile.shortName.trim()}/"
                             } else {
-                                "RCP/BIZ/"
+                                "RCP/INV/"
                             }
                             ElvanDocumentNumberField(
                                 label = K.receiptNumber.tr(),
@@ -724,7 +724,8 @@ fun TextilesReceiptEditorScreen(
                             }
 
                             // 3. Reference Number (shown when payment mode requires it)
-                            if (paymentType.needsReference) {
+                            Column(Modifier.fillMaxWidth()) {
+                            ElvanEditorReveal(paymentType.needsReference, gapBelow = true) {
                                 ElvanEditorTextField(
                                     value = suttruEn,
                                     onValueChange = {
@@ -747,6 +748,7 @@ fun TextilesReceiptEditorScreen(
                                 minLines = 2,
                                 maxLines = 6
                             )
+                            }
                         }
                     }
                 }

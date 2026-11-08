@@ -97,7 +97,8 @@ fun FactoryItemEditorScreen(
         handleBackAttempt()
     }
 
-    val pageTitle = if (isEditing) K.editItem.tr() else K.createItem.tr()
+    val editedAtOpen = remember { isEditing } // the title is fixed when the page opens, so saving never flips it mid-transition
+    val pageTitle = if (editedAtOpen) K.edit.tr() else K.createItem.tr()
     val nameRequiredMsg = K.itemNameRequired.tr()
     val duplicateItemMsg = K.itemNameAlreadyExists.tr()
     val savedMsg = K.itemSavedSuccessfully.tr()

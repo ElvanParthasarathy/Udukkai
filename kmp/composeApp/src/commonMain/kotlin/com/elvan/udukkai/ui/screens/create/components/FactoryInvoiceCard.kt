@@ -124,6 +124,7 @@ fun FactoryInvoiceCard(
                 number = invoice.invoiceNumber,
                 fy = "FY ${BillNumbering.fyShort(invoice.invoiceDate)}",
                 status = statusText,
+                statusTint = if (isPaid) colors.receiptColor else colors.itemColor,
                 textLines = textLines,
                 isSelectionMode = isSelectionMode,
                 modifier = Modifier.weight(1f)

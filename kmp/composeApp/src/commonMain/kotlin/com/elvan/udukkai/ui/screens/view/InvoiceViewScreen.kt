@@ -50,23 +50,20 @@ fun InvoiceViewScreen(
     val activeProfile = (if (invoice.companyId != null) allProfiles.find { it.id == invoice.companyId } else null) ?: profile
     val payload = remember(invoice, activeProfile) { printPayload?.invoke(activeProfile) }
     val isProforma = invoice.invoiceType == "proforma"
-    val docTitle = if (isProforma) K.proforma.tr() else K.invoice.tr()
-    val convertTitle = K.convertToTaxInvoice.tr()
     val copyTitle = K.copyBtn.tr()
 
     PreviewScreen(
-        title = "$docTitle #${invoice.invoiceNumber}",
+        title = invoice.invoiceNumber,
         onBack = onBack,
         onEdit = if (isPaid) null else onEdit,
         menuItems = buildList {
-            if (isProforma && onConvertToTaxInvoice != null) add(ElvanPopupMenuItem(convertTitle, MaterialSymbols.Rounded.SwapHoriz, onConvertToTaxInvoice))
             if (onCopy != null) add(ElvanPopupMenuItem(copyTitle, MaterialSymbols.Rounded.ContentCopy, onCopy))
         },
         printPayload = payload,
         printFileName = invoicePdfName(invoice),
         businessFolder = billBusinessFolder(activeProfile),
         showPreparationOverlay = true,
-        body = { InvoiceBody(invoice, activeProfile, isPaid, isProforma, receipts, onOpenReceipt, onRecordPayment, onOpenCustomer, isFactory) }
+        body = { InvoiceBody(invoice, activeProfile, isPaid, isProforma, receipts, onOpenReceipt, onRecordPayment, onOpenCustomer, isFactory, onConvertToTaxInvoice) }
     )
 }
 
@@ -82,7 +79,8 @@ private fun InvoiceBody(
     onOpenReceipt: ((ReceiptModel) -> Unit)?,
     onRecordPayment: (() -> Unit)?,
     onOpenCustomer: (() -> Unit)?,
-    isFactory: Boolean
+    isFactory: Boolean,
+    onConvertToTaxInvoice: (() -> Unit)?
 ) {
     val primary = profile.primaryLanguage.ifEmpty { "ta" }
     val secondary = profile.secondaryLanguage.ifEmpty { "en" }
@@ -101,6 +99,7 @@ private fun InvoiceBody(
     val itemsTitle = K.items.tr()
     val receiptsTitle = K.receipts.tr()
     val recordPayment = K.recordPayment.tr()
+    val convertTitle = K.convertToTaxInvoice.tr()
     val billNoLabel = K.billNo.tr()
     val dateLabel = K.date.tr()
     val fyLabel = K.thisFinYear.tr()
@@ -126,6 +125,9 @@ private fun InvoiceBody(
         }
         if (!isPaid && !isProforma && onRecordPayment != null) {
             item(key = "record") { DocPrimaryButton(MaterialSymbols.Rounded.Add, recordPayment, onRecordPayment) }
+        }
+        if (isProforma && onConvertToTaxInvoice != null) {
+            item(key = "convert") { DocPrimaryButton(MaterialSymbols.Rounded.SwapHoriz, convertTitle, onConvertToTaxInvoice) }
         }
         item(key = "customer") { DocCustomerCard(name, secondName, town, onOpenCustomer) }
         if (receipts.isNotEmpty()) {
@@ -215,7 +217,7 @@ private fun billSummary(invoice: InvoiceModel, options: InvoiceDisplayOptions, i
         val subtotal = lines.sumOf { it.amount }
         val extras = buildList {
             if (invoice.postalCharges > 0) add("அஞ்சல் கட்டணம்" to invoice.postalCharges)
-            if (invoice.ahimsaSilkAmount > 0) add("அகிம்சா பட்டு" to invoice.ahimsaSilkAmount)
+            if (invoice.ahimsaSilkAmount > 0) add("அகிம்சைப் பட்டு" to invoice.ahimsaSilkAmount)
         }
         val before = subtotal - invoice.discount + extras.sumOf { it.second } + tax
         BillSummary(lines, subtotal, invoice.discount, extras, cgst, sgst, igst, invoice.totalAmount - before)

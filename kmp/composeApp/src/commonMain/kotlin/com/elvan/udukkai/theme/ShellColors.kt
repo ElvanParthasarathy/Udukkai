@@ -46,10 +46,10 @@ data class ShellColors(
     val itemColor: Color = if (isDark) Color(0xFFF4B94F) else Color(0xFFE8930C),
     val customerColor: Color = if (isDark) Color(0xFFB79CF7) else Color(0xFF8A5CE6),
     // Unified entity gradients for card icons
-    val invoiceGradient: List<Color> = if (isDark) listOf(Color(0xFF7AB8FF), Color(0xFF4A8FFF)) else listOf(Color(0xFF3B8EFA), Color(0xFF1565C0)),
-    val receiptGradient: List<Color> = if (isDark) listOf(Color(0xFF6EE0A6), Color(0xFF38B574)) else listOf(Color(0xFF22C55E), Color(0xFF15803D)),
-    val itemGradient: List<Color> = if (isDark) listOf(Color(0xFFFCD34D), Color(0xFFE89E28)) else listOf(Color(0xFFF59E0B), Color(0xFFD97706)),
-    val customerGradient: List<Color> = if (isDark) listOf(Color(0xFFD4BFFF), Color(0xFFA585F2)) else listOf(Color(0xFF9D71F2), Color(0xFF7342D6)),
+    val invoiceGradient: List<Color> = if (isDark) listOf(Color(0xFF8CC8FF), Color(0xFF3D86FF)) else listOf(Color(0xFF4AA0FF), Color(0xFF0F58BE)),
+    val receiptGradient: List<Color> = if (isDark) listOf(Color(0xFF7DEBB1), Color(0xFF2CA865)) else listOf(Color(0xFF2ED272), Color(0xFF0F7437)),
+    val itemGradient: List<Color> = if (isDark) listOf(Color(0xFFFFE073), Color(0xFFDC8E1E)) else listOf(Color(0xFFFFB020), Color(0xFFC46602)),
+    val customerGradient: List<Color> = if (isDark) listOf(Color(0xFFDFCEFF), Color(0xFF9774EE)) else listOf(Color(0xFFAC84FA), Color(0xFF6636CA)),
     /** Neram / One UI blue (#0072DE): buttons, switches and text links. A deep blue, not a washed-out one. */
     val link: Color = Color(0xFF0072DE)
 )
@@ -111,10 +111,10 @@ fun rememberShellColors(): ShellColors {
                 receiptColor = Color(0xFF4FCB8A),
                 itemColor = Color(0xFFF4B94F),
                 customerColor = Color(0xFFB79CF7),
-                invoiceGradient = listOf(Color(0xFF7AB8FF), Color(0xFF4A8FFF)),
-                receiptGradient = listOf(Color(0xFF6EE0A6), Color(0xFF38B574)),
-                itemGradient = listOf(Color(0xFFFCD34D), Color(0xFFE89E28)),
-                customerGradient = listOf(Color(0xFFD4BFFF), Color(0xFFA585F2))
+                invoiceGradient = listOf(Color(0xFF8CC8FF), Color(0xFF3D86FF)),
+                receiptGradient = listOf(Color(0xFF7DEBB1), Color(0xFF2CA865)),
+                itemGradient = listOf(Color(0xFFFFE073), Color(0xFFDC8E1E)),
+                customerGradient = listOf(Color(0xFFDFCEFF), Color(0xFF9774EE))
             )
         } else {
             ShellColors(
@@ -148,10 +148,10 @@ fun rememberShellColors(): ShellColors {
                 receiptColor = Color(0xFF16A864),
                 itemColor = Color(0xFFE8930C),
                 customerColor = Color(0xFF8A5CE6),
-                invoiceGradient = listOf(Color(0xFF3B8EFA), Color(0xFF1565C0)),
-                receiptGradient = listOf(Color(0xFF22C55E), Color(0xFF15803D)),
-                itemGradient = listOf(Color(0xFFF59E0B), Color(0xFFD97706)),
-                customerGradient = listOf(Color(0xFF9D71F2), Color(0xFF7342D6))
+                invoiceGradient = listOf(Color(0xFF4AA0FF), Color(0xFF0F58BE)),
+                receiptGradient = listOf(Color(0xFF2ED272), Color(0xFF0F7437)),
+                itemGradient = listOf(Color(0xFFFFB020), Color(0xFFC46602)),
+                customerGradient = listOf(Color(0xFFAC84FA), Color(0xFF6636CA))
             )
         }
     }

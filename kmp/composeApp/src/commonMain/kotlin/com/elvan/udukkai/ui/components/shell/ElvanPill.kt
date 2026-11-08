@@ -33,7 +33,7 @@ fun ElvanPill(
             .clip(CircleShape)
             .clickable(
                 interactionSource = remember { MutableInteractionSource() },
-                indication = ripple(bounded = true),
+                indication = com.elvan.udukkai.theme.ShellDefaults.ripple(colors, bounded = true),
                 onClick = onClick
             )
     } else Modifier

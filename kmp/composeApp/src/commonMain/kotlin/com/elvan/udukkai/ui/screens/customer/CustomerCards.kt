@@ -34,10 +34,12 @@ private fun resolveCustomerCompanyTag(
     profiles: List<BusinessProfile>,
     primaryLang: String
 ): String {
-    if (merchant.companyIds.isEmpty()) {
+    // With one company only, its own name shows instead of the generic "All Companies"
+    val ids = if (merchant.companyIds.isEmpty() && profiles.size == 1) listOfNotNull(profiles[0].id) else merchant.companyIds
+    if (ids.isEmpty()) {
         return K.allCompanies.tr()
     }
-    return merchant.companyIds.mapNotNull { cId ->
+    return ids.mapNotNull { cId ->
         val p = profiles.find { it.id == cId }
         p?.shortName?.trim()?.takeIf { it.isNotEmpty() }
             ?: p?.businessName?.get(primaryLang)?.trim()?.takeIf { it.isNotEmpty() }

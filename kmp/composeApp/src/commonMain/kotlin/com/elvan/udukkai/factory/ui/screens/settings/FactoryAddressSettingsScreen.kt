@@ -48,6 +48,13 @@ fun FactoryAddressSettingsScreen(
 
     val bottomSheet = LocalElvanBottomSheetController.current
 
+    // A listed value as (primary, secondary) in the profile's languages; null for anything typed by hand or "Custom"
+    fun listed(options: List<com.elvan.udukkai.core.data.LocationName>, typed: String): Pair<String, String>? {
+        val taFirst = profile.primaryLanguage == "ta"
+        val hit = options.firstOrNull { it.en != "Custom" && it.ta != "தனிப்பயன்" && (if (taFirst) it.ta else it.en) == typed } ?: return null
+        return if (taFirst) hit.ta to hit.en else hit.en to hit.ta
+    }
+
     fun beginEdit(section: String, primary: String, secondary: String = "") {
         editingSection = section
         tempPrimary = primary
@@ -214,7 +221,7 @@ fun FactoryAddressSettingsScreen(
                                 title = K.country.tr(),
                                 primaryValue = countryPrimary,
                                 secondaryValue = if (isBilingual) countrySecondary else null,
-                                onEdit = openCountrySelection,
+                                onEdit = { beginEdit("naadu", countryPrimary, countrySecondary) },
                                 colors = colors
                             )
                         },
@@ -225,21 +232,17 @@ fun FactoryAddressSettingsScreen(
                                 onSave = { saveBilingual("naadu") },
                                 colors = colors
                             ) {
-                                ElvanSettingsTextField(
-                                    label = "${K.country.tr()} ($primaryLangLabel)",
-                                    value = tempPrimary,
-                                    onValueChange = { tempPrimary = it },
+                                ElvanSettingsOptionFields(
+                                    label = K.country.tr(),
+                                    primaryLangLabel = primaryLangLabel,
+                                    secondaryLangLabel = secondaryLangLabel,
+                                    isBilingual = isBilingual,
+                                    primary = tempPrimary,
+                                    secondary = tempSecondary,
+                                    lookup = { v -> listed(worldCountries, v) },
+                                    onChange = { p, s -> tempPrimary = p; tempSecondary = s },
                                     colors = colors
                                 )
-                                if (isBilingual) {
-                                    Spacer(modifier = Modifier.height(12.dp))
-                                    ElvanSettingsTextField(
-                                        label = "${K.country.tr()} ($secondaryLangLabel)",
-                                        value = tempSecondary,
-                                        onValueChange = { tempSecondary = it },
-                                        colors = colors
-                                    )
-                                }
                             }
                         }
                     )
@@ -298,7 +301,7 @@ fun FactoryAddressSettingsScreen(
                                 title = K.district.tr(),
                                 primaryValue = districtPrimary,
                                 secondaryValue = if (isBilingual) districtSecondary else null,
-                                onEdit = if (isTamilNadu) openDistrictSelection else { { beginEdit("maavattam", districtPrimary, districtSecondary) } },
+                                onEdit = { beginEdit("maavattam", districtPrimary, districtSecondary) },
                                 colors = colors
                             )
                         },
@@ -309,21 +312,17 @@ fun FactoryAddressSettingsScreen(
                                 onSave = { saveBilingual("maavattam") },
                                 colors = colors
                             ) {
-                                ElvanSettingsTextField(
-                                    label = "${K.district.tr()} ($primaryLangLabel)",
-                                    value = tempPrimary,
-                                    onValueChange = { tempPrimary = it },
+                                ElvanSettingsOptionFields(
+                                    label = K.district.tr(),
+                                    primaryLangLabel = primaryLangLabel,
+                                    secondaryLangLabel = secondaryLangLabel,
+                                    isBilingual = isBilingual,
+                                    primary = tempPrimary,
+                                    secondary = tempSecondary,
+                                    lookup = if (isTamilNadu) { v -> listed(tamilNaduDistricts, v) } else { _ -> null },
+                                    onChange = { p, s -> tempPrimary = p; tempSecondary = s },
                                     colors = colors
                                 )
-                                if (isBilingual) {
-                                    Spacer(modifier = Modifier.height(12.dp))
-                                    ElvanSettingsTextField(
-                                        label = "${K.district.tr()} ($secondaryLangLabel)",
-                                        value = tempSecondary,
-                                        onValueChange = { tempSecondary = it },
-                                        colors = colors
-                                    )
-                                }
                             }
                         }
                     )
@@ -459,7 +458,7 @@ fun FactoryAddressSettingsScreen(
                                 title = K.country.tr(),
                                 primaryValue = countryPrimary,
                                 secondaryValue = if (isBilingual) countrySecondary else null,
-                                onEdit = openCountrySelection,
+                                onEdit = { beginEdit("naadu", countryPrimary, countrySecondary) },
                                 colors = colors
                             )
                         },

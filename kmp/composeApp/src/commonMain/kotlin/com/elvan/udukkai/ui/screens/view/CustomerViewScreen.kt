@@ -122,7 +122,7 @@ fun CustomerViewScreen(
             item(key = "stats") {
                 ViewStats(
                     left = Triple(MaterialSymbols.Rounded.CurrencyRupeeCircle, K.totalBilledAmount.tr(), CurrencyUtils.formatInr(activity.billed)),
-                    right = Triple(MaterialSymbols.Rounded.Receipt, K.unpaidAmount.tr(), CurrencyUtils.formatInr(activity.unpaid)),
+                    right = Triple(MaterialSymbols.Rounded.Payments, K.unpaidAmount.tr(), CurrencyUtils.formatInr(activity.unpaid)),
                     colors = colors
                 )
             }

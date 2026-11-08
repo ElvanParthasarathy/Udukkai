@@ -268,7 +268,7 @@ fun ElvanTintedIcon(
         modifier = modifier
             .size(size)
             .clip(shape)
-            .background(tint.copy(alpha = if (dark) 0.18f else 0.11f)),
+            .background(tint.copy(alpha = if (dark) 0.16f else 0.10f)),
         contentAlignment = Alignment.Center
     ) {
         Icon(

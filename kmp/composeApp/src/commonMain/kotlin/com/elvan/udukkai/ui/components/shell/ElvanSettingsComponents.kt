@@ -645,21 +645,33 @@ fun ElvanSettingsEditContainer(
                 )
             }
             Spacer(modifier = Modifier.width(8.dp))
-            Button(
-                onClick = onSave,
-                shape = RoundedCornerShape(50),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = colors.accent,
-                    contentColor = if (colors.isDark) Color.Black else Color.White
-                ),
-                elevation = ButtonDefaults.buttonElevation(0.dp)
+            // Mono pill: clip, then clickable, so the ripple fills the whole pill; its ripple is the text colour
+            val saveInk = if (colors.isDark) Color.Black else Color.White
+            Box(
+                modifier = Modifier
+                    .heightIn(min = 40.dp)
+                    .clip(RoundedCornerShape(50))
+                    .background(colors.accent)
+                    .clickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = androidx.compose.material3.ripple(color = saveInk.copy(alpha = 0.35f), bounded = true),
+                        role = androidx.compose.ui.semantics.Role.Button,
+                        onClick = onSave
+                    )
+                    .padding(horizontal = 24.dp),
+                contentAlignment = Alignment.Center
             ) {
                 Text(
                     text = effectiveSave,
+                    color = saveInk,
                     style = TextStyle(
                         fontFamily = ff,
                         fontSize = 14.sp,
-                        fontWeight = FontWeight.SemiBold
+                        fontWeight = FontWeight.SemiBold,
+                        lineHeightStyle = androidx.compose.ui.text.style.LineHeightStyle(
+                            androidx.compose.ui.text.style.LineHeightStyle.Alignment.Center,
+                            androidx.compose.ui.text.style.LineHeightStyle.Trim.Both
+                        )
                     )
                 )
             }
@@ -1014,4 +1026,50 @@ private val settingsHues: Map<ImageVector, Hue> by lazy {
 fun settingsHue(icon: ImageVector, dark: Boolean): Color {
     val hue = settingsHues[icon] ?: Hue.entries[(icon.name.hashCode() and 0x7fffffff) % Hue.entries.size]
     return Color(if (dark) hue.dark else hue.light)
+}
+
+/**
+ * Country and District edit fields, as Flutter's ElvanIrumozhiAutocomplete: in bilingual mode the primary language is
+ * typed and the other follows from the list, read-only; once the typed value is not in the list (or is empty, as after
+ * choosing "Custom") both fields are editable on their own.
+ * [lookup] gives the (primary, secondary) pair of a listed primary value, or null when it is not listed.
+ */
+@Composable
+fun ElvanSettingsOptionFields(
+    label: String,
+    primaryLangLabel: String,
+    secondaryLangLabel: String,
+    isBilingual: Boolean,
+    primary: String,
+    secondary: String,
+    lookup: (String) -> Pair<String, String>?,
+    onChange: (primary: String, secondary: String) -> Unit,
+    colors: ShellColors = rememberShellColors()
+) {
+    var custom by remember { mutableStateOf(primary.isBlank() || lookup(primary) == null) }
+    ElvanSettingsTextField(
+        label = "$label ($primaryLangLabel)",
+        value = primary,
+        onValueChange = { typed ->
+            val hit = lookup(typed.trim())
+            if (hit != null) {
+                custom = false
+                onChange(hit.first, hit.second)
+            } else {
+                if (typed.isBlank() && isBilingual && !custom) onChange("", "") else onChange(typed, secondary)
+                custom = true
+            }
+        },
+        colors = colors
+    )
+    if (isBilingual) {
+        Spacer(modifier = Modifier.height(12.dp))
+        ElvanSettingsTextField(
+            label = "$label ($secondaryLangLabel)",
+            value = secondary,
+            onValueChange = { onChange(primary, it) },
+            readOnly = !custom,
+            colors = colors
+        )
+    }
 }

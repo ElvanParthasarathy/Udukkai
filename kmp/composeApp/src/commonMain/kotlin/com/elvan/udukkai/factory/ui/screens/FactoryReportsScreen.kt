@@ -171,9 +171,9 @@ fun FactoryReportsScreen(onBack: () -> Unit) {
                     colors,
                     (FactoryInvoiceRepository.invoices.map { com.elvan.udukkai.core.utils.DateUtils.financialYearStart(it.invoiceDate) } +
                         FactoryReceiptRepository.receipts.map { com.elvan.udukkai.core.utils.DateUtils.financialYearStart(it.receiptDate) }).toSet(),
-                    nextBill = FactoryInvoiceRepository.getNextInvoiceNumber(profile.id, profile.shortName.ifEmpty { "INV" }),
+                    nextBill = FactoryInvoiceRepository.getNextInvoiceNumber(profile.id, com.elvan.udukkai.core.finance.BillNumbering.invoiceBase(profile.shortName)),
                     nextReceipt = FactoryReceiptRepository.formatReceiptNumber(profile.shortName, FactoryReceiptRepository.getNextVanakkam(profile.id)),
-                    firstBill = com.elvan.udukkai.core.finance.BillNumbering.format(profile.shortName.ifEmpty { "INV" }, 1),
+                    firstBill = com.elvan.udukkai.core.finance.BillNumbering.format(com.elvan.udukkai.core.finance.BillNumbering.invoiceBase(profile.shortName), 1),
                     firstReceipt = FactoryReceiptRepository.formatReceiptNumber(profile.shortName, 1)
                 )
             }

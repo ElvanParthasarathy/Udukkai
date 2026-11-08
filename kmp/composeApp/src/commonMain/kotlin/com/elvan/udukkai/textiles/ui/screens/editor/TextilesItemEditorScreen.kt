@@ -122,7 +122,8 @@ fun TextilesItemEditorScreen(
         handleBackAttempt()
     }
 
-    val pageTitle = if (isEditing) K.editItem.tr() else K.createItem.tr()
+    val editedAtOpen = remember { isEditing } // the title is fixed when the page opens, so saving never flips it mid-transition
+    val pageTitle = if (editedAtOpen) K.edit.tr() else K.createItem.tr()
     val nameRequiredMsg = K.itemNameRequired.tr()
     val duplicateItemMsg = K.itemNameAlreadyExists.tr()
     val savedMsg = K.itemSavedSuccessfully.tr()
@@ -334,7 +335,12 @@ private fun GstRatePicker(value: String, onValueChange: (String) -> Unit, label:
             },
             itemLabelBuilder = { if (it == GST_CUSTOM) customLabel else "$it%" }
         )
-        androidx.compose.animation.AnimatedVisibility(visible = custom) {
+        androidx.compose.animation.AnimatedVisibility(
+            visible = custom,
+            // Grows from the top and fades, like the saved-details box: no sideways slide
+            enter = androidx.compose.animation.expandVertically(expandFrom = Alignment.Top, animationSpec = androidx.compose.animation.core.spring(stiffness = androidx.compose.animation.core.Spring.StiffnessMediumLow, dampingRatio = androidx.compose.animation.core.Spring.DampingRatioNoBouncy)) + androidx.compose.animation.fadeIn(),
+            exit = androidx.compose.animation.shrinkVertically(shrinkTowards = Alignment.Top, animationSpec = androidx.compose.animation.core.spring(stiffness = androidx.compose.animation.core.Spring.StiffnessMediumLow, dampingRatio = androidx.compose.animation.core.Spring.DampingRatioNoBouncy)) + androidx.compose.animation.fadeOut()
+        ) {
             ElvanEditorTextField(
                 value = value,
                 onValueChange = { onValueChange(it.filter { c -> c.isDigit() || c == '.' }) },

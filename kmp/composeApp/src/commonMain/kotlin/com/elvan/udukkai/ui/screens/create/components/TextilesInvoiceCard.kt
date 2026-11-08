@@ -87,7 +87,7 @@ fun TextilesInvoiceCard(
     val dateStr = DateUtils.formatEpochMillis(invoice.invoiceDate)
     val docTypeLabel = if (invoice.invoiceType == "proforma") K.proforma.tr() else K.taxInvoice.tr()
     // The type only shows for an estimate: a tax invoice is the usual bill, and its number is long enough already
-    val leftDetail = listOfNotNull(dateStr, docTypeLabel.takeIf { invoice.invoiceType == "proforma" }).joinToString("  •  ")
+    val leftDetail = dateStr
 
     // A screen reader reads the card as one item; at a larger text size the name and place wrap instead of being cut
     val statusText = if (isPaid) K.statusPaid.tr() else K.statusUnpaid.tr()
@@ -128,6 +128,7 @@ fun TextilesInvoiceCard(
                 number = invoice.invoiceNumber,
                 fy = "FY ${BillNumbering.fyShort(invoice.invoiceDate)}",
                 status = statusText,
+                statusTint = if (isPaid) colors.receiptColor else colors.itemColor,
                 textLines = textLines,
                 isSelectionMode = isSelectionMode,
                 modifier = Modifier.weight(1f)

@@ -1,5 +1,6 @@
 package com.elvan.udukkai.ui.screens.settings
 
+import dev.chrisbanes.haze.hazeSource
 import com.elvan.udukkai.ui.components.shell.frostedGlass
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.CubicBezierEasing
@@ -223,10 +224,13 @@ fun SettingsSearchOverlay(open: Boolean, entries: List<SettingsEntry>, colors: S
         val openWidth = maxWidth - PILL_OPEN_MARGIN * 2
         val currentWidth = closedWidth + (openWidth - closedWidth) * p
         val currentHeight = PILL_CLOSED_HEIGHT + (PILL_OPEN_HEIGHT - PILL_CLOSED_HEIGHT) * p
-        Box(Modifier.fillMaxSize().graphicsLayer { alpha = p; translationY = rise }) {
+        // The page is the blur source for the field floating over it, so the field is frosted glass here as on the other pages
+        val haze = remember { dev.chrisbanes.haze.HazeState() }
+        Box(Modifier.fillMaxSize().graphicsLayer { alpha = p; translationY = rise }.hazeSource(haze)) {
             SearchPage(query, { query = it }, recents, { recents = it }, results, colors, ::openResult, onClose)
         }
         // The field is the pill itself: it starts at the pill's place and size and smoothly grows to the full field
+        androidx.compose.runtime.CompositionLocalProvider(com.elvan.udukkai.ui.components.shell.LocalHazeState provides haze) {
         SearchField(
             colors = colors, open = open, query = query, onQuery = { query = it },
             onSearch = { results.firstOrNull()?.let { openResult(it.route) } },
@@ -235,6 +239,7 @@ fun SettingsSearchOverlay(open: Boolean, entries: List<SettingsEntry>, colors: S
                 .padding(bottom = maxOf(imeBottom, navInset) + Dimens.FloatingBarBottomGap)
                 .width(currentWidth)
         )
+        }
     }
 }
 

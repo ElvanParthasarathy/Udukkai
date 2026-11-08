@@ -219,7 +219,7 @@ export default function CoolieInvoiceBilingual({ bill }) {
           </div>
           {fyFull(date) && (
             <div style={{ marginTop: '6px', paddingRight: '8px', textAlign: 'right', whiteSpace: 'nowrap' }}>
-              <h4 className="inv-section-label" style={{ color: 'var(--bill-primary)', fontWeight: 700, fontSize: '12px', marginBottom: '3px', textTransform: 'none' }}>{slash('நிதியாண்டு', 'Financial Year')}</h4>
+              <h4 className="inv-section-label" style={{ color: 'var(--bill-primary)', fontWeight: 700, fontSize: '12px', marginBottom: '3px', textTransform: 'none' }}>{slash('பொருளாண்டு', 'Financial Year')}</h4>
               <p style={{ color: '#242f3d', fontWeight: 600, fontSize: '15px', margin: 0 }}>{fyFull(date)}</p>
             </div>
           )}

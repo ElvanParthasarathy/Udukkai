@@ -118,8 +118,8 @@ fun UllnuzhaivuThirai(
                         contentDescription = null,
                         tint = Color.Unspecified,
                         modifier = Modifier
-                            .size(110.dp)
-                            .clip(RoundedCornerShape(28.dp))
+                            .size(96.dp)
+                            .clip(RoundedCornerShape(24.dp))
                     )
                     Spacer(Modifier.height(18.dp))
                     NeramHeader(

@@ -112,6 +112,7 @@ fun ReceiptCard(
                 number = receipt.receiptNumber,
                 fy = "FY ${com.elvan.udukkai.core.finance.BillNumbering.fyShort(receipt.receiptDate)}",
                 status = paymentModeText,
+                statusTint = colors.receiptColor,
                 textLines = 1,
                 isSelectionMode = isSelectionMode,
                 modifier = Modifier.weight(1f)

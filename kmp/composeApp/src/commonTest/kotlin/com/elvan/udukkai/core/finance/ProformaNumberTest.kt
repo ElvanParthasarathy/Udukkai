@@ -21,5 +21,18 @@ class ProformaNumberTest {
     @Test
     fun missingShortNameFallsBackToInv() {
         assertEquals("PF/INV", BillNumbering.proformaBase("  "))
+        assertEquals("PF/INV", BillNumbering.proformaBase(null))
+        for (blank in listOf(null, "", "   ")) assertEquals("INV", BillNumbering.invoiceBase(blank))
+        assertEquals("VRM", BillNumbering.invoiceBase(" VRM "))
+    }
+
+    @Test
+    fun invoiceProformaAndCompaniesCountApartWithoutShortName() {
+        val inv = BillNumbering.invoiceBase("")
+        assertEquals("INV-001", BillNumbering.format(inv, BillNumbering.nextSerial(emptyList(), inv)))
+        val used = listOf("INV-001", "INV-002", "PF/INV-001", "VRM-005")
+        assertEquals(3, BillNumbering.nextSerial(used, inv))
+        assertEquals(2, BillNumbering.nextSerial(used, BillNumbering.proformaBase(null)))
+        assertEquals(6, BillNumbering.nextSerial(used, BillNumbering.invoiceBase("VRM")))
     }
 }
