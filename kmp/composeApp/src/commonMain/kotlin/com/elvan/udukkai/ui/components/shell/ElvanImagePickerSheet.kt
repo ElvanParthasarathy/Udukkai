@@ -25,7 +25,7 @@ import com.elvan.udukkai.ui.navigation.MaterialSymbols
 /**
  * ElvanImagePickerSheet — Upward floating action sheet for picking images.
  * Replicates Flutter's `showElvanImagePickerSheet` (`elvan_padam_thaervu_maeladukku.dart`).
- * Offers options for Gallery ("புகைப்படத் தொகுப்பு") and Files ("கோப்புகள்").
+ * Offers options for Gallery ("நிழலகம்") and Files ("கோப்புகள்").
  */
 @Composable
 fun ElvanImagePickerSheet(
