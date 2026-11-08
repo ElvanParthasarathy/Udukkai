@@ -1,4 +1,4 @@
-package com.elvan.udukkai.data.model
+package com.elvan.udukkai.data.model
 
 import com.elvan.udukkai.core.utils.DateUtils
 
