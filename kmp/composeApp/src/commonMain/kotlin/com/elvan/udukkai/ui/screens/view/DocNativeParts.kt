@@ -35,7 +35,7 @@ import com.elvan.udukkai.ui.navigation.MaterialSymbols
 /** One bill line as the view page shows it. */
 data class BillLine(val name: String, val secondName: String, val detail: String, val amount: Double)
 
-/** Paid (green), money still to come (red) or neither (proforma). */
+/** Paid (green), money still to come (calm grey, like a draft) or neither (proforma). */
 enum class DocTone { Paid, Due, Neutral }
 
 @Composable
@@ -43,7 +43,7 @@ private fun toneColor(tone: DocTone): Color {
     val dark = rememberShellColors().isDark
     return when (tone) {
         DocTone.Paid -> if (dark) Color(0xFF4ADE80) else Color(0xFF15803D)
-        DocTone.Due -> if (dark) Color(0xFFF87171) else Color(0xFFDC2626)
+        DocTone.Due -> if (dark) Color(0xFF9CA3AF) else Color(0xFF6B7280)
         DocTone.Neutral -> rememberShellColors().textPrimary
     }
 }
@@ -134,12 +134,12 @@ fun DocCustomerCard(name: String, secondName: String, town: String, onClick: (()
         verticalAlignment = Alignment.CenterVertically
     ) {
         Box(
-            Modifier.size(44.dp).clip(CircleShape).background(colors.textPrimary.copy(alpha = 0.08f)),
+            Modifier.size(44.dp).clip(CircleShape).background(colors.customerColor.copy(alpha = 0.16f)),
             contentAlignment = Alignment.Center
         ) {
             Text(
                 text = (secondName.ifBlank { name }).trim().take(1).uppercase().ifEmpty { "?" },
-                style = TextStyle(fontFamily = ff, fontSize = 18.sp, fontWeight = FontWeight.Bold, color = colors.textPrimary)
+                style = TextStyle(fontFamily = ff, fontSize = 18.sp, fontWeight = FontWeight.Bold, color = colors.customerColor)
             )
         }
         Spacer(Modifier.width(14.dp))
@@ -187,7 +187,7 @@ fun DocRow(label: String, value: String, strong: Boolean = false, valueColor: Co
 
 /** A tappable row that opens a linked document (a receipt from a bill, a bill from a receipt). */
 @Composable
-fun DocLinkRow(icon: ImageVector, title: String, subtitle: String, amount: Double?, onClick: (() -> Unit)?) {
+fun DocLinkRow(icon: ImageVector, title: String, subtitle: String, amount: Double?, onClick: (() -> Unit)?, tint: Color? = null) {
     val colors = rememberShellColors()
     val ff = LocalAppFontFamily.current
     Row(
@@ -197,7 +197,7 @@ fun DocLinkRow(icon: ImageVector, title: String, subtitle: String, amount: Doubl
             .padding(horizontal = 20.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Icon(icon, contentDescription = null, tint = colors.textSecondary, modifier = Modifier.size(22.dp))
+        Icon(icon, contentDescription = null, tint = tint ?: colors.textSecondary, modifier = Modifier.size(22.dp))
         Spacer(Modifier.width(14.dp))
         Column(Modifier.weight(1f)) {
             Text(title.preventBrokenLigatures(), style = TextStyle(fontFamily = ff, fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = colors.textPrimary), maxLines = 1)

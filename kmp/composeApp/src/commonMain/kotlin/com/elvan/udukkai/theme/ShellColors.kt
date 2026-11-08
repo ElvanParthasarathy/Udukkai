@@ -62,8 +62,6 @@ val LocalShellColors = staticCompositionLocalOf<ShellColors> {
 fun rememberShellColors(): ShellColors {
     val isDark = ThemeManager.isDark()
     return remember(isDark) {
-        val monoColor = if (isDark) Color.White else Color.Black
-
         if (isDark) {
             ShellColors(
                 isDark = true,
@@ -81,7 +79,7 @@ fun rememberShellColors(): ShellColors {
                 ripple = Color.White.copy(alpha = 0.16f),
                 floatingBg = Color(0xFF1E1E1E),
                 floatingBorder = Color(0xFF333333),
-                iconBg = Color.White.copy(alpha = 0.08f),
+                iconBg = Color(0xFF2B2633),
                 divider = Color.White.copy(alpha = 0.04f),
                 icon = Color.White,
                 iconInactive = Color.White.copy(alpha = 0.50f),
@@ -91,10 +89,11 @@ fun rememberShellColors(): ShellColors {
                 accentContainer = Color.White.copy(alpha = 0.12f),
                 iconAccent = Color.White,
                 error = Color(0xFFFFB4AB),
-                invoiceColor = monoColor,
-                receiptColor = monoColor,
-                itemColor = monoColor,
-                customerColor = monoColor
+                // Soft hues, so bills, receipts, items and customers tell apart at a glance without shouting
+                invoiceColor = Color(0xFF9DBEFF),
+                receiptColor = Color(0xFF8ED6A6),
+                itemColor = Color(0xFFF2C27F),
+                customerColor = Color(0xFFC7B4FA)
             )
         } else {
             ShellColors(
@@ -113,7 +112,7 @@ fun rememberShellColors(): ShellColors {
                 ripple = Color.Black.copy(alpha = 0.08f),
                 floatingBg = Color.White,
                 floatingBorder = Color.White,
-                iconBg = Color.Black.copy(alpha = 0.06f),
+                iconBg = Color(0xFFEEE9F4),
                 divider = Color.Black.copy(alpha = 0.04f),
                 icon = Color.Black,
                 iconInactive = Color.Black.copy(alpha = 0.56f),
@@ -123,10 +122,10 @@ fun rememberShellColors(): ShellColors {
                 accentContainer = Color.Black.copy(alpha = 0.08f),
                 iconAccent = Color(0xFF1D1D1F),
                 error = Color(0xFFBA1A1A),
-                invoiceColor = monoColor,
-                receiptColor = monoColor,
-                itemColor = monoColor,
-                customerColor = monoColor
+                invoiceColor = Color(0xFF3466C2),
+                receiptColor = Color(0xFF2E8A55),
+                itemColor = Color(0xFFA86A12),
+                customerColor = Color(0xFF6D52C4)
             )
         }
     }

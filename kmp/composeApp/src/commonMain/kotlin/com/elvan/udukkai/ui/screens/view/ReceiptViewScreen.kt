@@ -105,7 +105,8 @@ private fun ReceiptBody(
                             title = inv.invoiceNumber,
                             subtitle = DateUtils.formatEpochMillis(inv.invoiceDate),
                             amount = inv.totalAmount,
-                            onClick = onOpenInvoice?.let { open -> { open(inv) } }
+                            onClick = onOpenInvoice?.let { open -> { open(inv) } },
+                            tint = com.elvan.udukkai.theme.rememberShellColors().invoiceColor
                         )
                     }
                 }

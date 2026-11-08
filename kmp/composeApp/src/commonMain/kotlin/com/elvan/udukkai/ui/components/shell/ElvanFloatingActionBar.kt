@@ -16,6 +16,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.mutableStateOf
+import com.elvan.udukkai.localization.K
+import com.elvan.udukkai.localization.tr
+import com.elvan.udukkai.ui.navigation.MaterialSymbols
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -48,9 +54,10 @@ data class ElvanFloatingAction(
 )
 
 /**
- * Universal Floating Action Bar for Compose Multiplatform.
- * Unified One UI floating pill component shared across View screens, Editor screens, and Recycle Bin.
- * Preserves the exact compact dimensions, circular ripples, and pixel-perfect design language.
+ * Universal Floating Action Bar: the floating pill of the view pages, editors and selection.
+ * Laid out like the bottom navigation bar: the pill is as wide as its buttons, and each button is as wide as its
+ * label needs (optical spacing, as Samsung's Gallery bar), so it never runs edge to edge. At most five buttons
+ * show; any more go into a More menu that opens above the bar.
  */
 @Composable
 fun ElvanFloatingActionBar(
@@ -67,13 +74,13 @@ fun ElvanFloatingActionBar(
         ElvanSnackbar.isBottomBarVisible = true
     }
 
-    val barWidth: Dp = when (actions.size) {
-        1 -> 84.dp
-        2 -> 168.dp
-        3 -> 246.dp
-        4 -> 308.dp
-        else -> (actions.size * 77).dp
-    }
+    var moreOpen by remember { mutableStateOf(false) }
+    val overflow = if (actions.size > MAX_BAR_ACTIONS) actions.drop(MAX_BAR_ACTIONS - 1) else emptyList()
+    val shown = if (overflow.isEmpty()) actions else actions.take(MAX_BAR_ACTIONS - 1) + ElvanFloatingAction(
+        label = K.more.tr(),
+        icon = MaterialSymbols.Rounded.MoreVert,
+        onClick = { moreOpen = true }
+    )
 
     Box(
         modifier = modifier
@@ -83,9 +90,8 @@ fun ElvanFloatingActionBar(
             .padding(bottom = Dimens.FloatingBarBottomGap),
         contentAlignment = Alignment.Center
     ) {
-        Box(
+        Row(
             modifier = Modifier
-                .width(barWidth)
                 .height(56.dp)
                 .cssShadow(
                     color = Color.Black,
@@ -102,74 +108,73 @@ fun ElvanFloatingActionBar(
                     color = colors.floatingBorder.copy(alpha = if (isDark) 0.15f else 0.6f),
                     shape = CircleShape
                 )
-                .padding(horizontal = 4.dp, vertical = 4.dp),
-            contentAlignment = Alignment.Center
+                .padding(4.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Row(
-                modifier = Modifier.fillMaxSize(),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.Center
-            ) {
-                actions.forEachIndexed { index, action ->
-                    if (index > 0) {
-                        Box(
-                            modifier = Modifier
-                                .width(1.dp)
-                                .height(24.dp)
-                                .background(colors.floatingBorder.copy(alpha = if (isDark) 0.2f else 0.4f))
+            shown.forEachIndexed { index, action ->
+                val itemColor = action.customColor
+                    ?: if (action.isDestructive) colors.danger
+                    else if (action.enabled) colors.textPrimary
+                    else colors.textSecondary.copy(alpha = 0.35f)
+
+                Box(
+                    modifier = Modifier
+                        .fillMaxHeight()
+                        // Each button as wide as its label, never narrower than a nav-bar tab
+                        .widthIn(min = 58.dp)
+                        .clip(CircleShape)
+                        .clickable(
+                            interactionSource = remember { MutableInteractionSource() },
+                            indication = ripple(bounded = true),
+                            enabled = action.enabled && !action.isLoading,
+                            onClick = action.onClick
                         )
-                    }
-
-                    val itemColor = action.customColor
-                        ?: if (action.isDestructive) colors.danger
-                        else if (action.enabled) colors.textPrimary
-                        else colors.textSecondary.copy(alpha = 0.35f)
-
-                    Box(
-                        modifier = Modifier
-                            .weight(1f)
-                            .fillMaxHeight()
-                            .clip(CircleShape)
-                            .clickable(
-                                interactionSource = remember { MutableInteractionSource() },
-                                indication = ripple(bounded = true),
-                                enabled = action.enabled && !action.isLoading,
-                                onClick = action.onClick
-                            ),
-                        contentAlignment = Alignment.Center
+                        .padding(horizontal = 12.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center
                     ) {
-                        Column(
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.Center
-                        ) {
-                            if (action.isLoading) {
-                                ExpressiveLoadingIndicator(modifier = Modifier.size(20.dp), color = itemColor, strokeWidth = 2.dp)
-                                Spacer(modifier = Modifier.height(2.dp))
-                            } else {
-                                Icon(
-                                    imageVector = action.icon,
-                                    contentDescription = action.label,
-                                    tint = itemColor,
-                                    modifier = Modifier.size(19.dp)
-                                )
-                                Spacer(modifier = Modifier.height(2.dp))
-                            }
-                            Text(
-                                text = action.label.preventBrokenLigatures(),
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis,
-                                style = TextStyle(
-                                    fontFamily = ff,
-                                    fontSize = 11.sp,
-                                    fontWeight = FontWeight.Medium,
-                                    color = itemColor,
-                                    textAlign = TextAlign.Center
-                                )
+                        if (action.isLoading) {
+                            ExpressiveLoadingIndicator(modifier = Modifier.size(22.dp), color = itemColor, strokeWidth = 2.dp)
+                        } else {
+                            Icon(
+                                imageVector = action.icon,
+                                contentDescription = action.label,
+                                tint = itemColor,
+                                modifier = Modifier.size(22.dp)
                             )
                         }
+                        Spacer(modifier = Modifier.height(1.5.dp))
+                        Text(
+                            text = action.label.preventBrokenLigatures(),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            style = TextStyle(
+                                fontFamily = ff,
+                                fontSize = 10.sp,
+                                lineHeight = 12.sp,
+                                fontWeight = FontWeight.Medium,
+                                color = itemColor,
+                                textAlign = TextAlign.Center
+                            )
+                        )
+                    }
+                    if (overflow.isNotEmpty() && index == shown.lastIndex) {
+                        ElvanPopupMenu(
+                            expanded = moreOpen,
+                            onDismissRequest = { moreOpen = false },
+                            colors = colors,
+                            upward = true,
+                            items = overflow.filter { it.enabled }.map { a -> ElvanPopupMenuItem(a.label, a.icon) { moreOpen = false; a.onClick() } }
+                        )
                     }
                 }
             }
         }
     }
 }
+
+/** The bar shows at most this many buttons; the rest go into More. */
+private const val MAX_BAR_ACTIONS = 5

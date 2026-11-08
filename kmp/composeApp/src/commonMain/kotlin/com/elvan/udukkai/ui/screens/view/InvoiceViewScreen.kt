@@ -138,7 +138,8 @@ private fun InvoiceBody(
                             title = r.receiptNumber,
                             subtitle = DateUtils.formatEpochMillis(r.receiptDate) + " • " + PaymentType.fromStored(r.paymentMode).label(),
                             amount = r.amount,
-                            onClick = onOpenReceipt?.let { open -> { open(r) } }
+                            onClick = onOpenReceipt?.let { open -> { open(r) } },
+                            tint = com.elvan.udukkai.theme.rememberShellColors().receiptColor
                         )
                     }
                 }
