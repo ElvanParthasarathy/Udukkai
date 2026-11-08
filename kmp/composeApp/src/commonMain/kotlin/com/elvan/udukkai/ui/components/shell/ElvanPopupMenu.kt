@@ -2,7 +2,6 @@ package com.elvan.udukkai.ui.components.shell
 
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.CubicBezierEasing
-import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -16,12 +15,18 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.TransformOrigin
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.geometry.RoundRect
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Outline
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Popup
@@ -29,7 +34,6 @@ import androidx.compose.ui.window.PopupProperties
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.boundsInRoot
 import androidx.compose.ui.layout.positionInRoot
-import com.elvan.udukkai.core.extensions.cssShadow
 import com.elvan.udukkai.theme.LocalAppFontFamily
 import com.elvan.udukkai.theme.ShellColors
 import com.elvan.udukkai.theme.ShellDefaults
@@ -45,13 +49,31 @@ object ElvanMenuState {
 private class PanelRef {
     var rect: androidx.compose.ui.geometry.Rect? = null
     var coveredByNewPage = false
+    /** Where the button is, in the panel's own coordinates; set when the panel is placed. */
+    var trigger: Rect? = null
 }
+
+private val PANEL_RADIUS = 24.dp
+/** The panel reaches this far past the button, so the button sits inside the corner the panel grows from. */
+private val TRIGGER_OUTSET = 4.dp
+private val SCREEN_MARGIN = 8.dp
+
+/** The panel's outline at [progress]: exactly the button at 0, the whole panel at 1. */
+internal fun morphRect(trigger: Rect, panel: Size, progress: Float): Rect = Rect(
+    trigger.left * (1f - progress),
+    trigger.top * (1f - progress),
+    trigger.right + (panel.width - trigger.right) * progress,
+    trigger.bottom + (panel.height - trigger.bottom) * progress
+)
+
+/** The panel's left or top edge: where the button puts it, kept on screen. */
+internal fun clampToScreen(wanted: Int, panel: Int, screen: Int, margin: Int): Int =
+    wanted.coerceIn(margin, (screen - panel - margin).coerceAtLeast(margin))
 
 /**
  * ElvanPopupMenu for Udukkai.
- * Spawns directly on top of the 3-dot icon button, scales from 20% to 100%
- * with an easeOutCubic curve anchored at the top-right corner, and uses
- * frosted translucent styling with 24dp rounded corners.
+ * The panel's outline starts as the button itself and opens out to the full menu, corners easing to 24dp, and closes
+ * back into the button. It is revealed, never scaled, so the rows do not squash. Frosted, translucent styling.
  */
 class ElvanPopupMenuItem(
     val title: String,
@@ -78,8 +100,7 @@ fun ElvanPopupMenu(
         }
     }
 
-    // As on iOS: the menu grows out of the button on a spring and settles with a slight overshoot, then shrinks back
-    // into it quickly when closed (it stays on screen until that has played)
+    // Opens out of the button without overshoot and closes back into it (it stays on screen until that has played)
     val progress = remember { Animatable(0f) }
     var mounted by remember { mutableStateOf(false) }
     val panelRef = remember { PanelRef() }
@@ -87,7 +108,9 @@ fun ElvanPopupMenu(
         if (expanded) {
             panelRef.coveredByNewPage = false
             mounted = true
-            progress.animateTo(1f, spring(dampingRatio = 0.78f, stiffness = 420f))
+            // The panel takes a frame or two to compose; started now, the opening would be used up before it is on screen
+            if (progress.value == 0f) repeat(2) { withFrameNanos { } }
+            progress.animateTo(1f, tween(230, easing = CubicBezierEasing(0f, 0f, 0.2f, 1f)))
         } else if (mounted) {
             if (panelRef.coveredByNewPage) {
                 // shortcut: fixed wait for the new window to cover the panel, tie it to the lifecycle if a slow phone shows the panel vanish first
@@ -95,7 +118,7 @@ fun ElvanPopupMenu(
                 progress.snapTo(0f)
                 panelRef.coveredByNewPage = false
             } else {
-                progress.animateTo(0f, tween(140, easing = CubicBezierEasing(0.4f, 0f, 1f, 1f)))
+                progress.animateTo(0f, tween(170, easing = CubicBezierEasing(0.4f, 0f, 1f, 1f)))
             }
             mounted = false
         }
@@ -128,13 +151,23 @@ fun ElvanPopupMenu(
             modifier = modifier
                 .graphicsLayer {
                     val p = progress.value
-                    scaleX = 0.5f + 0.5f * p
-                    scaleY = 0.5f + 0.5f * p
-                    transformOrigin = TransformOrigin(1f, if (upward) 1f else 0f) // Anchored at the corner where the button is
-                    alpha = (p * 2.5f).coerceIn(0f, 1f)
+                    val outset = TRIGGER_OUTSET.toPx()
+                    // Without a placed panel (separate popup window) the button is in the corner the panel grows from
+                    val button = panelRef.trigger ?: anchor.size.let {
+                        val top = if (upward) size.height - outset - it.height else outset
+                        Rect(size.width - outset - it.width, top, size.width - outset, top + it.height)
+                    }
+                    val outline = morphRect(button, size, p)
+                    val corner = minOf(button.width, button.height) / 2 * (1f - p) + PANEL_RADIUS.toPx() * p
+                    shape = object : Shape {
+                        override fun createOutline(size: Size, layoutDirection: LayoutDirection, density: Density) =
+                            Outline.Rounded(RoundRect(outline, CornerRadius(corner)))
+                    }
+                    clip = true
+                    shadowElevation = 12.dp.toPx() * p
+                    alpha = (p * 8f).coerceIn(0f, 1f) // only so the first frame does not pop
                 }
                 .onGloballyPositioned { panelRef.rect = it.boundsInRoot() }
-                .cssShadow(color = Color.Black, alpha = 0.08f, blurRadius = 20.dp, offsetY = 6.dp)
                 // Frosted glass over the page; plain translucent where there is no page to blur
                 .frostedGlass(RoundedCornerShape(24.dp), colors, fallbackAlpha = 0.94f)
                 .border(
@@ -146,7 +179,7 @@ fun ElvanPopupMenu(
                 .width(IntrinsicSize.Max)
                 // Taps on the menu stay on the menu
                 .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null) {}
-        ) { MenuRows(items, colors, progress.value, onDismissRequest, pick) }
+        ) { MenuRows(items, colors, { progress.value }, onDismissRequest, pick) }
     }
 
     if (host != null) {
@@ -163,12 +196,13 @@ fun ElvanPopupMenu(
             ) { measurables, constraints ->
                 val placeable = measurables.first().measure(constraints.copy(minWidth = 0, minHeight = 0))
                 layout(constraints.maxWidth, constraints.maxHeight) {
-                    // Same spot as the old popup: top right of the button (opening down), or above it (opening up)
-                    val right = anchor.right - origin.x + (if (upward) -24f else 8f)
-                    val x = (right - placeable.width).toInt().coerceIn(0, (constraints.maxWidth - placeable.width).coerceAtLeast(0))
-                    val y = if (upward) (anchor.bottom - origin.y - 28f - placeable.height).toInt()
-                            else (anchor.top - origin.y - 16f).toInt()
-                    placeable.place(x, y.coerceIn(0, (constraints.maxHeight - placeable.height).coerceAtLeast(0)))
+                    val button = anchor.translate(-origin)
+                    val outset = TRIGGER_OUTSET.roundToPx()
+                    val margin = SCREEN_MARGIN.roundToPx()
+                    val x = clampToScreen(button.right.toInt() + outset - placeable.width, placeable.width, constraints.maxWidth, margin)
+                    val y = clampToScreen(if (upward) button.bottom.toInt() + outset - placeable.height else button.top.toInt() - outset, placeable.height, constraints.maxHeight, margin)
+                    panelRef.trigger = button.translate(-x.toFloat(), -y.toFloat())
+                    placeable.place(x, y)
                 }
             }
         }
@@ -183,9 +217,10 @@ fun ElvanPopupMenu(
 
     if (!expanded && !mounted) return
 
+    val outsetPx = with(androidx.compose.ui.platform.LocalDensity.current) { TRIGGER_OUTSET.roundToPx() }
     Popup(
         alignment = if (upward) Alignment.BottomEnd else Alignment.TopEnd,
-        offset = if (upward) IntOffset(x = -24, y = -28) else IntOffset(x = 8, y = -16),
+        offset = IntOffset(x = outsetPx, y = if (upward) outsetPx else -outsetPx),
         onDismissRequest = dismiss,
         properties = PopupProperties(focusable = true, dismissOnClickOutside = true, dismissOnBackPress = true)
     ) { panel() }
@@ -195,13 +230,10 @@ fun ElvanPopupMenu(
 private var dismissKey: (() -> Unit)? = null
 
 @Composable
-private fun MenuRows(items: List<ElvanPopupMenuItem>, colors: ShellColors, progress: Float, onDismissRequest: () -> Unit, onPick: (ElvanPopupMenuItem) -> Unit) {
+private fun MenuRows(items: List<ElvanPopupMenuItem>, colors: ShellColors, progress: () -> Float, onDismissRequest: () -> Unit, onPick: (ElvanPopupMenuItem) -> Unit) {
     Column(
-        // The rows come in just behind the panel, so the menu reads as growing first, then filling
-        modifier = Modifier.fillMaxWidth().graphicsLayer {
-            alpha = ((progress - 0.25f) / 0.6f).coerceIn(0f, 1f)
-            translationY = (1f - progress.coerceIn(0f, 1f)) * -6.dp.toPx()
-        }
+        // The rows come in as the panel opens over them, in step with it
+        modifier = Modifier.fillMaxWidth().graphicsLayer { alpha = ((progress() - 0.3f) / 0.5f).coerceIn(0f, 1f) }
     ) {
         items.forEachIndexed { index, item ->
             val isFirst = index == 0
