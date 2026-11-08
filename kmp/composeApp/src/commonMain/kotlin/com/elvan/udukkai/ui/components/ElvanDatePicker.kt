@@ -61,6 +61,7 @@ import com.elvan.udukkai.theme.LocalAppFontFamily
 import com.elvan.udukkai.theme.ShellColors
 import com.elvan.udukkai.theme.rememberShellColors
 import com.elvan.udukkai.ui.components.shell.ElvanActionSheet
+import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.launch
 
 private const val FIRST_YEAR = 1900
@@ -146,6 +147,7 @@ private fun CalendarSheet(
     var wheels by remember { mutableStateOf(false) }
     val today = remember { DateUtils.todayMillis() }
     val scope = rememberCoroutineScope()
+    val haptics = rememberHaptics()
     val measurer = rememberTextMeasurer()
     val font = LocalAppFontFamily.current
     val dayFontSize = 15.dp.fixedSp()
@@ -159,7 +161,12 @@ private fun CalendarSheet(
     // The month on show: one value that the header and the wheels both read. The pager follows it when the grid is on screen
     var shown by remember { mutableStateOf(firstMonth + pager.currentPage) }
     val (year, month) = ElvanCalendar.monthOfIndex(shown)
-    LaunchedEffect(pager) { snapshotFlow { pager.targetPage }.collect { shown = firstMonth + it } }
+    LaunchedEffect(pager) {
+        snapshotFlow { pager.targetPage }.collect {
+            if (!wheels && shown != firstMonth + it) haptics.tick() // each month the grid reaches, by arrow or swipe
+            shown = firstMonth + it
+        }
+    }
     LaunchedEffect(wheels) { if (!wheels) pager.scrollToPage(shown - firstMonth) }
 
     // Taps come faster than the animation: each one aims from the last aim, and restarts the slide from wherever the page is
@@ -230,6 +237,7 @@ private fun CalendarSheet(
                                     val (y, m) = ElvanCalendar.monthOfIndex(firstMonth + page)
                                     MonthGrid(y, m, row, span, range, today, min, max, tamil, colors, ink, dayText) { tapped, inMonth ->
                                         span = ElvanCalendar.tap(span, tapped, range)
+                                        haptics.tick()
                                         if (!inMonth) slideTo(indexOf(tapped) - firstMonth)
                                     }
                                 }
@@ -441,6 +449,9 @@ private fun Wheel(labels: List<String>, selected: Int, modifier: Modifier, ink: 
     }
     val chosen by rememberUpdatedState(selected)
     val report by rememberUpdatedState(onSelect)
+    val haptics = rememberHaptics()
+    // A tick for every row that reaches the middle while the wheel is moving, like a detent
+    LaunchedEffect(state) { snapshotFlow { middle }.drop(1).collect { if (state.isScrollInProgress) haptics.tick() } }
     LaunchedEffect(state) {
         snapshotFlow { state.isScrollInProgress }.collect { moving -> if (!moving && middle != chosen) report(middle) }
     }

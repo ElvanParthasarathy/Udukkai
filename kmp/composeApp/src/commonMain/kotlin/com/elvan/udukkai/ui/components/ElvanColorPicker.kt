@@ -51,6 +51,8 @@ import com.elvan.udukkai.theme.LocalAppFontFamily
 import com.elvan.udukkai.theme.ShellColors
 import com.elvan.udukkai.ui.components.shell.ElvanActionSheet
 import kotlin.math.abs
+import com.elvan.udukkai.ui.screens.create.components.ElvanPillShifter
+import com.elvan.udukkai.ui.screens.create.components.PillShifterItem
 
 /** "#rrggbb" of a colour (alpha is ignored). */
 fun colorToHex(c: Color): String {
@@ -141,7 +143,8 @@ private fun channel(v: Float) = (v * 255f + 0.5f).toInt()
 
 // The One UI 8 colour picker's layout, in dp
 private val SIDE = 24.dp
-private val TAB_HEIGHT = 40.dp
+// The app's own shifter, a little smaller than the full-width 40dp one
+private val TAB_HEIGHT = 34.dp
 private val BAR_HEIGHT = 20.dp
 private val SWATCH_HEIGHT = 277.dp
 private val SPECTRUM_HEIGHT = 248.dp
@@ -172,6 +175,8 @@ fun ElvanColorPicker(
 ) {
     val ff = LocalAppFontFamily.current
     val focus = LocalFocusManager.current
+    val haptics = rememberHaptics()
+    var lastCell by remember { mutableStateOf(-1) }
     val ink = remember(colors) { PickerInk(colors) }
     val swatchesLabel = K.swatches.tr()
     val spectrumLabel = K.spectrum.tr()
@@ -202,19 +207,14 @@ fun ElvanColorPicker(
                 // The grid gives way when the keyboard or a short window leaves less room than the full 634dp card
                 val shortBy = (634.dp - maxHeight).coerceAtLeast(0.dp)
                 Column(Modifier.fillMaxWidth().padding(start = SIDE, end = SIDE, top = 20.dp, bottom = 12.dp)) {
-                    Row(Modifier.fillMaxWidth().height(TAB_HEIGHT)) {
-                        listOf(swatchesLabel, spectrumLabel).forEachIndexed { i, label ->
-                            val on = tab == i
-                            Box(
-                                Modifier.weight(1f).fillMaxHeight().clip(RoundedCornerShape(TAB_HEIGHT / 2))
-                                    .background(if (on) ink.tab else Color.Transparent)
-                                    .clickable(role = Role.Tab) { tab = i },
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Text(label, maxLines = 1, style = TextStyle(fontFamily = ff, fontSize = 15.dp.fixedSp(), fontWeight = if (on) FontWeight.SemiBold else FontWeight.Normal), color = if (on) ink.strong else ink.soft)
-                            }
-                        }
-                    }
+                    ElvanPillShifter(
+                        items = listOf(PillShifterItem(swatchesLabel), PillShifterItem(spectrumLabel)),
+                        selectedIndex = tab,
+                        onIndexSelected = { tab = it },
+                        colors = colors,
+                        isFullWidth = true,
+                        height = TAB_HEIGHT
+                    )
 
                     // Touching the colour area leaves the text fields: the keyboard's own Back keeps their focus
                     Column(Modifier.fillMaxWidth().pointerInput(Unit) { awaitEachGesture { awaitFirstDown(requireUnconsumed = false, pass = PointerEventPass.Initial); focus.clearFocus() } }) {
@@ -224,7 +224,11 @@ fun ElvanColorPicker(
                                 Modifier.fillMaxWidth().height((SWATCH_HEIGHT - shortBy).coerceAtLeast(80.dp)).clip(RoundedCornerShape(4.dp))
                                     .semantics { contentDescription = "$swatchesLabel $hex" }
                                     .followFinger { o, area ->
-                                        pick(swatchColor((o.y / area.height * ROWS).toInt().coerceIn(0, ROWS - 1), (o.x / area.width * COLS).toInt().coerceIn(0, COLS - 1)))
+                                        val r = (o.y / area.height * ROWS).toInt().coerceIn(0, ROWS - 1)
+                                        val c = (o.x / area.width * COLS).toInt().coerceIn(0, COLS - 1)
+                                        if (r * COLS + c != lastCell) haptics.tick() // one tick per swatch the finger crosses
+                                        lastCell = r * COLS + c
+                                        pick(swatchColor(r, c))
                                     }
                             ) {
                                 val w = size.width / COLS
@@ -243,7 +247,7 @@ fun ElvanColorPicker(
                                     drawRoundRect(cc, at + Offset(-grow, -grow), Size(w + 2 * grow, h + 2 * grow), corner)
                                 }
                             }
-                            Spacer(Modifier.height(40.dp))
+                            Spacer(Modifier.height(45.dp)) // so both modes stand the same height
                         } else {
                             Spacer(Modifier.height(24.dp))
                             Canvas(
@@ -297,7 +301,7 @@ fun ElvanColorPicker(
                             Box(
                                 Modifier.size(40.dp).clip(CircleShape).background(c).border(1.dp, Color.Black.copy(alpha = 0.6f), CircleShape)
                                     .semantics { contentDescription = h.uppercase() }
-                                    .clickable { pick(c) }
+                                    .clickable { haptics.tick(); pick(c) }
                             )
                         }
                         repeat(RECENT_SLOTS - shown.size) { Box(Modifier.size(40.dp).clip(CircleShape).background(ink.emptySlot).border(1.dp, Color.Black.copy(alpha = 0.6f), CircleShape)) }
@@ -325,7 +329,7 @@ private fun Modifier.followFinger(onAt: (Offset, IntSize) -> Unit): Modifier = p
 private fun ColorBar(value: Float, ink: PickerInk, checker: PickerInk?, gradient: List<Color>, onChange: (Float) -> Unit) {
     val percent = (value * 100f + 0.5f).toInt()
     val thumbPx = with(LocalDensity.current) { 9.dp.toPx() }
-    Row(verticalAlignment = Alignment.CenterVertically) {
+    Row(Modifier.height(BAR_HEIGHT), verticalAlignment = Alignment.CenterVertically) { // fixed, so the percentage text cannot make one mode taller than the other
         Canvas(
             Modifier.weight(1f).height(BAR_HEIGHT).clip(RoundedCornerShape(BAR_HEIGHT / 2))
                 .semantics {

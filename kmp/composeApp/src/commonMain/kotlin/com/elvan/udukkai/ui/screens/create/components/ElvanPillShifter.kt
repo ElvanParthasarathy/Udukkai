@@ -77,6 +77,7 @@ fun ElvanPillShifter(
 
     val coroutineScope = rememberCoroutineScope()
     val density = LocalDensity.current
+    val haptics = com.elvan.udukkai.ui.components.rememberHaptics()
 
     var isInteracting by remember { mutableStateOf(false) }
     var dragOffsetPx by remember { mutableStateOf<Float?>(null) }
@@ -205,6 +206,7 @@ fun ElvanPillShifter(
 
                         val initialX = down.position.x
                         hoverIndex = floor(initialX / layoutWidthPx).toInt().coerceIn(0, itemCount - 1)
+                        if (hoverIndex != actualIndex) haptics.tick()
                         val slotCenter = (hoverIndex!! * layoutWidthPx) + (layoutWidthPx / 2f)
                         touchOffsetFromCenterPx = initialX - slotCenter
                         dragOffsetPx = null
@@ -221,7 +223,9 @@ fun ElvanPillShifter(
                             if (kotlin.math.abs(currentPos.x - down.position.x) > 4f) {
                                 val targetCenter = currentPos.x - touchOffsetFromCenterPx
                                 dragOffsetPx = targetCenter
-                                hoverIndex = floor(targetCenter / layoutWidthPx).toInt().coerceIn(0, itemCount - 1)
+                                val slot = floor(targetCenter / layoutWidthPx).toInt().coerceIn(0, itemCount - 1)
+                                if (slot != hoverIndex) haptics.tick()
+                                hoverIndex = slot
                                 onDragProgress(targetCenter / layoutWidthPx)
                                 change.consume()
                             }

@@ -72,8 +72,10 @@ fun ElvanPopupMenu(
     // into it quickly when closed (it stays on screen until that has played)
     val progress = remember { Animatable(0f) }
     var mounted by remember { mutableStateOf(false) }
+    val haptics = com.elvan.udukkai.ui.components.rememberHaptics()
     LaunchedEffect(expanded) {
         if (expanded) {
+            haptics.click()
             mounted = true
             progress.animateTo(1f, spring(dampingRatio = 0.78f, stiffness = 420f))
         } else if (mounted) {

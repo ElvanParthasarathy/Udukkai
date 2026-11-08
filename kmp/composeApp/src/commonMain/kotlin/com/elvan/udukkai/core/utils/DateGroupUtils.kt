@@ -46,7 +46,7 @@ object DateGroupUtils {
     private val WEEKDAY_NAMES_EN = arrayOf("Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat")
     private val WEEKDAY_FULL_EN = arrayOf("Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday")
 
-    private val WEEKDAY_NAMES_TA = arrayOf("ஞாயிறு", "திங்கள்", "செவ்வாய்", "புதன்", "வியாழன்", "வெள்ளி", "சனி")
+    private val WEEKDAY_NAMES_TA = arrayOf("ஞாயிறு", "திங்கள்", "செவ்வாய்", "அறிவன்", "வியாழன்", "வெள்ளி", "காரி") // Wednesday is Arivan, Saturday is Kaari
 
     private val WEEKDAY_ABBREV_TA = arrayOf("ஞாயி", "திங்", "செவ்", "அறி", "வியா", "வெள்", "காரி") // Wednesday is Arivan, Saturday is Kaari
 

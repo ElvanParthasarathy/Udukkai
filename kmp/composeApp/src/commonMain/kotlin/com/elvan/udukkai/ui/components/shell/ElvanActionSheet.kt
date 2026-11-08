@@ -67,6 +67,8 @@ fun ElvanActionSheet(
     customContent: (@Composable () -> Unit)? = null
 ) {
     val ff = LocalAppFontFamily.current
+    val haptics = com.elvan.udukkai.ui.components.rememberHaptics()
+    val confirmed: () -> Unit = { haptics.confirm(); onConfirm() }
     val isDark = colors.isDark
     // Frosted where the phone blurs the screen behind; just slightly see-through where it cannot, so text stays clear of what is behind
     val glass = remember { com.elvan.udukkai.core.platform.dialogBlurAvailable() }
@@ -198,7 +200,7 @@ fun ElvanActionSheet(
                     if (pickerCard) {
                         customContent?.invoke()
                         Spacer(modifier = Modifier.height(4.dp))
-                        PickerButtons(cancelText, confirmText, colors, onCancel = { dismiss() }, onConfirm = { dismiss { onConfirm() } })
+                        PickerButtons(cancelText, confirmText, colors, onCancel = { dismiss() }, onConfirm = { dismiss { confirmed() } })
                         Spacer(modifier = Modifier.height(20.dp))
                     } else {
                     // Centered Title
@@ -273,7 +275,7 @@ fun ElvanActionSheet(
                                 if (isConfirmFilled) {
                                     Button(
                                         onClick = {
-                                            if (keepOpenOnConfirm) onConfirm() else dismiss { onConfirm() }
+                                            if (keepOpenOnConfirm) confirmed() else dismiss { confirmed() }
                                         },
                                         modifier = Modifier
                                             .weight(1f)
@@ -296,7 +298,7 @@ fun ElvanActionSheet(
                                 } else {
                                     TextButton(
                                         onClick = {
-                                            if (keepOpenOnConfirm) onConfirm() else dismiss { onConfirm() }
+                                            if (keepOpenOnConfirm) confirmed() else dismiss { confirmed() }
                                         },
                                         modifier = Modifier
                                             .weight(1f)
@@ -328,7 +330,7 @@ fun ElvanActionSheet(
                             if (isConfirmFilled) {
                                 Button(
                                     onClick = {
-                                        if (keepOpenOnConfirm) onConfirm() else dismiss { onConfirm() }
+                                        if (keepOpenOnConfirm) confirmed() else dismiss { confirmed() }
                                     },
                                     modifier = Modifier
                                         .fillMaxWidth()
@@ -351,7 +353,7 @@ fun ElvanActionSheet(
                             } else {
                                 TextButton(
                                     onClick = {
-                                        if (keepOpenOnConfirm) onConfirm() else dismiss { onConfirm() }
+                                        if (keepOpenOnConfirm) confirmed() else dismiss { confirmed() }
                                     },
                                     modifier = Modifier
                                         .fillMaxWidth()

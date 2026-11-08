@@ -248,9 +248,10 @@ fun ElvanSettingsSwitch(
     colors: ShellColors = rememberShellColors()
 ) {
     val isDark = colors.isDark
+    val haptics = com.elvan.udukkai.ui.components.rememberHaptics()
     Switch(
         checked = checked,
-        onCheckedChange = onCheckedChange,
+        onCheckedChange = { haptics.toggle(it); onCheckedChange(it) },
         enabled = enabled,
         modifier = modifier,
         colors = SwitchDefaults.colors(

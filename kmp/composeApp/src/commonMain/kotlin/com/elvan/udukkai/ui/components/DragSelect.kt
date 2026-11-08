@@ -66,6 +66,7 @@ fun Modifier.dragSelect(
     val selected by rememberUpdatedState(isSelected)
     val add by rememberUpdatedState(onAdd)
     val remove by rememberUpdatedState(onRemove)
+    val haptics = rememberHaptics()
     return pointerInput(listState) {
         val edge = 150.dp.toPx()
         val maxStep = 16.dp.toPx()
@@ -112,6 +113,7 @@ fun Modifier.dragSelect(
                     val row = rowAtFinger() ?: return
                     val range = idsBetween(rows, start.index, anchorCol, row.index, columnAt(rows[row.index].orEmpty().size, fingerX, width))
                     if (range == applied) return
+                    if (applied.isNotEmpty()) haptics.tick() // each card the finger gains or leaves
                     (range - applied).forEach { add(it) }
                     (applied - range).filter(selected).forEach { remove(it) } // a card Back already cleared is left alone: remove toggles
                     applied = range

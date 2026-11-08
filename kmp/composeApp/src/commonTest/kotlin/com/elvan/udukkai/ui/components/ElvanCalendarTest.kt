@@ -164,4 +164,13 @@ class ElvanCalendarTest {
         val justAfterLocalMidnight = Math.floorDiv(1_700_000_000_000L + offset, ElvanCalendar.DAY) * ElvanCalendar.DAY - offset + 60_000L
         assertEquals(Math.floorDiv(justAfterLocalMidnight + offset, ElvanCalendar.DAY) * ElvanCalendar.DAY, DateUtils.todayMillis(justAfterLocalMidnight))
     }
+
+    @Test
+    fun wednesdayIsArivanAndSaturdayIsKaariInTamil() {
+        assertEquals("அறிவன்", DateGroupUtils.weekdayShortName(3, tamil = true))
+        assertEquals("காரி", DateGroupUtils.weekdayShortName(6, tamil = true))
+        assertEquals("அறி", DateGroupUtils.weekdayAbbreviation(3, tamil = true))
+        assertEquals("காரி", DateGroupUtils.weekdayAbbreviation(6, tamil = true))
+        assertEquals("Wed", DateGroupUtils.weekdayShortName(3, tamil = false))
+    }
 }
