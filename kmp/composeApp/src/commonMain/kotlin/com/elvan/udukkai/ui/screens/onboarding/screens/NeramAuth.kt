@@ -46,8 +46,9 @@ internal object NeramColors {
     @Composable fun textMuted() = if (ThemeManager.isDark()) Color.White.copy(alpha = 0.52f) else Color(0xFF767676)
     @Composable fun inputBackground() = if (ThemeManager.isDark()) Color(0xFF1E1E1E) else Color.White
     @Composable fun divider() = if (ThemeManager.isDark()) Color.White.copy(alpha = 0.08f) else Color.Black.copy(alpha = 0.06f)
-    @Composable fun accent() = if (ThemeManager.isDark()) Color.White else Color.Black
-    @Composable fun onAccent() = if (ThemeManager.isDark()) Color.Black else Color.White
+    // The app's blue (Neram / One UI #0072DE) for the main buttons, white on it
+    @Composable fun accent() = Color(0xFF0072DE)
+    @Composable fun onAccent() = Color.White
 }
 
 /** Neram's AuthAnimatedElement: each piece fades in and rises 20dp, one after another (80ms + 90ms per step, 500ms). */

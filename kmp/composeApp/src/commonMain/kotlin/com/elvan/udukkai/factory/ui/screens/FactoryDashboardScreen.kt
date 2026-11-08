@@ -1,5 +1,6 @@
 package com.elvan.udukkai.factory.ui.screens
 
+import androidx.compose.ui.graphics.Color
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
@@ -131,6 +132,8 @@ fun FactoryDashboardScreen(
                             label = K.totalInvoices.tr(),
                             value = "$activeCompanyInvoiceCount",
                             colors = colors,
+                            accentColor = Color(0xFF2F8BFF),
+                            gradientColors = listOf(Color(0xFF6DB3FF), Color(0xFF0072DE)),
                             modifier = Modifier.weight(1f),
                             isFullWidth = false,
                             onClick = onSeeAll
@@ -138,6 +141,8 @@ fun FactoryDashboardScreen(
 
                         ElvanStatsCard(
                             icon = MaterialSymbols.Rounded.CurrencyRupeeCircle,
+                            accentColor = Color(0xFF2FB67A),
+                            gradientColors = listOf(Color(0xFF6EE0A6), Color(0xFF18935A)),
                             label = K.totalInvoiced.tr(),
                             value = CurrencyUtils.formatInr(overallTotal),
                             colors = colors,

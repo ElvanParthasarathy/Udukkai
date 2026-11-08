@@ -48,12 +48,12 @@ fun ElvanStatsCard(
     val effectiveTint = iconTint ?: accentColor ?: LocalShellColors.current.textPrimary
     val effectiveGradient = gradientColors ?: colors.gradientFor(accentColor ?: iconTint)
     val effectiveBg = iconBg ?: if (accentColor != null) {
-        accentColor.copy(alpha = if (isDark) 0.16f else 0.10f)
+        accentColor.copy(alpha = if (isDark) 0.20f else 0.12f)
     } else {
         if (isDark) Color.White.copy(alpha = 0.06f) else Color(0xFFF5F5F5)
     }
 
-    val iconBoxShape = RoundedCornerShape(if (isFullWidth) 14.dp else 12.dp)
+    val iconBoxShape = androidx.compose.foundation.shape.CircleShape
     val iconBoxSize = if (isFullWidth) 44.dp else 38.dp
     val iconSize = if (isFullWidth) 22.dp else 20.dp
 

@@ -1,5 +1,8 @@
 package com.elvan.udukkai.ui.screens.home.components
 
+import androidx.compose.ui.draw.drawWithCache
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.Color
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -224,8 +227,22 @@ fun GreetingPill(
                                 Icon(
                                     imageVector = MaterialSymbols.Rounded.AutoAwesome,
                                     contentDescription = null,
-                                    tint = colors.textPrimary,
-                                    modifier = Modifier.size(18.dp)
+                                    tint = Color.White,
+                                    modifier = Modifier
+                                        .size(18.dp)
+                                        .graphicsLayer(alpha = 0.99f)
+                                        .drawWithCache {
+                                            // The app's blue running into violet, like Samsung's Galaxy AI sparkle
+                                            val brush = androidx.compose.ui.graphics.Brush.linearGradient(
+                                                listOf(Color(0xFF4DA3FF), Color(0xFF0072DE), Color(0xFF8A5CFF)),
+                                                start = androidx.compose.ui.geometry.Offset.Zero,
+                                                end = androidx.compose.ui.geometry.Offset(size.width, size.height)
+                                            )
+                                            onDrawWithContent {
+                                                drawContent()
+                                                drawRect(brush = brush, blendMode = androidx.compose.ui.graphics.BlendMode.SrcIn)
+                                            }
+                                        }
                                 )
                             }
 

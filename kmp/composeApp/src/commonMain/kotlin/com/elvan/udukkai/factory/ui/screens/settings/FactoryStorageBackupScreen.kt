@@ -176,7 +176,8 @@ fun FactoryStorageBackupScreen(
                                 .fillMaxWidth(animatedProgress)
                                 .fillMaxHeight()
                                 .clip(RoundedCornerShape(100.dp))
-                                .background(colors.textPrimary)
+                                // Samsung My Files' storage bar: blue running into teal
+                                .background(androidx.compose.ui.graphics.Brush.horizontalGradient(listOf(androidx.compose.ui.graphics.Color(0xFF0072DE), androidx.compose.ui.graphics.Color(0xFF3FA9A0))))
                         )
                     }
                 }
@@ -344,20 +345,12 @@ fun FactoryStorageBackupScreen(
                             .padding(horizontal = 20.dp, vertical = 14.dp)
                     ) {
                         Row(verticalAlignment = Alignment.Top) {
-                            Surface(
-                                shape = CircleShape,
-                                color = colors.iconBg,
-                                modifier = Modifier.size(36.dp)
-                            ) {
-                                Box(contentAlignment = Alignment.Center) {
-                                    Icon(
-                                        imageVector = MaterialSymbols.Rounded.BusinessCenter,
-                                        contentDescription = null,
-                                        tint = colors.textPrimary,
-                                        modifier = Modifier.size(18.dp)
-                                    )
-                                }
-                            }
+                            com.elvan.udukkai.ui.components.ElvanTintedIcon(
+                                icon = MaterialSymbols.Rounded.BusinessCenter,
+                                tint = com.elvan.udukkai.ui.components.shell.settingsHue(MaterialSymbols.Rounded.BusinessCenter, colors.isDark),
+                                size = 36.dp,
+                                iconSize = 18.dp
+                            )
 
                             Spacer(modifier = Modifier.width(14.dp))
 

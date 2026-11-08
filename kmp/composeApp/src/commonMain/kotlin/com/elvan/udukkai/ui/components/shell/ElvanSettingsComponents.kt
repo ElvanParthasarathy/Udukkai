@@ -1009,7 +1009,8 @@ private val settingsHues: Map<ImageVector, Hue> by lazy {
     }
 }
 
-private fun settingsHue(icon: ImageVector, dark: Boolean): Color {
+/** The colour a settings icon gets; other screens use it so the same thing has the same colour everywhere. */
+fun settingsHue(icon: ImageVector, dark: Boolean): Color {
     val hue = settingsHues[icon] ?: Hue.entries[(icon.name.hashCode() and 0x7fffffff) % Hue.entries.size]
     return Color(if (dark) hue.dark else hue.light)
 }

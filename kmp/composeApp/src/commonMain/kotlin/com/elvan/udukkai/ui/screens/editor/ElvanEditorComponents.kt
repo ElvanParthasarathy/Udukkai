@@ -119,8 +119,9 @@ fun ElvanEditorSection(
     val colors = rememberShellColors()
     val isDark = colors.isDark
     val ff = LocalAppFontFamily.current
-    val badgeBg = badgeColor ?: if (isDark) Color.White else Color.Black
-    val badgeTextColor = if (badgeColor != null) Color.White else if (isDark) Color.Black else Color.White
+    // The step being filled is the app's blue; steps not reached yet come grey from the caller
+    val badgeBg = badgeColor ?: colors.link
+    val badgeTextColor = Color.White
 
     Column(
         modifier = modifier
@@ -886,7 +887,8 @@ fun ElvanEditorBottomBar(
     showSave: Boolean = true
 ) {
     val previewLabel = K.previewToolbarBtn.tr()
-    val actions = remember(label, enabled, isLoading, onClick, onPreview, previewLabel, showSave) {
+    val saveColor = com.elvan.udukkai.theme.rememberShellColors().link
+    val actions = remember(label, enabled, isLoading, onClick, onPreview, previewLabel, showSave, saveColor) {
         listOfNotNull(
             onPreview?.let {
                 ElvanFloatingAction(
@@ -901,7 +903,8 @@ fun ElvanEditorBottomBar(
                     icon = MaterialSymbols.Rounded.Save,
                     onClick = onClick,
                     enabled = enabled,
-                    isLoading = isLoading
+                    isLoading = isLoading,
+                    customColor = if (enabled) saveColor else null
                 )
             } else null
         )
