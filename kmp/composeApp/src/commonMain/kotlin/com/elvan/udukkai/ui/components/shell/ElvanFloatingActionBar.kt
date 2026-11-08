@@ -167,7 +167,6 @@ fun ElvanFloatingActionBar(
                             onDismissRequest = { moreOpen = false },
                             colors = colors,
                             upward = true,
-                            triggerIcon = null,
                             items = overflow.filter { it.enabled }.map { a -> ElvanPopupMenuItem(a.label, a.icon) { moreOpen = false; a.onClick() } }
                         )
                     }

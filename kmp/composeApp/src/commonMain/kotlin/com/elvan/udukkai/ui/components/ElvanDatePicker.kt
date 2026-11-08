@@ -58,11 +58,9 @@ import com.elvan.udukkai.core.utils.DateGroupUtils
 import com.elvan.udukkai.core.utils.DateUtils
 import com.elvan.udukkai.localization.LocalAppLanguage
 import com.elvan.udukkai.theme.LocalAppFontFamily
-import com.elvan.udukkai.theme.OneUiBlue
 import com.elvan.udukkai.theme.ShellColors
 import com.elvan.udukkai.theme.rememberShellColors
 import com.elvan.udukkai.ui.components.shell.ElvanActionSheet
-import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
 private const val FIRST_YEAR = 1900
@@ -87,13 +85,14 @@ private val DAY_CIRCLE_RADIUS = 14.dp
 @Composable
 internal fun Dp.fixedSp(): TextUnit = with(LocalDensity.current) { this@fixedSp.toSp() }
 
-/** The calendar's own colours, One UI's in both themes. */
-private class CalendarInk(dark: Boolean) {
-    val text = if (dark) Color(0xFFCCCCCE) else Color(0xFF4D4D52)
-    val strong = if (dark) Color(0xFFFAFAFF) else Color(0xFF010102)
-    val weekday = if (dark) Color(0xFFAAAAAD) else Color(0xFF6E6E73)
-    val sunday = if (dark) Color(0xFFFC6C65) else Color(0xFFD93E36)
-    val onSelected = if (dark) Color(0xFF252528) else Color(0xFFFCFCFD)
+/** The calendar's colours are the app's own, so it matches the sheets and cards around it. */
+private class CalendarInk(colors: ShellColors) {
+    val text = colors.textPrimary
+    val strong = colors.textPrimary
+    val weekday = colors.textSecondary
+    val sunday = colors.error
+    val accent = colors.accent
+    val onSelected = if (colors.isDark) Color.Black else Color.White
 }
 
 /**
@@ -151,13 +150,17 @@ private fun CalendarSheet(
     val font = LocalAppFontFamily.current
     val dayFontSize = 15.dp.fixedSp()
     val dayText = remember(measurer, font, dayFontSize) { DayText(measurer, TextStyle(fontFamily = font, fontSize = dayFontSize)) }
-    val ink = remember(colors.isDark) { CalendarInk(colors.isDark) }
+    val ink = remember(colors) { CalendarInk(colors) }
 
     fun indexOf(millis: Long) = DateGroupUtils.getDateComponents(millis).let { ElvanCalendar.monthIndex(it.year, it.month) }
     val firstMonth = min?.let(::indexOf) ?: ElvanCalendar.monthIndex(FIRST_YEAR, 1)
     val lastMonth = max?.let(::indexOf) ?: ElvanCalendar.monthIndex(LAST_YEAR, 12)
     val pager = rememberPagerState(initialPage = indexOf(initial.start ?: today) - firstMonth) { lastMonth - firstMonth + 1 }
-    val (year, month) = ElvanCalendar.monthOfIndex(firstMonth + pager.targetPage)
+    // The month on show: one value that the header and the wheels both read. The pager follows it when the grid is on screen
+    var shown by remember { mutableStateOf(firstMonth + pager.currentPage) }
+    val (year, month) = ElvanCalendar.monthOfIndex(shown)
+    LaunchedEffect(pager) { snapshotFlow { pager.targetPage }.collect { shown = firstMonth + it } }
+    LaunchedEffect(wheels) { if (!wheels) pager.scrollToPage(shown - firstMonth) }
 
     // Taps come faster than the animation: each one aims from the last aim, and restarts the slide from wherever the page is
     var aim by remember { mutableStateOf(pager.currentPage) }
@@ -166,7 +169,7 @@ private fun CalendarSheet(
         scope.launch { pager.animateScrollToPage(aim, animationSpec = tween(MONTH_STEP_MS, easing = Decelerate)) }
     }
     fun shift(delta: Int) = slideTo((if (pager.isScrollInProgress) aim else pager.currentPage) + delta)
-    fun jumpTo(index: Int) { scope.launch { pager.scrollToPage(index - firstMonth) } }
+    fun show(index: Int) { shown = index.coerceIn(firstMonth, lastMonth) }
 
     ElvanActionSheet(
         title = "",
@@ -185,13 +188,13 @@ private fun CalendarSheet(
                         wheels = wheels,
                         onToggle = {
                             // The wheels show the chosen day, so the month behind them follows it
-                            if (!wheels && !range) span.start?.let { jumpTo(indexOf(it)) }
+                            if (!wheels && !range) span.start?.let { show(indexOf(it)) }
                             wheels = !wheels
                         },
                         previousLabel = ElvanCalendar.shiftMonth(year, month, -1).let { (y, m) -> "${DateGroupUtils.monthFullName(m, tamil)} $y" },
                         nextLabel = ElvanCalendar.shiftMonth(year, month, 1).let { (y, m) -> "${DateGroupUtils.monthFullName(m, tamil)} $y" },
-                        canGoBack = pager.targetPage > 0,
-                        canGoForward = pager.targetPage < pager.pageCount - 1,
+                        canGoBack = shown > firstMonth,
+                        canGoForward = shown < lastMonth,
                         onShift = ::shift,
                         ink = ink
                     )
@@ -210,9 +213,9 @@ private fun CalendarSheet(
                                 onDate = { y, m, d ->
                                     val day = ElvanCalendar.clampToRange(ElvanCalendar.dayIn(y, m, d), min, max)
                                     span = DaySpan(day)
-                                    jumpTo(indexOf(day))
+                                    show(indexOf(day))
                                 },
-                                onMonth = { y, m -> jumpTo(ElvanCalendar.monthIndex(y, m).coerceIn(firstMonth, lastMonth)) }
+                                onMonth = { y, m -> show(ElvanCalendar.monthIndex(y, m)) }
                             )
                         } else {
                             Column(Modifier.fillMaxSize().padding(horizontal = SIDE_MARGIN)) {
@@ -327,7 +330,7 @@ private fun MonthGrid(
     year: Int, month: Int, row: Dp, span: DaySpan, range: Boolean, today: Long,
     min: Long?, max: Long?, tamil: Boolean, colors: ShellColors, ink: CalendarInk, text: DayText, onTap: (Long, Boolean) -> Unit
 ) {
-    val band = OneUiBlue.copy(alpha = 0.16f)
+    val band = ink.accent.copy(alpha = 0.16f)
     val cells = remember(year, month) { ElvanCalendar.monthCells(year, month) }
     val tap by rememberUpdatedState(onTap)
     val allowed by rememberUpdatedState { c: MonthCell -> ElvanCalendar.isSelectable(c.millis, min, max) }
@@ -362,7 +365,7 @@ private fun MonthGrid(
                         c.inMonth && range && !on && ElvanCalendar.contains(span, c.millis) -> drawRect(band, Offset(left, bandTop), Size(w, radius * 2))
                         on && joined -> drawRect(band, Offset(if (isStart) left + w / 2 else left, bandTop), Size(w / 2, radius * 2)) // from the middle of the circle at each end
                     }
-                    if (on) drawCircle(OneUiBlue, radius, center)
+                    if (on) drawCircle(ink.accent, radius, center)
                     else if (c.inMonth && c.millis == today) drawCircle(ink.text.copy(alpha = 0.45f), radius, center, style = Stroke(1.dp.toPx()))
                     val base = if (col == 0) ink.sunday else ink.text
                     val color = when {
@@ -422,21 +425,27 @@ private fun DateWheels(
 
 private val WHEEL_ROW = 53.5.dp
 
-/** Three rows showing, the middle one chosen. Reports the row as it reaches the middle, and follows [selected] when it is changed from outside. */
+/**
+ * Three rows showing, the middle one chosen. The choice is reported once the wheel has stopped, not on every row it
+ * passes: reporting each row rebuilt the calendar behind it dozens of times in one fling and left the header and the wheel
+ * out of step. It follows [selected] when that is changed from outside (a day pulled back to the end of a shorter month).
+ */
 @Composable
 private fun Wheel(labels: List<String>, selected: Int, modifier: Modifier, ink: CalendarInk, onSelect: (Int) -> Unit) {
-    val state = rememberLazyListState(initialFirstVisibleItemIndex = selected)
+    val last = labels.lastIndex
+    val state = rememberLazyListState(initialFirstVisibleItemIndex = selected.coerceIn(0, last))
     val scope = rememberCoroutineScope()
     val rowPx = with(LocalDensity.current) { WHEEL_ROW.roundToPx() }
-    val middle by remember(labels.size) {
-        derivedStateOf { (state.firstVisibleItemIndex + if (state.firstVisibleItemScrollOffset > rowPx / 2) 1 else 0).coerceIn(0, labels.lastIndex) }
+    val middle by remember(last) {
+        derivedStateOf { (state.firstVisibleItemIndex + if (state.firstVisibleItemScrollOffset > rowPx / 2) 1 else 0).coerceIn(0, last) }
     }
+    val chosen by rememberUpdatedState(selected)
     val report by rememberUpdatedState(onSelect)
-    LaunchedEffect(state, labels.size) {
-        snapshotFlow { middle to state.isScrollInProgress }.collectLatest { (row, moving) -> if (moving) report(row) }
+    LaunchedEffect(state) {
+        snapshotFlow { state.isScrollInProgress }.collect { moving -> if (!moving && middle != chosen) report(middle) }
     }
     LaunchedEffect(selected, labels.size) {
-        if (!state.isScrollInProgress && middle != selected) state.scrollToItem(selected)
+        if (!state.isScrollInProgress && middle != selected) state.scrollToItem(selected.coerceIn(0, last))
     }
     LazyColumn(
         state = state,

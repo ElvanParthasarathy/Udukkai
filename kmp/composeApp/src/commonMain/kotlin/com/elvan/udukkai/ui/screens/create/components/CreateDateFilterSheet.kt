@@ -182,6 +182,7 @@ fun CreateDateFilterSheet(
             onConfirm = { start, end ->
                 onApplyFilter(start, end + 86399999L, DateFilterPreset.CUSTOM)
                 showDateRangePicker = false
+                onDismissRequest() // the presets sheet behind has nothing more to ask
             },
             colors = colors
         )

@@ -70,8 +70,7 @@ fun ElvanActionSheet(
     val isDark = colors.isDark
     // Frosted where the phone blurs the screen behind; just slightly see-through where it cannot, so text stays clear of what is behind
     val glass = remember { com.elvan.udukkai.core.platform.dialogBlurAvailable() }
-    val cardBg = if (pickerCard) (if (isDark) Color(0xFF252528) else Color(0xFFFCFCFD))
-        else (if (isDark) Color(0xFF161616) else Color(0xFFFAFAFA)).copy(alpha = if (glass) 0.86f else 0.95f)
+    val cardBg = (if (isDark) Color(0xFF161616) else Color(0xFFFAFAFA)).copy(alpha = if (glass) 0.86f else 0.95f)
     val mainColor = confirmColor ?: colors.accent
 
     val coroutineScope = rememberCoroutineScope()
@@ -432,36 +431,17 @@ fun ElvanDiscardChangesDialog(
     )
 }
 
-/** One UI's dialog buttons: text only, split by a short divider, each as wide as its text plus an equal share of what is left. */
+/** One UI's dialog buttons: text only, two equal halves. */
 @Composable
 private fun PickerButtons(cancel: String, confirm: String, colors: ShellColors, onCancel: () -> Unit, onConfirm: () -> Unit) {
-    val ink = if (colors.isDark) Color(0xFFFAFAFF) else Color(0xFF010102)
-    val line = if (colors.isDark) Color(0xFF3B3B3E) else Color(0xFFD5D5D8)
     @Composable
-    fun Button(text: String, onClick: () -> Unit) {
-        Box(Modifier.clip(RoundedCornerShape(18.dp)).clickable(role = androidx.compose.ui.semantics.Role.Button, onClick = onClick), contentAlignment = Alignment.Center) {
-            Text(text.preventBrokenLigatures(), maxLines = 1, style = TextStyle(fontFamily = LocalAppFontFamily.current, fontSize = 18.sp, fontWeight = FontWeight.Bold), color = ink)
+    fun RowScope.Button(text: String, onClick: () -> Unit) {
+        Box(Modifier.weight(1f).fillMaxHeight().clip(RoundedCornerShape(18.dp)).clickable(role = androidx.compose.ui.semantics.Role.Button, onClick = onClick), contentAlignment = Alignment.Center) {
+            Text(text.preventBrokenLigatures(), maxLines = 1, style = TextStyle(fontFamily = LocalAppFontFamily.current, fontSize = 18.sp, fontWeight = FontWeight.Bold), color = colors.textPrimary)
         }
     }
-    androidx.compose.ui.layout.Layout(
-        content = {
-            Button(cancel, onCancel)
-            Box(Modifier.background(line))
-            Button(confirm, onConfirm)
-        },
-        modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp).height(36.dp)
-    ) { parts, constraints ->
-        val h = constraints.maxHeight
-        val divider = parts[1].measure(androidx.compose.ui.unit.Constraints.fixed(1.dp.roundToPx(), 16.dp.roundToPx()))
-        val leftText = parts[0].maxIntrinsicWidth(h)
-        val rightText = parts[2].maxIntrinsicWidth(h)
-        val share = ((constraints.maxWidth - divider.width - leftText - rightText) / 2).coerceAtLeast(0)
-        val left = parts[0].measure(androidx.compose.ui.unit.Constraints.fixed(leftText + share, h))
-        val right = parts[2].measure(androidx.compose.ui.unit.Constraints.fixed(rightText + share, h))
-        layout(constraints.maxWidth, h) {
-            left.place(0, 0)
-            divider.place(left.width, (h - divider.height) / 2)
-            right.place(left.width + divider.width, 0)
-        }
+    Row(Modifier.fillMaxWidth().padding(horizontal = 24.dp).height(36.dp)) {
+        Button(cancel, onCancel)
+        Button(confirm, onConfirm)
     }
 }

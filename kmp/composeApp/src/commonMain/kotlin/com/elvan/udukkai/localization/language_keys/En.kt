@@ -196,7 +196,7 @@ val en: Map<String, String> = mapOf(
     K.deleteBtn to "Delete",
     K.copyBtn to "Copy",
     K.syncAppBtn to "Sync App",
-    K.addItemBtn to "+ Add Item",
+
     K.addItemBtn to "Add Item",
     K.item to "Item",
     K.items to "Items",

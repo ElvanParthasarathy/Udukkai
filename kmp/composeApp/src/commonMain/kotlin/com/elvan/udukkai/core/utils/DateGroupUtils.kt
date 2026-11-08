@@ -48,7 +48,7 @@ object DateGroupUtils {
 
     private val WEEKDAY_NAMES_TA = arrayOf("ஞாயிறு", "திங்கள்", "செவ்வாய்", "புதன்", "வியாழன்", "வெள்ளி", "சனி")
 
-    private val WEEKDAY_ABBREV_TA = arrayOf("ஞாயி", "திங்", "செவ்", "புத", "வியா", "வெள்", "சனி")
+    private val WEEKDAY_ABBREV_TA = arrayOf("ஞாயி", "திங்", "செவ்", "அறி", "வியா", "வெள்", "காரி") // Wednesday is Arivan, Saturday is Kaari
 
     /** Names for calendars; [tamil] false gives English. Month is 1..12, weekday 0 = Sunday. */
     fun monthFullName(month: Int, tamil: Boolean) = (if (tamil) MONTH_FULL_TA else MONTH_FULL_EN)[month]

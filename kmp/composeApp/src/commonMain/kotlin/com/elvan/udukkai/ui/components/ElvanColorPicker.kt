@@ -146,14 +146,14 @@ private val BAR_HEIGHT = 20.dp
 private val SWATCH_HEIGHT = 277.dp
 private val SPECTRUM_HEIGHT = 248.dp
 
-private class PickerInk(dark: Boolean) {
-    val strong = if (dark) Color(0xFFFAFAFF) else Color(0xFF010102)
-    val soft = if (dark) Color(0xFFAAAAAD) else Color(0xFF6E6E73)
-    val tab = if (dark) Color(0xFF2D2D30) else Color(0xFFEDEDF0)
-    val emptySlot = if (dark) Color(0xFF3A3A3D) else Color(0xFFE4E4E7)
-    val checkerA = if (dark) Color(0xFF3C3C40) else Color(0xFFFFFFFF)
-    val checkerB = if (dark) Color(0xFF2C2C30) else Color(0xFFD8D8DC)
-    val line = if (dark) Color(0xFF55555A) else Color(0xFFC4C4C8)
+private class PickerInk(colors: ShellColors) {
+    val strong = colors.textPrimary
+    val soft = colors.textSecondary
+    val tab = colors.iconBg
+    val emptySlot = colors.iconBg
+    val checkerA = if (colors.isDark) Color(0xFF3C3C40) else Color(0xFFFFFFFF)
+    val checkerB = if (colors.isDark) Color(0xFF2C2C30) else Color(0xFFD8D8DC)
+    val line = colors.textPrimary.copy(alpha = 0.25f)
 }
 
 /**
@@ -172,7 +172,7 @@ fun ElvanColorPicker(
 ) {
     val ff = LocalAppFontFamily.current
     val focus = LocalFocusManager.current
-    val ink = remember(colors.isDark) { PickerInk(colors.isDark) }
+    val ink = remember(colors) { PickerInk(colors) }
     val swatchesLabel = K.swatches.tr()
     val spectrumLabel = K.spectrum.tr()
     var tab by remember { mutableStateOf(0) }
