@@ -36,6 +36,15 @@ import com.elvan.udukkai.theme.ShellDefaults
 
 object ElvanMenuState {
     var isMenuOpen by mutableStateOf(false)
+
+    /** The panel (window pixels) during a menu row's onClick; a page that opens from it takes it (sets null) to grow out of it. */
+    var clickedPanel: androidx.compose.ui.geometry.Rect? = null
+}
+
+/** Panel position, and whether a page opening over the panel means it should stay put rather than shrink. Not state: read only on taps. */
+private class PanelRef {
+    var rect: androidx.compose.ui.geometry.Rect? = null
+    var coveredByNewPage = false
 }
 
 /**
@@ -73,12 +82,21 @@ fun ElvanPopupMenu(
     // into it quickly when closed (it stays on screen until that has played)
     val progress = remember { Animatable(0f) }
     var mounted by remember { mutableStateOf(false) }
+    val panelRef = remember { PanelRef() }
     LaunchedEffect(expanded) {
         if (expanded) {
+            panelRef.coveredByNewPage = false
             mounted = true
             progress.animateTo(1f, spring(dampingRatio = 0.78f, stiffness = 420f))
         } else if (mounted) {
-            progress.animateTo(0f, tween(140, easing = CubicBezierEasing(0.4f, 0f, 1f, 1f)))
+            if (panelRef.coveredByNewPage) {
+                // shortcut: fixed wait for the new window to cover the panel, tie it to the lifecycle if a slow phone shows the panel vanish first
+                kotlinx.coroutines.delay(700)
+                progress.snapTo(0f)
+                panelRef.coveredByNewPage = false
+            } else {
+                progress.animateTo(0f, tween(140, easing = CubicBezierEasing(0.4f, 0f, 1f, 1f)))
+            }
             mounted = false
         }
     }
@@ -95,6 +113,16 @@ fun ElvanPopupMenu(
         onDismissRequest()
     }
 
+    val pick: (ElvanPopupMenuItem) -> Unit = pick@{ item ->
+        if (panelRef.coveredByNewPage) return@pick // a second tap while the first page is opening
+        // A separate popup window has its own coordinates, so only a menu in the page layer can hand over its position
+        val rect = if (host != null) panelRef.rect else null
+        ElvanMenuState.clickedPanel = rect
+        item.onClick()
+        panelRef.coveredByNewPage = rect != null && ElvanMenuState.clickedPanel == null
+        ElvanMenuState.clickedPanel = null
+    }
+
     val panel: @Composable () -> Unit = {
         Box(
             modifier = modifier
@@ -105,6 +133,7 @@ fun ElvanPopupMenu(
                     transformOrigin = TransformOrigin(1f, if (upward) 1f else 0f) // Anchored at the corner where the button is
                     alpha = (p * 2.5f).coerceIn(0f, 1f)
                 }
+                .onGloballyPositioned { panelRef.rect = it.boundsInRoot() }
                 .cssShadow(color = Color.Black, alpha = 0.08f, blurRadius = 20.dp, offsetY = 6.dp)
                 // Frosted glass over the page; plain translucent where there is no page to blur
                 .frostedGlass(RoundedCornerShape(24.dp), colors, fallbackAlpha = 0.94f)
@@ -117,7 +146,7 @@ fun ElvanPopupMenu(
                 .width(IntrinsicSize.Max)
                 // Taps on the menu stay on the menu
                 .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null) {}
-        ) { MenuRows(items, colors, progress.value, onDismissRequest) }
+        ) { MenuRows(items, colors, progress.value, onDismissRequest, pick) }
     }
 
     if (host != null) {
@@ -166,7 +195,7 @@ fun ElvanPopupMenu(
 private var dismissKey: (() -> Unit)? = null
 
 @Composable
-private fun MenuRows(items: List<ElvanPopupMenuItem>, colors: ShellColors, progress: Float, onDismissRequest: () -> Unit) {
+private fun MenuRows(items: List<ElvanPopupMenuItem>, colors: ShellColors, progress: Float, onDismissRequest: () -> Unit, onPick: (ElvanPopupMenuItem) -> Unit) {
     Column(
         // The rows come in just behind the panel, so the menu reads as growing first, then filling
         modifier = Modifier.fillMaxWidth().graphicsLayer {
@@ -193,7 +222,7 @@ private fun MenuRows(items: List<ElvanPopupMenuItem>, colors: ShellColors, progr
                         indication = ShellDefaults.ripple(colors, bounded = true),
                         onClick = {
                             onDismissRequest()
-                            item.onClick()
+                            onPick(item)
                         }
                     )
                     .padding(horizontal = 16.dp, vertical = 14.dp),

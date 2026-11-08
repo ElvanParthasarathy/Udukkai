@@ -85,7 +85,7 @@ fun <T> ElvanSelectionBottomSheet(
     val isDark = colors.isDark
     // Frosted where the phone blurs the screen behind; solid where it cannot
     val glass = androidx.compose.runtime.remember { com.elvan.udukkai.core.platform.dialogBlurAvailable() }
-    val sheetBg = LocalShellColors.current.surface.copy(alpha = if (glass) 0.88f else 1f)
+    val sheetBg = LocalShellColors.current.surface.copy(alpha = if (glass) 0.88f else 0.95f)
     val ff = LocalAppFontFamily.current
     var searchQuery by remember { mutableStateOf("") }
     val isMultiSelect = onConfirmed != null
