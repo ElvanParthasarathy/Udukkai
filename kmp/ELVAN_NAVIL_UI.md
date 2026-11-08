@@ -1,6 +1,6 @@
-# Elvan UI: design reference
+# Elvan Navil UI: design reference
 
-Elvan UI is the look and feel of the Udukkai apps (Textiles and Factory). This document describes what the app **does today**, checked against the source. Where something is only a wish, it is under "Planned". Where a rule was kept from the earlier version of this document but could not be re-checked, it says so.
+Elvan Navil UI is the look and feel of the Udukkai apps (Textiles and Factory). This document describes what the app **does today**, checked against the source. Where something is only a wish, it is under "Planned". Where a rule was kept from the earlier version of this document but could not be re-checked, it says so.
 
 **Last audited against commit `ff4f1fb4`** (selection, menu reveal and pickers included). On-device checks were made on one phone (Samsung SM-A536E, Android 16) in the Textiles app, dark theme, portrait.
 
@@ -19,7 +19,7 @@ Where the rules live: `theme/` (`Dimens.kt`, `Spacing.kt`, `Shape.kt`, `ShellCol
 
 ## 1. Identity
 
-Elvan UI blends four things:
+Elvan Navil UI blends four things:
 
 | From | What it takes |
 | --- | --- |
