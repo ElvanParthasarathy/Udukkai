@@ -242,7 +242,7 @@ fun AboutAppScreen(
                     ElvanSettingsRow(
                         icon = MaterialSymbols.Rounded.Sync,
                         title = if (isTa) "மேகக் கணினி ஒத்திசைவு" else "Cloud Sync & Backups",
-                        description = if (isTa) "பாதுகாப்பான உள்ளூர் காப்புகள் மற்றும் சாதன ஒத்திசைவு" else "Secure local database backups and device sync",
+                        description = if (isTa) "பாதுகாப்பான உள்ளூர் காப்புகள் மற்றும் கருவி ஒத்திசைவு" else "Secure local database backups and device sync",
                         onClick = {},
                         colors = colors
                     )
@@ -271,7 +271,7 @@ fun AboutAppScreen(
                     ElvanSettingsRow(
                         icon = MaterialSymbols.Rounded.ReceiptFill,
                         title = if (isTa) "கட்டணப் பெறுகைகள்" else "Payment Receipts",
-                        description = if (isTa) "நேரடிப் பணம், வங்கி, யுபிஐ ரசீதுகள் மற்றும் பட்டியல் வரவு கழித்தல்" else "Cash, Bank, and UPI receipts linked to pending bills",
+                        description = if (isTa) "நேரடிப் பணம், வங்கி, யுபிஐ பெறுகைகள் மற்றும் பட்டியல் வரவு கழித்தல்" else "Cash, Bank, and UPI receipts linked to pending bills",
                         onClick = {},
                         colors = colors
                     )
@@ -281,7 +281,7 @@ fun AboutAppScreen(
                     ElvanSettingsRow(
                         icon = MaterialSymbols.Rounded.Sync,
                         title = if (isTa) "மேகக் கணினி ஒத்திசைவு" else "Cloud Sync & Security",
-                        description = if (isTa) "நிறுவனத் தரவுப் பாதுகாப்பு மற்றும் தானியங்கி சாதன ஒத்திசைவு" else "Multi-firm data protection and automatic device synchronization",
+                        description = if (isTa) "நிறுவனத் தரவுப் பாதுகாப்பு மற்றும் தானியங்கிக் கருவி ஒத்திசைவு" else "Multi-firm data protection and automatic device synchronization",
                         onClick = {},
                         colors = colors
                     )

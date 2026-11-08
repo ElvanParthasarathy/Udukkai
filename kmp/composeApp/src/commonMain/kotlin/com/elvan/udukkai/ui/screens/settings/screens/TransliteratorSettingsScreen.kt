@@ -154,7 +154,7 @@ fun TransliteratorSettingsScreen(
                 ) {
                     Text(
                         text = t(
-                            taText = "தனித்துவமான சொந்த மென்பொருள்கள், எண்மப் படைப்புகள் மற்றும் தமிழ்க் கணினித் தொழில்நுட்பங்களுக்கான தனிநபர் மென்பொருள் படைப்பக அடையாளம். நேர்த்தியான கைவினைத்திறன், இருமொழி இலக்கியம் மற்றும் நடைமுறைத் தொழில் முறைமை உருவாக்கத்தில் அர்ப்பணிப்பு கொண்டது.",
+                            taText = "தனித்துவமான சொந்த மென்பொருள்கள், எண்மப் படைப்புகள் மற்றும் தமிழ்க் கணினித் தொழில்நுட்பங்களுக்கான தனி ஆள் மென்பொருள் படைப்பக அடையாளம். நேர்த்தியான கைவினைத்திறன், இருமொழி இலக்கியம் மற்றும் நடைமுறைத் தொழில் முறைமை உருவாக்கத்தில் அர்ப்பணிப்பு கொண்டது.",
                             enText = "An independent software craft label and digital creation imprint. Dedicated to purposeful digital craftsmanship, bilingual literature, artisan business tools, and classical Tamil linguistic computing."
                         ),
                         style = TextStyle(
