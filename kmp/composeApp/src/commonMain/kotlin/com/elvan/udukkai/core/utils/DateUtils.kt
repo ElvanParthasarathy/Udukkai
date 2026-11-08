@@ -46,6 +46,11 @@ object DateUtils {
         val m = parts[1].toIntOrNull() ?: return null
         val y = parts[2].toIntOrNull() ?: return null
 
+        return millisOf(y, m, d)
+    }
+
+    /** UTC midnight of a calendar day, the form every date in the app is kept in. */
+    fun millisOf(y: Int, m: Int, d: Int): Long {
         val adjustedYear = if (m <= 2) y - 1 else y
         val era = (if (adjustedYear >= 0) adjustedYear else adjustedYear - 399) / 400
         val yoe = adjustedYear - era * 400
@@ -54,6 +59,12 @@ object DateUtils {
         val doe = yoe * 365 + yoe / 4 - yoe / 100 + doy
         val days = era * 146097 + doe - 719468
         return days * 86400000L
+    }
+
+    /** Today's calendar day (as the phone's clock shows it) as UTC midnight, unlike `now / 86400000` which turns over at 05:30 in India. */
+    fun todayMillis(now: Long = System.currentTimeMillis()): Long {
+        val local = now + java.util.TimeZone.getDefault().getOffset(now)
+        return Math.floorDiv(local, 86400000L) * 86400000L
     }
 
     /** Whole days since 1970 in the same UTC calendar [formatEpochMillis] shows. */

@@ -9,7 +9,6 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.elvan.udukkai.core.platform.ConfigureDialogWindow
 import com.elvan.udukkai.core.utils.DateGroupUtils
 import com.elvan.udukkai.core.utils.DateUtils
 import com.elvan.udukkai.localization.K
@@ -18,6 +17,7 @@ import com.elvan.udukkai.localization.tr
 import com.elvan.udukkai.theme.LocalAppFontFamily
 import com.elvan.udukkai.theme.ShellColors
 import com.elvan.udukkai.theme.rememberShellColors
+import com.elvan.udukkai.ui.components.ElvanDateRangePicker
 import com.elvan.udukkai.ui.components.shell.ElvanSelectionBottomSheet
 
 enum class DateFilterPreset {
@@ -36,7 +36,7 @@ enum class DateFilterPreset {
  * - Bottom-anchored sheet with top rounded corners and drag handle.
  * - Clean list with monochrome checkmark (✓) for the active preset.
  * - Instant one-tap selection: Tapping any preset immediately applies filter and closes sheet with no jiggles.
- * - Custom Date Range: Opens Compose Material 3's DateRangePicker in a DatePickerDialog.
+ * - Custom Date Range: Opens the app's ElvanDateRangePicker.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -174,133 +174,17 @@ fun CreateDateFilterSheet(
         )
     }
 
-    // Material 3 Compose DateRangePicker with clean compact typography
     if (showDateRangePicker) {
-        val dateRangePickerState = rememberDateRangePickerState(
-            initialSelectedStartDateMillis = currentStartMillis ?: todayStart,
-            initialSelectedEndDateMillis = currentEndMillis ?: todayEnd,
-            yearRange = DatePickerDefaults.YearRange,
-            selectableDates = DatePickerDefaults.AllDates
+        ElvanDateRangePicker(
+            initialStart = currentStartMillis ?: todayStart,
+            initialEnd = currentEndMillis ?: todayEnd,
+            title = selectDateRangeLabel,
+            onDismiss = { showDateRangePicker = false },
+            onConfirm = { start, end ->
+                onApplyFilter(start, end + 86399999L, DateFilterPreset.CUSTOM)
+                showDateRangePicker = false
+            },
+            colors = colors
         )
-        val dialogBg = if (isDark) Color(0xFF1E1E1E) else Color.White
-
-        ConfigureDialogWindow(isDark = isDark)
-        DatePickerDialog(
-            onDismissRequest = { showDateRangePicker = false },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        val s = dateRangePickerState.selectedStartDateMillis
-                        val e = dateRangePickerState.selectedEndDateMillis
-                        if (s != null && e != null) {
-                            val actualStart = minOf(s, e)
-                            val actualEnd = maxOf(s, e) + 86399999L
-                            onApplyFilter(actualStart, actualEnd, DateFilterPreset.CUSTOM)
-                        } else if (s != null) {
-                            val actualStart = s
-                            val actualEnd = s + 86399999L
-                            onApplyFilter(actualStart, actualEnd, DateFilterPreset.CUSTOM)
-                        }
-                        showDateRangePicker = false
-                    }
-                ) {
-                    Text(
-                        text = K.okBtn.tr(),
-                        style = TextStyle(fontFamily = ff, fontWeight = FontWeight.Bold, color = colors.accent)
-                    )
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { showDateRangePicker = false }) {
-                    Text(
-                        text = K.cancelBtn.tr(),
-                        style = TextStyle(fontFamily = ff, color = colors.textSecondary)
-                    )
-                }
-            },
-            colors = DatePickerDefaults.colors(containerColor = dialogBg)
-        ) {
-            MaterialTheme(
-                typography = MaterialTheme.typography.copy(
-                    headlineLarge = TextStyle(
-                        fontFamily = ff,
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        lineHeight = 24.sp
-                    ),
-                    headlineMedium = TextStyle(
-                        fontFamily = ff,
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        lineHeight = 24.sp
-                    ),
-                    headlineSmall = TextStyle(
-                        fontFamily = ff,
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        lineHeight = 22.sp
-                    ),
-                    titleLarge = TextStyle(
-                        fontFamily = ff,
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        lineHeight = 22.sp
-                    ),
-                    titleMedium = TextStyle(
-                        fontFamily = ff,
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        lineHeight = 20.sp
-                    ),
-                    titleSmall = TextStyle(
-                        fontFamily = ff,
-                        fontSize = 13.sp,
-                        fontWeight = FontWeight.Medium,
-                        lineHeight = 18.sp
-                    ),
-                    bodyLarge = TextStyle(
-                        fontFamily = ff,
-                        fontSize = 13.sp,
-                        lineHeight = 18.sp
-                    ),
-                    bodyMedium = TextStyle(
-                        fontFamily = ff,
-                        fontSize = 12.sp,
-                        lineHeight = 16.sp
-                    ),
-                    labelLarge = TextStyle(
-                        fontFamily = ff,
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.Medium,
-                        lineHeight = 16.sp
-                    )
-                )
-            ) {
-                DateRangePicker(
-                    state = dateRangePickerState,
-                    title = null,
-                    headline = {
-                        DateRangePickerDefaults.DateRangePickerHeadline(
-                            selectedStartDateMillis = dateRangePickerState.selectedStartDateMillis,
-                            selectedEndDateMillis = dateRangePickerState.selectedEndDateMillis,
-                            displayMode = dateRangePickerState.displayMode,
-                            dateFormatter = remember { DatePickerDefaults.dateFormatter() },
-                            modifier = Modifier.padding(start = 24.dp, end = 12.dp, top = 16.dp, bottom = 8.dp)
-                        )
-                    },
-                    colors = DatePickerDefaults.colors(
-                        containerColor = dialogBg,
-                        headlineContentColor = colors.textPrimary,
-                        titleContentColor = colors.textSecondary,
-                        selectedDayContainerColor = colors.accent,
-                        selectedDayContentColor = colors.surface,
-                        dayInSelectionRangeContainerColor = colors.accent.copy(alpha = 0.2f),
-                        dayInSelectionRangeContentColor = colors.textPrimary,
-                        todayDateBorderColor = colors.accent,
-                        todayContentColor = colors.accent
-                    )
-                )
-            }
-        }
     }
 }

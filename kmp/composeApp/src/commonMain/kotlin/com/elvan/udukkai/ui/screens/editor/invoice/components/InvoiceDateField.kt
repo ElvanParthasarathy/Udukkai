@@ -24,6 +24,7 @@ import com.elvan.udukkai.theme.rememberShellColors
 import com.elvan.udukkai.ui.navigation.MaterialSymbols
 import com.elvan.udukkai.ui.screens.editor.ElvanEditorLabel
 import com.elvan.udukkai.ui.components.shell.ElvanSnackbar
+import com.elvan.udukkai.ui.components.ElvanDatePicker
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -99,57 +100,12 @@ fun InvoiceDateField(
     }
 
     if (isPickerOpen) {
-        val datePickerState = rememberDatePickerState(
-            initialSelectedDateMillis = selectedDate,
-            yearRange = DatePickerDefaults.YearRange,
-            selectableDates = DatePickerDefaults.AllDates
+        ElvanDatePicker(
+            initialMillis = selectedDate,
+            title = label.orEmpty(),
+            onDismiss = { isPickerOpen = false },
+            onConfirm = { onDateChanged(it); isPickerOpen = false },
+            colors = colors
         )
-        val dialogBg = if (isDark) Color(0xFF1E1E1E) else Color.White
-
-        DatePickerDialog(
-            onDismissRequest = { isPickerOpen = false },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        datePickerState.selectedDateMillis?.let { onDateChanged(it) }
-                        isPickerOpen = false
-                    }
-                ) {
-                    Text(
-                        text = K.confirm.tr(),
-                        style = TextStyle(fontFamily = ff, fontWeight = FontWeight.Bold, color = colors.accent)
-                    )
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { isPickerOpen = false }) {
-                    Text(
-                        text = K.cancel.tr(),
-                        style = TextStyle(fontFamily = ff, color = colors.textSecondary)
-                    )
-                }
-            },
-            colors = DatePickerDefaults.colors(
-                containerColor = dialogBg
-            )
-        ) {
-            DatePicker(
-                state = datePickerState,
-                title = null,
-                headline = {
-                    DatePickerDefaults.DatePickerHeadline(
-                        selectedDateMillis = datePickerState.selectedDateMillis,
-                        displayMode = datePickerState.displayMode,
-                        dateFormatter = remember { DatePickerDefaults.dateFormatter() },
-                        modifier = Modifier.padding(start = 24.dp, end = 12.dp, top = 16.dp, bottom = 8.dp)
-                    )
-                },
-                colors = DatePickerDefaults.colors(
-                    containerColor = dialogBg,
-                    selectedDayContainerColor = colors.accent,
-                    todayDateBorderColor = colors.accent
-                )
-            )
-        }
     }
 }

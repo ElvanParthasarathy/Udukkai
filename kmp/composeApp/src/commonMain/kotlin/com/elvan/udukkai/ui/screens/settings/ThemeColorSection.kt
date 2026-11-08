@@ -25,6 +25,8 @@ import com.elvan.udukkai.localization.tr
 import com.elvan.udukkai.theme.LocalAppFontFamily
 import com.elvan.udukkai.theme.ShellColors
 import com.elvan.udukkai.theme.ShellDefaults
+import com.elvan.udukkai.ui.components.parseRecentColors
+import com.elvan.udukkai.ui.components.pushRecentColor
 import com.elvan.udukkai.ui.components.shell.*
 import com.elvan.udukkai.ui.navigation.MaterialSymbols
 
@@ -64,7 +66,7 @@ fun ThemeColorSection(profile: BusinessProfile, colors: ShellColors, onSave: (Bu
     var isEditing by remember { mutableStateOf(false) }
     var tempColor by remember(profile.themeColor) { mutableStateOf(current) }
     var pickingCustom by remember { mutableStateOf(false) }
-    var recent by remember { mutableStateOf(prefs.getString(RECENT_KEY)?.split(",")?.filter { it.length == 7 } ?: emptyList()) }
+    var recent by remember { mutableStateOf(parseRecentColors(prefs.getString(RECENT_KEY))) }
 
     ElvanSettingsSection(colors = colors) {
         ElvanSettingsAnimatedExpand(
@@ -171,7 +173,7 @@ fun ThemeColorSection(profile: BusinessProfile, colors: ShellColors, onSave: (Bu
             recent = recent,
             onDismiss = { pickingCustom = false },
             onDone = { hex ->
-                recent = (listOf(hex) + recent).distinct().take(5)
+                recent = pushRecentColor(recent, hex)
                 prefs.setString(RECENT_KEY, recent.joinToString(","))
                 tempColor = hex
                 pickingCustom = false
