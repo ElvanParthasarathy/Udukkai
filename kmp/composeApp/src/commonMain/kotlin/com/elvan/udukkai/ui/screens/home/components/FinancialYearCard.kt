@@ -20,8 +20,6 @@ import com.elvan.udukkai.theme.ShellColors
 import com.elvan.udukkai.ui.components.shell.ElvanSettingsDivider
 import com.elvan.udukkai.ui.components.shell.ElvanSettingsSection
 
-private const val DAY = 24L * 60 * 60 * 1000
-
 /**
  * Everything about the financial year in one place (the Reports page): the running year and its days left, when the
  * numbers start again, whether the years before it can still be changed or are closed, and how long deleted items are kept.
@@ -39,51 +37,58 @@ fun FinancialYearSection(colors: ShellColors, dataYears: Set<Int>, nextBill: Str
     fun label(start: Int) = "$start-${((start + 1) % 100).toString().padStart(2, '0')}"
 
     @Composable
-    fun row(title: String, value: String, bold: Boolean = false) {
-        Row(Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 12.dp), verticalAlignment = Alignment.Top) {
-            Text(title, Modifier.weight(0.45f), style = TextStyle(fontFamily = ff, fontSize = 14.sp), color = colors.textSecondary)
-            Text(value, Modifier.weight(0.55f), style = TextStyle(fontFamily = ff, fontSize = 14.sp, fontWeight = if (bold) FontWeight.Bold else FontWeight.SemiBold, textAlign = androidx.compose.ui.text.style.TextAlign.End), color = colors.textPrimary)
+    fun row(title: String, value: String) {
+        Row(Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 12.dp), verticalAlignment = Alignment.CenterVertically) {
+            Text(title, Modifier.weight(1f), style = TextStyle(fontFamily = ff, fontSize = 14.sp), color = colors.textSecondary, maxLines = 1)
+            Spacer(Modifier.width(12.dp))
+            Text(value, style = TextStyle(fontFamily = ff, fontSize = 14.sp, fontWeight = FontWeight.SemiBold), color = colors.textPrimary, maxLines = 1)
         }
     }
 
-    ElvanSettingsSection(title = K.fyRunning.tr(), colors = colors) {
-        row(K.fyRunning.tr(), status.label, bold = true)
-        ElvanSettingsDivider(colors = colors)
-        row(K.fyPeriod.tr(), "01/04/$current – 31/03/${current + 1}")
-        ElvanSettingsDivider(colors = colors)
-        row(K.fyDaysLeft.tr(), "${status.daysLeft}")
-    }
-
-    ElvanSettingsSection(title = K.fyNumbersTitle.tr(), colors = colors) {
-        row(K.fyNextBill.tr(), nextBill, bold = true)
-        ElvanSettingsDivider(colors = colors)
-        row(K.fyNextReceipt.tr(), nextReceipt, bold = true)
-        ElvanSettingsDivider(colors = colors)
-        row(K.fyFromDate.tr().replace("%s", status.nextStart), firstBill + "\n" + firstReceipt)
+    @Composable
+    fun note(text: String) {
         Text(
-            K.fyNumbersNote.tr(),
-            style = TextStyle(fontFamily = ff, fontSize = 12.5.sp, lineHeight = 18.sp),
-            color = colors.textSecondary,
-            modifier = Modifier.padding(start = 20.dp, end = 20.dp, top = 2.dp, bottom = 14.dp)
+            text,
+            style = TextStyle(fontFamily = ff, fontSize = 12.sp, lineHeight = 17.sp),
+            color = colors.textTertiary,
+            modifier = Modifier.padding(horizontal = 20.dp)
         )
     }
 
-    ElvanSettingsSection(title = K.fyYearsTitle.tr(), colors = colors) {
-        years.forEachIndexed { i, y ->
-            if (i > 0) ElvanSettingsDivider(colors = colors)
-            val close = YearLock.closeDay(y)
-            val value = when {
-                y == current -> K.fyOpen.tr()
-                now < close -> K.fyOpenUntil.tr().replace("%s", DateUtils.formatEpochMillis(close)).replace("%d", "${((close - now + DAY - 1) / DAY).toInt()}")
-                else -> K.fyClosedSince.tr().replace("%s", DateUtils.formatEpochMillis(close))
-            }
-            row(label(y), value)
+    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        ElvanSettingsSection(title = K.fyRunning.tr() + " " + status.label, colors = colors) {
+            row(K.fyStarted.tr(), "01/04/$current")
+            ElvanSettingsDivider(colors = colors)
+            row(K.fyEnds.tr(), "31/03/${current + 1}")
+            ElvanSettingsDivider(colors = colors)
+            row(K.fyDaysLeft.tr(), "${status.daysLeft}")
         }
-    }
 
-    ElvanSettingsSection(title = K.fyDeletionTitle.tr(), colors = colors) {
-        row(K.recycleBin.tr(), K.fyBinDays.tr())
-        ElvanSettingsDivider(colors = colors)
-        row(K.fyYearCloses.tr(), K.fyCloseDay.tr())
+        ElvanSettingsSection(title = K.fyNumbersTitle.tr(), colors = colors) {
+            row(K.fyNextBill.tr(), nextBill)
+            ElvanSettingsDivider(colors = colors)
+            row(K.fyNextReceipt.tr(), nextReceipt)
+        }
+
+        ElvanSettingsSection(title = K.fyFromDate.tr().replace("%s", status.nextStart), colors = colors) {
+            row(K.fyFirstBill.tr(), firstBill)
+            ElvanSettingsDivider(colors = colors)
+            row(K.fyFirstReceipt.tr(), firstReceipt)
+        }
+        note(K.fyNumbersNote.tr())
+
+        ElvanSettingsSection(title = K.fyYearsTitle.tr(), colors = colors) {
+            years.forEachIndexed { i, y ->
+                if (i > 0) ElvanSettingsDivider(colors = colors)
+                val close = YearLock.closeDay(y)
+                val value = when {
+                    y == current -> K.fyOpen.tr()
+                    now < close -> K.fyOpenUntil.tr().replace("%s", DateUtils.formatEpochMillis(close))
+                    else -> K.fyClosed.tr()
+                }
+                row(label(y), value)
+            }
+        }
+        note(K.fyCloseNote.tr())
     }
 }

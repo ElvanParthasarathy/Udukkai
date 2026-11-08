@@ -689,7 +689,7 @@ androidx.compose.animation.AnimatedContent(
                                     modifier = Modifier.fillMaxWidth()
                                 ) {
                                     ElvanSelectionBar(
-                                        visible = true,
+                                        visible = !com.elvan.udukkai.ui.components.DragSelectState.active,
                                         selectedCount = selectedItemIds.size,
                                         onDelete = {
                                             if (selectedItemIds.isNotEmpty()) {

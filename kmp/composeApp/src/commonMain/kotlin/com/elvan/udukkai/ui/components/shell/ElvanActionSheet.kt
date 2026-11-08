@@ -6,9 +6,6 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.Orientation
-import androidx.compose.foundation.gestures.draggable
-import androidx.compose.foundation.gestures.rememberDraggableState
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -41,7 +38,7 @@ import kotlin.math.roundToInt
 
 /**
  * ElvanActionSheet — Flutter & Neram-matching floating action sheet modal popup.
- * Built with rock-solid Dialog + animated scrim + downward drag-to-dismiss.
+ * Built with rock-solid Dialog + animated scrim. Closes by a tap on the background, Back or its buttons, not by swiping.
  *
  * Replaces Material 3's ModalBottomSheet to eliminate black screen/blocking glitches on swipe.
  */
@@ -58,7 +55,7 @@ fun ElvanActionSheet(
     isConfirmFilled: Boolean = false,
     /** Confirm runs [onConfirm] without closing the sheet (e.g. Pause/Resume on a progress sheet). */
     keepOpenOnConfirm: Boolean = false,
-    /** False: only the Cancel button closes the sheet (tap outside, back and drag do nothing). */
+    /** False: only the Cancel button closes the sheet (tap outside and Back do nothing). */
     dismissible: Boolean = true,
     tertiaryText: String? = null,
     onTertiary: (() -> Unit)? = null,
@@ -76,7 +73,6 @@ fun ElvanActionSheet(
     val initialOffsetPx = with(density) { slideDistance.toPx() }
     val sheetOffsetY = remember { Animatable(initialOffsetPx) }
     var isClosing by remember { mutableStateOf(false) }
-    var dragOffsetY by remember { mutableFloatStateOf(0f) }
 
     LaunchedEffect(Unit) {
         sheetOffsetY.animateTo(
@@ -92,9 +88,6 @@ fun ElvanActionSheet(
         if (isClosing) return
         isClosing = true
         coroutineScope.launch {
-            val currentTotal = sheetOffsetY.value + dragOffsetY
-            sheetOffsetY.snapTo(currentTotal)
-            dragOffsetY = 0f
             sheetOffsetY.animateTo(
                 targetValue = initialOffsetPx,
                 animationSpec = tween(
@@ -104,25 +97,6 @@ fun ElvanActionSheet(
             )
             onDismissRequest()
             onComplete?.invoke()
-        }
-    }
-
-    val draggableState = rememberDraggableState { delta ->
-        // Clamped at 0f: Only allow dragging DOWNWARDS (delta > 0).
-        val target = dragOffsetY + delta
-        dragOffsetY = target.coerceAtLeast(0f)
-    }
-
-    fun snapBackDrag() {
-        if (dragOffsetY > 0f) {
-            coroutineScope.launch {
-                Animatable(dragOffsetY).animateTo(
-                    targetValue = 0f,
-                    animationSpec = tween(160, easing = CubicBezierEasing(0.2f, 0f, 0f, 1f))
-                ) {
-                    dragOffsetY = value
-                }
-            }
         }
     }
 
@@ -173,7 +147,7 @@ fun ElvanActionSheet(
                         .widthIn(max = if (tertiaryText != null) 360.dp else 460.dp)
                         .fillMaxWidth()
                         .padding(24.dp)
-                        .offset { IntOffset(0, (sheetOffsetY.value + dragOffsetY).roundToInt()) }
+                        .offset { IntOffset(0, sheetOffsetY.value.roundToInt()) }
                         .clickable(
                             interactionSource = remember { MutableInteractionSource() },
                             indication = null
@@ -186,7 +160,7 @@ fun ElvanActionSheet(
                         .fillMaxWidth()
                         .windowInsetsPadding(WindowInsets.navigationBars.only(WindowInsetsSides.End + WindowInsetsSides.Bottom))
                         .padding(end = 24.dp, top = 16.dp, bottom = 16.dp)
-                        .offset { IntOffset((sheetOffsetY.value + dragOffsetY).roundToInt(), 0) }
+                        .offset { IntOffset(sheetOffsetY.value.roundToInt(), 0) }
                         .clickable(
                             interactionSource = remember { MutableInteractionSource() },
                             indication = null
@@ -198,18 +172,7 @@ fun ElvanActionSheet(
                         .navigationBarsPadding()
                         .imePadding()
                         .padding(start = 16.dp, end = 16.dp, bottom = 16.dp)
-                        .offset { IntOffset(0, (sheetOffsetY.value + dragOffsetY).roundToInt()) }
-                        .draggable(
-                            state = draggableState,
-                            orientation = Orientation.Vertical,
-                            onDragStopped = { velocity ->
-                                if (dismissible && (dragOffsetY > 80f || velocity > 600f)) {
-                                    dismiss()
-                                } else {
-                                    snapBackDrag()
-                                }
-                            }
-                        )
+                        .offset { IntOffset(0, sheetOffsetY.value.roundToInt()) }
                         .clickable(
                             interactionSource = remember { MutableInteractionSource() },
                             indication = null

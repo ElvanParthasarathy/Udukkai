@@ -6,6 +6,8 @@ import androidx.compose.foundation.gestures.scrollBy
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.PointerEventPass
@@ -16,6 +18,11 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
+
+/** True while a finger is selecting: the selection toolbar stays away until it lifts. */
+object DragSelectState {
+    var active by mutableStateOf(false)
+}
 
 private val RECORD_KEY = Regex("^(?:item|cust|invoice|receipt)_([0-9]+)$")
 
@@ -60,6 +67,7 @@ fun Modifier.dragSelect(listState: LazyListState, onSelect: (Long) -> Unit): Mod
                     }
                     lastIndex = hit.index
                 }
+                DragSelectState.active = true
                 pick()
                 // Near the top or bottom the list moves by itself, faster the closer the finger is to the edge
                 val autoScroll = scope.launch {
@@ -87,6 +95,7 @@ fun Modifier.dragSelect(listState: LazyListState, onSelect: (Long) -> Unit): Mod
                     }
                 } finally {
                     autoScroll.cancel()
+                    DragSelectState.active = false
                 }
             }
         }
