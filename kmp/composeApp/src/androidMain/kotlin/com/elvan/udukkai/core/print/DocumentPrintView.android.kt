@@ -399,8 +399,10 @@ private class PrintBridge(
     private fun failExport() {
         exporting = false
         controller.isBusy = false
+        controller.clearAction()
         controller.isRefreshing = false
         pendingAction = null
+        delivering = false
         controller.notice = PrintNotice(PrintNoticeKind.Failed)
     }
 
@@ -451,19 +453,19 @@ private class PrintBridge(
     // ---- print / save / share ----------------------------------------------------------------
 
     fun run(requested: DocumentPrintAction) {
+        if (delivering) return
+        controller.activeAction = requested
+        controller.isBusy = true
+        controller.notice = null
+        action = requested
+
         val file = currentFile
         if (file == null || currentKey != wantKey) {
             // The PDF for the chosen options is still being made: continue once it is ready
             pendingAction = requested
-            controller.isBusy = true
-            controller.notice = null
             ensure()
             return
         }
-        if (delivering) return
-        controller.isBusy = true
-        controller.notice = null
-        action = requested
         deliver(file, currentPages)
     }
 
@@ -492,28 +494,89 @@ private class PrintBridge(
     }
 
     private fun deliver(file: File, pages: Int) {
+        if (delivering) return
         delivering = true
-        try {
-            val bytes = file.readBytes()
-            when (action) {
-                DocumentPrintAction.Print -> printPdf(bytes, pages)
-                DocumentPrintAction.Share -> sharePdf(bytes)
-                DocumentPrintAction.Open -> openPdf(file, bytes)
+        val targetAction = action
+        val name = safeName()
+        val folder = controller.folder
+        val options = controller.options
+        val startTime = System.currentTimeMillis()
+
+        Thread {
+            try {
+                val bytes = file.readBytes()
+                when (targetAction) {
+                    DocumentPrintAction.Print -> {
+                        val adapter = createPrintAdapter(name, bytes, pages)
+                        val attributes = printAttributes(options)
+                        postHandoff(startTime) {
+                            val activity = uiContext?.findActivity() ?: throw IllegalStateException("No activity to print from")
+                            val manager = activity.getSystemService(Context.PRINT_SERVICE) as PrintManager
+                            manager.print(name, adapter, attributes)
+                        }
+                    }
+                    DocumentPrintAction.Share -> {
+                        val uri = stagePdf(bytes, name)
+                        val intent = Intent(Intent.ACTION_SEND).apply {
+                            type = "application/pdf"
+                            putExtra(Intent.EXTRA_STREAM, uri)
+                            putExtra(Intent.EXTRA_SUBJECT, name)
+                            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                        }
+                        val chooser = Intent.createChooser(intent, name)
+                        postHandoff(startTime) {
+                            val launcher = uiContext?.findActivity()
+                            if (launcher != null) launcher.startActivity(chooser)
+                            else context.startActivity(chooser.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+                        }
+                    }
+                    DocumentPrintAction.Open -> {
+                        storeBillPdf(file.absolutePath, name, folder)
+                        val uri = stagePdf(bytes, name)
+                        val intent = Intent(Intent.ACTION_VIEW).apply {
+                            setDataAndType(uri, "application/pdf")
+                            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                        }
+                        postHandoff(startTime) {
+                            val launcher = uiContext?.findActivity()
+                            if (launcher != null) launcher.startActivity(intent)
+                            else context.startActivity(intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+                        }
+                    }
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Delivering PDF failed: ${e.message}", e)
+                main.post {
+                    delivering = false
+                    controller.isBusy = false
+                    controller.activeAction = null
+                    controller.notice = PrintNotice(PrintNoticeKind.Failed)
+                }
             }
-            controller.isBusy = false
-        } catch (e: Exception) {
-            Log.e(TAG, "Delivering PDF failed: ${e.message}", e)
-            controller.isBusy = false
-            controller.notice = PrintNotice(PrintNoticeKind.Failed)
-        }
-        delivering = false
+        }.start()
     }
 
-    // Hands the finished PDF to Android's print framework: the system dialog (and any installed
-    // print service / "Save as PDF") opens with the chosen paper, orientation and colour.
-    private fun printPdf(bytes: ByteArray, pages: Int) {
-        val name = safeName()
-        val adapter = object : PrintDocumentAdapter() {
+    private fun postHandoff(startTime: Long, launch: () -> Unit) {
+        val elapsed = System.currentTimeMillis() - startTime
+        val remaining = (200L - elapsed).coerceAtLeast(0L)
+        main.postDelayed({
+            try {
+                if (!released) {
+                    launch()
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Launching intent failed: ${e.message}", e)
+                controller.notice = PrintNotice(PrintNoticeKind.Failed)
+            } finally {
+                delivering = false
+                controller.isBusy = false
+                controller.activeAction = null
+            }
+        }, remaining)
+    }
+
+    private fun createPrintAdapter(name: String, bytes: ByteArray, pages: Int): PrintDocumentAdapter {
+        return object : PrintDocumentAdapter() {
             override fun onLayout(
                 old: PrintAttributes?, new: PrintAttributes, cancel: CancellationSignal?,
                 callback: LayoutResultCallback, extras: Bundle?
@@ -540,15 +603,6 @@ private class PrintBridge(
                 }
             }
         }
-        val activity = uiContext?.findActivity() ?: throw IllegalStateException("No activity to print from")
-        val o = controller.options
-        val size = mediaSize(o)
-        val attributes = PrintAttributes.Builder()
-            .setMediaSize(if (o.orientation == PageOrientation.LANDSCAPE) size.asLandscape() else size)
-            .setColorMode(if (o.color) PrintAttributes.COLOR_MODE_COLOR else PrintAttributes.COLOR_MODE_MONOCHROME)
-            .build()
-        val manager = activity.getSystemService(Context.PRINT_SERVICE) as PrintManager
-        manager.print(name, adapter, attributes)
     }
 
     // The PDF in app storage that the share and open intents can hand to other apps
@@ -558,36 +612,5 @@ private class PrintBridge(
         val file = File(dir, "$name.pdf")
         file.writeBytes(bytes)
         return FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", file)
-    }
-
-    private fun sharePdf(bytes: ByteArray) {
-        val name = safeName()
-        val intent = Intent(Intent.ACTION_SEND).apply {
-            type = "application/pdf"
-            putExtra(Intent.EXTRA_STREAM, stagePdf(bytes, name))
-            putExtra(Intent.EXTRA_SUBJECT, name)
-            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-        }
-        val launcher = uiContext?.findActivity()
-        if (launcher != null) launcher.startActivity(Intent.createChooser(intent, name))
-        else context.startActivity(Intent.createChooser(intent, name).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
-    }
-
-    // Opens the bill's PDF in the phone's PDF viewer. The copy in Documents/Udukkai is refreshed
-    // first, so what opens always matches what is stored.
-    private fun openPdf(file: File, bytes: ByteArray) {
-        val name = safeName()
-        storeBillPdf(file.absolutePath, name, controller.folder)
-        val intent = Intent(Intent.ACTION_VIEW).apply {
-            setDataAndType(stagePdf(bytes, name), "application/pdf")
-            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-        }
-        val launcher = uiContext?.findActivity()
-        try {
-            if (launcher != null) launcher.startActivity(intent)
-            else context.startActivity(intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
-        } catch (e: android.content.ActivityNotFoundException) {
-            controller.notice = PrintNotice(PrintNoticeKind.Failed)
-        }
     }
 }

@@ -30,6 +30,10 @@ class DocumentPrintController {
     var isBusy by mutableStateOf(false)
         internal set
 
+    /** The action (Open / Print / Share) currently being executed or dispatched. */
+    var activeAction by mutableStateOf<DocumentPrintAction?>(null)
+        internal set
+
     /** True while a bill that is already on screen is being made again after it was changed, so the old page is not shown as if current. */
     var isRefreshing by mutableStateOf(false)
         internal set
@@ -74,6 +78,8 @@ class DocumentPrintController {
     fun open() = request(DocumentPrintAction.Open)
 
     private fun request(action: DocumentPrintAction) {
+        if (activeAction != null) return
+        activeAction = action
         val h = handler
         if (isReady && h != null) h(action) else pending = action
     }
@@ -83,6 +89,12 @@ class DocumentPrintController {
         val action = pending ?: return
         pending = null
         handler?.invoke(action)
+    }
+
+    internal fun clearAction() {
+        pending = null
+        activeAction = null
+        isBusy = false
     }
 }
 

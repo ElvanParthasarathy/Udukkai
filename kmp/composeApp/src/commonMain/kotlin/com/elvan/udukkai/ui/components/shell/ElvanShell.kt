@@ -232,7 +232,11 @@ fun ElvanShell(
                 }
 
                 // 4. Navbar hide/show logic matching Flutter One UI Physics
-                val reachedPill = !isItem0 || currentScrollOffset >= (handoffShrinkOffsetPx.coerceAtMost(collisionOffsetPx) - with(density) { 4.dp.toPx() })
+                val reachedPill = if (isCompactHeader) {
+                    scrollState.firstVisibleItemIndex > 0 || scrollState.firstVisibleItemScrollOffset > 8
+                } else {
+                    !isItem0 || currentScrollOffset >= (handoffShrinkOffsetPx.coerceAtMost(collisionOffsetPx) - with(density) { 4.dp.toPx() })
+                }
                 if (delta > 2f && !isNavbarVisible) {
                     // Scrolling UP (finger moving down) -> Show immediately!
                     isNavbarVisible = true
@@ -286,7 +290,11 @@ fun ElvanShell(
                 }
 
                 if (available.y < -300f) {
-                    val reachedPill = !isItem0 || currentScrollOffset >= (handoffShrinkOffsetPx.coerceAtMost(collisionOffsetPx) - with(density) { 4.dp.toPx() })
+                    val reachedPill = if (isCompactHeader) {
+                        scrollState.firstVisibleItemIndex > 0 || scrollState.firstVisibleItemScrollOffset > 8
+                    } else {
+                        !isItem0 || currentScrollOffset >= (handoffShrinkOffsetPx.coerceAtMost(collisionOffsetPx) - with(density) { 4.dp.toPx() })
+                    }
                     if (reachedPill && isNavbarVisible) {
                         isNavbarVisible = false
                     }
@@ -302,7 +310,11 @@ fun ElvanShell(
         }
     }
 
-    val isTruePill = scrollState.firstVisibleItemIndex > 0 || currentScrollOffset >= (handoffShrinkOffsetPx.coerceAtMost(collisionOffsetPx) - with(density) { 4.dp.toPx() })
+    val isTruePill = if (isCompactHeader) {
+        scrollState.firstVisibleItemIndex > 0 || scrollState.firstVisibleItemScrollOffset > 8
+    } else {
+        scrollState.firstVisibleItemIndex > 0 || currentScrollOffset >= (handoffShrinkOffsetPx.coerceAtMost(collisionOffsetPx) - with(density) { 4.dp.toPx() })
+    }
     LaunchedEffect(isTruePill) {
         if (!isTruePill && !isNavbarVisible) {
             isNavbarVisible = true
@@ -389,7 +401,8 @@ fun ElvanShell(
         LocalElvanTopSpacerHeight provides topSpacerHeight,
         LocalElvanShellController provides shellController
     ) {
-        val shellModifier = if (!isCompactHeader) {
+        val shouldAttachNestedScroll = !isDesktop && !isLandscape
+        val shellModifier = if (shouldAttachNestedScroll) {
             Modifier
                 .fillMaxSize()
                 .background(colors.background)
@@ -521,7 +534,7 @@ fun ElvanShell(
                         title = effectiveTitle,
                         onBack = onBack,
                         leadingIcon = leadingIcon,
-                        navOpacity = 1f,
+                        navOpacity = effectiveNavOpacity,
                         hasActions = if (isSelectionMode) false else hasActions,
                         actions = actions,
                         isSelectionMode = isSelectionMode,
@@ -626,17 +639,19 @@ fun ElvanShell(
                 }
 
                 // Subpage floating bar rendered ABOVE the bottom shadow fade mask (Layer 5)
-                Box(
-                    modifier = Modifier
-                        .align(Alignment.BottomCenter)
-                        .fillMaxWidth()
-                        .graphicsLayer {
-                            alpha = effectiveNavOpacity
-                        }
-                        .zIndex(100f),
-                    contentAlignment = Alignment.BottomCenter
-                ) {
-                    floatingBar()
+                if (effectiveNavOpacity > 0.01f) {
+                    Box(
+                        modifier = Modifier
+                            .align(Alignment.BottomCenter)
+                            .fillMaxWidth()
+                            .graphicsLayer {
+                                alpha = effectiveNavOpacity
+                            }
+                            .zIndex(100f),
+                        contentAlignment = Alignment.BottomCenter
+                    ) {
+                        floatingBar()
+                    }
                 }
             }
 

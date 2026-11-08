@@ -41,6 +41,7 @@ import com.elvan.udukkai.ui.components.shell.ElvanFloatingAction
 import com.elvan.udukkai.ui.components.shell.ElvanFloatingActionBar
 import com.elvan.udukkai.ui.components.shell.ElvanSubShell2
 import com.elvan.udukkai.core.platform.HideSystemBars
+import com.elvan.udukkai.core.print.DocumentPrintAction
 import com.elvan.udukkai.core.print.DocumentPrintController
 import com.elvan.udukkai.core.print.DocumentPrintView
 import com.elvan.udukkai.core.print.DocumentPdfViewer
@@ -141,7 +142,7 @@ private fun DocumentPreview(
 
         var showPreparationLoader by remember { mutableStateOf(false) }
         if (showPreparationOverlay) {
-            val isWorking = makePaper && (!controller.isReady || controller.isRefreshing || controller.isBusy) && controller.notice == null
+            val isWorking = makePaper && (!controller.isReady || controller.isRefreshing) && controller.notice == null
             LaunchedEffect(isWorking) {
                 if (isWorking) {
                     delay(180)
@@ -365,19 +366,22 @@ private fun PreviewBottomArea(controller: DocumentPrintController, onEdit: (() -
                         label = K.openBtn.tr(),
                         icon = MaterialSymbols.Rounded.Description,
                         onClick = { controller.open() },
-                        enabled = controller.isReady
+                        enabled = controller.isReady && controller.activeAction == null,
+                        isLoading = controller.activeAction == DocumentPrintAction.Open
                     ),
                     ElvanFloatingAction(
                         label = K.printBtn.tr(),
                         icon = MaterialSymbols.Rounded.Print,
                         onClick = { controller.print() },
-                        enabled = controller.isReady
+                        enabled = controller.isReady && controller.activeAction == null,
+                        isLoading = controller.activeAction == DocumentPrintAction.Print
                     ),
                     ElvanFloatingAction(
                         label = K.shareBtn.tr(),
                         icon = MaterialSymbols.Rounded.Share,
                         onClick = { controller.share() },
-                        enabled = controller.isReady
+                        enabled = controller.isReady && controller.activeAction == null,
+                        isLoading = controller.activeAction == DocumentPrintAction.Share
                     ),
                     if (menuItems.isEmpty()) null else ElvanFloatingAction(
                         label = K.more.tr(),

@@ -108,17 +108,18 @@ fun ElvanCollapsedBar(
         0f
     }
 
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(top = finalTopDp, start = 16.dp, end = 16.dp)
-            .zIndex(150f)
-            .graphicsLayer {
-                this.alpha = navOpacity
-            },
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween
-    ) {
+    if (navOpacity > 0.01f) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = finalTopDp, start = 16.dp, end = 16.dp)
+                .zIndex(150f)
+                .graphicsLayer {
+                    this.alpha = navOpacity
+                },
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
         AnimatedContent(
             targetState = isSelectionMode,
             // Apple-style morph, like the bottom bar: the old controls shrink and fade while the new ones grow in on a spring
@@ -309,5 +310,6 @@ fun ElvanCollapsedBar(
             }
         }
     }
+}
 }
 
