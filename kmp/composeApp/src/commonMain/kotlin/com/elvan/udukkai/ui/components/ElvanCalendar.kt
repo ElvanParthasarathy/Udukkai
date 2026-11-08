@@ -6,6 +6,9 @@ import com.elvan.udukkai.core.utils.DateUtils
 /** A chosen day, or an inclusive run of days; [end] is null while only the first day of a range has been tapped. */
 data class DaySpan(val start: Long?, val end: Long? = null)
 
+/** One square of a month grid; [inMonth] is false for the dimmed days of the months either side. */
+data class MonthCell(val millis: Long, val day: Int, val inMonth: Boolean)
+
 /**
  * Calendar rules behind [ElvanDatePicker] and [ElvanDateRangePicker], kept free of UI so they can be tested.
  * Days are UTC midnights, the same form the rest of the app keeps its dates in.
@@ -62,10 +65,27 @@ object ElvanCalendar {
         return day in s..(span.end ?: s)
     }
 
-    /** Day numbers of a month laid out in weeks starting Sunday: null for the blank cells before the 1st and after the last. Always six rows, so a sheet never changes height. */
-    fun monthCells(year: Int, month: Int): List<Int?> {
+    /** A month laid out in weeks starting Sunday, filled out with the days of the months either side. Always six rows, so a sheet never changes height. */
+    fun monthCells(year: Int, month: Int): List<MonthCell> {
         val lead = weekdayOf(year, month, 1)
         val days = daysInMonth(year, month)
-        return List(42) { i -> (i - lead + 1).takeIf { it in 1..days } }
+        val first = DateUtils.millisOf(year, month, 1) - lead * DAY
+        val previous = shiftMonth(year, month, -1).let { (y, m) -> daysInMonth(y, m) }
+        return List(42) { i ->
+            val inMonth = i in lead until lead + days
+            val day = when {
+                i < lead -> previous - lead + i + 1
+                inMonth -> i - lead + 1
+                else -> i - lead - days + 1
+            }
+            MonthCell(first + i * DAY, day, inMonth)
+        }
     }
+
+    /** Months as one running number, for paging through them. */
+    fun monthIndex(year: Int, month: Int): Int = year * 12 + month - 1
+    fun monthOfIndex(index: Int): Pair<Int, Int> = index.floorDiv(12) to index.mod(12) + 1
+
+    /** [day] of [month]: the 31st asked of a shorter month becomes its last day. */
+    fun dayIn(year: Int, month: Int, day: Int): Long = DateUtils.millisOf(year, month, day.coerceAtMost(daysInMonth(year, month)))
 }

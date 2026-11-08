@@ -14,6 +14,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -61,6 +62,8 @@ fun ElvanActionSheet(
     onTertiary: (() -> Unit)? = null,
     tertiaryColor: Color? = null,
     slideDistance: androidx.compose.ui.unit.Dp = 300.dp,
+    /** The card fades as it moves, for a short rise rather than a slide up from the bottom of the screen. */
+    fadeWithSlide: Boolean = false,
     customContent: (@Composable () -> Unit)? = null
 ) {
     val ff = LocalAppFontFamily.current
@@ -183,7 +186,7 @@ fun ElvanActionSheet(
                 shape = cardShape,
                 color = cardBg,
                 shadowElevation = 12.dp,
-                modifier = cardModifier
+                modifier = if (fadeWithSlide) cardModifier.graphicsLayer { alpha = 1f - (sheetOffsetY.value / initialOffsetPx).coerceIn(0f, 1f) } else cardModifier
             ) {
                 Column(
                     modifier = Modifier

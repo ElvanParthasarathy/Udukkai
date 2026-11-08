@@ -108,16 +108,41 @@ class ElvanCalendarTest {
     }
 
     @Test
-    fun monthGridHasSixWeeksAndTheRightBlanks() {
-        val feb2026 = ElvanCalendar.monthCells(2026, 2) // 1 Feb 2026 is a Sunday
-        assertEquals(42, feb2026.size)
-        assertEquals(1, feb2026[0])
-        assertEquals(28, feb2026[27])
-        assertNull(feb2026[28])
-        val jan2026 = ElvanCalendar.monthCells(2026, 1) // starts on Thursday: four blanks first
-        assertEquals(listOf(null, null, null, null, 1), jan2026.take(5))
-        assertEquals(31, jan2026.filterNotNull().size)
-        assertEquals(29, ElvanCalendar.monthCells(2024, 2).filterNotNull().size)
+    fun monthGridHasSixWeeksFilledFromTheMonthsEitherSide() {
+        val nov = ElvanCalendar.monthCells(2026, 11) // 1 November 2026 is a Sunday, November has 30 days
+        assertEquals(42, nov.size)
+        assertEquals(MonthCell(day(2026, 11, 1), 1, true), nov[0])
+        assertEquals(MonthCell(day(2026, 11, 30), 30, true), nov[29])
+        assertEquals(MonthCell(day(2026, 12, 1), 1, false), nov[30])
+        assertEquals(MonthCell(day(2026, 12, 12), 12, false), nov[41])
+
+        val feb = ElvanCalendar.monthCells(2028, 2) // 1 February 2028 is a Tuesday, a leap February
+        assertEquals(MonthCell(day(2028, 1, 30), 30, false), feb[0])
+        assertEquals(MonthCell(day(2028, 2, 1), 1, true), feb[2])
+        assertEquals(MonthCell(day(2028, 2, 29), 29, true), feb[30])
+        assertEquals(MonthCell(day(2028, 3, 1), 1, false), feb[31])
+
+        val jan = ElvanCalendar.monthCells(2027, 1) // the row before reaches back over the year
+        assertEquals(MonthCell(day(2026, 12, 27), 27, false), jan[0])
+    }
+
+    @Test
+    fun everyCellIsTheDayBeforeTheNext() {
+        val cells = ElvanCalendar.monthCells(2026, 3)
+        cells.zipWithNext { a, b -> assertEquals(ElvanCalendar.DAY, b.millis - a.millis) }
+    }
+
+    @Test
+    fun monthIndexRoundTripsOverYearEnds() {
+        assertEquals(2026 to 12, ElvanCalendar.monthOfIndex(ElvanCalendar.monthIndex(2026, 12)))
+        assertEquals(2027 to 1, ElvanCalendar.monthOfIndex(ElvanCalendar.monthIndex(2026, 12) + 1))
+    }
+
+    @Test
+    fun aDayPastTheMonthEndBecomesItsLastDay() {
+        assertEquals(day(2026, 2, 28), ElvanCalendar.dayIn(2026, 2, 31))
+        assertEquals(day(2028, 2, 29), ElvanCalendar.dayIn(2028, 2, 31))
+        assertEquals(day(2026, 3, 31), ElvanCalendar.dayIn(2026, 3, 31))
     }
 
     @Test
