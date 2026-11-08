@@ -276,13 +276,19 @@ fun ElvanCardLeadingIcon(
     contentDescription: String? = null,
     modifier: Modifier = Modifier,
     size: Dp = 40.dp,
-    iconSize: Dp = 22.dp,
+    iconSize: Dp = 20.dp,
     borderRadius: Dp = 0.dp,
     tint: Color? = null,
     gradientColors: List<Color>? = null
 ) {
     val colors = LocalShellColors.current
-    ElvanTintedIcon(icon, tint ?: colors.modeAccent, modifier, size, iconSize, contentDescription)
+    // Cards stay monochrome: a neutral circle, the glyph in the text colour
+    Box(
+        modifier = modifier.size(size).clip(CircleShape).background(colors.iconBg),
+        contentAlignment = Alignment.Center
+    ) {
+        Icon(imageVector = icon, contentDescription = contentDescription, tint = colors.textPrimary, modifier = Modifier.size(iconSize))
+    }
 }
 
 

@@ -47,14 +47,8 @@ data class ShellColors(
     val receiptGradient: List<Color> = emptyList(),
     val itemGradient: List<Color> = emptyList(),
     val customerGradient: List<Color> = emptyList(),
-    /** Samsung blue: buttons, switches and text links, as in One UI. */
-    val link: Color = if (isDark) Color(0xFF598FFF) else Color(0xFF2F6FE4),
-    /** Soft hues for icon circles (teal, amber, rose, indigo, violet, lime, blue), taken from Samsung My Files. */
-    val palette: List<Color> = if (isDark) listOf(
-        Color(0xFF5AD0B9), Color(0xFFE8BE7F), Color(0xFFF08AA8), Color(0xFFA6AAF0), Color(0xFFC9A4F5), Color(0xFF9ACF3A), Color(0xFF7FA8FF)
-    ) else listOf(
-        Color(0xFF13856F), Color(0xFFA86A12), Color(0xFFC2416A), Color(0xFF4F55C9), Color(0xFF7A4BC4), Color(0xFF5B8A00), Color(0xFF2F6FE4)
-    )
+    /** Neram / One UI blue (#0072DE): buttons, switches and text links. A deep blue, not a washed-out one. */
+    val link: Color = Color(0xFF0072DE)
 )
 
 fun ShellColors.gradientFor(color: Color?): List<Color>? {
@@ -87,7 +81,7 @@ fun rememberShellColors(): ShellColors {
                 ripple = Color.White.copy(alpha = 0.16f),
                 floatingBg = Color(0xFF1E1E1E),
                 floatingBorder = Color(0xFF333333),
-                iconBg = Color(0xFF2B2633),
+                iconBg = Color.White.copy(alpha = 0.08f),
                 divider = Color.White.copy(alpha = 0.04f),
                 icon = Color.White,
                 iconInactive = Color.White.copy(alpha = 0.50f),
@@ -97,11 +91,10 @@ fun rememberShellColors(): ShellColors {
                 accentContainer = Color.White.copy(alpha = 0.12f),
                 iconAccent = Color.White,
                 error = Color(0xFFFFB4AB),
-                // Soft hues, so bills, receipts, items and customers tell apart at a glance without shouting
-                invoiceColor = Color(0xFF9DBEFF),
-                receiptColor = Color(0xFF8ED6A6),
-                itemColor = Color(0xFFF2C27F),
-                customerColor = Color(0xFFC7B4FA)
+                invoiceColor = Color.White,
+                receiptColor = Color.White,
+                itemColor = Color.White,
+                customerColor = Color.White
             )
         } else {
             ShellColors(
@@ -120,7 +113,7 @@ fun rememberShellColors(): ShellColors {
                 ripple = Color.Black.copy(alpha = 0.08f),
                 floatingBg = Color.White,
                 floatingBorder = Color.White,
-                iconBg = Color(0xFFEEE9F4),
+                iconBg = Color.Black.copy(alpha = 0.06f),
                 divider = Color.Black.copy(alpha = 0.04f),
                 icon = Color.Black,
                 iconInactive = Color.Black.copy(alpha = 0.56f),
@@ -130,10 +123,10 @@ fun rememberShellColors(): ShellColors {
                 accentContainer = Color.Black.copy(alpha = 0.08f),
                 iconAccent = Color(0xFF1D1D1F),
                 error = Color(0xFFBA1A1A),
-                invoiceColor = Color(0xFF3466C2),
-                receiptColor = Color(0xFF2E8A55),
-                itemColor = Color(0xFFA86A12),
-                customerColor = Color(0xFF6D52C4)
+                invoiceColor = Color.Black,
+                receiptColor = Color.Black,
+                itemColor = Color.Black,
+                customerColor = Color.Black
             )
         }
     }

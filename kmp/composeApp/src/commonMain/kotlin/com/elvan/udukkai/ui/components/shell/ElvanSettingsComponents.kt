@@ -146,7 +146,7 @@ fun ElvanSettingsRow(
         ) {
             // An icon of its own soft colour in a tinted circle (Samsung style); the same icon always gets the same hue
             if (icon != null && iconWidget == null && iconBgColor == null) {
-                val hue = iconTint ?: colors.palette[(icon.name.hashCode() and 0x7fffffff) % colors.palette.size]
+                val hue = iconTint ?: settingsHue(icon, colors.isDark)
                 com.elvan.udukkai.ui.components.ElvanTintedIcon(icon = icon, tint = hue, size = 36.dp, iconSize = 20.dp)
                 Spacer(modifier = Modifier.width(16.dp))
             } else if (icon != null || iconWidget != null) {
@@ -989,3 +989,27 @@ fun ElvanAuthTextField(
 }
 
 
+
+/** One colour per kind of setting, the way Samsung Settings colours its icons; the same icon is always the same colour. */
+private enum class Hue(val dark: Long, val light: Long) {
+    Blue(0xFF5C9DFF, 0xFF0072DE), Teal(0xFF4FD1B5, 0xFF0F8A72), Green(0xFF6CD27E, 0xFF2E8B3E), Lime(0xFFB5D650, 0xFF5B8A00),
+    Amber(0xFFF4BF63, 0xFFB06F00), Orange(0xFFFF9A62, 0xFFC4561A), Rose(0xFFF4849F, 0xFFC2416A), Violet(0xFFBFA0F7, 0xFF7446C7),
+    Indigo(0xFF9EA5F5, 0xFF4B52C9), Grey(0xFFAEB3BA, 0xFF5F6670), Red(0xFFFF7A7A, 0xFFC93434)
+}
+
+private val settingsHues: Map<ImageVector, Hue> by lazy {
+    with(MaterialSymbols.Rounded) {
+        mapOf(
+            BusinessCenter to Hue.Blue, LocationOn to Hue.Green, CreditCard to Hue.Teal, Description to Hue.Orange,
+            LightMode to Hue.Amber, Translate to Hue.Violet, Person to Hue.Indigo, Folder to Hue.Lime, Info to Hue.Grey,
+            CloudUpload to Hue.Blue, Sync to Hue.Teal, Restore to Hue.Green, Schedule to Hue.Violet, Share to Hue.Orange,
+            Lock to Hue.Teal, Key to Hue.Amber, Link to Hue.Blue, Logout to Hue.Orange, DeleteForever to Hue.Red,
+            Email to Hue.Rose, Code to Hue.Grey, Handyman to Hue.Amber, Payments to Hue.Green, ReceiptFill to Hue.Teal
+        )
+    }
+}
+
+private fun settingsHue(icon: ImageVector, dark: Boolean): Color {
+    val hue = settingsHues[icon] ?: Hue.entries[(icon.name.hashCode() and 0x7fffffff) % Hue.entries.size]
+    return Color(if (dark) hue.dark else hue.light)
+}

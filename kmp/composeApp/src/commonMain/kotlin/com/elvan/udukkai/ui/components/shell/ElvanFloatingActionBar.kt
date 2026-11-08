@@ -93,6 +93,8 @@ fun ElvanFloatingActionBar(
         Row(
             modifier = Modifier
                 .height(56.dp)
+                // With every button weighted alike, the row takes the widest button's width for each of them
+                .width(IntrinsicSize.Max)
                 .cssShadow(
                     color = Color.Black,
                     alpha = if (isDark) 0.25f else 0.06f,
@@ -119,8 +121,9 @@ fun ElvanFloatingActionBar(
 
                 Box(
                     modifier = Modifier
+                        .weight(1f)
                         .fillMaxHeight()
-                        // Each button as wide as its label, never narrower than a nav-bar tab
+                        // All buttons the same width, never narrower than a nav-bar tab
                         .widthIn(min = 62.dp)
                         .clip(CircleShape)
                         .clickable(

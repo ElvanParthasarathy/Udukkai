@@ -132,14 +132,12 @@ fun DocCustomerCard(name: String, secondName: String, town: String, onClick: (()
         verticalAlignment = Alignment.CenterVertically
     ) {
         Box(
-            Modifier.size(44.dp).clip(CircleShape).background(
-                androidx.compose.ui.graphics.Brush.verticalGradient(listOf(colors.customerColor.copy(alpha = if (colors.isDark) 0.30f else 0.20f), colors.customerColor.copy(alpha = if (colors.isDark) 0.15f else 0.10f)))
-            ),
+            Modifier.size(44.dp).clip(CircleShape).background(colors.iconBg),
             contentAlignment = Alignment.Center
         ) {
             Text(
                 text = (secondName.ifBlank { name }).trim().take(1).uppercase().ifEmpty { "?" },
-                style = TextStyle(fontFamily = ff, fontSize = 18.sp, fontWeight = FontWeight.Bold, color = colors.customerColor)
+                style = TextStyle(fontFamily = ff, fontSize = 18.sp, fontWeight = FontWeight.Bold, color = colors.textPrimary)
             )
         }
         Spacer(Modifier.width(14.dp))
@@ -197,7 +195,9 @@ fun DocLinkRow(icon: ImageVector, title: String, subtitle: String, amount: Doubl
             .padding(horizontal = 20.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        com.elvan.udukkai.ui.components.ElvanTintedIcon(icon = icon, tint = tint ?: colors.textSecondary, size = 38.dp, iconSize = 20.dp)
+        Box(Modifier.size(38.dp).clip(CircleShape).background(colors.iconBg), contentAlignment = Alignment.Center) {
+            Icon(icon, contentDescription = null, tint = colors.textPrimary, modifier = Modifier.size(20.dp))
+        }
         Spacer(Modifier.width(14.dp))
         Column(Modifier.weight(1f)) {
             Text(title.preventBrokenLigatures(), style = TextStyle(fontFamily = ff, fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = colors.textPrimary), maxLines = 1)
@@ -243,15 +243,15 @@ fun DocPrimaryButton(icon: ImageVector, label: String, onClick: () -> Unit) {
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(50))
-            .background(colors.link)
+            .background(colors.textPrimary)
             .clickable(onClick = onClick)
             .padding(vertical = 15.dp),
         horizontalArrangement = Arrangement.Center,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Icon(icon, contentDescription = null, tint = Color.White, modifier = Modifier.size(20.dp))
+        Icon(icon, contentDescription = null, tint = colors.background, modifier = Modifier.size(20.dp))
         Spacer(Modifier.width(8.dp))
-        Text(label.preventBrokenLigatures(), style = TextStyle(fontFamily = ff, fontSize = 15.sp, fontWeight = FontWeight.Bold, color = Color.White))
+        Text(label.preventBrokenLigatures(), style = TextStyle(fontFamily = ff, fontSize = 15.sp, fontWeight = FontWeight.Bold, color = colors.background))
     }
 }
 
