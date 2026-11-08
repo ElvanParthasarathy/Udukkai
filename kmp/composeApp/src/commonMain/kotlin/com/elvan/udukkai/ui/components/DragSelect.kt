@@ -3,12 +3,11 @@ package com.elvan.udukkai.ui.components
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.scrollBy
+import androidx.compose.foundation.lazy.LazyListItemInfo
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.changedToUp
@@ -19,24 +18,55 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
 
-/** True while a finger is selecting: the selection toolbar stays away until it lifts. */
-object DragSelectState {
-    var active by mutableStateOf(false)
+private val SINGLE_KEY = Regex("^(?:item|cust|invoice|receipt)_([0-9]+)$")
+private val PAIR_KEY = Regex("^(?:item|cust|inv)_pair_([0-9]+(?:_[0-9]+)*)$")
+
+/** The record ids of a list key, left to right: "item_12" gives [12], a landscape row "item_pair_12_13" gives [12, 13]; headers and spacers give none. */
+internal fun recordIdsOfKey(key: Any): List<Long> {
+    val k = key.toString()
+    SINGLE_KEY.find(k)?.let { return listOfNotNull(it.groupValues[1].toLongOrNull()) }
+    PAIR_KEY.find(k)?.let { return it.groupValues[1].split('_').mapNotNull { s -> s.toLongOrNull() } }
+    return emptyList()
 }
 
-private val RECORD_KEY = Regex("^(?:item|cust|invoice|receipt)_([0-9]+)$")
-
-/** The record id of a list key like "item_12"; null for date headers, spacers and pairs. */
-internal fun recordIdOfKey(key: Any): Long? = RECORD_KEY.find(key.toString())?.groupValues?.get(1)?.toLongOrNull()
+/** Which card of a row a finger at [x] is over (0 for a one-card row). */
+internal fun columnAt(cards: Int, x: Float, width: Float): Int =
+    if (cards <= 1 || width <= 0f) 0 else (x / width * cards).toInt().coerceIn(0, cards - 1)
 
 /**
- * Samsung-style multi-select: press and hold a card and, without lifting the finger, slide up or down: every card it
- * passes over is selected. Works from the plain list too, since [onSelect] starts selecting (it must add, never toggle).
+ * Every card between two points in reading order (row by row, left to right), either end first.
+ * [rows] maps a list index to the ids of the cards in that row; a point is (row index, card column).
+ */
+internal fun idsBetween(rows: Map<Int, List<Long>>, aRow: Int, aCol: Int, bRow: Int, bCol: Int): Set<Long> {
+    val a = aRow.toLong() * 1000 + aCol
+    val b = bRow.toLong() * 1000 + bCol
+    val lo = minOf(a, b)
+    val hi = maxOf(a, b)
+    val out = LinkedHashSet<Long>()
+    for (row in minOf(aRow, bRow)..maxOf(aRow, bRow)) {
+        rows[row].orEmpty().forEachIndexed { col, id -> if (row * 1000L + col in lo..hi) out.add(id) }
+    }
+    return out
+}
+
+/**
+ * Samsung My Files / Google Photos multi-select: hold a card that is not selected yet and, without lifting, slide.
+ * Every card between where the hold began and the finger is selected; slide back and the cards the finger leaves are
+ * unselected again (a card selected earlier and swept over and left is unselected too, as in both reference apps).
+ * Cards outside the slide are never touched. Near the top or bottom the list scrolls by itself.
  * The touch is watched before the cards see it (initial pass), so their own press handling cannot swallow the hold.
+ * [onAdd] must add (never toggle); [onRemove] unselects one card.
  */
 @Composable
-fun Modifier.dragSelect(listState: LazyListState, onSelect: (Long) -> Unit): Modifier {
-    val select by rememberUpdatedState(onSelect)
+fun Modifier.dragSelect(
+    listState: LazyListState,
+    isSelected: (Long) -> Boolean,
+    onAdd: (Long) -> Unit,
+    onRemove: (Long) -> Unit
+): Modifier {
+    val selected by rememberUpdatedState(isSelected)
+    val add by rememberUpdatedState(onAdd)
+    val remove by rememberUpdatedState(onRemove)
     return pointerInput(listState) {
         val edge = 150.dp.toPx()
         val maxStep = 16.dp.toPx()
@@ -53,23 +83,40 @@ fun Modifier.dragSelect(listState: LazyListState, onSelect: (Long) -> Unit): Mod
                     @Suppress("UNREACHABLE_CODE") false
                 }
                 if (movedOrLifted == true) return@awaitEachGesture
-                val seen = HashSet<Long>()
-                var lastIndex = -1
+
+                // Ids by list index, remembered as rows scroll past so a range can span rows that have left the screen
+                val rows = HashMap<Int, List<Long>>()
+                var fingerX = down.position.x
                 var fingerY = down.position.y
-                // Every card between the last one and this one, so a fast slide never skips a card
-                fun pick() {
+                val width = size.width.toFloat()
+                fun noteRows() = listState.layoutInfo.visibleItemsInfo.forEach { rows[it.index] = recordIdsOfKey(it.key) }
+                // The row under the finger; past the first or last row it is that edge row, in a gap between rows none
+                fun rowAtFinger(): LazyListItemInfo? {
                     val items = listState.layoutInfo.visibleItemsInfo
-                    val hit = items.firstOrNull { fingerY >= it.offset && fingerY < it.offset + it.size } ?: return
-                    val from = if (lastIndex < 0) hit.index else minOf(lastIndex, hit.index)
-                    val to = if (lastIndex < 0) hit.index else maxOf(lastIndex, hit.index)
-                    items.filter { it.index in from..to }.forEach { item ->
-                        recordIdOfKey(item.key)?.let { if (seen.add(it)) select(it) }
-                    }
-                    lastIndex = hit.index
+                    val first = items.firstOrNull() ?: return null
+                    val last = items.last()
+                    return items.firstOrNull { fingerY >= it.offset && fingerY < it.offset + it.size }
+                        ?: if (fingerY < first.offset) first else if (fingerY >= last.offset + last.size) last else null
                 }
-                DragSelectState.active = true
+                noteRows()
+                // Only a hold that lands on a card that is not selected yet starts a drag (header, filter pills, gaps and selected cards do not)
+                val start = rowAtFinger() ?: return@awaitEachGesture
+                val startCards = rows[start.index].orEmpty()
+                if (startCards.isEmpty()) return@awaitEachGesture
+                val anchorCol = columnAt(startCards.size, fingerX, width)
+                if (selected(startCards[anchorCol])) return@awaitEachGesture
+
+                var applied = emptySet<Long>()
+                fun pick() {
+                    noteRows()
+                    val row = rowAtFinger() ?: return
+                    val range = idsBetween(rows, start.index, anchorCol, row.index, columnAt(rows[row.index].orEmpty().size, fingerX, width))
+                    if (range == applied) return
+                    (range - applied).forEach { add(it) }
+                    (applied - range).forEach { remove(it) }
+                    applied = range
+                }
                 pick()
-                // Near the top or bottom the list moves by itself, faster the closer the finger is to the edge
                 val autoScroll = scope.launch {
                     while (true) {
                         delay(16)
@@ -89,13 +136,13 @@ fun Modifier.dragSelect(listState: LazyListState, onSelect: (Long) -> Unit): Mod
                     while (true) {
                         val change = awaitPointerEvent(PointerEventPass.Initial).changes.firstOrNull { it.id == down.id } ?: break
                         if (change.changedToUp()) break
+                        fingerX = change.position.x
                         fingerY = change.position.y
                         pick()
                         change.consume() // the finger selects here, it must not also scroll the list
                     }
                 } finally {
                     autoScroll.cancel()
-                    DragSelectState.active = false
                 }
             }
         }

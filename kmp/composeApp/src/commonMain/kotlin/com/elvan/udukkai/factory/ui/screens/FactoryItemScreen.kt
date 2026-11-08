@@ -57,7 +57,7 @@ fun FactoryItemScreen(
         val isLandscape = maxWidth > maxHeight
         LazyColumn(
             state = scrollState,
-            modifier = Modifier.fillMaxSize().dragSelect(scrollState) { onItemLongClick?.invoke(it) },
+            modifier = Modifier.fillMaxSize().dragSelect(scrollState, { it in selectedItemIds }, { onItemLongClick?.invoke(it) }, { onToggleSelect?.invoke(it) }),
             contentPadding = PaddingValues(
                 start = Dimens.ContentPadding,
                 end = Dimens.ContentPadding,
@@ -113,7 +113,7 @@ fun FactoryItemScreen(
                     val pairs = items.chunked(2)
                     itemsIndexed(
                         items = pairs,
-                        key = { _, pair -> "item_pair_${pair.first().id}" }
+                        key = { _, pair -> "item_pair_${pair.joinToString("_") { it.id.toString() }}" }
                     ) { rowIndex, pair ->
                         Row(
                             modifier = Modifier

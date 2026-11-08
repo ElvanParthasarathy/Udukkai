@@ -58,7 +58,7 @@ fun FactoryCustomerScreen(
         val isLandscape = maxWidth > maxHeight
         LazyColumn(
             state = scrollState,
-            modifier = Modifier.fillMaxSize().dragSelect(scrollState) { onCustomerLongClick?.invoke(it) },
+            modifier = Modifier.fillMaxSize().dragSelect(scrollState, { it in selectedCustomerIds }, { onCustomerLongClick?.invoke(it) }, { onToggleSelect?.invoke(it) }),
             contentPadding = PaddingValues(
                 start = Dimens.ContentPadding,
                 end = Dimens.ContentPadding,
@@ -114,7 +114,7 @@ fun FactoryCustomerScreen(
                     val pairs = customers.chunked(2)
                     itemsIndexed(
                         items = pairs,
-                        key = { _, pair -> "cust_pair_${pair.first().id}" }
+                        key = { _, pair -> "cust_pair_${pair.joinToString("_") { it.id.toString() }}" }
                     ) { rowIndex, pair ->
                         Row(
                             modifier = Modifier

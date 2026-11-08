@@ -99,7 +99,7 @@ fun TextilesCreateScreen(
         val isLandscape = maxWidth > maxHeight
         LazyColumn(
             state = scrollState,
-            modifier = Modifier.fillMaxSize().dragSelect(scrollState) { onItemLongClick?.invoke(it) },
+            modifier = Modifier.fillMaxSize().dragSelect(scrollState, { it in selectedItemIds }, { onItemLongClick?.invoke(it) }, { onToggleSelect?.invoke(it) }),
             contentPadding = PaddingValues(
                 bottom = Dimens.ContentPaddingBottom
             ),
@@ -272,7 +272,7 @@ fun TextilesCreateScreen(
                             val pairs = group.items.chunked(2)
                             items(
                                 items = pairs,
-                                key = { "inv_pair_${it.first().data.id}" }
+                                key = { "inv_pair_${it.joinToString("_") { row -> row.data.id.toString() }}" }
                             ) { pair ->
                                 Row(
                                     modifier = Modifier
