@@ -143,7 +143,7 @@ fun ThemeColorSection(profile: BusinessProfile, colors: ShellColors, onSave: (Bu
                         label = themeTitle,
                         value = tempColor,
                         items = items,
-                        itemLabelBuilder = { if (it == MORE) moreName else names.getValue(it) },
+                        itemLabelBuilder = { if (it == MORE) moreName else nameOf(it) },
                         leadingBuilder = { item ->
                             val fill = if (item == MORE) {
                                 Modifier.background(Brush.sweepGradient((0..6).map { Color.hsv(it * 60f, 0.85f, 0.95f) }))
