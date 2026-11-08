@@ -2,7 +2,7 @@
 
 Elvan Navil UI is the look and feel of the Udukkai apps (Textiles and Factory). This document describes what the app **does today**, checked against the source. Where something is only a wish, it is under "Planned". Where a rule was kept from the earlier version of this document but could not be re-checked, it says so.
 
-**Last audited against commit `ff4f1fb4`** (selection, menu reveal and pickers included). On-device checks were made on one phone (Samsung SM-A536E, Android 16) in the Textiles app, dark theme, portrait.
+**Last audited against branch `feat/one-ui-interactions`** (selection, dates, pickers and menu morph included). On-device checks were made on one phone (Samsung SM-A536E, Android 16, One UI 8) in portrait: Textiles and Factory in dark theme, Textiles also in light. Landscape was not checked on the device.
 
 ## How to read the status marks
 
@@ -171,8 +171,8 @@ All **Implemented** unless marked.
 Implemented in this audit's work; matches Samsung My Files and Google Photos (measured on the phone).
 
 1. **Start:** long-press a card, or hold and slide. In selection mode a tap toggles a card; outside it a tap opens the record.
-2. **Hold and slide** (`ui/components/DragSelect.kt`): hold a card that is not selected yet and slide. Every card between where the hold began and the finger is selected, in reading order (row by row, left to right in landscape). Slide back and the cards the finger leaves are **unselected again**, including ones selected earlier. Cards outside the slide are never touched.
-3. A hold that lands on a header, filter pills, a gap between cards, or an already-selected card does not start a drag. Plain scrolling never selects.
+2. **Hold and slide** (`ui/components/DragSelect.kt`): hold a card, selected or not, and slide, as often as you like. Every card between where the hold began and the finger is selected, in reading order (row by row, left to right in landscape). Slide back and the cards the finger leaves are **unselected again**, including ones selected earlier. Cards outside the slide are never touched.
+3. A hold that lands on a header, filter pills or a gap between cards does not start a drag. Plain scrolling never selects. A touch the phone takes for its Back gesture never counts as a hold: gesture code must test `!change.pressed`, because a cancelled touch arrives already consumed and `changedToUp()` stays false.
 4. Near the top or bottom edge the list scrolls by itself, faster closer to the edge, and selection keeps following.
 5. The selection bar stays visible during a drag.
 6. Cards show a round checkbox that slides in at the left; a selected card gets only the tick, no tint (`ElvanCardSelector`, `ElvanCheckMark`). The header changes to "N selected" with Select all and Cancel.
@@ -188,7 +188,8 @@ Implemented in this audit's work; matches Samsung My Files and Google Photos (me
 - The status says what is true: Paid or Unpaid. The short bill number has the financial-year tag beside it (`FY 26-27`) (**Carried over** for the wording rules).
 
 ### Menus. **Implemented** (`ElvanPopupMenu`, `MenuHost`)
-- A menu opens from its button on a spring (about 0.78 damping), growing from the button's corner, and closes with a quick 140 ms shrink. It is frosted glass over the page where haze is available.
+- A menu's outline starts as its button and opens out to the full panel in 230 ms, corners easing to 24 dp, without overshoot; it closes back into the button in 170 ms. The panel is revealed by the outline, never scaled, so the rows do not squash. It waits for the panel to be composed before starting, or the opening would be spent before it is on screen. The panel reaches 4 dp past the button and stays 8 dp inside the screen. It is frosted glass over the page where haze is available.
+- One UI 8's own menu fades with a slight scale near its button. The morph here is a deliberate choice, with the same timing family.
 - **Menu to page:** choosing Settings or Recycle Bin hands the menu panel's bounds to the next Activity (`ElvanMenuState.clickedPanel`), and Android grows the new window out of that rectangle (`ActivityOptions.makeClipRevealAnimation`). The panel stays until it is covered. On Android 14 and later the page shrinks back toward the menu when closed (`res/anim/menu_reveal_close.xml`). Older versions keep the normal close. The system runs this, so it holds across the window change and with predictive back.
 - A second tap while a page is opening is ignored.
 
@@ -205,9 +206,9 @@ Implemented in this audit's work; matches Samsung My Files and Google Photos (me
 `Modifier.frostedGlass(shape, colors, fallbackAlpha)`: Haze blur (24 dp radius) with a tint of the bar colour, where a shell provides a Haze source. Without one (no shell, or Android below 12) it falls back to the plain translucent bar colour (about 88% to 94%).
 
 ### Pickers. **Implemented** (this audit's work)
-- **Date:** `ElvanDatePicker` (one day) and `ElvanDateRangePicker` (first tap starts, second ends in either order, a third starts again). In the action sheet: the chosen date large at the top, month arrows, a tap on the month for a year grid, round 42 dp day cells (34 dp when the window is short), a ring on today, selected days in the accent, the range as a soft band. Always six weeks tall, so the sheet never resizes. Optional `minMillis`/`maxMillis` grey days out; the opening day is pulled inside them. Month and weekday names are Tamil, or English for English and Tamil Latin. Each day has a spoken label and a selected state.
+- **Date:** `ElvanDatePicker` (one day) and `ElvanDateRangePicker` (first tap starts, second ends in either order, a third starts again). In the action sheet, which fades in with a 32 dp rise: the chosen date large at the top, the month centred between its arrows, a weekday row that stays still, and six fixed rows of round 42 dp day cells (34 dp when the window is short) that page sideways, forward moving left, by arrow (about 130 ms, rapid taps retarget) or swipe. Days of the months either side show dimmed and can be chosen, which moves to that month. A tap on the month cross-fades the grid in place for day, month and year wheels (month and year only for a range); the arrows go at once and the caret flips. A ring on today, Sundays in the error colour, selected days in the accent, the range as a soft band. Always six weeks tall, so the sheet never resizes. A month is drawn in one pass, not as 42 composables: composing them held the main thread for about 250 ms per step. Optional `minMillis`/`maxMillis` grey days out; the opening day is pulled inside them. Month and weekday names are Tamil, or English for English and Tamil Latin. Each day has a spoken label and a selected state.
 - Dates are UTC midnights, like every date in the app. Calendar rules (leap years, month lengths, weekday, month rollover, limits, range taps) are in `ElvanCalendar` and unit-tested.
-- **Colour:** `ElvanColorPicker`: a Swatches | Spectrum shifter, the old and new colour side by side, red-green-blue values, a hex field (`#rgb` or `#rrggbb`), and recent colours (the caller keeps them with `pushRecentColor` and `parseRecentColors`). The PDF theme uses it through `BillColorPickerDialog`, which darkens colours too pale to read on white paper.
+- **Colour:** `ElvanColorPicker`: a Swatches | Spectrum shifter over a colour area of one fixed height (an 11 by 10 grid with the chosen swatch raised, or a hue and saturation square with a brightness bar), the old and new colour side by side, editable hex (`#rgb` or `#rrggbb`) and red, green and blue fields, and five recent-colour slots (the caller keeps them with `pushRecentColor` and `parseRecentColors`). Colour follows the finger from the moment it lands. A field keeps what is typed until focus leaves it; a value that does not parse shows in the error colour and changes nothing. The PDF theme uses it through `BillColorPickerDialog`, which darkens colours too pale to read on white paper.
 - Do not use the stock Material date or colour pickers.
 
 ### Buttons. **Implemented** (sizes differ by place)
@@ -262,17 +263,16 @@ The bill is drawn by a bundled web print app (`androidMain/assets/print/`), not 
 3. The app has its own Light / Dark / Automatic switch.
 
 ### Known gaps (true today)
-1. **Dates are shown and filtered in UTC.** From midnight to about 5:30 am in India, "Today" in the date filter and a new bill's default date still point at yesterday. The date picker's today-ring uses the phone's local date (`DateUtils.todayMillis`), so in that window it sits one day after the default date.
-2. The desktop target does not compile (a missing `actual` for `platformUpdateDisplayName` in `GoogleAuth.kt`). All checks were on Android.
-3. Drag-select in landscape and on the Customers and Create tabs has unit tests for its rules but was not exercised on the device. The Factory app was compiled but not exercised on the device for the work in this audit.
+1. Bills saved before this change with a raw clock time between midnight and 5:30 am still show the day before; their stored values were left alone.
+2. The date wheels stop at their ends rather than wrapping round (December to January needs a scroll back through the year). Holding an arrow does not repeat.
+3. Landscape has not been exercised on the device for the selection, picker or menu work.
 4. The menu-to-page reveal depends on the phone's window manager honouring `makeClipRevealAnimation`. It works on the test phone; other makers' skins are untested.
 5. Smaller text than 11 sp exists in one place (section 3).
 6. The date picker has no limits wired in yet; invoices accept any date, as before.
 
 ### Planned (not built)
-- Swipe between months and a "jump to today" shortcut in the date picker.
+- A "jump to today" shortcut in the date picker.
 - Reducing motion for users who turn animations off, beyond onboarding.
-- Keeping the date filter's "Today" and "Yesterday" in step with the phone's local day.
 
 ## 13. Accessibility floor
 
