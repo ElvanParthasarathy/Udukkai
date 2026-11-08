@@ -39,16 +39,19 @@ class ReceiptEditorActivity : BaseSubpageActivity() {
     @Composable
     override fun ScreenContent() {
         val receipt = PlatformNavigationState.consumePendingReceipt()
+        val forInvoice = PlatformNavigationState.consumePendingInvoice()
         if (isFactory) {
-            FactoryReceiptEditorScreen(receipt = receipt, onBack = { finish() })
+            FactoryReceiptEditorScreen(receipt = receipt, forInvoice = forInvoice, onBack = { finish() })
         } else {
-            TextilesReceiptEditorScreen(receipt = receipt, onBack = { finish() })
+            TextilesReceiptEditorScreen(receipt = receipt, forInvoice = forInvoice, onBack = { finish() })
         }
     }
 
     companion object {
-        fun start(context: Context, receipt: ReceiptModel? = null) {
+        /** [forInvoice]: a new receipt for this bill, its customer and amount filled in. */
+        fun start(context: Context, receipt: ReceiptModel? = null, forInvoice: InvoiceModel? = null) {
             PlatformNavigationState.pendingReceipt = receipt
+            PlatformNavigationState.pendingInvoice = forInvoice
             context.startActivity(Intent(context, ReceiptEditorActivity::class.java))
         }
     }

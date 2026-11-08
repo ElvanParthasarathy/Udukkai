@@ -356,6 +356,7 @@ fun TextilesHomeScreen() {
                 is ActiveSubpage.ReceiptEditor -> {
                     TextilesReceiptEditorScreen(
                         receipt = subpage.receipt,
+                        forInvoice = subpage.forInvoice,
                         onBack = popSubpage
                     )
                 }
@@ -405,6 +406,9 @@ fun TextilesHomeScreen() {
                         isPaid = TextilesInvoiceRepository.hasLinkedReceipts(currentInvoice.id),
                         receipts = TextilesReceiptRepository.receiptsForInvoice(currentInvoice.id),
                         onOpenReceipt = { navigateToSubpage(ActiveSubpage.ReceiptView(it)) },
+                        onRecordPayment = { navigateToSubpage(ActiveSubpage.ReceiptEditor(null, currentInvoice)) },
+                        onOpenCustomer = currentInvoice.customerId?.let { id -> TextilesCustomerRepository.getById(id) }?.let { c -> { navigateToSubpage(ActiveSubpage.CustomerView(c)) } },
+                        isFactory = false,
                         onBack = popSubpage,
                         onEdit = {
                             if (TextilesInvoiceRepository.hasLinkedReceipts(currentInvoice.id)) {
@@ -445,6 +449,9 @@ fun TextilesHomeScreen() {
                         receipt = currentReceipt,
                         profile = TextilesProfileRepository.profile,
                         allProfiles = TextilesProfileRepository.profiles,
+                        invoices = TextilesReceiptRepository.getLinksForReceipt(currentReceipt.id).mapNotNull { link -> TextilesInvoiceRepository.invoices.find { it.id == link.invoiceId } },
+                        onOpenInvoice = { navigateToSubpage(ActiveSubpage.InvoiceView(it)) },
+                        onOpenCustomer = currentReceipt.customerId?.let { id -> TextilesCustomerRepository.getById(id) }?.let { c -> { navigateToSubpage(ActiveSubpage.CustomerView(c)) } },
                         onBack = popSubpage,
                         onEdit = {
                             navigateToSubpage(ActiveSubpage.ReceiptEditor(currentReceipt))

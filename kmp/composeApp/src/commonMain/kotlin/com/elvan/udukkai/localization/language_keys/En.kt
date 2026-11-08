@@ -724,6 +724,12 @@ val en: Map<String, String> = mapOf(
     K.noInternetConnection to "No Internet Connection",
     K.noInternetDesc to "Please check your internet connection and try again",
     K.retryBtn to "Retry",
+    K.billFullyPaid to "Fully paid",
+    K.balanceDue to "Balance due",
+    K.pendingForDays to "Pending for %s days",
+    K.recordPayment to "Record payment",
+    K.amountReceived to "Amount received",
+    K.paymentMode to "Payment mode",
 )
 
 

@@ -50,6 +50,9 @@ class InvoiceViewActivity : BaseSubpageActivity() {
                 onBack = { finish() },
                 receipts = FactoryReceiptRepository.receiptsForInvoice(currentInvoice.id),
                 onOpenReceipt = { ReceiptViewActivity.start(this, it) },
+                onRecordPayment = { ReceiptEditorActivity.start(this, null, currentInvoice) },
+                onOpenCustomer = currentInvoice.customerId?.let { id -> FactoryCustomerRepository.getById(id) }?.let { c -> { CustomerViewActivity.start(this, c) } },
+                isFactory = true,
                 onEdit = {
                     if (FactoryInvoiceRepository.hasLinkedReceipts(currentInvoice.id)) {
                         ElvanSnackbar.show(invoiceLockedMsg)
@@ -99,6 +102,9 @@ class InvoiceViewActivity : BaseSubpageActivity() {
                 onBack = { finish() },
                 receipts = TextilesReceiptRepository.receiptsForInvoice(currentInvoice.id),
                 onOpenReceipt = { ReceiptViewActivity.start(this, it) },
+                onRecordPayment = { ReceiptEditorActivity.start(this, null, currentInvoice) },
+                onOpenCustomer = currentInvoice.customerId?.let { id -> TextilesCustomerRepository.getById(id) }?.let { c -> { CustomerViewActivity.start(this, c) } },
+                isFactory = false,
                 onEdit = {
                     if (TextilesInvoiceRepository.hasLinkedReceipts(currentInvoice.id)) {
                         ElvanSnackbar.show(invoiceLockedMsg)
@@ -166,6 +172,9 @@ class ReceiptViewActivity : BaseSubpageActivity() {
                 allProfiles = FactoryProfileRepository.profiles,
                 onBack = { finish() },
                 onEdit = { ReceiptEditorActivity.start(this, currentReceipt) },
+                invoices = FactoryReceiptRepository.getLinksForReceipt(currentReceipt.id).mapNotNull { link -> FactoryInvoiceRepository.invoices.find { it.id == link.invoiceId } },
+                onOpenInvoice = { InvoiceViewActivity.start(this, it) },
+                onOpenCustomer = currentReceipt.customerId?.let { id -> FactoryCustomerRepository.getById(id) }?.let { c -> { CustomerViewActivity.start(this, c) } },
                 printPayload = { activeProfile ->
                     PrintPayload.forReceipt(
                         receipt = currentReceipt,
@@ -187,6 +196,9 @@ class ReceiptViewActivity : BaseSubpageActivity() {
                 allProfiles = TextilesProfileRepository.profiles,
                 onBack = { finish() },
                 onEdit = { ReceiptEditorActivity.start(this, currentReceipt) },
+                invoices = TextilesReceiptRepository.getLinksForReceipt(currentReceipt.id).mapNotNull { link -> TextilesInvoiceRepository.invoices.find { it.id == link.invoiceId } },
+                onOpenInvoice = { InvoiceViewActivity.start(this, it) },
+                onOpenCustomer = currentReceipt.customerId?.let { id -> TextilesCustomerRepository.getById(id) }?.let { c -> { CustomerViewActivity.start(this, c) } },
                 printPayload = { activeProfile ->
                     PrintPayload.forReceipt(
                         receipt = currentReceipt,

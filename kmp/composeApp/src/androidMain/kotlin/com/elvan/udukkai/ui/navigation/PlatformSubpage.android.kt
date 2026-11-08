@@ -11,7 +11,7 @@ actual fun openPlatformSubpage(subpage: ActiveSubpage): Boolean {
         is ActiveSubpage.RecycleBin -> RecycleBinActivity.start(activity)
         is ActiveSubpage.Reports -> ReportsActivity.start(activity)
         is ActiveSubpage.InvoiceEditor -> InvoiceEditorActivity.start(activity, subpage.invoice)
-        is ActiveSubpage.ReceiptEditor -> ReceiptEditorActivity.start(activity, subpage.receipt)
+        is ActiveSubpage.ReceiptEditor -> ReceiptEditorActivity.start(activity, subpage.receipt, subpage.forInvoice)
         is ActiveSubpage.ItemEditor -> ItemEditorActivity.start(activity, subpage.item)
         is ActiveSubpage.MerchantEditor -> CustomerEditorActivity.start(activity, subpage.merchant)
         is ActiveSubpage.InvoiceView -> InvoiceViewActivity.start(activity, subpage.invoice)

@@ -12,7 +12,7 @@ sealed class ActiveSubpage {
     data class ItemEditor(val item: ItemModel? = null) : ActiveSubpage()
     data class MerchantEditor(val merchant: CustomerModel? = null) : ActiveSubpage()
     data class InvoiceEditor(val invoice: InvoiceModel? = null) : ActiveSubpage()
-    data class ReceiptEditor(val receipt: ReceiptModel? = null) : ActiveSubpage()
+    data class ReceiptEditor(val receipt: ReceiptModel? = null, val forInvoice: InvoiceModel? = null) : ActiveSubpage()
     data class CustomerView(val customer: CustomerModel) : ActiveSubpage()
     data class ItemView(val item: ItemModel) : ActiveSubpage()
     data class InvoiceView(val invoice: InvoiceModel) : ActiveSubpage()

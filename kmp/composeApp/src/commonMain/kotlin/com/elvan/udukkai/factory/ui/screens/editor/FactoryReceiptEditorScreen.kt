@@ -72,6 +72,8 @@ import androidx.compose.ui.graphics.graphicsLayer
 @Composable
 fun FactoryReceiptEditorScreen(
     receipt: ReceiptModel? = null,
+    /** A new receipt made from a bill's page: that bill picked, its customer and amount filled in. */
+    forInvoice: InvoiceModel? = null,
     onBack: () -> Unit
 ) {
     val colors = rememberShellColors()
@@ -99,7 +101,7 @@ fun FactoryReceiptEditorScreen(
 
     // Linked Invoices
     val allInvoices = com.elvan.udukkai.factory.data.FactoryInvoiceRepository.invoices
-    val selectedInvoices = remember { mutableStateListOf<InvoiceModel>() }
+    val selectedInvoices = remember { mutableStateListOf<InvoiceModel>().apply { if (receipt == null && forInvoice != null) add(forInvoice) } }
     var isInvoicePickerOpen by remember { mutableStateOf(false) }
 
     // Initial load of linked invoices when editing
@@ -119,12 +121,12 @@ fun FactoryReceiptEditorScreen(
     }
 
     // Customer
-    var selectedCustomerId by remember { mutableStateOf(receipt?.customerId) }
+    var selectedCustomerId by remember { mutableStateOf(receipt?.customerId ?: forInvoice?.customerId) }
     var selectedCustomerNameMap by remember {
-        mutableStateOf(receipt?.customerName ?: emptyMap())
+        mutableStateOf(receipt?.customerName ?: forInvoice?.customerName ?: emptyMap())
     }
     var selectedCustomerAddressMap by remember {
-        mutableStateOf(receipt?.customerAddress ?: emptyMap())
+        mutableStateOf(receipt?.customerAddress ?: forInvoice?.customerAddress ?: emptyMap())
     }
 
     // Receipt Data
@@ -138,6 +140,8 @@ fun FactoryReceiptEditorScreen(
         mutableStateOf(
             if (receipt != null && receipt.amount > 0) {
                 if (receipt.amount % 1.0 == 0.0) receipt.amount.toLong().toString() else receipt.amount.toString()
+            } else if (receipt == null && forInvoice != null && forInvoice.totalAmount > 0) {
+                if (forInvoice.totalAmount % 1.0 == 0.0) forInvoice.totalAmount.toLong().toString() else forInvoice.totalAmount.toString()
             } else ""
         )
     }

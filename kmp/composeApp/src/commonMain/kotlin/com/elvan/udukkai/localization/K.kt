@@ -732,4 +732,10 @@ object K {
     const val noInternetConnection = "noInternetConnection"
     const val noInternetDesc = "noInternetDesc"
     const val retryBtn = "retryBtn"
+    const val billFullyPaid = "billFullyPaid"
+    const val balanceDue = "balanceDue"
+    const val pendingForDays = "pendingForDays"
+    const val recordPayment = "recordPayment"
+    const val amountReceived = "amountReceived"
+    const val paymentMode = "paymentMode"
 }

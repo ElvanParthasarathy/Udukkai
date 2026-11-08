@@ -34,36 +34,47 @@ class AndroidUdukkaiBackupService : UdukkaiBackupService {
     }
 
     /**
-     * Secondary public directory in Documents for user accessibility.
-     * Best-effort mirror that survives app uninstalls if permission allows.
+     * The copy outside the app: Documents/Udukkai/<Udukkai Textiles|Udukkai Factory>/Backup, visible in My Files
+     * and kept when the app is uninstalled. Android 11+ lets an app write its own files in Documents without any
+     * storage permission; where that fails the backup inside the app is still made.
      */
     private fun getExternalBackupDir(): File? {
         return try {
-            // A dot folder: hidden from file managers and the gallery, but still outside the app so it
-            // survives an uninstall
-            val dir = File("/storage/emulated/0/Documents/.Udukkai/backup")
+            val app = if (isFactory()) "Udukkai Factory" else "Udukkai Textiles"
+            val docs = android.os.Environment.getExternalStoragePublicDirectory(android.os.Environment.DIRECTORY_DOCUMENTS)
+            val dir = File(docs, "Udukkai/$app/Backup")
             if (!dir.exists()) dir.mkdirs()
-            File(dir, ".nomedia").let { if (!it.exists()) it.createNewFile() }
-            moveVisibleBackups(dir)
+            if (!dir.isDirectory) return null
+            moveOldBackups(docs, dir)
             dir
         } catch (_: Exception) {
             null
         }
     }
 
-    /** Backups used to sit in the visible Documents/Udukkai/backup: moved here once, never lost. */
-    private fun moveVisibleBackups(hidden: File) {
-        val old = File("/storage/emulated/0/Documents/Udukkai/backup")
-        if (!old.isDirectory) return
-        old.listFiles()?.filter { it.isFile }?.forEach { file ->
-            val target = File(hidden, file.name)
+    /** Backups this app left in the old places (the hidden Documents/.Udukkai/backup, earlier Documents/Udukkai/backup) move here once. */
+    private fun moveOldBackups(docs: File, target: File) {
+        val mine = if (isFactory()) listOf("udukkai_factory", "udukkai_kooli") else listOf("udukkai_textiles", "udukkai_pattu")
+        for (old in listOf(File(docs, ".Udukkai/backup"), File(docs, "Udukkai/backup"))) {
+            if (!old.isDirectory) continue
+            old.listFiles()?.filter { f -> f.isFile && mine.any { f.name.startsWith(it) } }?.forEach { file ->
+                val moved = File(target, file.name)
+                try {
+                    if (!moved.exists() || moved.length() < file.length()) file.copyTo(moved, overwrite = true)
+                    // The original goes only after the copy is complete
+                    if (moved.length() == file.length()) { file.delete(); showInFiles(moved) }
+                } catch (_: Exception) {}
+            }
             try {
-                if (!target.exists() || target.length() < file.length()) file.copyTo(target, overwrite = true)
-                // The original goes only after the copy is complete
-                if (target.length() == file.length()) file.delete()
+                File(old, ".nomedia").takeIf { old.listFiles()?.all { it.name == ".nomedia" } == true }?.delete()
+                if (old.listFiles().isNullOrEmpty()) { old.delete(); old.parentFile?.takeIf { it.name == ".Udukkai" && it.listFiles().isNullOrEmpty() }?.delete() }
             } catch (_: Exception) {}
         }
-        if (old.listFiles().isNullOrEmpty()) old.delete()
+    }
+
+    /** Tells Android the file changed, so My Files and a computer over USB see it at once. */
+    private fun showInFiles(file: File) {
+        try { android.media.MediaScannerConnection.scanFile(AppContext.context, arrayOf(file.absolutePath), null, null) } catch (_: Exception) {}
     }
 
     private fun modePrefix(mode: String?): String {
@@ -564,6 +575,7 @@ class AndroidUdukkaiBackupService : UdukkaiBackupService {
             if (extDir != null) {
                 val extFile = File(extDir, latestFile.name)
                 latestFile.copyTo(extFile, overwrite = true)
+                showInFiles(extFile)
             }
         } catch (_: Exception) {}
 
@@ -596,6 +608,7 @@ class AndroidUdukkaiBackupService : UdukkaiBackupService {
             if (extDir != null) {
                 val extVault = File(extDir, vaultFile.name)
                 vaultFile.copyTo(extVault, overwrite = true)
+                showInFiles(extVault)
             }
         } catch (_: Exception) {}
 

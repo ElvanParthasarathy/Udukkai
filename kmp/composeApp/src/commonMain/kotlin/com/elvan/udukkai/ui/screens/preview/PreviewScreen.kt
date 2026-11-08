@@ -83,9 +83,14 @@ fun PreviewScreen(
     printPayload: String? = null,
     printFileName: String = subtitle ?: title,
     printController: DocumentPrintController? = null,
-    externalPrintView: Boolean = false
+    externalPrintView: Boolean = false,
+    /** A native page shown instead of the paper: opens at once, the PDF is made behind it for Open, Print and Share. */
+    body: (@Composable () -> Unit)? = null
 ) {
-    if (printPayload != null && isDocumentPrintSupported) {
+    if (body != null && !(printPayload != null && isDocumentPrintSupported)) {
+        // Nothing to print here (desktop): the page alone
+        ElvanSubShell2(title = title, onBack = onBack) { body() }
+    } else if (printPayload != null && isDocumentPrintSupported) {
         val controller = printController ?: remember { DocumentPrintController() }
         DocumentPreview(
             title = title,
@@ -97,7 +102,8 @@ fun PreviewScreen(
             payloadJson = printPayload,
             fileName = printFileName,
             controller = controller,
-            externalPrintView = externalPrintView
+            externalPrintView = externalPrintView,
+            body = body
         )
     } else {
         PlaceholderPreview(title = title, subtitle = subtitle, onBack = onBack)
@@ -115,9 +121,13 @@ private fun DocumentPreview(
     payloadJson: String,
     fileName: String,
     controller: DocumentPrintController,
-    externalPrintView: Boolean
+    externalPrintView: Boolean,
+    body: (@Composable () -> Unit)? = null
 ) {
     val colors = rememberShellColors()
+    // With a native page the paper is made a moment later, so the page appears first
+    var makePaper by remember { mutableStateOf(body == null) }
+    LaunchedEffect(Unit) { if (!makePaper) { delay(450); makePaper = true } }
 
     LaunchedEffect(Unit) {
         if (controller.fileName.isBlank()) controller.fileName = fileName
@@ -133,11 +143,11 @@ private fun DocumentPreview(
         onBack = onBack,
         hideChrome = controller.immersive,
         // An unsaved bill is only looked at: no Print, Share or Open (Back returns to the form)
-        floatingBar = { if (!isDraft) PreviewBottomArea(controller, onEdit, menuItems) }
+        floatingBar = { if (!isDraft) PreviewBottomArea(controller, onEdit, menuItems, quiet = body != null) }
     ) {
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             // The web page only prepares the PDF; it stays hidden (unless the caller already hosts it)
-            if (!externalPrintView) {
+            if (!externalPrintView && makePaper) {
                 DocumentPrintView(
                     payloadJson = payloadJson,
                     fileName = fileName,
@@ -148,7 +158,9 @@ private fun DocumentPreview(
                         .graphicsLayer { alpha = 0f }
                 )
             }
-            if (controller.pdfPath != null) {
+            if (body != null) {
+                body()
+            } else if (controller.pdfPath != null) {
                 DocumentPdfViewer(
                     controller = controller,
                     modifier = Modifier.fillMaxSize(),
@@ -159,7 +171,7 @@ private fun DocumentPreview(
             }
             // A changed bill is made again: fade a loader over the old page instead of letting it change suddenly
             androidx.compose.animation.AnimatedVisibility(
-                visible = controller.isRefreshing,
+                visible = controller.isRefreshing && body == null,
                 enter = androidx.compose.animation.fadeIn(androidx.compose.animation.core.tween(220)),
                 exit = androidx.compose.animation.fadeOut(androidx.compose.animation.core.tween(320))
             ) {
@@ -198,7 +210,7 @@ private fun PreviewMenuButton(items: List<ElvanPopupMenuItem>) {
 
 /** Status pill and the action pill, stacked above the system navigation bar. */
 @Composable
-private fun PreviewBottomArea(controller: DocumentPrintController, onEdit: (() -> Unit)?, menuItems: List<ElvanPopupMenuItem> = emptyList()) {
+private fun PreviewBottomArea(controller: DocumentPrintController, onEdit: (() -> Unit)?, menuItems: List<ElvanPopupMenuItem> = emptyList(), quiet: Boolean = false) {
     val colors = rememberShellColors()
     var menuOpen by remember { mutableStateOf(false) }
     Column(
@@ -213,7 +225,8 @@ private fun PreviewBottomArea(controller: DocumentPrintController, onEdit: (() -
                 controller.notice = null
             }
         }
-        if (controller.isBusy || notice != null) {
+        // A native page needs no "preparing" note: the buttons simply wake up when the paper is ready
+        if ((controller.isBusy && !quiet) || notice != null) {
             val text = when {
                 controller.isBusy -> K.preparingPdf.tr()
                 notice?.kind == PrintNoticeKind.Saved -> "${K.pdfSavedTo.tr()}: ${notice.detail}"

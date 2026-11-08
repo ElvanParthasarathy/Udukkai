@@ -5,15 +5,15 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
-import android.os.Environment
 import android.provider.Settings
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 
 actual fun isStoragePermissionGranted(): Boolean {
     if (!AppContext.isInitialized) return false
+    // Android 11+: the app writes only its own files (Documents/Udukkai, MediaStore), which needs no permission
     return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-        Environment.isExternalStorageManager()
+        true
     } else {
         val ctx = AppContext.context
         val readGranted = ContextCompat.checkSelfPermission(
@@ -34,11 +34,7 @@ actual fun requestStoragePermission() {
     val activity = CurrentActivity.activity
     try {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            val intent = Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION).apply {
-                data = Uri.parse("package:${ctx.packageName}")
-                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-            }
-            ctx.startActivity(intent)
+            return
         } else {
             if (activity != null) {
                 val shouldShowRationale = ActivityCompat.shouldShowRequestPermissionRationale(

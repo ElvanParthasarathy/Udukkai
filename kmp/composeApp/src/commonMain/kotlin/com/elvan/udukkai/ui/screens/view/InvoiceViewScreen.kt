@@ -1,52 +1,30 @@
 package com.elvan.udukkai.ui.screens.view
 
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import com.elvan.udukkai.core.print.billBusinessFolder
-import com.elvan.udukkai.ui.components.shell.ElvanPopupMenuItem
-import com.elvan.udukkai.ui.screens.preview.PreviewScreen
-import com.elvan.udukkai.core.print.isDocumentPrintSupported
 import com.elvan.udukkai.core.print.invoicePdfName
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import com.elvan.udukkai.core.platform.AppBackHandler
+import com.elvan.udukkai.core.utils.BillRules
 import com.elvan.udukkai.core.utils.CurrencyUtils
 import com.elvan.udukkai.core.utils.DateUtils
 import com.elvan.udukkai.core.utils.NumberToWords
 import com.elvan.udukkai.data.model.InvoiceDisplayOptions
 import com.elvan.udukkai.data.model.InvoiceModel
+import com.elvan.udukkai.data.model.PaymentType
+import com.elvan.udukkai.data.model.ReceiptModel
 import com.elvan.udukkai.data.settings.BusinessProfile
-import com.elvan.udukkai.data.settings.PaymentAccount
+import com.elvan.udukkai.factory.ui.screens.editor.FactoryCalculation
 import com.elvan.udukkai.localization.K
 import com.elvan.udukkai.localization.tr
-import com.elvan.udukkai.theme.Dimens
-import com.elvan.udukkai.theme.LocalAppFontFamily
-import com.elvan.udukkai.theme.preventBrokenLigatures
-import com.elvan.udukkai.theme.rememberShellColors
-import com.elvan.udukkai.ui.components.shell.LocalElvanTopSpacerHeight
+import com.elvan.udukkai.textiles.ui.screens.editor.TextilesCalculation
+import com.elvan.udukkai.ui.components.shell.ElvanPopupMenuItem
 import com.elvan.udukkai.ui.navigation.MaterialSymbols
+import com.elvan.udukkai.ui.screens.preview.PreviewScreen
 
 /**
- * Invoice View Screen (பட்டியல் பார்வை)
- * Ported 1:1 from Flutter's pattu_pattiyal_paarvai.dart & kooli_pattiyal_paarvai.dart.
- * Enhanced with:
- * - Proforma / Estimate badge & 1-click Convert to Tax Invoice flow
- * - Number to Words in Pure Tamil and English Indian numbering
- * - Bill Options (Vehicle No, Due Date, Tax-inclusive badge)
- * - Selected Bank Account display
+ * Invoice view (பட்டியல் பார்வை): a native page that opens at once, like Zoho's invoice details.
+ * Status and amount on top, the customer, the receipts that paid it, the bill's numbers, its lines and totals.
+ * The paper (PDF) is made behind it for Open, Print and Share in the bottom bar.
  */
 @Composable
 fun InvoiceViewScreen(
@@ -59,547 +37,199 @@ fun InvoiceViewScreen(
     onPrint: (() -> Unit)? = null,
     onCopy: (() -> Unit)? = null,
     onConvertToTaxInvoice: (() -> Unit)? = null,
-    /** The receipts that paid this bill: each gets an entry in the menu that opens it. */
-    receipts: List<com.elvan.udukkai.data.model.ReceiptModel> = emptyList(),
-    onOpenReceipt: ((com.elvan.udukkai.data.model.ReceiptModel) -> Unit)? = null,
+    /** The receipts that paid this bill: each opens from the page and from the menu. */
+    receipts: List<ReceiptModel> = emptyList(),
+    onOpenReceipt: ((ReceiptModel) -> Unit)? = null,
+    /** A bill still due: makes a receipt for it with the customer and amount filled in. */
+    onRecordPayment: (() -> Unit)? = null,
+    onOpenCustomer: (() -> Unit)? = null,
+    isFactory: Boolean = false,
     printPayload: ((activeProfile: BusinessProfile) -> String)? = null
 ) {
-    if (printPayload != null && isDocumentPrintSupported) {
-        // The bill itself is the view page: the rendered document with Edit, Open, Print and Share
-        val activeProfile = (if (invoice.companyId != null) allProfiles.find { it.id == invoice.companyId } else null)
-            ?: profile
-        val payload = remember(invoice, activeProfile) { printPayload(activeProfile) }
-        val isProforma = invoice.invoiceType == "proforma"
-        val convertTitle = K.convertToTaxInvoice.tr()
-        PreviewScreen(
-            title = (if (isProforma) K.proforma.tr() else K.invoice.tr()) + " #" + invoice.invoiceNumber,
-            onBack = onBack,
-            onEdit = if (isPaid) null else onEdit,
-            menuItems = buildList {
-                if (isProforma && onConvertToTaxInvoice != null) add(ElvanPopupMenuItem(convertTitle, MaterialSymbols.Rounded.SwapHoriz, onConvertToTaxInvoice))
-                if (onOpenReceipt != null) receipts.forEach { r -> add(ElvanPopupMenuItem(K.receipt.tr() + " " + r.receiptNumber, MaterialSymbols.Rounded.ReceiptFill) { onOpenReceipt(r) }) }
-            },
-            printPayload = payload,
-            printFileName = invoicePdfName(invoice),
-            businessFolder = billBusinessFolder(activeProfile)
-        )
-    } else {
-        InvoiceDetailsScreen(invoice, profile, allProfiles, isPaid, onBack, onEdit, onPrint, onCopy, onConvertToTaxInvoice)
-    }
+    val activeProfile = (if (invoice.companyId != null) allProfiles.find { it.id == invoice.companyId } else null) ?: profile
+    val payload = remember(invoice, activeProfile) { printPayload?.invoke(activeProfile) }
+    val isProforma = invoice.invoiceType == "proforma"
+    val docTitle = if (isProforma) K.proforma.tr() else K.invoice.tr()
+    val convertTitle = K.convertToTaxInvoice.tr()
+    val copyTitle = K.copyBtn.tr()
+    val receiptWord = K.receipt.tr()
+
+    PreviewScreen(
+        title = "$docTitle #${invoice.invoiceNumber}",
+        onBack = onBack,
+        onEdit = if (isPaid) null else onEdit,
+        menuItems = buildList {
+            if (isProforma && onConvertToTaxInvoice != null) add(ElvanPopupMenuItem(convertTitle, MaterialSymbols.Rounded.SwapHoriz, onConvertToTaxInvoice))
+            if (onOpenReceipt != null) receipts.forEach { r -> add(ElvanPopupMenuItem("$receiptWord ${r.receiptNumber}", MaterialSymbols.Rounded.ReceiptFill) { onOpenReceipt(r) }) }
+            if (onCopy != null) add(ElvanPopupMenuItem(copyTitle, MaterialSymbols.Rounded.ContentCopy, onCopy))
+        },
+        printPayload = payload,
+        printFileName = invoicePdfName(invoice),
+        businessFolder = billBusinessFolder(activeProfile),
+        body = { InvoiceBody(invoice, activeProfile, isPaid, isProforma, receipts, onOpenReceipt, onRecordPayment, onOpenCustomer, isFactory) }
+    )
 }
 
-/** Fallback where documents cannot be rendered (desktop): the bill's details as cards. */
+private const val DAY = 24L * 60 * 60 * 1000
+
 @Composable
-private fun InvoiceDetailsScreen(
+private fun InvoiceBody(
     invoice: InvoiceModel,
     profile: BusinessProfile,
-    allProfiles: List<BusinessProfile> = emptyList(),
-    isPaid: Boolean = false,
-    onBack: () -> Unit,
-    onEdit: () -> Unit,
-    onPrint: (() -> Unit)? = null,
-    onCopy: (() -> Unit)? = null,
-    onConvertToTaxInvoice: (() -> Unit)? = null
+    isPaid: Boolean,
+    isProforma: Boolean,
+    receipts: List<ReceiptModel>,
+    onOpenReceipt: ((ReceiptModel) -> Unit)?,
+    onRecordPayment: (() -> Unit)?,
+    onOpenCustomer: (() -> Unit)?,
+    isFactory: Boolean
 ) {
-    val colors = rememberShellColors()
-    val isDark = colors.isDark
-    val ff = LocalAppFontFamily.current
+    val primary = profile.primaryLanguage.ifEmpty { "ta" }
+    val secondary = profile.secondaryLanguage.ifEmpty { "en" }
+    val name = invoice.customerName[primary] ?: invoice.customerName[secondary] ?: invoice.customerName.values.firstOrNull().orEmpty().ifEmpty { "-" }
+    val secondName = if (profile.isBilingual) invoice.customerName[secondary].orEmpty() else ""
+    val town = invoice.customerAddress[primary] ?: invoice.customerAddress[secondary] ?: invoice.customerAddress.values.firstOrNull().orEmpty()
 
-    val activeProfile = (if (invoice.companyId != null) allProfiles.find { it.id == invoice.companyId } else null)
-        ?: profile
-    val isBilingual = activeProfile.isBilingual
-    val primaryLang = activeProfile.primaryLanguage.ifEmpty { "ta" }
-    val secondaryLang = activeProfile.secondaryLanguage.ifEmpty { "en" }
+    val options = remember(invoice.customPreferencesJson) { InvoiceDisplayOptions.fromJson(invoice.customPreferencesJson) }
+    val summary = remember(invoice, isFactory) { billSummary(invoice, options, isFactory) }
+    val daysPending = ((System.currentTimeMillis() - invoice.invoiceDate) / DAY).toInt()
 
-    val customerName = invoice.customerName[primaryLang]
-        ?: invoice.customerName[secondaryLang]
-        ?: invoice.customerName.values.firstOrNull().orEmpty().ifEmpty { "-" }
+    val paidLabel = K.billFullyPaid.tr()
+    val dueLabel = K.balanceDue.tr()
+    val totalLabel = K.grandTotal.tr()
+    val pendingNote = K.pendingForDays.tr()
+    val itemsTitle = K.items.tr()
+    val receiptsTitle = K.receipts.tr()
+    val recordPayment = K.recordPayment.tr()
+    val billNoLabel = K.billNo.tr()
+    val dateLabel = K.date.tr()
+    val fyLabel = K.thisFinYear.tr()
+    val placeLabel = K.placeOfSupply.tr()
+    val subtotalLabel = K.subtotal.tr()
+    val discountLabel = K.discount.tr()
+    val roundLabel = K.roundOff.tr()
+    val paidRowLabel = K.statusPaid.tr()
+    val wordsTitle = K.amountInWords.tr()
+    val notesTitle = K.remarks.tr()
+    val words = remember(invoice.totalAmount) { NumberToWords.toTamil(invoice.totalAmount) to NumberToWords.toEnglish(invoice.totalAmount) }
 
-    val secondaryCustomerName = if (isBilingual) (invoice.customerName[secondaryLang] ?: "") else ""
-
-    val customerTown = invoice.customerAddress[primaryLang]
-        ?: invoice.customerAddress[secondaryLang]
-        ?: invoice.customerAddress.values.firstOrNull().orEmpty()
-
-    val isProforma = invoice.invoiceType == "proforma"
-    val docTypeTitle = if (isProforma) K.proforma.tr() else K.invoice.tr()
-
-    val displayOptions = remember(invoice.customPreferencesJson) {
-        InvoiceDisplayOptions.fromJson(invoice.customPreferencesJson)
-    }
-
-    // The bank account is the business's own
-    val selectedBank = remember(activeProfile) { activeProfile.getDefaultPaymentAccount() }
-
-    val tamilWords = remember(invoice.totalAmount) { NumberToWords.toTamil(invoice.totalAmount) }
-    val englishWords = remember(invoice.totalAmount) { NumberToWords.toEnglish(invoice.totalAmount) }
-
-    val scrollState = rememberLazyListState()
-
-    ViewTile(
-        title = "$docTypeTitle #${invoice.invoiceNumber}",
-        onBack = onBack,
-        scrollState = scrollState,
-        isDocument = true,
-        onEdit = if (isPaid) null else onEdit,
-        onPrint = onPrint,
-        onCopy = onCopy
-    ) {
-        LazyColumn(
-            state = scrollState,
-            modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(
-                start = 16.dp,
-                end = 16.dp,
-                bottom = Dimens.SubpageContentPaddingBottom + 64.dp
-            ),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            // One UI Collapsible Header top spacer
-            item(key = "top_spacer") {
-                Spacer(modifier = Modifier.height(LocalElvanTopSpacerHeight.current))
+    DocPage {
+        item(key = "status") {
+            when {
+                isProforma -> DocStatusHeader(DocTone.Neutral, totalLabel, invoice.totalAmount)
+                isPaid -> DocStatusHeader(DocTone.Paid, paidLabel, invoice.totalAmount)
+                else -> DocStatusHeader(
+                    DocTone.Due, dueLabel, invoice.totalAmount,
+                    note = if (daysPending > 0) pendingNote.replace("%s", daysPending.toString()) else null
+                )
             }
-
-            // Customer & Date Header Card
-            item(key = "header_card") {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(20.dp))
-                        .background(if (isDark) Color.White.copy(alpha = 0.05f) else Color.Black.copy(alpha = 0.03f))
-                        .border(
-                            width = 1.dp,
-                            color = if (isDark) Color.White.copy(alpha = 0.08f) else Color.Black.copy(alpha = 0.06f),
-                            shape = RoundedCornerShape(20.dp)
+        }
+        if (!isPaid && !isProforma && onRecordPayment != null) {
+            item(key = "record") { DocPrimaryButton(MaterialSymbols.Rounded.Add, recordPayment, onRecordPayment) }
+        }
+        item(key = "customer") { DocCustomerCard(name, secondName, town, onOpenCustomer) }
+        if (receipts.isNotEmpty()) {
+            item(key = "receipts") {
+                DocSection("$receiptsTitle (${receipts.size})") {
+                    receipts.forEachIndexed { i, r ->
+                        if (i > 0) DocDivider()
+                        DocLinkRow(
+                            icon = MaterialSymbols.Rounded.ReceiptFill,
+                            title = r.receiptNumber,
+                            subtitle = DateUtils.formatEpochMillis(r.receiptDate) + " • " + PaymentType.fromStored(r.paymentMode).label(),
+                            amount = r.amount,
+                            onClick = onOpenReceipt?.let { open -> { open(r) } }
                         )
-                        .padding(24.dp)
-                ) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.Top
-                    ) {
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text(
-                                text = customerName.preventBrokenLigatures(),
-                                style = TextStyle(
-                                    fontFamily = ff,
-                                    fontSize = 20.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = colors.textPrimary
-                                )
-                            )
-                            if (isBilingual && secondaryCustomerName.isNotBlank() && secondaryCustomerName != customerName) {
-                                Text(
-                                    text = secondaryCustomerName.preventBrokenLigatures(),
-                                    style = TextStyle(
-                                        fontFamily = ff,
-                                        fontSize = 14.sp,
-                                        color = colors.textSecondary
-                                    )
-                                )
-                            }
-                            if (customerTown.isNotBlank()) {
-                                Spacer(modifier = Modifier.height(4.dp))
-                                Text(
-                                    text = customerTown.preventBrokenLigatures(),
-                                    style = TextStyle(
-                                        fontFamily = ff,
-                                        fontSize = 13.5.sp,
-                                        color = colors.textSecondary
-                                    )
-                                )
-                            }
-                        }
-
-                        Column(horizontalAlignment = Alignment.End) {
-                            Text(
-                                text = DateUtils.formatDate(invoice.invoiceDate),
-                                style = TextStyle(
-                                    fontFamily = ff,
-                                    fontSize = 13.sp,
-                                    color = colors.textSecondary
-                                )
-                            )
-                            Spacer(modifier = Modifier.height(6.dp))
-                            Row(
-                                horizontalArrangement = Arrangement.spacedBy(6.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                // Invoice Type Pill
-                                Box(
-                                    modifier = Modifier
-                                        .clip(CircleShape)
-                                        .background(
-                                            if (isProforma) colors.accent.copy(alpha = 0.15f)
-                                            else if (isDark) Color.White.copy(alpha = 0.08f)
-                                            else Color.Black.copy(alpha = 0.06f)
-                                        )
-                                        .padding(horizontal = 8.dp, vertical = 4.dp)
-                                ) {
-                                    Text(
-                                        text = if (isProforma) K.proforma.tr() else K.taxInvoice.tr(),
-                                        style = TextStyle(
-                                            fontFamily = ff,
-                                            fontSize = 11.5.sp,
-                                            fontWeight = FontWeight.Bold,
-                                            color = if (isProforma) colors.accent else colors.textPrimary
-                                        )
-                                    )
-                                }
-
-                                val statusBg = if (isPaid) {
-                                    if (isDark) Color(0xFF22C55E).copy(alpha = 0.18f) else Color(0xFF16A34A).copy(alpha = 0.12f)
-                                } else {
-                                    if (isDark) Color(0xFFF59E0B).copy(alpha = 0.18f) else Color(0xFFF59E0B).copy(alpha = 0.12f)
-                                }
-                                val statusColor = if (isPaid) {
-                                    if (isDark) Color(0xFF4ADE80) else Color(0xFF15803D)
-                                } else {
-                                    if (isDark) Color(0xFFFBBF24) else Color(0xFFB45309)
-                                }
-
-                                // Payment Status Pill
-                                Box(
-                                    modifier = Modifier
-                                        .clip(CircleShape)
-                                        .background(statusBg)
-                                        .padding(horizontal = 8.dp, vertical = 4.dp)
-                                ) {
-                                    Row(
-                                        verticalAlignment = Alignment.CenterVertically,
-                                        horizontalArrangement = Arrangement.spacedBy(4.dp)
-                                    ) {
-                                        if (isPaid) {
-                                            Icon(
-                                                imageVector = MaterialSymbols.Rounded.Check,
-                                                contentDescription = null,
-                                                tint = statusColor,
-                                                modifier = Modifier.size(12.dp)
-                                            )
-                                        }
-                                        Text(
-                                            text = (if (isPaid) K.statusPaid.tr() else K.statusUnpaid.tr()).preventBrokenLigatures(),
-                                            style = TextStyle(
-                                                fontFamily = ff,
-                                                fontSize = 11.5.sp,
-                                                fontWeight = FontWeight.Bold,
-                                                color = statusColor
-                                            )
-                                        )
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-
-            // 1-Click Convert Proforma to Tax Invoice CTA Button
-            if (isProforma && onConvertToTaxInvoice != null) {
-                item(key = "convert_cta") {
-                    Button(
-                        onClick = onConvertToTaxInvoice,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(48.dp),
-                        shape = RoundedCornerShape(14.dp),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = colors.accent,
-                            contentColor = Color.White
-                        )
-                    ) {
-                        Icon(
-                            imageVector = MaterialSymbols.Rounded.SwapHoriz,
-                            contentDescription = null,
-                            modifier = Modifier.size(18.dp)
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(
-                            text = K.convertToTaxInvoice.tr().preventBrokenLigatures(),
-                            style = TextStyle(
-                                fontFamily = ff,
-                                fontSize = 14.5.sp,
-                                fontWeight = FontWeight.SemiBold
-                            )
-                        )
-                    }
-                }
-            }
-
-            // Bank Details Card
-            if (selectedBank != null && (selectedBank.accountNumber.isNotBlank() || selectedBank.upiId.isNotBlank())) {
-                item(key = "bank_details_card") {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clip(RoundedCornerShape(16.dp))
-                            .background(if (isDark) Color.White.copy(alpha = 0.04f) else Color.Black.copy(alpha = 0.025f))
-                            .border(
-                                width = 1.dp,
-                                color = if (isDark) Color.White.copy(alpha = 0.08f) else Color.Black.copy(alpha = 0.06f),
-                                shape = RoundedCornerShape(16.dp)
-                            )
-                            .padding(18.dp)
-                    ) {
-                        Column(
-                            modifier = Modifier.fillMaxWidth(),
-                            verticalArrangement = Arrangement.spacedBy(6.dp)
-                        ) {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Icon(
-                                    imageVector = MaterialSymbols.Rounded.AccountBalance,
-                                    contentDescription = null,
-                                    tint = colors.textSecondary,
-                                    modifier = Modifier.size(16.dp)
-                                )
-                                Spacer(modifier = Modifier.width(6.dp))
-                                Text(
-                                    text = K.bankAccount.tr().preventBrokenLigatures(),
-                                    style = TextStyle(
-                                        fontFamily = ff,
-                                        fontSize = 13.sp,
-                                        fontWeight = FontWeight.Bold,
-                                        color = colors.textPrimary
-                                    )
-                                )
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Text(
-                                    text = "(${selectedBank.label})",
-                                    style = TextStyle(
-                                        fontFamily = ff,
-                                        fontSize = 12.sp,
-                                        color = colors.accent,
-                                        fontWeight = FontWeight.Medium
-                                    )
-                                )
-                            }
-
-                            val bName = selectedBank.bankName[primaryLang] ?: selectedBank.bankName["ta"] ?: selectedBank.bankName.values.firstOrNull() ?: ""
-                            if (bName.isNotBlank()) {
-                                Text(
-                                    text = "${K.bankName.tr()}: $bName",
-                                    style = TextStyle(fontFamily = ff, fontSize = 13.sp, color = colors.textSecondary)
-                                )
-                            }
-                            if (selectedBank.accountNumber.isNotBlank()) {
-                                Text(
-                                    text = "${K.accountNumber.tr()}: ${selectedBank.accountNumber}",
-                                    style = TextStyle(fontFamily = ff, fontSize = 13.sp, color = colors.textPrimary, fontWeight = FontWeight.SemiBold)
-                                )
-                            }
-                            if (selectedBank.ifsc.isNotBlank()) {
-                                Text(
-                                    text = "IFSC: ${selectedBank.ifsc}",
-                                    style = TextStyle(fontFamily = ff, fontSize = 12.5.sp, color = colors.textSecondary)
-                                )
-                            }
-                            if (selectedBank.upiId.isNotBlank()) {
-                                Text(
-                                    text = "UPI: ${selectedBank.upiId}",
-                                    style = TextStyle(fontFamily = ff, fontSize = 12.5.sp, color = colors.textSecondary)
-                                )
-                            }
-                        }
-                    }
-                }
-            }
-
-            // Factory Specific Additional Charges Card
-            if (invoice.wastageGrams > 0 || invoice.postalCharges > 0 || invoice.ahimsaSilkAmount > 0) {
-                item(key = "factory_charges_card") {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clip(RoundedCornerShape(20.dp))
-                            .background(if (isDark) Color.White.copy(alpha = 0.05f) else Color.Black.copy(alpha = 0.03f))
-                            .border(
-                                width = 1.dp,
-                                color = if (isDark) Color.White.copy(alpha = 0.08f) else Color.Black.copy(alpha = 0.06f),
-                                shape = RoundedCornerShape(20.dp)
-                            )
-                            .padding(20.dp)
-                    ) {
-                        Column(
-                            modifier = Modifier.fillMaxWidth(),
-                            verticalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            if (invoice.wastageGrams > 0) {
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.SpaceBetween
-                                ) {
-                                    Text(
-                                        text = K.wastage.tr(),
-                                        style = TextStyle(fontFamily = ff, fontSize = 14.sp, color = colors.textSecondary)
-                                    )
-                                    Text(
-                                        text = "${invoice.wastageGrams} g",
-                                        style = TextStyle(fontFamily = ff, fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = colors.textPrimary)
-                                    )
-                                }
-                            }
-                            if (invoice.postalCharges > 0) {
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.SpaceBetween
-                                ) {
-                                    Text(
-                                        text = "அஞ்சல் கட்டணம்",
-                                        style = TextStyle(fontFamily = ff, fontSize = 14.sp, color = colors.textSecondary)
-                                    )
-                                    Text(
-                                        text = CurrencyUtils.formatInr(invoice.postalCharges),
-                                        style = TextStyle(fontFamily = ff, fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = colors.textPrimary)
-                                    )
-                                }
-                            }
-                            if (invoice.ahimsaSilkAmount > 0) {
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.SpaceBetween
-                                ) {
-                                    Text(
-                                        text = "அகிம்சா பட்டு",
-                                        style = TextStyle(fontFamily = ff, fontSize = 14.sp, color = colors.textSecondary)
-                                    )
-                                    Text(
-                                        text = CurrencyUtils.formatInr(invoice.ahimsaSilkAmount),
-                                        style = TextStyle(fontFamily = ff, fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = colors.textPrimary)
-                                    )
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-
-            // Total Amount Card
-            item(key = "total_card") {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(20.dp))
-                        .background(if (isDark) Color.White.copy(alpha = 0.04f) else Color.Black.copy(alpha = 0.025f))
-                        .border(
-                            width = 1.dp,
-                            color = if (isDark) Color.White.copy(alpha = 0.08f) else Color.Black.copy(alpha = 0.06f),
-                            shape = RoundedCornerShape(20.dp)
-                        )
-                        .padding(28.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text(
-                            text = K.grandTotal.tr().preventBrokenLigatures(),
-                            style = TextStyle(
-                                fontFamily = ff,
-                                fontSize = 15.sp,
-                                fontWeight = FontWeight.Medium,
-                                color = colors.textSecondary
-                            )
-                        )
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text(
-                            text = CurrencyUtils.formatInr(invoice.totalAmount),
-                            style = TextStyle(
-                                fontFamily = ff,
-                                fontSize = 34.sp,
-                                fontWeight = FontWeight.ExtraBold,
-                                color = colors.textPrimary
-                            )
-                        )
-                    }
-                }
-            }
-
-            // Amount in Words Card (Pure Tamil + English)
-            item(key = "amount_in_words_card") {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(16.dp))
-                        .background(if (isDark) Color.White.copy(alpha = 0.04f) else Color.Black.copy(alpha = 0.025f))
-                        .border(
-                            width = 1.dp,
-                            color = if (isDark) Color.White.copy(alpha = 0.08f) else Color.Black.copy(alpha = 0.06f),
-                            shape = RoundedCornerShape(16.dp)
-                        )
-                        .padding(18.dp)
-                ) {
-                    Column(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalArrangement = Arrangement.spacedBy(6.dp)
-                    ) {
-                        Text(
-                            text = K.amountInWords.tr().preventBrokenLigatures(),
-                            style = TextStyle(
-                                fontFamily = ff,
-                                fontSize = 13.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = colors.textPrimary
-                            )
-                        )
-                        Text(
-                            text = tamilWords.preventBrokenLigatures(),
-                            style = TextStyle(
-                                fontFamily = ff,
-                                fontSize = 13.5.sp,
-                                fontWeight = FontWeight.Medium,
-                                color = colors.accent
-                            )
-                        )
-                        Text(
-                            text = englishWords,
-                            style = TextStyle(
-                                fontFamily = ff,
-                                fontSize = 12.5.sp,
-                                fontWeight = FontWeight.Normal,
-                                color = colors.textSecondary
-                            )
-                        )
-                    }
-                }
-            }
-
-            // Internal Notes / Comments
-            if (invoice.notes.isNotBlank()) {
-                item(key = "notes_card") {
-                    Column(modifier = Modifier.fillMaxWidth()) {
-                        Text(
-                            text = K.remarks.tr().preventBrokenLigatures(),
-                            style = TextStyle(
-                                fontFamily = ff,
-                                fontSize = 16.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = colors.textPrimary
-                            )
-                        )
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clip(RoundedCornerShape(14.dp))
-                                .background(if (isDark) Color.White.copy(alpha = 0.04f) else Color.Black.copy(alpha = 0.025f))
-                                .border(
-                                    width = 1.dp,
-                                    color = if (isDark) Color.White.copy(alpha = 0.08f) else Color.Black.copy(alpha = 0.06f),
-                                    shape = RoundedCornerShape(14.dp)
-                                )
-                                .padding(16.dp)
-                        ) {
-                            Text(
-                                text = invoice.notes.preventBrokenLigatures(),
-                                style = TextStyle(
-                                    fontFamily = ff,
-                                    fontSize = 14.sp,
-                                    color = colors.textPrimary
-                                )
-                            )
-                        }
                     }
                 }
             }
         }
+        item(key = "info") {
+            DocSection(null) {
+                DocRow(billNoLabel, invoice.invoiceNumber)
+                DocDivider()
+                DocRow(dateLabel, DateUtils.formatEpochMillis(invoice.invoiceDate))
+                DocDivider()
+                DocRow(fyLabel, DateUtils.financialYearLabel(invoice.invoiceDate))
+                DocDivider()
+                DocRow(placeLabel, if (primary.startsWith("ta")) options.placeOfSupplyTa.ifBlank { options.placeOfSupply } else options.placeOfSupply)
+            }
+        }
+        if (summary.lines.isNotEmpty()) {
+            item(key = "lines") {
+                DocSection("$itemsTitle (${summary.lines.size})") {
+                    summary.lines.forEachIndexed { i, line ->
+                        if (i > 0) DocDivider()
+                        DocLineRow(line)
+                    }
+                }
+            }
+        }
+        item(key = "totals") {
+            DocSection(null) {
+                DocRow(subtotalLabel, CurrencyUtils.formatInr(summary.subtotal))
+                if (summary.discount > 0.004) DocRow(discountLabel, "− " + CurrencyUtils.formatInr(summary.discount))
+                summary.extras.forEach { (label, amount) -> DocRow(label, CurrencyUtils.formatInr(amount)) }
+                if (summary.cgst > 0.004) DocRow("CGST", CurrencyUtils.formatInr(summary.cgst))
+                if (summary.sgst > 0.004) DocRow("SGST", CurrencyUtils.formatInr(summary.sgst))
+                if (summary.igst > 0.004) DocRow("IGST", CurrencyUtils.formatInr(summary.igst))
+                if (kotlin.math.abs(summary.roundOff) > 0.004) DocRow(roundLabel, (if (summary.roundOff < 0) "− " else "+ ") + CurrencyUtils.formatInr(kotlin.math.abs(summary.roundOff)))
+                DocDivider()
+                DocRow(totalLabel, CurrencyUtils.formatInr(invoice.totalAmount), strong = true)
+                if (isPaid) DocRow(paidRowLabel, "− " + CurrencyUtils.formatInr(invoice.totalAmount), valueColor = androidx.compose.ui.graphics.Color(0xFF16A34A))
+            }
+        }
+        item(key = "words") { DocTextCard(wordsTitle, listOf(words.first to true, words.second to false)) }
+        if (invoice.notes.isNotBlank()) {
+            item(key = "notes") { DocTextCard(notesTitle, listOf(invoice.notes to true)) }
+        }
+    }
+}
+
+/** What the totals card shows, worked out the same way the paper does. */
+private data class BillSummary(
+    val lines: List<BillLine>,
+    val subtotal: Double,
+    val discount: Double,
+    val extras: List<Pair<String, Double>>,
+    val cgst: Double,
+    val sgst: Double,
+    val igst: Double,
+    val roundOff: Double
+)
+
+private fun taxPart(json: String, key: String): Double =
+    Regex("\"$key\"\\s*:\\s*([-+0-9.eE]+)").find(json)?.groupValues?.get(1)?.toDoubleOrNull() ?: 0.0
+
+private fun billSummary(invoice: InvoiceModel, options: InvoiceDisplayOptions, isFactory: Boolean): BillSummary {
+    val cgst = taxPart(invoice.taxDataJson, "cgst")
+    val sgst = taxPart(invoice.taxDataJson, "sgst")
+    val igst = taxPart(invoice.taxDataJson, "igst")
+    val tax = cgst + sgst + igst
+    return if (isFactory) {
+        val items = FactoryCalculation.itemsFromJson(invoice.itemsJson)
+        val lines = items.map {
+            BillLine(it.itemName, it.itemNameEn, "${BillRules.plainNumber(it.weight)} kg × ${CurrencyUtils.formatInr(it.price)}", it.rowTotal.toDouble())
+        }
+        val subtotal = lines.sumOf { it.amount }
+        val extras = buildList {
+            if (invoice.postalCharges > 0) add("அஞ்சல் கட்டணம்" to invoice.postalCharges)
+            if (invoice.ahimsaSilkAmount > 0) add("அகிம்சா பட்டு" to invoice.ahimsaSilkAmount)
+        }
+        val before = subtotal - invoice.discount + extras.sumOf { it.second } + tax
+        BillSummary(lines, subtotal, invoice.discount, extras, cgst, sgst, igst, invoice.totalAmount - before)
+    } else {
+        val items = TextilesCalculation.itemsFromJson(invoice.itemsJson)
+        val totals = TextilesCalculation.calculate(items, options.globalDiscountValue, options.globalDiscountType, taxInclusive = options.taxInclusive)
+        val lines = items.map {
+            val detail = listOfNotNull(
+                it.hsnCode.takeIf { h -> h.isNotBlank() }?.let { h -> "HSN $h" },
+                "${BillRules.plainNumber(it.quantity)} × ${CurrencyUtils.formatInr(it.price)}",
+                if (it.taxRate > 0) "${BillRules.plainNumber(it.taxRate)}%" else null
+            ).joinToString("  •  ")
+            BillLine(it.itemName, it.itemNameEn, detail, it.taxableAmount)
+        }
+        val before = totals.subtotal - totals.totalDiscount + (if (options.taxInclusive) 0.0 else tax)
+        BillSummary(lines, totals.subtotal, totals.totalDiscount, emptyList(), cgst, sgst, igst, invoice.totalAmount - before)
     }
 }

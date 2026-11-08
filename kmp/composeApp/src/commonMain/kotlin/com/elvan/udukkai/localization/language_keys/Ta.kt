@@ -725,6 +725,12 @@ val ta: Map<String, String> = mapOf(
     K.noInternetConnection to "இணைய இணைப்பு இல்லை",
     K.noInternetDesc to "உங்கள் இணைய இணைப்பைச் சரிபார்த்து மீண்டும் முயற்சிக்கவும்",
     K.retryBtn to "மீண்டும் முயற்சி செய்",
+    K.billFullyPaid to "முழுத் தொகையும் பெறப்பட்டது",
+    K.balanceDue to "நிலுவைத் தொகை",
+    K.pendingForDays to "%s நாட்களாக நிலுவை",
+    K.recordPayment to "பெறுகை பதிவு செய்",
+    K.amountReceived to "பெற்ற தொகை",
+    K.paymentMode to "செலுத்தும் முறை",
 )
 
 /**

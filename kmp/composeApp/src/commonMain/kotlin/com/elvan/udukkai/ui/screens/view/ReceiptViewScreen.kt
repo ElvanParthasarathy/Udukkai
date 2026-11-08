@@ -1,45 +1,24 @@
 package com.elvan.udukkai.ui.screens.view
 
-import com.elvan.udukkai.core.print.billBusinessFolder
-import com.elvan.udukkai.ui.screens.preview.PreviewScreen
-import com.elvan.udukkai.core.print.isDocumentPrintSupported
-import com.elvan.udukkai.core.print.receiptPdfName
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import com.elvan.udukkai.core.platform.AppBackHandler
-import com.elvan.udukkai.core.utils.CurrencyUtils
+import com.elvan.udukkai.core.print.billBusinessFolder
+import com.elvan.udukkai.core.print.receiptPdfName
 import com.elvan.udukkai.core.utils.DateUtils
+import com.elvan.udukkai.core.utils.NumberToWords
+import com.elvan.udukkai.data.model.InvoiceModel
+import com.elvan.udukkai.data.model.PaymentType
 import com.elvan.udukkai.data.model.ReceiptModel
 import com.elvan.udukkai.data.settings.BusinessProfile
-import com.elvan.udukkai.localization.PrintLanguageManager
 import com.elvan.udukkai.localization.K
 import com.elvan.udukkai.localization.tr
-import com.elvan.udukkai.theme.Dimens
-import com.elvan.udukkai.theme.LocalAppFontFamily
-import com.elvan.udukkai.theme.preventBrokenLigatures
-import com.elvan.udukkai.theme.rememberShellColors
-import com.elvan.udukkai.ui.components.shell.LocalElvanTopSpacerHeight
 import com.elvan.udukkai.ui.navigation.MaterialSymbols
-import com.elvan.udukkai.theme.LocalShellColors
+import com.elvan.udukkai.ui.screens.preview.PreviewScreen
 
 /**
- * Receipt View Screen (பற்றுச்சீட்டு பார்வை)
- * Ported 1:1 from Flutter's patrucheettu_paarvai.dart.
+ * Receipt view (பெறுகை பார்வை): a native page like Zoho's payment receipt.
+ * Amount received on top, the customer, the receipt's details and the bills it settled (each opens).
+ * The paper (PDF) is made behind it for Open, Print and Share.
  */
 @Composable
 fun ReceiptViewScreen(
@@ -49,302 +28,92 @@ fun ReceiptViewScreen(
     onBack: () -> Unit,
     onEdit: () -> Unit,
     onPrint: (() -> Unit)? = null,
+    /** The bills this receipt settled. */
+    invoices: List<InvoiceModel> = emptyList(),
+    onOpenInvoice: ((InvoiceModel) -> Unit)? = null,
+    onOpenCustomer: (() -> Unit)? = null,
     printPayload: ((activeProfile: BusinessProfile) -> String)? = null
 ) {
-    if (printPayload != null && isDocumentPrintSupported) {
-        // The receipt itself is the view page: the rendered document with Edit, Open, Print and Share
-        val activeProfile = (if (receipt.companyId != null) allProfiles.find { it.id == receipt.companyId } else null)
-            ?: profile
-        val payload = remember(receipt, activeProfile) { printPayload(activeProfile) }
-        PreviewScreen(
-            title = K.receipt.tr() + " #" + receipt.receiptNumber,
-            onBack = onBack,
-            onEdit = onEdit,
-            printPayload = payload,
-            printFileName = receiptPdfName(receipt),
-            businessFolder = billBusinessFolder(activeProfile)
-        )
-    } else {
-        ReceiptDetailsScreen(receipt, profile, allProfiles, onBack, onEdit, onPrint)
-    }
+    val activeProfile = (if (receipt.companyId != null) allProfiles.find { it.id == receipt.companyId } else null) ?: profile
+    val payload = remember(receipt, activeProfile) { printPayload?.invoke(activeProfile) }
+    PreviewScreen(
+        title = K.receipt.tr() + " #" + receipt.receiptNumber,
+        onBack = onBack,
+        onEdit = onEdit,
+        printPayload = payload,
+        printFileName = receiptPdfName(receipt),
+        businessFolder = billBusinessFolder(activeProfile),
+        body = { ReceiptBody(receipt, activeProfile, invoices, onOpenInvoice, onOpenCustomer) }
+    )
 }
 
-/** Fallback where documents cannot be rendered (desktop): the receipt's details as cards. */
 @Composable
-private fun ReceiptDetailsScreen(
+private fun ReceiptBody(
     receipt: ReceiptModel,
     profile: BusinessProfile,
-    allProfiles: List<BusinessProfile>,
-    onBack: () -> Unit,
-    onEdit: () -> Unit,
-    onPrint: (() -> Unit)? = null
+    invoices: List<InvoiceModel>,
+    onOpenInvoice: ((InvoiceModel) -> Unit)?,
+    onOpenCustomer: (() -> Unit)?
 ) {
-    val colors = rememberShellColors()
-    val isDark = colors.isDark
-    val ff = LocalAppFontFamily.current
+    val primary = profile.primaryLanguage.ifEmpty { "ta" }
+    val secondary = profile.secondaryLanguage.ifEmpty { "en" }
+    val name = receipt.customerName[primary] ?: receipt.customerName[secondary] ?: receipt.customerName.values.firstOrNull().orEmpty().ifEmpty { "-" }
+    val secondName = if (profile.isBilingual) receipt.customerName[secondary].orEmpty() else ""
+    val town = receipt.customerAddress[primary] ?: receipt.customerAddress[secondary] ?: receipt.customerAddress.values.firstOrNull().orEmpty()
 
-    val activeProfile = (if (receipt.companyId != null) allProfiles.find { it.id == receipt.companyId } else null)
-        ?: profile
-    val isBilingual = activeProfile.isBilingual
-    val primaryLang = activeProfile.primaryLanguage.ifEmpty { "ta" }
-    val secondaryLang = activeProfile.secondaryLanguage.ifEmpty { "en" }
+    val receivedLabel = K.amountReceived.tr()
+    val numberLabel = K.receiptNumber.tr()
+    val dateLabel = K.date.tr()
+    val fyLabel = K.thisFinYear.tr()
+    val modeLabel = K.paymentMode.tr()
+    val refLabel = K.referenceOrTxnNo.tr()
+    val bankLabel = K.bank.tr()
+    val billsTitle = K.invoices.tr()
+    val wordsTitle = K.amountInWords.tr()
+    val notesTitle = K.remarks.tr()
+    val words = remember(receipt.amount) { NumberToWords.toTamil(receipt.amount) to NumberToWords.toEnglish(receipt.amount) }
 
-    val customerName = receipt.customerName[primaryLang]
-        ?: receipt.customerName[secondaryLang]
-        ?: receipt.customerName.values.firstOrNull().orEmpty().ifEmpty { "-" }
-
-    val secondaryCustomerName = if (isBilingual) (receipt.customerName[secondaryLang] ?: "") else ""
-
-
-    val scrollState = rememberLazyListState()
-
-    ViewTile(
-        title = "${K.receipt.tr()} #${receipt.receiptNumber}",
-        onBack = onBack,
-        scrollState = scrollState,
-        isDocument = true,
-        onEdit = onEdit,
-        onPrint = onPrint
-    ) {
-        LazyColumn(
-            state = scrollState,
-            modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(
-                start = 16.dp,
-                end = 16.dp,
-                bottom = Dimens.SubpageContentPaddingBottom + 64.dp
-            ),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            // One UI Collapsible Header top spacer
-            item(key = "top_spacer") {
-                Spacer(modifier = Modifier.height(LocalElvanTopSpacerHeight.current))
-            }
-
-            // Customer & Date Header Card
-            item(key = "header_card") {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(20.dp))
-                        .background(if (isDark) Color.White.copy(alpha = 0.05f) else Color.Black.copy(alpha = 0.03f))
-                        .border(
-                            width = 1.dp,
-                            color = if (isDark) Color.White.copy(alpha = 0.08f) else Color.Black.copy(alpha = 0.06f),
-                            shape = RoundedCornerShape(20.dp)
-                        )
-                        .padding(24.dp)
-                ) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.Top
-                    ) {
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text(
-                                text = customerName.preventBrokenLigatures(),
-                                style = TextStyle(
-                                    fontFamily = ff,
-                                    fontSize = 20.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = colors.textPrimary,
-                                    letterSpacing = (-0.2).sp
-                                )
-                            )
-                            if (isBilingual && secondaryCustomerName.isNotBlank() && secondaryCustomerName != customerName) {
-                                Spacer(modifier = Modifier.height(2.dp))
-                                Text(
-                                    text = secondaryCustomerName.preventBrokenLigatures(),
-                                    style = TextStyle(
-                                        fontFamily = ff,
-                                        fontSize = 14.sp,
-                                        fontWeight = FontWeight.Medium,
-                                        color = LocalShellColors.current.textSecondary
-                                    )
-                                )
-                            }
-                        }
-
-                        Spacer(modifier = Modifier.width(16.dp))
-
-                        Column(horizontalAlignment = Alignment.End) {
-                            Text(
-                                text = DateUtils.formatEpochMillis(receipt.receiptDate),
-                                style = TextStyle(
-                                    fontFamily = ff,
-                                    fontSize = 15.sp,
-                                    fontWeight = FontWeight.SemiBold,
-                                    color = colors.textPrimary
-                                )
-                            )
-                            val fy = DateUtils.normalizeFinYear(receipt.finYear, receipt.receiptDate)
-                            if (fy.isNotBlank()) {
-                                Spacer(modifier = Modifier.height(2.dp))
-                                Text(
-                                    text = "${K.thisFinYear.tr()}: $fy".preventBrokenLigatures(),
-                                    style = TextStyle(
-                                        fontFamily = ff,
-                                        fontSize = 12.sp,
-                                        fontWeight = FontWeight.Normal,
-                                        color = colors.textSecondary
-                                    )
-                                )
-                            }
-                            if (receipt.paymentMode.isNotBlank()) {
-                                Spacer(modifier = Modifier.height(6.dp))
-                                Box(
-                                    modifier = Modifier
-                                        .clip(RoundedCornerShape(6.dp))
-                                        .background(if (isDark) Color.White.copy(alpha = 0.08f) else Color.Black.copy(alpha = 0.06f))
-                                        .padding(horizontal = 8.dp, vertical = 4.dp)
-                                ) {
-                                    Text(
-                                        text = receipt.paymentMode.preventBrokenLigatures(),
-                                        style = TextStyle(
-                                            fontFamily = ff,
-                                            fontSize = 12.sp,
-                                            fontWeight = FontWeight.Bold,
-                                            color = colors.textPrimary
-                                        )
-                                    )
-                                }
-                            }
-                        }
-                    }
+    DocPage {
+        item(key = "status") { DocStatusHeader(DocTone.Paid, receivedLabel, receipt.amount) }
+        item(key = "customer") { DocCustomerCard(name, secondName, town, onOpenCustomer) }
+        item(key = "info") {
+            DocSection(null) {
+                DocRow(numberLabel, receipt.receiptNumber)
+                DocDivider()
+                DocRow(dateLabel, DateUtils.formatEpochMillis(receipt.receiptDate))
+                DocDivider()
+                DocRow(fyLabel, DateUtils.financialYearLabel(receipt.receiptDate))
+                DocDivider()
+                DocRow(modeLabel, PaymentType.fromStored(receipt.paymentMode).label())
+                if (!receipt.transactionNumber.isNullOrBlank()) {
+                    DocDivider()
+                    DocRow(refLabel, receipt.transactionNumber)
+                }
+                if (!receipt.bankName.isNullOrBlank()) {
+                    DocDivider()
+                    DocRow(bankLabel, receipt.bankName)
                 }
             }
-
-            // Total Received Amount Card
-            item(key = "total_card") {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(20.dp))
-                        .background(if (isDark) Color.White.copy(alpha = 0.04f) else Color.Black.copy(alpha = 0.025f))
-                        .border(
-                            width = 1.dp,
-                            color = if (isDark) Color.White.copy(alpha = 0.08f) else Color.Black.copy(alpha = 0.06f),
-                            shape = RoundedCornerShape(20.dp)
-                        )
-                        .padding(28.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text(
-                            text = K.grandTotal.tr().preventBrokenLigatures(),
-                            style = TextStyle(
-                                fontFamily = ff,
-                                fontSize = 15.sp,
-                                fontWeight = FontWeight.Medium,
-                                color = colors.textSecondary
-                            )
-                        )
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text(
-                            text = CurrencyUtils.formatInr(receipt.amount),
-                            style = TextStyle(
-                                fontFamily = ff,
-                                fontSize = 34.sp,
-                                fontWeight = FontWeight.ExtraBold,
-                                color = colors.textPrimary
-                            )
+        }
+        if (invoices.isNotEmpty()) {
+            item(key = "bills") {
+                DocSection("$billsTitle (${invoices.size})") {
+                    invoices.forEachIndexed { i, inv ->
+                        if (i > 0) DocDivider()
+                        DocLinkRow(
+                            icon = MaterialSymbols.Rounded.Description,
+                            title = inv.invoiceNumber,
+                            subtitle = DateUtils.formatEpochMillis(inv.invoiceDate),
+                            amount = inv.totalAmount,
+                            onClick = onOpenInvoice?.let { open -> { open(inv) } }
                         )
                     }
                 }
             }
-
-            // Payment Transaction / Reference Details
-            if (!receipt.transactionNumber.isNullOrBlank() || !receipt.bankName.isNullOrBlank()) {
-                item(key = "reference_details") {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clip(RoundedCornerShape(16.dp))
-                            .background(if (isDark) Color.White.copy(alpha = 0.04f) else Color.Black.copy(alpha = 0.025f))
-                            .border(
-                                width = 1.dp,
-                                color = if (isDark) Color.White.copy(alpha = 0.08f) else Color.Black.copy(alpha = 0.06f),
-                                shape = RoundedCornerShape(16.dp)
-                            )
-                            .padding(18.dp)
-                    ) {
-                        Column(
-                            modifier = Modifier.fillMaxWidth(),
-                            verticalArrangement = Arrangement.spacedBy(10.dp)
-                        ) {
-                            if (!receipt.transactionNumber.isNullOrBlank()) {
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.SpaceBetween
-                                ) {
-                                    Text(
-                                        text = "பரிமாற்ற எண்",
-                                        style = TextStyle(fontFamily = ff, fontSize = 14.sp, color = colors.textSecondary)
-                                    )
-                                    Text(
-                                        text = receipt.transactionNumber ?: "",
-                                        style = TextStyle(fontFamily = ff, fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = colors.textPrimary)
-                                    )
-                                }
-                            }
-                            if (!receipt.bankName.isNullOrBlank()) {
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.SpaceBetween
-                                ) {
-                                    Text(
-                                        text = K.bank.tr(),
-                                        style = TextStyle(fontFamily = ff, fontSize = 14.sp, color = colors.textSecondary)
-                                    )
-                                    Text(
-                                        text = receipt.bankName ?: "",
-                                        style = TextStyle(fontFamily = ff, fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = colors.textPrimary)
-                                    )
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-
-            // Notes / Comments
-            if (receipt.notes.isNotBlank()) {
-                item(key = "notes_card") {
-                    Column(modifier = Modifier.fillMaxWidth()) {
-                        Text(
-                            text = K.remarks.tr().preventBrokenLigatures(),
-                            style = TextStyle(
-                                fontFamily = ff,
-                                fontSize = 16.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = colors.textPrimary
-                            )
-                        )
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clip(RoundedCornerShape(14.dp))
-                                .background(if (isDark) Color.White.copy(alpha = 0.04f) else Color.Black.copy(alpha = 0.025f))
-                                .border(
-                                    width = 1.dp,
-                                    color = if (isDark) Color.White.copy(alpha = 0.08f) else Color.Black.copy(alpha = 0.06f),
-                                    shape = RoundedCornerShape(14.dp)
-                                )
-                                .padding(16.dp)
-                        ) {
-                            Text(
-                                text = receipt.notes.preventBrokenLigatures(),
-                                style = TextStyle(
-                                    fontFamily = ff,
-                                    fontSize = 14.sp,
-                                    color = colors.textPrimary
-                                )
-                            )
-                        }
-                    }
-                }
-            }
+        }
+        item(key = "words") { DocTextCard(wordsTitle, listOf(words.first to true, words.second to false)) }
+        if (receipt.notes.isNotBlank()) {
+            item(key = "notes") { DocTextCard(notesTitle, listOf(receipt.notes to true)) }
         }
     }
 }
