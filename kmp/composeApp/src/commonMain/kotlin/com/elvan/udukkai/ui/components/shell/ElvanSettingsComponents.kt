@@ -144,8 +144,12 @@ fun ElvanSettingsRow(
                 .padding(horizontal = 16.dp, vertical = 12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Circular icon container — 36px, monochrome background
-            if (icon != null || iconWidget != null) {
+            // An icon of its own soft colour in a tinted circle (Samsung style); the same icon always gets the same hue
+            if (icon != null && iconWidget == null && iconBgColor == null) {
+                val hue = iconTint ?: colors.palette[(icon.name.hashCode() and 0x7fffffff) % colors.palette.size]
+                com.elvan.udukkai.ui.components.ElvanTintedIcon(icon = icon, tint = hue, size = 36.dp, iconSize = 20.dp)
+                Spacer(modifier = Modifier.width(16.dp))
+            } else if (icon != null || iconWidget != null) {
                 Box(
                     modifier = Modifier
                         .size(36.dp)
@@ -250,12 +254,12 @@ fun ElvanSettingsSwitch(
         enabled = enabled,
         modifier = modifier,
         colors = SwitchDefaults.colors(
-            checkedThumbColor = if (isDark) Color.Black else Color.White,
-            checkedTrackColor = if (isDark) Color.White else Color.Black,
+            checkedThumbColor = Color.White,
+            checkedTrackColor = colors.link,
             uncheckedThumbColor = if (isDark) Color.White.copy(alpha = 0.6f) else Color.Black.copy(alpha = 0.6f),
             uncheckedTrackColor = if (isDark) Color.White.copy(alpha = 0.12f) else Color.Black.copy(alpha = 0.10f),
-            disabledCheckedThumbColor = (if (isDark) Color.Black else Color.White).copy(alpha = 0.6f),
-            disabledCheckedTrackColor = (if (isDark) Color.White else Color.Black).copy(alpha = 0.25f),
+            disabledCheckedThumbColor = Color.White.copy(alpha = 0.6f),
+            disabledCheckedTrackColor = colors.link.copy(alpha = 0.35f),
             disabledUncheckedThumbColor = (if (isDark) Color.White else Color.Black).copy(alpha = 0.3f),
             disabledUncheckedTrackColor = (if (isDark) Color.White else Color.Black).copy(alpha = 0.06f),
             checkedBorderColor = Color.Transparent,
@@ -644,8 +648,8 @@ fun ElvanSettingsEditContainer(
                 onClick = onSave,
                 shape = RoundedCornerShape(50),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = if (colors.isDark) Color.White else Color.Black,
-                    contentColor = if (colors.isDark) Color.Black else Color.White
+                    containerColor = colors.link,
+                    contentColor = Color.White
                 ),
                 elevation = ButtonDefaults.buttonElevation(0.dp)
             ) {

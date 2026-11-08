@@ -60,7 +60,7 @@ fun ElvanSheetConfirmButton(
                     fontSize = 15.sp,
                     fontWeight = FontWeight.Medium
                 ),
-                color = colors.textPrimary.copy(alpha = 0.8f)
+                color = colors.link
             )
         }
     }

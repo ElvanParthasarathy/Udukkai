@@ -241,58 +241,48 @@ fun ElvanCardSecondLine(
 }
 
 /**
- * Leading icon for cards, rendering the symbol alone with a rich, vibrant gradient.
+ * An icon in a round container filled with a soft wash of its own colour, as Samsung's My Files does:
+ * a dark, muted circle of the hue with the bright hue on the icon (light mode: a pale circle, a deep icon).
  */
+@Composable
+fun ElvanTintedIcon(
+    icon: ImageVector,
+    tint: Color,
+    modifier: Modifier = Modifier,
+    size: Dp = 40.dp,
+    iconSize: Dp = 22.dp,
+    contentDescription: String? = null
+) {
+    val dark = LocalShellColors.current.isDark
+    Box(
+        modifier = modifier
+            .size(size)
+            .clip(CircleShape)
+            .background(
+                Brush.verticalGradient(
+                    listOf(tint.copy(alpha = if (dark) 0.30f else 0.20f), tint.copy(alpha = if (dark) 0.15f else 0.10f))
+                )
+            ),
+        contentAlignment = Alignment.Center
+    ) {
+        Icon(imageVector = icon, contentDescription = contentDescription, tint = tint, modifier = Modifier.size(iconSize))
+    }
+}
+
+/** Leading icon for cards: the card's colour in a tinted circle. */
 @Composable
 fun ElvanCardLeadingIcon(
     icon: ImageVector,
     contentDescription: String? = null,
     modifier: Modifier = Modifier,
-    size: Dp = 26.dp,
-    iconSize: Dp = 26.dp,
+    size: Dp = 40.dp,
+    iconSize: Dp = 22.dp,
     borderRadius: Dp = 0.dp,
     tint: Color? = null,
     gradientColors: List<Color>? = null
 ) {
     val colors = LocalShellColors.current
-    val effectiveGradient = gradientColors ?: colors.gradientFor(tint ?: colors.modeAccent)
-    val effectiveTint = tint ?: colors.modeAccent
-
-    Box(
-        modifier = modifier
-            .padding(top = 1.dp)
-            .size(iconSize),
-        contentAlignment = Alignment.Center
-    ) {
-        if (effectiveGradient != null && effectiveGradient.size >= 2) {
-            Icon(
-                imageVector = icon,
-                contentDescription = contentDescription,
-                tint = Color.White,
-                modifier = Modifier
-                    .size(iconSize)
-                    .graphicsLayer(alpha = 0.99f)
-                    .drawWithCache {
-                        val brush = Brush.linearGradient(
-                            colors = effectiveGradient,
-                            start = Offset.Zero,
-                            end = Offset(this.size.width, this.size.height)
-                        )
-                        onDrawWithContent {
-                            drawContent()
-                            drawRect(brush = brush, blendMode = BlendMode.SrcIn)
-                        }
-                    }
-            )
-        } else {
-            Icon(
-                imageVector = icon,
-                contentDescription = contentDescription,
-                tint = effectiveTint,
-                modifier = Modifier.size(iconSize)
-            )
-        }
-    }
+    ElvanTintedIcon(icon, tint ?: colors.modeAccent, modifier, size, iconSize, contentDescription)
 }
 
 

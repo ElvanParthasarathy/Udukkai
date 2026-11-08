@@ -46,7 +46,15 @@ data class ShellColors(
     val invoiceGradient: List<Color> = emptyList(),
     val receiptGradient: List<Color> = emptyList(),
     val itemGradient: List<Color> = emptyList(),
-    val customerGradient: List<Color> = emptyList()
+    val customerGradient: List<Color> = emptyList(),
+    /** Samsung blue: buttons, switches and text links, as in One UI. */
+    val link: Color = if (isDark) Color(0xFF598FFF) else Color(0xFF2F6FE4),
+    /** Soft hues for icon circles (teal, amber, rose, indigo, violet, lime, blue), taken from Samsung My Files. */
+    val palette: List<Color> = if (isDark) listOf(
+        Color(0xFF5AD0B9), Color(0xFFE8BE7F), Color(0xFFF08AA8), Color(0xFFA6AAF0), Color(0xFFC9A4F5), Color(0xFF9ACF3A), Color(0xFF7FA8FF)
+    ) else listOf(
+        Color(0xFF13856F), Color(0xFFA86A12), Color(0xFFC2416A), Color(0xFF4F55C9), Color(0xFF7A4BC4), Color(0xFF5B8A00), Color(0xFF2F6FE4)
+    )
 )
 
 fun ShellColors.gradientFor(color: Color?): List<Color>? {

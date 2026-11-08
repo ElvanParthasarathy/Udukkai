@@ -121,7 +121,7 @@ fun ElvanFloatingActionBar(
                     modifier = Modifier
                         .fillMaxHeight()
                         // Each button as wide as its label, never narrower than a nav-bar tab
-                        .widthIn(min = 58.dp)
+                        .widthIn(min = 62.dp)
                         .clip(CircleShape)
                         .clickable(
                             interactionSource = remember { MutableInteractionSource() },
@@ -129,7 +129,7 @@ fun ElvanFloatingActionBar(
                             enabled = action.enabled && !action.isLoading,
                             onClick = action.onClick
                         )
-                        .padding(horizontal = 12.dp),
+                        .padding(horizontal = 13.dp),
                     contentAlignment = Alignment.Center
                 ) {
                     Column(

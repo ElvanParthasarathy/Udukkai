@@ -5,6 +5,10 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
+import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.runtime.compositionLocalOf
+import com.elvan.udukkai.ui.components.shell.LocalElvanTopSpacerHeight
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
@@ -22,14 +26,12 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.elvan.udukkai.core.platform.getNavBarHeightIgnoringVisibility
-import com.elvan.udukkai.core.platform.getStatusBarHeightIgnoringVisibility
 import com.elvan.udukkai.core.utils.CurrencyUtils
 import com.elvan.udukkai.theme.LocalAppFontFamily
 import com.elvan.udukkai.theme.preventBrokenLigatures
 import com.elvan.udukkai.theme.rememberShellColors
 import com.elvan.udukkai.ui.components.shell.ElvanSettingsDivider
 import com.elvan.udukkai.ui.components.shell.ElvanSettingsSection
-import com.elvan.udukkai.ui.components.shell.ElvanStandardTopBarHeight
 import com.elvan.udukkai.ui.navigation.MaterialSymbols
 
 /** One bill line as the view page shows it. */
@@ -48,24 +50,20 @@ private fun toneColor(tone: DocTone): Color {
     }
 }
 
-/** The scrolling page under the top bar and above the bottom action bar. */
+/** The list state of the view page, given by the page shell so its header fades as the page scrolls. */
+val LocalDocListState = compositionLocalOf<LazyListState?> { null }
+
+/** The scrolling page, under the same collapsing, fading header as the customer page. */
 @Composable
 fun DocPage(content: LazyListScope.() -> Unit) {
-    val top = getStatusBarHeightIgnoringVisibility() + ElvanStandardTopBarHeight
-    Box(Modifier.fillMaxSize()) {
-        LazyColumn(
-            modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(
-                start = 16.dp,
-                end = 16.dp,
-                top = top + 8.dp,
-                bottom = getNavBarHeightIgnoringVisibility() + 120.dp
-            ),
-            verticalArrangement = Arrangement.spacedBy(14.dp),
-            content = content
-        )
-        // Cards scroll away under a solid strip, so the title never sits on top of them
-        Box(Modifier.fillMaxWidth().height(top).background(rememberShellColors().background))
+    LazyColumn(
+        state = LocalDocListState.current ?: rememberLazyListState(),
+        modifier = Modifier.fillMaxSize(),
+        contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = getNavBarHeightIgnoringVisibility() + 120.dp),
+        verticalArrangement = Arrangement.spacedBy(14.dp)
+    ) {
+        item(key = "top_spacer") { Spacer(Modifier.height(LocalElvanTopSpacerHeight.current)) }
+        content()
     }
 }
 
@@ -134,7 +132,9 @@ fun DocCustomerCard(name: String, secondName: String, town: String, onClick: (()
         verticalAlignment = Alignment.CenterVertically
     ) {
         Box(
-            Modifier.size(44.dp).clip(CircleShape).background(colors.customerColor.copy(alpha = 0.16f)),
+            Modifier.size(44.dp).clip(CircleShape).background(
+                androidx.compose.ui.graphics.Brush.verticalGradient(listOf(colors.customerColor.copy(alpha = if (colors.isDark) 0.30f else 0.20f), colors.customerColor.copy(alpha = if (colors.isDark) 0.15f else 0.10f)))
+            ),
             contentAlignment = Alignment.Center
         ) {
             Text(
@@ -197,7 +197,7 @@ fun DocLinkRow(icon: ImageVector, title: String, subtitle: String, amount: Doubl
             .padding(horizontal = 20.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Icon(icon, contentDescription = null, tint = tint ?: colors.textSecondary, modifier = Modifier.size(22.dp))
+        com.elvan.udukkai.ui.components.ElvanTintedIcon(icon = icon, tint = tint ?: colors.textSecondary, size = 38.dp, iconSize = 20.dp)
         Spacer(Modifier.width(14.dp))
         Column(Modifier.weight(1f)) {
             Text(title.preventBrokenLigatures(), style = TextStyle(fontFamily = ff, fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = colors.textPrimary), maxLines = 1)
@@ -243,15 +243,15 @@ fun DocPrimaryButton(icon: ImageVector, label: String, onClick: () -> Unit) {
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(50))
-            .background(colors.textPrimary)
+            .background(colors.link)
             .clickable(onClick = onClick)
             .padding(vertical = 15.dp),
         horizontalArrangement = Arrangement.Center,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Icon(icon, contentDescription = null, tint = colors.background, modifier = Modifier.size(20.dp))
+        Icon(icon, contentDescription = null, tint = Color.White, modifier = Modifier.size(20.dp))
         Spacer(Modifier.width(8.dp))
-        Text(label.preventBrokenLigatures(), style = TextStyle(fontFamily = ff, fontSize = 15.sp, fontWeight = FontWeight.Bold, color = colors.background))
+        Text(label.preventBrokenLigatures(), style = TextStyle(fontFamily = ff, fontSize = 15.sp, fontWeight = FontWeight.Bold, color = Color.White))
     }
 }
 

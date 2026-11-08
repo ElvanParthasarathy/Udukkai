@@ -129,6 +129,39 @@ private fun DocumentPreview(
     var makePaper by remember { mutableStateOf(body == null) }
     LaunchedEffect(Unit) { if (!makePaper) { delay(450); makePaper = true } }
 
+    if (body != null) {
+        LaunchedEffect(Unit) {
+            if (controller.fileName.isBlank()) controller.fileName = fileName
+            controller.folder = businessFolder
+        }
+        // The same collapsing, fading header as the customer page
+        val listState = androidx.compose.foundation.lazy.rememberLazyListState()
+        ElvanSubShell(
+            title = title,
+            onBack = onBack,
+            scrollState = listState,
+            showBottomFade = true,
+            collapsedOnly = true,
+            floatingBar = { PreviewBottomArea(controller, onEdit, menuItems, quiet = true) }
+        ) {
+            Box(Modifier.fillMaxSize()) {
+                if (makePaper) {
+                    DocumentPrintView(
+                        payloadJson = payloadJson,
+                        fileName = fileName,
+                        controller = controller,
+                        topInset = 0.dp,
+                        modifier = Modifier.size(1.dp).graphicsLayer { alpha = 0f }
+                    )
+                }
+                androidx.compose.runtime.CompositionLocalProvider(com.elvan.udukkai.ui.screens.view.LocalDocListState provides listState) {
+                    body()
+                }
+            }
+        }
+        return
+    }
+
     LaunchedEffect(Unit) {
         if (controller.fileName.isBlank()) controller.fileName = fileName
         controller.folder = businessFolder

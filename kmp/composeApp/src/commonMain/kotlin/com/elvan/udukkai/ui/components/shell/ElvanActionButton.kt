@@ -32,7 +32,7 @@ fun ElvanActionButton(
     ) {
         Text(
             text = label,
-            color = if (enabled) colors.accent else colors.textSecondary.copy(alpha = 0.4f),
+            color = if (enabled) colors.link else colors.textSecondary.copy(alpha = 0.4f),
             fontWeight = FontWeight.Bold,
             fontSize = 15.sp,
             fontFamily = LocalAppFontFamily.current

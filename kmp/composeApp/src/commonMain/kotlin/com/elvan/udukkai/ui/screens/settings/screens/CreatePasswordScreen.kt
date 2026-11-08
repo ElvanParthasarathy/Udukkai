@@ -208,8 +208,8 @@ fun CreatePasswordScreen(
                                             .height(48.dp),
                                         shape = RoundedCornerShape(50),
                                         colors = ButtonDefaults.buttonColors(
-                                            containerColor = if (colors.isDark) Color.White else Color.Black,
-                                            contentColor = if (colors.isDark) Color.Black else Color.White
+                                            containerColor = colors.link,
+                                            contentColor = Color.White
                                         ),
                                         elevation = ButtonDefaults.buttonElevation(0.dp),
                                         enabled = passwordsMatch && passwordValid && !isProcessing
