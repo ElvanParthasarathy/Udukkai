@@ -1,5 +1,6 @@
 package com.elvan.udukkai.ui.components.shell
 
+import dev.chrisbanes.haze.hazeSource
 import androidx.compose.animation.core.CubicBezierEasing
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
@@ -399,12 +400,15 @@ fun ElvanShell(
                 .background(colors.background)
         }
 
+        val hazeState = dev.chrisbanes.haze.rememberHazeState()
+        androidx.compose.runtime.CompositionLocalProvider(LocalHazeState provides hazeState) {
         Box(
             modifier = shellModifier
         ) {
             // Layer 1: Content (100% Full screen, ZERO translation, ZERO bottom clipping)
             Box(
                 modifier = Modifier
+                    .hazeSource(hazeState)
                     .fillMaxSize()
                     .then(if (!showNavbar) Modifier.imePadding() else Modifier)
             ) {
@@ -658,6 +662,7 @@ fun ElvanShell(
                         }
                 )
             }
+        }
         }
     }
     }

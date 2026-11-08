@@ -260,7 +260,7 @@ fun ElvanTintedIcon(
             .clip(CircleShape)
             .background(
                 Brush.verticalGradient(
-                    listOf(tint.copy(alpha = if (dark) 0.30f else 0.20f), tint.copy(alpha = if (dark) 0.15f else 0.10f))
+                    listOf(tint.copy(alpha = if (dark) 0.30f else 0.16f), tint.copy(alpha = if (dark) 0.15f else 0.07f))
                 )
             ),
         contentAlignment = Alignment.Center
@@ -282,12 +282,27 @@ fun ElvanCardLeadingIcon(
     gradientColors: List<Color>? = null
 ) {
     val colors = LocalShellColors.current
-    // Cards stay monochrome: a neutral circle, the glyph in the text colour
+    val hue = tint ?: colors.modeAccent
+    val glyph = gradientColors ?: listOf(androidx.compose.ui.graphics.lerp(hue, Color.White, if (colors.isDark) 0.30f else 0.22f), hue)
     Box(
-        modifier = modifier.size(size).clip(CircleShape).background(colors.iconBg),
+        modifier = modifier.size(size).clip(CircleShape).background(hue.copy(alpha = if (colors.isDark) 0.18f else 0.11f)),
         contentAlignment = Alignment.Center
     ) {
-        Icon(imageVector = icon, contentDescription = contentDescription, tint = colors.textPrimary, modifier = Modifier.size(iconSize))
+        Icon(
+            imageVector = icon,
+            contentDescription = contentDescription,
+            tint = Color.White,
+            modifier = Modifier
+                .size(iconSize)
+                .graphicsLayer(alpha = 0.99f)
+                .drawWithCache {
+                    val brush = Brush.linearGradient(glyph, start = Offset.Zero, end = Offset(this.size.width, this.size.height))
+                    onDrawWithContent {
+                        drawContent()
+                        drawRect(brush = brush, blendMode = BlendMode.SrcIn)
+                    }
+                }
+        )
     }
 }
 

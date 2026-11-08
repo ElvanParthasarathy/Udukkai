@@ -27,8 +27,13 @@ actual val currentPlatform: PlatformType = PlatformType.ANDROID
 
 actual val isDebugBuild: Boolean = com.elvan.udukkai.BuildConfig.DEBUG
 
-actual fun edgeToEdgeDialogProperties() =
-    androidx.compose.ui.window.DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false)
+actual fun edgeToEdgeDialogProperties(dismissOnBackPress: Boolean, dismissOnClickOutside: Boolean) =
+    androidx.compose.ui.window.DialogProperties(
+        dismissOnBackPress = dismissOnBackPress,
+        dismissOnClickOutside = dismissOnClickOutside,
+        usePlatformDefaultWidth = false,
+        decorFitsSystemWindows = false
+    )
 
 private fun startView(uri: String, action: String) {
     val ctx = AppContext.context
@@ -129,6 +134,12 @@ actual fun ConfigureDialogWindow(
         window.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
         decorView.setPadding(0, 0, 0, 0)
         window.setLayout(WindowManager.LayoutParams.MATCH_PARENT, WindowManager.LayoutParams.MATCH_PARENT)
+        // The dim behind a sheet covers the status bar too, also beside a camera cut-out
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            window.attributes = window.attributes.apply { layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_ALWAYS }
+        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            window.attributes = window.attributes.apply { layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES }
+        }
         window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS)
         window.clearFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_NAVIGATION)
         window.clearFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS)

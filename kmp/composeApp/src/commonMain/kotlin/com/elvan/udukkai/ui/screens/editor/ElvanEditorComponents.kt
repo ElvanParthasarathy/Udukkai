@@ -119,9 +119,8 @@ fun ElvanEditorSection(
     val colors = rememberShellColors()
     val isDark = colors.isDark
     val ff = LocalAppFontFamily.current
-    // The step being filled is the app's blue; steps not reached yet come grey from the caller
-    val badgeBg = badgeColor ?: colors.link
-    val badgeTextColor = Color.White
+    val badgeBg = badgeColor ?: if (isDark) Color.White else Color.Black
+    val badgeTextColor = if (badgeColor != null) Color.White else if (isDark) Color.Black else Color.White
 
     Column(
         modifier = modifier

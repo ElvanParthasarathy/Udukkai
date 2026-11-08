@@ -91,10 +91,11 @@ fun rememberShellColors(): ShellColors {
                 accentContainer = Color.White.copy(alpha = 0.12f),
                 iconAccent = Color.White,
                 error = Color(0xFFFFB4AB),
-                invoiceColor = Color.White,
-                receiptColor = Color.White,
-                itemColor = Color.White,
-                customerColor = Color.White
+                // Each kind of card has its own colour on its icon (bright in dark mode)
+                invoiceColor = Color(0xFF5C9DFF),
+                receiptColor = Color(0xFF4FCB8A),
+                itemColor = Color(0xFFF4B94F),
+                customerColor = Color(0xFFB79CF7)
             )
         } else {
             ShellColors(
@@ -123,10 +124,11 @@ fun rememberShellColors(): ShellColors {
                 accentContainer = Color.Black.copy(alpha = 0.08f),
                 iconAccent = Color(0xFF1D1D1F),
                 error = Color(0xFFBA1A1A),
-                invoiceColor = Color.Black,
-                receiptColor = Color.Black,
-                itemColor = Color.Black,
-                customerColor = Color.Black
+                // Light mode: clear, bright tones, not dark ones
+                invoiceColor = Color(0xFF1E7BF2),
+                receiptColor = Color(0xFF16A864),
+                itemColor = Color(0xFFE8930C),
+                customerColor = Color(0xFF8A5CE6)
             )
         }
     }

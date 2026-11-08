@@ -992,9 +992,9 @@ fun ElvanAuthTextField(
 
 /** One colour per kind of setting, the way Samsung Settings colours its icons; the same icon is always the same colour. */
 private enum class Hue(val dark: Long, val light: Long) {
-    Blue(0xFF5C9DFF, 0xFF0072DE), Teal(0xFF4FD1B5, 0xFF0F8A72), Green(0xFF6CD27E, 0xFF2E8B3E), Lime(0xFFB5D650, 0xFF5B8A00),
-    Amber(0xFFF4BF63, 0xFFB06F00), Orange(0xFFFF9A62, 0xFFC4561A), Rose(0xFFF4849F, 0xFFC2416A), Violet(0xFFBFA0F7, 0xFF7446C7),
-    Indigo(0xFF9EA5F5, 0xFF4B52C9), Grey(0xFFAEB3BA, 0xFF5F6670), Red(0xFFFF7A7A, 0xFFC93434)
+    Blue(0xFF5C9DFF, 0xFF1E7BF2), Teal(0xFF4FD1B5, 0xFF0FB397), Green(0xFF6CD27E, 0xFF22AE4F), Lime(0xFFB5D650, 0xFF7DB316),
+    Amber(0xFFF4BF63, 0xFFF0A21C), Orange(0xFFFF9A62, 0xFFF4772E), Rose(0xFFF4849F, 0xFFE8507A), Violet(0xFFBFA0F7, 0xFF8E5CEB),
+    Indigo(0xFF9EA5F5, 0xFF5C66EC), Grey(0xFFAEB3BA, 0xFF8A919B), Red(0xFFFF7A7A, 0xFFEB4545)
 }
 
 private val settingsHues: Map<ImageVector, Hue> by lazy {

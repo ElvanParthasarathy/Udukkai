@@ -13,7 +13,8 @@ actual fun ConfigureDialogWindow(
     // No-op on desktop
 }
 
-actual fun edgeToEdgeDialogProperties() = androidx.compose.ui.window.DialogProperties(usePlatformDefaultWidth = false)
+actual fun edgeToEdgeDialogProperties(dismissOnBackPress: Boolean, dismissOnClickOutside: Boolean) =
+    androidx.compose.ui.window.DialogProperties(dismissOnBackPress = dismissOnBackPress, dismissOnClickOutside = dismissOnClickOutside, usePlatformDefaultWidth = false)
 
 actual fun openDialer(number: String) {
     // No phone on desktop

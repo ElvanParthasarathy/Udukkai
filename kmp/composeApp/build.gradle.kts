@@ -62,6 +62,8 @@ kotlin {
             implementation(compose.ui)
             implementation(compose.components.resources)
             implementation(compose.components.uiToolingPreview)
+            // Frosted glass behind the floating bars
+            implementation(libs.haze)
         }
         commonTest.dependencies {
             implementation(kotlin("test"))

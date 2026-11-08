@@ -104,11 +104,8 @@ fun ElvanActionSheet(
 
     Dialog(
         onDismissRequest = { if (dismissible) dismiss() },
-        properties = DialogProperties(
-            usePlatformDefaultWidth = false,
-            dismissOnBackPress = dismissible,
-            dismissOnClickOutside = dismissible
-        )
+        // Reaches under the status and navigation bars, so the dim covers the whole screen
+        properties = com.elvan.udukkai.core.platform.edgeToEdgeDialogProperties(dismissOnBackPress = dismissible, dismissOnClickOutside = dismissible)
     ) {
         ConfigureDialogWindow(isDark = isDark, clearDim = true)
 

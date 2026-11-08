@@ -8,10 +8,12 @@ compose-multiplatform = "1.9.3"
 kotlin = "2.1.0"
 googleServices = "4.4.2"
 firebase-bom = "33.10.0"
+haze = "1.6.10"
 
 [libraries]
 androidx-activity-compose = { module = "androidx.activity:activity-compose", version.ref = "androidx-activityCompose" }
 firebase-bom = { module = "com.google.firebase:firebase-bom", version.ref = "firebase-bom" }
+haze = { module = "dev.chrisbanes.haze:haze", version.ref = "haze" }
 firebase-database = { module = "com.google.firebase:firebase-database" }
 firebase-auth = { module = "com.google.firebase:firebase-auth" }
 firebase-appcheck-playintegrity = { module = "com.google.firebase:firebase-appcheck-playintegrity" }

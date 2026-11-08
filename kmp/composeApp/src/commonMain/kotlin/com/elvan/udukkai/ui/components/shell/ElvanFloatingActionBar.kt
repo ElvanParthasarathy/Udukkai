@@ -101,10 +101,7 @@ fun ElvanFloatingActionBar(
                     blurRadius = 16.dp,
                     offsetY = 4.dp
                 )
-                .background(
-                    color = colors.floatingBg.copy(alpha = 0.92f),
-                    shape = CircleShape
-                )
+                .frostedGlass(CircleShape, colors)
                 .border(
                     width = 0.5.dp,
                     color = colors.floatingBorder.copy(alpha = if (isDark) 0.15f else 0.6f),

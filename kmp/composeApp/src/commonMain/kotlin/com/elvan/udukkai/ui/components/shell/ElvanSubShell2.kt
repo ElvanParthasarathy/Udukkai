@@ -1,5 +1,6 @@
 package com.elvan.udukkai.ui.components.shell
 
+import dev.chrisbanes.haze.hazeSource
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -49,6 +50,8 @@ fun ElvanSubShell2(
     val statusTop = getStatusBarHeightIgnoringVisibility()
     val navBottom = getNavBarHeightIgnoringVisibility()
 
+    val hazeState = dev.chrisbanes.haze.rememberHazeState()
+    androidx.compose.runtime.CompositionLocalProvider(LocalHazeState provides hazeState) {
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -56,7 +59,7 @@ fun ElvanSubShell2(
             // Swallows touches that the page itself does not use, so none reach the screen below
             .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null) {}
     ) {
-        content()
+        Box(Modifier.fillMaxSize().hazeSource(hazeState)) { content() }
 
         AnimatedVisibility(
             visible = !hideChrome,
@@ -105,5 +108,6 @@ fun ElvanSubShell2(
                 }
             }
         }
+    }
     }
 }
