@@ -886,8 +886,7 @@ fun ElvanEditorBottomBar(
     showSave: Boolean = true
 ) {
     val previewLabel = K.previewToolbarBtn.tr()
-    val saveColor = com.elvan.udukkai.theme.rememberShellColors().link
-    val actions = remember(label, enabled, isLoading, onClick, onPreview, previewLabel, showSave, saveColor) {
+    val actions = remember(label, enabled, isLoading, onClick, onPreview, previewLabel, showSave) {
         listOfNotNull(
             onPreview?.let {
                 ElvanFloatingAction(
@@ -902,8 +901,7 @@ fun ElvanEditorBottomBar(
                     icon = MaterialSymbols.Rounded.Save,
                     onClick = onClick,
                     enabled = enabled,
-                    isLoading = isLoading,
-                    customColor = if (enabled) saveColor else null
+                    isLoading = isLoading
                 )
             } else null
         )

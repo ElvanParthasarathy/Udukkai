@@ -49,3 +49,5 @@ actual fun isNetworkAvailable(): Boolean {
         true
     }
 }
+
+actual fun dialogBlurAvailable(): Boolean = false

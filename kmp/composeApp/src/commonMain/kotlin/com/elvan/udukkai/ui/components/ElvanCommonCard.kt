@@ -254,38 +254,9 @@ fun ElvanTintedIcon(
     contentDescription: String? = null
 ) {
     val dark = LocalShellColors.current.isDark
+    val glyph = listOf(androidx.compose.ui.graphics.lerp(tint, Color.White, if (dark) 0.30f else 0.22f), tint)
     Box(
-        modifier = modifier
-            .size(size)
-            .clip(CircleShape)
-            .background(
-                Brush.verticalGradient(
-                    listOf(tint.copy(alpha = if (dark) 0.30f else 0.16f), tint.copy(alpha = if (dark) 0.15f else 0.07f))
-                )
-            ),
-        contentAlignment = Alignment.Center
-    ) {
-        Icon(imageVector = icon, contentDescription = contentDescription, tint = tint, modifier = Modifier.size(iconSize))
-    }
-}
-
-/** Leading icon for cards: the card's colour in a tinted circle. */
-@Composable
-fun ElvanCardLeadingIcon(
-    icon: ImageVector,
-    contentDescription: String? = null,
-    modifier: Modifier = Modifier,
-    size: Dp = 40.dp,
-    iconSize: Dp = 20.dp,
-    borderRadius: Dp = 0.dp,
-    tint: Color? = null,
-    gradientColors: List<Color>? = null
-) {
-    val colors = LocalShellColors.current
-    val hue = tint ?: colors.modeAccent
-    val glyph = gradientColors ?: listOf(androidx.compose.ui.graphics.lerp(hue, Color.White, if (colors.isDark) 0.30f else 0.22f), hue)
-    Box(
-        modifier = modifier.size(size).clip(CircleShape).background(hue.copy(alpha = if (colors.isDark) 0.18f else 0.11f)),
+        modifier = modifier.size(size).clip(CircleShape).background(tint.copy(alpha = if (dark) 0.18f else 0.11f)),
         contentAlignment = Alignment.Center
     ) {
         Icon(
@@ -304,6 +275,22 @@ fun ElvanCardLeadingIcon(
                 }
         )
     }
+}
+
+/** Leading icon for cards: the card's colour in a tinted circle. */
+@Composable
+fun ElvanCardLeadingIcon(
+    icon: ImageVector,
+    contentDescription: String? = null,
+    modifier: Modifier = Modifier,
+    size: Dp = 40.dp,
+    iconSize: Dp = 20.dp,
+    borderRadius: Dp = 0.dp,
+    tint: Color? = null,
+    gradientColors: List<Color>? = null
+) {
+    val colors = LocalShellColors.current
+    ElvanTintedIcon(icon, tint ?: colors.modeAccent, modifier, size, iconSize, contentDescription)
 }
 
 

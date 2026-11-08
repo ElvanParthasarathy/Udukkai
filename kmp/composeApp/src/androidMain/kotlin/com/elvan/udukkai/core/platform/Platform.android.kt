@@ -134,6 +134,11 @@ actual fun ConfigureDialogWindow(
         window.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
         decorView.setPadding(0, 0, 0, 0)
         window.setLayout(WindowManager.LayoutParams.MATCH_PARENT, WindowManager.LayoutParams.MATCH_PARENT)
+        // Frosted glass: whatever is behind a sheet or dialog is blurred (where the phone allows it)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && window.windowManager.isCrossWindowBlurEnabled) {
+            window.addFlags(WindowManager.LayoutParams.FLAG_BLUR_BEHIND)
+            window.attributes = window.attributes.apply { blurBehindRadius = 48 }
+        }
         // The dim behind a sheet covers the status bar too, also beside a camera cut-out
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
             window.attributes = window.attributes.apply { layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_ALWAYS }
@@ -278,3 +283,8 @@ actual fun isNetworkAvailable(): Boolean {
         false
     }
 }
+
+actual fun dialogBlurAvailable(): Boolean = try {
+    android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S &&
+        (AppContext.context.getSystemService(android.content.Context.WINDOW_SERVICE) as android.view.WindowManager).isCrossWindowBlurEnabled
+} catch (_: Exception) { false }

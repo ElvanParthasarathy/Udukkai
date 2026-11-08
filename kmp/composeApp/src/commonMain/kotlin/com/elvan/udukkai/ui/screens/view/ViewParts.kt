@@ -101,8 +101,14 @@ fun ViewStats(
     colors: ShellColors
 ) {
     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-        ElvanStatsCard(icon = left.first, label = left.second, value = left.third, colors = colors, modifier = Modifier.weight(1f))
-        ElvanStatsCard(icon = right.first, label = right.second, value = right.third, colors = colors, modifier = Modifier.weight(1f))
+        for ((icon, label, value) in listOf(left, right)) {
+            val hue = viewIconHue(icon, colors)
+            ElvanStatsCard(
+                icon = icon, label = label, value = value, colors = colors, modifier = Modifier.weight(1f),
+                accentColor = hue,
+                gradientColors = listOf(androidx.compose.ui.graphics.lerp(hue, androidx.compose.ui.graphics.Color.White, 0.3f), hue)
+            )
+        }
     }
 }
 
@@ -125,12 +131,7 @@ fun ViewQuickActions(actions: List<Triple<ImageVector, String, () -> Unit>>, col
                     )
                     .padding(horizontal = 16.dp, vertical = 6.dp)
             ) {
-                Box(
-                    modifier = Modifier.size(56.dp).clip(CircleShape).background(colors.surface),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(icon, null, tint = colors.textPrimary, modifier = Modifier.size(24.dp))
-                }
+                com.elvan.udukkai.ui.components.ElvanTintedIcon(icon = icon, tint = viewIconHue(icon, colors), size = 56.dp, iconSize = 24.dp)
                 Spacer(Modifier.height(6.dp))
                 Text(label.preventBrokenLigatures(), style = TextStyle(fontFamily = ff, fontSize = 13.sp, color = colors.textSecondary))
             }
@@ -239,5 +240,18 @@ fun ViewBillsSection(title: String, bills: List<ViewBillRow>, colors: ShellColor
                 Icon(MaterialSymbols.Rounded.ChevronRight, null, tint = colors.border, modifier = Modifier.size(18.dp))
             }
         }
+    }
+}
+
+/** The colour a view page gives an icon: money green, bills blue, unpaid amber, weight amber, call green, mail blue. */
+private fun viewIconHue(icon: ImageVector, colors: ShellColors): androidx.compose.ui.graphics.Color = with(MaterialSymbols.Rounded) {
+    when (icon) {
+        CurrencyRupeeCircle -> colors.receiptColor
+        InvoiceFill -> colors.invoiceColor
+        Receipt -> colors.itemColor
+        Straighten -> colors.itemColor
+        Call -> colors.receiptColor
+        Email -> colors.invoiceColor
+        else -> colors.customerColor
     }
 }

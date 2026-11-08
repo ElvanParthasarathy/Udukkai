@@ -34,3 +34,6 @@ expect fun updatePlatformLauncher(languageCode: String)
 
 /** Returns true if the device currently has an active internet connection. */
 expect fun isNetworkAvailable(): Boolean
+
+/** True where a dialog can blur the screen behind it (Android 12+ with window blur on); sheets stay solid elsewhere. */
+expect fun dialogBlurAvailable(): Boolean

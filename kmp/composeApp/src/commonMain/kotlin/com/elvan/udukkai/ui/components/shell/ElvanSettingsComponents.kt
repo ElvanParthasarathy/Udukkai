@@ -1000,8 +1000,8 @@ private enum class Hue(val dark: Long, val light: Long) {
 private val settingsHues: Map<ImageVector, Hue> by lazy {
     with(MaterialSymbols.Rounded) {
         mapOf(
-            BusinessCenter to Hue.Blue, LocationOn to Hue.Green, CreditCard to Hue.Teal, Description to Hue.Orange,
-            LightMode to Hue.Amber, Translate to Hue.Violet, Person to Hue.Indigo, Folder to Hue.Lime, Info to Hue.Grey,
+            BusinessCenter to Hue.Blue, LocationOn to Hue.Teal, CreditCard to Hue.Indigo, Description to Hue.Blue,
+            LightMode to Hue.Amber, Translate to Hue.Violet, Person to Hue.Indigo, Folder to Hue.Green, Info to Hue.Grey,
             CloudUpload to Hue.Blue, Sync to Hue.Teal, Restore to Hue.Green, Schedule to Hue.Violet, Share to Hue.Orange,
             Lock to Hue.Teal, Key to Hue.Amber, Link to Hue.Blue, Logout to Hue.Orange, DeleteForever to Hue.Red,
             Email to Hue.Rose, Code to Hue.Grey, Handyman to Hue.Amber, Payments to Hue.Green, ReceiptFill to Hue.Teal
