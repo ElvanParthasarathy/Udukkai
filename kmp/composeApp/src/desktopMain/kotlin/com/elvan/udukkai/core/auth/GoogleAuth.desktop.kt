@@ -48,3 +48,5 @@ actual suspend fun platformDeleteAccount(password: String?): Result<Unit> {
 }
 
 actual suspend fun platformRefreshAccount() {}
+
+actual suspend fun platformUpdateDisplayName(name: String): Result<Unit> = Result.success(Unit)

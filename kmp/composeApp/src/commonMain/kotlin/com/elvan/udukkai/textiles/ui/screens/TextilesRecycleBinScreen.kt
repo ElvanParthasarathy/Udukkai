@@ -1,5 +1,6 @@
 package com.elvan.udukkai.textiles.ui.screens
 
+import com.elvan.udukkai.ui.components.dragSelect
 import com.elvan.udukkai.ui.screens.recyclebin.RecycleBinTab
 import com.elvan.udukkai.ui.screens.recyclebin.RecycleBinBottomNavBar
 import com.elvan.udukkai.ui.screens.recyclebin.RecycleBinSelectionBar
@@ -164,8 +165,8 @@ fun TextilesRecycleBinScreen(
         selectedItemIds = if (selectedItemIds.contains(id)) selectedItemIds - id else selectedItemIds + id
     }
     val onStartSelection: (Long) -> Unit = { id ->
+        selectedItemIds = if (isSelectionMode) selectedItemIds + id else setOf(id)
         isSelectionMode = true
-        selectedItemIds = setOf(id)
     }
 
     // System Back handling
@@ -342,7 +343,7 @@ fun TextilesRecycleBinScreen(
             RecycleBinTab.Create -> {
                 LazyColumn(
                     state = createScrollState,
-                    modifier = Modifier.fillMaxSize(),
+                    modifier = Modifier.fillMaxSize().dragSelect(createScrollState, { it in selectedItemIds }, onStartSelection, onToggleItem),
                     contentPadding = PaddingValues(start = 0.dp, top = 0.dp, end = 0.dp, bottom = Dimens.ContentPaddingBottom),
                     verticalArrangement = Arrangement.spacedBy(14.dp)
                 ) {
@@ -381,7 +382,7 @@ fun TextilesRecycleBinScreen(
                                 )
                             }
                         } else {
-                            itemsIndexed(displayedInvoices, key = { _, inv -> inv.id }) { index, invoice ->
+                            itemsIndexed(displayedInvoices, key = { _, inv -> "invoice_${inv.id}" }) { index, invoice ->
                                 val isSelected = selectedItemIds.contains(invoice.id)
                                 val onCardClick = {
                                     if (isSelectionMode) onToggleItem(invoice.id) else onStartSelection(invoice.id)
@@ -409,7 +410,7 @@ fun TextilesRecycleBinScreen(
                                 )
                             }
                         } else {
-                            itemsIndexed(displayedReceipts, key = { _, rec -> rec.id }) { index, receipt ->
+                            itemsIndexed(displayedReceipts, key = { _, rec -> "receipt_${rec.id}" }) { index, receipt ->
                                 val isSelected = selectedItemIds.contains(receipt.id)
                                 val onCardClick = {
                                     if (isSelectionMode) onToggleItem(receipt.id) else onStartSelection(receipt.id)
@@ -437,7 +438,7 @@ fun TextilesRecycleBinScreen(
             RecycleBinTab.Items -> {
                 LazyColumn(
                     state = itemsScrollState,
-                    modifier = Modifier.fillMaxSize(),
+                    modifier = Modifier.fillMaxSize().dragSelect(itemsScrollState, { it in selectedItemIds }, onStartSelection, onToggleItem),
                     contentPadding = PaddingValues(start = Dimens.ContentPadding, top = 0.dp, end = Dimens.ContentPadding, bottom = Dimens.ContentPaddingBottom),
                     verticalArrangement = Arrangement.spacedBy(14.dp)
                 ) {
@@ -453,7 +454,7 @@ fun TextilesRecycleBinScreen(
                             )
                         }
                     } else {
-                        itemsIndexed(displayedItems, key = { _, item -> item.id }) { index, item ->
+                        itemsIndexed(displayedItems, key = { _, item -> "item_${item.id}" }) { index, item ->
                             val isSelected = selectedItemIds.contains(item.id)
                             val onCardClick = {
                                 if (isSelectionMode) onToggleItem(item.id) else onStartSelection(item.id)
@@ -477,7 +478,7 @@ fun TextilesRecycleBinScreen(
             RecycleBinTab.Customers -> {
                 LazyColumn(
                     state = customersScrollState,
-                    modifier = Modifier.fillMaxSize(),
+                    modifier = Modifier.fillMaxSize().dragSelect(customersScrollState, { it in selectedItemIds }, onStartSelection, onToggleItem),
                     contentPadding = PaddingValues(start = Dimens.ContentPadding, top = 0.dp, end = Dimens.ContentPadding, bottom = Dimens.ContentPaddingBottom),
                     verticalArrangement = Arrangement.spacedBy(14.dp)
                 ) {
@@ -493,7 +494,7 @@ fun TextilesRecycleBinScreen(
                             )
                         }
                     } else {
-                        itemsIndexed(displayedCustomers, key = { _, merchant -> merchant.id }) { index, merchant ->
+                        itemsIndexed(displayedCustomers, key = { _, merchant -> "cust_${merchant.id}" }) { index, merchant ->
                             val isSelected = selectedItemIds.contains(merchant.id)
                             val onCardClick = {
                                 if (isSelectionMode) onToggleItem(merchant.id) else onStartSelection(merchant.id)

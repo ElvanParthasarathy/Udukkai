@@ -72,6 +72,13 @@ kotlin {
             implementation(compose.desktop.currentOs)
             implementation("org.xerial:sqlite-jdbc:3.45.1.0")
         }
+        val desktopTest by getting {
+            dependencies {
+                // Real pointer gestures against the shared Compose code
+                implementation(compose.desktop.uiTestJUnit4)
+                implementation(compose.desktop.currentOs)
+            }
+        }
     }
 }
 

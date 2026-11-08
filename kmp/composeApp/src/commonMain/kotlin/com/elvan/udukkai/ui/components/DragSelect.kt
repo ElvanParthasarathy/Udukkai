@@ -10,7 +10,6 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.PointerEventPass
-import androidx.compose.ui.input.pointer.changedToUp
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.coroutineScope
@@ -50,7 +49,7 @@ internal fun idsBetween(rows: Map<Int, List<Long>>, aRow: Int, aCol: Int, bRow: 
 }
 
 /**
- * Samsung My Files / Google Photos multi-select: hold a card that is not selected yet and, without lifting, slide.
+ * Samsung My Files / Google Photos multi-select: hold a card and, without lifting, slide. Works from any card, as often as you like.
  * Every card between where the hold began and the finger is selected; slide back and the cards the finger leaves are
  * unselected again (a card selected earlier and swept over and left is unselected too, as in both reference apps).
  * Cards outside the slide are never touched. Near the top or bottom the list scrolls by itself.
@@ -75,10 +74,12 @@ fun Modifier.dragSelect(
             awaitEachGesture {
                 val down = awaitFirstDown(requireUnconsumed = false, pass = PointerEventPass.Initial)
                 // Held still for the long-press time? A quick lift or a move first means an ordinary tap or scroll.
+                // Not pressed covers a lift and a cancel: when the phone takes the touch for its Back gesture Compose reports it
+                // already consumed, so changedToUp() stays false and this timer would "hold" the card under the swipe.
                 val movedOrLifted = withTimeoutOrNull(viewConfiguration.longPressTimeoutMillis) {
                     while (true) {
                         val change = awaitPointerEvent(PointerEventPass.Initial).changes.firstOrNull { it.id == down.id } ?: return@withTimeoutOrNull true
-                        if (change.changedToUp() || (change.position - down.position).getDistance() > viewConfiguration.touchSlop) return@withTimeoutOrNull true
+                        if (!change.pressed || (change.position - down.position).getDistance() > viewConfiguration.touchSlop) return@withTimeoutOrNull true
                     }
                     @Suppress("UNREACHABLE_CODE") false
                 }
@@ -99,12 +100,11 @@ fun Modifier.dragSelect(
                         ?: if (fingerY < first.offset) first else if (fingerY >= last.offset + last.size) last else null
                 }
                 noteRows()
-                // Only a hold that lands on a card that is not selected yet starts a drag (header, filter pills, gaps and selected cards do not)
+                // Only a hold on a card starts a drag (header, filter pills and gaps do not)
                 val start = rowAtFinger() ?: return@awaitEachGesture
                 val startCards = rows[start.index].orEmpty()
                 if (startCards.isEmpty()) return@awaitEachGesture
                 val anchorCol = columnAt(startCards.size, fingerX, width)
-                if (selected(startCards[anchorCol])) return@awaitEachGesture
 
                 var applied = emptySet<Long>()
                 fun pick() {
@@ -113,7 +113,7 @@ fun Modifier.dragSelect(
                     val range = idsBetween(rows, start.index, anchorCol, row.index, columnAt(rows[row.index].orEmpty().size, fingerX, width))
                     if (range == applied) return
                     (range - applied).forEach { add(it) }
-                    (applied - range).forEach { remove(it) }
+                    (applied - range).filter(selected).forEach { remove(it) } // a card Back already cleared is left alone: remove toggles
                     applied = range
                 }
                 pick()
@@ -135,7 +135,7 @@ fun Modifier.dragSelect(
                 try {
                     while (true) {
                         val change = awaitPointerEvent(PointerEventPass.Initial).changes.firstOrNull { it.id == down.id } ?: break
-                        if (change.changedToUp()) break
+                        if (!change.pressed) break
                         fingerX = change.position.x
                         fingerY = change.position.y
                         pick()
