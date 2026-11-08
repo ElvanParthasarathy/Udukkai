@@ -37,7 +37,7 @@ fun InvoiceViewScreen(
     onPrint: (() -> Unit)? = null,
     onCopy: (() -> Unit)? = null,
     onConvertToTaxInvoice: (() -> Unit)? = null,
-    /** The receipts that paid this bill: each opens from the page and from the menu. */
+    /** The receipts that paid this bill: each opens from the page. */
     receipts: List<ReceiptModel> = emptyList(),
     onOpenReceipt: ((ReceiptModel) -> Unit)? = null,
     /** A bill still due: makes a receipt for it with the customer and amount filled in. */
@@ -52,7 +52,6 @@ fun InvoiceViewScreen(
     val docTitle = if (isProforma) K.proforma.tr() else K.invoice.tr()
     val convertTitle = K.convertToTaxInvoice.tr()
     val copyTitle = K.copyBtn.tr()
-    val receiptWord = K.receipt.tr()
 
     PreviewScreen(
         title = "$docTitle #${invoice.invoiceNumber}",
@@ -60,7 +59,6 @@ fun InvoiceViewScreen(
         onEdit = if (isPaid) null else onEdit,
         menuItems = buildList {
             if (isProforma && onConvertToTaxInvoice != null) add(ElvanPopupMenuItem(convertTitle, MaterialSymbols.Rounded.SwapHoriz, onConvertToTaxInvoice))
-            if (onOpenReceipt != null) receipts.forEach { r -> add(ElvanPopupMenuItem("$receiptWord ${r.receiptNumber}", MaterialSymbols.Rounded.ReceiptFill) { onOpenReceipt(r) }) }
             if (onCopy != null) add(ElvanPopupMenuItem(copyTitle, MaterialSymbols.Rounded.ContentCopy, onCopy))
         },
         printPayload = payload,
