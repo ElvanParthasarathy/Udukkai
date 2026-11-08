@@ -35,6 +35,7 @@ import com.elvan.udukkai.core.print.PrintNoticeKind
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.pointerInput
 import com.elvan.udukkai.ui.components.shell.ElvanFloatingAction
 import com.elvan.udukkai.ui.components.shell.ElvanFloatingActionBar
@@ -84,6 +85,7 @@ fun PreviewScreen(
     printFileName: String = subtitle ?: title,
     printController: DocumentPrintController? = null,
     externalPrintView: Boolean = false,
+    showPreparationOverlay: Boolean = false,
     /** A native page shown instead of the paper: opens at once, the PDF is made behind it for Open, Print and Share. */
     body: (@Composable () -> Unit)? = null
 ) {
@@ -103,6 +105,7 @@ fun PreviewScreen(
             fileName = printFileName,
             controller = controller,
             externalPrintView = externalPrintView,
+            showPreparationOverlay = showPreparationOverlay,
             body = body
         )
     } else {
@@ -122,6 +125,7 @@ private fun DocumentPreview(
     fileName: String,
     controller: DocumentPrintController,
     externalPrintView: Boolean,
+    showPreparationOverlay: Boolean = false,
     body: (@Composable () -> Unit)? = null
 ) {
     val colors = rememberShellColors()
@@ -134,6 +138,20 @@ private fun DocumentPreview(
             if (controller.fileName.isBlank()) controller.fileName = fileName
             controller.folder = businessFolder
         }
+
+        var showPreparationLoader by remember { mutableStateOf(false) }
+        if (showPreparationOverlay) {
+            val isWorking = makePaper && (!controller.isReady || controller.isRefreshing || controller.isBusy) && controller.notice == null
+            LaunchedEffect(isWorking) {
+                if (isWorking) {
+                    delay(180)
+                    showPreparationLoader = true
+                } else {
+                    showPreparationLoader = false
+                }
+            }
+        }
+
         // The same collapsing, fading header as the customer page
         val listState = androidx.compose.foundation.lazy.rememberLazyListState()
         ElvanSubShell(
@@ -142,7 +160,37 @@ private fun DocumentPreview(
             scrollState = listState,
             showBottomFade = true,
             collapsedOnly = true,
-            floatingBar = { PreviewBottomArea(controller, onEdit, menuItems, quiet = true) }
+            floatingBar = { PreviewBottomArea(controller, onEdit, menuItems, quiet = true) },
+            overlay = {
+                if (showPreparationOverlay) {
+                    androidx.compose.animation.AnimatedVisibility(
+                        visible = showPreparationLoader,
+                        enter = androidx.compose.animation.fadeIn(androidx.compose.animation.core.tween(220)),
+                        exit = androidx.compose.animation.fadeOut(androidx.compose.animation.core.tween(320))
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .background(colors.background.copy(alpha = 0.88f))
+                                .pointerInput(Unit) {
+                                    awaitPointerEventScope {
+                                        while (true) {
+                                            val event = awaitPointerEvent(PointerEventPass.Initial)
+                                            event.changes.forEach { it.consume() }
+                                        }
+                                    }
+                                },
+                            contentAlignment = Alignment.Center
+                        ) {
+                            ExpressiveContainedLoader(
+                                modifier = Modifier.size(48.dp),
+                                containerColor = colors.surface,
+                                indicatorColor = colors.textPrimary
+                            )
+                        }
+                    }
+                }
+            }
         ) {
             Box(Modifier.fillMaxSize()) {
                 if (makePaper) {

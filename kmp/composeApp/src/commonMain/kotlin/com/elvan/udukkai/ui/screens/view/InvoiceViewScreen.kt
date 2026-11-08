@@ -17,6 +17,7 @@ import com.elvan.udukkai.factory.ui.screens.editor.FactoryCalculation
 import com.elvan.udukkai.localization.K
 import com.elvan.udukkai.localization.tr
 import com.elvan.udukkai.textiles.ui.screens.editor.TextilesCalculation
+import com.elvan.udukkai.theme.Dimens
 import com.elvan.udukkai.ui.components.shell.ElvanPopupMenuItem
 import com.elvan.udukkai.ui.navigation.MaterialSymbols
 import com.elvan.udukkai.ui.screens.preview.PreviewScreen
@@ -64,6 +65,7 @@ fun InvoiceViewScreen(
         printPayload = payload,
         printFileName = invoicePdfName(invoice),
         businessFolder = billBusinessFolder(activeProfile),
+        showPreparationOverlay = true,
         body = { InvoiceBody(invoice, activeProfile, isPaid, isProforma, receipts, onOpenReceipt, onRecordPayment, onOpenCustomer, isFactory) }
     )
 }
@@ -111,7 +113,7 @@ private fun InvoiceBody(
     val notesTitle = K.remarks.tr()
     val words = remember(invoice.totalAmount) { NumberToWords.toTamil(invoice.totalAmount) to NumberToWords.toEnglish(invoice.totalAmount) }
 
-    DocPage {
+    DocPage(horizontalPadding = Dimens.ContentPadding) {
         item(key = "status") {
             when {
                 isProforma -> DocStatusHeader(DocTone.Neutral, totalLabel, invoice.totalAmount)
