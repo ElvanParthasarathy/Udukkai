@@ -132,9 +132,8 @@ private fun DocumentPreview(
         title = title,
         onBack = onBack,
         hideChrome = controller.immersive,
-        actions = { if (menuItems.isNotEmpty()) PreviewMenuButton(menuItems) },
         // An unsaved bill is only looked at: no Print, Share or Open (Back returns to the form)
-        floatingBar = { if (!isDraft) PreviewBottomArea(controller, onEdit) }
+        floatingBar = { if (!isDraft) PreviewBottomArea(controller, onEdit, menuItems) }
     ) {
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             // The web page only prepares the PDF; it stays hidden (unless the caller already hosts it)
@@ -199,8 +198,9 @@ private fun PreviewMenuButton(items: List<ElvanPopupMenuItem>) {
 
 /** Status pill and the action pill, stacked above the system navigation bar. */
 @Composable
-private fun PreviewBottomArea(controller: DocumentPrintController, onEdit: (() -> Unit)?) {
+private fun PreviewBottomArea(controller: DocumentPrintController, onEdit: (() -> Unit)?, menuItems: List<ElvanPopupMenuItem> = emptyList()) {
     val colors = rememberShellColors()
+    var menuOpen by remember { mutableStateOf(false) }
     Column(
         modifier = Modifier.fillMaxWidth(),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -242,6 +242,18 @@ private fun PreviewBottomArea(controller: DocumentPrintController, onEdit: (() -
                 )
             }
         }
+        // The more-menu opens upward from the right end of the bar
+        if (menuItems.isNotEmpty()) {
+            Box(Modifier.fillMaxWidth().padding(end = 28.dp), contentAlignment = Alignment.CenterEnd) {
+                ElvanPopupMenu(
+                    expanded = menuOpen,
+                    onDismissRequest = { menuOpen = false },
+                    colors = colors,
+                    upward = true,
+                    items = menuItems.map { item -> ElvanPopupMenuItem(item.title, item.icon) { menuOpen = false; item.onClick() } }
+                )
+            }
+        }
         // The bar is there while the PDF is still being made: Edit works at once, Open, Print and Share are greyed
         // until the document is ready
         run {
@@ -272,6 +284,11 @@ private fun PreviewBottomArea(controller: DocumentPrintController, onEdit: (() -
                         icon = MaterialSymbols.Rounded.Share,
                         onClick = { controller.share() },
                         enabled = controller.isReady
+                    ),
+                    if (menuItems.isEmpty()) null else ElvanFloatingAction(
+                        label = K.more.tr(),
+                        icon = MaterialSymbols.Rounded.MoreVert,
+                        onClick = { menuOpen = true }
                     )
                 )
             )

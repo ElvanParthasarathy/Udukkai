@@ -53,7 +53,9 @@ fun ElvanPopupMenu(
     onDismissRequest: () -> Unit,
     colors: ShellColors,
     items: List<ElvanPopupMenuItem>,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    /** True for a button at the bottom of the screen: the menu opens upward and grows from its bottom-right corner. */
+    upward: Boolean = false
 ) {
     SideEffect {
         ElvanMenuState.isMenuOpen = expanded
@@ -81,8 +83,8 @@ fun ElvanPopupMenu(
     if (!expanded && !mounted) return
 
     Popup(
-        alignment = Alignment.TopEnd,
-        offset = IntOffset(x = 8, y = -16),
+        alignment = if (upward) Alignment.BottomEnd else Alignment.TopEnd,
+        offset = if (upward) IntOffset(x = 0, y = -8) else IntOffset(x = 8, y = -16),
         onDismissRequest = {
             ElvanMenuState.isMenuOpen = false
             onDismissRequest()
@@ -99,7 +101,7 @@ fun ElvanPopupMenu(
                     val p = progress.value
                     scaleX = 0.5f + 0.5f * p
                     scaleY = 0.5f + 0.5f * p
-                    transformOrigin = TransformOrigin(1f, 0f) // Anchored at top-right, where the button is
+                    transformOrigin = TransformOrigin(1f, if (upward) 1f else 0f) // Anchored at the corner where the button is
                     alpha = (p * 2.5f).coerceIn(0f, 1f)
                 }
                 .cssShadow(

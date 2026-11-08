@@ -12,6 +12,33 @@ import com.elvan.udukkai.data.model.ReceiptModel
  */
 object SearchHelper {
     private val DELIMS_REGEX = Regex("""[\s\-_—–./\\#@,;:|()\[\]{}+*"'`~^=<>!%&?$]+""")
+    // "sjps001" and "sjps1" are the same bill number: leading zeros of a number are ignored when the query has none
+    private val LEAD_ZEROS = Regex("(?<![0-9])0+(?=[0-9])")
+
+    /** The text with the leading zeros of every number removed ("sjps010" -> "sjps10"). */
+    fun looseDigits(stripped: String): String = LEAD_ZEROS.replace(stripped, "")
+
+    /** Folded English-letter form of a text when it is Tamil, else nothing (used by the cached bill search text). */
+    fun foldedLatinOfTamil(s: String): String = if (hasTamil(s)) foldSounds(latinOf(s)) else ""
+
+    private fun hasTamil(s: String): Boolean = s.any { it in '\u0B80'..'\u0BFF' }
+
+    private val latinCache = HashMap<String, String>()
+
+    /** A Tamil text in English letters, without delimiters ("சிவராம்" -> "civaraam"), so "sivaram" can find it. */
+    fun latinOf(tamil: String): String {
+        if (latinCache.size > 4000) latinCache.clear()
+        return latinCache.getOrPut(tamil) {
+            stripDelimiters(com.elvan.udukkai.core.navil.NavilMozhimaatri.transliterate(tamil, false))
+        }
+    }
+
+    // The sounds Tamil spells with one letter but English with two ("s/c/ch", "th/d", "k/g", "b/p"): a query is compared after the same folding
+    internal fun foldSounds(s: String): String = s
+        .replace("ch", "s").replace("c", "s").replace("z", "s").replace("th", "t").replace("dh", "t").replace("d", "t")
+        .replace("g", "k").replace("b", "p").replace("aa", "a").replace("ee", "i").replace("oo", "u").replace("w", "v")
+        .replace("ii", "i").replace("uu", "u")
+
     private val TOKEN_SPLIT_REGEX = Regex("""[\s,./\-_—–|#@;:()\[\]{}]+""")
 
     /**
@@ -102,6 +129,20 @@ object SearchHelper {
             if (allTokensMatch) return true
         }
 
+        // 4. Numbers without their leading zeros ("sjps1" finds SJPS-001), and Tamil names by English letters ("sivaram")
+        if (qStripped.isNotEmpty()) {
+            val qLoose = looseDigits(qStripped)
+            val useLoose = qLoose == qStripped && qStripped.any { it.isDigit() }
+            val latinQuery = qStripped.all { it.code < 128 } && qStripped.any { it.isLetter() }
+            val qFolded = if (latinQuery) foldSounds(qStripped) else ""
+            for (i in list.indices) {
+                val t = list[i]
+                if (t.isNullOrBlank()) continue
+                if (useLoose && looseDigits(strippedAt(i)).contains(qLoose)) return true
+                if (latinQuery && hasTamil(t) && foldSounds(latinOf(t)).contains(qFolded)) return true
+            }
+        }
+
         return false
     }
 
@@ -120,7 +161,10 @@ object SearchHelper {
         if (q.stripped.isEmpty() || q.strippedTokens.any { it.isEmpty() }) return matchesInvoicePlain(inv, q.text)
         val text = inv.searchText
         if (text.contains(q.stripped)) return true
-        return q.strippedTokens.size > 1 && q.strippedTokens.all { text.contains(it) }
+        if (q.strippedTokens.size > 1 && q.strippedTokens.all { text.contains(it) }) return true
+        val qLoose = looseDigits(q.stripped)
+        if (qLoose == q.stripped && q.stripped.any { it.isDigit() } && inv.searchTextLoose.contains(qLoose)) return true
+        return q.stripped.all { it.code < 128 } && q.stripped.any { it.isLetter() } && inv.searchTextLatin.contains(foldSounds(q.stripped))
     }
 
     private fun matchesInvoicePlain(inv: InvoiceModel, query: String): Boolean {

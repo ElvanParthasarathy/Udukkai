@@ -43,6 +43,16 @@ data class InvoiceModel(
      * Number, names, addresses and line items in lower case without delimiters, made on the first search and kept
      * with the bill, so typing a query is one substring test per bill instead of cleaning every field again.
      */
+    /** [searchText] without the leading zeros of its numbers, so "sjps1" finds SJPS-001. */
+    val searchTextLoose: String by lazy(LazyThreadSafetyMode.PUBLICATION) { SearchHelper.looseDigits(searchText) }
+
+    /** The Tamil names and addresses of the bill in English letters, so "sivaram" finds "சிவராம்". */
+    val searchTextLatin: String by lazy(LazyThreadSafetyMode.PUBLICATION) {
+        buildString {
+            (customerName.values + customerAddress.values).forEach { append(SearchHelper.foldedLatinOfTamil(it)) }
+        }
+    }
+
     val searchText: String by lazy(LazyThreadSafetyMode.PUBLICATION) {
         buildString {
             append(SearchHelper.stripDelimiters(invoiceNumber))
