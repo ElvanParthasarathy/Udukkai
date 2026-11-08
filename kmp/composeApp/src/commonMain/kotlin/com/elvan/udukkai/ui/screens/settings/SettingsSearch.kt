@@ -1,5 +1,6 @@
 package com.elvan.udukkai.ui.screens.settings
 
+import com.elvan.udukkai.ui.components.shell.frostedGlass
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.CubicBezierEasing
 import androidx.compose.animation.core.tween
@@ -140,7 +141,7 @@ private val PILL_OPEN_MARGIN = 16.dp
 private fun Modifier.floatingPill(colors: ShellColors, height: Dp = PILL_CLOSED_HEIGHT): Modifier = this
     .height(height)
     .cssShadow(color = Color.Black, alpha = 0.05f, blurRadius = 16.dp, offsetY = 4.dp)
-    .background(color = colors.floatingBg.copy(alpha = 0.88f), shape = CircleShape)
+    .frostedGlass(CircleShape, colors, fallbackAlpha = 0.88f)
     .border(width = 0.5.dp, color = colors.floatingBorder.copy(alpha = if (colors.isDark) 0.15f else 0.6f), shape = CircleShape)
 
 /** The search pill kept at the bottom of the settings page: comfortable, elegant floating search pill. */

@@ -110,10 +110,7 @@ fun ElvanPopupMenu(
                     blurRadius = 16.dp,
                     offsetY = 4.dp
                 )
-                .background(
-                    color = colors.floatingBg.copy(alpha = 0.92f),
-                    shape = RoundedCornerShape(24.dp)
-                )
+                .background(color = colors.floatingBg.copy(alpha = 0.94f), shape = RoundedCornerShape(24.dp))
                 .border(
                     width = 0.5.dp,
                     color = colors.floatingBorder.copy(alpha = if (colors.isDark) 0.25f else 0.6f),

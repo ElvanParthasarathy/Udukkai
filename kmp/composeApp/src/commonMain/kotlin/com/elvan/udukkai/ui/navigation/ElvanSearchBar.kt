@@ -1,5 +1,6 @@
 package com.elvan.udukkai.ui.navigation
 
+import com.elvan.udukkai.ui.components.shell.frostedGlass
 import androidx.compose.animation.core.CubicBezierEasing
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
@@ -112,10 +113,7 @@ fun ElvanSearchBar(
                         blurRadius = 16.dp,
                         offsetY = 4.dp
                     )
-                    .background(
-                        color = colors.floatingBg.copy(alpha = 0.88f),
-                        shape = CircleShape
-                    )
+                    .frostedGlass(CircleShape, colors, fallbackAlpha = 0.88f)
                     .border(
                         width = 0.5.dp,
                         color = colors.floatingBorder.copy(alpha = if (isDark) 0.15f else 0.6f),

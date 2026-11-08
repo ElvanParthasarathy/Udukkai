@@ -83,7 +83,9 @@ fun DocStatusHeader(tone: DocTone, label: String, amount: Double, note: String? 
     ) {
         if (tone != DocTone.Neutral) {
             Box(
-                Modifier.size(52.dp).clip(CircleShape).background(tint),
+                Modifier.size(52.dp).clip(CircleShape).background(
+                    androidx.compose.ui.graphics.Brush.linearGradient(listOf(androidx.compose.ui.graphics.lerp(tint, Color.White, 0.30f), tint))
+                ),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(

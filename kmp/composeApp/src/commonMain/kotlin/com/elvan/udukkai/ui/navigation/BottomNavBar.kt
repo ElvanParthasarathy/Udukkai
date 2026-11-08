@@ -356,19 +356,8 @@ fun BottomNavBar(
                         .then(
                             if (!isDark) Modifier.cssShadow(color = Color.Black, alpha = 0.04f, blurRadius = 4.dp, offsetY = 1.dp) else Modifier
                         )
-                        // Liquid-glass lens: light falls in from the top, a thin bright rim; it thins while dragged
                         .background(
-                            brush = androidx.compose.ui.graphics.Brush.verticalGradient(
-                                if (isDark) listOf(Color.White.copy(alpha = if (isInteracting) 0.20f else 0.24f), Color.White.copy(alpha = if (isInteracting) 0.10f else 0.14f))
-                                else listOf(Color.Black.copy(alpha = if (isInteracting) 0.05f else 0.07f), Color.Black.copy(alpha = if (isInteracting) 0.09f else 0.12f))
-                            ),
-                            shape = CircleShape
-                        )
-                        .border(
-                            width = 0.75.dp,
-                            brush = androidx.compose.ui.graphics.Brush.verticalGradient(
-                                listOf(Color.White.copy(alpha = if (isDark) 0.35f else 0.9f), Color.White.copy(alpha = if (isDark) 0.06f else 0.4f))
-                            ),
+                            color = if (isDark) Color(0xFF333333) else Color(0xFFE5E5E5),
                             shape = CircleShape
                         )
                 )
