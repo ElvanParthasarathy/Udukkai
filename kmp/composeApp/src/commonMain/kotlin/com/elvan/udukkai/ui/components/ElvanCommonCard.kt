@@ -250,13 +250,25 @@ fun ElvanTintedIcon(
     tint: Color,
     modifier: Modifier = Modifier,
     size: Dp = 40.dp,
-    iconSize: Dp = 22.dp,
-    contentDescription: String? = null
+    iconSize: Dp = 20.dp,
+    borderRadius: Dp = 0.dp,
+    contentDescription: String? = null,
+    gradientColors: List<Color>? = null
 ) {
-    val dark = LocalShellColors.current.isDark
-    val glyph = listOf(androidx.compose.ui.graphics.lerp(tint, Color.White, if (dark) 0.30f else 0.22f), tint)
+    val colors = LocalShellColors.current
+    val dark = colors.isDark
+    val effectiveGradient = gradientColors ?: colors.gradientFor(tint)
+    val glyph = if (effectiveGradient != null && effectiveGradient.size >= 2) {
+        effectiveGradient
+    } else {
+        listOf(androidx.compose.ui.graphics.lerp(tint, Color.White, if (dark) 0.30f else 0.22f), tint)
+    }
+    val shape = if (borderRadius > 0.dp) RoundedCornerShape(borderRadius) else CircleShape
     Box(
-        modifier = modifier.size(size).clip(CircleShape).background(tint.copy(alpha = if (dark) 0.18f else 0.11f)),
+        modifier = modifier
+            .size(size)
+            .clip(shape)
+            .background(tint.copy(alpha = if (dark) 0.18f else 0.11f)),
         contentAlignment = Alignment.Center
     ) {
         Icon(
@@ -267,7 +279,11 @@ fun ElvanTintedIcon(
                 .size(iconSize)
                 .graphicsLayer(alpha = 0.99f)
                 .drawWithCache {
-                    val brush = Brush.linearGradient(glyph, start = Offset.Zero, end = Offset(this.size.width, this.size.height))
+                    val brush = Brush.linearGradient(
+                        colors = glyph,
+                        start = Offset.Zero,
+                        end = Offset(this.size.width, this.size.height)
+                    )
                     onDrawWithContent {
                         drawContent()
                         drawRect(brush = brush, blendMode = BlendMode.SrcIn)
@@ -277,7 +293,7 @@ fun ElvanTintedIcon(
     }
 }
 
-/** Leading icon for cards: the card's colour in a tinted circle. */
+/** Leading icon for cards: the card's colour in a tinted circle with subtle gradient. */
 @Composable
 fun ElvanCardLeadingIcon(
     icon: ImageVector,
@@ -290,7 +306,18 @@ fun ElvanCardLeadingIcon(
     gradientColors: List<Color>? = null
 ) {
     val colors = LocalShellColors.current
-    ElvanTintedIcon(icon, tint ?: colors.modeAccent, modifier, size, iconSize, contentDescription)
+    val effectiveTint = tint ?: colors.modeAccent
+    val effectiveGradient = gradientColors ?: colors.gradientFor(effectiveTint)
+    ElvanTintedIcon(
+        icon = icon,
+        tint = effectiveTint,
+        modifier = modifier,
+        size = size,
+        iconSize = iconSize,
+        borderRadius = borderRadius,
+        contentDescription = contentDescription,
+        gradientColors = effectiveGradient
+    )
 }
 
 

@@ -158,7 +158,7 @@ fun GreetingPill(
                                     fontSize = 14.sp,
                                     fontWeight = FontWeight.Medium
                                 ),
-                                color = colors.textPrimary.copy(alpha = 0.5f),
+                                color = colors.textSecondary,
                                 maxLines = 1,
                                 overflow = TextOverflow.Ellipsis
                             )
@@ -258,7 +258,7 @@ fun GreetingPill(
                                         fontSize = 14.sp,
                                         fontWeight = FontWeight.Medium
                                     ),
-                                    color = colors.textPrimary.copy(alpha = 0.5f),
+                                    color = colors.textSecondary,
                                     maxLines = 2,
                                     overflow = TextOverflow.Ellipsis,
                                     modifier = Modifier.weight(1f, fill = false)
@@ -267,7 +267,7 @@ fun GreetingPill(
                                 Icon(
                                     imageVector = MaterialSymbols.Rounded.KeyboardArrowDown,
                                     contentDescription = K.a11ySwitchCompany.tr(),
-                                    tint = colors.textPrimary.copy(alpha = 0.5f),
+                                    tint = colors.textSecondary,
                                     modifier = Modifier.size(16.dp)
                                 )
                             }

@@ -132,8 +132,8 @@ fun TextilesDashboardScreen(
                             label = K.totalInvoices.tr(),
                             value = "$activeCompanyInvoiceCount",
                             colors = colors,
-                            accentColor = Color(0xFF2F8BFF),
-                            gradientColors = listOf(Color(0xFF6DB3FF), Color(0xFF0072DE)),
+                            accentColor = colors.invoiceColor,
+                            gradientColors = colors.invoiceGradient,
                             modifier = Modifier.weight(1f),
                             isFullWidth = false,
                             onClick = onSeeAll
@@ -141,8 +141,8 @@ fun TextilesDashboardScreen(
 
                         ElvanStatsCard(
                             icon = MaterialSymbols.Rounded.CurrencyRupeeCircle,
-                            accentColor = Color(0xFF2FB67A),
-                            gradientColors = listOf(Color(0xFF6EE0A6), Color(0xFF18935A)),
+                            accentColor = colors.receiptColor,
+                            gradientColors = colors.receiptGradient,
                             label = K.totalInvoiced.tr(),
                             value = CurrencyUtils.formatInr(overallTotal),
                             colors = colors,

@@ -45,16 +45,16 @@ fun ElvanStatsCard(
     val ff = LocalAppFontFamily.current
     val isDark = colors.isDark
 
-    val effectiveTint = iconTint ?: accentColor ?: LocalShellColors.current.textPrimary
+    val effectiveTint = iconTint ?: accentColor ?: colors.textPrimary
     val effectiveGradient = gradientColors ?: colors.gradientFor(accentColor ?: iconTint)
     val effectiveBg = iconBg ?: if (accentColor != null) {
-        accentColor.copy(alpha = if (isDark) 0.20f else 0.12f)
+        accentColor.copy(alpha = if (isDark) 0.18f else 0.11f)
     } else {
-        if (isDark) Color.White.copy(alpha = 0.06f) else Color(0xFFF5F5F5)
+        colors.iconBg
     }
 
     val iconBoxShape = androidx.compose.foundation.shape.CircleShape
-    val iconBoxSize = if (isFullWidth) 44.dp else 38.dp
+    val iconBoxSize = if (isFullWidth) 44.dp else 40.dp
     val iconSize = if (isFullWidth) 22.dp else 20.dp
 
     fun adaptiveFontSize(valStr: String, fullWidth: Boolean): Int {

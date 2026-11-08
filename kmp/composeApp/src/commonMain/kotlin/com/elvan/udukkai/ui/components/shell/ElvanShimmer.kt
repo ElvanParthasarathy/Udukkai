@@ -249,8 +249,8 @@ fun HomeStatsSkeleton(
                     // Icon placeholder
                     Box(
                         modifier = Modifier
-                            .size(38.dp)
-                            .clip(RoundedCornerShape(12.dp))
+                            .size(40.dp)
+                            .clip(androidx.compose.foundation.shape.CircleShape)
                             .background(shimmerBrush)
                     )
                     // Label & value placeholder

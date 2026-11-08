@@ -37,23 +37,35 @@ data class ShellColors(
     val error: Color = if (isDark) Color(0xFFFFB4AB) else Color(0xFFBA1A1A),
     val danger: Color = if (isDark) Color(0xFFFF5252) else Color(0xFFE53935),
     val success: Color = if (isDark) Color(0xFF4CAF50) else Color(0xFF2E7D32),
-    // Unified entity card icon colors (Pure Monochrome)
-    val invoiceColor: Color = if (isDark) Color.White else Color.Black,
-    val receiptColor: Color = if (isDark) Color.White else Color.Black,
-    val itemColor: Color = if (isDark) Color.White else Color.Black,
-    val customerColor: Color = if (isDark) Color.White else Color.Black,
-    // Unified entity gradients for card icons (empty/neutral in monochrome)
-    val invoiceGradient: List<Color> = emptyList(),
-    val receiptGradient: List<Color> = emptyList(),
-    val itemGradient: List<Color> = emptyList(),
-    val customerGradient: List<Color> = emptyList(),
+    // Unified entity card icon colors
+    val invoiceColor: Color = if (isDark) Color(0xFF5C9DFF) else Color(0xFF1E7BF2),
+    val receiptColor: Color = if (isDark) Color(0xFF4FCB8A) else Color(0xFF16A864),
+    val itemColor: Color = if (isDark) Color(0xFFF4B94F) else Color(0xFFE8930C),
+    val customerColor: Color = if (isDark) Color(0xFFB79CF7) else Color(0xFF8A5CE6),
+    // Unified entity gradients for card icons
+    val invoiceGradient: List<Color> = if (isDark) listOf(Color(0xFF7AB8FF), Color(0xFF4A8FFF)) else listOf(Color(0xFF3B8EFA), Color(0xFF1565C0)),
+    val receiptGradient: List<Color> = if (isDark) listOf(Color(0xFF6EE0A6), Color(0xFF38B574)) else listOf(Color(0xFF22C55E), Color(0xFF15803D)),
+    val itemGradient: List<Color> = if (isDark) listOf(Color(0xFFFCD34D), Color(0xFFE89E28)) else listOf(Color(0xFFF59E0B), Color(0xFFD97706)),
+    val customerGradient: List<Color> = if (isDark) listOf(Color(0xFFD4BFFF), Color(0xFFA585F2)) else listOf(Color(0xFF9D71F2), Color(0xFF7342D6)),
     /** Neram / One UI blue (#0072DE): buttons, switches and text links. A deep blue, not a washed-out one. */
     val link: Color = Color(0xFF0072DE)
 )
 
 fun ShellColors.gradientFor(color: Color?): List<Color>? {
-    // Pure monochrome aesthetic — all icons render crisp solid monochrome
-    return null
+    if (color == null || color == Color.Unspecified) return null
+    return when (color) {
+        invoiceColor, Color(0xFF2F8BFF), Color(0xFF5C9DFF), Color(0xFF1E7BF2), Color(0xFF0072DE) -> invoiceGradient
+        receiptColor, Color(0xFF2FB67A), Color(0xFF4FCB8A), Color(0xFF16A864), Color(0xFF16A34A) -> receiptGradient
+        itemColor, Color(0xFFF4B94F), Color(0xFFE8930C) -> itemGradient
+        customerColor, Color(0xFFB79CF7), Color(0xFF8A5CE6) -> customerGradient
+        else -> {
+            val dark = isDark
+            listOf(
+                androidx.compose.ui.graphics.lerp(color, Color.White, if (dark) 0.28f else 0.20f),
+                color
+            )
+        }
+    }
 }
 
 val LocalShellColors = staticCompositionLocalOf<ShellColors> {
@@ -95,7 +107,11 @@ fun rememberShellColors(): ShellColors {
                 invoiceColor = Color(0xFF5C9DFF),
                 receiptColor = Color(0xFF4FCB8A),
                 itemColor = Color(0xFFF4B94F),
-                customerColor = Color(0xFFB79CF7)
+                customerColor = Color(0xFFB79CF7),
+                invoiceGradient = listOf(Color(0xFF7AB8FF), Color(0xFF4A8FFF)),
+                receiptGradient = listOf(Color(0xFF6EE0A6), Color(0xFF38B574)),
+                itemGradient = listOf(Color(0xFFFCD34D), Color(0xFFE89E28)),
+                customerGradient = listOf(Color(0xFFD4BFFF), Color(0xFFA585F2))
             )
         } else {
             ShellColors(
@@ -128,7 +144,11 @@ fun rememberShellColors(): ShellColors {
                 invoiceColor = Color(0xFF1E7BF2),
                 receiptColor = Color(0xFF16A864),
                 itemColor = Color(0xFFE8930C),
-                customerColor = Color(0xFF8A5CE6)
+                customerColor = Color(0xFF8A5CE6),
+                invoiceGradient = listOf(Color(0xFF3B8EFA), Color(0xFF1565C0)),
+                receiptGradient = listOf(Color(0xFF22C55E), Color(0xFF15803D)),
+                itemGradient = listOf(Color(0xFFF59E0B), Color(0xFFD97706)),
+                customerGradient = listOf(Color(0xFF9D71F2), Color(0xFF7342D6))
             )
         }
     }
