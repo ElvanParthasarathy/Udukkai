@@ -51,13 +51,15 @@ fun ElvanSubShell2(
     val navBottom = getNavBarHeightIgnoringVisibility()
 
     val hazeState = dev.chrisbanes.haze.rememberHazeState()
-    androidx.compose.runtime.CompositionLocalProvider(LocalHazeState provides hazeState) {
+    val menuHost = remember { MenuHostState() }
+    androidx.compose.runtime.CompositionLocalProvider(LocalHazeState provides hazeState, LocalMenuHost provides menuHost) {
     Box(
         modifier = Modifier
             .fillMaxSize()
             .background(colors.background)
             // Swallows touches that the page itself does not use, so none reach the screen below
-            .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null) {}
+            .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null) {
+}
     ) {
         Box(Modifier.fillMaxSize().hazeSource(hazeState)) { content() }
 
@@ -108,6 +110,7 @@ fun ElvanSubShell2(
                 }
             }
         }
+        MenuHostLayer(menuHost)
     }
     }
 }

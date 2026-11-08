@@ -401,7 +401,8 @@ fun ElvanShell(
         }
 
         val hazeState = dev.chrisbanes.haze.rememberHazeState()
-        androidx.compose.runtime.CompositionLocalProvider(LocalHazeState provides hazeState) {
+        val menuHost = remember { MenuHostState() }
+    androidx.compose.runtime.CompositionLocalProvider(LocalHazeState provides hazeState, LocalMenuHost provides menuHost) {
         Box(
             modifier = shellModifier
         ) {
@@ -662,7 +663,8 @@ fun ElvanShell(
                         }
                 )
             }
-        }
+            MenuHostLayer(menuHost)
+}
         }
     }
     }

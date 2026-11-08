@@ -26,6 +26,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Popup
 import androidx.compose.ui.window.PopupProperties
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.boundsInRoot
+import androidx.compose.ui.layout.positionInRoot
 import com.elvan.udukkai.core.extensions.cssShadow
 import com.elvan.udukkai.theme.LocalAppFontFamily
 import com.elvan.udukkai.theme.ShellColors
@@ -80,21 +83,19 @@ fun ElvanPopupMenu(
         }
     }
 
-    if (!expanded && !mounted) return
+    // Where the button is, so the menu opens at the same spot when it is drawn in the page layer
+    var anchor by remember { mutableStateOf(androidx.compose.ui.geometry.Rect.Zero) }
+    androidx.compose.foundation.layout.Spacer(
+        Modifier.size(0.dp).onGloballyPositioned { c -> c.parentLayoutCoordinates?.let { val at = it.positionInRoot(); anchor = androidx.compose.ui.geometry.Rect(at.x, at.y, at.x + it.size.width, at.y + it.size.height) } }
+    )
 
-    Popup(
-        alignment = if (upward) Alignment.BottomEnd else Alignment.TopEnd,
-        offset = if (upward) IntOffset(x = -24, y = -28) else IntOffset(x = 8, y = -16),
-        onDismissRequest = {
-            ElvanMenuState.isMenuOpen = false
-            onDismissRequest()
-        },
-        properties = PopupProperties(
-            focusable = true,
-            dismissOnClickOutside = true,
-            dismissOnBackPress = true
-        )
-    ) {
+    val host = LocalMenuHost.current
+    val dismiss = {
+        ElvanMenuState.isMenuOpen = false
+        onDismissRequest()
+    }
+
+    val panel: @Composable () -> Unit = {
         Box(
             modifier = modifier
                 .graphicsLayer {
@@ -104,13 +105,9 @@ fun ElvanPopupMenu(
                     transformOrigin = TransformOrigin(1f, if (upward) 1f else 0f) // Anchored at the corner where the button is
                     alpha = (p * 2.5f).coerceIn(0f, 1f)
                 }
-                .cssShadow(
-                    color = Color.Black,
-                    alpha = 0.05f,
-                    blurRadius = 16.dp,
-                    offsetY = 4.dp
-                )
-                .background(color = colors.floatingBg.copy(alpha = 0.94f), shape = RoundedCornerShape(24.dp))
+                .cssShadow(color = Color.Black, alpha = 0.08f, blurRadius = 20.dp, offsetY = 6.dp)
+                // Frosted glass over the page; plain translucent where there is no page to blur
+                .frostedGlass(RoundedCornerShape(24.dp), colors, fallbackAlpha = 0.94f)
                 .border(
                     width = 0.5.dp,
                     color = colors.floatingBorder.copy(alpha = if (colors.isDark) 0.25f else 0.6f),
@@ -118,57 +115,94 @@ fun ElvanPopupMenu(
                 )
                 .clip(RoundedCornerShape(24.dp))
                 .width(IntrinsicSize.Max)
-        ) {
-            Column(
-                // The rows come in just behind the panel, so the menu reads as growing first, then filling
-                modifier = Modifier.fillMaxWidth().graphicsLayer {
-                    alpha = ((progress.value - 0.25f) / 0.6f).coerceIn(0f, 1f)
-                    translationY = (1f - progress.value.coerceIn(0f, 1f)) * -6.dp.toPx()
-                }
-            ) {
-                items.forEachIndexed { index, item ->
-                    val isFirst = index == 0
-                    val isLast = index == items.size - 1
-                    val shape = when {
-                        isFirst && isLast -> RoundedCornerShape(24.dp)
-                        isFirst -> RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp)
-                        isLast -> RoundedCornerShape(bottomStart = 24.dp, bottomEnd = 24.dp)
-                        else -> RoundedCornerShape(0.dp)
-                    }
+                // Taps on the menu stay on the menu
+                .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null) {}
+        ) { MenuRows(items, colors, progress.value, onDismissRequest) }
+    }
 
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(50.dp)
-                            .clip(shape)
-                            .clickable(
-                                interactionSource = remember { MutableInteractionSource() },
-                                indication = ShellDefaults.ripple(colors, bounded = true),
-                                onClick = {
-                                    onDismissRequest()
-                                    item.onClick()
-                                }
-                            )
-                            .padding(horizontal = 16.dp, vertical = 14.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Icon(
-                            imageVector = item.icon,
-                            contentDescription = item.title,
-                            tint = colors.textPrimary,
-                            modifier = Modifier.size(22.dp)
-                        )
-                        Spacer(modifier = Modifier.width(12.dp))
-                        Text(
-                            text = item.title,
-                            fontSize = 14.sp,
-                            fontWeight = FontWeight.Medium,
-                            color = colors.textPrimary,
-                            fontFamily = LocalAppFontFamily.current
-                        )
-                        Spacer(modifier = Modifier.width(16.dp))
-                    }
+    if (host != null) {
+        if (!expanded && !mounted) {
+            SideEffect { if (host.content != null && host.onDismiss === dismissKey) host.content = null }
+            return
+        }
+        val density = androidx.compose.ui.platform.LocalDensity.current
+        val content: @Composable () -> Unit = {
+            var origin by remember { mutableStateOf(androidx.compose.ui.geometry.Offset.Zero) }
+            androidx.compose.ui.layout.Layout(
+                content = panel,
+                modifier = Modifier.fillMaxSize().onGloballyPositioned { origin = it.positionInRoot() }
+            ) { measurables, constraints ->
+                val placeable = measurables.first().measure(constraints.copy(minWidth = 0, minHeight = 0))
+                layout(constraints.maxWidth, constraints.maxHeight) {
+                    // Same spot as the old popup: top right of the button (opening down), or above it (opening up)
+                    val right = anchor.right - origin.x + (if (upward) -24f else 8f)
+                    val x = (right - placeable.width).toInt().coerceIn(0, (constraints.maxWidth - placeable.width).coerceAtLeast(0))
+                    val y = if (upward) (anchor.bottom - origin.y - 28f - placeable.height).toInt()
+                            else (anchor.top - origin.y - 16f).toInt()
+                    placeable.place(x, y.coerceIn(0, (constraints.maxHeight - placeable.height).coerceAtLeast(0)))
                 }
+            }
+        }
+        SideEffect {
+            host.onDismiss = dismiss
+            dismissKey = dismiss
+            host.content = content
+        }
+        DisposableEffect(host) { onDispose { if (host.content === content) host.content = null } }
+        return
+    }
+
+    if (!expanded && !mounted) return
+
+    Popup(
+        alignment = if (upward) Alignment.BottomEnd else Alignment.TopEnd,
+        offset = if (upward) IntOffset(x = -24, y = -28) else IntOffset(x = 8, y = -16),
+        onDismissRequest = dismiss,
+        properties = PopupProperties(focusable = true, dismissOnClickOutside = true, dismissOnBackPress = true)
+    ) { panel() }
+}
+
+/** The one dismiss callback currently shown, so a closed menu clears only its own panel. */
+private var dismissKey: (() -> Unit)? = null
+
+@Composable
+private fun MenuRows(items: List<ElvanPopupMenuItem>, colors: ShellColors, progress: Float, onDismissRequest: () -> Unit) {
+    Column(
+        // The rows come in just behind the panel, so the menu reads as growing first, then filling
+        modifier = Modifier.fillMaxWidth().graphicsLayer {
+            alpha = ((progress - 0.25f) / 0.6f).coerceIn(0f, 1f)
+            translationY = (1f - progress.coerceIn(0f, 1f)) * -6.dp.toPx()
+        }
+    ) {
+        items.forEachIndexed { index, item ->
+            val isFirst = index == 0
+            val isLast = index == items.size - 1
+            val shape = when {
+                isFirst && isLast -> RoundedCornerShape(24.dp)
+                isFirst -> RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp)
+                isLast -> RoundedCornerShape(bottomStart = 24.dp, bottomEnd = 24.dp)
+                else -> RoundedCornerShape(0.dp)
+            }
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(50.dp)
+                    .clip(shape)
+                    .clickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = ShellDefaults.ripple(colors, bounded = true),
+                        onClick = {
+                            onDismissRequest()
+                            item.onClick()
+                        }
+                    )
+                    .padding(horizontal = 16.dp, vertical = 14.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(imageVector = item.icon, contentDescription = item.title, tint = colors.textPrimary, modifier = Modifier.size(22.dp))
+                Spacer(modifier = Modifier.width(12.dp))
+                Text(text = item.title, fontSize = 14.sp, fontWeight = FontWeight.Medium, color = colors.textPrimary, fontFamily = LocalAppFontFamily.current)
+                Spacer(modifier = Modifier.width(16.dp))
             }
         }
     }

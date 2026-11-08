@@ -1,5 +1,6 @@
 package com.elvan.udukkai.ui.components.shell
 
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -46,10 +47,6 @@ fun ElvanPill(
                 blurRadius = 16.dp,
                 offsetY = 4.dp
             )
-            .background(
-                color = colors.floatingBg.copy(alpha = 0.88f * liftProgress),
-                shape = CircleShape
-            )
             .border(
                 width = 0.5.dp,
                 color = colors.floatingBorder.copy(alpha = 0.15f * liftProgress),
@@ -58,6 +55,10 @@ fun ElvanPill(
             .then(clickModifier),
         contentAlignment = Alignment.Center
     ) {
+        // Frosted glass behind the button, fading in as the page scrolls under it
+        if (liftProgress > 0.01f) {
+            Box(Modifier.matchParentSize().graphicsLayer { alpha = liftProgress }.frostedGlass(CircleShape, colors, fallbackAlpha = 0.88f))
+        }
         Box(
             modifier = Modifier.fillMaxHeight(),
             contentAlignment = Alignment.Center
