@@ -63,6 +63,7 @@ import com.elvan.udukkai.theme.rememberShellColors
 import com.elvan.udukkai.ui.components.shell.ElvanActionSheet
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.launch
+import androidx.compose.foundation.interaction.MutableInteractionSource
 
 private const val FIRST_YEAR = 1900
 private const val LAST_YEAR = 2100
@@ -469,7 +470,7 @@ private fun Wheel(labels: List<String>, selected: Int, modifier: Modifier, ink: 
             val on = index == middle
             Box(
                 Modifier.fillMaxWidth().height(WHEEL_ROW)
-                    .clickable(role = Role.Button) { scope.launch { state.animateScrollToItem(index) } }
+                    .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null, role = Role.Button) { scope.launch { state.animateScrollToItem(index) } }
                     .semantics { this.selected = on },
                 contentAlignment = Alignment.Center
             ) {

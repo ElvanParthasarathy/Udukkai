@@ -143,8 +143,8 @@ private fun channel(v: Float) = (v * 255f + 0.5f).toInt()
 
 // The One UI 8 colour picker's layout, in dp
 private val SIDE = 24.dp
-// The app's own shifter, a little smaller than the full-width 40dp one
-private val TAB_HEIGHT = 34.dp
+// The app's own shifter: a little under its full-width 40dp, but not so slim that it looks lost
+private val TAB_HEIGHT = 38.dp
 private val BAR_HEIGHT = 20.dp
 private val SWATCH_HEIGHT = 277.dp
 private val SPECTRUM_HEIGHT = 248.dp

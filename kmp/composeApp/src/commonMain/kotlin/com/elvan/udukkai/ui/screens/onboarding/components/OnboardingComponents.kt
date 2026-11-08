@@ -523,7 +523,7 @@ fun AuthButton(
                 .clickable(
                     enabled = !isDisabled,
                     interactionSource = remember { MutableInteractionSource() },
-                    indication = null,
+                    indication = androidx.compose.material3.ripple(color = btnText.copy(alpha = 0.35f), bounded = true), // the text colour: it contrasts with the button
                     onClick = onClick
                 ),
             contentAlignment = Alignment.Center

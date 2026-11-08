@@ -117,7 +117,7 @@ internal fun NeramButton(
             .clickable(
                 enabled = active,
                 interactionSource = remember { MutableInteractionSource() },
-                indication = ripple(color = NeramColors.onAccent().copy(alpha = 0.35f), bounded = true),
+                indication = ripple(color = Color.Black.copy(alpha = 0.35f), bounded = true), // Neram's: dark in light and dark mode, white was lost on the blue
                 onClick = onClick
             ),
         contentAlignment = Alignment.Center

@@ -630,9 +630,11 @@ fun ElvanSettingsEditContainer(
                 extraAction()
                 Spacer(modifier = Modifier.width(8.dp))
             }
-            TextButton(
+            Button(
                 onClick = onCancel,
-                shape = RoundedCornerShape(50)
+                shape = RoundedCornerShape(50),
+                colors = ButtonDefaults.buttonColors(containerColor = colors.iconBg, contentColor = colors.textPrimary),
+                elevation = ButtonDefaults.buttonElevation(0.dp)
             ) {
                 Text(
                     text = effectiveCancel,
@@ -641,7 +643,7 @@ fun ElvanSettingsEditContainer(
                         fontSize = 14.sp,
                         fontWeight = FontWeight.Medium
                     ),
-                    color = colors.textPrimary.copy(alpha = 0.7f)
+                    color = colors.textPrimary
                 )
             }
             Spacer(modifier = Modifier.width(8.dp))
@@ -649,8 +651,8 @@ fun ElvanSettingsEditContainer(
                 onClick = onSave,
                 shape = RoundedCornerShape(50),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = colors.link,
-                    contentColor = Color.White
+                    containerColor = colors.accent,
+                    contentColor = if (colors.isDark) Color.Black else Color.White
                 ),
                 elevation = ButtonDefaults.buttonElevation(0.dp)
             ) {
