@@ -1,5 +1,6 @@
 package com.elvan.udukkai.factory.ui
 
+import com.elvan.udukkai.core.utils.DateUtils
 import com.elvan.udukkai.core.print.billBusinessFolder
 import androidx.compose.runtime.LaunchedEffect
 import com.elvan.udukkai.core.print.BillPdfAutoSave
@@ -133,7 +134,7 @@ fun FactoryHomeScreen() {
         val copied = invoice.copy(
             id = 0L,
             invoiceNumber = "",
-            invoiceDate = System.currentTimeMillis(),
+            invoiceDate = DateUtils.todayMillis(),
             createdAt = System.currentTimeMillis(),
             updatedAt = System.currentTimeMillis()
         )
@@ -429,7 +430,7 @@ fun FactoryHomeScreen() {
                                 id = 0L,
                                 invoiceNumber = "",
                                 invoiceType = "tax-invoice",
-                                invoiceDate = System.currentTimeMillis(),
+                                invoiceDate = DateUtils.todayMillis(),
                                 createdAt = System.currentTimeMillis(),
                                 updatedAt = System.currentTimeMillis()
                             )

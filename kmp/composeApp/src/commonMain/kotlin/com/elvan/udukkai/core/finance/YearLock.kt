@@ -18,7 +18,7 @@ object YearLock {
 
     fun isLocked(dateMillis: Long, now: Long = System.currentTimeMillis()): Boolean {
         val fy = DateUtils.financialYearStart(dateMillis)
-        return fy !in openedForSession && now >= closeDay(fy)
+        return fy !in openedForSession && DateUtils.todayMillis(now) >= closeDay(fy)
     }
 
     /** Lets the closed year of this date be changed until the app is closed. */

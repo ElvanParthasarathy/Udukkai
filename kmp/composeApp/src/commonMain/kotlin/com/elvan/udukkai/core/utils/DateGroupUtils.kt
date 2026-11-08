@@ -93,9 +93,9 @@ object DateGroupUtils {
      * Formats Google Photos-style section header label.
      * Returns Pair(primaryLabel, secondaryLabel).
      */
-    fun formatDateHeader(millis: Long, isBilingual: Boolean = true, primaryLang: String = "ta"): Pair<String, String> {
+    fun formatDateHeader(millis: Long, isBilingual: Boolean = true, primaryLang: String = "ta", today: Long = DateUtils.todayMillis()): Pair<String, String> {
         val itemDays = (millis / 86400000L).toInt()
-        val nowDays = (System.currentTimeMillis() / 86400000L).toInt()
+        val nowDays = (today / 86400000L).toInt()
         val diffDays = nowDays - itemDays
 
         val c = getDateComponents(millis)
@@ -140,9 +140,9 @@ object DateGroupUtils {
     /**
      * Compact date for floating fast-scroll pill (e.g. "18 Sep 2026" or "18 செப் • 18 Sep").
      */
-    fun formatPillDate(millis: Long, isBilingual: Boolean = true, primaryLang: String = "ta"): String {
+    fun formatPillDate(millis: Long, isBilingual: Boolean = true, primaryLang: String = "ta", today: Long = DateUtils.todayMillis()): String {
         val itemDays = (millis / 86400000L).toInt()
-        val nowDays = (System.currentTimeMillis() / 86400000L).toInt()
+        val nowDays = (today / 86400000L).toInt()
         val diffDays = nowDays - itemDays
 
         val isEnglishPrimary = primaryLang.lowercase().startsWith("en")
@@ -161,7 +161,7 @@ object DateGroupUtils {
         val mTa = MONTH_NAMES_TA[c.month]
         val wEn = WEEKDAY_NAMES_EN[c.dayOfWeek]
         val wTa = WEEKDAY_NAMES_TA[c.dayOfWeek]
-        val currentYear = getDateComponents(System.currentTimeMillis()).year
+        val currentYear = getDateComponents(today).year
         val yearSuffix = if (c.year != currentYear) " ${c.year}" else ""
 
         return if (!isBilingual) {

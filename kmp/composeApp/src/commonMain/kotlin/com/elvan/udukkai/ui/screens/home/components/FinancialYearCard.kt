@@ -29,7 +29,7 @@ import com.elvan.udukkai.ui.components.shell.ElvanSettingsSection
 @Composable
 fun FinancialYearSection(colors: ShellColors, dataYears: Set<Int>, nextBill: String, nextReceipt: String, firstBill: String, firstReceipt: String) {
     val ff = LocalAppFontFamily.current
-    val now = remember { System.currentTimeMillis() }
+    val now = remember { DateUtils.todayMillis() }
     val status = remember { FinancialYearStatus.of(now) }
     val current = DateUtils.financialYearStart(now)
     val years = (dataYears + current + (current - 1)).filter { it <= current }.sortedDescending().take(4)

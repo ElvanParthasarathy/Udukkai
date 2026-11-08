@@ -1,5 +1,6 @@
 package com.elvan.udukkai.activities
 
+import com.elvan.udukkai.core.utils.DateUtils
 import android.content.Context
 import android.content.Intent
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -64,7 +65,7 @@ class InvoiceViewActivity : BaseSubpageActivity() {
                     val copied = currentInvoice.copy(
                         id = 0L,
                         invoiceNumber = "",
-                        invoiceDate = System.currentTimeMillis(),
+                        invoiceDate = DateUtils.todayMillis(),
                         createdAt = System.currentTimeMillis(),
                         updatedAt = System.currentTimeMillis()
                     )
@@ -75,7 +76,7 @@ class InvoiceViewActivity : BaseSubpageActivity() {
                         id = 0L,
                         invoiceNumber = "",
                         invoiceType = "tax-invoice",
-                        invoiceDate = System.currentTimeMillis(),
+                        invoiceDate = DateUtils.todayMillis(),
                         createdAt = System.currentTimeMillis(),
                         updatedAt = System.currentTimeMillis()
                     )
@@ -116,7 +117,7 @@ class InvoiceViewActivity : BaseSubpageActivity() {
                     val copied = currentInvoice.copy(
                         id = 0L,
                         invoiceNumber = "",
-                        invoiceDate = System.currentTimeMillis(),
+                        invoiceDate = DateUtils.todayMillis(),
                         createdAt = System.currentTimeMillis(),
                         updatedAt = System.currentTimeMillis()
                     )
@@ -127,7 +128,7 @@ class InvoiceViewActivity : BaseSubpageActivity() {
                         id = 0L,
                         invoiceNumber = "",
                         invoiceType = "tax-invoice",
-                        invoiceDate = System.currentTimeMillis(),
+                        invoiceDate = DateUtils.todayMillis(),
                         createdAt = System.currentTimeMillis(),
                         updatedAt = System.currentTimeMillis()
                     )

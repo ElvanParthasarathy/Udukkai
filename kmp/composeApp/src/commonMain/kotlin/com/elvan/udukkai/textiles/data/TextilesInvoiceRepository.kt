@@ -97,7 +97,7 @@ object TextilesInvoiceRepository {
     }
 
     /** The next short number (VRM-007) of the financial year the bill is dated in: it restarts at 001 each April. */
-    fun getNextInvoiceNumber(companyId: Long?, prefix: String, date: Long = System.currentTimeMillis()): String {
+    fun getNextInvoiceNumber(companyId: Long?, prefix: String, date: Long = DateUtils.todayMillis()): String {
         val fy = DateUtils.financialYearStart(date)
         val used = (invoices + deletedInvoices)
             .filter { it.companyId == companyId && DateUtils.financialYearStart(it.invoiceDate) == fy }

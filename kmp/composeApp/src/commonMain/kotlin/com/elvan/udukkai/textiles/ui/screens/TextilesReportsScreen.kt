@@ -86,7 +86,7 @@ fun TextilesReportsScreen(onBack: () -> Unit) {
     val ff = LocalAppFontFamily.current
     var period by remember { mutableStateOf(0) }
 
-    val now = monthIndex(System.currentTimeMillis())
+    val now = monthIndex(DateUtils.todayMillis())
     val fyStart = financialYearFirstMonth(now)
     val range: IntRange = when (period) {
         0 -> now..now

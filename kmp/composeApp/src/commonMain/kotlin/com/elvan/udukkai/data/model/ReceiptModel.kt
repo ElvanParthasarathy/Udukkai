@@ -1,4 +1,6 @@
-package com.elvan.udukkai.data.model
+package com.elvan.udukkai.data.model
+
+import com.elvan.udukkai.core.utils.DateUtils
 
 /**
  * Domain model for a Payment Receipt (Patru / Patrugal) in both Coolie and Silk modes.
@@ -13,7 +15,7 @@ data class ReceiptModel(
     val customerId: Long? = null,
     val customerName: Map<String, String> = emptyMap(),
     val customerAddress: Map<String, String> = emptyMap(),
-    val receiptDate: Long = System.currentTimeMillis(),
+    val receiptDate: Long = DateUtils.todayMillis(),
     val amount: Double = 0.0,
     val paymentMode: String = "cash",
     val bankName: String? = null,

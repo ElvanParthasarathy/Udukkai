@@ -180,7 +180,7 @@ fun FactoryInvoiceEditorScreen(
     var displayOptions by remember { mutableStateOf(initialDisplayOptions) }
 
     // Date
-    var invoiceDate by remember { mutableStateOf(invoice?.invoiceDate ?: System.currentTimeMillis()) }
+    var invoiceDate by remember { mutableStateOf(invoice?.invoiceDate ?: DateUtils.todayMillis()) }
 
     // Line Items
     var items by remember {

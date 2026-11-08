@@ -174,7 +174,7 @@ fun TextilesInvoiceEditorScreen(
 
     // Metadata
     var invoiceType by remember { mutableStateOf(invoice?.invoiceType?.ifEmpty { "tax-invoice" } ?: "tax-invoice") }
-    var invoiceDate by remember { mutableStateOf(invoice?.invoiceDate ?: System.currentTimeMillis()) }
+    var invoiceDate by remember { mutableStateOf(invoice?.invoiceDate ?: DateUtils.todayMillis()) }
     var placeOfSupplyEn by remember {
         mutableStateOf(
             if (invoice != null && initialDisplayOptions.placeOfSupply.isNotEmpty()) initialDisplayOptions.placeOfSupply else "Tamil Nadu"

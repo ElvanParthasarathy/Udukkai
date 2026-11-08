@@ -253,7 +253,7 @@ object FactoryReceiptRepository {
     fun getPaidAmounts(invoiceIds: List<Long>): Map<Long, Double> =
         getFactoryDatabaseHelper().getPaidAmountsForInvoices(invoiceIds)
 
-    fun getNextVanakkam(companyId: Long?, date: Long = System.currentTimeMillis()): Int {
+    fun getNextVanakkam(companyId: Long?, date: Long = DateUtils.todayMillis()): Int {
         val fy = DateUtils.financialYearStart(date)
         val matching = (receipts + deletedReceipts).filter {
             (if (companyId != null) it.companyId == companyId else true) &&

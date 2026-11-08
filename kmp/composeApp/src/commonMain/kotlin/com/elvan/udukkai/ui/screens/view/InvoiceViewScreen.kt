@@ -92,7 +92,7 @@ private fun InvoiceBody(
 
     val options = remember(invoice.customPreferencesJson) { InvoiceDisplayOptions.fromJson(invoice.customPreferencesJson) }
     val summary = remember(invoice, isFactory) { billSummary(invoice, options, isFactory) }
-    val daysPending = ((System.currentTimeMillis() - invoice.invoiceDate) / DAY).toInt()
+    val daysPending = ((DateUtils.todayMillis() - invoice.invoiceDate) / DAY).toInt()
 
     val paidLabel = K.billFullyPaid.tr()
     val dueLabel = K.balanceDue.tr()

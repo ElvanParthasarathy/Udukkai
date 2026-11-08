@@ -1,5 +1,6 @@
 package com.elvan.udukkai.data.model
 
+import com.elvan.udukkai.core.utils.DateUtils
 import com.elvan.udukkai.core.utils.SearchHelper
 
 /**
@@ -16,7 +17,7 @@ data class InvoiceModel(
     val customerId: Long? = null,
     val customerName: Map<String, String> = emptyMap(),
     val customerAddress: Map<String, String> = emptyMap(),
-    val invoiceDate: Long = System.currentTimeMillis(),
+    val invoiceDate: Long = DateUtils.todayMillis(),
     val itemsJson: String = "[]",
     val totalAmount: Double = 0.0,
     val discount: Double = 0.0,

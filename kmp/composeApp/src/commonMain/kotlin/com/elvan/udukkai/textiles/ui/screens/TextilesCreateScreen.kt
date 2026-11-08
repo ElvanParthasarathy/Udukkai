@@ -147,7 +147,7 @@ fun TextilesCreateScreen(
                                 val startKey = DateGroupUtils.getDayKey(startMillis)
                                 val endKey = DateGroupUtils.getDayKey(endMillis)
                                 if (startKey == endKey) {
-                                    val now = System.currentTimeMillis()
+                                    val now = DateUtils.todayMillis()
                                     val todayKey = DateGroupUtils.getDayKey(now)
                                     val yesterdayKey = DateGroupUtils.getDayKey(now - 86400000L)
                                     when (startKey) {

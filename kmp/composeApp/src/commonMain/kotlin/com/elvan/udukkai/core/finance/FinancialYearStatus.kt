@@ -21,7 +21,8 @@ object FinancialYearStatus {
 
     private fun daysUntil(target: Long, now: Long): Int = ((target - now + DAY - 1) / DAY).toInt().coerceAtLeast(0)
 
-    fun of(now: Long = System.currentTimeMillis()): Status {
+    fun of(clock: Long = System.currentTimeMillis()): Status {
+        val now = DateUtils.todayMillis(clock)
         val fy = DateUtils.financialYearStart(now)
         val nextStartMillis = DateUtils.parseToEpochMillis("01/04/${fy + 1}")!!
         val prevStart = fy - 1

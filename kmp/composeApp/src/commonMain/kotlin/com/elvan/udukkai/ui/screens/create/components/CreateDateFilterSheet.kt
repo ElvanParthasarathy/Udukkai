@@ -51,8 +51,7 @@ fun CreateDateFilterSheet(
     val ff = LocalAppFontFamily.current
     val isDark = colors.isDark
 
-    val now = System.currentTimeMillis()
-    val todayStart = (now / 86400000L) * 86400000L
+    val todayStart = DateUtils.todayMillis()
     val todayEnd = todayStart + 86399999L
 
     val yesterdayStart = todayStart - 86400000L

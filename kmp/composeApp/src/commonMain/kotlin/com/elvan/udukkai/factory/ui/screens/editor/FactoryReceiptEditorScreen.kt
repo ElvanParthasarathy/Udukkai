@@ -130,7 +130,7 @@ fun FactoryReceiptEditorScreen(
     }
 
     // Receipt Data
-    var receiptDate by remember { mutableStateOf(receipt?.receiptDate ?: System.currentTimeMillis()) }
+    var receiptDate by remember { mutableStateOf(receipt?.receiptDate ?: DateUtils.todayMillis()) }
     var vanakkam by remember { mutableStateOf(receipt?.vanakkam ?: 1) }
     var receiptNumber by remember { mutableStateOf(receipt?.receiptNumber.orEmpty()) }
     var isReceiptNumberOverridden by remember { mutableStateOf(false) }
