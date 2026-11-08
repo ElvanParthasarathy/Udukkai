@@ -1,8 +1,7 @@
 package com.elvan.udukkai.ui.components.shell
 
 import androidx.compose.animation.core.Animatable
-import androidx.compose.animation.core.CubicBezierEasing
-import androidx.compose.animation.core.tween
+import androidx.compose.animation.core.spring
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -19,8 +18,11 @@ import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.RoundRect
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Outline
 import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
@@ -32,24 +34,18 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Popup
 import androidx.compose.ui.window.PopupProperties
 import androidx.compose.ui.layout.onGloballyPositioned
-import androidx.compose.ui.layout.boundsInRoot
 import androidx.compose.ui.layout.positionInRoot
+import com.elvan.udukkai.core.extensions.cssShadow
 import com.elvan.udukkai.theme.LocalAppFontFamily
 import com.elvan.udukkai.theme.ShellColors
 import com.elvan.udukkai.theme.ShellDefaults
 
 object ElvanMenuState {
     var isMenuOpen by mutableStateOf(false)
-
-    /** The panel (window pixels) during a menu row's onClick; a page that opens from it takes it (sets null) to grow out of it. */
-    var clickedPanel: androidx.compose.ui.geometry.Rect? = null
 }
 
-/** Panel position, and whether a page opening over the panel means it should stay put rather than shrink. Not state: read only on taps. */
+/** Where the button is, in the panel's own coordinates; set when the panel is placed. Not state: read only while drawing. */
 private class PanelRef {
-    var rect: androidx.compose.ui.geometry.Rect? = null
-    var coveredByNewPage = false
-    /** Where the button is, in the panel's own coordinates; set when the panel is placed. */
     var trigger: Rect? = null
 }
 
@@ -89,7 +85,9 @@ fun ElvanPopupMenu(
     items: List<ElvanPopupMenuItem>,
     modifier: Modifier = Modifier,
     /** True for a button at the bottom of the screen: the menu opens upward and grows from its bottom-right corner. */
-    upward: Boolean = false
+    upward: Boolean = false,
+    /** The glyph of a plain icon button, drawn on the glass so it dissolves as the menu opens; null where the button is more than an icon. */
+    triggerIcon: ImageVector? = com.elvan.udukkai.ui.navigation.MaterialSymbols.Rounded.MoreVert
 ) {
     SideEffect {
         ElvanMenuState.isMenuOpen = expanded
@@ -100,26 +98,17 @@ fun ElvanPopupMenu(
         }
     }
 
-    // Opens out of the button without overshoot and closes back into it (it stays on screen until that has played)
     val progress = remember { Animatable(0f) }
     var mounted by remember { mutableStateOf(false) }
     val panelRef = remember { PanelRef() }
     LaunchedEffect(expanded) {
         if (expanded) {
-            panelRef.coveredByNewPage = false
             mounted = true
             // The panel takes a frame or two to compose; started now, the opening would be used up before it is on screen
             if (progress.value == 0f) repeat(2) { withFrameNanos { } }
-            progress.animateTo(1f, tween(230, easing = CubicBezierEasing(0f, 0f, 0.2f, 1f)))
+            progress.animateTo(1f, spring(dampingRatio = 0.62f, stiffness = 300f))
         } else if (mounted) {
-            if (panelRef.coveredByNewPage) {
-                // shortcut: fixed wait for the new window to cover the panel, tie it to the lifecycle if a slow phone shows the panel vanish first
-                kotlinx.coroutines.delay(700)
-                progress.snapTo(0f)
-                panelRef.coveredByNewPage = false
-            } else {
-                progress.animateTo(0f, tween(170, easing = CubicBezierEasing(0.4f, 0f, 1f, 1f)))
-            }
+            progress.animateTo(0f, spring(dampingRatio = 1f, stiffness = 500f))
             mounted = false
         }
     }
@@ -136,50 +125,80 @@ fun ElvanPopupMenu(
         onDismissRequest()
     }
 
-    val pick: (ElvanPopupMenuItem) -> Unit = pick@{ item ->
-        if (panelRef.coveredByNewPage) return@pick // a second tap while the first page is opening
-        // A separate popup window has its own coordinates, so only a menu in the page layer can hand over its position
-        val rect = if (host != null) panelRef.rect else null
-        ElvanMenuState.clickedPanel = rect
-        item.onClick()
-        panelRef.coveredByNewPage = rect != null && ElvanMenuState.clickedPanel == null
-        ElvanMenuState.clickedPanel = null
+    fun buttonIn(size: Size, outset: Float): Rect = panelRef.trigger ?: anchor.size.let {
+        // A separate popup window has no placed panel: the button is in the corner the panel grows from
+        val top = if (upward) size.height - outset - it.height else outset
+        Rect(size.width - outset - it.width, top, size.width - outset, top + it.height)
     }
+    val panelShape = RoundedCornerShape(PANEL_RADIUS)
+    val rim = Brush.verticalGradient(
+        if (colors.isDark) listOf(Color.White.copy(alpha = 0.28f), colors.floatingBorder.copy(alpha = 0.25f))
+        else listOf(Color.White.copy(alpha = 0.9f), colors.floatingBorder.copy(alpha = 0.6f))
+    )
 
     val panel: @Composable () -> Unit = {
         Box(
             modifier = modifier
+                .width(IntrinsicSize.Max)
                 .graphicsLayer {
                     val p = progress.value
-                    val outset = TRIGGER_OUTSET.toPx()
-                    // Without a placed panel (separate popup window) the button is in the corner the panel grows from
-                    val button = panelRef.trigger ?: anchor.size.let {
-                        val top = if (upward) size.height - outset - it.height else outset
-                        Rect(size.width - outset - it.width, top, size.width - outset, top + it.height)
-                    }
-                    val outline = morphRect(button, size, p)
-                    val corner = minOf(button.width, button.height) / 2 * (1f - p) + PANEL_RADIUS.toPx() * p
-                    shape = object : Shape {
-                        override fun createOutline(size: Size, layoutDirection: LayoutDirection, density: Density) =
-                            Outline.Rounded(RoundRect(outline, CornerRadius(corner)))
-                    }
-                    clip = true
-                    shadowElevation = 12.dp.toPx() * p
+                    val button = buttonIn(size, TRIGGER_OUTSET.toPx())
+                    // Past the end of the spring the whole pane swells from the button
+                    val swell = 1f + (p - 1f).coerceAtLeast(0f) * 0.5f
+                    scaleX = swell
+                    scaleY = swell
+                    transformOrigin = TransformOrigin(button.center.x / size.width, button.center.y / size.height)
                     alpha = (p * 8f).coerceIn(0f, 1f) // only so the first frame does not pop
                 }
-                .onGloballyPositioned { panelRef.rect = it.boundsInRoot() }
-                // Frosted glass over the page; plain translucent where there is no page to blur
-                .frostedGlass(RoundedCornerShape(24.dp), colors, fallbackAlpha = 0.94f)
-                .border(
-                    width = 0.5.dp,
-                    color = colors.floatingBorder.copy(alpha = if (colors.isDark) 0.25f else 0.6f),
-                    shape = RoundedCornerShape(24.dp)
-                )
-                .clip(RoundedCornerShape(24.dp))
-                .width(IntrinsicSize.Max)
-                // Taps on the menu stay on the menu
-                .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null) {}
-        ) { MenuRows(items, colors, { progress.value }, onDismissRequest, pick) }
+        ) {
+            // The navigation bar's shadow, kept to the moving outline
+            Box(
+                Modifier.matchParentSize().graphicsLayer {
+                    val o = morphRect(buttonIn(size, TRIGGER_OUTSET.toPx()), size, progress.value.coerceIn(0f, 1f))
+                    transformOrigin = TransformOrigin(0f, 0f)
+                    translationX = o.left
+                    translationY = o.top
+                    scaleX = o.width / size.width
+                    scaleY = o.height / size.height
+                }.cssShadow(color = Color.Black, alpha = 0.05f, borderRadius = PANEL_RADIUS, blurRadius = 16.dp, offsetY = 4.dp)
+            )
+            Box(
+                Modifier
+                    .graphicsLayer {
+                        val p = progress.value.coerceIn(0f, 1f)
+                        val button = buttonIn(size, TRIGGER_OUTSET.toPx())
+                        val outline = morphRect(button, size, p)
+                        val corner = minOf(button.width, button.height) / 2 * (1f - p) + PANEL_RADIUS.toPx() * p
+                        shape = object : Shape {
+                            override fun createOutline(size: Size, layoutDirection: LayoutDirection, density: Density) =
+                                Outline.Rounded(RoundRect(outline, CornerRadius(corner)))
+                        }
+                        clip = true
+                    }
+                    // Frosted glass over the page; plain translucent where there is no page to blur
+                    .frostedGlass(panelShape, colors, fallbackAlpha = 0.94f)
+                    .border(0.75.dp, rim, panelShape)
+                    .clip(panelShape)
+                    // Taps on the menu stay on the menu
+                    .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null) {}
+            ) {
+                MenuRows(items, colors, { progress.value }, onDismissRequest)
+                if (triggerIcon != null) {
+                    Icon(
+                        triggerIcon, contentDescription = null, tint = colors.textPrimary,
+                        modifier = Modifier.size(22.dp).graphicsLayer {
+                            val button = panelRef.trigger ?: return@graphicsLayer
+                            val gone = (progress.value / 0.3f).coerceIn(0f, 1f)
+                            translationX = button.center.x - size.width / 2
+                            translationY = button.center.y - size.height / 2
+                            alpha = 1f - gone
+                            scaleX = 1f - gone * 0.3f
+                            scaleY = 1f - gone * 0.3f
+                        }
+                    )
+                }
+            }
+        }
     }
 
     if (host != null) {
@@ -230,7 +249,7 @@ fun ElvanPopupMenu(
 private var dismissKey: (() -> Unit)? = null
 
 @Composable
-private fun MenuRows(items: List<ElvanPopupMenuItem>, colors: ShellColors, progress: () -> Float, onDismissRequest: () -> Unit, onPick: (ElvanPopupMenuItem) -> Unit) {
+private fun MenuRows(items: List<ElvanPopupMenuItem>, colors: ShellColors, progress: () -> Float, onDismissRequest: () -> Unit) {
     Column(
         // The rows come in as the panel opens over them, in step with it
         modifier = Modifier.fillMaxWidth().graphicsLayer { alpha = ((progress() - 0.3f) / 0.5f).coerceIn(0f, 1f) }
@@ -254,7 +273,7 @@ private fun MenuRows(items: List<ElvanPopupMenuItem>, colors: ShellColors, progr
                         indication = ShellDefaults.ripple(colors, bounded = true),
                         onClick = {
                             onDismissRequest()
-                            onPick(item)
+                            item.onClick()
                         }
                     )
                     .padding(horizontal = 16.dp, vertical = 14.dp),

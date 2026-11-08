@@ -332,6 +332,7 @@ private fun PreviewBottomArea(controller: DocumentPrintController, onEdit: (() -
                     onDismissRequest = { menuOpen = false },
                     colors = colors,
                     upward = true,
+                    triggerIcon = null,
                     items = menuItems.map { item -> ElvanPopupMenuItem(item.title, item.icon) { menuOpen = false; item.onClick() } }
                 )
             }

@@ -177,7 +177,6 @@ fun CreateDateFilterSheet(
         ElvanDateRangePicker(
             initialStart = currentStartMillis ?: todayStart,
             initialEnd = currentEndMillis ?: todayEnd,
-            title = selectDateRangeLabel,
             onDismiss = { showDateRangePicker = false },
             onConfirm = { start, end ->
                 onApplyFilter(start, end + 86399999L, DateFilterPreset.CUSTOM)

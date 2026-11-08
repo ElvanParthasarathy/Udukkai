@@ -102,7 +102,6 @@ fun InvoiceDateField(
     if (isPickerOpen) {
         ElvanDatePicker(
             initialMillis = selectedDate,
-            title = label.orEmpty(),
             onDismiss = { isPickerOpen = false },
             onConfirm = { onDateChanged(it); isPickerOpen = false },
             colors = colors

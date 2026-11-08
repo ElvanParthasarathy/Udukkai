@@ -92,6 +92,10 @@ fun <T> ElvanSettingsDropdown(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically
             ) {
+                if (value != null && leadingBuilder != null) {
+                    leadingBuilder(value)
+                    androidx.compose.foundation.layout.Spacer(Modifier.width(10.dp))
+                }
                 Text(
                     text = if (value != null) itemLabelBuilder(value) else "",
                     style = TextStyle(

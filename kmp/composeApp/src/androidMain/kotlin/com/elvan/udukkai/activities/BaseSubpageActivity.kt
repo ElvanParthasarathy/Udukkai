@@ -40,7 +40,6 @@ import com.elvan.udukkai.updateSystemBarsAppearance
  * Common base Activity for all subpage activities in the multi-window architecture.
  * Manages window lifecycle, system bar insets, edge-to-edge drawing, and app lock.
  */
-const val EXTRA_MENU_REVEAL = "extra_menu_reveal"
 
 abstract class BaseSubpageActivity : FragmentActivity() {
     private var currentHeaderExpanded: MutableState<Boolean>? = null
@@ -52,10 +51,6 @@ abstract class BaseSubpageActivity : FragmentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        // Opened from a menu: leave by shrinking back toward it (older Android keeps its usual close animation)
-        if (Build.VERSION.SDK_INT >= 34 && intent.getBooleanExtra(EXTRA_MENU_REVEAL, false)) {
-            overrideActivityTransition(OVERRIDE_TRANSITION_CLOSE, 0, com.elvan.udukkai.R.anim.menu_reveal_close)
-        }
         requestedOrientation = android.content.pm.ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
         AppContext.context = applicationContext
         ScreenLockReceiver.register(applicationContext)

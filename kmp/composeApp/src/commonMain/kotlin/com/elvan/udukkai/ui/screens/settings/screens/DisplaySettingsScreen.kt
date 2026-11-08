@@ -44,6 +44,7 @@ import com.elvan.udukkai.theme.rememberShellColors
 import com.elvan.udukkai.ui.components.shell.*
 import com.elvan.udukkai.ui.navigation.MaterialSymbols
 import com.elvan.udukkai.theme.LocalShellColors
+import com.elvan.udukkai.theme.OneUiBlue
 
 /**
  * Display Settings Screen matching Neram's `DisplaySettingsScreen.kt` 1:1 pixel-perfect.
@@ -170,12 +171,12 @@ private fun ThemeOptionBox(
     val isDark = colors.isDark
     val ff = LocalAppFontFamily.current
 
-    // The top of a phone, as in Samsung's own Display page, drawn in greys: a frame with a thin rim, one card with two
+    // The top of a phone, as in Samsung's own Display page, drawn in greys with blue list icons: a frame with a thin rim, one card with two
     // rows (a dot and a bar), and the next card peeking in at the foot. The pictures look the same in light and dark mode.
     val rimColor = if (isDarkModeDesign) Color(0xFF2D2D2F) else Color(0xFFD4D4D7)
     val frameColor = if (isDarkModeDesign) Color(0xFF38383B) else Color(0xFFE2E2E5)
     val cardColor = if (isDarkModeDesign) Color(0xFF5E5E62) else Color.White
-    val dotColor = if (isDarkModeDesign) Color.White else Color(0xFF1D1D1F)
+    val dotColor = OneUiBlue
     val barColor = if (isDarkModeDesign) Color(0xFF8E8E93) else Color(0xFFD3D3D3)
     val tileShape = RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp, bottomStart = 4.dp, bottomEnd = 4.dp)
 

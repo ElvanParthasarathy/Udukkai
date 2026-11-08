@@ -1,5 +1,6 @@
 package com.elvan.udukkai.ui.components.shell
 
+import androidx.compose.ui.draw.clip
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.CubicBezierEasing
 import androidx.compose.animation.core.animateFloatAsState
@@ -14,7 +15,6 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -62,15 +62,16 @@ fun ElvanActionSheet(
     onTertiary: (() -> Unit)? = null,
     tertiaryColor: Color? = null,
     slideDistance: androidx.compose.ui.unit.Dp = 300.dp,
-    /** The card fades as it moves, for a short rise rather than a slide up from the bottom of the screen. */
-    fadeWithSlide: Boolean = false,
+    /** One UI picker form: no title, a solid 26dp card 10dp from the screen edges, plain text buttons with a divider. Content sets its own padding. */
+    pickerCard: Boolean = false,
     customContent: (@Composable () -> Unit)? = null
 ) {
     val ff = LocalAppFontFamily.current
     val isDark = colors.isDark
     // Frosted where the phone blurs the screen behind; just slightly see-through where it cannot, so text stays clear of what is behind
     val glass = remember { com.elvan.udukkai.core.platform.dialogBlurAvailable() }
-    val cardBg = (if (isDark) Color(0xFF161616) else Color(0xFFFAFAFA)).copy(alpha = if (glass) 0.86f else 0.95f)
+    val cardBg = if (pickerCard) (if (isDark) Color(0xFF252528) else Color(0xFFFCFCFD))
+        else (if (isDark) Color(0xFF161616) else Color(0xFFFAFAFA)).copy(alpha = if (glass) 0.86f else 0.95f)
     val mainColor = confirmColor ?: colors.accent
 
     val coroutineScope = rememberCoroutineScope()
@@ -142,7 +143,7 @@ fun ElvanActionSheet(
                     else -> Alignment.BottomCenter
                 }
             ) {
-            val cardShape = if (isLandscape) RoundedCornerShape(24.dp) else RoundedCornerShape(32.dp)
+            val cardShape = RoundedCornerShape(if (pickerCard) 26.dp else if (isLandscape) 24.dp else 32.dp)
             val cardModifier = when {
                 isDesktop -> {
                     modifier
@@ -173,7 +174,7 @@ fun ElvanActionSheet(
                         .fillMaxWidth()
                         .navigationBarsPadding()
                         .imePadding()
-                        .padding(start = 16.dp, end = 16.dp, bottom = 16.dp)
+                        .padding(start = if (pickerCard) 10.dp else 16.dp, end = if (pickerCard) 10.dp else 16.dp, bottom = 16.dp)
                         .offset { IntOffset(0, sheetOffsetY.value.roundToInt()) }
                         .clickable(
                             interactionSource = remember { MutableInteractionSource() },
@@ -186,14 +187,20 @@ fun ElvanActionSheet(
                 shape = cardShape,
                 color = cardBg,
                 shadowElevation = 12.dp,
-                modifier = if (fadeWithSlide) cardModifier.graphicsLayer { alpha = 1f - (sheetOffsetY.value / initialOffsetPx).coerceIn(0f, 1f) } else cardModifier
+                modifier = cardModifier
             ) {
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(start = 20.dp, end = 20.dp, top = 24.dp, bottom = 16.dp),
+                        .then(if (pickerCard) Modifier else Modifier.padding(start = 20.dp, end = 20.dp, top = 24.dp, bottom = 16.dp)),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
+                    if (pickerCard) {
+                        customContent?.invoke()
+                        Spacer(modifier = Modifier.height(4.dp))
+                        PickerButtons(cancelText, confirmText, colors, onCancel = { dismiss() }, onConfirm = { dismiss { onConfirm() } })
+                        Spacer(modifier = Modifier.height(20.dp))
+                    } else {
                     // Centered Title
                     Text(
                         text = title.preventBrokenLigatures(),
@@ -402,6 +409,7 @@ fun ElvanActionSheet(
                             }
                         }
                     }
+                    }
                 }
             }
             }
@@ -422,4 +430,38 @@ fun ElvanDiscardChangesDialog(
         onDismissRequest = onKeepEditing,
         onConfirm = onDiscard
     )
+}
+
+/** One UI's dialog buttons: text only, split by a short divider, each as wide as its text plus an equal share of what is left. */
+@Composable
+private fun PickerButtons(cancel: String, confirm: String, colors: ShellColors, onCancel: () -> Unit, onConfirm: () -> Unit) {
+    val ink = if (colors.isDark) Color(0xFFFAFAFF) else Color(0xFF010102)
+    val line = if (colors.isDark) Color(0xFF3B3B3E) else Color(0xFFD5D5D8)
+    @Composable
+    fun Button(text: String, onClick: () -> Unit) {
+        Box(Modifier.clip(RoundedCornerShape(18.dp)).clickable(role = androidx.compose.ui.semantics.Role.Button, onClick = onClick), contentAlignment = Alignment.Center) {
+            Text(text.preventBrokenLigatures(), maxLines = 1, style = TextStyle(fontFamily = LocalAppFontFamily.current, fontSize = 18.sp, fontWeight = FontWeight.Bold), color = ink)
+        }
+    }
+    androidx.compose.ui.layout.Layout(
+        content = {
+            Button(cancel, onCancel)
+            Box(Modifier.background(line))
+            Button(confirm, onConfirm)
+        },
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp).height(36.dp)
+    ) { parts, constraints ->
+        val h = constraints.maxHeight
+        val divider = parts[1].measure(androidx.compose.ui.unit.Constraints.fixed(1.dp.roundToPx(), 16.dp.roundToPx()))
+        val leftText = parts[0].maxIntrinsicWidth(h)
+        val rightText = parts[2].maxIntrinsicWidth(h)
+        val share = ((constraints.maxWidth - divider.width - leftText - rightText) / 2).coerceAtLeast(0)
+        val left = parts[0].measure(androidx.compose.ui.unit.Constraints.fixed(leftText + share, h))
+        val right = parts[2].measure(androidx.compose.ui.unit.Constraints.fixed(rightText + share, h))
+        layout(constraints.maxWidth, h) {
+            left.place(0, 0)
+            divider.place(left.width, (h - divider.height) / 2)
+            right.place(left.width + divider.width, 0)
+        }
+    }
 }

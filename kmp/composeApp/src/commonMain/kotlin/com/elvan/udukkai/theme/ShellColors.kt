@@ -6,6 +6,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
 
+/** One UI's blue, for the places that copy One UI directly: the calendar and the theme previews. */
+val OneUiBlue = Color(0xFF387AFF)
+
 @Immutable
 data class ShellColors(
     val isDark: Boolean,

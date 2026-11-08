@@ -2,8 +2,7 @@ package com.elvan.udukkai.ui.screens.settings
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
-import com.elvan.udukkai.localization.K
-import com.elvan.udukkai.localization.tr
+import androidx.compose.ui.graphics.compositeOver
 import com.elvan.udukkai.theme.ShellColors
 import com.elvan.udukkai.ui.components.ElvanColorPicker
 import com.elvan.udukkai.ui.components.colorToHex
@@ -26,11 +25,10 @@ internal fun readable(c: Color): Color {
 @Composable
 fun BillColorPickerDialog(initial: Color, colors: ShellColors, recent: List<String>, onDismiss: () -> Unit, onDone: (String) -> Unit) {
     ElvanColorPicker(
-        title = K.pdfTheme.tr(),
         initial = initial,
         colors = colors,
         recent = recent,
         onDismiss = onDismiss,
-        onDone = { onDone(billColorHex(readable(it))) }
+        onDone = { onDone(billColorHex(readable(it.compositeOver(Color.White)))) }
     )
 }

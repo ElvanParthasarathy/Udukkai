@@ -4,7 +4,6 @@ import android.content.Context
 import android.content.Intent
 import androidx.compose.runtime.Composable
 import com.elvan.udukkai.activities.BaseSubpageActivity
-import com.elvan.udukkai.activities.EXTRA_MENU_REVEAL
 import com.elvan.udukkai.factory.ui.screens.FactorySettingsScreen
 import com.elvan.udukkai.textiles.ui.screens.TextilesSettingsScreen
 import com.elvan.udukkai.ui.screens.settings.SettingsRoute
@@ -47,12 +46,11 @@ class SettingsActivity : BaseSubpageActivity() {
     companion object {
         const val EXTRA_ROUTE = "extra_settings_route"
 
-        fun start(context: Context, route: SettingsRoute = SettingsRoute.Hub, menuReveal: android.os.Bundle? = null) {
+        fun start(context: Context, route: SettingsRoute = SettingsRoute.Hub) {
             val intent = Intent(context, SettingsActivity::class.java).apply {
                 putExtra(EXTRA_ROUTE, route.name)
-                putExtra(EXTRA_MENU_REVEAL, menuReveal != null)
             }
-            context.startActivity(intent, menuReveal)
+            context.startActivity(intent)
         }
     }
 }

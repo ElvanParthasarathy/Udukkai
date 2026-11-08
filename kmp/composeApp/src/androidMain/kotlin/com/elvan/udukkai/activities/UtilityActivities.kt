@@ -19,8 +19,8 @@ class RecycleBinActivity : BaseSubpageActivity() {
     }
 
     companion object {
-        fun start(context: Context, menuReveal: android.os.Bundle? = null) {
-            context.startActivity(Intent(context, RecycleBinActivity::class.java).putExtra(EXTRA_MENU_REVEAL, menuReveal != null), menuReveal)
+        fun start(context: Context) {
+            context.startActivity(Intent(context, RecycleBinActivity::class.java))
         }
     }
 }
