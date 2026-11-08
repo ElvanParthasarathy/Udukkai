@@ -84,7 +84,7 @@ fun ElvanPopupMenu(
 
     Popup(
         alignment = if (upward) Alignment.BottomEnd else Alignment.TopEnd,
-        offset = if (upward) IntOffset(x = 0, y = -8) else IntOffset(x = 8, y = -16),
+        offset = if (upward) IntOffset(x = -24, y = -28) else IntOffset(x = 8, y = -16),
         onDismissRequest = {
             ElvanMenuState.isMenuOpen = false
             onDismissRequest()
