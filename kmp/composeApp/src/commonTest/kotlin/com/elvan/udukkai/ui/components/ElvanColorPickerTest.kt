@@ -73,4 +73,37 @@ class ElvanColorPickerTest {
         assertEquals(listOf("#112233"), parseRecentColors("#zzzzzz,#12,,#112233,112233"))
         assertNotNull(parseHexColor(parseRecentColors("#388E3C").single()))
     }
+
+    @Test
+    fun hexFieldKeepsHashAndDigitsOnly() {
+        assertEquals("#123", cleanHexInput("123"))
+        assertEquals("#ABC123", cleanHexInput("#abc123"))
+        assertEquals("#123456", cleanHexInput("#1234567"))
+        assertEquals("#1A", cleanHexInput("#1g!a"))
+        assertEquals("#", cleanHexInput(""))
+    }
+
+    @Test
+    fun shortAndFullHexBothParseWhileTyping() {
+        assertEquals("#112233", colorToHex(parseHexColor(cleanHexInput("#123"))!!))
+        assertEquals("#123456", colorToHex(parseHexColor(cleanHexInput("#123456"))!!))
+        assertNull(parseHexColor(cleanHexInput("#12")))
+        assertNull(parseHexColor(cleanHexInput("#1234")))
+    }
+
+    @Test
+    fun channelFieldIsDigitsUpTo255() {
+        assertEquals("12", cleanChannelInput("1a2"))
+        assertEquals("255", cleanChannelInput("999"))
+        assertEquals("255", cleanChannelInput("2555"))
+        assertEquals("", cleanChannelInput("x"))
+        assertEquals("0", cleanChannelInput("0"))
+    }
+
+    @Test
+    fun swatchGridRunsPaleToDarkWithGreysFirst() {
+        assertEquals("#ffffff", colorToHex(swatchColor(0, 0)))
+        assertEquals("#000000", colorToHex(swatchColor(9, 0)))
+        for (col in 1..10) assertTrue(rgbToHsv(swatchColor(0, col)).third >= rgbToHsv(swatchColor(9, col)).third, "column $col")
+    }
 }
