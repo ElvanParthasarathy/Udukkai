@@ -249,12 +249,12 @@ fun ElvanColorPicker(
                             Canvas(
                                 Modifier.fillMaxWidth().height((SPECTRUM_HEIGHT - shortBy).coerceAtLeast(80.dp)).clip(RoundedCornerShape(4.dp))
                                     .semantics { contentDescription = "$spectrumLabel $hex" }
-                                    .followFinger { o, area -> pickHsv((o.x / area.width * 360f).coerceIn(0f, 360f), (o.y / area.height).coerceIn(0f, 1f), hsv.third) }
+                                    .followFinger { o, area -> pickHsv((o.x / area.width * 300f).coerceIn(0f, 300f), (o.y / area.height).coerceIn(0f, 1f), hsv.third) }
                             ) {
-                                drawRect(Brush.horizontalGradient((0..6).map { Color.hsv(it * 60f, 1f, 1f) }))
+                                drawRect(Brush.horizontalGradient((0..5).map { Color.hsv(it * 60f, 1f, 1f) })) // red to magenta, as One UI: the strip does not loop back to red
                                 drawRect(Brush.verticalGradient(listOf(Color.White, Color.Transparent)))
                                 val r = 13.dp.toPx()
-                                val p = Offset((hsv.first / 360f * size.width).coerceIn(r, size.width - r), (hsv.second * size.height).coerceIn(r, size.height - r))
+                                val p = Offset((hsv.first.coerceAtMost(300f) / 300f * size.width).coerceIn(r, size.width - r), (hsv.second * size.height).coerceIn(r, size.height - r))
                                 drawCircle(color, radius = r, center = p)
                                 drawCircle(Color.White, radius = r, center = p, style = Stroke(2.dp.toPx()))
                             }
@@ -265,7 +265,7 @@ fun ElvanColorPicker(
                         ColorBar(opacity, ink, ink, listOf(color.copy(alpha = 0f), color.copy(alpha = 1f))) { opacity = it }
                     }
 
-                    Spacer(Modifier.height(26.dp))
+                    Spacer(Modifier.height(18.dp))
                     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(7.5.dp)) {
                         Row(Modifier.size(width = 56.dp, height = 36.dp).clip(RoundedCornerShape(10.dp)).border(BorderStroke(1.dp, ink.strong.copy(alpha = 0.3f)), RoundedCornerShape(10.dp))) {
                             Box(Modifier.weight(1f).fillMaxHeight().background(initial))
@@ -277,7 +277,7 @@ fun ElvanColorPicker(
                         ColorField(K.colorBlue.tr(), "${channel(color.blue)}", ::cleanChannelInput, KeyboardType.Number, ink, Modifier.weight(40f)) { t -> t.toIntOrNull()?.let { pick(Color(channel(color.red), channel(color.green), it)); true } ?: false }
                     }
 
-                    Spacer(Modifier.height(10.dp))
+                    Spacer(Modifier.height(5.dp))
                     Row(Modifier.height(20.dp), verticalAlignment = Alignment.CenterVertically) {
                         Text(K.recentColors.tr(), maxLines = 1, style = TextStyle(fontFamily = ff, fontSize = 13.dp.fixedSp()), color = ink.soft)
                         Spacer(Modifier.width(16.dp))

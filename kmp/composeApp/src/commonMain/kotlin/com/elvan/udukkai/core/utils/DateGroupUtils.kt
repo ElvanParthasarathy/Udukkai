@@ -48,13 +48,13 @@ object DateGroupUtils {
 
     private val WEEKDAY_NAMES_TA = arrayOf("ஞாயிறு", "திங்கள்", "செவ்வாய்", "புதன்", "வியாழன்", "வெள்ளி", "சனி")
 
-    private val WEEKDAY_NARROW_TA = arrayOf("ஞா", "தி", "செ", "பு", "வி", "வெ", "ச")
+    private val WEEKDAY_ABBREV_TA = arrayOf("ஞாயி", "திங்", "செவ்", "புத", "வியா", "வெள்", "சனி")
 
     /** Names for calendars; [tamil] false gives English. Month is 1..12, weekday 0 = Sunday. */
     fun monthFullName(month: Int, tamil: Boolean) = (if (tamil) MONTH_FULL_TA else MONTH_FULL_EN)[month]
     fun monthShortName(month: Int, tamil: Boolean) = (if (tamil) MONTH_NAMES_TA else MONTH_NAMES_EN)[month]
     fun weekdayShortName(weekday: Int, tamil: Boolean) = (if (tamil) WEEKDAY_NAMES_TA else WEEKDAY_NAMES_EN)[weekday]
-    fun weekdayNarrowName(weekday: Int, tamil: Boolean) = if (tamil) WEEKDAY_NARROW_TA[weekday] else WEEKDAY_NAMES_EN[weekday].take(1)
+    fun weekdayAbbreviation(weekday: Int, tamil: Boolean) = (if (tamil) WEEKDAY_ABBREV_TA else WEEKDAY_NAMES_EN)[weekday]
 
     /**
      * Decomposes epoch milliseconds to calendar date components without java.time dependencies.

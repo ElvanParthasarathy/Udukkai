@@ -20,7 +20,6 @@ import androidx.compose.foundation.pager.PagerDefaults
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -31,6 +30,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.Fill
 import androidx.compose.ui.graphics.drawscope.Stroke
@@ -62,7 +62,6 @@ import com.elvan.udukkai.theme.OneUiBlue
 import com.elvan.udukkai.theme.ShellColors
 import com.elvan.udukkai.theme.rememberShellColors
 import com.elvan.udukkai.ui.components.shell.ElvanActionSheet
-import com.elvan.udukkai.ui.navigation.MaterialSymbols
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
@@ -250,7 +249,7 @@ private fun MonthBar(
     Row(Modifier.fillMaxWidth().height(HEADER_HEIGHT).padding(horizontal = SIDE_MARGIN), verticalAlignment = Alignment.CenterVertically) {
         // The arrows go at once when the wheels open, and keep their space so the month does not move
         Box(Modifier.size(HEADER_HEIGHT)) { if (!wheels) ArrowButton(previousLabel, canGoBack, flip = true, ink) { onShift(-1) } }
-        Box(Modifier.weight(1f), contentAlignment = Alignment.Center) {
+        Box(Modifier.weight(1f).offset(x = 3.dp), contentAlignment = Alignment.Center) {
             Row(
                 Modifier.clip(RoundedCornerShape(50)).clickable(role = Role.Button, onClick = onToggle).padding(horizontal = 8.dp).height(HEADER_HEIGHT),
                 verticalAlignment = Alignment.CenterVertically
@@ -281,11 +280,20 @@ private fun ArrowButton(description: String, enabled: Boolean, flip: Boolean, in
         Modifier.size(HEADER_HEIGHT).clip(CircleShape).clickable(enabled = enabled, role = Role.Button, onClick = onClick),
         contentAlignment = Alignment.Center
     ) {
-        Icon(
-            MaterialSymbols.Rounded.ChevronRight, contentDescription = description,
-            tint = ink.text.copy(alpha = if (enabled) 1f else 0.25f),
-            modifier = Modifier.size(24.dp).graphicsLayer { rotationZ = if (flip) 180f else 0f }
-        )
+        // One UI's chevron is thinner than the icon set's
+        Canvas(Modifier.size(24.dp).graphicsLayer { rotationZ = if (flip) 180f else 0f }.semantics { contentDescription = description }) {
+            val half = 5.5.dp.toPx()
+            val c = Offset(size.width / 2, size.height / 2)
+            drawPath(
+                Path().apply {
+                    moveTo(c.x - half / 2, c.y - half)
+                    lineTo(c.x + half / 2, c.y)
+                    lineTo(c.x - half / 2, c.y + half)
+                },
+                ink.text.copy(alpha = if (enabled) 1f else 0.25f),
+                style = Stroke(1.5.dp.toPx(), cap = StrokeCap.Round, join = StrokeJoin.Round)
+            )
+        }
     }
 }
 
@@ -294,10 +302,11 @@ private fun WeekdayRow(tamil: Boolean, ink: CalendarInk) {
     Row(Modifier.fillMaxWidth().height(ROW_HEIGHT)) {
         for (w in 0..6) {
             Text(
-                DateGroupUtils.weekdayNarrowName(w, tamil),
-                modifier = Modifier.weight(1f).align(Alignment.CenterVertically),
+                DateGroupUtils.weekdayAbbreviation(w, tamil),
+                maxLines = 1,
+                modifier = Modifier.weight(1f).align(Alignment.CenterVertically).offset(y = 2.dp),
                 textAlign = TextAlign.Center,
-                style = TextStyle(fontFamily = LocalAppFontFamily.current, fontSize = 13.dp.fixedSp(), color = if (w == 0) ink.sunday else ink.weekday)
+                style = TextStyle(fontFamily = LocalAppFontFamily.current, fontSize = 11.dp.fixedSp(), color = if (w == 0) ink.sunday else ink.weekday)
             )
         }
     }
@@ -362,7 +371,7 @@ private fun MonthGrid(
                         else -> base
                     }
                     val number = text.of(c.day)
-                    drawText(number, color, Offset(center.x - number.size.width / 2f, center.y - number.size.height / 2f))
+                    drawText(number, color, Offset(center.x - number.size.width / 2f, center.y - number.size.height / 2f + 0.6.dp.toPx()))
                 }
             }
     ) {

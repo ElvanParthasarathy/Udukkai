@@ -152,8 +152,8 @@ class ElvanCalendarTest {
             assertTrue(DateGroupUtils.monthFullName(m, tamil = true).isNotEmpty())
         }
         for (w in 0..6) {
-            assertEquals(1, DateGroupUtils.weekdayNarrowName(w, tamil = false).length)
-            assertTrue(DateGroupUtils.weekdayNarrowName(w, tamil = true).isNotEmpty())
+            assertEquals(3, DateGroupUtils.weekdayAbbreviation(w, tamil = false).length)
+            assertTrue(DateGroupUtils.weekdayAbbreviation(w, tamil = true).isNotEmpty())
         }
     }
 

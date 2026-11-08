@@ -105,7 +105,8 @@ fun CreateDateFilterSheet(
         )
     }
 
-    if (isOpen) {
+    // The calendar is narrower than this sheet, so the sheet must not show around it
+    if (isOpen && !showDateRangePicker) {
         ElvanSelectionBottomSheet(
             title = filterTitle,
             items = items,
