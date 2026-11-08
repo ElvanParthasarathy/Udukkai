@@ -59,6 +59,9 @@ fun InvoiceViewScreen(
     onPrint: (() -> Unit)? = null,
     onCopy: (() -> Unit)? = null,
     onConvertToTaxInvoice: (() -> Unit)? = null,
+    /** The receipts that paid this bill: each gets an entry in the menu that opens it. */
+    receipts: List<com.elvan.udukkai.data.model.ReceiptModel> = emptyList(),
+    onOpenReceipt: ((com.elvan.udukkai.data.model.ReceiptModel) -> Unit)? = null,
     printPayload: ((activeProfile: BusinessProfile) -> String)? = null
 ) {
     if (printPayload != null && isDocumentPrintSupported) {
@@ -72,9 +75,10 @@ fun InvoiceViewScreen(
             title = (if (isProforma) K.proforma.tr() else K.invoice.tr()) + " #" + invoice.invoiceNumber,
             onBack = onBack,
             onEdit = if (isPaid) null else onEdit,
-            menuItems = if (isProforma && onConvertToTaxInvoice != null) {
-                listOf(ElvanPopupMenuItem(convertTitle, MaterialSymbols.Rounded.SwapHoriz, onConvertToTaxInvoice))
-            } else emptyList(),
+            menuItems = buildList {
+                if (isProforma && onConvertToTaxInvoice != null) add(ElvanPopupMenuItem(convertTitle, MaterialSymbols.Rounded.SwapHoriz, onConvertToTaxInvoice))
+                if (onOpenReceipt != null) receipts.forEach { r -> add(ElvanPopupMenuItem(K.receipt.tr() + " " + r.receiptNumber, MaterialSymbols.Rounded.ReceiptFill) { onOpenReceipt(r) }) }
+            },
             printPayload = payload,
             printFileName = invoicePdfName(invoice),
             businessFolder = billBusinessFolder(activeProfile)

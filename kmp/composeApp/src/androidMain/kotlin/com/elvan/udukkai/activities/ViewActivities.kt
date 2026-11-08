@@ -48,6 +48,8 @@ class InvoiceViewActivity : BaseSubpageActivity() {
                 allProfiles = FactoryProfileRepository.profiles,
                 isPaid = FactoryInvoiceRepository.hasLinkedReceipts(currentInvoice.id),
                 onBack = { finish() },
+                receipts = FactoryReceiptRepository.receiptsForInvoice(currentInvoice.id),
+                onOpenReceipt = { ReceiptViewActivity.start(this, it) },
                 onEdit = {
                     if (FactoryInvoiceRepository.hasLinkedReceipts(currentInvoice.id)) {
                         ElvanSnackbar.show(invoiceLockedMsg)
@@ -95,6 +97,8 @@ class InvoiceViewActivity : BaseSubpageActivity() {
                 allProfiles = TextilesProfileRepository.profiles,
                 isPaid = TextilesInvoiceRepository.hasLinkedReceipts(currentInvoice.id),
                 onBack = { finish() },
+                receipts = TextilesReceiptRepository.receiptsForInvoice(currentInvoice.id),
+                onOpenReceipt = { ReceiptViewActivity.start(this, it) },
                 onEdit = {
                     if (TextilesInvoiceRepository.hasLinkedReceipts(currentInvoice.id)) {
                         ElvanSnackbar.show(invoiceLockedMsg)

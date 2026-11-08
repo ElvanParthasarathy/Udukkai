@@ -152,10 +152,17 @@ object SearchHelper {
     /**
      * High-power receipt matcher.
      */
-    fun matchesReceipt(receipt: ReceiptModel, query: String): Boolean {
+    fun matchesReceipt(receipt: ReceiptModel, query: String, settledInvoiceNumbers: List<String> = emptyList()): Boolean {
         if (query.isBlank()) return true
-        val targetList = ArrayList<String?>(6 + receipt.customerName.size + receipt.customerAddress.size)
+        val targetList = ArrayList<String?>(12 + receipt.customerName.size + receipt.customerAddress.size + settledInvoiceNumbers.size)
         targetList.add(receipt.receiptNumber)
+        // Everything the card shows is searchable: the bills it settled, how it was paid, the amount, the date and the year
+        targetList.addAll(settledInvoiceNumbers)
+        targetList.add(receipt.paymentMode)
+        targetList.add(receipt.amount.toLong().toString())
+        targetList.add(com.elvan.udukkai.core.utils.CurrencyUtils.formatInr(receipt.amount, showDecimals = receipt.amount % 1.0 != 0.0))
+        targetList.add(com.elvan.udukkai.core.utils.DateUtils.formatEpochMillis(receipt.receiptDate))
+        targetList.add(com.elvan.udukkai.core.finance.BillNumbering.fyShort(receipt.receiptDate))
         targetList.addAll(receipt.customerName.values)
         targetList.addAll(receipt.customerAddress.values)
         if (receipt.notes.isNotBlank()) targetList.add(receipt.notes)

@@ -114,18 +114,7 @@ fun ReceiptCard(
                 status = paymentModeText,
                 textLines = 1,
                 isSelectionMode = isSelectionMode,
-                modifier = Modifier.weight(1f),
-                below = {
-                    if (linkedInvoicesText.isNotEmpty()) {
-                        Spacer(Modifier.height(3.dp))
-                        Text(
-                            text = linkedInvoicesText.preventBrokenLigatures(),
-                            style = TextStyle(fontFamily = ff, fontSize = 13.sp, color = LocalShellColors.current.textTertiary),
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
-                        )
-                    }
-                }
+                modifier = Modifier.weight(1f)
             )
         }
     }

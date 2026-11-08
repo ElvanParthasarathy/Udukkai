@@ -293,6 +293,15 @@ fun TextilesItemCard(
                                 overflow = TextOverflow.Ellipsis
                             )
                         }
+
+                        val measureLabel = if (item.quantityType == "weight") K.weight.tr() else K.quantity.tr()
+                        Text(
+                            text = measureLabel.preventBrokenLigatures(),
+                            style = TextStyle(fontFamily = ff, fontSize = 13.5.sp, color = colors.textSecondary),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier.padding(top = 2.dp)
+                        )
                     }
 
                     Spacer(modifier = Modifier.width(8.dp))
@@ -302,24 +311,16 @@ fun TextilesItemCard(
                     } else {
                         "-"
                     }
-                    Column(horizontalAlignment = Alignment.End) {
-                        val measureLabel = if (item.quantityType == "weight") K.weight.tr() else K.quantity.tr()
-                        Text(
-                            text = measureLabel.preventBrokenLigatures(),
-                            style = TextStyle(fontFamily = ff, fontSize = 12.sp, color = colors.textSecondary),
-                            maxLines = 1
-                        )
-                        Text(
-                            text = priceText,
-                            style = TextStyle(
-                                fontFamily = ff,
-                                fontWeight = FontWeight.ExtraBold,
-                                fontSize = if (priceText.length > 11) 12.8.sp else 15.2.sp,
-                                color = colors.accent
-                            ),
-                            maxLines = 1
-                        )
-                    }
+                    Text(
+                        text = priceText,
+                        style = TextStyle(
+                            fontFamily = ff,
+                            fontWeight = FontWeight.ExtraBold,
+                            fontSize = if (priceText.length > 11) 12.8.sp else 15.2.sp,
+                            color = colors.accent
+                        ),
+                        maxLines = 1
+                    )
                 }
             }
         }

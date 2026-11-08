@@ -49,7 +49,8 @@ object FactoryInvoiceRepository {
     val filteredInvoices: List<InvoiceModel>
         get() {
             return activeCompanyInvoices.filter { inv ->
-                val matchesQuery = SearchHelper.matchesInvoice(inv, searchQuery)
+                val matchesQuery = SearchHelper.matchesInvoice(inv, searchQuery) ||
+                    (searchQuery.isNotBlank() && FactoryReceiptRepository.receiptsForInvoice(inv.id).any { SearchHelper.matchesRecord(listOf(it.receiptNumber), searchQuery) })
 
                 val matchesDate = when {
                     startDateFilter != null && endDateFilter != null ->

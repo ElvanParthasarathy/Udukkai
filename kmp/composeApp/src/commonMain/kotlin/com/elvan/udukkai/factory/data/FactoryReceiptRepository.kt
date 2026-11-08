@@ -54,7 +54,7 @@ object FactoryReceiptRepository {
     val filteredReceipts: List<ReceiptModel>
         get() {
             return activeCompanyReceipts.filter { r ->
-                val matchesQuery = SearchHelper.matchesReceipt(r, searchQuery)
+                val matchesQuery = SearchHelper.matchesReceipt(r, searchQuery, if (searchQuery.isBlank()) emptyList() else getLinkedInvoiceNumbers(r.id))
                 val matchesDate = when {
                     startDateFilter != null && endDateFilter != null -> r.receiptDate in startDateFilter!!..endDateFilter!!
                     startDateFilter != null -> r.receiptDate >= startDateFilter!!
@@ -103,6 +103,7 @@ object FactoryReceiptRepository {
             paidCache = null
             receipts = getFactoryDatabaseHelper().loadAllReceipts()
             linksCache.clear()
+            receiptsByInvoice = null
             cacheLinkedNumbers(receipts)
         } catch (_: Exception) {
             receipts = emptyList()
@@ -216,6 +217,21 @@ object FactoryReceiptRepository {
         for (r in list) {
             linksCache[r.id] = links[r.id].orEmpty().mapNotNull { numbers[it.invoiceId] }
         }
+    }
+
+    private var receiptsByInvoice: Map<Long, List<ReceiptModel>>? = null
+
+    /** The receipts that paid this bill, newest first. */
+    fun receiptsForInvoice(invoiceId: Long): List<ReceiptModel> {
+        val map = receiptsByInvoice ?: run {
+            val byId = receipts.associateBy { it.id }
+            val built = try {
+                getFactoryDatabaseHelper().loadAllLinks().groupBy { it.invoiceId }
+                    .mapValues { (_, links) -> links.mapNotNull { byId[it.receiptId] }.distinctBy { it.id }.sortedByDescending { it.receiptDate } }
+            } catch (_: Exception) { emptyMap() }
+            built.also { receiptsByInvoice = it }
+        }
+        return map[invoiceId].orEmpty()
     }
 
     fun getLinkedInvoiceNumbers(receiptId: Long): List<String> {

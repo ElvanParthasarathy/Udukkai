@@ -405,6 +405,8 @@ fun FactoryHomeScreen() {
                         profile = FactoryProfileRepository.profile,
                         allProfiles = FactoryProfileRepository.profiles,
                         isPaid = FactoryInvoiceRepository.hasLinkedReceipts(currentInvoice.id),
+                        receipts = FactoryReceiptRepository.receiptsForInvoice(currentInvoice.id),
+                        onOpenReceipt = { navigateToSubpage(ActiveSubpage.ReceiptView(it)) },
                         onBack = popSubpage,
                         onEdit = {
                             if (FactoryInvoiceRepository.hasLinkedReceipts(currentInvoice.id)) {

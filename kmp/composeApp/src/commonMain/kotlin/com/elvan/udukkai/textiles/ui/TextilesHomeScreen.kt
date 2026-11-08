@@ -403,6 +403,8 @@ fun TextilesHomeScreen() {
                         profile = TextilesProfileRepository.profile,
                         allProfiles = TextilesProfileRepository.profiles,
                         isPaid = TextilesInvoiceRepository.hasLinkedReceipts(currentInvoice.id),
+                        receipts = TextilesReceiptRepository.receiptsForInvoice(currentInvoice.id),
+                        onOpenReceipt = { navigateToSubpage(ActiveSubpage.ReceiptView(it)) },
                         onBack = popSubpage,
                         onEdit = {
                             if (TextilesInvoiceRepository.hasLinkedReceipts(currentInvoice.id)) {
