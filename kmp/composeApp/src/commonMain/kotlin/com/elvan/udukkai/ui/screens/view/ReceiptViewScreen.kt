@@ -43,6 +43,7 @@ fun ReceiptViewScreen(
         printPayload = payload,
         printFileName = receiptPdfName(receipt),
         businessFolder = billBusinessFolder(activeProfile),
+        showPreparationOverlay = true,
         body = { ReceiptBody(receipt, activeProfile, invoices, onOpenInvoice, onOpenCustomer) }
     )
 }

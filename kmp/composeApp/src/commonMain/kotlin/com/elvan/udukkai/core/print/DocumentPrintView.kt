@@ -34,6 +34,10 @@ class DocumentPrintController {
     var activeAction by mutableStateOf<DocumentPrintAction?>(null)
         internal set
 
+    /** True only when the user tapped an action and is waiting for the PDF to be prepared. */
+    var isWaitingForPdfAction by mutableStateOf(false)
+        internal set
+
     /** True while a bill that is already on screen is being made again after it was changed, so the old page is not shown as if current. */
     var isRefreshing by mutableStateOf(false)
         internal set
@@ -78,23 +82,37 @@ class DocumentPrintController {
     fun open() = request(DocumentPrintAction.Open)
 
     private fun request(action: DocumentPrintAction) {
-        if (activeAction != null) return
+        if (activeAction != null || isBusy || isWaitingForPdfAction) return
         activeAction = action
         val h = handler
-        if (isReady && h != null) h(action) else pending = action
+        if (h != null) {
+            h(action)
+        } else {
+            pending = action
+            isWaitingForPdfAction = true
+        }
     }
 
     internal fun markReady() {
         isReady = true
         val action = pending ?: return
         pending = null
+        isWaitingForPdfAction = false
         handler?.invoke(action)
+    }
+
+    internal fun checkPending() {
+        val action = pending ?: return
+        val h = handler ?: return
+        pending = null
+        h(action)
     }
 
     internal fun clearAction() {
         pending = null
         activeAction = null
         isBusy = false
+        isWaitingForPdfAction = false
     }
 }
 

@@ -88,6 +88,7 @@ actual fun DocumentPrintView(
 
     DisposableEffect(controller) {
         controller.handler = { action -> bridge.run(action) }
+        controller.checkPending()
         onDispose {
             controller.handler = null
             bridge.release()
@@ -244,6 +245,8 @@ private class PrintBridge(
         webView = null
         exportWebView?.destroy()
         exportWebView = null
+        pendingAction = null
+        controller.clearAction()
     }
 
     // ---- getting the PDF ---------------------------------------------------------------------
@@ -253,7 +256,10 @@ private class PrintBridge(
         if (released) return
         val key = cacheKey(context, payloadJson, controller.options)
         wantKey = key
-        if (controller.pdfPath != null && key != currentKey) controller.isRefreshing = true
+        if (key != currentKey) {
+            if (controller.pdfPath != null) controller.isRefreshing = true
+            controller.isReady = false
+        }
         val file = File(cacheDir(context), "$key.pdf")
         if (file.exists() && file.length() > 0) {
             publish(key, file)
@@ -398,7 +404,9 @@ private class PrintBridge(
 
     private fun failExport() {
         exporting = false
+        controller.isReady = false
         controller.isBusy = false
+        controller.isWaitingForPdfAction = false
         controller.clearAction()
         controller.isRefreshing = false
         pendingAction = null
@@ -410,6 +418,7 @@ private class PrintBridge(
     private fun publish(key: String, file: File) {
         if (currentKey == key && currentFile == file) {
             controller.isRefreshing = false
+            controller.markReady()
             runPending()
             return
         }
@@ -438,6 +447,7 @@ private class PrintBridge(
         val next = pendingAction ?: return
         if (currentKey != wantKey) return
         pendingAction = null
+        controller.isWaitingForPdfAction = false
         run(next)
     }
 
@@ -463,9 +473,11 @@ private class PrintBridge(
         if (file == null || currentKey != wantKey) {
             // The PDF for the chosen options is still being made: continue once it is ready
             pendingAction = requested
+            controller.isWaitingForPdfAction = true
             ensure()
             return
         }
+        controller.isWaitingForPdfAction = false
         deliver(file, currentPages)
     }
 
@@ -550,6 +562,7 @@ private class PrintBridge(
                     delivering = false
                     controller.isBusy = false
                     controller.activeAction = null
+                    controller.isWaitingForPdfAction = false
                     controller.notice = PrintNotice(PrintNoticeKind.Failed)
                 }
             }
@@ -571,6 +584,7 @@ private class PrintBridge(
                 delivering = false
                 controller.isBusy = false
                 controller.activeAction = null
+                controller.isWaitingForPdfAction = false
             }
         }, remaining)
     }

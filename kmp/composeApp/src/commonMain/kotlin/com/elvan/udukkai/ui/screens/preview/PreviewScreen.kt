@@ -140,19 +140,6 @@ private fun DocumentPreview(
             controller.folder = businessFolder
         }
 
-        var showPreparationLoader by remember { mutableStateOf(false) }
-        if (showPreparationOverlay) {
-            val isWorking = makePaper && (!controller.isReady || controller.isRefreshing) && controller.notice == null
-            LaunchedEffect(isWorking) {
-                if (isWorking) {
-                    delay(180)
-                    showPreparationLoader = true
-                } else {
-                    showPreparationLoader = false
-                }
-            }
-        }
-
         // The same collapsing, fading header as the customer page
         val listState = androidx.compose.foundation.lazy.rememberLazyListState()
         ElvanSubShell(
@@ -165,7 +152,7 @@ private fun DocumentPreview(
             overlay = {
                 if (showPreparationOverlay) {
                     androidx.compose.animation.AnimatedVisibility(
-                        visible = showPreparationLoader,
+                        visible = controller.isWaitingForPdfAction && controller.notice == null,
                         enter = androidx.compose.animation.fadeIn(androidx.compose.animation.core.tween(220)),
                         exit = androidx.compose.animation.fadeOut(androidx.compose.animation.core.tween(320))
                     ) {
@@ -349,8 +336,7 @@ private fun PreviewBottomArea(controller: DocumentPrintController, onEdit: (() -
                 )
             }
         }
-        // The bar is there while the PDF is still being made: Edit works at once, Open, Print and Share are greyed
-        // until the document is ready
+        // Actions remain readable and interactive: requests made while PDF is generating are queued and run once ready
         run {
             // Same slots as the view page's bar: Edit, then Open where Preview was, Print, Share
             ElvanFloatingActionBar(
@@ -365,23 +351,17 @@ private fun PreviewBottomArea(controller: DocumentPrintController, onEdit: (() -
                     ElvanFloatingAction(
                         label = K.openBtn.tr(),
                         icon = MaterialSymbols.Rounded.Description,
-                        onClick = { controller.open() },
-                        enabled = controller.isReady && controller.activeAction == null,
-                        isLoading = controller.activeAction == DocumentPrintAction.Open
+                        onClick = { controller.open() }
                     ),
                     ElvanFloatingAction(
                         label = K.printBtn.tr(),
                         icon = MaterialSymbols.Rounded.Print,
-                        onClick = { controller.print() },
-                        enabled = controller.isReady && controller.activeAction == null,
-                        isLoading = controller.activeAction == DocumentPrintAction.Print
+                        onClick = { controller.print() }
                     ),
                     ElvanFloatingAction(
                         label = K.shareBtn.tr(),
                         icon = MaterialSymbols.Rounded.Share,
-                        onClick = { controller.share() },
-                        enabled = controller.isReady && controller.activeAction == null,
-                        isLoading = controller.activeAction == DocumentPrintAction.Share
+                        onClick = { controller.share() }
                     ),
                     if (menuItems.isEmpty()) null else ElvanFloatingAction(
                         label = K.more.tr(),
