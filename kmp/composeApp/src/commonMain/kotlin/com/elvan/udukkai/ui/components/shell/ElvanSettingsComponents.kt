@@ -630,11 +630,9 @@ fun ElvanSettingsEditContainer(
                 extraAction()
                 Spacer(modifier = Modifier.width(8.dp))
             }
-            Button(
+            TextButton(
                 onClick = onCancel,
-                shape = RoundedCornerShape(50),
-                colors = ButtonDefaults.buttonColors(containerColor = colors.iconBg, contentColor = colors.textPrimary),
-                elevation = ButtonDefaults.buttonElevation(0.dp)
+                shape = RoundedCornerShape(50)
             ) {
                 Text(
                     text = effectiveCancel,

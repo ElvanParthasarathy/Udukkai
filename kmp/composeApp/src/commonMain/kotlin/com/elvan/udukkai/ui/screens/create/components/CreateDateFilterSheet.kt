@@ -178,7 +178,10 @@ fun CreateDateFilterSheet(
         ElvanDateRangePicker(
             initialStart = currentStartMillis ?: todayStart,
             initialEnd = currentEndMillis ?: todayEnd,
-            onDismiss = { showDateRangePicker = false },
+            onDismiss = {
+                showDateRangePicker = false
+                onDismissRequest() // cancelled or not, the presets sheet does not come back: one step out, not two
+            },
             onConfirm = { start, end ->
                 onApplyFilter(start, end + 86399999L, DateFilterPreset.CUSTOM)
                 showDateRangePicker = false
