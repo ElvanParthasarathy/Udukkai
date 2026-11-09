@@ -162,7 +162,8 @@ fun TextilesReportsScreen(onBack: () -> Unit) {
     // One scroll state for the list and the shell, so the large title collapses with the page instead of the rows passing under it
     val listState = rememberLazyListState()
     ElvanSubShell(title = K.reports.tr(), onBack = onBack, scrollState = listState) {
-        LazyColumn(
+        com.elvan.udukkai.ui.screens.editor.ElvanEditorList(
+            fullWidthKeys = setOf("top_spacer", "period", "empty", "export", "note", "financial_year"),
             state = listState,
             modifier = Modifier.fillMaxSize(),
             contentPadding = PaddingValues(

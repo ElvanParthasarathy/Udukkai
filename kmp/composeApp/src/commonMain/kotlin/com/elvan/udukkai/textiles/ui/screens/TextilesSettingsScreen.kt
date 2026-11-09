@@ -283,7 +283,7 @@ fun TextilesSettingsScreen(
                       }
                     }
                 }
-                if (sideChrome) {
+                if (sideChrome && !searchOpen) {
                     com.elvan.udukkai.ui.navigation.LandscapeTopActionButton(
                         icon = com.elvan.udukkai.ui.navigation.MaterialSymbols.Rounded.ArrowBack,
                         contentDescription = K.back.tr(),

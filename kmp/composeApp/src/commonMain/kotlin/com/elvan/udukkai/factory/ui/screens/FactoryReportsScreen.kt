@@ -92,7 +92,8 @@ fun FactoryReportsScreen(onBack: () -> Unit) {
 
     val listState = rememberLazyListState()
     ElvanSubShell(title = K.reports.tr(), onBack = onBack, scrollState = listState) {
-        LazyColumn(
+        com.elvan.udukkai.ui.screens.editor.ElvanEditorList(
+            fullWidthKeys = setOf("top_spacer", "period", "empty", "export", "note", "financial_year"),
             state = listState,
             modifier = Modifier.fillMaxSize(),
             contentPadding = PaddingValues(

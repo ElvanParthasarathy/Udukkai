@@ -1,5 +1,6 @@
 package com.elvan.udukkai.textiles.ui.screens
 
+import com.elvan.udukkai.ui.components.shell.sidewaysTight
 import androidx.compose.ui.graphics.Color
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -59,13 +60,13 @@ fun TextilesDashboardScreen(
             state = scrollState,
             modifier = Modifier.fillMaxSize(),
             contentPadding = PaddingValues(
-                bottom = Dimens.ContentPaddingBottom
+                bottom = Dimens.ContentPaddingBottom.sidewaysTight()
             ),
             verticalArrangement = Arrangement.spacedBy(Dimens.ItemSpacing)
         ) {
             // Collapsible Top Header spacer
             item(key = "home_top_spacer") {
-                Spacer(modifier = Modifier.height((LocalElvanTopSpacerHeight.current - (if (com.elvan.udukkai.ui.components.shell.LocalElvanSideBar.current) 34.dp else 0.dp)).coerceAtLeast(0.dp)))
+                Spacer(modifier = Modifier.height((LocalElvanTopSpacerHeight.current - (if (com.elvan.udukkai.ui.components.shell.LocalElvanSideBar.current) 46.dp else 0.dp)).coerceAtLeast(0.dp)))
             }
 
             // 1. Greeting Vanakkam Pill

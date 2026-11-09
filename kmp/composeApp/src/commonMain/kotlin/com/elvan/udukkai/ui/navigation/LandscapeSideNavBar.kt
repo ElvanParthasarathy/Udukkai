@@ -322,11 +322,10 @@ fun SideTabRail(
         Box(
             modifier = modifier
                 .graphicsLayer { alpha = navBarAlpha }
-                .windowInsetsPadding(WindowInsets.navigationBars.only(WindowInsetsSides.Bottom))
                 // A camera cut-out on this side keeps the rail clear of it; with none it sits at the edge
                 .windowInsetsPadding(WindowInsets.displayCutout.only(WindowInsetsSides.Start))
-                .padding(start = 9.dp, bottom = 12.dp),
-            contentAlignment = Alignment.BottomStart
+                .padding(start = 9.dp),
+            contentAlignment = Alignment.CenterStart
         ) {
             Box(
                 modifier = Modifier

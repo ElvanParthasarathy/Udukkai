@@ -1,5 +1,6 @@
 package com.elvan.udukkai.textiles.ui.screens
 
+import com.elvan.udukkai.ui.components.shell.sidewaysTight
 import com.elvan.udukkai.ui.components.dragSelect
 import com.elvan.udukkai.ui.screens.recyclebin.RecycleBinTab
 import com.elvan.udukkai.ui.screens.recyclebin.RecycleBinBottomNavBar
@@ -346,7 +347,7 @@ fun TextilesRecycleBinScreen(
                 LazyColumn(
                     state = createScrollState,
                     modifier = Modifier.fillMaxSize().dragSelect(createScrollState, { it in selectedItemIds }, onStartSelection, onToggleItem),
-                    contentPadding = PaddingValues(start = 0.dp, top = 0.dp, end = 0.dp, bottom = Dimens.ContentPaddingBottom),
+                    contentPadding = PaddingValues(start = 0.dp, top = 0.dp, end = 0.dp, bottom = Dimens.ContentPaddingBottom.sidewaysTight()),
                     verticalArrangement = Arrangement.spacedBy(14.dp)
                 ) {
                     item(key = "meetpagam_create_top_spacer") {
@@ -441,7 +442,7 @@ fun TextilesRecycleBinScreen(
                 LazyColumn(
                     state = itemsScrollState,
                     modifier = Modifier.fillMaxSize().dragSelect(itemsScrollState, { it in selectedItemIds }, onStartSelection, onToggleItem),
-                    contentPadding = PaddingValues(start = Dimens.ContentPadding, top = 0.dp, end = Dimens.ContentPadding, bottom = Dimens.ContentPaddingBottom),
+                    contentPadding = PaddingValues(start = Dimens.ContentPadding, top = 0.dp, end = Dimens.ContentPadding, bottom = Dimens.ContentPaddingBottom.sidewaysTight()),
                     verticalArrangement = Arrangement.spacedBy(14.dp)
                 ) {
                     item(key = "meetpagam_items_top_spacer") {
@@ -481,7 +482,7 @@ fun TextilesRecycleBinScreen(
                 LazyColumn(
                     state = customersScrollState,
                     modifier = Modifier.fillMaxSize().dragSelect(customersScrollState, { it in selectedItemIds }, onStartSelection, onToggleItem),
-                    contentPadding = PaddingValues(start = Dimens.ContentPadding, top = 0.dp, end = Dimens.ContentPadding, bottom = Dimens.ContentPaddingBottom),
+                    contentPadding = PaddingValues(start = Dimens.ContentPadding, top = 0.dp, end = Dimens.ContentPadding, bottom = Dimens.ContentPaddingBottom.sidewaysTight()),
                     verticalArrangement = Arrangement.spacedBy(14.dp)
                 ) {
                     item(key = "meetpagam_customers_top_spacer") {

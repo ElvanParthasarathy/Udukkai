@@ -1,5 +1,6 @@
 package com.elvan.udukkai.factory.ui.screens
 
+import com.elvan.udukkai.ui.components.shell.sidewaysTight
 import com.elvan.udukkai.ui.components.dragSelect
 import com.elvan.udukkai.ui.components.ExpressiveDotsLoader
 import androidx.compose.animation.*
@@ -102,7 +103,7 @@ fun FactoryCreateScreen(
             state = scrollState,
             modifier = Modifier.fillMaxSize().dragSelect(scrollState, { it in selectedItemIds }, { onItemLongClick?.invoke(it) }, { onToggleSelect?.invoke(it) }),
             contentPadding = PaddingValues(
-                bottom = Dimens.ContentPaddingBottom
+                bottom = Dimens.ContentPaddingBottom.sidewaysTight()
             ),
             verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {

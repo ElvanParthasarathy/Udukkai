@@ -73,7 +73,7 @@ fun DocPage(
         contentPadding = PaddingValues(start = horizontalPadding, end = horizontalPadding, bottom = getNavBarHeightIgnoringVisibility() + 120.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
-        item(key = "top_spacer") { Spacer(Modifier.height(LocalElvanTopSpacerHeight.current - 14.dp - (if (com.elvan.udukkai.ui.components.shell.LocalElvanSideBar.current) 34.dp else 0.dp))) }
+        item(key = "top_spacer") { Spacer(Modifier.height((LocalElvanTopSpacerHeight.current - 14.dp - (if (com.elvan.udukkai.ui.components.shell.LocalElvanSideBar.current) 46.dp else 0.dp)).coerceAtLeast(0.dp))) }
         content()
     }
     }
@@ -86,14 +86,11 @@ fun DocStatusHeader(tone: DocTone, label: String, amount: Double, note: String? 
     val colors = rememberShellColors()
     val ff = LocalAppFontFamily.current
     val tint = toneColor(tone)
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(28.dp))
-            .background(if (tone == DocTone.Neutral) colors.surface else tint.copy(alpha = if (colors.isDark) 0.14f else 0.09f))
-            .padding(vertical = if (LocalDocLandscape.current) 12.dp else 26.dp, horizontal = 20.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
+    val shape = Modifier
+        .fillMaxWidth()
+        .clip(RoundedCornerShape(28.dp))
+        .background(if (tone == DocTone.Neutral) colors.surface else tint.copy(alpha = if (colors.isDark) 0.14f else 0.09f))
+    val body: @Composable () -> Unit = {
         run {
             val darkGreen = tone == DocTone.Paid && colors.isDark
             Box(
@@ -139,6 +136,12 @@ fun DocStatusHeader(tone: DocTone, label: String, amount: Double, note: String? 
                 textAlign = TextAlign.Center
             )
         }
+    }
+    if (LocalDocLandscape.current) {
+        // Sideways: the tick or clock, the words and the amount in one line
+        Row(shape.padding(vertical = 12.dp, horizontal = 20.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(16.dp, Alignment.CenterHorizontally)) { body() }
+    } else {
+        Column(shape.padding(vertical = 26.dp, horizontal = 20.dp), horizontalAlignment = Alignment.CenterHorizontally) { body() }
     }
 }
 

@@ -166,6 +166,37 @@ internal fun NeramPage(
                 .fillMaxSize()
                 .imePadding()
         ) {
+            if (maxWidth > maxHeight) {
+                // Sideways: the heading on the left, the fields on the right
+                val scope = androidx.compose.runtime.remember {
+                    object : ColumnScope {
+                        override fun Modifier.weight(weight: Float, fill: Boolean): Modifier = this
+                        override fun Modifier.align(alignment: Alignment.Horizontal): Modifier = this
+                        override fun Modifier.alignBy(alignmentLine: androidx.compose.ui.layout.VerticalAlignmentLine): Modifier = this
+                        override fun Modifier.alignBy(alignmentLineBlock: (androidx.compose.ui.layout.Measured) -> Int): Modifier = this
+                    }
+                }
+                Box(
+                    modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 16.dp, vertical = 16.dp).padding(bottom = 72.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    androidx.compose.ui.layout.Layout(content = { scope.content() }, modifier = Modifier.fillMaxWidth()) { ms, c ->
+                        val gap = 32.dp.roundToPx()
+                        val rowGap = 12.dp.roundToPx()
+                        val leftW = (c.maxWidth - gap) * 2 / 5
+                        val rightW = c.maxWidth - gap - leftW
+                        val left = ms.first().measure(androidx.compose.ui.unit.Constraints(minWidth = leftW, maxWidth = leftW))
+                        val rights = ms.drop(1).map { it.measure(androidx.compose.ui.unit.Constraints(minWidth = rightW, maxWidth = rightW)) }
+                        val rightH = rights.sumOf { it.height } + rowGap * (rights.size - 1).coerceAtLeast(0)
+                        val h = maxOf(left.height, rightH)
+                        layout(c.maxWidth, h) {
+                            left.placeRelative(0, (h - left.height) / 2)
+                            var y = (h - rightH) / 2
+                            rights.forEach { it.placeRelative(leftW + gap, y); y += it.height + rowGap }
+                        }
+                    }
+                }
+            } else
             Column(
                 modifier = Modifier
                     .fillMaxWidth()

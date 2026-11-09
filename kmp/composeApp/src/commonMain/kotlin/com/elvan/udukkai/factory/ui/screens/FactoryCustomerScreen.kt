@@ -1,5 +1,6 @@
 package com.elvan.udukkai.factory.ui.screens
 
+import com.elvan.udukkai.ui.components.shell.sidewaysTight
 import com.elvan.udukkai.ui.components.dragSelect
 import com.elvan.udukkai.ui.components.ExpressiveDotsLoader
 import androidx.compose.foundation.layout.*
@@ -62,12 +63,12 @@ fun FactoryCustomerScreen(
             contentPadding = PaddingValues(
                 start = Dimens.ContentPadding,
                 end = Dimens.ContentPadding,
-                bottom = Dimens.ContentPaddingBottom
+                bottom = Dimens.ContentPaddingBottom.sidewaysTight()
             ),
             verticalArrangement = Arrangement.spacedBy(Dimens.ItemSpacing)
         ) {
             item(key = "customer_top_spacer") {
-                Spacer(modifier = Modifier.height((LocalElvanTopSpacerHeight.current - (if (com.elvan.udukkai.ui.components.shell.LocalElvanSideBar.current) 34.dp else 0.dp)).coerceAtLeast(0.dp)))
+                Spacer(modifier = Modifier.height((LocalElvanTopSpacerHeight.current - (if (com.elvan.udukkai.ui.components.shell.LocalElvanSideBar.current) 46.dp else 0.dp)).coerceAtLeast(0.dp)))
             }
 
             if (isRefreshing) {

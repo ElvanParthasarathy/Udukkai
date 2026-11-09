@@ -191,7 +191,7 @@ fun ElvanShell(
 
     val topSpacerHeight = if (isCompactHeader) {
         // Sideways the title row and the round button are one 56dp band; the page starts just under it
-        if (isWide && !isDesktop && !LocalElvanPaneChrome.current) statusBarHeight + 58.dp else ceiling + pillHeight + 10.dp
+        if (isWide && !isDesktop && !LocalElvanPaneChrome.current) statusBarHeight + 46.dp else ceiling + pillHeight + 10.dp
     } else {
         (expandedHeight - Dimens.SectionSpacing - with(density) { collapsePx.toDp() }).coerceAtLeast(0.dp)
     }
@@ -547,7 +547,7 @@ fun ElvanShell(
 
                 // Landscape: back sits top-right like the home screen controls; the bar leaves room for it
                 val chromeHandled = LocalElvanLandscapeChromeHandled.current
-                val backOnSide = isLandscape && onBack != null && !isSelectionMode && !chromeHandled
+                val backOnSide = isLandscape && onBack != null && !isSelectionMode && !chromeHandled && !isSearchActive
                 if (backOnSide) {
                     com.elvan.udukkai.ui.navigation.LandscapeTopActionButton(
                         icon = leadingIcon ?: com.elvan.udukkai.ui.navigation.MaterialSymbols.Rounded.ArrowBack,

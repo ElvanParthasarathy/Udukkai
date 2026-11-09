@@ -983,7 +983,7 @@ androidx.compose.animation.AnimatedContent(
             }
 
             // Floating Controls on the Trailing Edge in Landscape (Apple HIG Landscape Controls)
-            if (isLandscape && !isSelectionMode) {
+            if (isLandscape && !isSelectionMode && !isSearchActive) {
                 // Top-Right Action Button (Stationary at TopEnd)
                 // Shows ArrowBack (<) when viewing a subpage; shows Add (+) on the main screen
                 AnimatedContent(
@@ -1042,7 +1042,7 @@ androidx.compose.animation.AnimatedContent(
                                 selectedTab = tab
                             }
                         },
-                        modifier = Modifier.align(Alignment.BottomStart)
+                        modifier = Modifier.align(Alignment.CenterStart)
                     )
                 }
             }

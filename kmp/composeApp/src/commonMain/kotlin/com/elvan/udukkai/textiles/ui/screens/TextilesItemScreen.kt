@@ -1,5 +1,6 @@
 package com.elvan.udukkai.textiles.ui.screens
 
+import com.elvan.udukkai.ui.components.shell.sidewaysTight
 import com.elvan.udukkai.ui.components.dragSelect
 import com.elvan.udukkai.ui.components.ExpressiveDotsLoader
 import androidx.compose.foundation.layout.*
@@ -99,7 +100,7 @@ fun TextilesItemScreen(
             contentPadding = PaddingValues(
                 start = Dimens.ContentPadding,
                 end = Dimens.ContentPadding,
-                bottom = Dimens.ContentPaddingBottom
+                bottom = Dimens.ContentPaddingBottom.sidewaysTight()
             ),
             verticalArrangement = Arrangement.spacedBy(Dimens.ItemSpacing)
         ) {

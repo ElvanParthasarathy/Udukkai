@@ -127,13 +127,43 @@ fun UdukkaiAppLockScreen(
     ) {
         AuthBackdrop()
 
+        androidx.compose.foundation.layout.BoxWithConstraints(Modifier.fillMaxSize().windowInsetsPadding(WindowInsets.safeDrawing).padding(horizontal = 24.dp)) {
+        val wide = maxWidth > maxHeight
+        if (wide) {
+            // Sideways: the name and hint on the left, the unlock button on the right
+            Row(Modifier.fillMaxSize(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(48.dp, Alignment.CenterHorizontally)) {
+                Column(Modifier.weight(1f), horizontalAlignment = Alignment.Start) {
+                    Box(
+                        modifier = Modifier.size(72.dp).clip(CircleShape).background(lockBg),
+                        contentAlignment = Alignment.Center
+                    ) { Icon(imageVector = MaterialSymbols.Rounded.Lock, contentDescription = null, tint = lockFg, modifier = Modifier.size(34.dp)) }
+                    Spacer(Modifier.height(16.dp))
+                    Text(text = appNameKey.tr(), style = TextStyle(fontFamily = ff, fontSize = 28.sp, fontWeight = FontWeight.Bold, color = colors.textPrimary))
+                    Spacer(Modifier.height(8.dp))
+                    Text(text = K.appLockRowHint.tr(), style = TextStyle(fontFamily = ff, fontSize = 15.sp, color = colors.textSecondary))
+                }
+                Box(Modifier.weight(1f), contentAlignment = Alignment.Center) {
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(50))
+                            .background(lockBg)
+                            .clickable(interactionSource = remember { MutableInteractionSource() }, indication = ripple(color = lockRipple, bounded = true), onClick = onUnlock)
+                            .padding(horizontal = 32.dp, vertical = 15.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                            Icon(imageVector = MaterialSymbols.Rounded.Lock, contentDescription = null, tint = lockFg, modifier = Modifier.size(20.dp))
+                            Text(text = K.unlockApp.tr(), style = TextStyle(fontFamily = ff, fontSize = 16.sp, fontWeight = FontWeight.Bold, letterSpacing = 0.5.sp, color = lockFg))
+                        }
+                    }
+                }
+            }
+            return@BoxWithConstraints
+        }
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center,
-            modifier = Modifier
-                .fillMaxSize()
-                .windowInsetsPadding(WindowInsets.safeDrawing)
-                .padding(horizontal = 24.dp)
+            modifier = Modifier.fillMaxSize()
         ) {
             // Elegant Lock Icon Container with flat gray tone and pure ripple
             Box(
@@ -219,6 +249,7 @@ fun UdukkaiAppLockScreen(
                     )
                 }
             }
+        }
         }
     }
 }
