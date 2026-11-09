@@ -32,6 +32,7 @@ import com.elvan.udukkai.ui.components.shell.ElvanSettingsDivider
 import com.elvan.udukkai.ui.components.shell.ElvanSettingsSection
 import com.elvan.udukkai.ui.components.shell.ElvanSubShell
 import com.elvan.udukkai.ui.components.shell.LocalElvanTopSpacerHeight
+import com.elvan.udukkai.ui.components.shell.elvanTopBandRow
 import com.elvan.udukkai.ui.screens.create.components.ElvanPillShifter
 import com.elvan.udukkai.ui.screens.create.components.PillShifterItem
 
@@ -161,7 +162,14 @@ fun TextilesReportsScreen(onBack: () -> Unit) {
 
     // One scroll state for the list and the shell, so the large title collapses with the page instead of the rows passing under it
     val listState = rememberLazyListState()
-    ElvanSubShell(title = K.reports.tr(), onBack = onBack, scrollState = listState) {
+    ElvanSubShell(
+        title = K.reports.tr(),
+        onBack = onBack,
+        scrollState = listState,
+        hideTitleSideways = true
+    ) {
+        val sideways = com.elvan.udukkai.ui.components.shell.LocalElvanSideBar.current
+        val extraTop = if (sideways) 18.dp else 0.dp
         com.elvan.udukkai.ui.screens.editor.ElvanEditorList(
             fullWidthKeys = setOf("top_spacer", "period", "empty", "export", "note", "financial_year"),
             state = listState,
@@ -173,21 +181,28 @@ fun TextilesReportsScreen(onBack: () -> Unit) {
             ),
             verticalArrangement = Arrangement.spacedBy(Dimens.SectionSpacing)
         ) {
-            item(key = "top_spacer") { Spacer(Modifier.height(LocalElvanTopSpacerHeight.current)) }
+            item(key = "top_spacer") { Spacer(Modifier.height(LocalElvanTopSpacerHeight.current + extraTop)) }
 
             item(key = "period") {
-                ElvanPillShifter(
-                    items = listOf(
-                        PillShifterItem(K.thisMonth.tr()),
-                        PillShifterItem(K.lastMonth.tr()),
-                        PillShifterItem(K.thisFinYear.tr())
-                    ),
-                    selectedIndex = period,
-                    onIndexSelected = { period = it },
-                    colors = colors,
-                    isFullWidth = true,
-                    modifier = Modifier.fillMaxWidth()
-                )
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .then(if (sideways) Modifier.elvanTopBandRow(true, up = 12.dp + extraTop) else Modifier),
+                    contentAlignment = Alignment.Center
+                ) {
+                    ElvanPillShifter(
+                        items = listOf(
+                            PillShifterItem(K.thisMonth.tr()),
+                            PillShifterItem(K.lastMonth.tr()),
+                            PillShifterItem(K.thisFinYear.tr())
+                        ),
+                        selectedIndex = period,
+                        onIndexSelected = { period = it },
+                        colors = colors,
+                        isSmall = sideways,
+                        isFullWidth = !sideways
+                    )
+                }
             }
 
             if (lines.isEmpty()) {
