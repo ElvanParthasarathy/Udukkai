@@ -26,6 +26,7 @@ object Dimens {
     val SubpageContentPaddingBottom: Dp
         @Composable
         get() {
+            if (com.elvan.udukkai.ui.components.shell.LocalElvanSideBar.current) return 20.dp
             val navBarsPadding = getNavBarBottomPadding()
             val imePadding = getImeBottomPadding()
             return if (imePadding > 0.dp) 24.dp else 32.dp + navBarsPadding

@@ -444,12 +444,12 @@ fun ElvanShell(
                 modifier = Modifier
                     .hazeSource(hazeState)
                     .fillMaxSize()
-                    // Landscape pages: keep content clear of the trailing-edge back button and action column
-                    .then(if (isLandscape && ((!LocalElvanLandscapeChromeHandled.current && !showNavbar && onBack != null) || (toolbarPresent && !isSelectionMode))) Modifier.padding(end = 80.dp) else Modifier)
-                    // The tab rail on the left edge (the recycle bin) takes this much room
-                    .then(if (isLandscape && showNavbar && !LocalElvanLandscapeChromeHandled.current) Modifier.padding(start = 76.dp) else Modifier)
-                    // The camera sits on this side: keep the content clear of it
-                    .then(if (isLandscape && !LocalElvanLandscapeChromeHandled.current) Modifier.windowInsetsPadding(androidx.compose.foundation.layout.WindowInsets.safeDrawing.only(androidx.compose.foundation.layout.WindowInsetsSides.Start)).padding(start = 6.dp) else Modifier)
+                    // Subpages and unhandled landscape screens: exactly match the Home screen's horizontal window insets
+                    .then(if (isLandscape && !LocalElvanLandscapeChromeHandled.current) Modifier.windowInsetsPadding(androidx.compose.foundation.layout.WindowInsets.safeDrawing.only(androidx.compose.foundation.layout.WindowInsetsSides.Horizontal)) else Modifier)
+                    // Landscape pages: keep content clear of the trailing-edge back button and action column (matches Home screen end = 80.dp)
+                    .then(if (isLandscape && ((!LocalElvanLandscapeChromeHandled.current && (!showNavbar || onBack != null)) || (toolbarPresent && !isSelectionMode))) Modifier.padding(end = 80.dp) else Modifier)
+                    // Landscape start clearance (matches Home screen start = 76.dp for all subpages and navigation rails)
+                    .then(if (isLandscape && !LocalElvanLandscapeChromeHandled.current) Modifier.padding(start = 76.dp) else Modifier)
                     .then(if (!showNavbar) Modifier.imePadding() else Modifier)
             ) {
                 content()

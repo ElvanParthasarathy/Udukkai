@@ -66,15 +66,21 @@ fun DocPage(
     content: LazyListScope.() -> Unit
 ) {
     androidx.compose.foundation.layout.BoxWithConstraints(Modifier.fillMaxSize()) {
-    androidx.compose.runtime.CompositionLocalProvider(LocalDocLandscape provides (maxWidth > maxHeight)) {
+    val isLandscape = maxWidth > maxHeight
+    val sideways = isLandscape || com.elvan.udukkai.ui.components.shell.LocalElvanSideBar.current
+    androidx.compose.runtime.CompositionLocalProvider(LocalDocLandscape provides isLandscape) {
     com.elvan.udukkai.ui.screens.editor.ElvanEditorList(
         fullWidthKeys = fullWidthKeys,
         state = LocalDocListState.current ?: rememberLazyListState(),
         modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(start = horizontalPadding, end = horizontalPadding, bottom = getNavBarHeightIgnoringVisibility() + 120.dp),
+        contentPadding = PaddingValues(
+            start = horizontalPadding,
+            end = horizontalPadding,
+            bottom = if (sideways) 20.dp else (getNavBarHeightIgnoringVisibility() + 120.dp)
+        ),
         verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
-        item(key = "top_spacer") { Spacer(Modifier.height((LocalElvanTopSpacerHeight.current - 14.dp - (if (com.elvan.udukkai.ui.components.shell.LocalElvanSideBar.current) 37.dp else 0.dp)).coerceAtLeast(0.dp))) }
+        item(key = "top_spacer") { Spacer(Modifier.height((LocalElvanTopSpacerHeight.current - (if (com.elvan.udukkai.ui.components.shell.LocalElvanSideBar.current) 37.dp else 0.dp)).coerceAtLeast(0.dp))) }
         content()
     }
     }

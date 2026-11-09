@@ -71,10 +71,10 @@ fun ViewRecordPage(
         BoxWithConstraints(Modifier.fillMaxSize()) {
             val density = LocalDensity.current
             val topSpace = LocalElvanTopSpacerHeight.current
-            val bottomPadding = Dimens.SubpageContentPaddingBottom + 64.dp
-            val spacing = RECORD_GAP
             // Sideways the shifter sits in the top band beside the title and takes no height of its own
-            val sideways = com.elvan.udukkai.ui.components.shell.LocalElvanSideBar.current
+            val sideways = com.elvan.udukkai.ui.components.shell.LocalElvanSideBar.current || (maxWidth > maxHeight)
+            val bottomPadding = if (sideways) 20.dp else (Dimens.SubpageContentPaddingBottom + 64.dp)
+            val spacing = RECORD_GAP
             val shifterH = if (sideways) 0.dp else SHIFTER_HEIGHT
             // The shifter sits in the top band and takes no height, so the cards need a gap of their own under it
             val extraTop = if (sideways) 22.dp else 0.dp
