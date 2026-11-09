@@ -255,7 +255,7 @@ fun TextilesSettingsScreen(
 
         if (twoPane) {
             androidx.compose.runtime.CompositionLocalProvider(com.elvan.udukkai.ui.components.shell.LocalElvanPaneChrome provides true) {
-                Row(modifier = Modifier.fillMaxSize().then(if (sideChrome) Modifier.windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Start)).padding(end = 80.dp) else Modifier)) {
+                Row(modifier = Modifier.fillMaxSize().then(if (sideChrome) Modifier.windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal)).padding(end = 80.dp) else Modifier)) {
                     Box(modifier = Modifier.weight(0.4f).fillMaxHeight()) {
                         RoutePage(
                             route = SettingsRoute.Hub,
