@@ -6,14 +6,17 @@ All notable changes to this project will be documented in this file.
 ## Unreleased
 
 ### New
-- Automated in-app updater powered by Android 12+ PackageInstaller.
-- One-tap silent background updates with zero manual installation dialogs.
-- Real-time GitHub release check and "What's New" release notes bottom sheet.
-- Background Wi-Fi APK pre-fetching for instant update installs.
+- Customer and item pages have a Details tab and a Transactions tab: every invoice, receipt and proforma, with filter and sort.
+- Delete a customer, item, invoice or receipt from its own page, in the three-dot menu.
+- A proforma page now says "Proforma", with its own symbol and number label.
+- Updates install quietly in the background when you leave the app on Wi-Fi, once the app has updated itself once.
+- Country and district in Settings are picked from a bottom sheet; choosing Custom lets you type both.
 
 ### Fixed
-- Crisp vector launcher icons with mathematical bezier curve precision.
-- Standard 1 native splash screen with smooth adaptive background transitions.
+- Update: each app now downloads only its own APK. The Textiles app was fetching the Factory file, which Play Protect scanned and Android then refused, on every Update tap.
+- Back with the keyboard open now only closes the keyboard, in every editor.
+- Top-bar button ripples follow the shape, and the Save button's ripple fills its pill.
+- A smaller logo on the welcome page, and clearer Tamil wording for "All" and "All companies".
 
 ## 1.0.0
 
