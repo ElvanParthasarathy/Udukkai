@@ -24,6 +24,7 @@ import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.async
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.json.JSONArray
@@ -84,12 +85,53 @@ object AppUpdate {
     private var downloadVersion: String? = null
     private var awaitingPermission = false
 
+    /** Windows of this app on screen right now; 0 means the app is in the background. */
+    private var startedActivities = 0
+    private var callbacksRegistered = false
+    /** The version already tried in the background: one Android won't take silently is not retried again and again. */
+    private var autoTried: String? = null
+
     fun init(context: Context) {
         app = context.applicationContext
         prefs = app.getSharedPreferences("udukkai_update", Context.MODE_PRIVATE)
         available = savedRelease()?.takeIf { isNewer(it.version) }
         val keep = available?.let { apkFile(it).name }
         dir().listFiles()?.forEach { if (it.name != keep) it.delete() }
+        if (!callbacksRegistered) {
+            callbacksRegistered = true
+            (app as android.app.Application).registerActivityLifecycleCallbacks(object : android.app.Application.ActivityLifecycleCallbacks {
+                override fun onActivityStarted(activity: android.app.Activity) { startedActivities++ }
+                override fun onActivityStopped(activity: android.app.Activity) {
+                    startedActivities = (startedActivities - 1).coerceAtLeast(0)
+                    // Out of sight for a moment (not just one window handing over to the next): time to update
+                    if (startedActivities == 0) scope.launch { delay(1500); autoInstallIfIdle() }
+                }
+                override fun onActivityCreated(activity: android.app.Activity, savedInstanceState: android.os.Bundle?) = Unit
+                override fun onActivityResumed(activity: android.app.Activity) = Unit
+                override fun onActivityPaused(activity: android.app.Activity) = Unit
+                override fun onActivitySaveInstanceState(activity: android.app.Activity, outState: android.os.Bundle) = Unit
+                override fun onActivityDestroyed(activity: android.app.Activity) = Unit
+            })
+        }
+    }
+
+    /**
+     * Installed by this app before, so Android 12+ takes its updates with no prompt, and allowed to install. The first
+     * update of a copy put there by a browser, a file manager or adb still asks once; after that this is true.
+     */
+    private fun canUpdateSilently(): Boolean = Build.VERSION.SDK_INT >= 31 && runCatching {
+        app.packageManager.canRequestPackageInstalls() &&
+            app.packageManager.getInstallSourceInfo(app.packageName).installingPackageName == app.packageName
+    }.getOrDefault(false)
+
+    /** App out of sight and on Wi-Fi: a newer version installs on its own, no tap and no dialog. Once per version. */
+    private fun autoInstallIfIdle() {
+        val release = available ?: return
+        if (startedActivities > 0 || phase != Phase.Ready || autoTried == release.version) return
+        if (isPlayStoreChannel() || isMetered() || !canUpdateSilently()) return
+        autoTried = release.version
+        Log.i(TAG, "Installing ${release.version} in the background")
+        install(app)
     }
 
     fun checkIfDue() = check(force = false)
@@ -116,7 +158,10 @@ object AppUpdate {
             Log.i(TAG, "Update check: latest ${latest?.version ?: "none"}, current ${BuildConfig.VERSION_NAME}")
             if (phase == Phase.Downloading || phase == Phase.Installing) return@launch
             if (newer != available) { available = newer; phase = Phase.Ready }
-            if (newer != null && !isMetered() && !isPlayStoreChannel()) apkFor(newer)
+            if (newer != null && !isMetered() && !isPlayStoreChannel()) {
+                val ready = apkFor(newer)
+                scope.launch { ready.await(); autoInstallIfIdle() } // downloaded while the app was already away
+            }
         }
     }
 
@@ -188,6 +233,15 @@ object AppUpdate {
         val status = intent.getIntExtra(PackageInstaller.EXTRA_STATUS, PackageInstaller.STATUS_FAILURE)
         when (status) {
             PackageInstaller.STATUS_PENDING_USER_ACTION -> {
+                if (startedActivities == 0) {
+                    // Android wants the user after all, but nobody is looking: no dialog out of the blue.
+                    // The session is dropped; the Update button stays for the next time the app is open.
+                    val session = intent.getIntExtra(PackageInstaller.EXTRA_SESSION_ID, -1)
+                    if (session >= 0) runCatching { context.packageManager.packageInstaller.abandonSession(session) }
+                    prefs.edit().remove(KEY_INSTALLING).remove(KEY_PROMPTED).apply()
+                    phase = Phase.Ready
+                    return
+                }
                 val confirm = if (Build.VERSION.SDK_INT >= 33) {
                     intent.getParcelableExtra(Intent.EXTRA_INTENT, Intent::class.java)
                 } else {
@@ -265,13 +319,9 @@ object AppUpdate {
     internal fun parseRelease(json: JSONObject): Release? {
         val version = json.optString("tag_name").removePrefix("v").ifBlank { return null }
         val assets = json.optJSONArray("assets") ?: return null
-        val flavor = BuildConfig.FLAVOR.lowercase()
-        // Match flavor-specific APK (e.g. Udukkai-Factory.apk) or generic Udukkai.apk
-        val apk = (0 until assets.length()).map { assets.getJSONObject(it) }
-            .firstOrNull {
-                val name = it.optString("name").lowercase()
-                name.endsWith(".apk") && (name.contains(flavor) || name.contains("udukkai") || assets.length() == 1)
-            } ?: return null
+        // This app's own APK only (Udukkai-Textiles.apk / Udukkai-Factory.apk); the other app's file is never taken
+        val files = (0 until assets.length()).map { assets.getJSONObject(it) }
+        val apk = pickApkIndex(files.map { it.optString("name") }, BuildConfig.FLAVOR)?.let { files[it] } ?: return null
         return Release(
             version = version,
             apkUrl = apk.optString("browser_download_url").ifBlank { return null },
@@ -391,7 +441,15 @@ object AppUpdate {
         return file
     }
 
+    /** The downloaded file is really this app's own package: anything else is dropped before Android ever scans it. */
+    private fun isThisApp(apk: File): Boolean =
+        app.packageManager.getPackageArchiveInfo(apk.path, 0)?.packageName == app.packageName
+
     private fun commit(apk: File, release: Release) {
+        if (!isThisApp(apk)) {
+            apk.delete()
+            error("${apk.name} is not an APK of ${app.packageName}")
+        }
         val installer = app.packageManager.packageInstaller
         val params = PackageInstaller.SessionParams(PackageInstaller.SessionParams.MODE_FULL_INSTALL).apply {
             setAppPackageName(app.packageName)
