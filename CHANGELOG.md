@@ -5,6 +5,8 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## 1.0.7
+
 ### New
 - Customer and item pages have a Details tab and a Transactions tab: every invoice, receipt and proforma, with filter and sort.
 - Delete a customer, item, invoice or receipt from its own page, in the three-dot menu.
