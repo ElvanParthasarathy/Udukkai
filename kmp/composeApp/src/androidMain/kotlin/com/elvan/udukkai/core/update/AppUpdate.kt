@@ -270,7 +270,7 @@ object AppUpdate {
         val version = prefs.getString(KEY_INSTALLING, null) ?: return
         val prompted = prefs.getBoolean(KEY_PROMPTED, false)
         prefs.edit().remove(KEY_INSTALLING).remove(KEY_PROMPTED).apply()
-        Log.i(TAG, "Updated successfully to ${BuildConfig.VERSION_NAME} (from $version)")
+        Log.i(TAG, "Updated successfully to ${BuildConfig.VERSION_NAME} (installed $version)")
         if (prompted || !NotificationManagerCompat.from(context).areNotificationsEnabled()) return
         val manager = context.getSystemService(NotificationManager::class.java) ?: return
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {

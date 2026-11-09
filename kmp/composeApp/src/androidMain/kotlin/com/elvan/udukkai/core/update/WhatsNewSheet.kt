@@ -23,6 +23,7 @@ import androidx.compose.ui.unit.sp
 import com.elvan.udukkai.localization.LocalAppLanguage
 import com.elvan.udukkai.theme.LocalAppFontFamily
 import com.elvan.udukkai.theme.rememberShellColors
+import com.elvan.udukkai.ui.components.shell.ElvanBottomSheetFrame
 import com.elvan.udukkai.ui.navigation.MaterialSymbols
 
 /**
@@ -40,29 +41,13 @@ fun WhatsNewSheet(
     val colors = rememberShellColors()
     val isTa = LocalAppLanguage.current.startsWith("ta")
     val phase = AppUpdate.phase
-    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-
-    ModalBottomSheet(
-        onDismissRequest = onDismiss,
-        sheetState = sheetState,
-        containerColor = colors.surface,
-        contentColor = colors.textPrimary,
-        shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
-        dragHandle = {
-            Box(
-                Modifier
-                    .padding(vertical = 12.dp)
-                    .size(width = 36.dp, height = 4.dp)
-                    .clip(CircleShape)
-                    .background(colors.textSecondary.copy(alpha = 0.25f))
-            )
-        }
-    ) {
+    // The picker's own bottom sheet: it stays the same size and the notes scroll inside it, never a full-screen sheet
+    ElvanBottomSheetFrame(onDismissRequest = onDismiss, colors = colors) { maxBody ->
         Column(
             Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 24.dp)
-                .verticalScroll(rememberScrollState()),
+                .heightIn(max = maxBody)
+                .padding(horizontal = 24.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
@@ -91,9 +76,12 @@ fun WhatsNewSheet(
 
             Spacer(Modifier.height(20.dp))
 
-            // Aggregated release notes across skipped versions
+            // Aggregated release notes across skipped versions: the only part that scrolls
             Column(
-                Modifier.fillMaxWidth(),
+                Modifier
+                    .fillMaxWidth()
+                    .weight(1f, fill = false)
+                    .verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 if (release.notes.isEmpty()) {

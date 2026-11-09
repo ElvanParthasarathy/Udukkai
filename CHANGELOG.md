@@ -5,6 +5,9 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+### New
+- The update window is a compact bottom sheet, the same size as the item picker, with only the release notes scrolling inside it.
+
 ## 1.0.7
 
 ### New
