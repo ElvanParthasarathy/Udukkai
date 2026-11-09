@@ -77,7 +77,7 @@ private fun ReceiptBody(
     val notesTitle = K.remarks.tr()
     val words = remember(receipt.amount) { NumberToWords.toTamil(receipt.amount) to NumberToWords.toEnglish(receipt.amount) }
 
-    DocPage {
+    DocPage(fullWidthKeys = setOf("top_spacer")) {
         item(key = "status") { DocStatusHeader(DocTone.Paid, receivedLabel, receipt.amount) }
         item(key = "customer") { DocCustomerCard(name, secondName, town, onOpenCustomer) }
         item(key = "info") {

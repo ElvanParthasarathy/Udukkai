@@ -76,20 +76,22 @@ fun ViewRecordPage(
             // Sideways the shifter sits in the top band beside the title and takes no height of its own
             val sideways = com.elvan.udukkai.ui.components.shell.LocalElvanSideBar.current
             val shifterH = if (sideways) 0.dp else SHIFTER_HEIGHT
+            // The shifter sits in the top band and takes no height, so the cards need a gap of their own under it
+            val extraTop = if (sideways) 22.dp else 0.dp
 
             // How far the list has moved, for the items above the tab's content (spacer, shifter, type row)
             fun scrolledPx(): Int = scrollState.firstVisibleItemScrollOffset + with(density) {
                 when (scrollState.firstVisibleItemIndex) {
                     0 -> 0
-                    1 -> topSpace.roundToPx()
-                    else -> (topSpace + shifterH + spacing).roundToPx()
+                    1 -> (topSpace + extraTop).roundToPx()
+                    else -> (topSpace + extraTop + shifterH + spacing).roundToPx()
                 }
             }
             // Kept while scrolling back up, shrinking with it: the new content can hold the old position but not scroll further
             val held = remember(section, historyUi.tab, historyUi.filter, historyUi.sort) { scrolledPx() }
 
             fun heightBelow(rowAbove: Dp): Dp {
-                val fill = (maxHeight - topSpace - shifterH - spacing - rowAbove - bottomPadding).coerceAtLeast(0.dp)
+                val fill = (maxHeight - topSpace - extraTop - shifterH - spacing - rowAbove - bottomPadding).coerceAtLeast(0.dp)
                 return if (held > 0) fill + with(density) { minOf(held, scrolledPx()).toDp() } else fill
             }
 
@@ -99,9 +101,9 @@ fun ViewRecordPage(
                 contentPadding = PaddingValues(start = Dimens.ContentPadding, end = Dimens.ContentPadding, bottom = bottomPadding),
                 verticalArrangement = Arrangement.spacedBy(spacing)
             ) {
-                item(key = "top_spacer") { Spacer(Modifier.height(topSpace - spacing)) }
+                item(key = "top_spacer") { Spacer(Modifier.height(topSpace - spacing + extraTop)) }
                 item(key = "section_tabs") {
-                    Box(Modifier.fillMaxWidth().elvanTopBandRow(sideways), contentAlignment = Alignment.Center) {
+                    Box(Modifier.fillMaxWidth().elvanTopBandRow(sideways, up = 12.dp + extraTop), contentAlignment = Alignment.Center) {
                         ElvanPillShifter(
                             items = listOf(PillShifterItem(K.detailsTab.tr()), PillShifterItem(K.transactionsTab.tr())),
                             selectedIndex = section,
@@ -125,7 +127,7 @@ fun ViewRecordPage(
                         }
                     }
                 } else {
-                    viewHistoryItems(history, historyUi, colors, onBillClick, onReceiptClick, onRetryHistory, heightBelow(HISTORY_TOOLS_HEIGHT + spacing))
+                    viewHistoryItems(history, historyUi, colors, onBillClick, onReceiptClick, onRetryHistory, heightBelow(HISTORY_TOOLS_HEIGHT + spacing), isLandscape = maxWidth > maxHeight)
                 }
             }
         }

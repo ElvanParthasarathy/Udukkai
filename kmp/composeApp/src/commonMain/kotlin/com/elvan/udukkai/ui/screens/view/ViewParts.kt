@@ -306,7 +306,8 @@ fun LazyListScope.viewHistoryItems(
     onReceiptClick: (Long) -> Unit,
     onRetry: () -> Unit,
     /** Blank room kept under the type row, so a short list leaves the page where it was. */
-    minListHeight: androidx.compose.ui.unit.Dp
+    minListHeight: androidx.compose.ui.unit.Dp,
+    isLandscape: Boolean = false
 ) {
     val tabs = ui.tabs
     val tab = tabs.getOrNull(ui.tab) ?: return
@@ -336,22 +337,58 @@ fun LazyListScope.viewHistoryItems(
         }
     }
     val filtered = tab.hasStatus && ui.filter != HistoryFilter.All
-    if (state is ViewHistoryState.Ready && rows.size > SHORT_LIST_ROWS) {
-        items(rows, key = { "history_${it.kind}_${it.id}" }, contentType = { "bill" }) { row ->
-            ViewBillCard(row, colors) { if (row.kind == ViewRowKind.Receipt) onReceiptClick(row.id) else onBillClick(row.id) }
-        }
-    } else item(key = "history_short") {
-        // A short list is one block with a minimum height: the blank space under it holds the page still
-        Column(Modifier.fillMaxWidth().heightIn(min = minListHeight), verticalArrangement = Arrangement.spacedBy(RECORD_GAP)) {
-            when {
-                state == ViewHistoryState.Loading -> repeat(3) { com.elvan.udukkai.ui.components.shell.ItemCardSkeleton() }
-                state == ViewHistoryState.Failed -> HistoryMessage(null, K.historyLoadFailed.tr(), colors) {
-                    com.elvan.udukkai.ui.components.shell.ElvanActionButton(label = K.retryBtn.tr(), onClick = onRetry, reachPillEdge = false)
+    if (isLandscape) {
+        val pairs = rows.chunked(2)
+        if (state is ViewHistoryState.Ready && rows.size > SHORT_LIST_ROWS) {
+            items(pairs, key = { "history_pair_${it.joinToString("_") { r -> "${r.kind}_${r.id}" }}" }) { pair ->
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(RECORD_GAP)) {
+                    pair.forEach { row ->
+                        Box(Modifier.weight(1f)) {
+                            ViewBillCard(row, colors) { if (row.kind == ViewRowKind.Receipt) onReceiptClick(row.id) else onBillClick(row.id) }
+                        }
+                    }
+                    if (pair.size == 1) Spacer(Modifier.weight(1f))
                 }
-                rows.isEmpty() -> HistoryMessage(tab.item.icon, if (filtered) K.noHistoryInFilter.tr() else tab.empty, colors)
-                else -> rows.forEach { row ->
-                    androidx.compose.runtime.key(row.kind, row.id) {
-                        ViewBillCard(row, colors) { if (row.kind == ViewRowKind.Receipt) onReceiptClick(row.id) else onBillClick(row.id) }
+            }
+        } else item(key = "history_short") {
+            Column(Modifier.fillMaxWidth().heightIn(min = minListHeight), verticalArrangement = Arrangement.spacedBy(RECORD_GAP)) {
+                when {
+                    state == ViewHistoryState.Loading -> repeat(3) { com.elvan.udukkai.ui.components.shell.ItemCardSkeleton() }
+                    state == ViewHistoryState.Failed -> HistoryMessage(null, K.historyLoadFailed.tr(), colors) {
+                        com.elvan.udukkai.ui.components.shell.ElvanActionButton(label = K.retryBtn.tr(), onClick = onRetry, reachPillEdge = false)
+                    }
+                    rows.isEmpty() -> HistoryMessage(tab.item.icon, if (filtered) K.noHistoryInFilter.tr() else tab.empty, colors)
+                    else -> pairs.forEach { pair ->
+                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(RECORD_GAP)) {
+                            pair.forEach { row ->
+                                Box(Modifier.weight(1f)) {
+                                    ViewBillCard(row, colors) { if (row.kind == ViewRowKind.Receipt) onReceiptClick(row.id) else onBillClick(row.id) }
+                                }
+                            }
+                            if (pair.size == 1) Spacer(Modifier.weight(1f))
+                        }
+                    }
+                }
+            }
+        }
+    } else {
+        if (state is ViewHistoryState.Ready && rows.size > SHORT_LIST_ROWS) {
+            items(rows, key = { "history_${it.kind}_${it.id}" }, contentType = { "bill" }) { row ->
+                ViewBillCard(row, colors) { if (row.kind == ViewRowKind.Receipt) onReceiptClick(row.id) else onBillClick(row.id) }
+            }
+        } else item(key = "history_short") {
+            // A short list is one block with a minimum height: the blank space under it holds the page still
+            Column(Modifier.fillMaxWidth().heightIn(min = minListHeight), verticalArrangement = Arrangement.spacedBy(RECORD_GAP)) {
+                when {
+                    state == ViewHistoryState.Loading -> repeat(3) { com.elvan.udukkai.ui.components.shell.ItemCardSkeleton() }
+                    state == ViewHistoryState.Failed -> HistoryMessage(null, K.historyLoadFailed.tr(), colors) {
+                        com.elvan.udukkai.ui.components.shell.ElvanActionButton(label = K.retryBtn.tr(), onClick = onRetry, reachPillEdge = false)
+                    }
+                    rows.isEmpty() -> HistoryMessage(tab.item.icon, if (filtered) K.noHistoryInFilter.tr() else tab.empty, colors)
+                    else -> rows.forEach { row ->
+                        androidx.compose.runtime.key(row.kind, row.id) {
+                            ViewBillCard(row, colors) { if (row.kind == ViewRowKind.Receipt) onReceiptClick(row.id) else onBillClick(row.id) }
+                        }
                     }
                 }
             }

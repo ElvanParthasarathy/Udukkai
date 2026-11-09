@@ -191,7 +191,7 @@ fun ElvanShell(
 
     val topSpacerHeight = if (isCompactHeader) {
         // Sideways the title row and the round button are one 56dp band; the page starts just under it
-        if (isWide && !isDesktop && !LocalElvanPaneChrome.current) statusBarHeight + 46.dp else ceiling + pillHeight + 10.dp
+        if (isWide && !isDesktop && !LocalElvanPaneChrome.current) statusBarHeight + 37.dp else ceiling + pillHeight + 10.dp
     } else {
         (expandedHeight - Dimens.SectionSpacing - with(density) { collapsePx.toDp() }).coerceAtLeast(0.dp)
     }

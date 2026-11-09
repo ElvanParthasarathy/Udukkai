@@ -62,18 +62,19 @@ val LocalDocLandscape = androidx.compose.runtime.compositionLocalOf { false }
 @Composable
 fun DocPage(
     horizontalPadding: Dp = Dimens.ContentPadding,
+    fullWidthKeys: Set<Any?> = setOf("top_spacer", "status", "record", "convert", "lines"),
     content: LazyListScope.() -> Unit
 ) {
     androidx.compose.foundation.layout.BoxWithConstraints(Modifier.fillMaxSize()) {
     androidx.compose.runtime.CompositionLocalProvider(LocalDocLandscape provides (maxWidth > maxHeight)) {
     com.elvan.udukkai.ui.screens.editor.ElvanEditorList(
-        fullWidthKeys = setOf("top_spacer", "status", "record", "convert", "lines"),
+        fullWidthKeys = fullWidthKeys,
         state = LocalDocListState.current ?: rememberLazyListState(),
         modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(start = horizontalPadding, end = horizontalPadding, bottom = getNavBarHeightIgnoringVisibility() + 120.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
-        item(key = "top_spacer") { Spacer(Modifier.height((LocalElvanTopSpacerHeight.current - 14.dp - (if (com.elvan.udukkai.ui.components.shell.LocalElvanSideBar.current) 46.dp else 0.dp)).coerceAtLeast(0.dp))) }
+        item(key = "top_spacer") { Spacer(Modifier.height((LocalElvanTopSpacerHeight.current - 14.dp - (if (com.elvan.udukkai.ui.components.shell.LocalElvanSideBar.current) 37.dp else 0.dp)).coerceAtLeast(0.dp))) }
         content()
     }
     }

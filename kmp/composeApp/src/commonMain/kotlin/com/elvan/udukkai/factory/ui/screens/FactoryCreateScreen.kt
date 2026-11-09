@@ -393,42 +393,88 @@ fun FactoryCreateScreen(
                             )
                         }
 
-                        items(
-                            items = group.items,
-                            key = { "receipt_${it.data.id}" }
-                        ) { indexedReceipt ->
-                            val index = indexedReceipt.globalIndex
-                            val receipt = indexedReceipt.data
-                            val isSelected = selectedItemIds.contains(receipt.id)
-                            val onCardClick: () -> Unit = {
-                                if (isSelectionMode) {
-                                    onToggleSelect?.invoke(receipt.id)
-                                } else {
-                                    onReceiptClick(receipt)
+                        if (isLandscape) {
+                            val pairs = group.items.chunked(2)
+                            items(
+                                items = pairs,
+                                key = { "rec_pair_${it.joinToString("_") { row -> row.data.id.toString() }}" }
+                            ) { pair ->
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(horizontal = Dimens.ContentPadding),
+                                    horizontalArrangement = Arrangement.spacedBy(Dimens.ItemSpacing)
+                                ) {
+                                    pair.forEach { indexedReceipt ->
+                                        val index = indexedReceipt.globalIndex
+                                        val receipt = indexedReceipt.data
+                                        val isSelected = selectedItemIds.contains(receipt.id)
+                                        val onCardClick: () -> Unit = {
+                                            if (isSelectionMode) onToggleSelect?.invoke(receipt.id)
+                                            else onReceiptClick(receipt)
+                                        }
+                                        val onCardLongClick: () -> Unit = {
+                                            onItemLongClick?.invoke(receipt.id)
+                                        }
+                                        Box(modifier = Modifier.weight(1f)) {
+                                            ReceiptCard(
+                                                index = index,
+                                                receipt = receipt,
+                                                colors = colors,
+                                                isSelectionMode = isSelectionMode,
+                                                isSelected = isSelected,
+                                                onClick = onCardClick,
+                                                onLongClick = onCardLongClick,
+                                                profile = FactoryProfileRepository.profile,
+                                                allProfiles = FactoryProfileRepository.allProfiles,
+                                                customerCity = receipt.customerId?.let { id -> com.elvan.udukkai.factory.data.FactoryCustomerRepository.customers.find { it.id == id }?.city } ?: emptyMap(),
+                                                linkedInvoiceNumbers = FactoryReceiptRepository.getLinkedInvoiceNumbers(receipt.id)
+                                            )
+                                        }
+                                    }
+                                    if (pair.size == 1) {
+                                        Spacer(modifier = Modifier.weight(1f))
+                                    }
                                 }
                             }
-                            val onCardLongClick: () -> Unit = {
-                                onItemLongClick?.invoke(receipt.id)
-                            }
+                        } else {
+                            items(
+                                items = group.items,
+                                key = { "receipt_${it.data.id}" }
+                            ) { indexedReceipt ->
+                                val index = indexedReceipt.globalIndex
+                                val receipt = indexedReceipt.data
+                                val isSelected = selectedItemIds.contains(receipt.id)
+                                val onCardClick: () -> Unit = {
+                                    if (isSelectionMode) {
+                                        onToggleSelect?.invoke(receipt.id)
+                                    } else {
+                                        onReceiptClick(receipt)
+                                    }
+                                }
+                                val onCardLongClick: () -> Unit = {
+                                    onItemLongClick?.invoke(receipt.id)
+                                }
 
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(horizontal = Dimens.ContentPadding)
-                            ) {
-                                ReceiptCard(
-                                    index = index,
-                                    receipt = receipt,
-                                    colors = colors,
-                                    isSelectionMode = isSelectionMode,
-                                    isSelected = isSelected,
-                                    onClick = onCardClick,
-                                    onLongClick = onCardLongClick,
-                                    profile = FactoryProfileRepository.profile,
-                                    allProfiles = FactoryProfileRepository.allProfiles,
-                                    customerCity = receipt.customerId?.let { id -> com.elvan.udukkai.factory.data.FactoryCustomerRepository.customers.find { it.id == id }?.city } ?: emptyMap(),
-                                    linkedInvoiceNumbers = FactoryReceiptRepository.getLinkedInvoiceNumbers(receipt.id)
-                                )
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(horizontal = Dimens.ContentPadding)
+                                ) {
+                                    ReceiptCard(
+                                        index = index,
+                                        receipt = receipt,
+                                        colors = colors,
+                                        isSelectionMode = isSelectionMode,
+                                        isSelected = isSelected,
+                                        onClick = onCardClick,
+                                        onLongClick = onCardLongClick,
+                                        profile = FactoryProfileRepository.profile,
+                                        allProfiles = FactoryProfileRepository.allProfiles,
+                                        customerCity = receipt.customerId?.let { id -> com.elvan.udukkai.factory.data.FactoryCustomerRepository.customers.find { it.id == id }?.city } ?: emptyMap(),
+                                        linkedInvoiceNumbers = FactoryReceiptRepository.getLinkedInvoiceNumbers(receipt.id)
+                                    )
+                                }
                             }
                         }
                     }

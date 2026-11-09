@@ -129,9 +129,9 @@ private fun SideActionPill(colors: ShellColors, actions: @Composable RowScope.()
  * Sideways, the pill shifter lives in the top band beside the page title instead of below it: this keeps its place in the
  * list but takes no height, drawn [up] higher.
  */
-fun Modifier.elvanTopBandRow(active: Boolean, up: Dp = 10.dp): Modifier =
+fun Modifier.elvanTopBandRow(active: Boolean, up: Dp = 12.dp): Modifier =
     if (!active) this else this.then(
-        // Centred on the band the page title and the round button share: 10dp above where the page starts
+        // Centred on the band the page title and the round button share: 12dp above where the page starts
         Modifier.layout { measurable, constraints ->
             val p = measurable.measure(constraints)
             layout(p.width, 0) { p.placeRelative(0, -(up.roundToPx() + p.height / 2)) }
