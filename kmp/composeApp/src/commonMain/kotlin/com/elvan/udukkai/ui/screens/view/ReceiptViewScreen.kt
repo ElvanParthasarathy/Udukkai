@@ -32,14 +32,17 @@ fun ReceiptViewScreen(
     invoices: List<InvoiceModel> = emptyList(),
     onOpenInvoice: ((InvoiceModel) -> Unit)? = null,
     onOpenCustomer: (() -> Unit)? = null,
+    onDelete: (() -> ViewDeleteResult)? = null,
     printPayload: ((activeProfile: BusinessProfile) -> String)? = null
 ) {
     val activeProfile = (if (receipt.companyId != null) allProfiles.find { it.id == receipt.companyId } else null) ?: profile
+    val deleteItem = rememberViewDeleteItem(onDelete, K.receiptDeletedMsg.tr(), onBack)
     val payload = remember(receipt, activeProfile) { printPayload?.invoke(activeProfile) }
     PreviewScreen(
         title = receipt.receiptNumber,
         onBack = onBack,
         onEdit = onEdit,
+        menuItems = listOfNotNull(deleteItem),
         printPayload = payload,
         printFileName = receiptPdfName(receipt),
         businessFolder = billBusinessFolder(activeProfile),
@@ -102,7 +105,7 @@ private fun ReceiptBody(
                     invoices.forEachIndexed { i, inv ->
                         if (i > 0) DocDivider()
                         DocLinkRow(
-                            icon = MaterialSymbols.Rounded.Description,
+                            icon = MaterialSymbols.Rounded.InvoiceFill,
                             title = inv.invoiceNumber,
                             subtitle = DateUtils.formatEpochMillis(inv.invoiceDate),
                             amount = inv.totalAmount,

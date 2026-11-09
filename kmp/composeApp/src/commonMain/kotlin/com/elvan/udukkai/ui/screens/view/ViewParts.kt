@@ -1,5 +1,20 @@
 package com.elvan.udukkai.ui.screens.view
 
+import androidx.compose.foundation.lazy.LazyListScope
+import androidx.compose.foundation.lazy.items
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.setValue
+import com.elvan.udukkai.theme.rememberShellColors
+import com.elvan.udukkai.ui.components.ElvanCommonCard
+import com.elvan.udukkai.ui.components.shell.ElvanActionSheet
+import com.elvan.udukkai.ui.components.shell.ElvanPopupMenuItem
+import com.elvan.udukkai.ui.components.shell.ElvanSnackbar
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -44,7 +59,17 @@ data class ViewBillRow(
     val amount: Double,
     val isPaid: Boolean,
     /** A short extra fact for this page, e.g. the weight of the item on that bill. */
-    val note: String = ""
+    val note: String = "",
+    /** Item pages: who the bill is for. */
+    val customerName: String = "",
+    /** Item pages: the whole bill, when [amount] is only this item's lines. */
+    val invoiceTotal: Double? = null,
+    /** From the bill's linked receipts. */
+    val paidAmount: Double = 0.0,
+    val balance: Double = 0.0,
+    val kind: ViewRowKind = ViewRowKind.Invoice,
+    /** Receipts: how it was paid. */
+    val paymentMode: String = ""
 )
 
 /** What a view page shows about an item's or customer's bills. */
@@ -56,39 +81,41 @@ data class ViewActivity(
     val unpaid: Double = 0.0,
     /** Items only: the total weight or quantity billed, ready to show (e.g. "33.680 kg"). */
     val quantityText: String = "",
-    val bills: List<ViewBillRow> = emptyList()
+    val bills: List<ViewBillRow> = emptyList(),
+    /** Customers: their receipts. */
+    val receipts: List<ViewBillRow> = emptyList(),
+    /** Proforma invoices, where the app has them. */
+    val estimates: List<ViewBillRow> = emptyList()
 )
 
-/**
- * The top of a view page: the name in the main language, the second-language name in grey under it, and one quiet
- * line of facts. Text only, with no picture or circle, so the space goes to the details.
- */
+/** The record's card: its round icon, then its name on one line with the second-language line in grey under it. */
 @Composable
-fun ViewHero(
-    primary: String,
-    secondary: String,
-    facts: String,
-    colors: ShellColors
-) {
+fun ViewHero(primary: String, secondary: String, icon: ImageVector, tint: androidx.compose.ui.graphics.Color, colors: ShellColors) {
     val ff = LocalAppFontFamily.current
-    Column(Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 4.dp)) {
-        Text(
-            text = primary.preventBrokenLigatures(),
-            style = TextStyle(fontFamily = ff, fontSize = 24.sp, fontWeight = FontWeight.Bold, color = colors.textPrimary, lineHeight = 30.sp)
-        )
-        if (secondary.isNotEmpty()) {
-            Spacer(Modifier.height(2.dp))
-            Text(
-                text = secondary.preventBrokenLigatures(),
-                style = TextStyle(fontFamily = ff, fontSize = 15.sp, color = colors.textSecondary)
-            )
-        }
-        if (facts.isNotEmpty()) {
-            Spacer(Modifier.height(6.dp))
-            Text(
-                text = facts.preventBrokenLigatures(),
-                style = TextStyle(fontFamily = ff, fontSize = 13.sp, color = colors.textTertiary)
-            )
+    ElvanCommonCard(
+        padding = PaddingValues(horizontal = com.elvan.udukkai.theme.Dimens.CardPaddingHorizontal, vertical = com.elvan.udukkai.theme.Dimens.CardPaddingVertical),
+        borderRadius = com.elvan.udukkai.theme.Dimens.CardRadius
+    ) {
+        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+            com.elvan.udukkai.ui.components.ElvanCardLeadingIcon(icon = icon, tint = tint)
+            Spacer(Modifier.width(12.dp))
+            Column(Modifier.weight(1f)) {
+                Text(
+                    text = primary.preventBrokenLigatures(),
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    style = TextStyle(fontFamily = ff, fontSize = 17.sp, fontWeight = FontWeight.Bold, color = colors.textPrimary)
+                )
+                if (secondary.isNotEmpty()) {
+                    Spacer(Modifier.height(2.dp))
+                    Text(
+                        text = secondary.preventBrokenLigatures(),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        style = TextStyle(fontFamily = ff, fontSize = 13.5.sp, color = colors.textSecondary)
+                    )
+                }
+            }
         }
     }
 }
@@ -187,60 +214,243 @@ fun ViewAddressBox(title: String?, lines: List<String>, colors: ShellColors) {
     }
 }
 
-/** The latest bills for this item or customer; a row opens the bill. */
+sealed interface ViewHistoryState {
+    data object Loading : ViewHistoryState
+    data class Ready(val activity: ViewActivity) : ViewHistoryState
+    data object Failed : ViewHistoryState
+}
+
+/** Works out the page's bills off the main thread (an item has every bill's lines to read). Re-runs when [key] changes; the second value retries. */
 @Composable
-fun ViewBillsSection(title: String, bills: List<ViewBillRow>, colors: ShellColors, onBillClick: (Long) -> Unit) {
-    if (bills.isEmpty()) return
-    val ff = LocalAppFontFamily.current
-    ElvanSettingsSection(title = title, colors = colors) {
-        bills.forEachIndexed { index, bill ->
-            if (index > 0) ElvanSettingsDivider(colors = colors)
-            val status = if (bill.isPaid) K.statusPaid.tr() else K.statusUnpaid.tr()
-            val dateStr = DateUtils.formatEpochMillis(bill.date)
-            val amountStr = CurrencyUtils.formatInr(bill.amount)
+fun rememberViewHistory(subject: Any?, key: Any?, load: () -> ViewActivity): Pair<ViewHistoryState, () -> Unit> {
+    var state by remember { mutableStateOf<ViewHistoryState>(ViewHistoryState.Loading) }
+    var attempt by remember { mutableStateOf(0) }
+    val latestLoad by rememberUpdatedState(load)
+    LaunchedEffect(subject, key, attempt) {
+        state = try {
+            ViewHistoryState.Ready(withContext(Dispatchers.Default) { latestLoad() })
+        } catch (e: CancellationException) {
+            throw e
+        } catch (_: Exception) {
+            ViewHistoryState.Failed
+        }
+    }
+    return state to { state = ViewHistoryState.Loading; attempt++ }
+}
+
+/** Which type, status and order the page is showing; kept while a bill is open and the page comes back. */
+class ViewHistoryUi {
+    var tab by mutableStateOf(0)
+    var filter by mutableStateOf(HistoryFilter.All)
+    var sort by mutableStateOf(HistorySort.DateNew)
+    var showFilter by mutableStateOf(false)
+    var showSort by mutableStateOf(false)
+    var showType by mutableStateOf(false)
+    internal var tabs: List<HistoryTabInfo> = emptyList() // rebuilt with the page; not state, or setting it would recompose forever
+}
+
+internal class HistoryTabInfo(val item: com.elvan.udukkai.ui.screens.create.components.PillShifterItem, val rows: List<ViewBillRow>, val empty: String, val hasStatus: Boolean)
+
+/**
+ * The page's document types with their status filter and sort, as Zoho's Transactions tab has them, in the app's own
+ * pill shifter and sheets. Proformas sit with the invoices (their PF number tells them apart). [emptyInvoices] is the invoice
+ * tab's empty line; receipts appear on customer pages only.
+ */
+@Composable
+fun rememberViewHistoryUi(state: ViewHistoryState, emptyInvoices: String, withReceipts: Boolean): ViewHistoryUi {
+    val ui = remember { ViewHistoryUi() }
+    val activity = (state as? ViewHistoryState.Ready)?.activity ?: ViewActivity()
+    val symbols = MaterialSymbols.Rounded
+    val invoiceItem = com.elvan.udukkai.ui.screens.create.components.PillShifterItem(K.invoices.tr(), symbols.Invoice, symbols.InvoiceFill)
+    val receiptItem = com.elvan.udukkai.ui.screens.create.components.PillShifterItem(K.receipts.tr(), symbols.Receipt, symbols.ReceiptFill)
+    val noReceipts = K.noCustomerReceipts.tr()
+    ui.tabs = buildList {
+        add(HistoryTabInfo(invoiceItem, ViewHistory.withEstimates(activity.bills, activity.estimates), emptyInvoices, hasStatus = true))
+        if (withReceipts) add(HistoryTabInfo(receiptItem, activity.receipts, noReceipts, hasStatus = false))
+    }
+    if (ui.tab > ui.tabs.lastIndex) ui.tab = 0
+
+    val colors = rememberShellColors()
+    if (ui.showFilter) {
+        val labels = mapOf(HistoryFilter.All to K.all.tr(), HistoryFilter.Unpaid to K.statusUnpaid.tr(), HistoryFilter.PartlyPaid to K.statusPartlyPaid.tr(), HistoryFilter.Paid to K.statusPaid.tr())
+        com.elvan.udukkai.ui.components.shell.ElvanSelectionBottomSheet(
+            title = K.filterBy.tr(), items = HistoryFilter.entries, currentValue = ui.filter, colors = colors,
+            onSelected = { ui.filter = it; ui.showFilter = false }, onDismissRequest = { ui.showFilter = false },
+            itemLabelBuilder = { labels.getValue(it) }
+        )
+    }
+    if (ui.showSort) {
+        val labels = mapOf(HistorySort.DateNew to K.sortDateNew.tr(), HistorySort.DateOld to K.sortDateOld.tr(), HistorySort.NumberHigh to K.sortNumberHigh.tr(), HistorySort.NumberLow to K.sortNumberLow.tr())
+        com.elvan.udukkai.ui.components.shell.ElvanSelectionBottomSheet(
+            title = K.sortBy.tr(), items = HistorySort.entries, currentValue = ui.sort, colors = colors,
+            onSelected = { ui.sort = it; ui.showSort = false }, onDismissRequest = { ui.showSort = false },
+            itemLabelBuilder = { labels.getValue(it) }
+        )
+    }
+    if (ui.showType) {
+        com.elvan.udukkai.ui.components.shell.ElvanSelectionBottomSheet(
+            title = K.transactionsTab.tr(), items = ui.tabs.indices.toList(), currentValue = ui.tab, colors = colors,
+            onSelected = { ui.tab = it; ui.showType = false }, onDismissRequest = { ui.showType = false },
+            itemLabelBuilder = { ui.tabs[it].item.label }
+        )
+    }
+    return ui
+}
+
+/** The type and filter row, then the chosen type's rows, in the tab's own list so a long history stays smooth. */
+fun LazyListScope.viewHistoryItems(
+    state: ViewHistoryState,
+    ui: ViewHistoryUi,
+    colors: ShellColors,
+    onBillClick: (Long) -> Unit,
+    onReceiptClick: (Long) -> Unit,
+    onRetry: () -> Unit,
+    /** Blank room kept under the type row, so a short list leaves the page where it was. */
+    minListHeight: androidx.compose.ui.unit.Dp
+) {
+    val tabs = ui.tabs
+    val tab = tabs.getOrNull(ui.tab) ?: return
+    val rows = ViewHistory.apply(tab.rows, if (tab.hasStatus) ui.filter else HistoryFilter.All, ui.sort)
+    item(key = "history_tools") {
+        Row(Modifier.fillMaxWidth().height(HISTORY_TOOLS_HEIGHT).padding(start = 12.dp), verticalAlignment = Alignment.CenterVertically) {
             Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable(
-                        interactionSource = remember { MutableInteractionSource() },
-                        indication = ShellDefaults.ripple(colors, bounded = true),
-                        role = Role.Button,
-                        onClick = { onBillClick(bill.id) }
-                    )
-                    .semantics(mergeDescendants = true) {
-                        contentDescription = listOf(bill.number, dateStr, bill.note, amountStr, status).filter { it.isNotBlank() }.joinToString(", ")
-                    }
-                    .padding(horizontal = 20.dp, vertical = 12.dp),
+                Modifier
+                    .clip(androidx.compose.foundation.shape.RoundedCornerShape(50))
+                    .clickable(enabled = tabs.size > 1) { ui.showType = true }
+                    .padding(horizontal = 8.dp, vertical = 8.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Column(Modifier.weight(1f)) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text(bill.number, style = TextStyle(fontFamily = ff, fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = colors.textPrimary))
-                        Text(
-                            "FY ${BillNumbering.fyShort(bill.date)}",
-                            modifier = Modifier.padding(start = 8.dp),
-                            style = TextStyle(fontFamily = ff, fontSize = 12.5.sp, color = colors.textTertiary)
-                        )
-                    }
-                    Spacer(Modifier.height(2.dp))
-                    Text(
-                        text = if (bill.note.isNotBlank()) "$dateStr  •  ${bill.note}" else dateStr,
-                        style = TextStyle(fontFamily = ff, fontSize = 13.sp, color = colors.textSecondary),
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                }
-                Spacer(Modifier.width(8.dp))
-                Column(horizontalAlignment = Alignment.End) {
-                    Text(status.preventBrokenLigatures(), style = TextStyle(fontFamily = ff, fontSize = 12.sp, color = colors.textSecondary))
-                    Spacer(Modifier.height(2.dp))
-                    Text(amountStr, style = TextStyle(fontFamily = ff, fontSize = 15.sp, fontWeight = FontWeight.ExtraBold, color = colors.textPrimary))
-                }
-                Spacer(Modifier.width(4.dp))
-                Icon(MaterialSymbols.Rounded.ChevronRight, null, tint = colors.border, modifier = Modifier.size(18.dp))
+                Text(
+                    text = (if (state is ViewHistoryState.Ready) "${tab.item.label} (${rows.size})" else tab.item.label).preventBrokenLigatures(),
+                    style = TextStyle(fontFamily = LocalAppFontFamily.current, fontSize = 13.sp, fontWeight = FontWeight.SemiBold, letterSpacing = 0.3.sp, color = colors.textPrimary.copy(alpha = 0.55f))
+                )
+                if (tabs.size > 1) Icon(MaterialSymbols.Rounded.KeyboardArrowDown, null, tint = colors.textPrimary.copy(alpha = 0.55f), modifier = Modifier.size(18.dp))
+            }
+            Spacer(Modifier.weight(1f))
+            if (tab.hasStatus) com.elvan.udukkai.ui.components.shell.ElvanTopBarIconButton(onClick = { ui.showFilter = true }) {
+                Icon(MaterialSymbols.Rounded.FilterAlt, K.a11yFilter.tr(), tint = if (ui.filter == HistoryFilter.All) colors.textPrimary else colors.accent, modifier = Modifier.size(17.dp))
+            }
+            com.elvan.udukkai.ui.components.shell.ElvanTopBarIconButton(onClick = { ui.showSort = true }) {
+                Icon(MaterialSymbols.Rounded.Sort, K.sortBy.tr(), tint = if (ui.sort == HistorySort.DateNew) colors.textPrimary else colors.accent, modifier = Modifier.size(20.dp))
             }
         }
     }
+    val filtered = tab.hasStatus && ui.filter != HistoryFilter.All
+    if (state is ViewHistoryState.Ready && rows.size > SHORT_LIST_ROWS) {
+        items(rows, key = { "history_${it.kind}_${it.id}" }, contentType = { "bill" }) { row ->
+            ViewBillCard(row, colors) { if (row.kind == ViewRowKind.Receipt) onReceiptClick(row.id) else onBillClick(row.id) }
+        }
+    } else item(key = "history_short") {
+        // A short list is one block with a minimum height: the blank space under it holds the page still
+        Column(Modifier.fillMaxWidth().heightIn(min = minListHeight), verticalArrangement = Arrangement.spacedBy(RECORD_GAP)) {
+            when {
+                state == ViewHistoryState.Loading -> repeat(3) { com.elvan.udukkai.ui.components.shell.ItemCardSkeleton() }
+                state == ViewHistoryState.Failed -> HistoryMessage(null, K.historyLoadFailed.tr(), colors) {
+                    com.elvan.udukkai.ui.components.shell.ElvanActionButton(label = K.retryBtn.tr(), onClick = onRetry, reachPillEdge = false)
+                }
+                rows.isEmpty() -> HistoryMessage(tab.item.icon, if (filtered) K.noHistoryInFilter.tr() else tab.empty, colors)
+                else -> rows.forEach { row ->
+                    androidx.compose.runtime.key(row.kind, row.id) {
+                        ViewBillCard(row, colors) { if (row.kind == ViewRowKind.Receipt) onReceiptClick(row.id) else onBillClick(row.id) }
+                    }
+                }
+            }
+        }
+    }
+}
+
+/** More rows than this always pass a screen, so they stay lazy and need no blank room. */
+private const val SHORT_LIST_ROWS = 12
+
+internal val HISTORY_TOOLS_HEIGHT = 44.dp
+
+
+@Composable
+private fun HistoryMessage(icon: androidx.compose.ui.graphics.vector.ImageVector?, text: String, colors: ShellColors, action: (@Composable () -> Unit)? = null) {
+    // The blank state of the Create page: an icon and a line, in open space
+    Column(Modifier.fillMaxWidth().padding(vertical = 56.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+        if (icon != null) {
+            Icon(icon, null, tint = colors.textQuaternary, modifier = Modifier.size(48.dp))
+            Spacer(Modifier.height(14.dp))
+        }
+        Text(text.preventBrokenLigatures(), style = TextStyle(fontFamily = LocalAppFontFamily.current, fontSize = 15.sp, color = colors.textTertiary, textAlign = TextAlign.Center))
+        if (action != null) { Spacer(Modifier.height(8.dp)); action() }
+    }
+}
+
+/** A bill on a customer or item page. */
+@Composable
+private fun ViewBillCard(bill: ViewBillRow, colors: ShellColors, onClick: () -> Unit) {
+    val ff = LocalAppFontFamily.current
+    val status = when (bill.kind) {
+        ViewRowKind.Receipt -> com.elvan.udukkai.data.model.PaymentType.fromStored(bill.paymentMode).label()
+        ViewRowKind.Estimate -> K.proforma.tr() // as on the home cards
+        ViewRowKind.Invoice -> if (bill.isPaid) K.statusPaid.tr() else K.statusUnpaid.tr()
+    }
+    val dateStr = DateUtils.formatEpochMillis(bill.date)
+    val amountStr = CurrencyUtils.formatInr(bill.amount)
+    val partlyPaid = bill.kind == ViewRowKind.Invoice && bill.paidAmount > 0.0 && bill.balance > 0.004
+    val paidLine = if (partlyPaid) "${K.statusPaid.tr()} ${CurrencyUtils.formatInr(bill.paidAmount)}  •  ${K.balanceDue.tr()} ${CurrencyUtils.formatInr(bill.balance)}" else ""
+    val totalLine = bill.invoiceTotal?.let { "${K.invoiceTotalLabel.tr()} ${CurrencyUtils.formatInr(it)}" }.orEmpty()
+    val secondary = TextStyle(fontFamily = ff, fontSize = 13.sp, color = colors.textSecondary)
+    ElvanCommonCard(
+        onClick = onClick,
+        padding = PaddingValues(horizontal = 18.dp, vertical = 14.dp),
+        modifier = Modifier.semantics(mergeDescendants = true) {
+            contentDescription = listOf(bill.number, dateStr, bill.customerName, bill.note, amountStr, status, paidLine, totalLine).filter { it.isNotBlank() }.joinToString(", ")
+        }
+    ) {
+        Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(3.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(bill.number, style = TextStyle(fontFamily = ff, fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = colors.textPrimary), maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Text("FY ${BillNumbering.fyShort(bill.date)}", modifier = Modifier.padding(start = 8.dp).weight(1f), style = TextStyle(fontFamily = ff, fontSize = 12.5.sp, color = colors.textTertiary), maxLines = 1)
+                Spacer(Modifier.width(8.dp))
+                Text(amountStr, style = TextStyle(fontFamily = ff, fontSize = 15.sp, fontWeight = FontWeight.ExtraBold, color = colors.textPrimary), maxLines = 1)
+            }
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(listOf(dateStr, bill.note).filter { it.isNotBlank() }.joinToString("  •  ").preventBrokenLigatures(), style = secondary, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
+                Spacer(Modifier.width(8.dp))
+                Text(status.preventBrokenLigatures(), style = TextStyle(fontFamily = ff, fontSize = 12.sp, color = colors.textSecondary), maxLines = 1)
+            }
+            if (bill.customerName.isNotBlank()) Text(bill.customerName.preventBrokenLigatures(), style = secondary, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            if (paidLine.isNotBlank()) Text(paidLine.preventBrokenLigatures(), style = secondary, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            if (totalLine.isNotBlank()) Text(totalLine.preventBrokenLigatures(), style = TextStyle(fontFamily = ff, fontSize = 12.5.sp, color = colors.textTertiary), maxLines = 1)
+        }
+    }
+}
+
+/**
+ * Delete from a record's own page: the list's rules, with a confirmation first. Shows the sheet itself and returns the
+ * menu row, or null when this page has no delete. [onDone] leaves the page once the record has gone.
+ */
+@Composable
+fun rememberViewDeleteItem(onDelete: (() -> ViewDeleteResult)?, deletedMessage: String, onDone: () -> Unit): ElvanPopupMenuItem? {
+    if (onDelete == null) return null
+    val colors = rememberShellColors()
+    var confirming by remember { mutableStateOf(false) }
+    val hasReceiptsMsg = K.invoiceHasReceipts.tr()
+    val booksLockedMsg = K.booksLockedMsg.tr()
+    val failedMsg = K.error.tr()
+    if (confirming) {
+        ElvanActionSheet(
+            title = K.deleteRecordPrompt.tr(),
+            cancelText = K.cancelBtn.tr(),
+            confirmText = K.deleteBtn.tr(),
+            confirmColor = colors.danger,
+            colors = colors,
+            onDismissRequest = { confirming = false },
+            onConfirm = {
+                confirming = false
+                when (onDelete()) {
+                    ViewDeleteResult.Deleted -> { ElvanSnackbar.show(deletedMessage); onDone() }
+                    ViewDeleteResult.HasReceipts -> ElvanSnackbar.show(hasReceiptsMsg)
+                    ViewDeleteResult.BooksLocked -> ElvanSnackbar.show(booksLockedMsg)
+                    ViewDeleteResult.Failed -> ElvanSnackbar.show(failedMsg)
+                }
+            }
+        )
+    }
+    return ElvanPopupMenuItem(K.deleteBtn.tr(), MaterialSymbols.Rounded.Delete, { confirming = true }, isDestructive = true)
 }
 
 /** The colour a view page gives an icon: money green, bills blue, unpaid amber, weight amber, call green, mail blue. */

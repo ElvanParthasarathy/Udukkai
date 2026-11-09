@@ -272,7 +272,7 @@ private fun PreviewMenuButton(items: List<ElvanPopupMenuItem>) {
             expanded = expanded,
             onDismissRequest = { expanded = false },
             colors = colors,
-            items = items.map { item -> ElvanPopupMenuItem(item.title, item.icon) { expanded = false; item.onClick() } }
+            items = items.map { item -> ElvanPopupMenuItem(item.title, item.icon, { expanded = false; item.onClick() }, item.isDestructive) }
         )
     }
 }
@@ -324,18 +324,6 @@ private fun PreviewBottomArea(controller: DocumentPrintController, onEdit: (() -
                 )
             }
         }
-        // The more-menu opens upward from the right end of the bar
-        if (menuItems.isNotEmpty()) {
-            Box(Modifier.fillMaxWidth().padding(end = 28.dp), contentAlignment = Alignment.CenterEnd) {
-                ElvanPopupMenu(
-                    expanded = menuOpen,
-                    onDismissRequest = { menuOpen = false },
-                    colors = colors,
-                    upward = true,
-                    items = menuItems.map { item -> ElvanPopupMenuItem(item.title, item.icon) { menuOpen = false; item.onClick() } }
-                )
-            }
-        }
         // Actions remain readable and interactive: requests made while PDF is generating are queued and run once ready
         run {
             // Same slots as the view page's bar: Edit, then Open where Preview was, Print, Share
@@ -366,7 +354,16 @@ private fun PreviewBottomArea(controller: DocumentPrintController, onEdit: (() -
                     if (menuItems.isEmpty()) null else ElvanFloatingAction(
                         label = K.more.tr(),
                         icon = MaterialSymbols.Rounded.MoreVert,
-                        onClick = { menuOpen = true }
+                        onClick = { menuOpen = true },
+                        menu = {
+                            ElvanPopupMenu(
+                                expanded = menuOpen,
+                                onDismissRequest = { menuOpen = false },
+                                colors = colors,
+                                upward = true,
+                                items = menuItems.map { item -> ElvanPopupMenuItem(item.title, item.icon, { menuOpen = false; item.onClick() }, item.isDestructive) }
+                            )
+                        }
                     )
                 )
             )

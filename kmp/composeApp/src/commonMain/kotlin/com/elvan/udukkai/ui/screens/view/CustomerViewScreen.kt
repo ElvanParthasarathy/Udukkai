@@ -16,7 +16,6 @@ import com.elvan.udukkai.localization.K
 import com.elvan.udukkai.localization.tr
 import com.elvan.udukkai.theme.Dimens
 import com.elvan.udukkai.theme.rememberShellColors
-import com.elvan.udukkai.ui.components.shell.LocalElvanTopSpacerHeight
 import com.elvan.udukkai.ui.navigation.MaterialSymbols
 
 /**
@@ -29,15 +28,23 @@ fun CustomerViewScreen(
     profile: BusinessProfile,
     allProfiles: List<BusinessProfile> = emptyList(),
     showGst: Boolean = true,
-    activity: ViewActivity = ViewActivity(),
+    historyKey: Any? = null,
+    loadHistory: () -> ViewActivity = { ViewActivity() },
     onBillClick: (Long) -> Unit = {},
+    onReceiptClick: (Long) -> Unit = {},
     /** Kept by the caller, so the page comes back where it was after opening a bill. */
     scrollState: LazyListState = rememberLazyListState(),
     onBack: () -> Unit,
     onEdit: () -> Unit,
-    onCopy: (() -> Unit)? = null
+    onCopy: (() -> Unit)? = null,
+    onDelete: (() -> ViewDeleteResult)? = null
 ) {
     val colors = rememberShellColors()
+    val (history, retryHistory) = rememberViewHistory(merchant.id, historyKey, loadHistory)
+    val activity = (history as? ViewHistoryState.Ready)?.activity ?: ViewActivity()
+    val ready = history is ViewHistoryState.Ready
+    val historyUi = rememberViewHistoryUi(history, K.noCustomerInvoices.tr(), withReceipts = true)
+    val deleteItem = rememberViewDeleteItem(onDelete, K.customerDeleted.tr(), onBack)
 
     val isBilingual = profile.isBilingual
     val primaryLang = profile.primaryLanguage.ifEmpty { "ta" }
@@ -82,12 +89,12 @@ fun CustomerViewScreen(
         second(merchant.country).takeUnless { isDefaultCountry(it) }.orEmpty()
     ).takeIf { lines -> lines.any { it.isNotBlank() } && lines != addressLines } ?: emptyList()
 
-    // Under the name: the second-language name with the place (in the main language) after a dot; with no second language the place stands alone
+    // Under the name: the second-language name with the place after a dot; with no second language the place stands alone
     val heroSecond = if (secondaryName.isNotEmpty())
         listOf(secondaryName, pick(merchant.city)).filter { it.isNotBlank() }.joinToString("  •  ")
     else pick(merchant.city)
 
-    val availability = if (merchant.companyIds.isEmpty()) "${K.all.tr()} ${K.companies.tr()}"
+    val availability = if (merchant.companyIds.isEmpty()) K.allCompanies.tr()
     else merchant.companyIds.mapNotNull { id ->
         val p = allProfiles.find { it.id == id }
         p?.shortName?.ifEmpty { p.businessName.values.firstOrNull() }
@@ -100,38 +107,35 @@ fun CustomerViewScreen(
         if (merchant.email.isNotBlank()) add(Triple(MaterialSymbols.Rounded.Email, mailLabel) { openMailTo(merchant.email) })
     }
 
-    ViewTile(
+    ViewRecordPage(
         title = K.businessDetails.tr(),
         onBack = onBack,
-        scrollState = scrollState,
         onEdit = onEdit,
-        onCopy = onCopy
+        onCopy = onCopy,
+        menuItems = listOfNotNull(deleteItem),
+        colors = colors,
+        scrollState = scrollState,
+        history = history,
+        historyUi = historyUi,
+        onBillClick = onBillClick,
+        onReceiptClick = onReceiptClick,
+        onRetryHistory = retryHistory
     ) {
-        LazyColumn(
-            state = scrollState,
-            modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(start = Dimens.ContentPadding, end = Dimens.ContentPadding, bottom = Dimens.SubpageContentPaddingBottom + 64.dp),
-            verticalArrangement = Arrangement.spacedBy(Dimens.SectionSpacing)
-        ) {
-            item(key = "top_spacer") { Spacer(Modifier.height(LocalElvanTopSpacerHeight.current)) }
+            ViewHero(primary = primaryName, secondary = heroSecond, icon = MaterialSymbols.Rounded.Person, tint = colors.customerColor, colors = colors)
 
-            item(key = "hero") {
-                ViewHero(primary = primaryName, secondary = heroSecond, facts = "", colors = colors)
-            }
-
-            item(key = "stats") {
+            run {
                 ViewStats(
-                    left = Triple(MaterialSymbols.Rounded.CurrencyRupeeCircle, K.totalBilledAmount.tr(), CurrencyUtils.formatInr(activity.billed)),
-                    right = Triple(MaterialSymbols.Rounded.Payments, K.unpaidAmount.tr(), CurrencyUtils.formatInr(activity.unpaid)),
+                    left = Triple(MaterialSymbols.Rounded.CurrencyRupeeCircle, K.totalBilledAmount.tr(), if (ready) CurrencyUtils.formatInr(activity.billed) else "-"),
+                    right = Triple(MaterialSymbols.Rounded.Payments, K.unpaidAmount.tr(), if (ready) CurrencyUtils.formatInr(activity.unpaid) else "-"),
                     colors = colors
                 )
             }
 
             if (actions.isNotEmpty()) {
-                item(key = "actions") { ViewQuickActions(actions = actions, colors = colors) }
+                run { ViewQuickActions(actions = actions, colors = colors) }
             }
 
-            item(key = "contact") {
+            run {
                 ViewInfoSection(
                     title = K.contactSection.tr(),
                     rows = listOf(
@@ -143,7 +147,7 @@ fun CustomerViewScreen(
                 )
             }
 
-            item(key = "address") {
+            run {
                 // One box for each language, the second a little under the first
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     ViewAddressBox(title = K.address.tr(), lines = addressLines, colors = colors)
@@ -151,13 +155,9 @@ fun CustomerViewScreen(
                 }
             }
 
-            item(key = "companies") {
-                ViewInfoSection(title = K.companies.tr(), rows = listOf(K.companies.tr() to availability), colors = colors)
+            run {
+                // The title above the card says it; the card holds just the value, as on the item page
+                ViewAddressBox(title = K.companies.tr(), lines = listOf(availability), colors = colors)
             }
-
-            item(key = "bills") {
-                ViewBillsSection(title = K.recentBills.tr(), bills = activity.bills, colors = colors, onBillClick = onBillClick)
-            }
-        }
     }
 }

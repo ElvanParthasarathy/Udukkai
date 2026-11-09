@@ -14,7 +14,6 @@ import com.elvan.udukkai.localization.K
 import com.elvan.udukkai.localization.tr
 import com.elvan.udukkai.theme.Dimens
 import com.elvan.udukkai.theme.rememberShellColors
-import com.elvan.udukkai.ui.components.shell.LocalElvanTopSpacerHeight
 import com.elvan.udukkai.ui.navigation.MaterialSymbols
 
 /**
@@ -27,15 +26,23 @@ fun ItemViewScreen(
     profile: BusinessProfile,
     allProfiles: List<BusinessProfile>,
     isCoolie: Boolean = false,
-    activity: ViewActivity = ViewActivity(),
+    historyKey: Any? = null,
+    loadHistory: () -> ViewActivity = { ViewActivity() },
     onBillClick: (Long) -> Unit = {},
+    onReceiptClick: (Long) -> Unit = {},
     /** Kept by the caller, so the page comes back where it was after opening a bill. */
     scrollState: LazyListState = rememberLazyListState(),
     onBack: () -> Unit,
     onEdit: () -> Unit,
-    onCopy: (() -> Unit)? = null
+    onCopy: (() -> Unit)? = null,
+    onDelete: (() -> ViewDeleteResult)? = null
 ) {
     val colors = rememberShellColors()
+    val (history, retryHistory) = rememberViewHistory(item.id, historyKey, loadHistory)
+    val activity = (history as? ViewHistoryState.Ready)?.activity ?: ViewActivity()
+    val ready = history is ViewHistoryState.Ready
+    val historyUi = rememberViewHistoryUi(history, K.noItemInvoices.tr(), withReceipts = false)
+    val deleteItem = rememberViewDeleteItem(onDelete, K.itemDeleted.tr(), onBack)
 
     val isBilingual = profile.isBilingual
     val primaryLang = profile.primaryLanguage.ifEmpty { "ta" }
@@ -50,39 +57,36 @@ fun ItemViewScreen(
         val p = allProfiles.find { it.id == id }
         return p?.shortName?.ifEmpty { p.businessName.values.firstOrNull().orEmpty() }.orEmpty().ifEmpty { "#$id" }
     }
-    val availability = if (item.companyIds.isEmpty()) "${K.all.tr()} ${K.companies.tr()}"
+    val availability = if (item.companyIds.isEmpty()) K.allCompanies.tr()
     else item.companyIds.joinToString(", ") { companyName(it) }
 
-    ViewTile(
+    ViewRecordPage(
         title = K.itemDetails.tr(),
         onBack = onBack,
-        scrollState = scrollState,
         onEdit = onEdit,
-        onCopy = onCopy
+        onCopy = onCopy,
+        menuItems = listOfNotNull(deleteItem),
+        colors = colors,
+        scrollState = scrollState,
+        history = history,
+        historyUi = historyUi,
+        onBillClick = onBillClick,
+        onReceiptClick = onReceiptClick,
+        onRetryHistory = retryHistory
     ) {
-        LazyColumn(
-            state = scrollState,
-            modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(start = Dimens.ContentPadding, end = Dimens.ContentPadding, bottom = Dimens.SubpageContentPaddingBottom + 64.dp),
-            verticalArrangement = Arrangement.spacedBy(Dimens.SectionSpacing)
-        ) {
-            item(key = "top_spacer") { Spacer(Modifier.height(LocalElvanTopSpacerHeight.current)) }
+            ViewHero(primary = primaryName, secondary = secondaryName, icon = MaterialSymbols.Rounded.Inventory2, tint = colors.itemColor, colors = colors)
 
-            item(key = "hero") {
-                ViewHero(primary = primaryName, secondary = secondaryName, facts = "", colors = colors)
-            }
-
-            item(key = "stats") {
+            run {
                 ViewStats(
                     left = if (isCoolie) Triple(MaterialSymbols.Rounded.Straighten, K.weightBilled.tr(), activity.quantityText.ifEmpty { "-" })
-                    else Triple(MaterialSymbols.Rounded.CurrencyRupeeCircle, K.totalBilledAmount.tr(), CurrencyUtils.formatInr(activity.billed)),
-                    right = Triple(MaterialSymbols.Rounded.InvoiceFill, K.invoices.tr(), "${activity.count}"),
+                    else Triple(MaterialSymbols.Rounded.CurrencyRupeeCircle, K.totalBilledAmount.tr(), if (ready) CurrencyUtils.formatInr(activity.billed) else "-"),
+                    right = Triple(MaterialSymbols.Rounded.InvoiceFill, K.invoices.tr(), if (ready) "${activity.count}" else "-"),
                     colors = colors
                 )
             }
 
             if (!isCoolie) {
-                item(key = "pricing") {
+                run {
                     ViewInfoSection(
                         title = K.billingSection.tr(),
                         rows = listOf(
@@ -97,7 +101,7 @@ fun ItemViewScreen(
                 }
             }
 
-            item(key = "companies") {
+            run {
                 // The companies the item is for, one per line in a box of their own (no duplicate label beside the value)
                 ViewAddressBox(
                     title = K.companies.tr(),
@@ -107,7 +111,7 @@ fun ItemViewScreen(
             }
 
             if (!isCoolie && item.companyPrices.isNotEmpty()) {
-                item(key = "company_prices") {
+                run {
                     ViewInfoSection(
                         title = K.sellingRate.tr(),
                         rows = item.companyPrices.map { (id, price) -> companyName(id) to CurrencyUtils.formatInr(price) },
@@ -115,11 +119,6 @@ fun ItemViewScreen(
                     )
                 }
             }
-
-            item(key = "bills") {
-                ViewBillsSection(title = K.recentBills.tr(), bills = activity.bills, colors = colors, onBillClick = onBillClick)
-            }
-        }
     }
 }
 

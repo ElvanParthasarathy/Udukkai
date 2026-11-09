@@ -365,7 +365,10 @@ fun TextilesHomeScreen() {
                     val currentCustomer = TextilesCustomerRepository.customers.find { it.id == subpage.customer.id } ?: subpage.customer
                     CustomerViewScreen(
                         merchant = currentCustomer,
-                        activity = textilesCustomerActivity(currentCustomer),
+                       historyKey = TextilesInvoiceRepository.invoices to TextilesReceiptRepository.receipts,
+                       loadHistory = { textilesCustomerActivity(currentCustomer) },
+                       onReceiptClick = { id -> TextilesReceiptRepository.receipts.find { it.id == id }?.let { navigateToSubpage(ActiveSubpage.ReceiptView(it)) } },
+                       onDelete = { com.elvan.udukkai.textiles.ui.screens.textilesDeleteCustomer(currentCustomer.id) },
                         onBillClick = { id -> TextilesInvoiceRepository.invoices.find { it.id == id }?.let { navigateToSubpage(ActiveSubpage.InvoiceView(it)) } },
                         profile = TextilesProfileRepository.profile,
                         allProfiles = TextilesProfileRepository.profiles,
@@ -383,7 +386,9 @@ fun TextilesHomeScreen() {
                     val currentItem = TextilesItemRepository.items.find { it.id == subpage.item.id } ?: subpage.item
                     ItemViewScreen(
                         item = currentItem,
-                        activity = textilesItemActivity(currentItem),
+                       historyKey = TextilesInvoiceRepository.invoices to TextilesReceiptRepository.receipts,
+                       loadHistory = { textilesItemActivity(currentItem) },
+                       onDelete = { com.elvan.udukkai.textiles.ui.screens.textilesDeleteItem(currentItem.id) },
                         onBillClick = { id -> TextilesInvoiceRepository.invoices.find { it.id == id }?.let { navigateToSubpage(ActiveSubpage.InvoiceView(it)) } },
                         profile = TextilesProfileRepository.profile,
                         allProfiles = TextilesProfileRepository.profiles,
@@ -405,6 +410,7 @@ fun TextilesHomeScreen() {
                         profile = TextilesProfileRepository.profile,
                         allProfiles = TextilesProfileRepository.profiles,
                         isPaid = TextilesInvoiceRepository.hasLinkedReceipts(currentInvoice.id),
+                        onDelete = { com.elvan.udukkai.textiles.ui.screens.textilesDeleteInvoice(currentInvoice) },
                         receipts = TextilesReceiptRepository.receiptsForInvoice(currentInvoice.id),
                         onOpenReceipt = { navigateToSubpage(ActiveSubpage.ReceiptView(it)) },
                         onRecordPayment = { navigateToSubpage(ActiveSubpage.ReceiptEditor(null, currentInvoice)) },
@@ -450,6 +456,7 @@ fun TextilesHomeScreen() {
                         receipt = currentReceipt,
                         profile = TextilesProfileRepository.profile,
                         allProfiles = TextilesProfileRepository.profiles,
+                        onDelete = { com.elvan.udukkai.textiles.ui.screens.textilesDeleteReceipt(currentReceipt) },
                         invoices = TextilesReceiptRepository.getLinksForReceipt(currentReceipt.id).mapNotNull { link -> TextilesInvoiceRepository.invoices.find { it.id == link.invoiceId } },
                         onOpenInvoice = { navigateToSubpage(ActiveSubpage.InvoiceView(it)) },
                         onOpenCustomer = currentReceipt.customerId?.let { id -> TextilesCustomerRepository.getById(id) }?.let { c -> { navigateToSubpage(ActiveSubpage.CustomerView(c)) } },

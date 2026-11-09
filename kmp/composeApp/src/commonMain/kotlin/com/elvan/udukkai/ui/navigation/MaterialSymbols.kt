@@ -379,6 +379,7 @@ object MaterialSymbols {
         val ReceiptLong: ImageVector get() = Invoice
         val ReceiptLongFill: ImageVector get() = InvoiceFill
         val Schedule: ImageVector get() = LibSymbols.Rounded.Schedule
+        val Sort: ImageVector get() = LibSymbols.Rounded.Sort
         val ScheduleFill: ImageVector get() = LibSymbols.RoundedFilled.Schedule
         val Calendar: ImageVector get() = LibSymbols.Rounded.Calendar_month
         val CalendarFill: ImageVector get() = LibSymbols.RoundedFilled.Calendar_month
@@ -407,6 +408,13 @@ object MaterialSymbols {
             symbol24(
                 "FilterList",
                 "M10,18h4c0.55,0,1-0.45,1-1s-0.45-1-1-1h-4c-0.55,0-1,0.45-1,1S9.45,18,10,18z M3,7h18c0.55,0,1-0.45,1-1s-0.45-1-1-1H3C2.45,5,2,5.45,2,6S2.45,7,3,7z M6,13h12c0.55,0,1-0.45,1-1s-0.45-1-1-1H6c-0.55,0-1,0.45-1,1S5.45,13,6,13z"
+            )
+        }
+        // Material Symbols Rounded "filter_alt": the funnel, for the filter of a record's transactions
+        val FilterAlt: ImageVector by lazy {
+            symbol24(
+                "FilterAlt",
+                "M11,20q-0.42,0 -0.71,-0.29Q10,19.43 10,19V13L4.2,5.6Q3.83,5.1 4.09,4.55T5,4H19q0.65,0 0.91,0.55T19.8,5.6L14,13v6q0,0.43 -0.29,0.71T13,20H11Z m1,-7.7L16.95,6H7.05L12,12.3Z"
             )
         }
         val ChevronRight: ImageVector get() = LibSymbols.Rounded.Keyboard_arrow_right

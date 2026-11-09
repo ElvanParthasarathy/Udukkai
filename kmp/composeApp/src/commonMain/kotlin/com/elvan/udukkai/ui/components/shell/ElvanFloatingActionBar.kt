@@ -50,7 +50,9 @@ data class ElvanFloatingAction(
     val enabled: Boolean = true,
     val isLoading: Boolean = false,
     val isDestructive: Boolean = false,
-    val customColor: Color? = null
+    val customColor: Color? = null,
+    /** A menu this button opens: it sits in the button's slot so it can open from the button. */
+    val menu: (@Composable () -> Unit)? = null
 )
 
 /**
@@ -161,13 +163,14 @@ fun ElvanFloatingActionBar(
                             )
                         )
                     }
+                    action.menu?.invoke()
                     if (overflow.isNotEmpty() && index == shown.lastIndex) {
                         ElvanPopupMenu(
                             expanded = moreOpen,
                             onDismissRequest = { moreOpen = false },
                             colors = colors,
                             upward = true,
-                            items = overflow.filter { it.enabled }.map { a -> ElvanPopupMenuItem(a.label, a.icon) { moreOpen = false; a.onClick() } }
+                            items = overflow.filter { it.enabled }.map { a -> ElvanPopupMenuItem(a.label, a.icon, { moreOpen = false; a.onClick() }) }
                         )
                     }
                 }

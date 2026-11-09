@@ -57,7 +57,7 @@ fun TextilesItemScreen(
     val ff = LocalAppFontFamily.current
     var selectedTabIndex by remember { mutableIntStateOf(0) }
 
-    val allTabLabel = K.all.tr()
+    val allTabLabel = K.allTab.tr()
     val quantityTabLabel = K.quantity.tr()
     val weightTabLabel = K.weight.tr()
 

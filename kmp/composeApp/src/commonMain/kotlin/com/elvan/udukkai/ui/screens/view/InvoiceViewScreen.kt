@@ -44,6 +44,7 @@ fun InvoiceViewScreen(
     /** A bill still due: makes a receipt for it with the customer and amount filled in. */
     onRecordPayment: (() -> Unit)? = null,
     onOpenCustomer: (() -> Unit)? = null,
+    onDelete: (() -> ViewDeleteResult)? = null,
     isFactory: Boolean = false,
     printPayload: ((activeProfile: BusinessProfile) -> String)? = null
 ) {
@@ -51,6 +52,7 @@ fun InvoiceViewScreen(
     val payload = remember(invoice, activeProfile) { printPayload?.invoke(activeProfile) }
     val isProforma = invoice.invoiceType == "proforma"
     val copyTitle = K.copyBtn.tr()
+    val deleteItem = rememberViewDeleteItem(onDelete, K.invoiceDeletedMsg.tr(), onBack)
 
     PreviewScreen(
         title = invoice.invoiceNumber,
@@ -58,6 +60,7 @@ fun InvoiceViewScreen(
         onEdit = if (isPaid) null else onEdit,
         menuItems = buildList {
             if (onCopy != null) add(ElvanPopupMenuItem(copyTitle, MaterialSymbols.Rounded.ContentCopy, onCopy))
+            deleteItem?.let { add(it) }
         },
         printPayload = payload,
         printFileName = invoicePdfName(invoice),
@@ -100,7 +103,8 @@ private fun InvoiceBody(
     val receiptsTitle = K.receipts.tr()
     val recordPayment = K.recordPayment.tr()
     val convertTitle = K.convertToTaxInvoice.tr()
-    val billNoLabel = K.billNo.tr()
+    val proformaLabel = K.proforma.tr()
+    val billNoLabel = if (isProforma) K.proformaNumber.tr() else K.billNo.tr()
     val dateLabel = K.date.tr()
     val fyLabel = K.thisFinYear.tr()
     val placeLabel = K.placeOfSupply.tr()
@@ -115,7 +119,7 @@ private fun InvoiceBody(
     DocPage(horizontalPadding = Dimens.ContentPadding) {
         item(key = "status") {
             when {
-                isProforma -> DocStatusHeader(DocTone.Neutral, totalLabel, invoice.totalAmount)
+                isProforma -> DocStatusHeader(DocTone.Neutral, proformaLabel, invoice.totalAmount, note = totalLabel)
                 isPaid -> DocStatusHeader(DocTone.Paid, paidLabel, invoice.totalAmount)
                 else -> DocStatusHeader(
                     DocTone.Due, dueLabel, invoice.totalAmount,

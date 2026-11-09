@@ -50,12 +50,13 @@ fun ElvanTopBarIconButton(
     size: Dp = 38.dp,
     content: @Composable () -> Unit
 ) {
-    // Takes [size] in the layout (so icons keep their tight spacing), but the touch circle is 6dp bigger all round: the
-    // 50dp of the floating pill it sits in, so the ripple reaches the pill's edge. Touches count within [size].
+    // Takes [size] in the layout (so icons keep their tight spacing). With the pill showing, the touch circle is 6dp bigger all
+    // round, the 50dp of the pill, so the ripple fills the shape; with no shape behind it, it stays [size]. Touches count within [size].
+    val lift = LocalElvanPillLift.current
     Box(modifier = modifier.size(size), contentAlignment = Alignment.Center) {
         Box(
             modifier = Modifier
-                .requiredSize(size + 12.dp)
+                .requiredSize(size + 12.dp * lift)
                 .clip(CircleShape)
                 .clickable(
                 interactionSource = remember { MutableInteractionSource() },

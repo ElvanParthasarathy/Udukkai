@@ -32,7 +32,6 @@ fun DocCardText(
     number: String,
     fy: String,
     status: String,
-    statusTint: androidx.compose.ui.graphics.Color? = null,
     textLines: Int,
     isSelectionMode: Boolean = false,
     modifier: Modifier = Modifier,
@@ -117,9 +116,9 @@ fun DocCardText(
             }
             Spacer(Modifier.width(8.dp))
             Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                Text(
+                if (status.isNotBlank()) Text(
                     text = status.preventBrokenLigatures(),
-                    style = TextStyle(fontFamily = ff, fontSize = 12.sp, color = (statusTint?.let { androidx.compose.ui.graphics.lerp(secondary, it, 0.7f) } ?: secondary)),
+                    style = TextStyle(fontFamily = ff, fontSize = 12.sp, color = secondary),
                     maxLines = 1
                 )
                 Text(

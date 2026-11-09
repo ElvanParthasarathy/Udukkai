@@ -90,7 +90,8 @@ fun TextilesInvoiceCard(
     val leftDetail = dateStr
 
     // A screen reader reads the card as one item; at a larger text size the name and place wrap instead of being cut
-    val statusText = if (isPaid) K.statusPaid.tr() else K.statusUnpaid.tr()
+    // A proforma is only an estimate: nothing is due on it, and its PF number already says what it is
+    val statusText = if (invoice.invoiceType == "proforma") K.proforma.tr() else if (isPaid) K.statusPaid.tr() else K.statusUnpaid.tr()
     val spoken = listOfNotNull(invoice.invoiceNumber, "FY " + BillNumbering.fyShort(invoice.invoiceDate), primary, nameSecondLine.takeIf { it.isNotBlank() }, leftDetail, amountStr, statusText).joinToString(", ")
     val textLines = if (LocalDensity.current.fontScale > 1.15f) 2 else 1
 
@@ -128,7 +129,6 @@ fun TextilesInvoiceCard(
                 number = invoice.invoiceNumber,
                 fy = "FY ${BillNumbering.fyShort(invoice.invoiceDate)}",
                 status = statusText,
-                statusTint = if (isPaid) colors.receiptColor else colors.itemColor,
                 textLines = textLines,
                 isSelectionMode = isSelectionMode,
                 modifier = Modifier.weight(1f)

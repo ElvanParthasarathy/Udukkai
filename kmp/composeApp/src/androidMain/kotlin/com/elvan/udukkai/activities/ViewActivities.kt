@@ -48,6 +48,7 @@ class InvoiceViewActivity : BaseSubpageActivity() {
                 profile = FactoryProfileRepository.profile,
                 allProfiles = FactoryProfileRepository.profiles,
                 isPaid = FactoryInvoiceRepository.hasLinkedReceipts(currentInvoice.id),
+                onDelete = { com.elvan.udukkai.factory.ui.screens.factoryDeleteInvoice(currentInvoice) },
                 onBack = { finish() },
                 receipts = FactoryReceiptRepository.receiptsForInvoice(currentInvoice.id),
                 onOpenReceipt = { ReceiptViewActivity.start(this, it) },
@@ -100,6 +101,7 @@ class InvoiceViewActivity : BaseSubpageActivity() {
                 profile = TextilesProfileRepository.profile,
                 allProfiles = TextilesProfileRepository.profiles,
                 isPaid = TextilesInvoiceRepository.hasLinkedReceipts(currentInvoice.id),
+                onDelete = { com.elvan.udukkai.textiles.ui.screens.textilesDeleteInvoice(currentInvoice) },
                 onBack = { finish() },
                 receipts = TextilesReceiptRepository.receiptsForInvoice(currentInvoice.id),
                 onOpenReceipt = { ReceiptViewActivity.start(this, it) },
@@ -173,6 +175,7 @@ class ReceiptViewActivity : BaseSubpageActivity() {
                 allProfiles = FactoryProfileRepository.profiles,
                 onBack = { finish() },
                 onEdit = { ReceiptEditorActivity.start(this, currentReceipt) },
+                onDelete = { com.elvan.udukkai.factory.ui.screens.factoryDeleteReceipt(currentReceipt) },
                 invoices = FactoryReceiptRepository.getLinksForReceipt(currentReceipt.id).mapNotNull { link -> FactoryInvoiceRepository.invoices.find { it.id == link.invoiceId } },
                 onOpenInvoice = { InvoiceViewActivity.start(this, it) },
                 onOpenCustomer = currentReceipt.customerId?.let { id -> FactoryCustomerRepository.getById(id) }?.let { c -> { CustomerViewActivity.start(this, c) } },
@@ -197,6 +200,7 @@ class ReceiptViewActivity : BaseSubpageActivity() {
                 allProfiles = TextilesProfileRepository.profiles,
                 onBack = { finish() },
                 onEdit = { ReceiptEditorActivity.start(this, currentReceipt) },
+                onDelete = { com.elvan.udukkai.textiles.ui.screens.textilesDeleteReceipt(currentReceipt) },
                 invoices = TextilesReceiptRepository.getLinksForReceipt(currentReceipt.id).mapNotNull { link -> TextilesInvoiceRepository.invoices.find { it.id == link.invoiceId } },
                 onOpenInvoice = { InvoiceViewActivity.start(this, it) },
                 onOpenCustomer = currentReceipt.customerId?.let { id -> TextilesCustomerRepository.getById(id) }?.let { c -> { CustomerViewActivity.start(this, c) } },
@@ -240,7 +244,9 @@ class ItemViewActivity : BaseSubpageActivity() {
             ItemViewScreen(
                 item = currentItem,
                 isCoolie = true,
-                activity = factoryItemActivity(currentItem),
+               historyKey = FactoryInvoiceRepository.invoices to FactoryReceiptRepository.receipts,
+               loadHistory = { factoryItemActivity(currentItem) },
+               onDelete = { com.elvan.udukkai.factory.ui.screens.factoryDeleteItem(currentItem.id) },
                 onBillClick = { id ->
                     FactoryInvoiceRepository.invoices.find { it.id == id }?.let {
                         InvoiceViewActivity.start(this, it)
@@ -265,7 +271,9 @@ class ItemViewActivity : BaseSubpageActivity() {
                 ?: initialItem ?: return
             ItemViewScreen(
                 item = currentItem,
-                activity = textilesItemActivity(currentItem),
+               historyKey = TextilesInvoiceRepository.invoices to TextilesReceiptRepository.receipts,
+               loadHistory = { textilesItemActivity(currentItem) },
+               onDelete = { com.elvan.udukkai.textiles.ui.screens.textilesDeleteItem(currentItem.id) },
                 onBillClick = { id ->
                     TextilesInvoiceRepository.invoices.find { it.id == id }?.let {
                         InvoiceViewActivity.start(this, it)
@@ -312,7 +320,10 @@ class CustomerViewActivity : BaseSubpageActivity() {
                 ?: initialCustomer ?: return
             CustomerViewScreen(
                 merchant = currentCustomer,
-                activity = factoryCustomerActivity(currentCustomer),
+               historyKey = FactoryInvoiceRepository.invoices to FactoryReceiptRepository.receipts,
+               loadHistory = { factoryCustomerActivity(currentCustomer) },
+               onReceiptClick = { id -> FactoryReceiptRepository.receipts.find { it.id == id }?.let { ReceiptViewActivity.start(this, it) } },
+               onDelete = { com.elvan.udukkai.factory.ui.screens.factoryDeleteCustomer(currentCustomer.id) },
                 onBillClick = { id ->
                     FactoryInvoiceRepository.invoices.find { it.id == id }?.let {
                         InvoiceViewActivity.start(this, it)
@@ -337,7 +348,10 @@ class CustomerViewActivity : BaseSubpageActivity() {
                 ?: initialCustomer ?: return
             CustomerViewScreen(
                 merchant = currentCustomer,
-                activity = textilesCustomerActivity(currentCustomer),
+               historyKey = TextilesInvoiceRepository.invoices to TextilesReceiptRepository.receipts,
+               loadHistory = { textilesCustomerActivity(currentCustomer) },
+               onReceiptClick = { id -> TextilesReceiptRepository.receipts.find { it.id == id }?.let { ReceiptViewActivity.start(this, it) } },
+               onDelete = { com.elvan.udukkai.textiles.ui.screens.textilesDeleteCustomer(currentCustomer.id) },
                 onBillClick = { id ->
                     TextilesInvoiceRepository.invoices.find { it.id == id }?.let {
                         InvoiceViewActivity.start(this, it)

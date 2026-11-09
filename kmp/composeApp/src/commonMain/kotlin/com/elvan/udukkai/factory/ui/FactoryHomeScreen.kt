@@ -365,7 +365,10 @@ fun FactoryHomeScreen() {
                     val currentCustomer = FactoryCustomerRepository.merchants.find { it.id == subpage.customer.id } ?: subpage.customer
                     CustomerViewScreen(
                         merchant = currentCustomer,
-                        activity = factoryCustomerActivity(currentCustomer),
+                       historyKey = FactoryInvoiceRepository.invoices to FactoryReceiptRepository.receipts,
+                       loadHistory = { factoryCustomerActivity(currentCustomer) },
+                       onReceiptClick = { id -> FactoryReceiptRepository.receipts.find { it.id == id }?.let { navigateToSubpage(ActiveSubpage.ReceiptView(it)) } },
+                       onDelete = { com.elvan.udukkai.factory.ui.screens.factoryDeleteCustomer(currentCustomer.id) },
                         onBillClick = { id -> FactoryInvoiceRepository.invoices.find { it.id == id }?.let { navigateToSubpage(ActiveSubpage.InvoiceView(it)) } },
                         profile = FactoryProfileRepository.profile,
                         allProfiles = FactoryProfileRepository.profiles,
@@ -384,7 +387,9 @@ fun FactoryHomeScreen() {
                     val currentItem = FactoryItemRepository.items.find { it.id == subpage.item.id } ?: subpage.item
                     ItemViewScreen(
                         item = currentItem,
-                        activity = factoryItemActivity(currentItem),
+                       historyKey = FactoryInvoiceRepository.invoices to FactoryReceiptRepository.receipts,
+                       loadHistory = { factoryItemActivity(currentItem) },
+                       onDelete = { com.elvan.udukkai.factory.ui.screens.factoryDeleteItem(currentItem.id) },
                         onBillClick = { id -> FactoryInvoiceRepository.invoices.find { it.id == id }?.let { navigateToSubpage(ActiveSubpage.InvoiceView(it)) } },
                         profile = FactoryProfileRepository.profile,
                         allProfiles = FactoryProfileRepository.profiles,
@@ -407,6 +412,7 @@ fun FactoryHomeScreen() {
                         profile = FactoryProfileRepository.profile,
                         allProfiles = FactoryProfileRepository.profiles,
                         isPaid = FactoryInvoiceRepository.hasLinkedReceipts(currentInvoice.id),
+                        onDelete = { com.elvan.udukkai.factory.ui.screens.factoryDeleteInvoice(currentInvoice) },
                         receipts = FactoryReceiptRepository.receiptsForInvoice(currentInvoice.id),
                         onOpenReceipt = { navigateToSubpage(ActiveSubpage.ReceiptView(it)) },
                         onRecordPayment = { navigateToSubpage(ActiveSubpage.ReceiptEditor(null, currentInvoice)) },
@@ -452,6 +458,7 @@ fun FactoryHomeScreen() {
                         receipt = currentReceipt,
                         profile = FactoryProfileRepository.profile,
                         allProfiles = FactoryProfileRepository.profiles,
+                        onDelete = { com.elvan.udukkai.factory.ui.screens.factoryDeleteReceipt(currentReceipt) },
                         invoices = FactoryReceiptRepository.getLinksForReceipt(currentReceipt.id).mapNotNull { link -> FactoryInvoiceRepository.invoices.find { it.id == link.invoiceId } },
                         onOpenInvoice = { navigateToSubpage(ActiveSubpage.InvoiceView(it)) },
                         onOpenCustomer = currentReceipt.customerId?.let { id -> FactoryCustomerRepository.getById(id) }?.let { c -> { navigateToSubpage(ActiveSubpage.CustomerView(c)) } },

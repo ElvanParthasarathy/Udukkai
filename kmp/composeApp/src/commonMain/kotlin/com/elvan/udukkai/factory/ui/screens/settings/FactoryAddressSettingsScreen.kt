@@ -38,6 +38,7 @@ fun FactoryAddressSettingsScreen(
     var editingSection by remember { mutableStateOf<String?>(null) }
     var tempPrimary by remember { mutableStateOf("") }
     var tempSecondary by remember { mutableStateOf("") }
+    var tempCustom by remember { mutableStateOf(false) }
 
     val countryTitle = K.country.tr()
     val stateTitle = K.state.tr()
@@ -55,7 +56,8 @@ fun FactoryAddressSettingsScreen(
         return if (taFirst) hit.ta to hit.en else hit.en to hit.ta
     }
 
-    fun beginEdit(section: String, primary: String, secondary: String = "") {
+    fun beginEdit(section: String, primary: String, secondary: String = "", custom: Boolean = false) {
+        tempCustom = custom
         editingSection = section
         tempPrimary = primary
         tempSecondary = secondary
@@ -65,36 +67,27 @@ fun FactoryAddressSettingsScreen(
         FactoryProfileRepository.updateProfile(updated)
     }
 
-    val openCountrySelection = {
+    // The list as a bottom sheet for the edit panel: a pick fills the two fields, "Custom" makes both typeable
+    fun pickFromList(title: String, items: List<com.elvan.udukkai.core.data.LocationName>) {
+        val taFirst = profile.primaryLanguage == "ta"
         bottomSheet.showSelection(
-            title = countryTitle,
-            items = worldCountries,
-            currentValue = worldCountries.find {
-                it.ta == profile.getPrimary("country") || it.en == profile.getPrimary("country")
-            } ?: if (profile.getPrimary("country").isNotBlank()) worldCountries.lastOrNull() else null,
-            itemLabelBuilder = { if (profile.primaryLanguage == "ta") it.ta else it.en },
-            subtitleBuilder = { if (isBilingual) (if (profile.primaryLanguage == "ta") it.en else it.ta) else null },
+            title = title,
+            items = items,
+            currentValue = if (tempCustom) items.firstOrNull { it.en == "Custom" } else items.find { (if (taFirst) it.ta else it.en) == tempPrimary },
+            itemLabelBuilder = { if (taFirst) it.ta else it.en },
+            subtitleBuilder = { if (isBilingual) (if (taFirst) it.en else it.ta) else null },
             showSearch = true,
             searchFilter = { item, query ->
                 item.ta.contains(query, ignoreCase = true) || item.en.contains(query, ignoreCase = true)
             },
-            onSelected = { countryItem ->
-                if (countryItem.en == "Custom" || countryItem.ta == "தனிப்பயன்") {
-                    val currP = profile.getPrimary("country")
-                    val currS = profile.getSecondary("country")
-                    val isAlreadyPreset = worldCountries.any { (it.ta == currP || it.en == currP) && it.en != "Custom" && it.ta != "தனிப்பயன்" }
-                    beginEdit("naadu", if (isAlreadyPreset) "" else currP, if (isAlreadyPreset) "" else currS)
+            onSelected = { item ->
+                if (item.en == "Custom" || item.ta == "தனிப்பயன்") {
+                    if (!tempCustom) { tempPrimary = ""; tempSecondary = "" }
+                    tempCustom = true
                 } else {
-                    val p = if (profile.primaryLanguage == "ta") countryItem.ta else countryItem.en
-                    val s = if (profile.primaryLanguage == "ta") countryItem.en else countryItem.ta
-                    val updated = profile.copy()
-                    updated.setBilingual("naadu", profile.primaryLanguage, p)
-                    updated.setBilingual("naadu", profile.secondaryLanguage, s)
-                    updated.state.clear()
-                    updated.district.clear()
-                    persistProfile(updated)
-                    editingSection = null
-                    ElvanSnackbar.show(saveSuccessMsg)
+                    tempPrimary = if (taFirst) item.ta else item.en
+                    tempSecondary = if (taFirst) item.en else item.ta
+                    tempCustom = false
                 }
             }
         )
@@ -127,41 +120,6 @@ fun FactoryAddressSettingsScreen(
                     val updated = profile.copy()
                     updated.setBilingual("maanilam", profile.primaryLanguage, p)
                     updated.setBilingual("maanilam", profile.secondaryLanguage, s)
-                    persistProfile(updated)
-                    editingSection = null
-                    ElvanSnackbar.show(saveSuccessMsg)
-                }
-            }
-        )
-    }
-
-    val openDistrictSelection = {
-        bottomSheet.showSelection(
-            title = districtTitle,
-            items = tamilNaduDistricts,
-            currentValue = tamilNaduDistricts.find {
-                it.ta == profile.getPrimary("district") || it.en == profile.getPrimary("district")
-            } ?: if (profile.getPrimary("district").isNotBlank()) tamilNaduDistricts.lastOrNull() else null,
-            itemLabelBuilder = { if (profile.primaryLanguage == "ta") it.ta else it.en },
-            subtitleBuilder = { if (isBilingual) (if (profile.primaryLanguage == "ta") it.en else it.ta) else null },
-            showSearch = true,
-            searchFilter = { item, query ->
-                item.ta.contains(query, ignoreCase = true) || item.en.contains(query, ignoreCase = true)
-            },
-            onSelected = { districtItem ->
-                if (districtItem.en == "Custom" || districtItem.ta == "தனிப்பயன்") {
-                    val currP = profile.getPrimary("district")
-                    val currS = profile.getSecondary("district")
-                    val isAlreadyPreset = tamilNaduDistricts.any { (it.ta == currP || it.en == currP) && it.en != "Custom" && it.ta != "தனிப்பயன்" }
-                    val initialP = if (isAlreadyPreset || currP == "Custom" || currP == "தனிப்பயன்") "" else currP
-                    val initialS = if (isAlreadyPreset || currS == "Custom" || currS == "தனிப்பயன்") "" else currS
-                    beginEdit("maavattam", initialP, initialS)
-                } else {
-                    val p = if (profile.primaryLanguage == "ta") districtItem.ta else districtItem.en
-                    val s = if (profile.primaryLanguage == "ta") districtItem.en else districtItem.ta
-                    val updated = profile.copy()
-                    updated.setBilingual("maavattam", profile.primaryLanguage, p)
-                    updated.setBilingual("maavattam", profile.secondaryLanguage, s)
                     persistProfile(updated)
                     editingSection = null
                     ElvanSnackbar.show(saveSuccessMsg)
@@ -221,7 +179,7 @@ fun FactoryAddressSettingsScreen(
                                 title = K.country.tr(),
                                 primaryValue = countryPrimary,
                                 secondaryValue = if (isBilingual) countrySecondary else null,
-                                onEdit = { beginEdit("naadu", countryPrimary, countrySecondary) },
+                                onEdit = { beginEdit("naadu", countryPrimary, countrySecondary, custom = countryPrimary.isNotBlank() && listed(worldCountries, countryPrimary) == null) },
                                 colors = colors
                             )
                         },
@@ -232,17 +190,19 @@ fun FactoryAddressSettingsScreen(
                                 onSave = { saveBilingual("naadu") },
                                 colors = colors
                             ) {
-                                ElvanSettingsOptionFields(
+                                ElvanSettingsPickFields(
                                     label = K.country.tr(),
                                     primaryLangLabel = primaryLangLabel,
                                     secondaryLangLabel = secondaryLangLabel,
                                     isBilingual = isBilingual,
                                     primary = tempPrimary,
                                     secondary = tempSecondary,
-                                    lookup = { v -> listed(worldCountries, v) },
+                                    custom = tempCustom,
+                                    onPick = { pickFromList(countryTitle, worldCountries) },
                                     onChange = { p, s -> tempPrimary = p; tempSecondary = s },
                                     colors = colors
                                 )
+
                             }
                         }
                     )
@@ -301,7 +261,7 @@ fun FactoryAddressSettingsScreen(
                                 title = K.district.tr(),
                                 primaryValue = districtPrimary,
                                 secondaryValue = if (isBilingual) districtSecondary else null,
-                                onEdit = { beginEdit("maavattam", districtPrimary, districtSecondary) },
+                                onEdit = { beginEdit("maavattam", districtPrimary, districtSecondary, custom = districtPrimary.isNotBlank() && listed(tamilNaduDistricts, districtPrimary) == null) },
                                 colors = colors
                             )
                         },
@@ -312,17 +272,20 @@ fun FactoryAddressSettingsScreen(
                                 onSave = { saveBilingual("maavattam") },
                                 colors = colors
                             ) {
-                                ElvanSettingsOptionFields(
+                                ElvanSettingsPickFields(
                                     label = K.district.tr(),
                                     primaryLangLabel = primaryLangLabel,
                                     secondaryLangLabel = secondaryLangLabel,
                                     isBilingual = isBilingual,
                                     primary = tempPrimary,
                                     secondary = tempSecondary,
-                                    lookup = if (isTamilNadu) { v -> listed(tamilNaduDistricts, v) } else { _ -> null },
+                                    custom = tempCustom,
+                                    canPick = isTamilNadu,
+                                    onPick = { pickFromList(districtTitle, tamilNaduDistricts) },
                                     onChange = { p, s -> tempPrimary = p; tempSecondary = s },
                                     colors = colors
                                 )
+
                             }
                         }
                     )
@@ -458,7 +421,7 @@ fun FactoryAddressSettingsScreen(
                                 title = K.country.tr(),
                                 primaryValue = countryPrimary,
                                 secondaryValue = if (isBilingual) countrySecondary else null,
-                                onEdit = { beginEdit("naadu", countryPrimary, countrySecondary) },
+                                onEdit = { beginEdit("naadu", countryPrimary, countrySecondary, custom = countryPrimary.isNotBlank() && listed(worldCountries, countryPrimary) == null) },
                                 colors = colors
                             )
                         },
@@ -469,21 +432,19 @@ fun FactoryAddressSettingsScreen(
                                 onSave = { saveBilingual("naadu") },
                                 colors = colors
                             ) {
-                                ElvanSettingsTextField(
-                                    label = "${K.country.tr()} ($primaryLangLabel)",
-                                    value = tempPrimary,
-                                    onValueChange = { tempPrimary = it },
+                                ElvanSettingsPickFields(
+                                    label = K.country.tr(),
+                                    primaryLangLabel = primaryLangLabel,
+                                    secondaryLangLabel = secondaryLangLabel,
+                                    isBilingual = isBilingual,
+                                    primary = tempPrimary,
+                                    secondary = tempSecondary,
+                                    custom = tempCustom,
+                                    onPick = { pickFromList(countryTitle, worldCountries) },
+                                    onChange = { p, s -> tempPrimary = p; tempSecondary = s },
                                     colors = colors
                                 )
-                                if (isBilingual) {
-                                    Spacer(modifier = Modifier.height(12.dp))
-                                    ElvanSettingsTextField(
-                                        label = "${K.country.tr()} ($secondaryLangLabel)",
-                                        value = tempSecondary,
-                                        onValueChange = { tempSecondary = it },
-                                        colors = colors
-                                    )
-                                }
+
                             }
                         }
                     )
@@ -583,7 +544,7 @@ fun FactoryAddressSettingsScreen(
                                 title = K.district.tr(),
                                 primaryValue = districtPrimary,
                                 secondaryValue = districtSecondary,
-                                onEdit = openDistrictSelection,
+                                onEdit = { beginEdit("maavattam", districtPrimary, districtSecondary, custom = districtPrimary.isNotBlank() && listed(tamilNaduDistricts, districtPrimary) == null) },
                                 colors = colors
                             )
                         },
@@ -594,19 +555,19 @@ fun FactoryAddressSettingsScreen(
                                 onSave = { saveBilingual("maavattam") },
                                 colors = colors
                             ) {
-                                ElvanSettingsTextField(
-                                    label = "${K.district.tr()} ($primaryLangLabel)",
-                                    value = tempPrimary,
-                                    onValueChange = { tempPrimary = it },
+                                ElvanSettingsPickFields(
+                                    label = K.district.tr(),
+                                    primaryLangLabel = primaryLangLabel,
+                                    secondaryLangLabel = secondaryLangLabel,
+                                    isBilingual = isBilingual,
+                                    primary = tempPrimary,
+                                    secondary = tempSecondary,
+                                    custom = tempCustom,
+                                    onPick = { pickFromList(districtTitle, tamilNaduDistricts) },
+                                    onChange = { p, s -> tempPrimary = p; tempSecondary = s },
                                     colors = colors
                                 )
-                                Spacer(modifier = Modifier.height(12.dp))
-                                ElvanSettingsTextField(
-                                    label = "${K.district.tr()} ($secondaryLangLabel)",
-                                    value = tempSecondary,
-                                    onValueChange = { tempSecondary = it },
-                                    colors = colors
-                                )
+
                             }
                         }
                     )

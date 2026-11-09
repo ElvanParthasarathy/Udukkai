@@ -67,7 +67,7 @@ fun DocPage(
         contentPadding = PaddingValues(start = horizontalPadding, end = horizontalPadding, bottom = getNavBarHeightIgnoringVisibility() + 120.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
-        item(key = "top_spacer") { Spacer(Modifier.height(LocalElvanTopSpacerHeight.current)) }
+        item(key = "top_spacer") { Spacer(Modifier.height(LocalElvanTopSpacerHeight.current - 14.dp)) }
         content()
     }
 }
@@ -86,21 +86,28 @@ fun DocStatusHeader(tone: DocTone, label: String, amount: Double, note: String? 
             .padding(vertical = 26.dp, horizontal = 20.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        if (tone != DocTone.Neutral) {
+        run {
+            val darkGreen = tone == DocTone.Paid && colors.isDark
             Box(
                 Modifier.size(52.dp).clip(CircleShape).background(
-                    androidx.compose.ui.graphics.Brush.linearGradient(
-                        if (colors.isDark) listOf(androidx.compose.ui.graphics.lerp(tint, Color.White, 0.25f), tint)
-                        else listOf(androidx.compose.ui.graphics.lerp(tint, Color.Black, 0.12f), androidx.compose.ui.graphics.lerp(tint, Color.Black, 0.38f)) // deeper than the white-ish card, so the badge and its icon stand out
-                    )
+                    // A clear, deeper tone of the hue in both modes, so the white symbol stands out and never blends into it
+                    (if (tone == DocTone.Paid) colors.receiptColor else if (tone == DocTone.Neutral) toneColor(DocTone.Due) else tint).let { base ->
+                        androidx.compose.ui.graphics.Brush.linearGradient(
+                            if (darkGreen) listOf(androidx.compose.ui.graphics.lerp(tint, Color.White, 0.25f), tint) // the dark mode green, with its dark symbol
+                            else listOf(
+                                androidx.compose.ui.graphics.lerp(base, Color.Black, if (colors.isDark) 0.25f else 0.12f),
+                                androidx.compose.ui.graphics.lerp(base, Color.Black, if (colors.isDark) 0.45f else 0.32f)
+                            )
+                        )
+                    }
                 ),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
-                    imageVector = if (tone == DocTone.Paid) MaterialSymbols.Rounded.Check else MaterialSymbols.Rounded.Schedule,
+                    imageVector = when (tone) { DocTone.Paid -> MaterialSymbols.Rounded.Check; DocTone.Due -> MaterialSymbols.Rounded.Schedule; DocTone.Neutral -> MaterialSymbols.Rounded.InvoiceFill },
                     contentDescription = null,
-                    tint = if (colors.isDark) Color(0xFF0B1210) else Color.White,
-                    modifier = Modifier.size(28.dp)
+                    tint = if (darkGreen) Color(0xFF0B1210) else Color.White,
+                    modifier = Modifier.size(if (darkGreen) 28.dp else 32.dp)
                 )
             }
             Spacer(Modifier.height(14.dp))
@@ -252,7 +259,7 @@ fun DocPrimaryButton(icon: ImageVector, label: String, onClick: () -> Unit) {
             .background(colors.textPrimary)
             .clickable(
                 interactionSource = androidx.compose.runtime.remember { androidx.compose.foundation.interaction.MutableInteractionSource() },
-                indication = androidx.compose.material3.ripple(color = colors.background.copy(alpha = 0.35f), bounded = true), // the text colour: black on white, white on black
+                indication = androidx.compose.material3.ripple(color = colors.background.copy(alpha = 0.35f), bounded = true),
                 role = androidx.compose.ui.semantics.Role.Button,
                 onClick = onClick
             )

@@ -69,8 +69,8 @@ fun WelcomeScreen(
                 modifier = Modifier
                     .offset(y = (if (moving) floatOffset else 0f).dp)
                     .scale(if (moving) pulse else 1f)
-                    .size(160.dp)
-                    .clip(RoundedCornerShape(38.dp))
+                    .size(112.dp)
+                    .clip(RoundedCornerShape(27.dp))
             )
         }
 

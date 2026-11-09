@@ -52,6 +52,7 @@ fun ElvanViewActionBar(
     onShare: (() -> Unit)? = null,
     onCopy: (() -> Unit)? = null,
     isDocument: Boolean = false,
+    menuItems: List<com.elvan.udukkai.ui.components.shell.ElvanPopupMenuItem> = emptyList(),
     modifier: Modifier = Modifier
 ) {
     val editLabel = K.editToolbarBtn.tr()
@@ -107,6 +108,19 @@ fun ElvanViewActionBar(
         }
     }
 
+    if (menuItems.isNotEmpty()) {
+        var menuOpen by remember { androidx.compose.runtime.mutableStateOf(false) }
+        val colors = rememberShellColors()
+        actions.add(
+            ElvanFloatingAction(
+                label = K.more.tr(),
+                icon = MaterialSymbols.Rounded.MoreVert,
+                onClick = { menuOpen = true },
+                menu = { com.elvan.udukkai.ui.components.shell.ElvanPopupMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }, colors = colors, upward = true, items = menuItems) }
+            )
+        )
+    }
+
     ElvanFloatingActionBar(
         actions = actions,
         modifier = modifier
@@ -133,6 +147,8 @@ fun ViewTile(
     onCopy: (() -> Unit)? = null,
     onShare: (() -> Unit)? = null,
     onPreview: (() -> Unit)? = null,
+    /** Non-document pages: the three-dot menu in the bottom bar. */
+    menuItems: List<com.elvan.udukkai.ui.components.shell.ElvanPopupMenuItem> = emptyList(),
     content: @Composable () -> Unit
 ) {
     val colors = rememberShellColors()
@@ -207,7 +223,8 @@ fun ViewTile(
                     ElvanViewActionBar(
                         onEdit = onEdit,
                         onCopy = onCopy,
-                        isDocument = false
+                        isDocument = false,
+                        menuItems = menuItems
                     )
                 },
                 content = {
@@ -219,3 +236,4 @@ fun ViewTile(
         }
     }
 }
+

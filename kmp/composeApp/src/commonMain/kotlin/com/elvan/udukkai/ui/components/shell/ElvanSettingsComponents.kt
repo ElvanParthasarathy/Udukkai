@@ -1029,37 +1029,54 @@ fun settingsHue(icon: ImageVector, dark: Boolean): Color {
 }
 
 /**
- * Country and District edit fields, as Flutter's ElvanIrumozhiAutocomplete: in bilingual mode the primary language is
- * typed and the other follows from the list, read-only; once the typed value is not in the list (or is empty, as after
- * choosing "Custom") both fields are editable on their own.
- * [lookup] gives the (primary, secondary) pair of a listed primary value, or null when it is not listed.
+ * Country and District edit fields. The first (primary language) is read-only and opens the list as a bottom sheet;
+ * the second, below it, is read-only and follows the pick. Once "Custom" is chosen (or the list does not apply),
+ * both are fields typed by hand, and the arrow on the first still opens the list again.
  */
 @Composable
-fun ElvanSettingsOptionFields(
+fun ElvanSettingsPickFields(
     label: String,
     primaryLangLabel: String,
     secondaryLangLabel: String,
     isBilingual: Boolean,
     primary: String,
     secondary: String,
-    lookup: (String) -> Pair<String, String>?,
+    custom: Boolean,
+    canPick: Boolean = true,
+    onPick: () -> Unit,
     onChange: (primary: String, secondary: String) -> Unit,
     colors: ShellColors = rememberShellColors()
 ) {
-    var custom by remember { mutableStateOf(primary.isBlank() || lookup(primary) == null) }
+    val typed = custom || !canPick
     ElvanSettingsTextField(
         label = "$label ($primaryLangLabel)",
         value = primary,
-        onValueChange = { typed ->
-            val hit = lookup(typed.trim())
-            if (hit != null) {
-                custom = false
-                onChange(hit.first, hit.second)
-            } else {
-                if (typed.isBlank() && isBilingual && !custom) onChange("", "") else onChange(typed, secondary)
-                custom = true
+        onValueChange = { onChange(it, secondary) },
+        placeholder = if (typed) "" else K.select.tr(),
+        readOnly = !typed,
+        onClick = if (!typed) onPick else null,
+        trailingIcon = if (canPick) {
+            {
+                // A round touch area for the arrow, so its ripple is a circle and not a square
+                Box(
+                    modifier = Modifier.size(34.dp).then(
+                        if (typed) Modifier.clip(CircleShape).clickable(
+                            interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() },
+                            indication = com.elvan.udukkai.theme.ShellDefaults.ripple(colors, bounded = true),
+                            onClick = onPick
+                        ) else Modifier
+                    ),
+                    contentAlignment = Alignment.Center
+                ) {
+                    androidx.compose.material3.Icon(
+                        imageVector = MaterialSymbols.Rounded.KeyboardArrowDown,
+                        contentDescription = label,
+                        tint = colors.textPrimary.copy(alpha = 0.6f),
+                        modifier = Modifier.size(22.dp)
+                    )
+                }
             }
-        },
+        } else null,
         colors = colors
     )
     if (isBilingual) {
@@ -1068,7 +1085,7 @@ fun ElvanSettingsOptionFields(
             label = "$label ($secondaryLangLabel)",
             value = secondary,
             onValueChange = { onChange(primary, it) },
-            readOnly = !custom,
+            readOnly = !typed,
             colors = colors
         )
     }

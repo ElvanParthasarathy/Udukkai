@@ -76,6 +76,7 @@ val ta: Map<String, String> = mapOf(
     K.address to "முகவரி",
     K.companyAddressDetails to "நிறுவன முகவரி",
     K.proforma to "முன்வரைவு",
+    K.proformaNumber to "முன்வரைவு எண்",
     K.country to "நாடு",
     K.dismiss to "நிராகரி",
     K.udukkai to "உடுக்கை",
@@ -84,6 +85,24 @@ val ta: Map<String, String> = mapOf(
     K.companyDetail to "நிறுவனத் தரவு",
     K.companies to "நிறுவனங்கள்",
     K.allCompanies to "அனைத்து நிறுவனங்களும்",
+    K.detailsTab to "தகவல்கள்",
+    K.transactionsTab to "பரிமாற்றம்",
+    K.statusPartlyPaid to "பகுதி பெறப்பட்டது",
+    K.filterBy to "வடிகட்டு",
+    K.sortBy to "வரிசைப்படுத்து",
+    K.sortDateNew to "நாள்: புதியது முதலில்",
+    K.sortDateOld to "நாள்: பழையது முதலில்",
+    K.sortNumberHigh to "எண்: பெரியது முதலில்",
+    K.sortNumberLow to "எண்: சிறியது முதலில்",
+    K.noHistoryInFilter to "இந்த வடிகட்டலுக்கு எதுவும் இல்லை.",
+    K.noCustomerReceipts to "இந்த வாங்குநருக்கு இன்னும் பெறுகைகள் இல்லை.",
+    K.historyLoadFailed to "பட்டியல்களைக் காட்ட முடியவில்லை.",
+    K.invoiceTotalLabel to "பட்டியல் மொத்தம்",
+    K.deleteRecordPrompt to "இதை நீக்கவா? 30 நாட்கள் மீட்பகத்தில் இருக்கும், மீட்டெடுக்கலாம்.",
+    K.noCustomerInvoices to "இந்த வாங்குநருக்கு இன்னும் பட்டியல்கள் இல்லை.",
+    K.noItemInvoices to "இந்த உருப்படி இன்னும் எந்தப் பட்டியலிலும் இல்லை.",
+    K.invoiceDeletedMsg to "பட்டியல் மீட்பகத்துக்கு நகர்த்தப்பட்டது",
+    K.receiptDeletedMsg to "பெறுகை மீட்பகத்துக்கு நகர்த்தப்பட்டது",
     K.companyLogo to "நிறுவனத்தின் ஓவுரு",
     K.companyName to "நிறுவனத்தின் பெயர்",
     K.selectCompany to "நிறுவனத்தைத் தேர்ந்தெடு",
@@ -470,6 +489,7 @@ val ta: Map<String, String> = mapOf(
     K.storagePermissionDesc to "காப்பு மற்றும் பட்டியல்களைச் சேமிக்க இந்த அணுகல் தேவை.",
     K.grantPermissionBtn to "அணுகலை இயக்கு",
     K.all to "எல்லாம்",
+    K.allTab to "யாவும்",
 
     // Date Filtering
     K.today to "இன்று",
@@ -740,6 +760,7 @@ val ta: Map<String, String> = mapOf(
  */
 val taLatn: Map<String, String> by lazy {
     ta.mapValues { (_, tamilText) ->
-        NavilMozhimaatri.transliterate(tamilText)
+        // Title-casing must not touch the fill-in marks, or "%s" is never replaced
+        NavilMozhimaatri.transliterate(tamilText).replace("%S", "%s")
     }
 }

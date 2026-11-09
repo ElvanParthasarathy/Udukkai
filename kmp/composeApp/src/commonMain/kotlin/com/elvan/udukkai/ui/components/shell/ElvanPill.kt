@@ -12,6 +12,8 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -19,6 +21,9 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import com.elvan.udukkai.core.extensions.cssShadow
 import com.elvan.udukkai.theme.ShellColors
+
+/** 0 = no shape behind the buttons (a small ripple around the icon), 1 = the pill is showing (the ripple fills it). */
+val LocalElvanPillLift = compositionLocalOf { 1f }
 
 @Composable
 fun ElvanPill(
@@ -63,7 +68,7 @@ fun ElvanPill(
             modifier = Modifier.fillMaxHeight(),
             contentAlignment = Alignment.Center
         ) {
-            content()
+            CompositionLocalProvider(LocalElvanPillLift provides liftProgress.coerceIn(0f, 1f)) { content() }
         }
     }
 }

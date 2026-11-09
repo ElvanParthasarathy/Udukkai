@@ -1,11 +1,19 @@
 package com.elvan.udukkai.factory.ui.screens
 
 import com.elvan.udukkai.data.model.CustomerModel
+import com.elvan.udukkai.data.model.InvoiceModel
 import com.elvan.udukkai.data.model.ItemModel
+import com.elvan.udukkai.data.model.ReceiptModel
+import com.elvan.udukkai.factory.data.FactoryCustomerRepository
 import com.elvan.udukkai.factory.data.FactoryInvoiceRepository
+import com.elvan.udukkai.factory.data.FactoryItemRepository
+import com.elvan.udukkai.factory.data.FactoryProfileRepository
+import com.elvan.udukkai.factory.data.FactoryReceiptRepository
 import com.elvan.udukkai.factory.ui.screens.editor.FactoryCalculation
+import com.elvan.udukkai.ui.screens.view.ItemLine
 import com.elvan.udukkai.ui.screens.view.ViewActivity
-import com.elvan.udukkai.ui.screens.view.ViewBillRow
+import com.elvan.udukkai.ui.screens.view.ViewDeleteResult
+import com.elvan.udukkai.ui.screens.view.ViewHistory
 import kotlin.math.roundToLong
 
 /** "33.680 kg": three decimals, as on the bill. */
@@ -14,41 +22,58 @@ private fun kg(weight: Double): String {
     return "${grams / 1000}.${(grams % 1000).toString().padStart(3, '0')} kg"
 }
 
-private fun billRow(inv: com.elvan.udukkai.data.model.InvoiceModel, note: String = "") = ViewBillRow(
-    id = inv.id,
-    number = inv.invoiceNumber,
-    date = inv.invoiceDate,
-    amount = inv.totalAmount,
-    isPaid = FactoryInvoiceRepository.hasLinkedReceipts(inv.id),
-    note = note
-)
+private fun paidAmounts(invoices: List<InvoiceModel>): Map<Long, Double> =
+    invoices.map { it.id }.chunked(500).fold(HashMap()) { acc, ids -> acc.apply { putAll(FactoryReceiptRepository.getPaidAmounts(ids)) } }
 
-/** A customer's bills: what they have been billed, what is still unpaid, and the latest five. */
+/** A customer's bills in the open company: what they have been billed, what is still unpaid, every bill. */
 fun factoryCustomerActivity(customer: CustomerModel): ViewActivity {
-    val bills = FactoryInvoiceRepository.invoices
-        .filter { it.customerId == customer.id }
-        .sortedByDescending { it.invoiceDate }
-    val rows = bills.map { billRow(it) }
+    val invoices = FactoryInvoiceRepository.activeCompanyInvoices
+    val rows = ViewHistory.customerRows(invoices, customer.id, FactoryProfileRepository.profile.id, paidAmounts(invoices))
     return ViewActivity(
-        count = bills.size,
-        billed = bills.sumOf { it.totalAmount },
+        count = rows.size,
+        billed = rows.sumOf { it.amount },
         unpaid = rows.filter { !it.isPaid }.sumOf { it.amount },
-        bills = rows.take(5)
+        bills = rows,
+        receipts = ViewHistory.receiptRows(FactoryReceiptRepository.activeCompanyReceipts, customer.id, FactoryProfileRepository.profile.id),
     )
 }
 
-/** An item's bills: how often and how much it was billed, and the latest five with its weight on each. */
+/** An item's bills in the open company: how much of it was billed, and every bill with its weight and line value. */
 fun factoryItemActivity(item: ItemModel): ViewActivity {
     val id = item.id.toString()
-    val used = FactoryInvoiceRepository.invoices
-        .map { inv -> inv to FactoryCalculation.itemsFromJson(inv.itemsJson).filter { it.itemId == id } }
-        .filter { it.second.isNotEmpty() }
-        .sortedByDescending { it.first.invoiceDate }
-    val lines = used.flatMap { it.second }
-    return ViewActivity(
-        count = used.size,
-        billed = lines.sumOf { it.rowTotal.toDouble() },
-        quantityText = if (used.isEmpty()) "" else kg(lines.sumOf { it.weight }),
-        bills = used.take(5).map { (inv, rows) -> billRow(inv, kg(rows.sumOf { it.weight })) }
+    val profile = FactoryProfileRepository.profile
+    val invoices = FactoryInvoiceRepository.activeCompanyInvoices
+    var totalWeight = 0.0
+    val rows = ViewHistory.itemRows(
+        invoices = invoices,
+        companyId = profile.id,
+        paid = paidAmounts(invoices),
+        linesOf = { inv -> FactoryCalculation.itemsFromJson(inv.itemsJson).filter { it.itemId == id }.map { ItemLine(it.weight, it.rowTotal.toDouble()) } },
+        customerNameOf = { it.customerName[profile.primaryLanguage] ?: it.customerName.values.firstOrNull { n -> n.isNotBlank() }.orEmpty() },
+        quantityText = { lines -> lines.sumOf { it.quantity }.let { totalWeight += it; kg(it) } }
     )
+    return ViewActivity(
+        count = rows.size,
+        billed = rows.sumOf { it.amount },
+        quantityText = if (rows.isEmpty()) "" else kg(totalWeight),
+        bills = rows
+    )
+}
+
+fun factoryDeleteCustomer(id: Long) = if (FactoryCustomerRepository.delete(id)) ViewDeleteResult.Deleted else ViewDeleteResult.Failed
+
+fun factoryDeleteItem(id: Long) = if (FactoryItemRepository.delete(id)) ViewDeleteResult.Deleted else ViewDeleteResult.Failed
+
+/** The rules of the list's delete: a bill with a receipt stays, and so does one in a closed year. */
+fun factoryDeleteInvoice(invoice: InvoiceModel) = when {
+    FactoryInvoiceRepository.hasLinkedReceipts(invoice.id) -> ViewDeleteResult.HasReceipts
+    FactoryInvoiceRepository.isLocked(invoice) -> ViewDeleteResult.BooksLocked
+    FactoryInvoiceRepository.delete(invoice.id) -> ViewDeleteResult.Deleted
+    else -> ViewDeleteResult.Failed
+}
+
+fun factoryDeleteReceipt(receipt: ReceiptModel) = when {
+    FactoryReceiptRepository.isLocked(receipt) -> ViewDeleteResult.BooksLocked
+    FactoryReceiptRepository.delete(receipt.id) -> ViewDeleteResult.Deleted
+    else -> ViewDeleteResult.Failed
 }

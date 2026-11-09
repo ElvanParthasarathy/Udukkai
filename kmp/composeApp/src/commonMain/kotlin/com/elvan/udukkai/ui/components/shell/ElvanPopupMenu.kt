@@ -16,6 +16,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.layout.layout
+import kotlin.math.roundToInt
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInRoot
@@ -43,7 +45,8 @@ object ElvanMenuState {
 class ElvanPopupMenuItem(
     val title: String,
     val icon: ImageVector,
-    val onClick: () -> Unit
+    val onClick: () -> Unit,
+    val isDestructive: Boolean = false
 )
 
 @Composable
@@ -99,32 +102,56 @@ fun ElvanPopupMenu(
     }
 
     val panel: @Composable () -> Unit = {
-        Box(
-            modifier = modifier
-                .graphicsLayer {
-                    val p = progress.value
-                    // Natural unified spring scale: continuous from start to finish with no artificial piecewise jumps
-                    scaleX = 0.3f + 0.7f * p
-                    scaleY = 0.3f + 0.7f * p
-                    // Pinned to the centre of the 24dp corner's curve (where the 3-dot sits), not the sharp corner, which is outside the rounded panel
-                    val corner = 24.dp.toPx()
-                    transformOrigin = if (size.width > 0f && size.height > 0f) {
-                        TransformOrigin(1f - corner / size.width, if (upward) 1f - corner / size.height else corner / size.height)
-                    } else TransformOrigin(1f, if (upward) 1f else 0f)
-                    alpha = (p * 2.8f).coerceIn(0f, 1f)
-                }
-                .cssShadow(color = Color.Black, alpha = 0.05f, borderRadius = 24.dp, blurRadius = 16.dp, offsetY = 4.dp)
-                .frostedGlass(RoundedCornerShape(24.dp), colors, fallbackAlpha = 0.94f)
-                .border(
-                    width = 0.5.dp,
-                    color = colors.floatingBorder.copy(alpha = if (colors.isDark) 0.25f else 0.6f),
-                    shape = RoundedCornerShape(24.dp)
-                )
-                .clip(RoundedCornerShape(24.dp))
-                .width(IntrinsicSize.Max)
-                .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null) {}
-        ) {
-            MenuRows(items, colors, progress.value, onDismissRequest)
+        Box(modifier) {
+            // Natural unified spring scale, centred on the 24dp corner's curve (where the 3-dot sits). The glass is really
+            // resized and moved rather than scaled: blur under a scaled layer doesn't line up with the panel.
+            val glassScale = 0.3f + 0.7f * progress.value
+            val glassShape = RoundedCornerShape(24.dp * glassScale.coerceAtLeast(0f))
+            Box(
+                Modifier
+                    .matchParentSize()
+                    .layout { measurable, constraints ->
+                        val corner = 24.dp.toPx()
+                        val w = constraints.maxWidth
+                        val h = constraints.maxHeight
+                        val scale = 0.3f + 0.7f * progress.value
+                        val glass = measurable.measure(
+                            androidx.compose.ui.unit.Constraints.fixed(
+                                (w * scale).roundToInt().coerceAtLeast(1),
+                                (h * scale).roundToInt().coerceAtLeast(1)
+                            )
+                        )
+                        val pivotX = w - corner
+                        val pivotY = if (upward) h - bottomPivotInset(h.toFloat(), corner) else corner
+                        layout(w, h) { glass.place((pivotX * (1f - scale)).roundToInt(), (pivotY * (1f - scale)).roundToInt()) }
+                    }
+                    .graphicsLayer { alpha = (progress.value * 2.8f).coerceIn(0f, 1f) }
+                    .cssShadow(color = Color.Black, alpha = 0.05f, borderRadius = 24.dp, blurRadius = 16.dp, offsetY = 4.dp)
+                    .frostedGlass(glassShape, colors, fallbackAlpha = 0.94f)
+                    .border(
+                        width = 0.5.dp,
+                        color = colors.floatingBorder.copy(alpha = if (colors.isDark) 0.25f else 0.6f),
+                        shape = glassShape
+                    )
+            )
+            Box(
+                Modifier
+                    .graphicsLayer {
+                        val p = progress.value
+                        scaleX = 0.3f + 0.7f * p
+                        scaleY = 0.3f + 0.7f * p
+                        val corner = 24.dp.toPx()
+                        transformOrigin = if (size.width > 0f && size.height > 0f) {
+                            TransformOrigin(1f - corner / size.width, if (upward) 1f - bottomPivotInset(size.height, corner) / size.height else corner / size.height)
+                        } else TransformOrigin(1f, if (upward) 1f else 0f)
+                        alpha = (p * 2.8f).coerceIn(0f, 1f)
+                    }
+                    .clip(RoundedCornerShape(24.dp))
+                    .width(IntrinsicSize.Max)
+                    .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null) {}
+            ) {
+                MenuRows(items, colors, progress.value, onDismissRequest)
+            }
         }
     }
 
@@ -141,9 +168,11 @@ fun ElvanPopupMenu(
             ) { measurables, constraints ->
                 val placeable = measurables.first().measure(constraints.copy(minWidth = 0, minHeight = 0))
                 layout(constraints.maxWidth, constraints.maxHeight) {
-                    val right = anchor.right - origin.x + (if (upward) -24f else 8f)
+                    // Opening up: lined up with the button's icon, and above the bar with its usual gap (the slot sits 4dp inside the pill)
+                    val corner = 24.dp.toPx()
+                    val right = if (upward) anchor.center.x - origin.x + corner else anchor.right - origin.x + 8f
                     val x = (right - placeable.width).toInt().coerceIn(0, (constraints.maxWidth - placeable.width).coerceAtLeast(0))
-                    val y = if (upward) (anchor.bottom - origin.y - 28f - placeable.height).toInt()
+                    val y = if (upward) (anchor.top - origin.y - 4.dp.toPx() - 28f - placeable.height).toInt()
                             else (anchor.top - origin.y - 16f).toInt()
                     placeable.place(x, y.coerceIn(0, (constraints.maxHeight - placeable.height).coerceAtLeast(0)))
                 }
@@ -204,11 +233,15 @@ private fun MenuRows(items: List<ElvanPopupMenuItem>, colors: ShellColors, progr
                     .padding(horizontal = 16.dp, vertical = 14.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Icon(imageVector = item.icon, contentDescription = item.title, tint = colors.textPrimary, modifier = Modifier.size(22.dp))
+                val itemTint = if (item.isDestructive) colors.danger else colors.textPrimary
+                Icon(imageVector = item.icon, contentDescription = item.title, tint = itemTint, modifier = Modifier.size(22.dp))
                 Spacer(modifier = Modifier.width(12.dp))
-                Text(text = item.title, fontSize = 14.sp, fontWeight = FontWeight.Medium, color = colors.textPrimary, fontFamily = LocalAppFontFamily.current)
+                Text(text = item.title, fontSize = 14.sp, fontWeight = FontWeight.Medium, color = itemTint, fontFamily = LocalAppFontFamily.current)
                 Spacer(modifier = Modifier.width(16.dp))
             }
         }
     }
 }
+
+/** How far above its bottom edge an upward menu scales from: the top menu's share of its height (a one-row menu is only 50dp tall, so the full 24dp corner would put the point at its middle and lose the diagonal). */
+private fun bottomPivotInset(height: Float, corner: Float): Float = minOf(corner, height * 0.24f)
