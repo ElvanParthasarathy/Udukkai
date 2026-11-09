@@ -42,12 +42,14 @@ import kotlin.math.roundToInt
  */
 @Composable
 fun FactoryDevMenu() {
+    if (com.elvan.udukkai.textiles.dev.DevPillState.hidden) return
     val colors = rememberShellColors()
     val isDark = colors.isDark
     val coroutineScope = rememberCoroutineScope()
     val density = LocalDensity.current
 
     var isExpanded by remember { mutableStateOf(false) }
+    var isSeeding by remember { mutableStateOf(false) }
     var offsetX by remember { mutableStateOf(with(density) { 16.dp.toPx() }) }
     var offsetY by remember { mutableStateOf(with(density) { 90.dp.toPx() }) }
 
@@ -127,41 +129,29 @@ fun FactoryDevMenu() {
                         isDark = isDark
                     ) {
                         isExpanded = false
+                        if (isSeeding) return@DevMenuItem
+                        isSeeding = true
                         coroutineScope.launch {
-                            FactoryMockDataSeeder.seedAllData()
+                            try { FactoryMockDataSeeder.seedAllData() } finally { isSeeding = false }
                             ElvanSnackbar.show("Factory Data Seeded Successfully ✓")
                         }
                     }
 
                     DevMenuDivider(isDark)
 
-                    // 2. Clear All Data
+                    // Screenshot demo (made-up English business for the Play Store screenshots)
                     DevMenuItem(
-                        label = "Clear All Data",
-                        icon = MaterialSymbols.Rounded.DeleteForever,
-                        color = Color(0xFFF44336),
+                        label = "Seed Screenshot Demo",
+                        icon = MaterialSymbols.Rounded.AutoAwesome,
+                        color = Color(0xFF2196F3),
                         isDark = isDark
                     ) {
                         isExpanded = false
+                        if (isSeeding) return@DevMenuItem
+                        isSeeding = true
                         coroutineScope.launch {
-                            FactoryMockDataSeeder.eraseAllData()
-                            ElvanSnackbar.show("All Factory Data & Businesses Cleared ✗")
-                        }
-                    }
-
-                    DevMenuDivider(isDark)
-
-                    // 3. Toggle Factory ±PVS
-                    DevMenuItem(
-                        label = "Toggle Factory ±PVS",
-                        icon = MaterialSymbols.Rounded.SwapHoriz,
-                        color = Color(0xFF009688),
-                        isDark = isDark
-                    ) {
-                        coroutineScope.launch {
-                            isExpanded = false
-                            val msg = FactoryMockDataSeeder.toggleExtraProfile()
-                            ElvanSnackbar.show(msg)
+                            try { FactoryMockDataSeeder.seedScreenshotData() } finally { isSeeding = false }
+                            ElvanSnackbar.show("Screenshot demo loaded")
                         }
                     }
 
@@ -213,15 +203,14 @@ fun FactoryDevMenu() {
 
                     DevMenuDivider(isDark)
 
-                    // 7. Color Analyzer
                     DevMenuItem(
-                        label = "Color Analyzer",
-                        icon = MaterialSymbols.Rounded.Palette,
-                        color = Color(0xFFFFB300),
+                        label = "Hide pill (screenshots)",
+                        icon = MaterialSymbols.Rounded.Close,
+                        color = Color(0xFF9E9E9E),
                         isDark = isDark
                     ) {
                         isExpanded = false
-                        ElvanSnackbar.show("Theme: ${if (isDark) "Dark Mode (கரிய பயன்முறை)" else "Light Mode (வெளிர் பயன்முறை)"}")
+                        com.elvan.udukkai.textiles.dev.DevPillState.hidden = true
                     }
                 }
             }

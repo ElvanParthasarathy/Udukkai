@@ -6,6 +6,7 @@ import androidx.compose.animation.*
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import com.elvan.udukkai.ui.components.shell.elvanTopBandRow
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
@@ -117,7 +118,7 @@ fun TextilesCreateScreen(
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
                     Box(
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier = Modifier.fillMaxWidth().elvanTopBandRow(com.elvan.udukkai.ui.components.shell.LocalElvanSideBar.current),
                         contentAlignment = Alignment.Center
                     ) {
                         ElvanPillShifter(

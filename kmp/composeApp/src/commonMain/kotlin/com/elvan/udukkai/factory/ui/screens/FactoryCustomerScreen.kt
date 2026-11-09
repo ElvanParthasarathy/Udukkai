@@ -67,7 +67,7 @@ fun FactoryCustomerScreen(
             verticalArrangement = Arrangement.spacedBy(Dimens.ItemSpacing)
         ) {
             item(key = "customer_top_spacer") {
-                Spacer(modifier = Modifier.height(LocalElvanTopSpacerHeight.current))
+                Spacer(modifier = Modifier.height((LocalElvanTopSpacerHeight.current - (if (com.elvan.udukkai.ui.components.shell.LocalElvanSideBar.current) 34.dp else 0.dp)).coerceAtLeast(0.dp)))
             }
 
             if (isRefreshing) {

@@ -73,8 +73,6 @@ class MainActivity : FragmentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         devSkipLock(intent)
-        // Temporarily locked to portrait per user decision. Landscape mode preserved for future continuation (see LANDSCAPE_MODE_NOTES.md).
-        requestedOrientation = android.content.pm.ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
         com.elvan.udukkai.core.platform.AppContext.context = applicationContext
         com.elvan.udukkai.core.security.ScreenLockReceiver.register(applicationContext)
         com.elvan.udukkai.core.platform.CurrentActivity.activity = this

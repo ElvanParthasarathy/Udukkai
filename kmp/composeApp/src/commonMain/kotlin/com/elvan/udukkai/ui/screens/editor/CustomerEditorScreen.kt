@@ -292,16 +292,17 @@ fun CustomerEditorScreen(
         onBack = handleBackAttempt,
         scrollState = scrollState,
         hasActions = true,
-        actions = {
-            // Save sits at the top, as in the item editor
-            ElvanActionButton(label = K.saveBtn.tr(), onClick = { handleSave() })
-        },
+        actions = { if (!com.elvan.udukkai.ui.components.shell.LocalElvanSideBar.current) ElvanActionButton(label = K.saveBtn.tr(), onClick = { handleSave() }) },
         showBottomFade = false,
-        floatingBar = {}
+        floatingBar = {
+        if (com.elvan.udukkai.ui.components.shell.LocalElvanSideBar.current) com.elvan.udukkai.ui.components.shell.ElvanFloatingActionBar(
+            actions = listOf(com.elvan.udukkai.ui.components.shell.ElvanFloatingAction(label = K.saveBtn.tr(), icon = com.elvan.udukkai.ui.navigation.MaterialSymbols.Rounded.Save, onClick = { handleSave() }))
+        )
+    }
     ) {
         Box(modifier = Modifier.fillMaxSize()) {
             CompositionLocalProvider(LocalEditorAccentColor provides editorAccent) {
-                LazyColumn(
+                ElvanEditorList(
                     state = scrollState,
                     modifier = Modifier.fillMaxSize(),
                     contentPadding = PaddingValues(

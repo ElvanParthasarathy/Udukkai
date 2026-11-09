@@ -108,7 +108,12 @@ fun ElvanViewActionBar(
         }
     }
 
-    if (menuItems.isNotEmpty()) {
+    if (menuItems.isNotEmpty() && com.elvan.udukkai.ui.components.shell.LocalElvanSideBar.current) {
+        // Sideways the page's menu items are buttons of their own, so there is no More inside the More
+        menuItems.forEach { mi ->
+            actions.add(ElvanFloatingAction(label = mi.title, icon = mi.icon, onClick = mi.onClick, isDestructive = mi.isDestructive))
+        }
+    } else if (menuItems.isNotEmpty()) {
         var menuOpen by remember { androidx.compose.runtime.mutableStateOf(false) }
         val colors = rememberShellColors()
         actions.add(
@@ -195,12 +200,11 @@ fun ViewTile(
                     )
                 }
                 Box(
-                    modifier = Modifier
-                        .align(Alignment.BottomCenter)
-                        .fillMaxWidth()
+                    modifier = (if (isLandscape) Modifier.fillMaxSize() else Modifier.align(Alignment.BottomCenter).fillMaxWidth())
                         .zIndex(100f),
-                    contentAlignment = Alignment.BottomCenter
+                    contentAlignment = if (isLandscape) Alignment.BottomEnd else Alignment.BottomCenter
                 ) {
+                  CompositionLocalProvider(com.elvan.udukkai.ui.components.shell.LocalElvanSideBar provides isLandscape) {
                     ElvanViewActionBar(
                         onEdit = onEdit,
                         onPreview = onPreview,
@@ -209,6 +213,7 @@ fun ViewTile(
                         onCopy = onCopy,
                         isDocument = true
                     )
+                  }
                 }
             }
         } else {
@@ -219,6 +224,7 @@ fun ViewTile(
                 scrollState = scrollState,
                 showBottomFade = true,
                 collapsedOnly = true,
+                hideTitleSideways = true,
                 floatingBar = {
                     ElvanViewActionBar(
                         onEdit = onEdit,

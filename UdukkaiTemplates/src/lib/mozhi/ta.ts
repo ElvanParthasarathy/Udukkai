@@ -333,7 +333,7 @@ export const ta = {
 
 
   // Dashboard
-  recentActivity: 'நடப்பு வினைகள்',
+  recentActivity: 'அண்மையவை',
   totalItems: 'மொத்தம்',
   seeAll: 'யாவும்',
   newInvoice: 'புதிய பட்டியல்',

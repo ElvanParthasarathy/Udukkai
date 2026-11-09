@@ -3,6 +3,7 @@ package com.elvan.udukkai.textiles.ui.screens
 import com.elvan.udukkai.ui.components.dragSelect
 import com.elvan.udukkai.ui.components.ExpressiveDotsLoader
 import androidx.compose.foundation.layout.*
+import com.elvan.udukkai.ui.components.shell.elvanTopBandRow
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.itemsIndexed
@@ -111,7 +112,7 @@ fun TextilesItemScreen(
                     contentAlignment = Alignment.Center,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(bottom = 6.dp)
+                        .padding(bottom = 6.dp).elvanTopBandRow(com.elvan.udukkai.ui.components.shell.LocalElvanSideBar.current)
                 ) {
                     ElvanPillShifter(
                         items = shifterItems,

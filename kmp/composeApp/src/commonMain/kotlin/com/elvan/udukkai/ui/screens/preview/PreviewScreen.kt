@@ -148,6 +148,7 @@ private fun DocumentPreview(
             scrollState = listState,
             showBottomFade = true,
             collapsedOnly = true,
+            hideTitleSideways = true,
             floatingBar = { PreviewBottomArea(controller, onEdit, menuItems, quiet = true) },
             overlay = {
                 if (showPreparationOverlay) {
@@ -351,7 +352,7 @@ private fun PreviewBottomArea(controller: DocumentPrintController, onEdit: (() -
                         icon = MaterialSymbols.Rounded.Share,
                         onClick = { controller.share() }
                     ),
-                    if (menuItems.isEmpty()) null else ElvanFloatingAction(
+                    if (menuItems.isEmpty() || com.elvan.udukkai.ui.components.shell.LocalElvanSideBar.current) null else ElvanFloatingAction(
                         label = K.more.tr(),
                         icon = MaterialSymbols.Rounded.MoreVert,
                         onClick = { menuOpen = true },
@@ -365,7 +366,7 @@ private fun PreviewBottomArea(controller: DocumentPrintController, onEdit: (() -
                             )
                         }
                     )
-                )
+                ) + (if (com.elvan.udukkai.ui.components.shell.LocalElvanSideBar.current) menuItems.map { mi -> ElvanFloatingAction(label = mi.title, icon = mi.icon, onClick = mi.onClick, isDestructive = mi.isDestructive) } else emptyList())
             )
         }
     }

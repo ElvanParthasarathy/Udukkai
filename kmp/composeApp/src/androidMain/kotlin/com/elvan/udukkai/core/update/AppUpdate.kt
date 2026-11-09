@@ -97,7 +97,7 @@ object AppUpdate {
         available = savedRelease()?.takeIf { isNewer(it.version) }
         val keep = available?.let { apkFile(it).name }
         dir().listFiles()?.forEach { if (it.name != keep) it.delete() }
-        if (!callbacksRegistered) {
+        if (!callbacksRegistered && !BuildConfig.IS_PLAY_STORE_BUILD) {
             callbacksRegistered = true
             (app as android.app.Application).registerActivityLifecycleCallbacks(object : android.app.Application.ActivityLifecycleCallbacks {
                 override fun onActivityStarted(activity: android.app.Activity) { startedActivities++ }
@@ -138,6 +138,8 @@ object AppUpdate {
     fun checkNow() = check(force = true)
 
     private fun check(force: Boolean) {
+        // The Google Play build never looks at GitHub: Play updates the app
+        if (BuildConfig.IS_PLAY_STORE_BUILD) return
         val newInstall = prefs.getString(KEY_CHECKED_BY, null) != BuildConfig.VERSION_NAME
         if (checking || (!force && !newInstall && System.currentTimeMillis() < prefs.getLong(KEY_NEXT_CHECK, 0L))) return
         checking = true

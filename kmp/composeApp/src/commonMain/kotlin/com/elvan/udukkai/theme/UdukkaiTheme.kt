@@ -13,6 +13,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Density
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.ui.unit.dp
 
 private val LightColorScheme = lightColorScheme(
     primary = PrimaryLight,
@@ -48,6 +50,9 @@ private val DarkColorScheme = darkColorScheme(
 )
 
 private const val MAX_FONT_SCALE = 1.0f
+
+/** Portrait sizes times this on a phone turned sideways. */
+private const val LANDSCAPE_PHONE_SCALE = 0.86f
 
 @Composable
 fun UdukkaiTheme(
@@ -86,8 +91,12 @@ fun UdukkaiTheme(
         }
     }
 
+    // A phone turned sideways is only ~360dp tall: everything is drawn a little smaller (not edge-to-edge portrait sizes)
+    androidx.compose.foundation.layout.BoxWithConstraints(androidx.compose.ui.Modifier.fillMaxSize()) {
+    val sideways = maxWidth > maxHeight && maxHeight < 480.dp
+    val sizedDensity = if (sideways) Density(density.density * LANDSCAPE_PHONE_SCALE, density.fontScale) else density
     CompositionLocalProvider(
-        LocalDensity provides density,
+        LocalDensity provides sizedDensity,
         LocalAppFontFamily provides currentFontFamily,
         LocalShellColors provides shellColors
     ) {
@@ -104,5 +113,6 @@ fun UdukkaiTheme(
                 content()
             }
         }
+    }
     }
 }

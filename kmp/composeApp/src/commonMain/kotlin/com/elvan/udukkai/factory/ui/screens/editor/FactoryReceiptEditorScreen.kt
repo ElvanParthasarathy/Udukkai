@@ -12,6 +12,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import com.elvan.udukkai.ui.screens.editor.ElvanEditorList
+import com.elvan.udukkai.ui.screens.editor.ElvanFieldGrid
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -417,7 +419,8 @@ fun FactoryReceiptEditorScreen(
     ) {
         Box(modifier = Modifier.fillMaxSize()) {
             CompositionLocalProvider(LocalEditorAccentColor provides colors.receiptColor) {
-                LazyColumn(
+                ElvanEditorList(
+                    pairSections = false,
                     state = scrollState,
                     modifier = Modifier.fillMaxSize(),
                     contentPadding = PaddingValues(
@@ -549,10 +552,7 @@ fun FactoryReceiptEditorScreen(
             item(key = "receipt_data_section") {
                 ElvanEditorDisabledOverlay(disabled = !isInvoiceSelected) {
                     ElvanEditorSection(index = 1, title = K.receiptDetails.tr()) {
-                        Column(
-                            modifier = Modifier.fillMaxWidth(),
-                            verticalArrangement = Arrangement.spacedBy(24.dp)
-                        ) {
+                        ElvanFieldGrid(spacing = 24.dp) {
                             // 1. Receipt Date
                             Column(modifier = Modifier.fillMaxWidth()) {
                                 ElvanEditorLabel(label = K.receiptDate.tr())
@@ -652,10 +652,7 @@ fun FactoryReceiptEditorScreen(
             item(key = "payment_section") {
                 ElvanEditorDisabledOverlay(disabled = !isInvoiceSelected) {
                     ElvanEditorSection(index = 2, title = K.paymentDetails.tr()) {
-                        Column(
-                            modifier = Modifier.fillMaxWidth(),
-                            verticalArrangement = Arrangement.spacedBy(24.dp)
-                        ) {
+                        ElvanFieldGrid(spacing = 24.dp) {
                             // 1. Amount (Read-Only: Auto-calculated from selected invoices)
                             ElvanEditorTextField(
                                 value = thogai,

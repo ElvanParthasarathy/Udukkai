@@ -7,6 +7,7 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -35,6 +36,12 @@ import com.elvan.udukkai.theme.rememberShellColors
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
 
+/** The home screen draws its own trailing-edge landscape controls and gutter; a page inside it must not add a second set. */
+val LocalElvanLandscapeChromeHandled = compositionLocalOf { false }
+/** True inside one pane of a two-pane page: the pane lays out like a narrow page, never like a landscape screen. */
+val LocalElvanPaneChrome = compositionLocalOf { false }
+/** The side back button of a two-pane page does the going back: the panes draw no chevron of their own. */
+val LocalElvanPaneNoBack = compositionLocalOf { false }
 val LocalElvanScrollState = compositionLocalOf<LazyListState?> { null }
 val LocalElvanTopSpacerHeight = compositionLocalOf<Dp> { 280.dp - Dimens.SectionSpacing }
 object GlobalHeaderState {
@@ -70,6 +77,8 @@ fun ElvanShell(
     onCancelSelection: () -> Unit = {},
     showBottomFade: Boolean = true,
     hasFloatingBar: Boolean = false,
+    /** Sideways the page's own title is left out (the tab pages, the view pages). */
+    hideTitleSideways: Boolean = false,
     banners: List<ShellBanner> = emptyList(),
     overlay: @Composable () -> Unit = {},
     floatingBar: @Composable () -> Unit = {},
@@ -78,6 +87,8 @@ fun ElvanShell(
     content: @Composable () -> Unit
 ) {
     val colors = rememberShellColors()
+    // Whether the landscape action toolbar is really showing (an editor with only a Save has none)
+    var toolbarPresent by remember { mutableStateOf(false) }
     var isNavbarVisible by remember { mutableStateOf(true) }
     val coroutineScope = rememberCoroutineScope()
 
@@ -89,11 +100,15 @@ fun ElvanShell(
     val density = LocalDensity.current
 
     BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
-        val isLandscape = maxWidth > maxHeight
-        val isCompactHeader = isLandscape || isDesktop || !useNewDesign || collapsedOnly
+        // 
+        // Phone/tablet landscape keeps the floating controls; desktop has a sidebar and a plain fixed bar
+        val isWide = maxWidth > maxHeight
+        val paneChrome = LocalElvanPaneChrome.current
+        val isLandscape = isWide && !isDesktop && !paneChrome
+        val isCompactHeader = isWide || isDesktop || !useNewDesign || collapsedOnly
 
         val pillHeight = 50.dp
-        val ceiling = if (isDesktop) 16.dp else if (isLandscape) statusBarHeight + 8.dp else statusBarHeight + 20.dp
+        val ceiling = if (isDesktop) 16.dp else if (isWide || LocalElvanPaneChrome.current) statusBarHeight + 8.dp else statusBarHeight + 20.dp
 
         val expandedHeight = if (isCompactHeader) ceiling + pillHeight else 280.dp
 
@@ -175,7 +190,8 @@ fun ElvanShell(
     val currentScrollOffset = (collapsePx + rawScrollOffset).coerceAtMost(with(density) { expandedHeight.toPx() })
 
     val topSpacerHeight = if (isCompactHeader) {
-        ceiling + pillHeight + 10.dp
+        // Sideways the title row and the round button are one 56dp band; the page starts just under it
+        if (isWide && !isDesktop && !LocalElvanPaneChrome.current) statusBarHeight + 58.dp else ceiling + pillHeight + 10.dp
     } else {
         (expandedHeight - Dimens.SectionSpacing - with(density) { collapsePx.toDp() }).coerceAtLeast(0.dp)
     }
@@ -402,9 +418,10 @@ fun ElvanShell(
     CompositionLocalProvider(
         LocalElvanScrollState provides scrollState,
         LocalElvanTopSpacerHeight provides topSpacerHeight,
-        LocalElvanShellController provides shellController
+        LocalElvanShellController provides shellController,
+        LocalElvanSideBar provides isLandscape
     ) {
-        val shouldAttachNestedScroll = !isDesktop && !isLandscape
+        val shouldAttachNestedScroll = !isDesktop && !isWide
         val shellModifier = if (shouldAttachNestedScroll) {
             Modifier
                 .fillMaxSize()
@@ -427,6 +444,12 @@ fun ElvanShell(
                 modifier = Modifier
                     .hazeSource(hazeState)
                     .fillMaxSize()
+                    // Landscape pages: keep content clear of the trailing-edge back button and action column
+                    .then(if (isLandscape && ((!LocalElvanLandscapeChromeHandled.current && !showNavbar && onBack != null) || (toolbarPresent && !isSelectionMode))) Modifier.padding(end = 80.dp) else Modifier)
+                    // The tab rail on the left edge (the recycle bin) takes this much room
+                    .then(if (isLandscape && showNavbar && !LocalElvanLandscapeChromeHandled.current) Modifier.padding(start = 76.dp) else Modifier)
+                    // The camera sits on this side: keep the content clear of it
+                    .then(if (isLandscape && !LocalElvanLandscapeChromeHandled.current) Modifier.windowInsetsPadding(androidx.compose.foundation.layout.WindowInsets.safeDrawing.only(androidx.compose.foundation.layout.WindowInsetsSides.Start)).padding(start = 6.dp) else Modifier)
                     .then(if (!showNavbar) Modifier.imePadding() else Modifier)
             ) {
                 content()
@@ -492,7 +515,7 @@ fun ElvanShell(
                 )
             } else {
                 // Layer 2: Top Fade Mask — strictly for portrait/desktop, NOT landscape (controls moved to sides)
-                if (!isLandscape) {
+                if (!isLandscape && !paneChrome) {
                     Box(
                         modifier = Modifier
                             .align(Alignment.TopCenter)
@@ -509,7 +532,7 @@ fun ElvanShell(
                     )
                 }
 
-                // In landscape, header hides when scrolling just like in scrolled view!
+                // In landscape the header fades out on scroll (it never slides)
                 val isScrolled = scrollState.firstVisibleItemIndex > 0 || scrollState.firstVisibleItemScrollOffset > 8
                 val topBarOffset by animateDpAsState(
                     targetValue = if (isLandscape && isScrolled && !isSelectionMode) -(ceiling + pillHeight + 14.dp) else 0.dp,
@@ -522,10 +545,31 @@ fun ElvanShell(
                     label = "landscapeTopBarAlpha"
                 )
 
-                Box(
+                // Landscape: back sits top-right like the home screen controls; the bar leaves room for it
+                val chromeHandled = LocalElvanLandscapeChromeHandled.current
+                val backOnSide = isLandscape && onBack != null && !isSelectionMode && !chromeHandled
+                if (backOnSide) {
+                    com.elvan.udukkai.ui.navigation.LandscapeTopActionButton(
+                        icon = leadingIcon ?: com.elvan.udukkai.ui.navigation.MaterialSymbols.Rounded.ArrowBack,
+                        contentDescription = if (leadingIcon != null) K.cancel.tr() else K.back.tr(),
+                        onClick = onBack!!,
+                        colors = colors,
+                        modifier = Modifier.align(Alignment.TopEnd).zIndex(120f)
+                    )
+                }
+                if (isLandscape) ElvanLandscapeChrome(
+                    title = if (hideTitleSideways) "" else effectiveTitle,
+                    topInset = statusBarHeight,
+                    titleStart = 16.dp,
+                    onToolbarPresent = { toolbarPresent = it },
+                    titleAlpha = topBarAlpha,
+                    hasActions = hasActions,
+                    actions = actions,
+                    colors = colors
+                ) else Box(
                     modifier = Modifier
                         .align(Alignment.TopCenter)
-                        .offset(y = topBarOffset)
+                        .then(if (backOnSide) Modifier.padding(end = 78.dp) else Modifier)
                         .graphicsLayer { alpha = topBarAlpha }
                         .zIndex(100f)
                 ) {
@@ -535,7 +579,7 @@ fun ElvanShell(
                         colors = colors,
                         expandedHeight = expandedHeight,
                         title = effectiveTitle,
-                        onBack = onBack,
+                        onBack = if (backOnSide) null else onBack,
                         leadingIcon = leadingIcon,
                         navOpacity = effectiveNavOpacity,
                         hasActions = if (isSelectionMode) false else hasActions,
@@ -623,7 +667,7 @@ fun ElvanShell(
                     navbar()
                 }
             } else {
-                if (showBottomFade && !isLandscape) {
+                if (showBottomFade && !isLandscape && !paneChrome) {
                     // Subpages: Bottom Shadow Fade Mask above System Navigation Bar (Layer 4)
                     Box(
                         modifier = Modifier
@@ -644,14 +688,12 @@ fun ElvanShell(
                 // Subpage floating bar rendered ABOVE the bottom shadow fade mask (Layer 5)
                 if (effectiveNavOpacity > 0.01f) {
                     Box(
-                        modifier = Modifier
-                            .align(Alignment.BottomCenter)
-                            .fillMaxWidth()
+                        modifier = (if (isLandscape) Modifier.fillMaxSize() else Modifier.align(Alignment.BottomCenter).fillMaxWidth())
                             .graphicsLayer {
                                 alpha = effectiveNavOpacity
                             }
                             .zIndex(100f),
-                        contentAlignment = Alignment.BottomCenter
+                        contentAlignment = if (isLandscape) Alignment.BottomEnd else Alignment.BottomCenter
                     ) {
                         floatingBar()
                     }

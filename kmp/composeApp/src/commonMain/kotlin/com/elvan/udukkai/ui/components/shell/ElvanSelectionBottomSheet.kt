@@ -8,6 +8,7 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.Orientation
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.gestures.draggable
 import androidx.compose.foundation.gestures.rememberDraggableState
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -384,13 +385,11 @@ fun <T> ElvanSelectionBottomSheet(
             val navReserved = 24.dp
             val maxListHeight = (availableHeight - topDragReserved - searchReserved - bottomReserved - navReserved).coerceIn(120.dp, 460.dp)
 
-            val sheetShape = if (isLandscape) RoundedCornerShape(24.dp) else RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp)
+            val sheetShape = if (isLandscape) RoundedCornerShape(topStart = 28.dp, bottomStart = 28.dp) else RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp)
             val sheetModifier = if (isLandscape) {
                 modifier
-                    .widthIn(max = 420.dp)
-                    .fillMaxWidth()
-                    .windowInsetsPadding(WindowInsets.navigationBars.only(WindowInsetsSides.End + WindowInsetsSides.Bottom))
-                    .padding(end = 24.dp, top = 16.dp, bottom = 16.dp)
+                    .width(340.dp)
+                    .fillMaxHeight()
                     .offset { IntOffset((sheetOffsetY.value + dragOffsetY).roundToInt(), 0) }
             } else {
                 modifier
@@ -414,7 +413,7 @@ fun <T> ElvanSelectionBottomSheet(
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .nestedScroll(downwardScrollConnection)
+                            .then(if (isLandscape) Modifier.fillMaxHeight() else Modifier.nestedScroll(downwardScrollConnection))
                             .navigationBarsPadding()
                             .padding(bottom = 16.dp)
                     ) {
@@ -425,6 +424,7 @@ fun <T> ElvanSelectionBottomSheet(
                             .draggable(
                                 state = draggableState,
                                 orientation = Orientation.Vertical,
+                                enabled = !isLandscape,
                                 onDragStopped = { velocity ->
                                     if (dragOffsetY > 100f || velocity > 800f) {
                                         dismissSheet()
@@ -456,6 +456,7 @@ fun <T> ElvanSelectionBottomSheet(
                                 .draggable(
                                     state = draggableState,
                                     orientation = Orientation.Vertical,
+                                enabled = !isLandscape,
                                     onDragStopped = { velocity ->
                                         if (dragOffsetY > 100f || velocity > 800f) {
                                             dismissSheet()
@@ -482,9 +483,11 @@ fun <T> ElvanSelectionBottomSheet(
                         Column(
                             modifier = Modifier
                                 .fillMaxWidth()
+                                .then(if (isLandscape) Modifier.weight(1f).verticalScroll(androidx.compose.foundation.rememberScrollState()) else Modifier)
                                 .draggable(
                                     state = draggableState,
                                     orientation = Orientation.Vertical,
+                                enabled = !isLandscape,
                                     onDragStopped = { velocity ->
                                         if (dragOffsetY > 100f || velocity > 800f) {
                                             dismissSheet()
@@ -521,7 +524,7 @@ fun <T> ElvanSelectionBottomSheet(
                         Box(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .heightIn(max = maxListHeight)
+                                .then(if (isLandscape) Modifier.weight(1f) else Modifier.heightIn(max = maxListHeight))
                         ) {
                             if (filteredItems.isEmpty() && emptyMessage != null) {
                                 Box(

@@ -29,6 +29,7 @@ import com.elvan.udukkai.localization.tr
 import com.elvan.udukkai.theme.Dimens
 import com.elvan.udukkai.theme.ShellColors
 import com.elvan.udukkai.ui.components.shell.ElvanPopupMenuItem
+import com.elvan.udukkai.ui.components.shell.elvanTopBandRow
 import com.elvan.udukkai.ui.components.shell.LocalElvanTopSpacerHeight
 import com.elvan.udukkai.ui.screens.create.components.ElvanPillShifter
 import com.elvan.udukkai.ui.screens.create.components.PillShifterItem
@@ -55,7 +56,7 @@ fun ViewRecordPage(
     onBillClick: (Long) -> Unit,
     onReceiptClick: (Long) -> Unit,
     onRetryHistory: () -> Unit,
-    details: @Composable ColumnScope.() -> Unit
+    details: @Composable () -> Unit
 ) {
     var section by rememberSaveable { mutableIntStateOf(0) }
 
@@ -72,20 +73,23 @@ fun ViewRecordPage(
             val topSpace = LocalElvanTopSpacerHeight.current
             val bottomPadding = Dimens.SubpageContentPaddingBottom + 64.dp
             val spacing = RECORD_GAP
+            // Sideways the shifter sits in the top band beside the title and takes no height of its own
+            val sideways = com.elvan.udukkai.ui.components.shell.LocalElvanSideBar.current
+            val shifterH = if (sideways) 0.dp else SHIFTER_HEIGHT
 
             // How far the list has moved, for the items above the tab's content (spacer, shifter, type row)
             fun scrolledPx(): Int = scrollState.firstVisibleItemScrollOffset + with(density) {
                 when (scrollState.firstVisibleItemIndex) {
                     0 -> 0
                     1 -> topSpace.roundToPx()
-                    else -> (topSpace + SHIFTER_HEIGHT + spacing).roundToPx()
+                    else -> (topSpace + shifterH + spacing).roundToPx()
                 }
             }
             // Kept while scrolling back up, shrinking with it: the new content can hold the old position but not scroll further
             val held = remember(section, historyUi.tab, historyUi.filter, historyUi.sort) { scrolledPx() }
 
             fun heightBelow(rowAbove: Dp): Dp {
-                val fill = (maxHeight - topSpace - SHIFTER_HEIGHT - spacing - rowAbove - bottomPadding).coerceAtLeast(0.dp)
+                val fill = (maxHeight - topSpace - shifterH - spacing - rowAbove - bottomPadding).coerceAtLeast(0.dp)
                 return if (held > 0) fill + with(density) { minOf(held, scrolledPx()).toDp() } else fill
             }
 
@@ -97,7 +101,7 @@ fun ViewRecordPage(
             ) {
                 item(key = "top_spacer") { Spacer(Modifier.height(topSpace - spacing)) }
                 item(key = "section_tabs") {
-                    Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                    Box(Modifier.fillMaxWidth().elvanTopBandRow(sideways), contentAlignment = Alignment.Center) {
                         ElvanPillShifter(
                             items = listOf(PillShifterItem(K.detailsTab.tr()), PillShifterItem(K.transactionsTab.tr())),
                             selectedIndex = section,
@@ -109,15 +113,43 @@ fun ViewRecordPage(
                 }
                 if (section == 0) {
                     item(key = "details") {
-                        Column(
-                            Modifier.fillMaxWidth().heightIn(min = heightBelow(0.dp)),
-                            verticalArrangement = Arrangement.spacedBy(spacing),
-                            content = details
-                        )
+                        if (maxWidth > maxHeight) {
+                            // Landscape: the cards flow into two columns so more of the page shows without scrolling
+                            TwoColumnFlow(Modifier.fillMaxWidth().heightIn(min = heightBelow(0.dp)), spacing, details)
+                        } else {
+                            Column(
+                                Modifier.fillMaxWidth().heightIn(min = heightBelow(0.dp)),
+                                verticalArrangement = Arrangement.spacedBy(spacing),
+                                content = { details() }
+                            )
+                        }
                     }
                 } else {
                     viewHistoryItems(history, historyUi, colors, onBillClick, onReceiptClick, onRetryHistory, heightBelow(HISTORY_TOOLS_HEIGHT + spacing))
                 }
+            }
+        }
+    }
+}
+
+
+/** Lays the cards out two to a row, the two of a row the same height, so every row lines up. */
+@Composable
+private fun TwoColumnFlow(modifier: Modifier, spacing: Dp, content: @Composable () -> Unit) {
+    androidx.compose.ui.layout.Layout(content = content, modifier = modifier) { measurables, constraints ->
+        val gap = spacing.roundToPx()
+        val colWidth = ((constraints.maxWidth - gap) / 2).coerceAtLeast(0)
+        val rows = measurables.chunked(2).map { row ->
+            // Asked for beforehand: a measurable can be measured only once
+            val h = row.maxOf { it.maxIntrinsicHeight(colWidth) }
+            row.map { it.measure(androidx.compose.ui.unit.Constraints(minWidth = colWidth, maxWidth = colWidth, minHeight = h, maxHeight = h)) }
+        }
+        val height = (rows.sumOf { it.first().height } + gap * (rows.size - 1).coerceAtLeast(0)).coerceAtLeast(constraints.minHeight)
+        layout(constraints.maxWidth, height) {
+            var y = 0
+            rows.forEach { row ->
+                row.forEachIndexed { i, p -> p.placeRelative(i * (colWidth + gap), y) }
+                y += row.first().height + gap
             }
         }
     }

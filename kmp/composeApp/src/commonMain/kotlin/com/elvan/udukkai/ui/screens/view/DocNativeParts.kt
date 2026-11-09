@@ -56,19 +56,27 @@ private fun toneColor(tone: DocTone): Color {
 val LocalDocListState = compositionLocalOf<LazyListState?> { null }
 
 /** The scrolling page, under the same collapsing, fading header as the customer page. */
+/** True when the page is wider than tall: the status block shrinks so the bill shows sooner. */
+val LocalDocLandscape = androidx.compose.runtime.compositionLocalOf { false }
+
 @Composable
 fun DocPage(
     horizontalPadding: Dp = Dimens.ContentPadding,
     content: LazyListScope.() -> Unit
 ) {
-    LazyColumn(
+    androidx.compose.foundation.layout.BoxWithConstraints(Modifier.fillMaxSize()) {
+    androidx.compose.runtime.CompositionLocalProvider(LocalDocLandscape provides (maxWidth > maxHeight)) {
+    com.elvan.udukkai.ui.screens.editor.ElvanEditorList(
+        fullWidthKeys = setOf("top_spacer", "status", "record", "convert", "lines"),
         state = LocalDocListState.current ?: rememberLazyListState(),
         modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(start = horizontalPadding, end = horizontalPadding, bottom = getNavBarHeightIgnoringVisibility() + 120.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
-        item(key = "top_spacer") { Spacer(Modifier.height(LocalElvanTopSpacerHeight.current - 14.dp)) }
+        item(key = "top_spacer") { Spacer(Modifier.height(LocalElvanTopSpacerHeight.current - 14.dp - (if (com.elvan.udukkai.ui.components.shell.LocalElvanSideBar.current) 34.dp else 0.dp))) }
         content()
+    }
+    }
     }
 }
 
@@ -83,13 +91,13 @@ fun DocStatusHeader(tone: DocTone, label: String, amount: Double, note: String? 
             .fillMaxWidth()
             .clip(RoundedCornerShape(28.dp))
             .background(if (tone == DocTone.Neutral) colors.surface else tint.copy(alpha = if (colors.isDark) 0.14f else 0.09f))
-            .padding(vertical = 26.dp, horizontal = 20.dp),
+            .padding(vertical = if (LocalDocLandscape.current) 12.dp else 26.dp, horizontal = 20.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         run {
             val darkGreen = tone == DocTone.Paid && colors.isDark
             Box(
-                Modifier.size(52.dp).clip(CircleShape).background(
+                Modifier.size(if (LocalDocLandscape.current) 40.dp else 52.dp).clip(CircleShape).background(
                     // A clear, deeper tone of the hue in both modes, so the white symbol stands out and never blends into it
                     (if (tone == DocTone.Paid) colors.receiptColor else if (tone == DocTone.Neutral) toneColor(DocTone.Due) else tint).let { base ->
                         androidx.compose.ui.graphics.Brush.linearGradient(
@@ -107,10 +115,10 @@ fun DocStatusHeader(tone: DocTone, label: String, amount: Double, note: String? 
                     imageVector = when (tone) { DocTone.Paid -> MaterialSymbols.Rounded.Check; DocTone.Due -> MaterialSymbols.Rounded.Schedule; DocTone.Neutral -> MaterialSymbols.Rounded.InvoiceFill },
                     contentDescription = null,
                     tint = if (darkGreen) Color(0xFF0B1210) else Color.White,
-                    modifier = Modifier.size(if (darkGreen) 28.dp else 32.dp)
+                    modifier = Modifier.size(if (LocalDocLandscape.current) (if (darkGreen) 22.dp else 26.dp) else if (darkGreen) 28.dp else 32.dp)
                 )
             }
-            Spacer(Modifier.height(14.dp))
+            Spacer(Modifier.height(if (LocalDocLandscape.current) 6.dp else 14.dp))
         }
         Text(
             text = label.preventBrokenLigatures(),
@@ -120,7 +128,7 @@ fun DocStatusHeader(tone: DocTone, label: String, amount: Double, note: String? 
         Spacer(Modifier.height(4.dp))
         Text(
             text = CurrencyUtils.formatInr(amount),
-            style = TextStyle(fontFamily = ff, fontSize = 32.sp, fontWeight = FontWeight.ExtraBold, color = colors.textPrimary),
+            style = TextStyle(fontFamily = ff, fontSize = if (LocalDocLandscape.current) 26.sp else 32.sp, fontWeight = FontWeight.ExtraBold, color = colors.textPrimary),
             maxLines = 1
         )
         if (!note.isNullOrBlank()) {

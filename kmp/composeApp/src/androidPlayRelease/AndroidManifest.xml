@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  The Google Play build (./gradlew bundleTextilesPlayRelease / bundleFactoryPlayRelease). Play updates the app itself, and
+  Play does not allow an app it distributes to install or update itself any other way, so everything of the GitHub
+  self-updater is taken out of the merged manifest: the install permissions and the receiver of the install results.
+-->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" tools:node="remove" />
+    <uses-permission android:name="android.permission.UPDATE_PACKAGES_WITHOUT_USER_ACTION" tools:node="remove" />
+
+    <application>
+        <receiver android:name=".core.update.UpdateReceiver" tools:node="remove" />
+    </application>
+</manifest>

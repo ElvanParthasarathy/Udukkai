@@ -33,7 +33,7 @@ import com.elvan.udukkai.theme.rememberShellColors
 @Composable
 fun ElvanSubShell(
     title: String,
-    onBack: () -> Unit,
+    onBack: (() -> Unit)?,
     scrollState: LazyListState = rememberLazyListState(),
     leadingIcon: ImageVector? = null,
     hasActions: Boolean = false,
@@ -43,9 +43,11 @@ fun ElvanSubShell(
     overlay: @Composable () -> Unit = {},
     floatingBar: @Composable () -> Unit = {},
     collapsedOnly: Boolean = false,
+    hideTitleSideways: Boolean = false,
     content: @Composable () -> Unit
 ) {
     val colors = rememberShellColors()
+    val onBack = if (LocalElvanPaneNoBack.current) null else onBack
 
     androidx.compose.runtime.SideEffect {
         if (hasFloatingBar || floatingBar != {}) {
@@ -73,6 +75,7 @@ fun ElvanSubShell(
         navbar = {},
         floatingBar = floatingBar,
         collapsedOnly = collapsedOnly,
+        hideTitleSideways = hideTitleSideways,
         content = content
     )
 }

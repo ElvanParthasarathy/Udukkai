@@ -310,15 +310,50 @@ fun TextilesHomeScreen() {
             }
         }
 
-        val isLandscape = maxWidth > maxHeight
-        SideEffect { isLandscapeMode = isLandscape }
+        // Desktop windows get the sidebar; a phone/tablet turned sideways keeps the floating trailing-edge controls
         val isWideScreen = isDesktop && maxWidth >= 768.dp
+        val isLandscape = maxWidth > maxHeight && !isWideScreen
+        SideEffect { isLandscapeMode = maxWidth > maxHeight }
 
         val shouldShowBottomBarForSnackbar = (activeSubpage !is ActiveSubpage.Settings) && !isWideScreen
         SideEffect {
             ElvanSnackbar.isBottomBarVisible = shouldShowBottomBarForSnackbar
         }
 
+
+        @Composable
+        fun HomeSearchBar() {
+ElvanSearchBar(
+                                        visible = isSearchActive,
+                                        query = currentSearchQuery,
+                                        onQueryChange = { newQuery ->
+                                            when (selectedTab) {
+                                                NavTab.Create -> {
+                                                    if (uruvakkuSegment == 0) {
+                                                        TextilesInvoiceRepository.searchQuery = newQuery
+                                                    } else {
+                                                        TextilesReceiptRepository.searchQuery = newQuery
+                                                    }
+                                                }
+                                                NavTab.Items -> {
+                                                    TextilesItemRepository.searchQuery = newQuery
+                                                }
+                                                NavTab.Customers -> {
+                                                    TextilesCustomerRepository.searchQuery = newQuery
+                                                }
+                                                else -> {}
+                                            }
+                                        },
+                                        onClose = {
+                                            isSearchActive = false
+                                            TextilesInvoiceRepository.searchQuery = ""
+                                            TextilesReceiptRepository.searchQuery = ""
+                                            TextilesItemRepository.searchQuery = ""
+                                            TextilesCustomerRepository.searchQuery = ""
+                                        },
+                                        colors = colors
+                                    )
+        }
 
         @Composable
         fun RenderSubpage(subpage: ActiveSubpage) {
@@ -502,64 +537,12 @@ fun TextilesHomeScreen() {
 
                     ElvanShell(
                         scrollState = currentScrollState,
+                        hideTitleSideways = true,
                         title = selectedTab.getLocalizedHeader(),
                         banners = activeBanners,
                         showNavbar = !isLandscape && !isWideScreen,
-                        hasActions = (!isSearchActive && !isSelectionMode) && (selectedTab != NavTab.Home || !isLandscape),
-                        leadingActions = if (isLandscape && !isSearchActive && !isSelectionMode) {
-                            {
-                                Box {
-                                    ElvanTopBarIconButton(
-                                        onClick = {
-                                            ElvanMenuState.isMenuOpen = true
-                                            menuExpanded = true
-                                        }
-                                    ) {
-                                        Icon(
-                                            imageVector = MaterialSymbols.Rounded.MoreVert,
-                                            contentDescription = K.more.tr(),
-                                            tint = colors.textPrimary,
-                                            modifier = Modifier.size(22.dp)
-                                        )
-                                    }
-                                    val settingsLabel = K.settings.tr()
-                                    val meetpagamLabel = K.recycleBin.tr()
-                                    val menuItems = buildList {
-                                        add(
-                                            ElvanPopupMenuItem(
-                                                title = settingsLabel,
-                                                icon = MaterialSymbols.Rounded.Settings,
-                                                onClick = {
-                                                    ElvanMenuState.isMenuOpen = false
-                                                    menuExpanded = false
-                                                    navigateToSubpage(ActiveSubpage.Settings)
-                                                }
-                                            )
-                                        )
-                                        add(
-                                            ElvanPopupMenuItem(
-                                                title = meetpagamLabel,
-                                                icon = MaterialSymbols.Rounded.Delete,
-                                                onClick = {
-                                                    ElvanMenuState.isMenuOpen = false
-                                                    menuExpanded = false
-                                                    navigateToSubpage(ActiveSubpage.RecycleBin)
-                                                }
-                                            )
-                                        )
-                                    }
-                                    ElvanPopupMenu(
-                                        expanded = menuExpanded,
-                                        onDismissRequest = {
-                                            ElvanMenuState.isMenuOpen = false
-                                            menuExpanded = false
-                                        },
-                                        colors = colors,
-                                        items = menuItems
-                                    )
-                                }
-                            }
-                        } else null,
+                        hasActions = (!isSearchActive && !isSelectionMode),
+                        leadingActions = null,
                         isSearchActive = isSearchActive,
                         isSelectionMode = isSelectionMode,
                         selectedCount = selectedItemIds.size,
@@ -602,7 +585,14 @@ fun TextilesHomeScreen() {
                             }
 
                             // 3-Dot More Menu (மேலும்) - in actions for portrait only
-                            if (!isLandscape) {
+                            if (isLandscape) {
+                                ElvanTopBarIconButton(onClick = { navigateToSubpage(ActiveSubpage.Settings) }) {
+                                    Icon(imageVector = MaterialSymbols.Rounded.Settings, contentDescription = K.settings.tr(), tint = colors.textPrimary, modifier = Modifier.size(22.dp))
+                                }
+                                ElvanTopBarIconButton(onClick = { navigateToSubpage(ActiveSubpage.RecycleBin) }) {
+                                    Icon(imageVector = MaterialSymbols.Rounded.Delete, contentDescription = K.recycleBin.tr(), tint = colors.textPrimary, modifier = Modifier.size(22.dp))
+                                }
+                            } else {
                                 Box {
                                     ElvanTopBarIconButton(
                                         onClick = {
@@ -764,36 +754,7 @@ androidx.compose.animation.AnimatedContent(
                                         }
                                     )
 
-                                    ElvanSearchBar(
-                                        visible = isSearchActive,
-                                        query = currentSearchQuery,
-                                        onQueryChange = { newQuery ->
-                                            when (selectedTab) {
-                                                NavTab.Create -> {
-                                                    if (uruvakkuSegment == 0) {
-                                                        TextilesInvoiceRepository.searchQuery = newQuery
-                                                    } else {
-                                                        TextilesReceiptRepository.searchQuery = newQuery
-                                                    }
-                                                }
-                                                NavTab.Items -> {
-                                                    TextilesItemRepository.searchQuery = newQuery
-                                                }
-                                                NavTab.Customers -> {
-                                                    TextilesCustomerRepository.searchQuery = newQuery
-                                                }
-                                                else -> {}
-                                            }
-                                        },
-                                        onClose = {
-                                            isSearchActive = false
-                                            TextilesInvoiceRepository.searchQuery = ""
-                                            TextilesReceiptRepository.searchQuery = ""
-                                            TextilesItemRepository.searchQuery = ""
-                                            TextilesCustomerRepository.searchQuery = ""
-                                        },
-                                        colors = colors
-                                    )
+                                    HomeSearchBar()
                                 }
                             }
                             }
@@ -986,10 +947,11 @@ androidx.compose.animation.AnimatedContent(
                 modifier = if (isWideScreen) Modifier.weight(1f).fillMaxHeight() else Modifier.fillMaxSize()
             ) {
             // ── Unified Adaptive Navigation (Zero split screen; full single-pane across portrait & landscape) ──
+            androidx.compose.runtime.CompositionLocalProvider(com.elvan.udukkai.ui.components.shell.LocalElvanLandscapeChromeHandled provides isLandscape) {
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .then(if (isLandscape) Modifier.padding(end = 76.dp) else Modifier)
+                    .then(if (isLandscape) Modifier.padding(start = 76.dp, end = if (subpageStack.isNotEmpty()) 80.dp else 0.dp) else Modifier)
             ) {
                 AnimatedContent(
                     targetState = subpageStack,
@@ -1011,6 +973,11 @@ androidx.compose.animation.AnimatedContent(
                         RenderMainShell()
                     }
                 }
+            }
+            }
+
+            if (isLandscape && isSearchActive) {
+                Box(Modifier.align(Alignment.BottomCenter).fillMaxWidth().padding(start = 72.dp, end = 80.dp)) { HomeSearchBar() }
             }
 
             // Floating Controls on the Trailing Edge in Landscape (Apple HIG Landscape Controls)
@@ -1073,7 +1040,7 @@ androidx.compose.animation.AnimatedContent(
                                 selectedTab = tab
                             }
                         },
-                        modifier = Modifier.align(Alignment.BottomEnd)
+                        modifier = Modifier.align(Alignment.BottomStart)
                     )
                 }
             }

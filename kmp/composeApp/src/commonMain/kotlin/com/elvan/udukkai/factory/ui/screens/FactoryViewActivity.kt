@@ -35,6 +35,7 @@ fun factoryCustomerActivity(customer: CustomerModel): ViewActivity {
         unpaid = rows.filter { !it.isPaid }.sumOf { it.amount },
         bills = rows,
         receipts = ViewHistory.receiptRows(FactoryReceiptRepository.activeCompanyReceipts, customer.id, FactoryProfileRepository.profile.id),
+        estimates = ViewHistory.customerRows(invoices, customer.id, FactoryProfileRepository.profile.id, emptyMap(), estimates = true),
     )
 }
 
@@ -43,20 +44,24 @@ fun factoryItemActivity(item: ItemModel): ViewActivity {
     val id = item.id.toString()
     val profile = FactoryProfileRepository.profile
     val invoices = FactoryInvoiceRepository.activeCompanyInvoices
+    val paid = paidAmounts(invoices)
     var totalWeight = 0.0
-    val rows = ViewHistory.itemRows(
+    fun rowsOf(estimates: Boolean) = ViewHistory.itemRows(
         invoices = invoices,
         companyId = profile.id,
-        paid = paidAmounts(invoices),
+        paid = paid,
         linesOf = { inv -> FactoryCalculation.itemsFromJson(inv.itemsJson).filter { it.itemId == id }.map { ItemLine(it.weight, it.rowTotal.toDouble()) } },
         customerNameOf = { it.customerName[profile.primaryLanguage] ?: it.customerName.values.firstOrNull { n -> n.isNotBlank() }.orEmpty() },
-        quantityText = { lines -> lines.sumOf { it.quantity }.let { totalWeight += it; kg(it) } }
+        quantityText = { lines -> lines.sumOf { it.quantity }.let { if (!estimates) totalWeight += it; kg(it) } },
+        estimates = estimates
     )
+    val rows = rowsOf(false)
     return ViewActivity(
         count = rows.size,
         billed = rows.sumOf { it.amount },
         quantityText = if (rows.isEmpty()) "" else kg(totalWeight),
-        bills = rows
+        bills = rows,
+        estimates = rowsOf(true)
     )
 }
 

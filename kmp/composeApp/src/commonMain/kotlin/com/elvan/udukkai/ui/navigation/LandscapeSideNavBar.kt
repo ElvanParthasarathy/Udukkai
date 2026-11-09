@@ -37,12 +37,14 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.elvan.udukkai.core.extensions.cssShadow
+import com.elvan.udukkai.ui.components.shell.frostedGlass
 import com.elvan.udukkai.localization.K
 import com.elvan.udukkai.localization.tr
 import com.elvan.udukkai.theme.LocalAppFontFamily
 import com.elvan.udukkai.theme.ShellColors
 import com.elvan.udukkai.theme.rememberShellColors
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
 import kotlin.math.abs
 import kotlin.math.floor
 import kotlin.math.roundToInt
@@ -149,12 +151,16 @@ fun LandscapeTopActionButton(
         animationSpec = tween(120, easing = CubicBezierEasing(0.0f, 0.0f, 0.2f, 1.0f)),
         label = "landscapeTopBtnScale"
     )
+    // With the keyboard up the first tap only puts the keyboard away; the page stays
+    val keyboard = androidx.compose.ui.platform.LocalSoftwareKeyboardController.current
+    val focus = androidx.compose.ui.platform.LocalFocusManager.current
+    val imeOpen = com.elvan.udukkai.core.platform.getImeBottomPadding() > 0.dp
 
     Box(
         modifier = modifier
             .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal + WindowInsetsSides.Top))
-            .padding(end = 16.dp, top = 16.dp)
-            .size(50.dp)
+            .padding(end = 12.dp, top = 8.dp)
+            .size(60.dp)
             .graphicsLayer {
                 scaleX = scale
                 scaleY = scale
@@ -173,8 +179,8 @@ fun LandscapeTopActionButton(
             .clip(CircleShape)
             .clickable(
                 interactionSource = interactionSource,
-                indication = ripple(bounded = true, radius = 25.dp),
-                onClick = onClick
+                indication = ripple(bounded = true, radius = 30.dp),
+                onClick = { if (imeOpen) { keyboard?.hide(); focus.clearFocus() } else onClick() }
             ),
         contentAlignment = Alignment.Center
     ) {
@@ -188,11 +194,8 @@ fun LandscapeTopActionButton(
 }
 
 /**
- * Udukkai Landscape Floating Side Navigation Bar (Bottom-Right Trailing Capsule).
- * - Anchored in the bottom-right corner of the landscape screen.
- * - In compact state: 54.dp wide, 46.dp per slot (icons only).
- * - On long press / firm drag: expands BOTH horizontally (to 76.dp) AND vertically (to 58.dp per slot)
- *   with Apple fluid spring physics, smoothly revealing labels beneath icons without text clipping.
+ * The landscape tab rail: the portrait [BottomNavBar] turned on its side. Same capsule, same sliding pill (it grows when
+ * touched and stretches as it glides), same drag and tap behaviour and the same tabs ([PillTab]); only the axis differs.
  */
 @Composable
 fun LandscapeSideNavBar(
@@ -203,84 +206,63 @@ fun LandscapeSideNavBar(
     hideContent: Boolean = false,
     modifier: Modifier = Modifier
 ) {
-    val tabs = NavTab.entries
+    val items = NavTab.entries.map { SideRailItem(it.icon, it.activeIcon, it.getLocalizedLabel()) }
+    SideTabRail(
+        items = items,
+        selectedIndex = NavTab.entries.indexOf(selectedTab),
+        onSelected = { i, drag -> onTabSelected(NavTab.entries[i], drag) },
+        onInteraction = onInteraction,
+        onDragProgress = onDragProgress,
+        hideContent = hideContent,
+        modifier = modifier
+    )
+}
+
+/** One tab of a [SideTabRail]. */
+class SideRailItem(val icon: ImageVector, val activeIcon: ImageVector, val label: String)
+
+/** The rail for any set of tabs: the main tabs, the recycle bin's, and so on. */
+@Composable
+fun SideTabRail(
+    items: List<SideRailItem>,
+    selectedIndex: Int,
+    onSelected: (Int, Boolean) -> Unit,
+    onInteraction: (Boolean) -> Unit = {},
+    onDragProgress: (Float) -> Unit = {},
+    hideContent: Boolean = false,
+    modifier: Modifier = Modifier
+) {
+    val tabs = items
     val coroutineScope = rememberCoroutineScope()
     val colors = rememberShellColors()
     val isDark = colors.isDark
 
     val itemCount = tabs.size
-    val verticalPadding = 5.dp
-    val horizontalPadding = 5.dp
+    val layoutHeight = 62.dp
+    val bgHeight = 70.dp
+    val horizontalPadding = 4.dp
+    val overlap = (bgHeight - layoutHeight) / 2
+    val verticalPadding = horizontalPadding + overlap
+    val totalHeight = (layoutHeight * itemCount) + (verticalPadding * 2)
 
     var isInteracting by remember { mutableStateOf(false) }
-    var isExpanded by remember { mutableStateOf(false) }
     var dragOffsetPx by remember { mutableStateOf<Float?>(null) }
     var touchOffsetFromCenterPx by remember { mutableStateOf(0f) }
     var hoverIndex by remember { mutableStateOf<Int?>(null) }
     var localLockedIndex by remember { mutableStateOf<Int?>(null) }
     var snapNextFrame by remember { mutableStateOf(false) }
 
-    // Apple fluid subtle zoom on long-press (keeps stadium pill shape, zero collision with plus button)
-    val railWidth by animateDpAsState(
-        targetValue = if (isExpanded) 60.dp else 50.dp,
-        animationSpec = spring(dampingRatio = 0.82f, stiffness = 320f),
-        label = "railWidth"
-    )
-
-    // Slot height expands subtly (44.dp -> 46.dp, only 8.dp total height change so it never hits the plus button)
-    val slotHeight by animateDpAsState(
-        targetValue = if (isExpanded) 46.dp else 44.dp,
-        animationSpec = spring(dampingRatio = 0.82f, stiffness = 320f),
-        label = "railSlotHeight"
-    )
-
-    val indicatorHeight by animateDpAsState(
-        targetValue = if (isExpanded) 38.dp else 36.dp,
-        animationSpec = spring(dampingRatio = 0.82f, stiffness = 320f),
-        label = "railIndicatorHeight"
-    )
-
-    val indicatorWidth by animateDpAsState(
-        targetValue = if (isExpanded) 50.dp else 42.dp,
-        animationSpec = spring(dampingRatio = 0.82f, stiffness = 320f),
-        label = "railIndicatorWidth"
-    )
-
-    val labelAlpha by animateFloatAsState(
-        targetValue = if (isExpanded) 1f else 0f,
-        animationSpec = tween(durationMillis = 140),
-        label = "railLabelAlpha"
-    )
-
-    val containerScale by animateFloatAsState(
-        targetValue = if (isExpanded) 1.03f else if (isInteracting) 1.01f else 1.0f,
-        animationSpec = spring(dampingRatio = 0.82f, stiffness = 320f),
-        label = "railContainerScale"
-    )
-
-    val pillScale by animateFloatAsState(
-        targetValue = if (isInteracting) 1.03f else 1.0f,
-        animationSpec = PillMotion.press,
-        label = "railPillScale"
-    )
-
-    val contentAlpha by animateFloatAsState(
-        targetValue = if (hideContent) 0f else 1f,
-        animationSpec = tween(150),
-        label = "railContentAlpha"
-    )
-
     val density = LocalDensity.current
-    val slotHeightPx = with(density) { slotHeight.toPx() }
-    val indicatorHeightPx = with(density) { indicatorHeight.toPx() }
+    val layoutHeightPx = with(density) { layoutHeight.toPx() }
+    val bgHeightPx = with(density) { bgHeight.toPx() }
 
-    val currentOnTabSelected by rememberUpdatedState(onTabSelected)
+    val currentOnTabSelected by rememberUpdatedState(onSelected)
     val currentOnInteraction by rememberUpdatedState(onInteraction)
     val currentOnDragProgress by rememberUpdatedState(onDragProgress)
 
     var pendingSelect by remember { mutableStateOf<kotlinx.coroutines.Job?>(null) }
 
-    val actualIndex = tabs.indexOf(selectedTab).coerceAtLeast(0)
+    val actualIndex = selectedIndex.coerceIn(0, items.lastIndex)
     LaunchedEffect(actualIndex) {
         if (localLockedIndex != actualIndex) snapNextFrame = true
         localLockedIndex = null
@@ -292,20 +274,32 @@ fun LandscapeSideNavBar(
         }
     }
 
-    val activeVisualIndex = if (isInteracting && hoverIndex != null) {
-        hoverIndex!!
-    } else {
-        localLockedIndex ?: actualIndex
-    }
+    val activeVisualIndex = if (isInteracting && hoverIndex != null) hoverIndex!! else localLockedIndex ?: actualIndex
 
-    val overlapPy = (slotHeightPx - indicatorHeightPx) / 2f
-    val maxTopPx = ((itemCount - 1) * slotHeightPx)
-    val minTopPx = 0f
+    val containerScale by animateFloatAsState(
+        targetValue = if (isInteracting) 1.02f else 1.0f,
+        animationSpec = PillMotion.press,
+        label = "railContainerScale"
+    )
+    val pillScale by animateFloatAsState(
+        targetValue = if (isInteracting) 1.30f else 1.0f,
+        animationSpec = PillMotion.press,
+        label = "railPillScale"
+    )
+    val contentAlpha by animateFloatAsState(
+        targetValue = if (hideContent) 0f else 1f,
+        animationSpec = tween(150),
+        label = "railContentAlpha"
+    )
+
+    val overlapPx = (bgHeightPx - layoutHeightPx) / 2f
+    val maxTopPx = ((itemCount - 1) * layoutHeightPx) - overlapPx
+    val minTopPx = -overlapPx
 
     val targetTopPx = if (isInteracting && dragOffsetPx != null) {
-        (dragOffsetPx!! - (slotHeightPx / 2f)).coerceIn(minTopPx, maxTopPx)
+        (dragOffsetPx!! - (bgHeightPx / 2f)).coerceIn(minTopPx, maxTopPx)
     } else {
-        (activeVisualIndex * slotHeightPx).coerceIn(minTopPx, maxTopPx)
+        ((activeVisualIndex * layoutHeightPx) - overlapPx).coerceIn(minTopPx, maxTopPx)
     }
 
     val animatedTop = animateFloatAsState(
@@ -315,7 +309,7 @@ fun LandscapeSideNavBar(
             isInteracting && dragOffsetPx != null -> PillMotion.follow
             else -> PillMotion.settle
         },
-        label = "pillY"
+        label = "railPillY"
     )
 
     val navBarAlpha by animateFloatAsState(
@@ -328,9 +322,11 @@ fun LandscapeSideNavBar(
         Box(
             modifier = modifier
                 .graphicsLayer { alpha = navBarAlpha }
-                .windowInsetsPadding(WindowInsets.navigationBars.only(WindowInsetsSides.Bottom + WindowInsetsSides.End))
-                .padding(end = 14.dp, bottom = 8.dp),
-            contentAlignment = Alignment.BottomEnd
+                .windowInsetsPadding(WindowInsets.navigationBars.only(WindowInsetsSides.Bottom))
+                // A camera cut-out on this side keeps the rail clear of it; with none it sits at the edge
+                .windowInsetsPadding(WindowInsets.displayCutout.only(WindowInsetsSides.Start))
+                .padding(start = 9.dp, bottom = 12.dp),
+            contentAlignment = Alignment.BottomStart
         ) {
             Box(
                 modifier = Modifier
@@ -339,27 +335,24 @@ fun LandscapeSideNavBar(
                         scaleY = containerScale
                         clip = false
                     }
-                    .height((slotHeight * itemCount) + (verticalPadding * 2))
-                    .width(railWidth),
-                contentAlignment = Alignment.TopCenter
+                    .width(66.dp)
+                    .height(totalHeight),
+                contentAlignment = Alignment.Center
             ) {
-                // Translucent Capsule Background & Border (Continuous Stadium Pill)
+                // Layer 1: capsule and border
                 Box(
                     modifier = Modifier
                         .matchParentSize()
-                        .cssShadow(color = Color.Black, alpha = 0.08f, blurRadius = 16.dp, offsetY = 4.dp)
-                        .background(
-                            color = colors.floatingBg.copy(alpha = 0.88f),
-                            shape = RoundedCornerShape(percent = 50)
-                        )
+                        .cssShadow(color = Color.Black, alpha = 0.05f, blurRadius = 16.dp, offsetY = 4.dp)
+                        .frostedGlass(CircleShape, colors, fallbackAlpha = 0.88f)
                         .border(
                             width = 0.5.dp,
                             color = colors.floatingBorder.copy(alpha = if (isDark) 0.15f else 0.6f),
-                            shape = RoundedCornerShape(percent = 50)
+                            shape = CircleShape
                         )
                 )
 
-                // Gesture Drag Area
+                // Layer 2: content with the drag gesture
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
@@ -374,13 +367,11 @@ fun LandscapeSideNavBar(
                                         currentOnInteraction(true)
 
                                         val initialY = down.position.y
-                                        val downTime = down.uptimeMillis
-                                        hoverIndex = floor(initialY / slotHeightPx).toInt().coerceIn(0, itemCount - 1)
-                                        val slotCenter = (hoverIndex!! * slotHeightPx) + (slotHeightPx / 2f)
+                                        hoverIndex = floor(initialY / layoutHeightPx).toInt().coerceIn(0, itemCount - 1)
+                                        val slotCenter = (hoverIndex!! * layoutHeightPx) + (layoutHeightPx / 2f)
                                         touchOffsetFromCenterPx = initialY - slotCenter
                                         dragOffsetPx = null
 
-                                        var isLongPressed = false
                                         var isDrag = false
                                         val pointerId = down.id
 
@@ -388,39 +379,20 @@ fun LandscapeSideNavBar(
                                             val event = awaitPointerEvent()
                                             val change = event.changes.firstOrNull { it.id == pointerId } ?: break
                                             if (!change.pressed) break
-
-                                            val elapsed = change.uptimeMillis - downTime
-                                            val pressure = change.pressure
                                             val currentPos = change.position
-                                            val moved = abs(currentPos.y - down.position.y) > 6f
-
-                                            // Normal swipe/drag does NOT expand the pill
-                                            if (moved && !isLongPressed) {
-                                                isDrag = true
-                                            }
-
-                                            // ONLY forced/deliberate long press (>380ms) BEFORE moving triggers expansion
-                                            if (!isDrag && (pressure > 1.3f || elapsed >= 380L)) {
-                                                isLongPressed = true
-                                                isExpanded = true
-                                            }
-
-                                            if (moved) {
+                                            if (abs(currentPos.y - down.position.y) > 4f) {
                                                 isDrag = true
                                                 val targetCenter = currentPos.y - touchOffsetFromCenterPx
                                                 dragOffsetPx = targetCenter
-                                                hoverIndex = floor(targetCenter / slotHeightPx).toInt().coerceIn(0, itemCount - 1)
-                                                currentOnDragProgress(targetCenter / slotHeightPx)
+                                                hoverIndex = floor(targetCenter / layoutHeightPx).toInt().coerceIn(0, itemCount - 1)
+                                                currentOnDragProgress(targetCenter / layoutHeightPx)
                                                 change.consume()
                                             }
                                         }
 
                                         val finalIndex = hoverIndex
-                                        if (finalIndex != null) {
-                                            localLockedIndex = finalIndex
-                                        }
+                                        if (finalIndex != null) localLockedIndex = finalIndex
                                         isInteracting = false
-                                        isExpanded = false
                                         currentOnInteraction(false)
                                         dragOffsetPx = null
                                         hoverIndex = null
@@ -428,8 +400,8 @@ fun LandscapeSideNavBar(
                                         if (finalIndex != null) {
                                             pendingSelect?.cancel()
                                             pendingSelect = coroutineScope.launch {
-                                                PillMotion.awaitLanded(animatedTop, (finalIndex * slotHeightPx).coerceIn(minTopPx, maxTopPx))
-                                                currentOnTabSelected(tabs[finalIndex], isDrag)
+                                                PillMotion.awaitLanded(animatedTop, ((finalIndex * layoutHeightPx) - overlapPx).coerceIn(minTopPx, maxTopPx))
+                                                currentOnTabSelected(finalIndex, isDrag)
                                             }
                                         }
                                     }
@@ -444,17 +416,17 @@ fun LandscapeSideNavBar(
                                 alpha = contentAlpha
                                 clip = false
                             }
-                            .fillMaxSize(),
-                        contentAlignment = Alignment.TopCenter
+                            .height(layoutHeight * itemCount)
+                            .fillMaxWidth()
                     ) {
-                        // Master Background Selection Pill
+                        // The sliding pill, detached and draggable
                         Box(
                             modifier = Modifier
-                                .offset { IntOffset(0, (animatedTop.value + overlapPy).roundToInt()) }
-                                .height(indicatorHeight)
-                                .width(indicatorWidth)
+                                .offset { IntOffset(0, animatedTop.value.roundToInt()) }
+                                .fillMaxWidth()
+                                .height(bgHeight)
                                 .graphicsLayer {
-                                    val stretch = PillMotion.stretch(targetTopPx, animatedTop.value, slotHeightPx)
+                                    val stretch = PillMotion.stretch(targetTopPx, animatedTop.value, bgHeightPx)
                                     scaleY = pillScale * (1f + stretch * 0.35f)
                                     scaleX = pillScale * (1f - stretch * 0.12f)
                                     transformOrigin = TransformOrigin.Center
@@ -465,24 +437,20 @@ fun LandscapeSideNavBar(
                                 )
                                 .background(
                                     color = if (isDark) Color(0xFF333333) else Color(0xFFE5E5E5),
-                                    shape = RoundedCornerShape(percent = 50)
+                                    shape = CircleShape
                                 )
                         )
 
-                        // Vertical Tab Items
-                        Column(
-                            modifier = Modifier.fillMaxSize(),
-                            verticalArrangement = Arrangement.Center
-                        ) {
+                        Column(modifier = Modifier.fillMaxSize()) {
                             tabs.forEachIndexed { index, tab ->
-                                LandscapeVerticalTab(
-                                    tab = tab,
-                                    near = { pillNearnessVertical(animatedTop.value, indicatorHeightPx, slotHeightPx, index) },
-                                    labelAlpha = labelAlpha,
-                                    slotHeight = slotHeight,
+                                PillTab(
+                                    icon = tab.icon,
+                                    activeIcon = tab.activeIcon,
+                                    label = tab.label,
+                                    near = { pillNearnessVertical(animatedTop.value, bgHeightPx, layoutHeightPx, index) },
                                     idleColor = colors.textSecondary,
                                     activeColor = colors.textPrimary,
-                                    modifier = Modifier.fillMaxWidth()
+                                    modifier = Modifier.fillMaxWidth().height(layoutHeight)
                                 )
                             }
                         }

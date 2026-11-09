@@ -39,6 +39,7 @@ import com.elvan.udukkai.ui.screens.settings.SettingsRoute
 import com.elvan.udukkai.ui.screens.settings.SettingsNavState
 import com.elvan.udukkai.ui.screens.settings.SettingsSearchOverlay
 import com.elvan.udukkai.ui.screens.settings.SettingsSearchPill
+import com.elvan.udukkai.ui.screens.settings.SettingsSearchIcon
 import com.elvan.udukkai.ui.screens.settings.settingsEntries
 import com.elvan.udukkai.ui.screens.settings.screens.*
 import com.elvan.udukkai.textiles.ui.screens.settings.*
@@ -90,31 +91,20 @@ fun TextilesSettingsScreen(
         if (searchOpen) searchOpen = false else handleBack()
     }
 
-    Box(
+    BoxWithConstraints(
         modifier = Modifier
             .fillMaxSize()
             .background(colors.background)
     ) {
-        AnimatedContent(
-            targetState = navState,
-            modifier = Modifier
-                .fillMaxSize()
-                .background(colors.background),
-            transitionSpec = {
-                val isForward = targetState.index >= initialState.index
-                with(Transitions) {
-                    if (targetState.route == SettingsRoute.ManageProfiles) {
-                        smoothVertical(forward = true)
-                    } else if (initialState.route == SettingsRoute.ManageProfiles) {
-                        smoothVertical(forward = false)
-                    } else {
-                        smoothHorizontal(forward = isForward)
-                    }
-                }
-            },
-            label = "TextilesSettingsTransition"
-        ) { state ->
-            val route = state.route
+        // Two panes (list left, page right) when the window is wider than tall; one page at a time otherwise
+        val twoPane = maxWidth > maxHeight && maxWidth >= 600.dp
+        val rightHistory = remember { mutableStateListOf<SettingsRoute>(if (initialRoute == SettingsRoute.Hub) SettingsRoute.Merchant else initialRoute) }
+        val chromeHandled = com.elvan.udukkai.ui.components.shell.LocalElvanLandscapeChromeHandled.current
+        // Phone/tablet landscape: back and search sit on the right edge like every other page, the panes fill the rest
+        val sideChrome = twoPane && !chromeHandled && com.elvan.udukkai.core.platform.currentPlatform != com.elvan.udukkai.core.platform.PlatformType.DESKTOP
+
+        @Composable
+        fun RoutePage(route: SettingsRoute, handleBack: () -> Unit, navigateTo: (SettingsRoute) -> Unit, twoPane: Boolean, showBack: Boolean) {
             val scrollState = if (route == SettingsRoute.Hub) hubScrollState else subpageScrollStates.getOrPut(route) { LazyListState() }
             val pageTitle = when (route) {
                 SettingsRoute.Hub -> K.settings.tr()
@@ -195,10 +185,12 @@ fun TextilesSettingsScreen(
             } else {
                 ElvanSubShell(
                     title = pageTitle,
-                    onBack = handleBack,
+                    onBack = if (showBack) handleBack else null,
+                    collapsedOnly = twoPane,
+                    hideTitleSideways = twoPane && route == SettingsRoute.Hub,
                     scrollState = scrollState,
                     hasFloatingBar = route == SettingsRoute.Hub,
-                    floatingBar = { if (route == SettingsRoute.Hub) SettingsSearchPill(colors, onVoice = { voiceQuery = it; searchOpen = true }, hidden = searchActive) { voiceQuery = ""; searchOpen = true } }
+                    floatingBar = { if (route == SettingsRoute.Hub) { if (twoPane) { if (!sideChrome) SettingsSearchIcon(colors, hidden = searchActive) { voiceQuery = ""; searchOpen = true } } else SettingsSearchPill(colors, onVoice = { voiceQuery = it; searchOpen = true }, hidden = searchActive) { voiceQuery = ""; searchOpen = true } } }
                 ) {
                     when (route) {
                         SettingsRoute.Hub -> TextilesSettingsHubContent(
@@ -254,18 +246,85 @@ fun TextilesSettingsScreen(
                         SettingsRoute.Privacy -> LegalScreen(LegalPage.PRIVACY, scrollState, colors)
                         SettingsRoute.Terms -> LegalScreen(LegalPage.TERMS, scrollState, colors)
                         SettingsRoute.Licences -> LegalScreen(LegalPage.LICENCES, scrollState, colors)
-                        SettingsRoute.About -> AboutHubScreen(versionText = "Udukkai Textiles v1.0", onNavigate = { navigateTo(it) }, scrollState = scrollState, colors = colors)
+                        SettingsRoute.About -> AboutHubScreen(versionText = "Udukkai Textiles v${com.elvan.udukkai.core.platform.appVersionName()}", onNavigate = { navigateTo(it) }, scrollState = scrollState, colors = colors)
                         else -> {}
                     }
                 }
             }
+        }
+
+        if (twoPane) {
+            androidx.compose.runtime.CompositionLocalProvider(com.elvan.udukkai.ui.components.shell.LocalElvanPaneChrome provides true) {
+                Row(modifier = Modifier.fillMaxSize().then(if (sideChrome) Modifier.windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Start)).padding(end = 80.dp) else Modifier)) {
+                    Box(modifier = Modifier.weight(0.4f).fillMaxHeight()) {
+                        RoutePage(
+                            route = SettingsRoute.Hub,
+                            handleBack = onBack,
+                            navigateTo = { r ->
+                                if (r != SettingsRoute.Hub) {
+                                    rightHistory.clear(); rightHistory.add(r)
+                                }
+                            },
+                            twoPane = true,
+                            showBack = !chromeHandled && !sideChrome
+                        )
+                    }
+                    Box(modifier = Modifier.weight(0.6f).fillMaxHeight()) {
+                      androidx.compose.runtime.CompositionLocalProvider(com.elvan.udukkai.ui.components.shell.LocalElvanPaneNoBack provides sideChrome) {
+                        RoutePage(
+                            route = rightHistory.last(),
+                            handleBack = { if (rightHistory.size > 1) rightHistory.removeLast() },
+                            navigateTo = { r ->
+                                if (r != SettingsRoute.Hub && rightHistory.last() != r) rightHistory.add(r)
+                            },
+                            twoPane = true,
+                            showBack = rightHistory.size > 1 && !sideChrome
+                        )
+                      }
+                    }
+                }
+                if (sideChrome) {
+                    com.elvan.udukkai.ui.navigation.LandscapeTopActionButton(
+                        icon = com.elvan.udukkai.ui.navigation.MaterialSymbols.Rounded.ArrowBack,
+                        contentDescription = K.back.tr(),
+                        onClick = { if (rightHistory.size > 1) rightHistory.removeLast() else onBack() },
+                        colors = colors,
+                        modifier = Modifier.align(Alignment.TopEnd)
+                    )
+                    Box(Modifier.align(Alignment.BottomEnd)) {
+                        SettingsSearchIcon(colors, hidden = searchActive) { voiceQuery = ""; searchOpen = true }
+                    }
+                }
+            }
+        } else AnimatedContent(
+            targetState = navState,
+            modifier = Modifier
+                .fillMaxSize()
+                .background(colors.background),
+            transitionSpec = {
+                val isForward = targetState.index >= initialState.index
+                with(Transitions) {
+                    if (targetState.route == SettingsRoute.ManageProfiles) {
+                        smoothVertical(forward = true)
+                    } else if (initialState.route == SettingsRoute.ManageProfiles) {
+                        smoothVertical(forward = false)
+                    } else {
+                        smoothHorizontal(forward = isForward)
+                    }
+                }
+            },
+            label = "TextilesSettingsTransition"
+        ) { state ->
+            RoutePage(state.route, handleBack, { navigateTo(it) }, false, true)
         }
         SettingsSearchOverlay(
             open = searchOpen,
             entries = remember { settingsEntries(SettingsRoute.TextilesIdentity) },
             colors = colors,
             onOpen = { targetRoute ->
-                if (onNavigateOverride?.invoke(targetRoute) != true) {
+                if (twoPane) {
+                    if (targetRoute != SettingsRoute.Hub) { rightHistory.clear(); rightHistory.add(targetRoute) }
+                } else if (onNavigateOverride?.invoke(targetRoute) != true) {
                     navigateTo(targetRoute)
                 }
                 searchOpen = false
@@ -293,12 +352,12 @@ private fun TextilesSettingsHubContent(
         state = scrollState,
         modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(
-            bottom = Dimens.SubpageContentPaddingBottom + 72.dp
+            bottom = Dimens.SubpageContentPaddingBottom + (if (com.elvan.udukkai.ui.components.shell.LocalElvanPaneChrome.current) 0.dp else 72.dp)
         ),
         verticalArrangement = Arrangement.spacedBy(Dimens.SectionSpacing)
     ) {
         item(key = "shell_top_spacer") {
-            Spacer(modifier = Modifier.height(LocalElvanTopSpacerHeight.current + 6.dp)) // keeps the top where it was while the gaps below are tighter
+            Spacer(modifier = Modifier.height(LocalElvanTopSpacerHeight.current + (if (com.elvan.udukkai.ui.components.shell.LocalElvanPaneChrome.current) (-30).dp else 6.dp))) // keeps the top where it was while the gaps below are tighter
         }
 
         // Section 0: Textiles Company Pill

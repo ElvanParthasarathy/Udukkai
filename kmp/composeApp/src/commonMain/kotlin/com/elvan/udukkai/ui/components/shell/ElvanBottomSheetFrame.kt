@@ -1,5 +1,7 @@
 package com.elvan.udukkai.ui.components.shell
 
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.CubicBezierEasing
 import androidx.compose.animation.core.animateFloatAsState
@@ -117,27 +119,28 @@ fun ElvanBottomSheetFrame(
             // What is left under the handle and above the navigation bar, within the picker's 460dp
             val maxBodyHeight = (maxHeight - 48.dp - 24.dp).coerceIn(120.dp, 460.dp)
 
-            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.BottomCenter) {
+            // Sideways the sheet is the same sheet turned to the right edge: full height, slim, scrolling inside
+            val side = maxWidth > maxHeight && com.elvan.udukkai.core.platform.currentPlatform != com.elvan.udukkai.core.platform.PlatformType.DESKTOP
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = if (side) Alignment.CenterEnd else Alignment.BottomCenter) {
                 Surface(
-                    shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
+                    shape = if (side) RoundedCornerShape(topStart = 28.dp, bottomStart = 28.dp) else RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
                     color = sheetBg,
                     contentColor = colors.textPrimary,
                     shadowElevation = 16.dp,
-                    modifier = modifier
-                        .widthIn(max = 560.dp)
-                        .fillMaxWidth()
-                        .offset { IntOffset(0, (sheetOffsetY.value + dragOffsetY).roundToInt()) }
+                    modifier = (if (side) modifier.width(340.dp).fillMaxHeight().offset { IntOffset((sheetOffsetY.value + dragOffsetY).roundToInt(), 0) }
+                        else modifier.widthIn(max = 560.dp).fillMaxWidth().offset { IntOffset(0, (sheetOffsetY.value + dragOffsetY).roundToInt()) })
                         // A tap inside the sheet does not close it
                         .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null) { }
                 ) {
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
+                            .then(if (side) Modifier.fillMaxHeight().padding(top = 8.dp) else Modifier)
                             .navigationBarsPadding()
                             .padding(bottom = 16.dp)
                     ) {
                         // The handle: drag it down to close
-                        Box(
+                        if (side) Spacer(Modifier.height(16.dp)) else Box(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .draggable(

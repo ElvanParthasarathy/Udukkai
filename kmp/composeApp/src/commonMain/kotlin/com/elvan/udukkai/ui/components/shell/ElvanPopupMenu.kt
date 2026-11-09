@@ -96,6 +96,7 @@ fun ElvanPopupMenu(
     )
 
     val host = LocalMenuHost.current
+    val sideways = com.elvan.udukkai.ui.components.shell.LocalElvanSideBar.current && upward
     val dismiss = {
         ElvanMenuState.isMenuOpen = false
         onDismissRequest()
@@ -170,9 +171,11 @@ fun ElvanPopupMenu(
                 layout(constraints.maxWidth, constraints.maxHeight) {
                     // Opening up: lined up with the button's icon, and above the bar with its usual gap (the slot sits 4dp inside the pill)
                     val corner = 24.dp.toPx()
-                    val right = if (upward) anchor.center.x - origin.x + corner else anchor.right - origin.x + 8f
+                    // From the side column the menu opens to the left of the button, its bottom level with the button's
+                    val right = if (sideways) anchor.left - origin.x - 8.dp.toPx() else if (upward) anchor.center.x - origin.x + corner else anchor.right - origin.x + 8f
                     val x = (right - placeable.width).toInt().coerceIn(0, (constraints.maxWidth - placeable.width).coerceAtLeast(0))
-                    val y = if (upward) (anchor.top - origin.y - 4.dp.toPx() - 28f - placeable.height).toInt()
+                    val y = if (sideways) (anchor.bottom - origin.y - placeable.height).toInt()
+                            else if (upward) (anchor.top - origin.y - 4.dp.toPx() - 28f - placeable.height).toInt()
                             else (anchor.top - origin.y - 16f).toInt()
                     placeable.place(x, y.coerceIn(0, (constraints.maxHeight - placeable.height).coerceAtLeast(0)))
                 }

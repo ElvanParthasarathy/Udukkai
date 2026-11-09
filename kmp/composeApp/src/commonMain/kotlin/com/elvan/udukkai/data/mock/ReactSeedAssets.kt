@@ -1,13 +1,15 @@
 package com.elvan.udukkai.data.mock
 
 import com.elvan.udukkai.core.utils.MiniJson
+import com.elvan.udukkai.data.model.CustomerModel
+import com.elvan.udukkai.data.model.ItemModel
 import com.elvan.udukkai.data.settings.BusinessProfile
 import migrate.composeapp.generated.resources.Res
 import org.jetbrains.compose.resources.ExperimentalResourceApi
 
 /**
- * Loads the React app's company images and print settings that
- * kmp/tools/export_react_seed.py exported into composeResources/files/seed/.
+ * Turns the generated seed data ([MockData.kt]) into app models, loading the company images that
+ * kmp/tools/import_rtdb_export.py wrote into composeResources/files/seed/.
  */
 @OptIn(ExperimentalResourceApi::class)
 object ReactSeedAssets {
@@ -25,15 +27,26 @@ object ReactSeedAssets {
         return readText("${value.removePrefix(SEED_PREFIX)}.txt").orEmpty()
     }
 
-    /** Fills seed image references and React print settings into [profile]. */
-    suspend fun apply(profile: BusinessProfile): BusinessProfile {
-        val companies = MiniJson.parseObject(readText("react_companies.json"))
-        val print = (companies[profile.shortName] as? Map<*, *>)?.get("print")
-        return profile.copy(
-            logo = resolveImage(profile.logo),
-            wideLogo = resolveImage(profile.wideLogo),
-            signature = resolveImage(profile.signature),
-            printSettingsJson = if (print != null) MiniJson.stringify(print) else profile.printSettingsJson
-        )
-    }
+    suspend fun profileOf(s: SeedProfile): BusinessProfile = BusinessProfile(
+        businessName = s.businessName.toMutableMap(),
+        shortName = s.shortName,
+        phone1 = s.phone1, phone2 = s.phone2, email = s.email, gstin = s.gstin, pan = s.pan,
+        address = s.address.toMutableMap(), city = s.city.toMutableMap(), district = s.district.toMutableMap(),
+        state = s.state.toMutableMap(), country = s.country.toMutableMap(), pinCode = s.pinCode,
+        bankName = s.bankName.toMutableMap(), branch = s.branch.toMutableMap(),
+        accountNumber = s.accountNumber, ifsc = s.ifsc,
+        logo = resolveImage(s.logo), wideLogo = resolveImage(s.wideLogo), signature = resolveImage(s.signature),
+        headerLayout = s.headerLayout, signatoryName = s.signatoryName,
+        tagline = s.tagline.toMutableMap(), themeColor = s.themeColor,
+        printSettingsJson = MiniJson.stringify(s.printSettings)
+    )
+
+    fun itemOf(s: SeedItem) = ItemModel(
+        name = s.name, hsnCode = s.hsnCode, price = s.price, taxRate = s.taxRate, quantityType = s.quantityType, unit = s.unit
+    )
+
+    fun customerOf(s: SeedCustomer) = CustomerModel(
+        name = s.name, address = s.address, city = s.city, district = s.district, state = s.state, country = s.country,
+        pinCode = s.pinCode, gstin = s.gstin, email = s.email, phone = s.phone
+    )
 }

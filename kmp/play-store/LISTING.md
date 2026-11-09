@@ -10,7 +10,7 @@ Play Console forms before sending. Nothing here has been sent to Google.
 | Textiles | `com.elvan.udukkai.textiles` | Udukkai Textiles |
 | Factory | `com.elvan.udukkai.factory` | Udukkai Factory |
 
-Release bundles: `kmp/release-bundles/udukkai-textiles-2.aab`, `udukkai-factory-2.aab` (version code 2, name 1.0.0).
+Build the Play bundles with `bundleTextilesPlayRelease` / `bundleFactoryPlayRelease` (see `README.md`).
 The signing key (`udukkai-release.jks`) and `keystore.properties` are ignored by git: keep a backup of them elsewhere.
 Losing the key means no more updates for the same listing.
 
@@ -78,13 +78,7 @@ Tamil:
 
 ## Assets Play asks for
 
-| Asset | Size | Status |
-|---|---|---|
-| App icon | 512 x 512 PNG | exists: `composeApp/src/androidMain/res/playstore_icon.png` (512 x 512, checked) |
-| Feature graphic | 1024 x 500 PNG or JPG | drafts made: `feature-graphic-textiles.png`, `feature-graphic-factory.png` (plain: icon, name, one line) |
-| Phone screenshots | 2 to 8, 16:9 or 9:16, 320 to 3840 px | missing (take them from the phone; use a test company, not real data) |
-| Privacy policy | a public web address | missing: the in-app page exists, but Play needs the same text on a public URL |
-| Short and full descriptions | as above | drafts above |
+All of them are in this folder: see `README.md` (icons, feature graphics and screenshots per app, privacy policy, form answers).
 
 ## Data safety form: draft answers (check each one in the Console)
 
@@ -97,7 +91,7 @@ Tamil:
 
 ## Things to settle before publishing
 
-1. **"All files access" permission (`MANAGE_EXTERNAL_STORAGE`).** Play only allows it for a small set of app types and asks for a declaration with a video. The app uses it to save bill PDFs and backups under `Documents`. Either justify it in the Console, or move PDFs and backups to the system file chooser (Storage Access Framework), which needs no special permission. This is a code change.
+1. **Storage.** The manifest asks only for the old read/write storage permissions on Android 12 and older, so no "All files access" declaration is needed (checked against `AndroidManifest.xml`).
 2. **`allowBackup="true"`.** Android may copy the app database to the user's Google Drive backup. Decide whether that is wanted; it is also how data can come back on a new phone.
 3. **Only four approved Google accounts can sign in** (`AllowedAccounts`). A public listing means nobody else can use the app. Decide whether the listing is public, or closed testing with those accounts.
 4. **Legal text.** The privacy policy and terms inside the app are drafts. Have them checked and add a contact address.

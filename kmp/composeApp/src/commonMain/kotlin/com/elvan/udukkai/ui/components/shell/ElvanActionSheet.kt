@@ -1,5 +1,6 @@
 package com.elvan.udukkai.ui.components.shell
 
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.ui.draw.clip
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.CubicBezierEasing
@@ -136,7 +137,9 @@ fun ElvanActionSheet(
                     if (dismissible) dismiss()
                 },
         ) {
-            val isLandscape = maxWidth > maxHeight && !isDesktop
+            // Sideways it is still the bottom-up sheet of the portrait, only narrower
+            val isWide = maxWidth > maxHeight && !isDesktop
+            val isLandscape = false
             Box(
                 modifier = Modifier.fillMaxSize(),
                 contentAlignment = when {
@@ -145,7 +148,7 @@ fun ElvanActionSheet(
                     else -> Alignment.BottomCenter
                 }
             ) {
-            val cardShape = RoundedCornerShape(if (pickerCard) 26.dp else if (isLandscape) 24.dp else 32.dp)
+            val cardShape = if (isLandscape) RoundedCornerShape(topStart = 28.dp, bottomStart = 28.dp) else RoundedCornerShape(if (pickerCard) 26.dp else 32.dp)
             val cardModifier = when {
                 isDesktop -> {
                     modifier
@@ -161,10 +164,8 @@ fun ElvanActionSheet(
                 isLandscape -> {
                     // Adaptive Side Sheet for Landscape: Right-side anchored, max-width ~420.dp
                     modifier
-                        .widthIn(max = 420.dp)
-                        .fillMaxWidth()
-                        .windowInsetsPadding(WindowInsets.navigationBars.only(WindowInsetsSides.End + WindowInsetsSides.Bottom))
-                        .padding(end = 24.dp, top = 16.dp, bottom = 16.dp)
+                        .width(340.dp)
+                        .fillMaxHeight()
                         .offset { IntOffset(sheetOffsetY.value.roundToInt(), 0) }
                         .clickable(
                             interactionSource = remember { MutableInteractionSource() },
@@ -173,6 +174,7 @@ fun ElvanActionSheet(
                 }
                 else -> {
                     modifier
+                        .then(if (isWide) Modifier.widthIn(max = 440.dp) else Modifier)
                         .fillMaxWidth()
                         .navigationBarsPadding()
                         .imePadding()
@@ -194,7 +196,9 @@ fun ElvanActionSheet(
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
+                        .then(if (isLandscape) Modifier.fillMaxHeight().verticalScroll(androidx.compose.foundation.rememberScrollState()).statusBarsPadding().navigationBarsPadding() else Modifier)
                         .then(if (pickerCard) Modifier else Modifier.padding(start = 20.dp, end = 20.dp, top = 24.dp, bottom = 16.dp)),
+                    verticalArrangement = if (isLandscape) Arrangement.Center else Arrangement.Top,
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     if (pickerCard) {

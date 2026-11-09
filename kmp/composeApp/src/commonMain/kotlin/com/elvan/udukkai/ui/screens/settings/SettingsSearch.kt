@@ -146,6 +146,18 @@ private fun Modifier.floatingPill(colors: ShellColors, height: Dp = PILL_CLOSED_
     .border(width = 0.5.dp, color = colors.floatingBorder.copy(alpha = if (colors.isDark) 0.15f else 0.6f), shape = CircleShape)
 
 /** The search pill kept at the bottom of the settings page: comfortable, elegant floating search pill. */
+/** The search pill as a single round icon, for the narrow list pane of the sideways settings. */
+@Composable
+fun SettingsSearchIcon(colors: ShellColors, hidden: Boolean = false, atStart: Boolean = false, onClick: () -> Unit) {
+    Row(Modifier.fillMaxWidth().navigationBarsPaddingIfMobile().padding(start = 12.dp, end = 12.dp, bottom = 12.dp), horizontalArrangement = if (atStart) Arrangement.Start else Arrangement.End) {
+        Box(
+            Modifier.alpha(if (hidden) 0f else 1f).width(60.dp).floatingPill(colors, height = 60.dp).clip(CircleShape)
+                .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null, onClick = onClick),
+            contentAlignment = Alignment.Center
+        ) { Icon(MaterialSymbols.Rounded.Search, K.searchWord.tr(), tint = colors.textPrimary, modifier = Modifier.size(22.dp)) }
+    }
+}
+
 @Composable
 fun SettingsSearchPill(colors: ShellColors, onVoice: ((String) -> Unit)? = null, hidden: Boolean = false, onClick: () -> Unit) {
     val ff = LocalAppFontFamily.current

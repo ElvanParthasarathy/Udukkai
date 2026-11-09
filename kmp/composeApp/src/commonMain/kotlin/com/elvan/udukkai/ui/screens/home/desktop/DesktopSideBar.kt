@@ -73,14 +73,14 @@ fun DesktopSideBar(
             Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .verticalScroll(rememberScrollState())
+                    .windowInsetsPadding(androidx.compose.foundation.layout.WindowInsets.systemBars.only(androidx.compose.foundation.layout.WindowInsetsSides.Vertical))
                     .padding(vertical = if (isMobileLandscape) 8.dp else 16.dp, horizontal = if (isCollapsed) 6.dp else 14.dp)
             ) {
             // ── 1. Top Brand Header ──
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(48.dp),
+                    .height(if (isMobileLandscape) 36.dp else 48.dp),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = if (isCollapsed) Arrangement.Center else Arrangement.SpaceBetween
             ) {
@@ -131,13 +131,14 @@ fun DesktopSideBar(
                 }
             }
 
-            Spacer(modifier = Modifier.height(28.dp))
+            Spacer(modifier = Modifier.height(if (isMobileLandscape) 8.dp else 28.dp))
 
             // ── 2. Navigation Items (Apple HIG macOS Sidebar Style) ──
             Column(
                 modifier = Modifier
                     .weight(1f)
-                    .fillMaxWidth(),
+                    .fillMaxWidth()
+                    .verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.spacedBy(4.dp)
             ) {
                 NavTab.entries.forEach { tab ->
@@ -150,7 +151,7 @@ fun DesktopSideBar(
                     Surface(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(40.dp)
+                            .height(if (isMobileLandscape) 34.dp else 40.dp)
                             .clip(RoundedCornerShape(10.dp))
                             .clickable { onTabSelected(tab) },
                         shape = RoundedCornerShape(10.dp),

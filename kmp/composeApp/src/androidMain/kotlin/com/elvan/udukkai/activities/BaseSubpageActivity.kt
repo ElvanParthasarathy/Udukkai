@@ -15,6 +15,7 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.zIndex
 import androidx.fragment.app.FragmentActivity
 import com.elvan.udukkai.BuildConfig
 import com.elvan.udukkai.core.platform.AppContext
@@ -51,7 +52,6 @@ abstract class BaseSubpageActivity : FragmentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        requestedOrientation = android.content.pm.ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
         AppContext.context = applicationContext
         ScreenLockReceiver.register(applicationContext)
         CurrentActivity.activity = this
@@ -138,6 +138,12 @@ abstract class BaseSubpageActivity : FragmentActivity() {
                             }
                             ElvanBottomSheetHost(bottomSheetController)
                             ElvanSnackbarHost(colors = colors)
+                            // Debug builds only: the same floating dev pill as on the home screen, on every screen
+                            if (BuildConfig.DEBUG) {
+                                Box(modifier = Modifier.fillMaxSize().zIndex(999f)) {
+                                    if (isFactory) com.elvan.udukkai.factory.dev.FactoryDevMenu() else com.elvan.udukkai.textiles.dev.TextilesDevMenu()
+                                }
+                            }
                         }
                     }
                 }

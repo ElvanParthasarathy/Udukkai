@@ -152,7 +152,15 @@ android {
             // Use the official release keystore if present, fallback to debug key
             signingConfig = signingConfigs.findByName("release") ?: signingConfigs.getByName("debug")
         }
+        // The Google Play build: the same as release, but without the GitHub self-updater (Play updates the app). Its
+        // manifest is src/androidPlayRelease/AndroidManifest.xml. Build it with bundleTextilesPlayRelease / bundleFactoryPlayRelease.
+        create("playRelease") {
+            initWith(getByName("release"))
+            matchingFallbacks += listOf("release")
+            buildConfigField("Boolean", "IS_PLAY_STORE_BUILD", "true")
+        }
     }
+    sourceSets.getByName("playRelease").manifest.srcFile("src/androidPlayRelease/AndroidManifest.xml")
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_21
         targetCompatibility = JavaVersion.VERSION_21

@@ -55,6 +55,9 @@ data class ElvanFloatingAction(
     val menu: (@Composable () -> Unit)? = null
 )
 
+/** True in phone/tablet landscape: the bar becomes a slim icon column on the trailing edge. */
+val LocalElvanSideBar = androidx.compose.runtime.compositionLocalOf { false }
+
 /**
  * Universal Floating Action Bar: the floating pill of the view pages, editors and selection.
  * Laid out like the bottom navigation bar: the pill is as wide as its buttons, and each button is as wide as its
@@ -77,12 +80,78 @@ fun ElvanFloatingActionBar(
     }
 
     var moreOpen by remember { mutableStateOf(false) }
-    val overflow = if (actions.size > MAX_BAR_ACTIONS) actions.drop(MAX_BAR_ACTIONS - 1) else emptyList()
-    val shown = if (overflow.isEmpty()) actions else actions.take(MAX_BAR_ACTIONS - 1) + ElvanFloatingAction(
+    val maxActions = if (LocalElvanSideBar.current) MAX_SIDE_ACTIONS else MAX_BAR_ACTIONS
+    val overflow = if (actions.size > maxActions) actions.drop(maxActions - 1) else emptyList()
+    val shown = if (overflow.isEmpty()) actions else actions.take(maxActions - 1) + ElvanFloatingAction(
         label = K.more.tr(),
         icon = MaterialSymbols.Rounded.MoreVert,
         onClick = { moreOpen = true }
     )
+
+    if (LocalElvanSideBar.current) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .windowInsetsPadding(androidx.compose.foundation.layout.WindowInsets.safeDrawing.only(androidx.compose.foundation.layout.WindowInsetsSides.Horizontal + androidx.compose.foundation.layout.WindowInsetsSides.Bottom))
+                .padding(end = 12.dp, bottom = 12.dp),
+            contentAlignment = Alignment.BottomEnd
+        ) {
+            Column(
+                modifier = Modifier
+                    .width(60.dp)
+                    .cssShadow(color = Color.Black, alpha = if (isDark) 0.25f else 0.06f, blurRadius = 16.dp, offsetY = 4.dp)
+                    .frostedGlass(CircleShape, colors)
+                    .border(0.5.dp, colors.floatingBorder.copy(alpha = if (isDark) 0.15f else 0.6f), CircleShape)
+                    .padding(vertical = 4.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                shown.forEachIndexed { index, action ->
+                    val itemColor = action.customColor
+                        ?: if (action.isDestructive) colors.danger
+                        else if (action.enabled) colors.textPrimary
+                        else colors.textSecondary.copy(alpha = 0.35f)
+                    Box(
+                        modifier = Modifier
+                            .size(width = 60.dp, height = 56.dp)
+                            .clip(CircleShape)
+                            .clickable(
+                                interactionSource = remember { MutableInteractionSource() },
+                                indication = ripple(bounded = true),
+                                enabled = action.enabled && !action.isLoading,
+                                onClick = action.onClick
+                            ),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
+                            if (action.isLoading) {
+                                ExpressiveLoadingIndicator(modifier = Modifier.size(20.dp), color = itemColor, strokeWidth = 2.dp)
+                            } else {
+                                Icon(imageVector = action.icon, contentDescription = action.label, tint = itemColor, modifier = Modifier.size(20.dp))
+                            }
+                            Text(
+                                text = action.label.preventBrokenLigatures(),
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                                style = TextStyle(fontFamily = ff, fontSize = 8.5.sp, lineHeight = 10.sp, fontWeight = FontWeight.Medium, color = itemColor, textAlign = TextAlign.Center),
+                                modifier = Modifier.padding(horizontal = 2.dp)
+                            )
+                        }
+                        action.menu?.invoke()
+                        if (overflow.isNotEmpty() && index == shown.lastIndex) {
+                            ElvanPopupMenu(
+                                expanded = moreOpen,
+                                onDismissRequest = { moreOpen = false },
+                                colors = colors,
+                                upward = true,
+                                items = overflow.filter { it.enabled }.map { a -> ElvanPopupMenuItem(a.label, a.icon, { moreOpen = false; a.onClick() }) }
+                            )
+                        }
+                    }
+                }
+            }
+        }
+        return
+    }
 
     Box(
         modifier = modifier
@@ -181,3 +250,6 @@ fun ElvanFloatingActionBar(
 
 /** The bar shows at most this many buttons; the rest go into More. */
 private const val MAX_BAR_ACTIONS = 5
+
+/** The landscape column is shorter, so it shows four. */
+private const val MAX_SIDE_ACTIONS = 4

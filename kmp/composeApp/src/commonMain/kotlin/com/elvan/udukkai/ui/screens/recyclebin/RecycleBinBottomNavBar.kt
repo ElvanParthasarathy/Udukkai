@@ -326,3 +326,25 @@ fun RecycleBinBottomNavBar(
         }
     }
 }
+
+
+/** The recycle bin's tabs: the bottom pill upright, the side rail when the screen is wider than tall. */
+@Composable
+fun RecycleBinTabs(
+    selectedTab: RecycleBinTab,
+    onTabSelected: (RecycleBinTab) -> Unit,
+    hideContent: Boolean = false
+) {
+    if (com.elvan.udukkai.ui.components.shell.LocalElvanSideBar.current) {
+        val items = RecycleBinTab.entries.map { com.elvan.udukkai.ui.navigation.SideRailItem(it.icon, it.activeIcon, it.getLocalizedLabel()) }
+        com.elvan.udukkai.ui.navigation.SideTabRail(
+            items = items,
+            selectedIndex = selectedTab.ordinal,
+            onSelected = { i, _ -> onTabSelected(RecycleBinTab.entries[i]) },
+            hideContent = hideContent,
+            modifier = Modifier.fillMaxSize()
+        )
+    } else {
+        RecycleBinBottomNavBar(selectedTab = selectedTab, onTabSelected = onTabSelected, hideContent = hideContent)
+    }
+}

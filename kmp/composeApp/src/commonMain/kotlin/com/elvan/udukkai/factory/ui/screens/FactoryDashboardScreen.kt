@@ -65,7 +65,7 @@ fun FactoryDashboardScreen(
         ) {
             // Collapsible Top Header spacer
             item(key = "home_top_spacer") {
-                Spacer(modifier = Modifier.height(LocalElvanTopSpacerHeight.current))
+                Spacer(modifier = Modifier.height((LocalElvanTopSpacerHeight.current - (if (com.elvan.udukkai.ui.components.shell.LocalElvanSideBar.current) 34.dp else 0.dp)).coerceAtLeast(0.dp)))
             }
 
             // 1. Greeting Vanakkam Pill
@@ -127,7 +127,8 @@ fun FactoryDashboardScreen(
                             .padding(horizontal = Dimens.ContentPadding),
                         horizontalArrangement = Arrangement.spacedBy(Dimens.ItemSpacing)
                     ) {
-                        ElvanStatsCard(
+
+ElvanStatsCard(
                             icon = MaterialSymbols.Rounded.InvoiceFill,
                             label = K.totalInvoices.tr(),
                             value = "$activeCompanyInvoiceCount",
@@ -139,7 +140,7 @@ fun FactoryDashboardScreen(
                             onClick = onSeeAll
                         )
 
-                        ElvanStatsCard(
+                                                ElvanStatsCard(
                             icon = MaterialSymbols.Rounded.CurrencyRupeeCircle,
                             accentColor = colors.receiptColor,
                             gradientColors = colors.receiptGradient,
@@ -169,7 +170,7 @@ fun FactoryDashboardScreen(
                     }
                 } else {
                     if (isLandscape) {
-                        val pairs = recentBills.chunked(2)
+                        val pairs = FactoryInvoiceRepository.activeCompanyInvoices.take(6).chunked(2) // landscape shows a sixth so the two columns end level
                         itemsIndexed(
                             items = pairs,
                             key = { _, pair -> "recent_pair_${pair.first().id}" }

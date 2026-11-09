@@ -39,6 +39,7 @@ import com.elvan.udukkai.theme.preventBrokenLigatures
 import com.elvan.udukkai.theme.rememberShellColors
 import com.elvan.udukkai.ui.components.shell.ElvanActionSheet
 import com.elvan.udukkai.ui.components.shell.ElvanShell
+import com.elvan.udukkai.ui.components.shell.elvanTopBandRow
 import com.elvan.udukkai.ui.components.shell.ElvanSnackbar
 import com.elvan.udukkai.ui.components.shell.ElvanTopBarIconButton
 import com.elvan.udukkai.ui.components.shell.LocalElvanTopSpacerHeight
@@ -310,10 +311,10 @@ fun TextilesRecycleBinScreen(
                         )
                     } else {
                         Box(
-                            contentAlignment = Alignment.Center,
-                            modifier = Modifier.fillMaxWidth()
+                            contentAlignment = if (com.elvan.udukkai.ui.components.shell.LocalElvanSideBar.current) Alignment.BottomEnd else Alignment.Center,
+                            modifier = if (com.elvan.udukkai.ui.components.shell.LocalElvanSideBar.current) Modifier.fillMaxSize() else Modifier.fillMaxWidth()
                         ) {
-                            RecycleBinBottomNavBar(
+                            com.elvan.udukkai.ui.screens.recyclebin.RecycleBinTabs(
                                 selectedTab = selectedTab,
                                 onTabSelected = { tab ->
                                     if (selectedTab != tab) {
@@ -325,6 +326,7 @@ fun TextilesRecycleBinScreen(
 
                             ElvanSearchBar(
                                 visible = isSearchActive,
+                                modifier = if (com.elvan.udukkai.ui.components.shell.LocalElvanSideBar.current) Modifier.padding(start = 72.dp, end = 80.dp) else Modifier,
                                 query = searchQuery,
                                 onQueryChange = { searchQuery = it },
                                 onClose = {
@@ -357,7 +359,7 @@ fun TextilesRecycleBinScreen(
                             contentAlignment = Alignment.Center,
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(bottom = 8.dp)
+                                .padding(bottom = 8.dp).elvanTopBandRow(com.elvan.udukkai.ui.components.shell.LocalElvanSideBar.current)
                         ) {
                             ElvanPillShifter(
                                 items = shifterItems,

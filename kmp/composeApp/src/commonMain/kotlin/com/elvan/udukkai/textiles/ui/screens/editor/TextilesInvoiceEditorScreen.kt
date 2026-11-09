@@ -23,6 +23,8 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import com.elvan.udukkai.ui.screens.editor.ElvanEditorList
+import com.elvan.udukkai.ui.screens.editor.ElvanFieldGrid
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -520,7 +522,8 @@ fun TextilesInvoiceEditorScreen(
     ) {
         Box(modifier = Modifier.fillMaxSize()) {
             CompositionLocalProvider(LocalEditorAccentColor provides colors.invoiceColor) {
-                LazyColumn(
+                ElvanEditorList(
+                    pairSections = false,
                     state = scrollState,
                     modifier = Modifier.fillMaxSize(),
                     contentPadding = PaddingValues(
@@ -610,10 +613,7 @@ fun TextilesInvoiceEditorScreen(
                 item(key = "invoice_details_section") {
                     ElvanEditorDisabledOverlay(disabled = !isCustomerSelected) {
                         ElvanEditorSection(index = 1, title = K.invoiceDetails.tr()) {
-                        Column(
-                            modifier = Modifier.fillMaxWidth(),
-                            verticalArrangement = Arrangement.spacedBy(24.dp)
-                        ) {
+                        ElvanFieldGrid(spacing = 24.dp) {
                             val profilePrefix = computePrefix(selectedProfile) + "-"
                             val legacyPrefix = if (invoiceType == "proforma") com.elvan.udukkai.core.finance.BillNumbering.proformaBase(selectedProfile.shortName) + "-" else profilePrefix
                             val currentDocPrefix = legacyPrefix
