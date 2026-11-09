@@ -990,7 +990,7 @@ androidx.compose.animation.AnimatedContent(
                         (fadeIn(tween(180)) + scaleIn(initialScale = 0.85f, animationSpec = tween(180)))
                             .togetherWith(fadeOut(tween(140)) + scaleOut(targetScale = 0.85f, animationSpec = tween(140)))
                     },
-                    modifier = Modifier.align(Alignment.TopEnd),
+                    modifier = Modifier.align(Alignment.TopStart),
                     label = "TopActionButtonTransition"
                 ) { hasSubpage ->
                     if (hasSubpage) {
@@ -998,7 +998,8 @@ androidx.compose.animation.AnimatedContent(
                             icon = MaterialSymbols.Rounded.ArrowBack,
                             contentDescription = K.back.tr(),
                             onClick = popSubpage,
-                            colors = colors
+                            colors = colors,
+                            alignStart = true
                         )
                     } else {
                         LandscapeTopActionButton(
@@ -1015,7 +1016,8 @@ androidx.compose.animation.AnimatedContent(
                                     }
                                 }
                             },
-                            colors = colors
+                            colors = colors,
+                            alignStart = true
                         )
                     }
                 }
@@ -1040,7 +1042,7 @@ androidx.compose.animation.AnimatedContent(
                                 selectedTab = tab
                             }
                         },
-                        modifier = Modifier.align(Alignment.CenterStart)
+                        modifier = Modifier.align(Alignment.BottomStart).windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Bottom)).padding(bottom = 8.dp)
                     )
                 }
             }

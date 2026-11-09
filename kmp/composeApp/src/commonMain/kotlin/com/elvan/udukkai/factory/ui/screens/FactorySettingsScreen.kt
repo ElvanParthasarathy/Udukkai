@@ -52,6 +52,7 @@ fun FactorySettingsScreen(
 ) {
     var navState by remember { mutableStateOf(SettingsNavState(initialRoute, 0)) }
     var searchOpen by remember { mutableStateOf(false) }
+    var landscapeQuery by remember { mutableStateOf("") }
     var voiceQuery by remember { mutableStateOf("") }
     var searchActive by remember { mutableStateOf(false) }
     val colors = rememberShellColors()
@@ -257,19 +258,40 @@ fun FactorySettingsScreen(
             androidx.compose.runtime.CompositionLocalProvider(com.elvan.udukkai.ui.components.shell.LocalElvanPaneChrome provides true) {
                 Row(modifier = Modifier.fillMaxSize().then(if (sideChrome) Modifier.windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal)).padding(end = 80.dp) else Modifier)) {
                     Box(modifier = Modifier.weight(0.4f).fillMaxHeight()) {
-                        RoutePage(
-                            route = SettingsRoute.Hub,
-                            handleBack = onBack,
-                            navigateTo = { r ->
-                                if (r != SettingsRoute.Hub) {
-                                    rightHistory.clear(); rightHistory.add(r)
-                                }
-                            },
-                            twoPane = true,
-                            showBack = !chromeHandled && !sideChrome
-                        )
+                        Column(Modifier.fillMaxSize()) {
+                            com.elvan.udukkai.ui.screens.settings.SettingsPaneSearchField(
+                                query = landscapeQuery,
+                                onQuery = { landscapeQuery = it; searchOpen = true },
+                                onFocus = { searchOpen = true },
+                                colors = colors
+                            )
+                            Box(Modifier.weight(1f)) {
+                                RoutePage(
+                                    route = SettingsRoute.Hub,
+                                    handleBack = onBack,
+                                    navigateTo = { r ->
+                                        if (r != SettingsRoute.Hub) {
+                                            searchOpen = false; rightHistory.clear(); rightHistory.add(r)
+                                        }
+                                    },
+                                    twoPane = true,
+                                    showBack = !chromeHandled && !sideChrome
+                                )
+                            }
+                        }
                     }
                     Box(modifier = Modifier.weight(0.6f).fillMaxHeight()) {
+                      if (searchOpen) {
+                          com.elvan.udukkai.ui.screens.settings.SettingsPaneSearchResults(
+                              query = landscapeQuery,
+                              entries = remember { settingsEntries(SettingsRoute.FactoryIdentity) },
+                              colors = colors,
+                              onOpen = { route ->
+                                  com.elvan.udukkai.ui.screens.settings.RecentSettingSearches.add(landscapeQuery)
+                                  rightHistory.clear(); rightHistory.add(route); searchOpen = false
+                              }
+                          )
+                      } else {
                       androidx.compose.runtime.CompositionLocalProvider(com.elvan.udukkai.ui.components.shell.LocalElvanPaneNoBack provides sideChrome) {
                         RoutePage(
                             route = rightHistory.last(),
@@ -281,6 +303,7 @@ fun FactorySettingsScreen(
                             showBack = rightHistory.size > 1 && !sideChrome
                         )
                       }
+                      }
                     }
                 }
                 if (sideChrome && !searchOpen) {
@@ -291,9 +314,6 @@ fun FactorySettingsScreen(
                         colors = colors,
                         modifier = Modifier.align(Alignment.TopEnd)
                     )
-                    Box(Modifier.align(Alignment.BottomEnd)) {
-                        SettingsSearchIcon(colors, hidden = searchActive) { voiceQuery = ""; searchOpen = true }
-                    }
                 }
             }
         } else AnimatedContent(
@@ -318,7 +338,7 @@ fun FactorySettingsScreen(
             RoutePage(state.route, handleBack, { navigateTo(it) }, false, true)
         }
         SettingsSearchOverlay(
-            open = searchOpen,
+            open = searchOpen && !twoPane,
             entries = remember { settingsEntries(SettingsRoute.FactoryIdentity) },
             colors = colors,
             onOpen = { targetRoute ->
@@ -331,7 +351,8 @@ fun FactorySettingsScreen(
             },
             onClose = { searchOpen = false },
             initialQuery = voiceQuery,
-            onActive = { searchActive = it }
+            onActive = { searchActive = it },
+            modifier = if (twoPane) Modifier.align(Alignment.CenterEnd).fillMaxWidth(0.6f).then(if (sideChrome) Modifier.padding(end = 80.dp) else Modifier) else Modifier
         )
     }
 }
@@ -345,6 +366,7 @@ private fun FactorySettingsHubContent(
     val ff = LocalAppFontFamily.current
     val profile = FactoryProfileRepository.profile
 
+    val landscape = com.elvan.udukkai.ui.components.shell.LocalElvanPaneChrome.current
     val defaultFirmTitle = K.udukkaiFactory.tr()
     val profileName = resolveCompanyItemLabel(profile).ifEmpty { defaultFirmTitle }
 
@@ -360,19 +382,21 @@ private fun FactorySettingsHubContent(
             Spacer(modifier = Modifier.height(LocalElvanTopSpacerHeight.current + (if (com.elvan.udukkai.ui.components.shell.LocalElvanPaneChrome.current) (-30).dp else 6.dp))) // keeps the top where it was while the gaps below are tighter
         }
 
-        // Section 0: Factory Company Pill
+        if (!landscape) {
+        // Section 0: Company card in landscape; compact pill in portrait.
         item(key = "factory_company_pill") {
+            val companyShape = RoundedCornerShape(if (com.elvan.udukkai.ui.components.shell.LocalElvanPaneChrome.current) 20.dp else 999.dp)
             ElvanSectionContainer {
                 Surface(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clip(RoundedCornerShape(999.dp))
+                        .clip(companyShape)
                         .clickable(
                             interactionSource = remember { MutableInteractionSource() },
                             indication = ShellDefaults.ripple(colors, bounded = true),
                             onClick = { onNavigate(SettingsRoute.Merchant) }
                         ),
-                    shape = RoundedCornerShape(999.dp),
+                    shape = companyShape,
                     color = colors.surface,
                     shadowElevation = 0.dp
                 ) {
@@ -443,10 +467,21 @@ private fun FactorySettingsHubContent(
             }
         }
 
+        }
+
         // Section 1: Business Identity & Finance
         item(key = "business_identity_section") {
             ElvanSectionContainer {
                 ElvanSettingsSection(colors = colors) {
+                    if (landscape) {
+                        ElvanSettingsRow(
+                            icon = MaterialSymbols.Rounded.BusinessCenter,
+                            title = K.company.tr(),
+                            onClick = { onNavigate(SettingsRoute.Merchant) },
+                            colors = colors
+                        )
+                        ElvanSettingsDivider(colors = colors)
+                    }
                     ElvanSettingsRow(
                         icon = MaterialSymbols.Rounded.BusinessCenter,
                         title = K.identifier.tr(),

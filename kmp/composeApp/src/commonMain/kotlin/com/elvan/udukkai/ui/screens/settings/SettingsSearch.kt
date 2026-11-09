@@ -26,6 +26,7 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.graphicsLayer
@@ -159,10 +160,14 @@ fun SettingsSearchIcon(colors: ShellColors, hidden: Boolean = false, atStart: Bo
 }
 
 @Composable
-fun SettingsSearchPill(colors: ShellColors, onVoice: ((String) -> Unit)? = null, hidden: Boolean = false, onClick: () -> Unit) {
+fun SettingsSearchPill(colors: ShellColors, onVoice: ((String) -> Unit)? = null, hidden: Boolean = false, atTop: Boolean = false, onClick: () -> Unit) {
     val ff = LocalAppFontFamily.current
     val voice = com.elvan.udukkai.ui.components.shell.rememberVoiceInput { onVoice?.invoke(it) }
-    BoxWithConstraints(Modifier.fillMaxWidth().navigationBarsPaddingIfMobile().padding(bottom = Dimens.FloatingBarBottomGap), contentAlignment = Alignment.Center) {
+    BoxWithConstraints(
+        Modifier.fillMaxWidth().navigationBarsPaddingIfMobile()
+            .padding(top = if (atTop) 12.dp else 0.dp, bottom = if (atTop) 8.dp else Dimens.FloatingBarBottomGap),
+        contentAlignment = Alignment.Center
+    ) {
         Row(
             // While the search page is opening or closing its own field takes the pill's place: two mics would flicker
             Modifier.alpha(if (hidden) 0f else 1f)
@@ -200,7 +205,7 @@ fun SettingsSearchPill(colors: ShellColors, onVoice: ((String) -> Unit)? = null,
  * stays at the bottom, above the keyboard.
  */
 @Composable
-fun SettingsSearchOverlay(open: Boolean, entries: List<SettingsEntry>, colors: ShellColors, onOpen: (SettingsRoute) -> Unit, onClose: () -> Unit, initialQuery: String = "", onActive: (Boolean) -> Unit = {}) {
+fun SettingsSearchOverlay(open: Boolean, entries: List<SettingsEntry>, colors: ShellColors, onOpen: (SettingsRoute) -> Unit, onClose: () -> Unit, initialQuery: String = "", onActive: (Boolean) -> Unit = {}, modifier: Modifier = Modifier) {
     val progress = remember { Animatable(0f) }
     var query by remember { mutableStateOf("") }
     var recents by remember { mutableStateOf(RecentSettingSearches.all()) }
@@ -225,7 +230,7 @@ fun SettingsSearchOverlay(open: Boolean, entries: List<SettingsEntry>, colors: S
     val navInset = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
 
     BoxWithConstraints(
-        Modifier.fillMaxSize()
+        modifier.fillMaxSize()
             // The settings page underneath fades away as this page fades in
             .background(colors.background.copy(alpha = p))
             // The page holds every touch while it is on screen
@@ -288,6 +293,57 @@ private fun SearchField(colors: ShellColors, open: Boolean, query: String, onQue
         } else if (voice != null) {
             Box(Modifier.size(36.dp).clip(CircleShape).clickable { voice() }, contentAlignment = Alignment.Center) {
                 Icon(MaterialSymbols.Rounded.Mic, null, tint = colors.textSecondary, modifier = Modifier.size(20.dp))
+            }
+        }
+    }
+}
+
+/** A stationary field in the left settings pane; only its results change on the right. */
+@Composable
+fun SettingsPaneSearchField(query: String, onQuery: (String) -> Unit, onFocus: () -> Unit, colors: ShellColors) {
+    val ff = LocalAppFontFamily.current
+    ElvanSectionContainer(Modifier.padding(top = 12.dp, bottom = 8.dp)) {
+        Row(
+            Modifier.fillMaxWidth().height(52.dp)
+                .background(colors.floatingBg.copy(alpha = 0.88f), CircleShape)
+                .clip(CircleShape).padding(horizontal = 16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(MaterialSymbols.Rounded.Search, null, tint = colors.textSecondary, modifier = Modifier.size(20.dp))
+            Spacer(Modifier.width(10.dp))
+            Box(Modifier.weight(1f)) {
+                if (query.isEmpty()) Text(K.searchWord.tr(), style = TextStyle(fontFamily = ff, fontSize = 15.5.sp, color = colors.textSecondary))
+                BasicTextField(
+                    value = query, onValueChange = onQuery, singleLine = true,
+                    textStyle = TextStyle(fontFamily = ff, fontSize = 15.5.sp, color = colors.textPrimary),
+                    cursorBrush = SolidColor(colors.textPrimary),
+                    modifier = Modifier.fillMaxWidth().onFocusChanged { if (it.isFocused) onFocus() }
+                )
+            }
+            if (query.isNotEmpty()) Box(Modifier.size(32.dp).clip(CircleShape).clickable { onQuery("") }, contentAlignment = Alignment.Center) {
+                Icon(MaterialSymbols.Rounded.Close, K.clearAll.tr(), tint = colors.textSecondary, modifier = Modifier.size(18.dp))
+            }
+        }
+    }
+}
+
+@Composable
+fun SettingsPaneSearchResults(query: String, entries: List<SettingsEntry>, colors: ShellColors, onOpen: (SettingsRoute) -> Unit) {
+    val results = remember(query, entries) { searchSettings(entries, query) }
+    val ff = LocalAppFontFamily.current
+    LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(vertical = 16.dp)) {
+        if (results.isEmpty()) item {
+            Text(if (query.isBlank()) K.searchSettingsHint.tr() else K.noResults.tr(),
+                modifier = Modifier.padding(24.dp), color = colors.textSecondary,
+                style = TextStyle(fontFamily = ff, fontSize = 15.sp))
+        } else item {
+            ElvanSectionContainer {
+                ElvanSettingsSection(colors = colors) {
+                    results.forEachIndexed { index, entry ->
+                        if (index > 0) ElvanSettingsDivider(colors = colors)
+                        ElvanSettingsRow(icon = entry.icon, title = entry.titleKey.tr(), description = entry.groupKey.tr(), onClick = { onOpen(entry.route) }, colors = colors)
+                    }
+                }
             }
         }
     }

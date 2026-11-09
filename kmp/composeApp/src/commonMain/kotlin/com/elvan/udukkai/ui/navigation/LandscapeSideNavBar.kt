@@ -141,7 +141,8 @@ fun LandscapeTopActionButton(
     contentDescription: String?,
     onClick: () -> Unit,
     colors: ShellColors = rememberShellColors(),
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    alignStart: Boolean = false
 ) {
     val isDark = colors.isDark
     val interactionSource = remember { MutableInteractionSource() }
@@ -159,18 +160,15 @@ fun LandscapeTopActionButton(
     Box(
         modifier = modifier
             .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal + WindowInsetsSides.Top))
-            .padding(end = 12.dp, top = 8.dp)
+            .padding(start = if (alignStart) 12.dp else 0.dp, end = if (alignStart) 0.dp else 12.dp, top = 8.dp)
             .size(60.dp)
             .graphicsLayer {
                 scaleX = scale
                 scaleY = scale
                 clip = false
             }
-            .cssShadow(color = Color.Black, alpha = 0.08f, blurRadius = 14.dp, offsetY = 3.dp)
-            .background(
-                color = colors.floatingBg.copy(alpha = 0.88f),
-                shape = CircleShape
-            )
+            .cssShadow(color = Color.Black, alpha = 0.05f, blurRadius = 16.dp, offsetY = 4.dp)
+            .background(colors.floatingBg.copy(alpha = 0.88f), CircleShape)
             .border(
                 width = 0.5.dp,
                 color = colors.floatingBorder.copy(alpha = if (isDark) 0.15f else 0.6f),
@@ -343,7 +341,7 @@ fun SideTabRail(
                     modifier = Modifier
                         .matchParentSize()
                         .cssShadow(color = Color.Black, alpha = 0.05f, blurRadius = 16.dp, offsetY = 4.dp)
-                        .frostedGlass(CircleShape, colors, fallbackAlpha = 0.88f)
+                        .background(colors.floatingBg.copy(alpha = 0.88f), CircleShape)
                         .border(
                             width = 0.5.dp,
                             color = colors.floatingBorder.copy(alpha = if (isDark) 0.15f else 0.6f),
