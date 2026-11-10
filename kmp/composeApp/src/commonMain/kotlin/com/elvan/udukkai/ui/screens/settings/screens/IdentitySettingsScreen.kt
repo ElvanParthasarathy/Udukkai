@@ -1,6 +1,7 @@
-﻿package com.elvan.udukkai.ui.screens.settings.screens
+package com.elvan.udukkai.ui.screens.settings.screens
 
-import com.elvan.udukkai.textiles.data.TextilesProfileRepository
+
+import com.elvan.udukkai.data.settings.BusinessProfileStore
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -38,16 +39,14 @@ import com.elvan.udukkai.theme.rememberShellColors
 import com.elvan.udukkai.ui.components.shell.*
 import com.elvan.udukkai.ui.navigation.MaterialSymbols
 
-/**
- * Textiles (சவுளி) Identity & Branding Screen.
- * Supports Logo, Wide Logo, Header Style (small vs wide), and Signature with official signatory name.
- */
+/** Shared business Settings backed by the owning app's profile store. */
 @Composable
-fun TextilesIdentityScreen(
+fun IdentitySettingsScreen(
+    store: BusinessProfileStore,
     scrollState: LazyListState = rememberLazyListState(),
     colors: ShellColors = rememberShellColors()
 ) {
-    val profile = TextilesProfileRepository.profile
+    val profile = store.profile
     val ff = LocalAppFontFamily.current
 
     var editingSection by remember { mutableStateOf<String?>(null) }
@@ -72,16 +71,15 @@ fun TextilesIdentityScreen(
     val logoPath = profile.logo.ifEmpty { null }
     val wideLogoPath = profile.wideLogo.ifEmpty { null }
     val headerStyle = profile.headerLayout.ifEmpty { "small" }
-    val signaturePath = profile.signature.ifEmpty { null }
-    val signatoryName = SignatoryNames.get(profile).let { it.second.ifEmpty { it.first } }
-
     val smallLabel = K.smallLogoCompanyName.tr()
     val wideLabel = K.wideLogoOnly.tr()
-    val saveSuccessMsg = K.profileSaved.tr()
     val headerStyleTitle = K.billHeaderStyle.tr()
     val bottomSheet = LocalElvanBottomSheetController.current
+    val signaturePath = profile.signature.ifEmpty { null }
+    val signatoryName = SignatoryNames.get(profile).let { it.second.ifEmpty { it.first } }
+    val saveSuccessMsg = K.profileSaved.tr()
 
-    LazyColumn(
+    com.elvan.udukkai.ui.components.shell.ElvanLazyColumn(
         state = scrollState,
         modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(
@@ -97,7 +95,7 @@ fun TextilesIdentityScreen(
         item(key = "identity_section") {
             ElvanSectionContainer {
                 ElvanSettingsSection(colors = colors) {
-                    // 1. Logo (Square / Icon)
+                    // 1. Logo (Niruvanathin Oavuru)
                     ElvanSettingsAnimatedExpand(
                         isEditing = editingSection == "logo",
                         displayContent = {
@@ -127,7 +125,7 @@ fun TextilesIdentityScreen(
                                 onSave = {
                                     val updated = profile.copy()
                                     updated.logo = tempImagePath ?: ""
-                                    TextilesProfileRepository.updateProfile(updated)
+                                    store.updateProfile(updated)
                                     editingSection = null
                                     ElvanSnackbar.show(saveSuccessMsg)
                                 },
@@ -177,7 +175,7 @@ fun TextilesIdentityScreen(
                                 onSave = {
                                     val updated = profile.copy()
                                     updated.wideLogo = tempWideImagePath ?: ""
-                                    TextilesProfileRepository.updateProfile(updated)
+                                    store.updateProfile(updated)
                                     editingSection = null
                                     ElvanSnackbar.show(saveSuccessMsg)
                                 },
@@ -218,7 +216,7 @@ fun TextilesIdentityScreen(
                                 onSave = {
                                     val updated = profile.copy()
                                     updated.headerLayout = tempHeaderStyle
-                                    TextilesProfileRepository.updateProfile(updated)
+                                    store.updateProfile(updated)
                                     editingSection = null
                                     ElvanSnackbar.show(saveSuccessMsg)
                                 },
@@ -310,7 +308,7 @@ fun TextilesIdentityScreen(
                                     updated.signatoryLastName = ""
                                     updated.signatoryName = tempSignatoryEn.trim().ifEmpty { tempSignatoryTa.trim() }
                                     updated.printSettingsJson = SignatoryNames.set(updated.printSettingsJson, tempSignatoryTa, tempSignatoryEn)
-                                    TextilesProfileRepository.updateProfile(updated)
+                                    store.updateProfile(updated)
                                     editingSection = null
                                     ElvanSnackbar.show(saveSuccessMsg)
                                 },
@@ -378,6 +376,7 @@ private fun ImageUploadBox(
                     .padding(8.dp),
                 contentScale = ContentScale.Fit
             )
+            // Delete button at top-right
             Surface(
                 shape = CircleShape,
                 color = colors.surface,
@@ -423,4 +422,3 @@ private fun ImageUploadBox(
         }
     }
 }
-

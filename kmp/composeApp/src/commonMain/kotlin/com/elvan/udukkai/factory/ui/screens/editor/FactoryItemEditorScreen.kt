@@ -215,6 +215,12 @@ fun FactoryItemEditorScreen(
                                     )
                                 }
 
+                            }
+                        }
+                    }
+                    item(key = "company_section") {
+                        ElvanEditorSection(index = 1, title = K.company.tr()) {
+                            Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(16.dp)) {
                                 if (allProfiles.isNotEmpty()) {
                                     ElvanEditorDropdown<CompanyOption>(
                                         label = K.company.tr(),

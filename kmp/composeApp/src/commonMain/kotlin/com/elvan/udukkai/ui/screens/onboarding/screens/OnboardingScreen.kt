@@ -95,21 +95,15 @@ fun UllnuzhaivuThirai(
         }
     }
 
+    com.elvan.udukkai.core.platform.AppBackHandler(enabled = showReset) { showReset = false }
     if (showReset) {
         ResetPasswordPage(initialEmail = email, onBack = { showReset = false })
         return
     }
 
-    BoxWithConstraints(modifier = Modifier.fillMaxSize().windowInsetsPadding(WindowInsets.safeDrawing).imePadding()) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .heightIn(min = maxHeight)
-                .verticalScroll(rememberScrollState())
-                .padding(horizontal = 16.dp, vertical = 24.dp),
-            verticalArrangement = Arrangement.Center,
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
+    NeramPage(
+        pinActions = false,
+        header = {
             NeramElement(delayIndex = 0) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     val isFactory = (AuthManager.appScope == AppScope.FACTORY)
@@ -118,10 +112,10 @@ fun UllnuzhaivuThirai(
                         contentDescription = null,
                         tint = Color.Unspecified,
                         modifier = Modifier
-                            .size(96.dp)
+                            .size(if (LocalAuthLandscape.current) 64.dp else 96.dp)
                             .clip(RoundedCornerShape(24.dp))
                     )
-                    Spacer(Modifier.height(18.dp))
+                    Spacer(Modifier.height(if (LocalAuthLandscape.current) 12.dp else 18.dp))
                     NeramHeader(
                         title = if (isFactory) K.udukkaiFactory.tr() else K.udukkaiTextiles.tr(),
                         subtitle = K.loginToAccessApp.tr()
@@ -131,6 +125,8 @@ fun UllnuzhaivuThirai(
 
             Spacer(Modifier.height(16.dp))
 
+        }
+    ) {
             NeramElement(delayIndex = 1, modifier = Modifier.fillMaxWidth()) {
                 Column(modifier = Modifier.fillMaxWidth()) {
                     NeramField(
@@ -140,7 +136,7 @@ fun UllnuzhaivuThirai(
                         contentType = androidx.compose.ui.autofill.ContentType.EmailAddress,
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email, imeAction = ImeAction.Next)
                     )
-                    Spacer(Modifier.height(16.dp))
+                    Spacer(Modifier.height(if (LocalAuthLandscape.current) 8.dp else 16.dp))
                     NeramField(
                         value = password,
                         onValueChange = { password = it; message = null },
@@ -162,7 +158,7 @@ fun UllnuzhaivuThirai(
                 }
             }
 
-            Spacer(Modifier.height(16.dp))
+            Spacer(Modifier.height(if (LocalAuthLandscape.current) 8.dp else 16.dp))
 
             NeramElement(delayIndex = 2, modifier = Modifier.fillMaxWidth()) {
                 Column(modifier = Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
@@ -200,7 +196,7 @@ fun UllnuzhaivuThirai(
                         HorizontalDivider(modifier = Modifier.weight(1f), thickness = 0.5.dp, color = NeramColors.divider())
                     }
 
-                    Spacer(Modifier.height(16.dp))
+                    Spacer(Modifier.height(if (LocalAuthLandscape.current) 8.dp else 16.dp))
 
                     GoogleButton(
                         text = K.signInWithGoogle.tr(),
@@ -217,7 +213,6 @@ fun UllnuzhaivuThirai(
                     )
                 }
             }
-        }
     }
 }
 
@@ -270,6 +265,7 @@ internal fun NeramField(
 
 @Composable
 private fun GoogleButton(text: String, loading: Boolean, enabled: Boolean, onClick: () -> Unit) {
+    if (LocalAuthKeyboardVisible.current) return
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -325,22 +321,17 @@ private fun ResetPasswordPage(initialEmail: String, onBack: () -> Unit) {
         }
     }
 
-    BoxWithConstraints(modifier = Modifier.fillMaxSize().windowInsetsPadding(WindowInsets.safeDrawing).imePadding()) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .heightIn(min = maxHeight)
-                .verticalScroll(rememberScrollState())
-                .padding(horizontal = 16.dp, vertical = 24.dp),
-            verticalArrangement = Arrangement.Center,
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
+    NeramPage(
+        pinActions = false,
+        header = {
             NeramElement(delayIndex = 0) {
                 NeramHeader(title = K.resetPasswordTitle.tr(), subtitle = if (sent) sentMsg else K.resetPasswordHint.tr())
             }
 
             Spacer(Modifier.height(16.dp))
 
+        }
+    ) {
             if (!sent) {
                 NeramElement(delayIndex = 1, modifier = Modifier.fillMaxWidth()) {
                     Column(modifier = Modifier.fillMaxWidth()) {
@@ -386,6 +377,5 @@ private fun ResetPasswordPage(initialEmail: String, onBack: () -> Unit) {
                     )
                     .padding(horizontal = 16.dp, vertical = 12.dp)
             )
-        }
     }
 }

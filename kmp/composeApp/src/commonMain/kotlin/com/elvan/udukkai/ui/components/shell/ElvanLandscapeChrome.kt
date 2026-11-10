@@ -68,17 +68,18 @@ fun BoxScope.ElvanLandscapeChrome(
             style = TextStyle(fontFamily = LocalAppFontFamily.current, fontSize = 22.sp, fontWeight = FontWeight.Bold, color = colors.textPrimary)
         )
     }
-    if (hasActions) {
+    androidx.compose.animation.AnimatedVisibility(
+        visible = hasActions && com.elvan.udukkai.core.platform.getImeBottomPadding() == 0.dp,
+        enter = androidx.compose.animation.fadeIn(androidx.compose.animation.core.tween(180)),
+        exit = androidx.compose.animation.fadeOut(androidx.compose.animation.core.tween(120)),
+        modifier = Modifier.align(Alignment.BottomEnd)
+            .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Bottom))
+            .padding(end = 16.dp, bottom = com.elvan.udukkai.theme.Dimens.LandscapeEdgeGap).zIndex(100f)
+    ) {
         // A camera cut-out on this edge (centred on the long side of some phones) moves the toolbar a little up, clear of it
         val density = androidx.compose.ui.platform.LocalDensity.current
         val cameraOnEdge = WindowInsets.displayCutout.getRight(density, androidx.compose.ui.unit.LayoutDirection.Ltr) > 0
-        Box(
-            modifier = Modifier
-                .align(Alignment.BottomEnd)
-                .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Bottom))
-                .padding(end = 16.dp, bottom = if (cameraOnEdge) 36.dp else 12.dp)
-                .zIndex(100f)
-        ) {
+        Box {
             // Drawn a touch larger than the top-bar pill; the labelled tab rail on the right is the bigger of the two
             val d = androidx.compose.ui.platform.LocalDensity.current
             androidx.compose.runtime.CompositionLocalProvider(androidx.compose.ui.platform.LocalDensity provides androidx.compose.ui.unit.Density(d.density * 1.05f, d.fontScale)) {
@@ -103,9 +104,7 @@ private fun SideActionPill(colors: ShellColors, actions: @Composable RowScope.()
     Layout(
         content = { scope.actions() },
         modifier = Modifier
-            .cssShadow(color = Color.Black, alpha = 0.05f, blurRadius = 16.dp, offsetY = 4.dp)
-            .frostedGlass(CircleShape, colors, fallbackAlpha = 0.88f)
-            .border(0.5.dp, colors.floatingBorder.copy(alpha = if (colors.isDark) 0.15f else 0.6f), CircleShape)
+            .landscapePillSurface(CircleShape, colors)
             .onSizeChanged { onPresent(it.width > 0) }
     ) { measurables, constraints ->
         val loose = constraints.copy(minWidth = 0, minHeight = 0)
@@ -125,18 +124,17 @@ private fun SideActionPill(colors: ShellColors, actions: @Composable RowScope.()
     }
 }
 
-/**
- * Sideways, the pill shifter lives in the top band beside the page title instead of below it: this keeps its place in the
- * list but takes no height, drawn [up] higher.
- */
+/** Android controls flow with the list; desktop retains its original top-band placement. */
 fun Modifier.elvanTopBandRow(active: Boolean, up: Dp = 12.dp): Modifier =
-    if (!active) this else this.then(
-        // Centred on the band the page title and the round button share: 12dp above where the page starts
-        Modifier.layout { measurable, constraints ->
-            val p = measurable.measure(constraints)
-            layout(p.width, 0) { p.placeRelative(0, -(up.roundToPx() + p.height / 2)) }
-        }
-    )
+    when {
+        !active || com.elvan.udukkai.core.platform.platformLayoutPolicy.supportsLandscapeControls -> this
+        else -> this.then(Modifier.layout { measurable, constraints ->
+            val placeable = measurable.measure(constraints)
+            layout(placeable.width, 0) {
+                placeable.placeRelative(0, -(up.roundToPx() + placeable.height / 2))
+            }
+        })
+    }
 
 
 /** The room under a list: the portrait value upright, a thin margin sideways (no bottom bar there). */

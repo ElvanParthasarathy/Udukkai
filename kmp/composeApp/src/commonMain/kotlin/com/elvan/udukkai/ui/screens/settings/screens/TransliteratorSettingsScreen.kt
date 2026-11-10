@@ -44,7 +44,7 @@ fun TransliteratorSettingsScreen(
     val lang = LocalAppLanguage.current
     val brandName = if (lang.startsWith("ta") && lang != "ta-Latn") "எல்வன் நவில்" else "Elvan Navil"
 
-    LazyColumn(
+    com.elvan.udukkai.ui.components.shell.ElvanLazyColumn(
         state = scrollState,
         modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(

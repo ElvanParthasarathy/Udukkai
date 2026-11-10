@@ -24,11 +24,9 @@ import com.elvan.udukkai.ui.navigation.MaterialSymbols
  * smaller on a spring and settles, while the outgoing one shrinks and fades a touch faster. Used in both directions.
  */
 fun elvanBarSwap(): ContentTransform = ContentTransform(
-    targetContentEnter = fadeIn(tween(150, delayMillis = 30)) +
-        scaleIn(spring(dampingRatio = 0.72f, stiffness = 420f), initialScale = 0.88f),
-    initialContentExit = fadeOut(tween(110)) +
-        scaleOut(tween(150, easing = CubicBezierEasing(0.4f, 0f, 1f, 1f)), targetScale = 0.92f),
-    sizeTransform = SizeTransform(clip = false)
+    targetContentEnter = fadeIn(tween(180)),
+    initialContentExit = fadeOut(tween(140)),
+    sizeTransform = null
 )
 
 /**
@@ -53,7 +51,7 @@ fun ElvanSelectionBar(
     )
 
     val scale by animateFloatAsState(
-        targetValue = if (visible) 1.0f else 0.92f,
+        targetValue = if (visible || LocalElvanSideBar.current) 1.0f else 0.92f,
         animationSpec = tween(durationMillis = 200, easing = CubicBezierEasing(0.0f, 0.0f, 0.2f, 1.0f)),
         label = "thervuPattaiScale"
     )

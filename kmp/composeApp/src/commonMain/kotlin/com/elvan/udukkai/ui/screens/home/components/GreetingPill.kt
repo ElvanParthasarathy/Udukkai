@@ -93,7 +93,7 @@ fun GreetingPill(
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(84.dp),
+                    .height(if (com.elvan.udukkai.ui.components.shell.LocalLandscapeContent.current) 68.dp else 84.dp),
                 contentAlignment = Alignment.CenterStart
             ) {
                 // 1. Welcome Greeting (Visually identical to Neram: 👋 + Welcome + Glad you're here)
@@ -120,7 +120,7 @@ fun GreetingPill(
                         Surface(
                             shape = CircleShape,
                             color = colors.iconBg,
-                            modifier = Modifier.size(62.dp)
+                            modifier = Modifier.size(if (com.elvan.udukkai.ui.components.shell.LocalLandscapeContent.current) 48.dp else 62.dp)
                         ) {
                             Box(contentAlignment = Alignment.Center) {
                                 Text(
@@ -187,7 +187,7 @@ fun GreetingPill(
                         Surface(
                             shape = CircleShape,
                             color = colors.iconBg,
-                            modifier = Modifier.size(62.dp)
+                            modifier = Modifier.size(if (com.elvan.udukkai.ui.components.shell.LocalLandscapeContent.current) 48.dp else 62.dp)
                         ) {
                             com.elvan.udukkai.ui.screens.settings.AccountAvatar {
                             Box(contentAlignment = Alignment.Center) {

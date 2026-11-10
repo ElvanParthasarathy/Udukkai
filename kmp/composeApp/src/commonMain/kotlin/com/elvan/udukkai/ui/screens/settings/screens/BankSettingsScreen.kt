@@ -86,7 +86,7 @@ fun BankSettingsScreen(
     val branchPrimary = profile.getPrimary("branch")
     val branchSecondary = profile.getSecondary("branch")
 
-    LazyColumn(
+    com.elvan.udukkai.ui.components.shell.ElvanLazyColumn(
         state = scrollState,
         modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(

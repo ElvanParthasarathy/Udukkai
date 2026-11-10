@@ -49,16 +49,19 @@ fun ElvanSearchBar(
     onQueryChange: (String) -> Unit,
     onClose: () -> Unit,
     colors: ShellColors,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    landscape: Boolean = com.elvan.udukkai.ui.components.shell.LocalElvanSideBar.current
 ) {
     val isDark = colors.isDark
     val ff = LocalAppFontFamily.current
     val focusRequester = remember { FocusRequester() }
     val focusManager = LocalFocusManager.current
+    var expanded by remember { mutableStateOf(false) }
+    LaunchedEffect(visible) { expanded = visible }
 
     LaunchedEffect(visible) {
         if (visible) {
-            delay(150)
+            delay(if (landscape) 420 else 150)
             try {
                 focusRequester.requestFocus()
             } catch (_: Exception) {}
@@ -74,7 +77,7 @@ fun ElvanSearchBar(
         modifier = modifier
             .fillMaxWidth()
             .then(
-                if (isImeOpen) {
+                if (landscape) Modifier else if (isImeOpen) {
                     Modifier.padding(bottom = imeBottom + Dimens.FloatingBarBottomGap)
                 } else {
                     Modifier.navigationBarsPaddingIfMobile().padding(bottom = Dimens.FloatingBarBottomGap)
@@ -83,29 +86,31 @@ fun ElvanSearchBar(
         contentAlignment = Alignment.Center
     ) {
         val screenWidth = maxWidth
-        val minWidth = 284.dp
-        val maxWidthTarget = (screenWidth - 32.dp).coerceAtLeast(minWidth)
+        val minWidth = if (landscape) 56.dp else 284.dp
+        val maxWidthTarget = if (landscape) (screenWidth - 32.dp).coerceIn(8.dp, 480.dp) else (screenWidth - 32.dp).coerceAtLeast(minWidth)
 
         val animatedWidth by animateDpAsState(
-            targetValue = if (visible) maxWidthTarget else minWidth,
+            targetValue = if (expanded) maxWidthTarget else minWidth,
             animationSpec = tween(
-                durationMillis = 300,
+                durationMillis = 420,
                 easing = CubicBezierEasing(0.0f, 0.0f, 0.2f, 1.0f)
             ),
             label = "thaedalPattaiWidth"
         )
 
         val alpha by animateFloatAsState(
-            targetValue = if (visible) 1f else 0f,
-            animationSpec = tween(durationMillis = 200),
+            targetValue = if (expanded) 1f else 0f,
+            animationSpec = tween(durationMillis = 320),
             label = "thaedalPattaiAlpha"
         )
+        val pillHeight = 56.dp
 
         if (visible || alpha > 0f) {
+            Box(Modifier.width(maxWidthTarget), contentAlignment = Alignment.Center) {
             Box(
                 modifier = Modifier
                     .width(animatedWidth)
-                    .height(56.dp)
+                    .height(pillHeight)
                     .graphicsLayer { this.alpha = alpha }
                     .cssShadow(
                         color = Color.Black,
@@ -122,7 +127,7 @@ fun ElvanSearchBar(
                     .padding(horizontal = 16.dp),
                 contentAlignment = Alignment.CenterStart
             ) {
-                Row(
+                if (!landscape || animatedWidth > 160.dp) Row(
                     modifier = Modifier.fillMaxSize(),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
@@ -187,7 +192,9 @@ fun ElvanSearchBar(
                             )
                         }
                     }
+
                 }
+            }
             }
         }
     }

@@ -51,48 +51,44 @@ fun WelcomeScreen(
     )
     val moving = remember { com.elvan.udukkai.core.platform.systemAnimationsEnabled() }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .windowInsetsPadding(WindowInsets.safeDrawing)
-            .padding(horizontal = 16.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Spacer(Modifier.weight(1f))
-
-        NeramElement(delayIndex = 0) {
-            val isFactory = (AuthManager.appScope == AppScope.FACTORY)
-            Icon(
-                painter = painterResource(if (isFactory) Res.drawable.factory_logo_vector else Res.drawable.textiles_logo_vector),
-                contentDescription = null,
-                tint = Color.Unspecified,
-                modifier = Modifier
-                    .offset(y = (if (moving) floatOffset else 0f).dp)
-                    .scale(if (moving) pulse else 1f)
-                    .size(112.dp)
-                    .clip(RoundedCornerShape(27.dp))
-            )
-        }
-
-        Spacer(Modifier.height(24.dp))
-
-        NeramElement(delayIndex = 1) {
-            NeramHeader(title = K.welcomeToUdukkai.tr(), subtitle = K.billingGstSorted.tr())
-        }
-
-        Spacer(Modifier.weight(1f))
-
-        NeramElement(delayIndex = 2, modifier = Modifier.fillMaxWidth()) {
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Text(
-                    text = K.tapGetStarted.tr(),
-                    style = TextStyle(fontFamily = ElvanSansFontFamily, fontSize = 11.sp, color = NeramColors.textMuted(), lineHeight = 16.sp),
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.padding(bottom = 20.dp, start = 16.dp, end = 16.dp)
+    NeramIntroPage(
+        centered = true,
+        horizontalPadding = 16.dp,
+        header = {
+            NeramElement(delayIndex = 0) {
+                val isFactory = (AuthManager.appScope == AppScope.FACTORY)
+                Icon(
+                    painter = painterResource(if (isFactory) Res.drawable.factory_logo_vector else Res.drawable.textiles_logo_vector),
+                    contentDescription = null,
+                    tint = Color.Unspecified,
+                    modifier = Modifier
+                        .offset(y = (if (moving) floatOffset else 0f).dp)
+                        .scale(if (moving) pulse else 1f)
+                        .size(if (LocalAuthLandscape.current) 72.dp else 112.dp)
+                        .clip(RoundedCornerShape(27.dp))
                 )
-                NeramButton(text = K.getStartedBtn.tr(), onClick = onNavigateToLogin)
-                Spacer(Modifier.height(40.dp))
+            }
+
+            Spacer(Modifier.height(if (LocalAuthLandscape.current) 12.dp else 24.dp))
+
+            NeramElement(delayIndex = 1) {
+                NeramHeader(title = K.welcomeToUdukkai.tr(), subtitle = K.billingGstSorted.tr())
+            }
+
+        },
+        bottom = {
+            NeramElement(delayIndex = 2, modifier = Modifier.fillMaxWidth()) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text(
+                        text = K.tapGetStarted.tr(),
+                        style = TextStyle(fontFamily = ElvanSansFontFamily, fontSize = 11.sp, color = NeramColors.textMuted(), lineHeight = 16.sp),
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.padding(bottom = 20.dp, start = 16.dp, end = 16.dp)
+                    )
+                    NeramButton(text = K.getStartedBtn.tr(), onClick = onNavigateToLogin)
+                    Spacer(Modifier.height(if (LocalAuthLandscape.current) 0.dp else 40.dp))
+                }
             }
         }
-    }
+    )
 }

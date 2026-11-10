@@ -137,7 +137,7 @@ fun ElvanBottomSheetFrame(
                             .fillMaxWidth()
                             .then(if (side) Modifier.fillMaxHeight().padding(top = 8.dp) else Modifier)
                             .navigationBarsPadding()
-                            .padding(bottom = 16.dp)
+                            .padding(bottom = if (side) 8.dp else 16.dp)
                     ) {
                         // The handle: drag it down to close
                         if (side) Spacer(Modifier.height(16.dp)) else Box(

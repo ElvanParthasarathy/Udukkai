@@ -23,7 +23,7 @@ fun AboutHubScreen(
     scrollState: LazyListState = rememberLazyListState(),
     colors: ShellColors = rememberShellColors()
 ) {
-    LazyColumn(
+    com.elvan.udukkai.ui.components.shell.ElvanLazyColumn(
         state = scrollState,
         modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(start = Dimens.ContentPadding, end = Dimens.ContentPadding, bottom = Dimens.SubpageContentPaddingBottom),

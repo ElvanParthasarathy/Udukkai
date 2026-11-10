@@ -4,7 +4,6 @@ import com.elvan.udukkai.ui.components.shell.frostedGlass
 import androidx.compose.animation.core.CubicBezierEasing
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.AnimationSpec
-import androidx.compose.animation.core.snap
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
@@ -12,8 +11,6 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
-import androidx.compose.foundation.gestures.awaitEachGesture
-import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.*
@@ -29,7 +26,6 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.elvan.udukkai.core.platform.navigationBarsPaddingIfMobile
@@ -47,7 +43,6 @@ import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.semantics
 import kotlin.math.abs
 import kotlin.math.floor
-import kotlin.math.roundToInt
 
 /** iOS-style pill motion, shared by the tab bars and the pill shifters. */
 object PillMotion {
@@ -141,6 +136,8 @@ fun BottomNavBar(
 ) {
     val tabs = NavTab.entries
     val coroutineScope = rememberCoroutineScope()
+    val pageDispatch = remember(coroutineScope) { com.elvan.udukkai.ui.navigation.PillPageDispatch(coroutineScope) }
+    DisposableEffect(pageDispatch) { onDispose { pageDispatch.cancel() } }
     val colors = rememberShellColors()
     val isDark = colors.isDark
 
@@ -157,7 +154,6 @@ fun BottomNavBar(
     var touchOffsetFromCenterPx by remember { mutableStateOf(0f) }
     var hoverIndex by remember { mutableStateOf<Int?>(null) }
     var localLockedIndex by remember { mutableStateOf<Int?>(null) }
-    var snapNextFrame by remember { mutableStateOf(false) }
 
     val density = LocalDensity.current
     val layoutWidthPx = with(density) { layoutWidth.toPx() }
@@ -167,20 +163,13 @@ fun BottomNavBar(
     val currentOnInteraction by rememberUpdatedState(onInteraction)
     val currentOnDragProgress by rememberUpdatedState(onDragProgress)
 
-    // The tab switch waits for the pill to land; a newer tap cancels an older one still waiting, so fast taps never pull back
-    var pendingSelect by remember { mutableStateOf<kotlinx.coroutines.Job?>(null) }
+    // The visual selection changes immediately; only the latest destination is composed after the pill settles.
 
     val actualIndex = tabs.indexOf(selectedTab).coerceAtLeast(0)
     LaunchedEffect(actualIndex) {
-        // Our own tap landing: let the pill finish its glide. A change from elsewhere: jump straight there.
-        if (localLockedIndex != actualIndex) snapNextFrame = true
-        localLockedIndex = null
-    }
-    LaunchedEffect(snapNextFrame) {
-        if (snapNextFrame) {
-            kotlinx.coroutines.yield()
-            snapNextFrame = false
-        }
+        // Acknowledge only this destination; a newer gesture owns its own visual target.
+        // Retarget the existing spring without a one-frame snap, including external navigation.
+        if (localLockedIndex == actualIndex) localLockedIndex = null
     }
 
     val activeVisualIndex = if (isInteracting && hoverIndex != null) {
@@ -220,7 +209,6 @@ fun BottomNavBar(
     val animatedLeft = animateFloatAsState(
         targetValue = targetLeftPx,
         animationSpec = when {
-            snapNextFrame -> snap()
             isInteracting && dragOffsetPx != null -> PillMotion.follow
             else -> PillMotion.settle
         },
@@ -229,7 +217,7 @@ fun BottomNavBar(
 
     val navBarAlpha by animateFloatAsState(
         targetValue = if (hideContent) 0f else 1f,
-        animationSpec = tween(200, easing = CubicBezierEasing(0.0f, 0.0f, 0.2f, 1.0f)),
+        animationSpec = tween(260, easing = CubicBezierEasing(0.2f, 0f, 0f, 1f)),
         label = "navBarAlpha"
     )
 
@@ -241,6 +229,8 @@ fun BottomNavBar(
                 .padding(bottom = Dimens.FloatingBarBottomGap)
                 .graphicsLayer {
                     alpha = navBarAlpha
+                    scaleX = .94f + .06f * navBarAlpha
+                    scaleY = .94f + .06f * navBarAlpha
                 },
             horizontalArrangement = Arrangement.Center,
             verticalAlignment = Alignment.CenterVertically
@@ -277,57 +267,40 @@ fun BottomNavBar(
                 .then(
                     if (!hideContent) {
                         Modifier.pointerInput(hideContent) {
-                            awaitEachGesture {
-                        val down = awaitFirstDown(requireUnconsumed = false)
-                        pendingSelect?.cancel()
-                        isInteracting = true
-                        currentOnInteraction(true)
-
-                        val initialX = down.position.x
-                        hoverIndex = floor(initialX / layoutWidthPx).toInt().coerceIn(0, itemCount - 1)
-                        val slotCenter = (hoverIndex!! * layoutWidthPx) + (layoutWidthPx / 2f)
-                        touchOffsetFromCenterPx = initialX - slotCenter
-                        dragOffsetPx = null
-
-                        var isDrag = false
-                        val pointerId = down.id
-
-                        while (true) {
-                            val event = awaitPointerEvent()
-                            val change = event.changes.firstOrNull { it.id == pointerId } ?: break
-                            if (!change.pressed) {
-                                break
-                            }
-                            val currentPos = change.position
-                            if (kotlin.math.abs(currentPos.x - down.position.x) > 4f) {
-                                isDrag = true
-                                val targetCenter = currentPos.x - touchOffsetFromCenterPx
-                                dragOffsetPx = targetCenter
-                                hoverIndex = floor(targetCenter / layoutWidthPx).toInt().coerceIn(0, itemCount - 1)
-                                currentOnDragProgress(targetCenter / layoutWidthPx)
-                                change.consume()
-                            }
+                            trackPillTabs(
+                                vertical = false,
+                                onStart = { position ->
+                                    pageDispatch.cancel()
+                                    isInteracting = true
+                                    currentOnInteraction(true)
+                                    hoverIndex = floor(position / layoutWidthPx).toInt().coerceIn(0, itemCount - 1)
+                                    touchOffsetFromCenterPx = position - (hoverIndex!! * layoutWidthPx + layoutWidthPx / 2f)
+                                    dragOffsetPx = null
+                                },
+                                onDrag = { position ->
+                                    val targetCenter = position - touchOffsetFromCenterPx
+                                    dragOffsetPx = targetCenter
+                                    hoverIndex = floor(targetCenter / layoutWidthPx).toInt().coerceIn(0, itemCount - 1)
+                                    currentOnDragProgress(targetCenter / layoutWidthPx)
+                                },
+                                onEnd = { isDrag ->
+                                    val finalIndex = hoverIndex
+                                    if (finalIndex != null) localLockedIndex = finalIndex
+                                    isInteracting = false
+                                    currentOnInteraction(false)
+                                    dragOffsetPx = null
+                                    hoverIndex = null
+                                    if (finalIndex != null) pageDispatch.select(animatedLeft, ((finalIndex * layoutWidthPx) - overlapPx).coerceIn(minLeftPx, maxLeftPx)) { currentOnTabSelected(tabs[finalIndex], isDrag) }
+                                },
+                                onCancel = {
+                                    isInteracting = false
+                                    currentOnInteraction(false)
+                                    dragOffsetPx = null
+                                    hoverIndex = null
+                                }
+                            )
                         }
-
-                        val finalIndex = hoverIndex
-                        if (finalIndex != null) {
-                            localLockedIndex = finalIndex
-                        }
-                        isInteracting = false
-                        currentOnInteraction(false)
-                        dragOffsetPx = null
-                        hoverIndex = null
-
-                        if (finalIndex != null) {
-                            pendingSelect?.cancel()
-                            pendingSelect = coroutineScope.launch {
-                                PillMotion.awaitLanded(animatedLeft, ((finalIndex * layoutWidthPx) - overlapPx).coerceIn(minLeftPx, maxLeftPx))
-                                currentOnTabSelected(tabs[finalIndex], isDrag)
-                            }
-                        }
-                    }
-                }
-            } else Modifier
+                    } else Modifier
         ),
             contentAlignment = Alignment.CenterStart
         ) {
@@ -343,7 +316,7 @@ fun BottomNavBar(
                 // Master Background Pill (Detached & Draggable)
                 Box(
                     modifier = Modifier
-                        .offset { IntOffset(animatedLeft.value.roundToInt(), 0) }
+                        .graphicsLayer { translationX = animatedLeft.value }
                         .fillMaxHeight()
                         .width(bgWidth)
                         .graphicsLayer {

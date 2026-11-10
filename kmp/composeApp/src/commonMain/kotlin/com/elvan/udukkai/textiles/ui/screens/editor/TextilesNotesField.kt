@@ -65,9 +65,8 @@ fun TextilesPlaceOfSupplyField(
 
     val displayText = when {
         isCustom -> if (LanguageManager.activeLanguageCode == "ta") "தனிப்பயன்" else "Custom"
-        placeOfSupplyTa.isNotBlank() -> placeOfSupplyTa
-        placeOfSupplyEn.isNotBlank() -> placeOfSupplyEn
-        else -> ""
+        LanguageManager.activeLanguageCode == "ta" -> placeOfSupplyTa.ifBlank { placeOfSupplyEn }
+        else -> placeOfSupplyEn.ifBlank { placeOfSupplyTa }
     }
 
     val containerBg = colors.iconBg

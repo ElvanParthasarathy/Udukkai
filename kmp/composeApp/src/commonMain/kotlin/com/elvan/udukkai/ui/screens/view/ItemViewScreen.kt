@@ -72,8 +72,8 @@ fun ItemViewScreen(
         historyUi = historyUi,
         onBillClick = onBillClick,
         onReceiptClick = onReceiptClick,
-        onRetryHistory = retryHistory
-    ) {
+        onRetryHistory = retryHistory,
+        summary = {
             ViewHero(primary = primaryName, secondary = secondaryName, icon = MaterialSymbols.Rounded.Inventory2, tint = colors.itemColor, colors = colors)
 
             run {
@@ -85,6 +85,8 @@ fun ItemViewScreen(
                 )
             }
 
+        }
+    ) {
             if (!isCoolie) {
                 run {
                     ViewInfoSection(

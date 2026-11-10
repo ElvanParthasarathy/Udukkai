@@ -1,7 +1,10 @@
 package com.elvan.udukkai.factory.ui
 
+import com.elvan.udukkai.ui.navigation.smoothScrollToTop
+
 import com.elvan.udukkai.core.utils.DateUtils
 import com.elvan.udukkai.core.print.billBusinessFolder
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.runtime.LaunchedEffect
 import com.elvan.udukkai.core.print.BillPdfAutoSave
 import com.elvan.udukkai.core.print.BillPdfAutoSaveHost
@@ -92,6 +95,7 @@ fun FactoryHomeScreen() {
     val customersScrollState = rememberLazyListState()
 
     var selectedTab by remember { mutableStateOf(NavTab.Home) }
+    var tabScrollJob by remember { mutableStateOf<kotlinx.coroutines.Job?>(null) }
     var uruvakkuSegment by remember { mutableStateOf(0) } // 0 = Invoices, 1 = Receipts
     var isLandscapeMode by remember { mutableStateOf(false) }
     var subpageStack by remember { mutableStateOf<List<ActiveSubpage>>(emptyList()) }
@@ -258,6 +262,8 @@ fun FactoryHomeScreen() {
 
     val isDesktop = currentPlatform == PlatformType.DESKTOP
 
+    val landscapeControlHaze = dev.chrisbanes.haze.rememberHazeState()
+    androidx.compose.runtime.CompositionLocalProvider(com.elvan.udukkai.ui.components.shell.LocalHazeState provides landscapeControlHaze.takeIf { com.elvan.udukkai.core.platform.platformLayoutPolicy.supportsLandscapeControls }) {
     BoxWithConstraints(
         modifier = Modifier
             .fillMaxSize()
@@ -312,8 +318,8 @@ fun FactoryHomeScreen() {
 
         // Desktop windows get the sidebar; a phone/tablet turned sideways keeps the floating trailing-edge controls
         val isWideScreen = isDesktop && maxWidth >= 768.dp
-        val isLandscape = maxWidth > maxHeight && !isWideScreen
-        SideEffect { isLandscapeMode = maxWidth > maxHeight }
+        val isLandscape = com.elvan.udukkai.core.platform.platformLayoutPolicy.screenLayout(maxWidth, maxHeight) == com.elvan.udukkai.core.platform.ScreenLayout.AndroidLandscape
+        SideEffect { isLandscapeMode = isLandscape }
 
         val shouldShowBottomBarForSnackbar = (activeSubpage !is ActiveSubpage.Settings) && !isWideScreen
         SideEffect {
@@ -324,6 +330,7 @@ fun FactoryHomeScreen() {
         @Composable
         fun HomeSearchBar() {
 ElvanSearchBar(
+                                        landscape = isLandscape,
                                         visible = isSearchActive,
                                         query = currentSearchQuery,
                                         onQueryChange = { newQuery ->
@@ -542,7 +549,7 @@ ElvanSearchBar(
                         hideTitleSideways = true,
                         title = selectedTab.getLocalizedHeader(),
                         banners = activeBanners,
-                        showNavbar = !isLandscape && !isWideScreen,
+                        showNavbar = isSelectionMode || (!isLandscape && !isWideScreen),
                         hasActions = (!isSearchActive && !isSelectionMode),
                         leadingActions = null,
                         isSearchActive = isSearchActive,
@@ -655,6 +662,7 @@ androidx.compose.animation.AnimatedContent(
                                 // Apple-style morph: the old pill softly shrinks and fades while the new one grows out of the same
                                 // spot on a spring, overlapping, instead of one sliding away and the other sliding in
                                 transitionSpec = {
+                                    if (isLandscape) fadeIn(tween(180)).togetherWith(fadeOut(tween(140))) else {
                                     val origin = androidx.compose.ui.graphics.TransformOrigin(0.5f, 1f)
                                     (androidx.compose.animation.fadeIn(androidx.compose.animation.core.tween(280, delayMillis = 50)) +
                                         androidx.compose.animation.scaleIn(androidx.compose.animation.core.spring(dampingRatio = 0.82f, stiffness = 380f), initialScale = 0.86f, transformOrigin = origin))
@@ -663,6 +671,7 @@ androidx.compose.animation.AnimatedContent(
                                                 androidx.compose.animation.scaleOut(androidx.compose.animation.core.tween(230), targetScale = 0.92f, transformOrigin = origin)
                                         )
                                         .using(androidx.compose.animation.SizeTransform(clip = false))
+                                    }
                                 },
                                 label = "bottomBarSwap"
                             ) { selecting ->
@@ -739,6 +748,7 @@ androidx.compose.animation.AnimatedContent(
                                         },
                                         onTabSelected = { tab, _ ->
                                             if (selectedTab == tab) {
+                                                tabScrollJob?.cancel()
                                                 shellController.toggleHeader()
                                             } else {
                                                 if (selectedTab == NavTab.Create || tab != NavTab.Create) {
@@ -750,13 +760,14 @@ androidx.compose.animation.AnimatedContent(
                                                     NavTab.Items -> itemsScrollState
                                                     NavTab.Customers -> customersScrollState
                                                 }
-                                                scope.launch { targetScrollState.scrollToItem(0, 0) }
+                                                tabScrollJob?.cancel()
+                                                targetScrollState.requestScrollToItem(0, 0)
                                                 selectedTab = tab
                                             }
                                         }
                                     )
 
-                                    HomeSearchBar()
+                                    if (!isLandscape) HomeSearchBar()
                                 }
                             }
                             }
@@ -929,7 +940,8 @@ androidx.compose.animation.AnimatedContent(
                                 NavTab.Items -> itemsScrollState
                                 NavTab.Customers -> customersScrollState
                             }
-                            scope.launch { targetScrollState.scrollToItem(0, 0) }
+                            // Mobile tabs retain their viewport; forcing a remeasure here competes with navigation.
+                                                if (isWideScreen) scope.launch { targetScrollState.scrollToItem(0, 0) }
                             selectedTab = tab
                         }
                     },
@@ -978,21 +990,31 @@ androidx.compose.animation.AnimatedContent(
             }
             }
 
-            if (isLandscape && isSearchActive) {
-                Box(Modifier.align(Alignment.BottomCenter).fillMaxWidth().padding(start = 72.dp, end = 80.dp)) { HomeSearchBar() }
+            if (isLandscape) {
+                Box(Modifier.align(Alignment.TopCenter).fillMaxWidth().statusBarsPadding().padding(top = 8.dp, start = 72.dp, end = 80.dp)) { HomeSearchBar() }
             }
 
             // Floating Controls on the Trailing Edge in Landscape (Apple HIG Landscape Controls)
-            if (isLandscape && !isSelectionMode && !isSearchActive) {
+            if (isLandscape) androidx.compose.animation.AnimatedVisibility(
+                visible = !isSelectionMode && !isSearchActive && com.elvan.udukkai.core.platform.getImeBottomPadding() == 0.dp,
+                enter = fadeIn(tween(180)), exit = fadeOut(tween(120)), modifier = Modifier.fillMaxSize()
+            ) { Box(Modifier.fillMaxSize()) {
+                val landscapeActionAlpha by androidx.compose.animation.core.animateFloatAsState(
+                    if (showDateFilterSheet || isSearchActive) 0f else 1f,
+                    androidx.compose.animation.core.tween(240), label = "landscapeActionVisibility"
+                )
                 // Top-Right Action Button (Stationary at TopEnd)
                 // Shows ArrowBack (<) when viewing a subpage; shows Add (+) on the main screen
                 AnimatedContent(
                     targetState = subpageStack.isNotEmpty(),
                     transitionSpec = {
-                        (fadeIn(tween(180)) + scaleIn(initialScale = 0.85f, animationSpec = tween(180)))
-                            .togetherWith(fadeOut(tween(140)) + scaleOut(targetScale = 0.85f, animationSpec = tween(140)))
+                        fadeIn(tween(180)).togetherWith(fadeOut(tween(140)))
                     },
-                    modifier = Modifier.align(Alignment.TopStart),
+                    modifier = Modifier.align(Alignment.TopStart).graphicsLayer {
+                        alpha = landscapeActionAlpha
+                        scaleX = .94f + .06f * landscapeActionAlpha
+                        scaleY = .94f + .06f * landscapeActionAlpha
+                    },
                     label = "TopActionButtonTransition"
                 ) { hasSubpage ->
                     if (hasSubpage) {
@@ -1029,8 +1051,12 @@ androidx.compose.animation.AnimatedContent(
                     LandscapeSideNavBar(
                         selectedTab = selectedTab,
                         hideContent = isSearchActive || showDateFilterSheet,
+                        morphWhenHidden = showDateFilterSheet,
                         onTabSelected = { tab, _ ->
-                            if (selectedTab != tab) {
+                            if (selectedTab == tab) {
+                                tabScrollJob?.cancel()
+                                tabScrollJob = scope.launch { currentScrollState.smoothScrollToTop() }
+                            } else {
                                 if (selectedTab == NavTab.Create || tab != NavTab.Create) {
                                     uruvakkuSegment = 0
                                 }
@@ -1040,7 +1066,8 @@ androidx.compose.animation.AnimatedContent(
                                     NavTab.Items -> itemsScrollState
                                     NavTab.Customers -> customersScrollState
                                 }
-                                scope.launch { targetScrollState.scrollToItem(0, 0) }
+                                tabScrollJob?.cancel()
+                                targetScrollState.requestScrollToItem(0, 0)
                                 selectedTab = tab
                             }
                         },
@@ -1049,6 +1076,7 @@ androidx.compose.animation.AnimatedContent(
                 }
             }
 
+            }
         closedYearEdit?.let { target ->
             ElvanActionSheet(
                 title = K.yearClosedEditTitle.tr(),
@@ -1148,5 +1176,6 @@ androidx.compose.animation.AnimatedContent(
         )
             }
         }
+    }
     }
 }

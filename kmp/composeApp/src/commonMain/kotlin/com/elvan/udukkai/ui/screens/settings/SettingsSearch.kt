@@ -74,7 +74,7 @@ class SettingsEntry(
 /** Everything the settings search knows. The identity page differs between the two apps, so it is passed in. */
 fun settingsEntries(identity: SettingsRoute): List<SettingsEntry> = with(MaterialSymbols.Rounded) {
     listOf(
-        SettingsEntry(SettingsRoute.Merchant, K.company, null, K.groupBusiness, BusinessCenter, listOf("profile", "switch company", "businesses", "manage")),
+        SettingsEntry(SettingsRoute.Merchant, K.company, null, K.groupBusiness, Apartment, listOf("profile", "switch company", "businesses", "manage")),
         SettingsEntry(identity, K.identifier, K.identityHint, K.groupBusiness, BusinessCenter, listOf("logo", "signature", "gstin", "gst", "pan", "owner", "name", "brand", "stamp", "seal")),
         SettingsEntry(SettingsRoute.Address, K.address, K.companyAddressDetails, K.groupBusiness, LocationOn, listOf("pincode", "pin code", "state", "district", "city", "street", "town")),
         SettingsEntry(SettingsRoute.Bank, K.bank, K.bankDetails, K.groupBusiness, CreditCard, listOf("ifsc", "account number", "upi", "branch", "qr")),
@@ -219,10 +219,16 @@ fun SettingsSearchOverlay(open: Boolean, entries: List<SettingsEntry>, colors: S
         onOpen(route)
     }
     LaunchedEffect(open) {
+        if (!open && progress.value > 0f) {
+            focusManager.clearFocus()
+            // Finish keyboard dismissal before handing the field back to the closed pill.
+            delay(280)
+        }
         progress.animateTo(if (open) 1f else 0f, tween(if (open) 320 else 260, easing = CubicBezierEasing(0.2f, 0f, 0f, 1f)))
     }
     val active = open || progress.value > 0f
-    LaunchedEffect(active) { onActive(active) }
+    // Hand the closed pill back in the same frame as the overlay disappears.
+    androidx.compose.runtime.SideEffect { onActive(active) }
     if (!active) return
     val p = progress.value
     val imeBottom = getImeBottomPadding()
@@ -247,7 +253,7 @@ fun SettingsSearchOverlay(open: Boolean, entries: List<SettingsEntry>, colors: S
             SearchPage(query, { query = it }, recents, { recents = it }, results, colors, ::openResult, onClose)
         }
         // The field is the pill itself: it starts at the pill's place and size and smoothly grows to the full field
-        androidx.compose.runtime.CompositionLocalProvider(com.elvan.udukkai.ui.components.shell.LocalHazeState provides haze) {
+        // Share the resting pill's blur source; switching blur sources at handoff flashes.
         SearchField(
             colors = colors, open = open, query = query, onQuery = { query = it },
             onSearch = { results.firstOrNull()?.let { openResult(it.route) } },
@@ -256,7 +262,6 @@ fun SettingsSearchOverlay(open: Boolean, entries: List<SettingsEntry>, colors: S
                 .padding(bottom = maxOf(imeBottom, navInset) + Dimens.FloatingBarBottomGap)
                 .width(currentWidth)
         )
-        }
     }
 }
 
@@ -302,7 +307,7 @@ private fun SearchField(colors: ShellColors, open: Boolean, query: String, onQue
 @Composable
 fun SettingsPaneSearchField(query: String, onQuery: (String) -> Unit, onFocus: () -> Unit, colors: ShellColors) {
     val ff = LocalAppFontFamily.current
-    ElvanSectionContainer(Modifier.padding(top = 12.dp, bottom = 8.dp)) {
+    ElvanSectionContainer {
         Row(
             Modifier.fillMaxWidth().height(52.dp)
                 .background(colors.floatingBg.copy(alpha = 0.88f), CircleShape)
@@ -331,7 +336,7 @@ fun SettingsPaneSearchField(query: String, onQuery: (String) -> Unit, onFocus: (
 fun SettingsPaneSearchResults(query: String, entries: List<SettingsEntry>, colors: ShellColors, onOpen: (SettingsRoute) -> Unit) {
     val results = remember(query, entries) { searchSettings(entries, query) }
     val ff = LocalAppFontFamily.current
-    LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(vertical = 16.dp)) {
+    com.elvan.udukkai.ui.components.shell.ElvanLazyColumn(Modifier.fillMaxSize(), landscapeRoot = true, contentPadding = PaddingValues(vertical = 16.dp)) {
         if (results.isEmpty()) item {
             Text(if (query.isBlank()) K.searchSettingsHint.tr() else K.noResults.tr(),
                 modifier = Modifier.padding(24.dp), color = colors.textSecondary,
@@ -359,7 +364,7 @@ private fun SearchPage(
     val ff = LocalAppFontFamily.current
     val scrollState = rememberLazyListState()
     ElvanSubShell(title = K.searchWord.tr(), onBack = onClose, scrollState = scrollState) {
-        LazyColumn(
+        com.elvan.udukkai.ui.components.shell.ElvanLazyColumn(
             state = scrollState,
             modifier = Modifier.fillMaxSize(),
             contentPadding = PaddingValues(bottom = 112.dp),

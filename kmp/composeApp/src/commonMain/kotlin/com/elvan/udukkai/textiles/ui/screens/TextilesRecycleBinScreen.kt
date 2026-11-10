@@ -265,6 +265,7 @@ fun TextilesRecycleBinScreen(
         showNavbar = true,
         hasActions = !isSearchActive && !isSelectionMode,
         isSearchActive = isSearchActive,
+        landscapeSearchAction = { isSearchActive = true },
         isSelectionMode = isSelectionMode,
         selectedCount = selectedItemIds.size,
         isAllSelected = isAllSelected,
@@ -327,7 +328,7 @@ fun TextilesRecycleBinScreen(
 
                             ElvanSearchBar(
                                 visible = isSearchActive,
-                                modifier = if (com.elvan.udukkai.ui.components.shell.LocalElvanSideBar.current) Modifier.padding(start = 72.dp, end = 80.dp) else Modifier,
+                                modifier = if (com.elvan.udukkai.ui.components.shell.LocalElvanSideBar.current) Modifier.align(Alignment.TopCenter).statusBarsPadding().padding(top = 8.dp, start = 72.dp, end = 80.dp) else Modifier,
                                 query = searchQuery,
                                 onQueryChange = { searchQuery = it },
                                 onClose = {
@@ -344,7 +345,7 @@ fun TextilesRecycleBinScreen(
     ) {
         when (selectedTab) {
             RecycleBinTab.Create -> {
-                LazyColumn(
+                com.elvan.udukkai.ui.screens.recyclebin.RecycleBinList(
                     state = createScrollState,
                     modifier = Modifier.fillMaxSize().dragSelect(createScrollState, { it in selectedItemIds }, onStartSelection, onToggleItem),
                     contentPadding = PaddingValues(start = 0.dp, top = 0.dp, end = 0.dp, bottom = Dimens.ContentPaddingBottom.sidewaysTight()),
@@ -400,7 +401,7 @@ fun TextilesRecycleBinScreen(
                                     isSelected = isSelected,
                                     onClick = onCardClick,
                                     onLongClick = onCardLongClick,
-                                    modifier = Modifier.padding(horizontal = Dimens.ContentPadding)
+                                    modifier = Modifier.padding(horizontal = if (com.elvan.udukkai.ui.components.shell.LocalElvanSideBar.current) 0.dp else Dimens.ContentPadding)
                                 )
                             }
                         }
@@ -428,7 +429,7 @@ fun TextilesRecycleBinScreen(
                                     isSelected = isSelected,
                                     onClick = onCardClick,
                                     onLongClick = onCardLongClick,
-                                    modifier = Modifier.padding(horizontal = Dimens.ContentPadding),
+                                    modifier = Modifier.padding(horizontal = if (com.elvan.udukkai.ui.components.shell.LocalElvanSideBar.current) 0.dp else Dimens.ContentPadding),
                                     customerCity = receipt.customerId?.let { id -> com.elvan.udukkai.textiles.data.TextilesCustomerRepository.customers.find { it.id == id }?.city } ?: emptyMap(),
                                     linkedInvoiceNumbers = TextilesReceiptRepository.getLinkedInvoiceNumbers(receipt.id)
                                 )
@@ -439,7 +440,7 @@ fun TextilesRecycleBinScreen(
             }
 
             RecycleBinTab.Items -> {
-                LazyColumn(
+                com.elvan.udukkai.ui.screens.recyclebin.RecycleBinList(
                     state = itemsScrollState,
                     modifier = Modifier.fillMaxSize().dragSelect(itemsScrollState, { it in selectedItemIds }, onStartSelection, onToggleItem),
                     contentPadding = PaddingValues(start = Dimens.ContentPadding, top = 0.dp, end = Dimens.ContentPadding, bottom = Dimens.ContentPaddingBottom.sidewaysTight()),
@@ -479,7 +480,7 @@ fun TextilesRecycleBinScreen(
             }
 
             RecycleBinTab.Customers -> {
-                LazyColumn(
+                com.elvan.udukkai.ui.screens.recyclebin.RecycleBinList(
                     state = customersScrollState,
                     modifier = Modifier.fillMaxSize().dragSelect(customersScrollState, { it in selectedItemIds }, onStartSelection, onToggleItem),
                     contentPadding = PaddingValues(start = Dimens.ContentPadding, top = 0.dp, end = Dimens.ContentPadding, bottom = Dimens.ContentPaddingBottom.sidewaysTight()),

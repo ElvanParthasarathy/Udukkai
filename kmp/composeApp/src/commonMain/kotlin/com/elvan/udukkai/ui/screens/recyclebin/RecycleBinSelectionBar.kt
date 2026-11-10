@@ -47,6 +47,15 @@ fun RecycleBinSelectionBar(
     colors: ShellColors = rememberShellColors(),
     modifier: Modifier = Modifier
 ) {
+    if (com.elvan.udukkai.ui.components.shell.LocalElvanSideBar.current) {
+        if (visible) com.elvan.udukkai.ui.components.shell.ElvanFloatingActionBar(
+            actions = listOf(
+                com.elvan.udukkai.ui.components.shell.ElvanFloatingAction(K.restoreBtn.tr(), MaterialSymbols.Rounded.Restore, onRestore, enabled = selectedCount > 0),
+                com.elvan.udukkai.ui.components.shell.ElvanFloatingAction(K.deleteBtn.tr(), MaterialSymbols.Rounded.Delete, onPermanentDelete, enabled = selectedCount > 0, isDestructive = true)
+            ), colors = colors
+        )
+        return
+    }
     val isDark = colors.isDark
     val ff = LocalAppFontFamily.current
 

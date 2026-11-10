@@ -171,6 +171,7 @@ fun TextilesReportsScreen(onBack: () -> Unit) {
         val sideways = com.elvan.udukkai.ui.components.shell.LocalElvanSideBar.current
         val extraTop = if (sideways) 18.dp else 0.dp
         com.elvan.udukkai.ui.screens.editor.ElvanEditorList(
+            landscapeOverviewKeys = setOf("period", "summary", "numbers", "note"),
             fullWidthKeys = setOf("top_spacer", "period", "empty", "export", "note", "financial_year"),
             state = listState,
             modifier = Modifier.fillMaxSize(),

@@ -1,5 +1,8 @@
 package com.elvan.udukkai.textiles.ui.screens
 
+import com.elvan.udukkai.ui.components.EqualHeightCardRow
+import com.elvan.udukkai.ui.components.EqualHeightCard
+
 import com.elvan.udukkai.ui.components.shell.sidewaysTight
 import com.elvan.udukkai.ui.components.dragSelect
 import com.elvan.udukkai.ui.components.ExpressiveDotsLoader
@@ -61,7 +64,7 @@ fun TextilesCustomerScreen(
 
     BoxWithConstraints(modifier = modifier.fillMaxSize()) {
         val isLandscape = maxWidth > maxHeight
-        LazyColumn(
+        com.elvan.udukkai.ui.components.shell.ElvanLazyColumn(
             state = scrollState,
             modifier = Modifier.fillMaxSize().dragSelect(scrollState, { it in selectedCustomerIds }, { onCustomerLongClick?.invoke(it) }, { onToggleSelect?.invoke(it) }),
             contentPadding = PaddingValues(
@@ -121,11 +124,10 @@ fun TextilesCustomerScreen(
                         items = pairs,
                         key = { _, pair -> "cust_pair_${pair.joinToString("_") { it.id.toString() }}" }
                     ) { rowIndex, pair ->
-                        Row(
+                        EqualHeightCardRow(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(horizontal = Dimens.ContentPadding),
-                            horizontalArrangement = Arrangement.spacedBy(Dimens.ItemSpacing)
+                                .padding(horizontal = Dimens.ContentPadding)
                         ) {
                             pair.forEachIndexed { colIndex, item ->
                                 val cardIndex = (rowIndex * 2) + colIndex
@@ -137,7 +139,7 @@ fun TextilesCustomerScreen(
                                 val onCardLongClick: () -> Unit = {
                                     onCustomerLongClick?.invoke(item.id)
                                 }
-                                Box(modifier = Modifier.weight(1f)) {
+                                EqualHeightCard {
                                     TextilesCustomerCard(
                                         index = cardIndex,
                                         merchant = item,

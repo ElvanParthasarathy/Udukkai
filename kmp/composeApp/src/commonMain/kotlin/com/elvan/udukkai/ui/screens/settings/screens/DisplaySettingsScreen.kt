@@ -59,7 +59,7 @@ fun DisplaySettingsScreen(
     val currentMode = ThemeManager.currentThemeMode
     val ff = LocalAppFontFamily.current
 
-    LazyColumn(
+    com.elvan.udukkai.ui.components.shell.ElvanLazyColumn(
         state = scrollState,
         modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(

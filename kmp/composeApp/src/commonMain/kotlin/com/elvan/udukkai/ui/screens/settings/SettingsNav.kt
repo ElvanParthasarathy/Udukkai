@@ -51,6 +51,10 @@ val SettingsRoute.depth: Int
  */
 data class SettingsNavState(val route: SettingsRoute, val index: Int)
 
+/** Password verification is a standalone flow, rather than another narrow Settings detail pane. */
+val SettingsRoute.opensStandalonePage: Boolean
+    get() = this == SettingsRoute.ChangePassword || this == SettingsRoute.CreatePassword
+
 val SettingsRoute.name: String
     get() = when (this) {
         SettingsRoute.Hub -> "Hub"

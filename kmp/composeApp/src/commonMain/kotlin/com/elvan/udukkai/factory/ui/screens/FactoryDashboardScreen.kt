@@ -1,5 +1,8 @@
 package com.elvan.udukkai.factory.ui.screens
 
+import com.elvan.udukkai.ui.components.EqualHeightCardRow
+import com.elvan.udukkai.ui.components.EqualHeightCard
+
 import com.elvan.udukkai.ui.components.shell.sidewaysTight
 import androidx.compose.ui.graphics.Color
 import androidx.compose.foundation.layout.*
@@ -56,7 +59,7 @@ fun FactoryDashboardScreen(
 
     BoxWithConstraints(modifier = modifier.fillMaxSize()) {
         val isLandscape = maxWidth > maxHeight
-        LazyColumn(
+        com.elvan.udukkai.ui.components.shell.ElvanLazyColumn(
             state = scrollState,
             modifier = Modifier.fillMaxSize(),
             contentPadding = PaddingValues(
@@ -106,7 +109,7 @@ fun FactoryDashboardScreen(
                     RecentActivityHeader(
                         onSeeAll = onSeeAll,
                         colors = colors,
-                        modifier = Modifier.offset(y = 6.dp)
+                        modifier = Modifier.offset(y = if (isLandscape) 0.dp else 6.dp)
                     )
                 }
 
@@ -122,11 +125,10 @@ fun FactoryDashboardScreen(
             } else {
                 // 2. Bento Stats Grid: Two Summary Tiles
                 item(key = "stats_bento_grid") {
-                    Row(
+                    EqualHeightCardRow(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(horizontal = Dimens.ContentPadding),
-                        horizontalArrangement = Arrangement.spacedBy(Dimens.ItemSpacing)
+                            .padding(horizontal = Dimens.ContentPadding)
                     ) {
 
 ElvanStatsCard(
@@ -136,8 +138,8 @@ ElvanStatsCard(
                             colors = colors,
                             accentColor = colors.invoiceColor,
                             gradientColors = colors.invoiceGradient,
-                            modifier = Modifier.weight(1f),
-                            isFullWidth = false,
+                            modifier = Modifier.weight(1f).fillMaxHeight(),
+                            isFullWidth = isLandscape,
                             onClick = onSeeAll
                         )
 
@@ -148,8 +150,8 @@ ElvanStatsCard(
                             label = K.totalInvoiced.tr(),
                             value = CurrencyUtils.formatInr(overallTotal),
                             colors = colors,
-                            modifier = Modifier.weight(1f),
-                            isFullWidth = false,
+                            modifier = Modifier.weight(1f).fillMaxHeight(),
+                            isFullWidth = isLandscape,
                             onClick = onOpenReports
                         )
                     }
@@ -160,7 +162,7 @@ ElvanStatsCard(
                     RecentActivityHeader(
                         onSeeAll = onSeeAll,
                         colors = colors,
-                        modifier = Modifier.offset(y = 6.dp)
+                        modifier = Modifier.offset(y = if (isLandscape) 0.dp else 6.dp)
                     )
                 }
 
@@ -176,15 +178,14 @@ ElvanStatsCard(
                             items = pairs,
                             key = { _, pair -> "recent_pair_${pair.first().id}" }
                         ) { rowIndex, pair ->
-                            Row(
+                            EqualHeightCardRow(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .padding(horizontal = Dimens.ContentPadding),
-                                horizontalArrangement = Arrangement.spacedBy(Dimens.ItemSpacing)
+                                    .padding(horizontal = Dimens.ContentPadding)
                             ) {
                                 pair.forEachIndexed { colIndex, item ->
                                     val cardIndex = (rowIndex * 2) + colIndex + 1
-                                    Box(modifier = Modifier.weight(1f)) {
+                                    EqualHeightCard {
                                         FactoryInvoiceCard(
                                             index = cardIndex,
                                             invoice = item,

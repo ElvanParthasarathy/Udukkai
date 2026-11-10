@@ -1,13 +1,11 @@
 package com.elvan.udukkai.ui.screens.recyclebin
 
+import com.elvan.udukkai.ui.navigation.trackPillTabs
 import androidx.compose.animation.core.CubicBezierEasing
 import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.snap
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.gestures.awaitEachGesture
-import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Icon
@@ -23,7 +21,6 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.elvan.udukkai.core.extensions.cssShadow
@@ -40,7 +37,6 @@ import com.elvan.udukkai.ui.navigation.PillMotion
 import com.elvan.udukkai.ui.navigation.PillTab
 import com.elvan.udukkai.ui.navigation.pillNearness
 import kotlin.math.floor
-import kotlin.math.roundToInt
 
 
 
@@ -89,6 +85,8 @@ fun RecycleBinBottomNavBar(
 ) {
     val tabs = RecycleBinTab.entries
     val coroutineScope = rememberCoroutineScope()
+    val pageDispatch = remember(coroutineScope) { com.elvan.udukkai.ui.navigation.PillPageDispatch(coroutineScope) }
+    DisposableEffect(pageDispatch) { onDispose { pageDispatch.cancel() } }
     val colors = rememberShellColors()
     val isDark = colors.isDark
 
@@ -105,7 +103,6 @@ fun RecycleBinBottomNavBar(
     var touchOffsetFromCenterPx by remember { mutableStateOf(0f) }
     var hoverIndex by remember { mutableStateOf<Int?>(null) }
     var localLockedIndex by remember { mutableStateOf<Int?>(null) }
-    var snapNextFrame by remember { mutableStateOf(false) }
 
     val density = LocalDensity.current
     val layoutWidthPx = with(density) { layoutWidth.toPx() }
@@ -114,18 +111,12 @@ fun RecycleBinBottomNavBar(
     val currentOnTabSelected by rememberUpdatedState(onTabSelected)
 
     // As in the main bar: a newer tap cancels an older one still waiting, and our own tap lets the pill finish its glide
-    var pendingSelect by remember { mutableStateOf<kotlinx.coroutines.Job?>(null) }
 
     val actualIndex = tabs.indexOf(selectedTab).coerceAtLeast(0)
     LaunchedEffect(actualIndex) {
-        if (localLockedIndex != actualIndex) snapNextFrame = true
-        localLockedIndex = null
-    }
-    LaunchedEffect(snapNextFrame) {
-        if (snapNextFrame) {
-            kotlinx.coroutines.yield()
-            snapNextFrame = false
-        }
+        // Acknowledge only this destination; a newer gesture owns its own visual target.
+        // Retarget the existing spring without a one-frame snap, including external navigation.
+        if (localLockedIndex == actualIndex) localLockedIndex = null
     }
 
     val activeVisualIndex = if (isInteracting && hoverIndex != null) {
@@ -165,7 +156,6 @@ fun RecycleBinBottomNavBar(
     val animatedLeft = animateFloatAsState(
         targetValue = targetLeftPx,
         animationSpec = when {
-            snapNextFrame -> snap()
             isInteracting && dragOffsetPx != null -> PillMotion.follow
             else -> PillMotion.settle
         },
@@ -225,50 +215,36 @@ fun RecycleBinBottomNavBar(
                         .then(
                             if (!hideContent) {
                                 Modifier.pointerInput(hideContent) {
-                                    awaitEachGesture {
-                                        val down = awaitFirstDown(requireUnconsumed = false)
-                                        pendingSelect?.cancel()
-                                        isInteracting = true
-
-                                        val initialX = down.position.x
-                                        hoverIndex = floor(initialX / layoutWidthPx).toInt().coerceIn(0, itemCount - 1)
-                                        val slotCenter = (hoverIndex!! * layoutWidthPx) + (layoutWidthPx / 2f)
-                                        touchOffsetFromCenterPx = initialX - slotCenter
-                                        dragOffsetPx = null
-
-                                        val pointerId = down.id
-
-                                        while (true) {
-                                            val event = awaitPointerEvent()
-                                            val change = event.changes.firstOrNull { it.id == pointerId } ?: break
-                                            if (!change.pressed) break
-                                            val currentPos = change.position
-                                            if (kotlin.math.abs(currentPos.x - down.position.x) > 4f) {
-                                                val targetCenter = currentPos.x - touchOffsetFromCenterPx
-                                                dragOffsetPx = targetCenter
-                                                hoverIndex = floor(targetCenter / layoutWidthPx).toInt().coerceIn(0, itemCount - 1)
-                                                change.consume()
-                                            }
-                                        }
-
-                                        val finalIndex = hoverIndex
-                                        if (finalIndex != null) {
-                                            localLockedIndex = finalIndex
-                                        }
-                                        isInteracting = false
-                                        dragOffsetPx = null
-                                        hoverIndex = null
-
-                                        if (finalIndex != null) {
-                                            pendingSelect?.cancel()
-                                            pendingSelect = coroutineScope.launch {
-                                                PillMotion.awaitLanded(animatedLeft, ((finalIndex * layoutWidthPx) - overlapPx).coerceIn(minLeftPx, maxLeftPx))
-                                                currentOnTabSelected(tabs[finalIndex])
-                                            }
-                                        }
-                                    }
+                            trackPillTabs(
+                                vertical = false,
+                                onStart = { position ->
+                                    pageDispatch.cancel()
+                                    isInteracting = true
+                                    hoverIndex = floor(position / layoutWidthPx).toInt().coerceIn(0, itemCount - 1)
+                                    touchOffsetFromCenterPx = position - (hoverIndex!! * layoutWidthPx + layoutWidthPx / 2f)
+                                    dragOffsetPx = null
+                                },
+                                onDrag = { position ->
+                                    val targetCenter = position - touchOffsetFromCenterPx
+                                    dragOffsetPx = targetCenter
+                                    hoverIndex = floor(targetCenter / layoutWidthPx).toInt().coerceIn(0, itemCount - 1)
+                                },
+                                onEnd = { isDrag ->
+                                    val finalIndex = hoverIndex
+                                    if (finalIndex != null) localLockedIndex = finalIndex
+                                    isInteracting = false
+                                    dragOffsetPx = null
+                                    hoverIndex = null
+                                    if (finalIndex != null) pageDispatch.select(animatedLeft, ((finalIndex * layoutWidthPx) - overlapPx).coerceIn(minLeftPx, maxLeftPx)) { currentOnTabSelected(tabs[finalIndex]) }
+                                },
+                                onCancel = {
+                                    isInteracting = false
+                                    dragOffsetPx = null
+                                    hoverIndex = null
                                 }
-                            } else Modifier
+                            )
+                        }
+                    } else Modifier
                         ),
                     contentAlignment = Alignment.CenterStart
                 ) {
@@ -284,7 +260,7 @@ fun RecycleBinBottomNavBar(
                         // Master Background Pill (Detached & Draggable)
                         Box(
                             modifier = Modifier
-                                .offset { IntOffset(animatedLeft.value.roundToInt(), 0) }
+                                .graphicsLayer { translationX = animatedLeft.value }
                                 .fillMaxHeight()
                                 .width(bgWidth)
                                 .graphicsLayer {

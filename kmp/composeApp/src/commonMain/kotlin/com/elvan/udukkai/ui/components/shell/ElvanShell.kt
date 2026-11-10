@@ -1,16 +1,22 @@
 package com.elvan.udukkai.ui.components.shell
 
+import com.elvan.udukkai.ui.navigation.smoothScrollToTop
+
 import dev.chrisbanes.haze.hazeSource
 import androidx.compose.animation.core.CubicBezierEasing
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.Icon
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
@@ -70,6 +76,7 @@ fun ElvanShell(
     actions: @Composable RowScope.() -> Unit = {},
     navbar: @Composable () -> Unit = {},
     isSearchActive: Boolean = false,
+    landscapeSearchAction: (() -> Unit)? = null,
     isSelectionMode: Boolean = false,
     selectedCount: Int = 0,
     isAllSelected: Boolean = false,
@@ -104,8 +111,10 @@ fun ElvanShell(
         // Phone/tablet landscape keeps the floating controls; desktop has a sidebar and a plain fixed bar
         val isWide = maxWidth > maxHeight
         val paneChrome = LocalElvanPaneChrome.current
-        val isLandscape = isWide && !isDesktop && !paneChrome
-        val isCompactHeader = isWide || isDesktop || !useNewDesign || collapsedOnly
+        val screenLayout = com.elvan.udukkai.core.platform.platformLayoutPolicy.screenLayout(maxWidth, maxHeight, paneChrome)
+        val androidLandscape = screenLayout == com.elvan.udukkai.core.platform.ScreenLayout.AndroidLandscape
+        val isLandscape = androidLandscape && !paneChrome
+        val isCompactHeader = paneChrome || isWide || isDesktop || !useNewDesign || collapsedOnly
 
         val pillHeight = 50.dp
         val ceiling = if (isDesktop) 16.dp else if (isWide || LocalElvanPaneChrome.current) statusBarHeight + 8.dp else statusBarHeight + 20.dp
@@ -191,7 +200,7 @@ fun ElvanShell(
 
     val topSpacerHeight = if (isCompactHeader) {
         // Sideways the title row and the round button are one 56dp band; the page starts just under it
-        if (isWide && !isDesktop && !LocalElvanPaneChrome.current) statusBarHeight + 37.dp else ceiling + pillHeight + 10.dp
+        if (isLandscape) statusBarHeight + 37.dp else ceiling + pillHeight + 10.dp
     } else {
         (expandedHeight - Dimens.SectionSpacing - with(density) { collapsePx.toDp() }).coerceAtLeast(0.dp)
     }
@@ -373,7 +382,7 @@ fun ElvanShell(
             toggleHeader = {
                 coroutineScope.launch {
                     if (scrollState.firstVisibleItemIndex > 0 || scrollState.firstVisibleItemScrollOffset > 0) {
-                        scrollState.animateScrollToItem(0, 0)
+                        scrollState.smoothScrollToTop()
                     } else {
                         val willExpand = headerCollapsePx > handoffShrinkOffsetPx / 2f
                         val target = if (willExpand) 0f else handoffShrinkOffsetPx
@@ -415,13 +424,19 @@ fun ElvanShell(
         )
     }
 
+    val searchClearance by animateDpAsState(
+        if (androidLandscape && (isSearchActive || isSelectionMode)) 68.dp else if (paneChrome && androidLandscape && LocalLandscapeSettingsHeader.current) Dimens.SettingsPaneHeaderHeight + Dimens.HeaderGap else 0.dp,
+        tween(420, easing = CubicBezierEasing(0.2f, 0f, 0.2f, 1f)), label = "searchContentClearance"
+    )
     CompositionLocalProvider(
         LocalElvanScrollState provides scrollState,
+        LocalLandscapeContent provides androidLandscape,
+        LocalLandscapeHeaderClearance provides searchClearance,
         LocalElvanTopSpacerHeight provides topSpacerHeight,
         LocalElvanShellController provides shellController,
         LocalElvanSideBar provides isLandscape
     ) {
-        val shouldAttachNestedScroll = !isDesktop && !isWide
+        val shouldAttachNestedScroll = screenLayout == com.elvan.udukkai.core.platform.ScreenLayout.AndroidPortrait
         val shellModifier = if (shouldAttachNestedScroll) {
             Modifier
                 .fillMaxSize()
@@ -433,7 +448,8 @@ fun ElvanShell(
                 .background(colors.background)
         }
 
-        val hazeState = dev.chrisbanes.haze.rememberHazeState()
+        val localHazeState = dev.chrisbanes.haze.rememberHazeState()
+        val hazeState = LocalHazeState.current ?: localHazeState
         val menuHost = remember { MenuHostState() }
     androidx.compose.runtime.CompositionLocalProvider(LocalHazeState provides hazeState, LocalMenuHost provides menuHost) {
         Box(
@@ -547,7 +563,7 @@ fun ElvanShell(
 
                 // Landscape: back sits top-right like the home screen controls; the bar leaves room for it
                 val chromeHandled = LocalElvanLandscapeChromeHandled.current
-                val backOnSide = isLandscape && onBack != null && !isSelectionMode && !chromeHandled && !isSearchActive
+                val backOnSide = isLandscape && onBack != null && landscapeSearchAction == null && !isSelectionMode && !chromeHandled && !isSearchActive
                 if (backOnSide) {
                     com.elvan.udukkai.ui.navigation.LandscapeTopActionButton(
                         icon = leadingIcon ?: com.elvan.udukkai.ui.navigation.MaterialSymbols.Rounded.ArrowBack,
@@ -557,16 +573,21 @@ fun ElvanShell(
                         modifier = Modifier.align(Alignment.TopEnd).zIndex(120f)
                     )
                 }
-                if (isLandscape) ElvanLandscapeChrome(
-                    title = if (hideTitleSideways) "" else effectiveTitle,
+                if (paneChrome && androidLandscape && LocalLandscapeSettingsHeader.current) SettingsPaneHeader(
+                    title = effectiveTitle,
+                    colors = colors,
+                    scrollState = scrollState,
+                    modifier = Modifier.align(Alignment.TopCenter).zIndex(100f)
+                ) else if (isLandscape && !isSelectionMode) ElvanLandscapeChrome(
+                    title = "",
                     topInset = statusBarHeight,
                     titleStart = 16.dp,
                     onToolbarPresent = { toolbarPresent = it },
                     titleAlpha = topBarAlpha,
-                    hasActions = hasActions,
+                    hasActions = hasActions && landscapeSearchAction == null,
                     actions = actions,
                     colors = colors
-                ) else Box(
+                ) else if (!paneChrome || isDesktop || isSelectionMode) Box(
                     modifier = Modifier
                         .align(Alignment.TopCenter)
                         .then(if (backOnSide) Modifier.padding(end = 78.dp) else Modifier)
@@ -605,7 +626,7 @@ fun ElvanShell(
             val isImeOpen = imeBottom > 0.dp
 
             if (showNavbar) {
-                if (isSearchActive && isImeOpen) {
+                if (!isLandscape && isSearchActive && isImeOpen) {
                     // Search active with keyboard: gentle gradient above keyboard, solid only behind keyboard
                     Column(
                         modifier = Modifier
@@ -701,6 +722,22 @@ fun ElvanShell(
             }
 
             // Full-screen layer above the header and bars (the editors' draft preview)
+            if (isLandscape && landscapeSearchAction != null && !isSearchActive && !isSelectionMode) {
+                Column(
+                    Modifier.align(Alignment.TopEnd)
+                        .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal + WindowInsetsSides.Top))
+                        .padding(end = 12.dp, top = 8.dp).width(60.dp)
+                        .landscapePillSurface(CircleShape, colors).padding(vertical = 4.dp).zIndex(120f),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    if (onBack != null) Box(Modifier.size(60.dp, 56.dp).clip(CircleShape).clickable(onClick = onBack), contentAlignment = Alignment.Center) {
+                        Icon(com.elvan.udukkai.ui.navigation.MaterialSymbols.Rounded.ArrowBack, K.back.tr(), tint = colors.textPrimary, modifier = Modifier.size(28.dp))
+                    }
+                    Box(Modifier.size(60.dp, 56.dp).clip(CircleShape).clickable(onClick = landscapeSearchAction), contentAlignment = Alignment.Center) {
+                        Icon(com.elvan.udukkai.ui.navigation.MaterialSymbols.Rounded.Search, K.search.tr(), tint = colors.textPrimary, modifier = Modifier.size(28.dp))
+                    }
+                }
+            }
             Box(modifier = Modifier.zIndex(150f)) { overlay() }
 
             // Layer 6: Android System Navigation Bar Touch Shield

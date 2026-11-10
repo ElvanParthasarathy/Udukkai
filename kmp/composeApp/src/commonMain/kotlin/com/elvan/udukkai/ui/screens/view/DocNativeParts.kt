@@ -5,6 +5,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
+import androidx.compose.foundation.lazy.LazyItemScope
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.compositionLocalOf
@@ -66,6 +67,11 @@ fun DocPage(
     content: LazyListScope.() -> Unit
 ) {
     androidx.compose.foundation.layout.BoxWithConstraints(Modifier.fillMaxSize()) {
+    val androidLandscape = com.elvan.udukkai.core.platform.platformLayoutPolicy.screenLayout(maxWidth, maxHeight) == com.elvan.udukkai.core.platform.ScreenLayout.AndroidLandscape
+    if (androidLandscape) {
+        LandscapeDocPage(horizontalPadding, content)
+        return@BoxWithConstraints
+    }
     val isLandscape = maxWidth > maxHeight
     val sideways = isLandscape || com.elvan.udukkai.ui.components.shell.LocalElvanSideBar.current
     androidx.compose.runtime.CompositionLocalProvider(LocalDocLandscape provides isLandscape) {
@@ -87,6 +93,52 @@ fun DocPage(
     }
 }
 
+private class DocSectionItem(val key: Any?, val body: @Composable LazyItemScope.() -> Unit)
+
+private class DocSections : LazyListScope {
+    val sections = mutableListOf<DocSectionItem>()
+    override fun item(key: Any?, contentType: Any?, content: @Composable LazyItemScope.() -> Unit) {
+        sections += DocSectionItem(key, content)
+    }
+    override fun items(count: Int, key: ((Int) -> Any)?, contentType: (Int) -> Any?, itemContent: @Composable LazyItemScope.(Int) -> Unit) {
+        repeat(count) { index -> sections += DocSectionItem(key?.invoke(index)) { itemContent(index) } }
+    }
+}
+
+internal val DOC_SUMMARY_ORDER = listOf("status", "customer", "record", "convert", "info")
+internal val DOC_DETAIL_ORDER = listOf("lines", "totals", "receipts", "bills", "words", "notes")
+
+/** Stable document hierarchy, rather than pairing unrelated sections by their portrait order. */
+@Composable
+internal fun LandscapeDocPage(horizontalPadding: Dp, content: LazyListScope.() -> Unit) {
+    val sections = DocSections().also { it.content() }.sections
+    val summary = DOC_SUMMARY_ORDER.mapNotNull { key -> sections.find { it.key == key } }
+    val detail = DOC_DETAIL_ORDER.mapNotNull { key -> sections.find { it.key == key } } +
+        sections.filter { it.key !in DOC_SUMMARY_ORDER && it.key !in DOC_DETAIL_ORDER && it.key != "top_spacer" }
+    LandscapeDocumentColumns(
+        horizontalPadding = horizontalPadding,
+        summary = { summary.forEach { section -> item(key = section.key, content = section.body) } },
+        details = { detail.forEach { section -> item(key = section.key, content = section.body) } }
+    )
+}
+
+/** Both columns retain their own scroll position and share the shell's top/bottom safe-area spacing. */
+@Composable
+internal fun LandscapeDocumentColumns(
+    horizontalPadding: Dp = Dimens.ContentPadding,
+    summary: LazyListScope.() -> Unit,
+    details: LazyListScope.() -> Unit
+) {
+    val summaryState = rememberLazyListState()
+    val detailState = LocalDocListState.current ?: rememberLazyListState()
+    androidx.compose.runtime.CompositionLocalProvider(LocalDocLandscape provides true) {
+        com.elvan.udukkai.ui.components.shell.ElvanLandscapeWorkspace(
+            modifier = Modifier.padding(horizontal = horizontalPadding), overviewState = summaryState,
+            detailState = detailState, overview = summary, detail = details
+        )
+    }
+}
+
 /** Big status block at the top: icon, what it means and the amount. */
 @Composable
 fun DocStatusHeader(tone: DocTone, label: String, amount: Double, note: String? = null) {
@@ -105,7 +157,11 @@ fun DocStatusHeader(tone: DocTone, label: String, amount: Double, note: String? 
                     // A clear, deeper tone of the hue in both modes, so the white symbol stands out and never blends into it
                     (if (tone == DocTone.Paid) colors.receiptColor else if (tone == DocTone.Neutral) toneColor(DocTone.Due) else tint).let { base ->
                         androidx.compose.ui.graphics.Brush.linearGradient(
-                            if (darkGreen) listOf(androidx.compose.ui.graphics.lerp(tint, Color.White, 0.25f), tint) // the dark mode green, with its dark symbol
+                            if (tone == DocTone.Paid && !colors.isDark) listOf(
+                                androidx.compose.ui.graphics.lerp(base, Color.Black, 0.02f),
+                                androidx.compose.ui.graphics.lerp(base, Color.Black, 0.14f)
+                            )
+                            else if (darkGreen) listOf(androidx.compose.ui.graphics.lerp(tint, Color.White, 0.25f), tint) // the dark mode green, with its dark symbol
                             else listOf(
                                 androidx.compose.ui.graphics.lerp(base, Color.Black, if (colors.isDark) 0.25f else 0.12f),
                                 androidx.compose.ui.graphics.lerp(base, Color.Black, if (colors.isDark) 0.45f else 0.32f)
@@ -145,8 +201,19 @@ fun DocStatusHeader(tone: DocTone, label: String, amount: Double, note: String? 
         }
     }
     if (LocalDocLandscape.current) {
-        // Sideways: the tick or clock, the words and the amount in one line
-        Row(shape.padding(vertical = 12.dp, horizontal = 20.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(16.dp, Alignment.CenterHorizontally)) { body() }
+        Row(shape.padding(16.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            Box(Modifier.size(38.dp).clip(CircleShape).background(tint.copy(alpha = 0.18f)), contentAlignment = Alignment.Center) {
+                Icon(
+                    when (tone) { DocTone.Paid -> MaterialSymbols.Rounded.Check; DocTone.Due -> MaterialSymbols.Rounded.Schedule; DocTone.Neutral -> MaterialSymbols.Rounded.InvoiceFill },
+                    null, tint = tint, modifier = Modifier.size(22.dp)
+                )
+            }
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Text(label.preventBrokenLigatures(), style = TextStyle(fontFamily = ff, fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = tint))
+                Text(CurrencyUtils.formatInr(amount), style = TextStyle(fontFamily = ff, fontSize = 24.sp, fontWeight = FontWeight.ExtraBold, color = colors.textPrimary))
+                if (!note.isNullOrBlank()) Text(note.preventBrokenLigatures(), style = TextStyle(fontFamily = ff, fontSize = 12.sp, color = colors.textSecondary))
+            }
+        }
     } else {
         Column(shape.padding(vertical = 26.dp, horizontal = 20.dp), horizontalAlignment = Alignment.CenterHorizontally) { body() }
     }
@@ -163,7 +230,7 @@ fun DocCustomerCard(name: String, secondName: String, town: String, onClick: (()
             .clip(RoundedCornerShape(24.dp))
             .background(colors.surface)
             .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier)
-            .padding(horizontal = 18.dp, vertical = 16.dp),
+            .padding(horizontal = 18.dp, vertical = if (LocalDocLandscape.current) 12.dp else 16.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         // The same customer icon as the customer cards
@@ -176,7 +243,7 @@ fun DocCustomerCard(name: String, secondName: String, town: String, onClick: (()
             Text(name.preventBrokenLigatures(), style = TextStyle(fontFamily = ff, fontSize = 16.sp, fontWeight = FontWeight.Bold, color = colors.textPrimary), maxLines = 2, overflow = TextOverflow.Ellipsis)
             val sub = listOf(secondName, town).filter { it.isNotBlank() && it != name }.joinToString(" • ")
             if (sub.isNotBlank()) {
-                Text(sub.preventBrokenLigatures(), style = TextStyle(fontFamily = ff, fontSize = 13.sp, color = colors.textSecondary), maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Text(sub.preventBrokenLigatures(), style = TextStyle(fontFamily = ff, fontSize = 13.sp, color = colors.textSecondary), maxLines = if (LocalDocLandscape.current) 3 else 1, overflow = TextOverflow.Ellipsis)
             }
         }
         if (onClick != null) {
@@ -199,15 +266,17 @@ fun DocDivider() = ElvanSettingsDivider(colors = rememberShellColors())
 fun DocRow(label: String, value: String, strong: Boolean = false, valueColor: Color? = null) {
     val colors = rememberShellColors()
     val ff = LocalAppFontFamily.current
-    Row(Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 12.dp), verticalAlignment = Alignment.CenterVertically) {
+    val landscape = LocalDocLandscape.current
+    Row(Modifier.fillMaxWidth().padding(horizontal = if (landscape) 16.dp else 20.dp, vertical = if (landscape) 9.dp else 12.dp), verticalAlignment = Alignment.CenterVertically) {
         Text(
             label.preventBrokenLigatures(),
-            Modifier.weight(1f),
+            Modifier.weight(if (landscape) 0.45f else 1f),
             style = TextStyle(fontFamily = ff, fontSize = if (strong) 15.sp else 14.sp, fontWeight = if (strong) FontWeight.Bold else FontWeight.Normal, color = if (strong) colors.textPrimary else colors.textSecondary)
         )
         Spacer(Modifier.width(12.dp))
         Text(
             value.preventBrokenLigatures(),
+            modifier = if (landscape) Modifier.weight(0.55f) else Modifier,
             style = TextStyle(fontFamily = ff, fontSize = if (strong) 16.sp else 14.sp, fontWeight = if (strong) FontWeight.ExtraBold else FontWeight.SemiBold, color = valueColor ?: colors.textPrimary),
             textAlign = TextAlign.End
         )

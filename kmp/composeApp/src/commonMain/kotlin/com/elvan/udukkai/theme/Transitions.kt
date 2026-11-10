@@ -234,6 +234,18 @@ object Transitions {
         ))
     }
 
+    /** Short vertical rise for Android Settings detail panes, without a full-width page sweep. */
+    fun settingsPaneRise(forward: Boolean): ContentTransform = (
+        (slideInVertically(
+            animationSpec = tween(280, easing = MotionTokens.StandardDecelerate),
+            initialOffsetY = { height -> if (forward) height / 12 else -height / 24 }
+        ) + fadeIn(tween(240, easing = MotionTokens.StandardDecelerate))) togetherWith
+        (slideOutVertically(
+            animationSpec = tween(200, easing = MotionTokens.StandardDecelerate),
+            targetOffsetY = { height -> if (forward) -height / 24 else height / 12 }
+        ) + fadeOut(tween(160)))
+    ).apply { targetContentZIndex = if (forward) 1f else -1f }
+
     fun fadeThrough(): ContentTransform {
         return (fadeIn(
             animationSpec = tween(

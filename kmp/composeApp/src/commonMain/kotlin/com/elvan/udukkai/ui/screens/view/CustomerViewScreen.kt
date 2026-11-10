@@ -119,8 +119,8 @@ fun CustomerViewScreen(
         historyUi = historyUi,
         onBillClick = onBillClick,
         onReceiptClick = onReceiptClick,
-        onRetryHistory = retryHistory
-    ) {
+        onRetryHistory = retryHistory,
+        summary = {
             ViewHero(primary = primaryName, secondary = heroSecond, icon = MaterialSymbols.Rounded.Person, tint = colors.customerColor, colors = colors)
 
             run {
@@ -134,7 +134,8 @@ fun CustomerViewScreen(
             if (actions.isNotEmpty()) {
                 run { ViewQuickActions(actions = actions, colors = colors) }
             }
-
+        }
+    ) {
             run {
                 ViewInfoSection(
                     title = K.contactSection.tr(),

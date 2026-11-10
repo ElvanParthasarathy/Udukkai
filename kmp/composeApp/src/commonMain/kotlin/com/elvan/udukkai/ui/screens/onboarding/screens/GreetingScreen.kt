@@ -135,17 +135,19 @@ fun GreetingScreen(
                 loading = isSaving,
                 enabled = !disabled
             )
+        },
+        header = {
+            NeramElement(delayIndex = 0) {
+                NeramHeader(
+                    title = K.enterCompanyDetails.tr(),
+                    subtitle = if (needsCoolie) K.usedForCoolieBillsReceipts.tr() else K.forGstInvoice.tr()
+                )
+            }
+
+            Spacer(Modifier.height(16.dp))
+
         }
     ) {
-        NeramElement(delayIndex = 0) {
-            NeramHeader(
-                title = K.enterCompanyDetails.tr(),
-                subtitle = if (needsCoolie) K.usedForCoolieBillsReceipts.tr() else K.forGstInvoice.tr()
-            )
-        }
-
-        Spacer(Modifier.height(16.dp))
-
         // Bilingual Mode Choice Card (Match React bank/bilingual preference)
         NeramElement(delayIndex = 1, modifier = Modifier.fillMaxWidth()) {
             Row(

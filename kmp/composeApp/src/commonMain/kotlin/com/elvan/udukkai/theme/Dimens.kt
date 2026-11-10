@@ -7,6 +7,8 @@ import com.elvan.udukkai.core.platform.getImeBottomPadding
 import com.elvan.udukkai.core.platform.getNavBarBottomPadding
 
 object Dimens {
+    val LandscapeEdgeGap = 8.dp
+    val SettingsPaneHeaderHeight = 52.dp
     val ContentPadding = 12.dp
     val SectionSpacing = 16.dp
     val ItemSpacing = 12.dp

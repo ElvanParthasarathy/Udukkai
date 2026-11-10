@@ -54,7 +54,7 @@ fun EditNameScreen(
         onBack = onBack,
         scrollState = scrollState
     ) {
-        LazyColumn(
+        com.elvan.udukkai.ui.components.shell.ElvanLazyColumn(
             state = scrollState,
             modifier = Modifier.fillMaxSize(),
             contentPadding = PaddingValues(bottom = Dimens.SubpageContentPaddingBottom),

@@ -210,7 +210,7 @@ fun ElvanCardSecondLine(
     isSelectionMode: Boolean = false
 ) {
     if (text.isBlank() && label.isBlank()) return
-    var measuredLines by remember { mutableStateOf<Int?>(null) }
+    var measuredLines by remember(text, com.elvan.udukkai.ui.components.shell.LocalLandscapeContent.current) { mutableStateOf<Int?>(null) }
     Spacer(modifier = Modifier.height(2.dp))
     // The business tag goes on a line of its own under the name: at the right end it squeezed a long name into "..."
     Column(modifier = Modifier.fillMaxWidth()) {

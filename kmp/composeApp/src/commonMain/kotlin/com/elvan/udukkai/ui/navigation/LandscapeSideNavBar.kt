@@ -4,14 +4,11 @@ import androidx.compose.animation.core.AnimationSpec
 import androidx.compose.animation.core.CubicBezierEasing
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.snap
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.awaitEachGesture
-import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.*
@@ -33,11 +30,11 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.elvan.udukkai.core.extensions.cssShadow
 import com.elvan.udukkai.ui.components.shell.frostedGlass
+import com.elvan.udukkai.ui.components.shell.landscapePillSurface
 import com.elvan.udukkai.localization.K
 import com.elvan.udukkai.localization.tr
 import com.elvan.udukkai.theme.LocalAppFontFamily
@@ -47,7 +44,6 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
 import kotlin.math.abs
 import kotlin.math.floor
-import kotlin.math.roundToInt
 
 /**
  * Vertical nearness metric for smooth icon & label interpolation as the selection pill glides along the Y axis.
@@ -167,13 +163,7 @@ fun LandscapeTopActionButton(
                 scaleY = scale
                 clip = false
             }
-            .cssShadow(color = Color.Black, alpha = 0.05f, blurRadius = 16.dp, offsetY = 4.dp)
-            .background(colors.floatingBg.copy(alpha = 0.88f), CircleShape)
-            .border(
-                width = 0.5.dp,
-                color = colors.floatingBorder.copy(alpha = if (isDark) 0.15f else 0.6f),
-                shape = CircleShape
-            )
+            .landscapePillSurface(CircleShape, colors)
             .clip(CircleShape)
             .clickable(
                 interactionSource = interactionSource,
@@ -202,6 +192,7 @@ fun LandscapeSideNavBar(
     onInteraction: (Boolean) -> Unit = {},
     onDragProgress: (Float) -> Unit = {},
     hideContent: Boolean = false,
+    morphWhenHidden: Boolean = false,
     modifier: Modifier = Modifier
 ) {
     val items = NavTab.entries.map { SideRailItem(it.icon, it.activeIcon, it.getLocalizedLabel()) }
@@ -212,6 +203,7 @@ fun LandscapeSideNavBar(
         onInteraction = onInteraction,
         onDragProgress = onDragProgress,
         hideContent = hideContent,
+        morphWhenHidden = morphWhenHidden,
         modifier = modifier
     )
 }
@@ -228,10 +220,13 @@ fun SideTabRail(
     onInteraction: (Boolean) -> Unit = {},
     onDragProgress: (Float) -> Unit = {},
     hideContent: Boolean = false,
+    morphWhenHidden: Boolean = false,
     modifier: Modifier = Modifier
 ) {
     val tabs = items
     val coroutineScope = rememberCoroutineScope()
+    val pageDispatch = remember(coroutineScope) { com.elvan.udukkai.ui.navigation.PillPageDispatch(coroutineScope) }
+    DisposableEffect(pageDispatch) { onDispose { pageDispatch.cancel() } }
     val colors = rememberShellColors()
     val isDark = colors.isDark
 
@@ -248,7 +243,6 @@ fun SideTabRail(
     var touchOffsetFromCenterPx by remember { mutableStateOf(0f) }
     var hoverIndex by remember { mutableStateOf<Int?>(null) }
     var localLockedIndex by remember { mutableStateOf<Int?>(null) }
-    var snapNextFrame by remember { mutableStateOf(false) }
 
     val density = LocalDensity.current
     val layoutHeightPx = with(density) { layoutHeight.toPx() }
@@ -258,18 +252,12 @@ fun SideTabRail(
     val currentOnInteraction by rememberUpdatedState(onInteraction)
     val currentOnDragProgress by rememberUpdatedState(onDragProgress)
 
-    var pendingSelect by remember { mutableStateOf<kotlinx.coroutines.Job?>(null) }
 
     val actualIndex = selectedIndex.coerceIn(0, items.lastIndex)
     LaunchedEffect(actualIndex) {
-        if (localLockedIndex != actualIndex) snapNextFrame = true
-        localLockedIndex = null
-    }
-    LaunchedEffect(snapNextFrame) {
-        if (snapNextFrame) {
-            kotlinx.coroutines.yield()
-            snapNextFrame = false
-        }
+        // Acknowledge only this destination; a newer gesture owns its own visual target.
+        // Retarget the existing spring without a one-frame snap, including external navigation.
+        if (localLockedIndex == actualIndex) localLockedIndex = null
     }
 
     val activeVisualIndex = if (isInteracting && hoverIndex != null) hoverIndex!! else localLockedIndex ?: actualIndex
@@ -303,7 +291,6 @@ fun SideTabRail(
     val animatedTop = animateFloatAsState(
         targetValue = targetTopPx,
         animationSpec = when {
-            snapNextFrame -> snap()
             isInteracting && dragOffsetPx != null -> PillMotion.follow
             else -> PillMotion.settle
         },
@@ -315,11 +302,15 @@ fun SideTabRail(
         animationSpec = tween(200, easing = CubicBezierEasing(0.0f, 0.0f, 0.2f, 1.0f)),
         label = "railAlpha"
     )
+    val hideScale by animateFloatAsState(
+        targetValue = if (hideContent && morphWhenHidden) 0.88f else 1f,
+        animationSpec = tween(220, easing = CubicBezierEasing(0.2f, 0f, 0f, 1f)), label = "railFilterMorph"
+    )
 
     if (navBarAlpha > 0f) {
         Box(
             modifier = modifier
-                .graphicsLayer { alpha = navBarAlpha }
+                .graphicsLayer { alpha = navBarAlpha; scaleX = hideScale; scaleY = hideScale; transformOrigin = TransformOrigin(0.5f, 1f) }
                 // A camera cut-out on this side keeps the rail clear of it; with none it sits at the edge
                 .windowInsetsPadding(WindowInsets.displayCutout.only(WindowInsetsSides.Start))
                 .padding(start = 9.dp),
@@ -340,13 +331,7 @@ fun SideTabRail(
                 Box(
                     modifier = Modifier
                         .matchParentSize()
-                        .cssShadow(color = Color.Black, alpha = 0.05f, blurRadius = 16.dp, offsetY = 4.dp)
-                        .background(colors.floatingBg.copy(alpha = 0.88f), CircleShape)
-                        .border(
-                            width = 0.5.dp,
-                            color = colors.floatingBorder.copy(alpha = if (isDark) 0.15f else 0.6f),
-                            shape = CircleShape
-                        )
+                        .landscapePillSurface(CircleShape, colors)
                 )
 
                 // Layer 2: content with the drag gesture
@@ -357,53 +342,40 @@ fun SideTabRail(
                         .then(
                             if (!hideContent) {
                                 Modifier.pointerInput(hideContent) {
-                                    awaitEachGesture {
-                                        val down = awaitFirstDown(requireUnconsumed = false)
-                                        pendingSelect?.cancel()
-                                        isInteracting = true
-                                        currentOnInteraction(true)
-
-                                        val initialY = down.position.y
-                                        hoverIndex = floor(initialY / layoutHeightPx).toInt().coerceIn(0, itemCount - 1)
-                                        val slotCenter = (hoverIndex!! * layoutHeightPx) + (layoutHeightPx / 2f)
-                                        touchOffsetFromCenterPx = initialY - slotCenter
-                                        dragOffsetPx = null
-
-                                        var isDrag = false
-                                        val pointerId = down.id
-
-                                        while (true) {
-                                            val event = awaitPointerEvent()
-                                            val change = event.changes.firstOrNull { it.id == pointerId } ?: break
-                                            if (!change.pressed) break
-                                            val currentPos = change.position
-                                            if (abs(currentPos.y - down.position.y) > 4f) {
-                                                isDrag = true
-                                                val targetCenter = currentPos.y - touchOffsetFromCenterPx
-                                                dragOffsetPx = targetCenter
-                                                hoverIndex = floor(targetCenter / layoutHeightPx).toInt().coerceIn(0, itemCount - 1)
-                                                currentOnDragProgress(targetCenter / layoutHeightPx)
-                                                change.consume()
-                                            }
-                                        }
-
-                                        val finalIndex = hoverIndex
-                                        if (finalIndex != null) localLockedIndex = finalIndex
-                                        isInteracting = false
-                                        currentOnInteraction(false)
-                                        dragOffsetPx = null
-                                        hoverIndex = null
-
-                                        if (finalIndex != null) {
-                                            pendingSelect?.cancel()
-                                            pendingSelect = coroutineScope.launch {
-                                                PillMotion.awaitLanded(animatedTop, ((finalIndex * layoutHeightPx) - overlapPx).coerceIn(minTopPx, maxTopPx))
-                                                currentOnTabSelected(finalIndex, isDrag)
-                                            }
-                                        }
-                                    }
+                            trackPillTabs(
+                                vertical = true,
+                                onStart = { position ->
+                                    pageDispatch.cancel()
+                                    isInteracting = true
+                                    currentOnInteraction(true)
+                                    hoverIndex = floor(position / layoutHeightPx).toInt().coerceIn(0, itemCount - 1)
+                                    touchOffsetFromCenterPx = position - (hoverIndex!! * layoutHeightPx + layoutHeightPx / 2f)
+                                    dragOffsetPx = null
+                                },
+                                onDrag = { position ->
+                                    val targetCenter = position - touchOffsetFromCenterPx
+                                    dragOffsetPx = targetCenter
+                                    hoverIndex = floor(targetCenter / layoutHeightPx).toInt().coerceIn(0, itemCount - 1)
+                                    currentOnDragProgress(targetCenter / layoutHeightPx)
+                                },
+                                onEnd = { isDrag ->
+                                    val finalIndex = hoverIndex
+                                    if (finalIndex != null) localLockedIndex = finalIndex
+                                    isInteracting = false
+                                    currentOnInteraction(false)
+                                    dragOffsetPx = null
+                                    hoverIndex = null
+                                    if (finalIndex != null) pageDispatch.select(animatedTop, ((finalIndex * layoutHeightPx) - overlapPx).coerceIn(minTopPx, maxTopPx)) { currentOnTabSelected(finalIndex, isDrag) }
+                                },
+                                onCancel = {
+                                    isInteracting = false
+                                    currentOnInteraction(false)
+                                    dragOffsetPx = null
+                                    hoverIndex = null
                                 }
-                            } else Modifier
+                            )
+                        }
+                    } else Modifier
                         ),
                     contentAlignment = Alignment.TopCenter
                 ) {
@@ -419,7 +391,7 @@ fun SideTabRail(
                         // The sliding pill, detached and draggable
                         Box(
                             modifier = Modifier
-                                .offset { IntOffset(0, animatedTop.value.roundToInt()) }
+                                .graphicsLayer { translationY = animatedTop.value }
                                 .fillMaxWidth()
                                 .height(bgHeight)
                                 .graphicsLayer {

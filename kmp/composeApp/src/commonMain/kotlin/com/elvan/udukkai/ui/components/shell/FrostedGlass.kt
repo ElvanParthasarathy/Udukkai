@@ -8,6 +8,8 @@ import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import com.elvan.udukkai.core.extensions.cssShadow
 import com.elvan.udukkai.theme.ShellColors
 import dev.chrisbanes.haze.HazeState
 import dev.chrisbanes.haze.HazeStyle
@@ -16,6 +18,13 @@ import dev.chrisbanes.haze.hazeEffect
 
 /** The page behind the floating bars; a shell provides it so the bars can blur what scrolls under them. */
 val LocalHazeState = compositionLocalOf<HazeState?> { null }
+
+/** One surface for the landscape action pill, tab rail, and round action buttons. */
+@Composable
+fun Modifier.landscapePillSurface(shape: Shape, colors: ShellColors): Modifier = this
+    .cssShadow(color = Color.Black, alpha = 0.05f, blurRadius = 16.dp, offsetY = 4.dp)
+    .frostedGlass(shape, colors, fallbackAlpha = 0.88f)
+    .border(0.5.dp, colors.floatingBorder.copy(alpha = if (colors.isDark) 0.15f else 0.6f), shape)
 
 /**
  * Frosted glass like iOS: the page behind is blurred and lightly tinted with the bar colour.

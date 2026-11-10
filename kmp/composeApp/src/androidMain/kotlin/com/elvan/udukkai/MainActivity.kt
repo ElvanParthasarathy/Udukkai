@@ -70,7 +70,17 @@ class MainActivity : FragmentActivity() {
         devSkipLock(intent)
     }
 
+    @OptIn(androidx.compose.ui.ExperimentalComposeUiApi::class)
+    private fun configureComposeRendering() {
+        // Samsung Android 16 captures a call stack for Compose 1.9's per-frame refresh-rate hints.
+        // Keep normal system refresh-rate scheduling; avoid that measured UI-thread cost.
+        if (Build.VERSION.SDK_INT == 36 && Build.MANUFACTURER.equals("samsung", ignoreCase = true)) {
+            androidx.compose.ui.ComposeUiFlags.isAdaptiveRefreshRateEnabled = false
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
+        configureComposeRendering()
         super.onCreate(savedInstanceState)
         devSkipLock(intent)
         com.elvan.udukkai.core.platform.AppContext.context = applicationContext

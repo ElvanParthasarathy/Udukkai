@@ -38,6 +38,8 @@ import com.elvan.udukkai.theme.rememberShellColors
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
 
+internal val LocalActionSheetLandscape = compositionLocalOf { false }
+
 /**
  * ElvanActionSheet — Flutter & Neram-matching floating action sheet modal popup.
  * Built with rock-solid Dialog + animated scrim. Closes by a tap on the background, Back or its buttons, not by swiping.
@@ -65,6 +67,7 @@ fun ElvanActionSheet(
     slideDistance: androidx.compose.ui.unit.Dp = 300.dp,
     /** One UI picker form: no title, a solid 26dp card 10dp from the screen edges, plain text buttons with a divider. Content sets its own padding. */
     pickerCard: Boolean = false,
+    landscapePickerWidth: androidx.compose.ui.unit.Dp = 440.dp,
     customContent: (@Composable () -> Unit)? = null
 ) {
     val ff = LocalAppFontFamily.current
@@ -139,16 +142,15 @@ fun ElvanActionSheet(
         ) {
             // Sideways it is still the bottom-up sheet of the portrait, only narrower
             val isWide = maxWidth > maxHeight && !isDesktop
-            val isLandscape = false
+            val availableHeight = maxHeight
             Box(
                 modifier = Modifier.fillMaxSize(),
                 contentAlignment = when {
                     isDesktop -> Alignment.Center
-                    isLandscape -> Alignment.CenterEnd
                     else -> Alignment.BottomCenter
                 }
             ) {
-            val cardShape = if (isLandscape) RoundedCornerShape(topStart = 28.dp, bottomStart = 28.dp) else RoundedCornerShape(if (pickerCard) 26.dp else 32.dp)
+            val cardShape = RoundedCornerShape(if (pickerCard) 26.dp else 32.dp)
             val cardModifier = when {
                 isDesktop -> {
                     modifier
@@ -161,21 +163,11 @@ fun ElvanActionSheet(
                             indication = null
                         ) { /* Consume clicks */ }
                 }
-                isLandscape -> {
-                    // Adaptive Side Sheet for Landscape: Right-side anchored, max-width ~420.dp
-                    modifier
-                        .width(340.dp)
-                        .fillMaxHeight()
-                        .offset { IntOffset(sheetOffsetY.value.roundToInt(), 0) }
-                        .clickable(
-                            interactionSource = remember { MutableInteractionSource() },
-                            indication = null
-                        ) { /* Consume clicks */ }
-                }
                 else -> {
                     modifier
-                        .then(if (isWide) Modifier.widthIn(max = 440.dp) else Modifier)
+                        .then(if (isWide) Modifier.widthIn(max = if (pickerCard) landscapePickerWidth else 440.dp) else Modifier)
                         .fillMaxWidth()
+                        .heightIn(max = (availableHeight - 32.dp).coerceAtLeast(120.dp))
                         .navigationBarsPadding()
                         .imePadding()
                         .padding(start = if (pickerCard) 10.dp else 16.dp, end = if (pickerCard) 10.dp else 16.dp, bottom = 16.dp)
@@ -196,16 +188,18 @@ fun ElvanActionSheet(
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .then(if (isLandscape) Modifier.fillMaxHeight().verticalScroll(androidx.compose.foundation.rememberScrollState()).statusBarsPadding().navigationBarsPadding() else Modifier)
+                        .then(if (isWide && !pickerCard) Modifier.verticalScroll(androidx.compose.foundation.rememberScrollState()) else Modifier)
                         .then(if (pickerCard) Modifier else Modifier.padding(start = 20.dp, end = 20.dp, top = 24.dp, bottom = 16.dp)),
-                    verticalArrangement = if (isLandscape) Arrangement.Center else Arrangement.Top,
+                    verticalArrangement = Arrangement.Top,
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     if (pickerCard) {
-                        customContent?.invoke()
+                        Box(Modifier.weight(1f, fill = false).verticalScroll(androidx.compose.foundation.rememberScrollState())) {
+                            CompositionLocalProvider(LocalActionSheetLandscape provides isWide) { customContent?.invoke() }
+                        }
                         Spacer(modifier = Modifier.height(4.dp))
                         PickerButtons(cancelText, confirmText, colors, onCancel = { dismiss() }, onConfirm = { dismiss { confirmed() } })
-                        Spacer(modifier = Modifier.height(20.dp))
+                        Spacer(modifier = Modifier.height(if (isWide) 8.dp else 20.dp))
                     } else {
                     // Centered Title
                     Text(
@@ -222,7 +216,7 @@ fun ElvanActionSheet(
 
                     if (customContent != null) {
                         Spacer(modifier = Modifier.height(16.dp))
-                        customContent()
+                        CompositionLocalProvider(LocalActionSheetLandscape provides isWide) { customContent() }
                     }
 
                     Spacer(modifier = Modifier.height(24.dp))
@@ -447,7 +441,7 @@ private fun PickerButtons(cancel: String, confirm: String, colors: ShellColors, 
             Text(text.preventBrokenLigatures(), maxLines = 1, style = TextStyle(fontFamily = LocalAppFontFamily.current, fontSize = 18.sp, fontWeight = FontWeight.Bold), color = colors.textPrimary)
         }
     }
-    Row(Modifier.fillMaxWidth().padding(horizontal = 24.dp).height(36.dp)) {
+    Row(Modifier.fillMaxWidth().padding(horizontal = 24.dp).height(48.dp)) {
         Button(cancel, onCancel)
         Button(confirm, onConfirm)
     }

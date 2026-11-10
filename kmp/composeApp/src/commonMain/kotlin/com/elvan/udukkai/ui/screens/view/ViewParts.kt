@@ -102,7 +102,7 @@ fun ViewHero(primary: String, secondary: String, icon: ImageVector, tint: androi
             Column(Modifier.weight(1f)) {
                 Text(
                     text = primary.preventBrokenLigatures(),
-                    maxLines = 1,
+                    maxLines = if (LocalDocLandscape.current) 3 else 1,
                     overflow = TextOverflow.Ellipsis,
                     style = TextStyle(fontFamily = ff, fontSize = 17.sp, fontWeight = FontWeight.Bold, color = colors.textPrimary)
                 )
@@ -110,7 +110,7 @@ fun ViewHero(primary: String, secondary: String, icon: ImageVector, tint: androi
                     Spacer(Modifier.height(2.dp))
                     Text(
                         text = secondary.preventBrokenLigatures(),
-                        maxLines = 1,
+                        maxLines = if (LocalDocLandscape.current) 3 else 1,
                         overflow = TextOverflow.Ellipsis,
                         style = TextStyle(fontFamily = ff, fontSize = 13.5.sp, color = colors.textSecondary)
                     )
@@ -127,6 +127,16 @@ fun ViewStats(
     right: Triple<ImageVector, String, String>,
     colors: ShellColors
 ) {
+    if (LocalDocLandscape.current) {
+        Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            for ((icon, label, value) in listOf(left, right)) {
+                val hue = viewIconHue(icon, colors)
+                ElvanStatsCard(icon = icon, label = label, value = value, colors = colors,
+                    accentColor = hue, isFullWidth = true)
+            }
+        }
+        return
+    }
     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
         for ((icon, label, value) in listOf(left, right)) {
             val hue = viewIconHue(icon, colors)

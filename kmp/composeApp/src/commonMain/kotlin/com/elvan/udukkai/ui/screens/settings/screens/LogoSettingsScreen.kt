@@ -39,7 +39,7 @@ fun LogoSettingsScreen(
     val path = if (wide) profile.wideLogo else profile.logo
 
     Box(modifier = Modifier.fillMaxSize()) {
-        LazyColumn(
+        com.elvan.udukkai.ui.components.shell.ElvanLazyColumn(
             state = scrollState,
             modifier = Modifier.fillMaxSize(),
             contentPadding = PaddingValues(

@@ -114,3 +114,9 @@ fun getCountryCallingCode(countryName: String?): String {
         else -> "+91"
     }
 }
+
+/** Localize known geographic names for controls without translating free-form address data. */
+fun locationUiName(value: String, options: List<LocationName>, language: String): String {
+    val preset = options.firstOrNull { it.en.equals(value, ignoreCase = true) || it.ta == value } ?: return value
+    return if (language == "ta") preset.ta else preset.en
+}

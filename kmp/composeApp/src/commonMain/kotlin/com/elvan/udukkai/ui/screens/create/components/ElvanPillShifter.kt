@@ -2,11 +2,8 @@ package com.elvan.udukkai.ui.screens.create.components
 
 import androidx.compose.animation.core.CubicBezierEasing
 import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.snap
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
-import androidx.compose.foundation.gestures.awaitEachGesture
-import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Icon
@@ -24,7 +21,6 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.elvan.udukkai.theme.LocalAppFontFamily
@@ -34,10 +30,11 @@ import com.elvan.udukkai.theme.rememberShellColors
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import androidx.compose.ui.semantics.clearAndSetSemantics
+import com.elvan.udukkai.ui.navigation.PillPageDispatch
+import com.elvan.udukkai.ui.navigation.trackPillTabs
 import com.elvan.udukkai.ui.navigation.PillMotion
 import com.elvan.udukkai.ui.navigation.pillNearness
 import kotlin.math.floor
-import kotlin.math.roundToInt
 import com.elvan.udukkai.theme.LocalShellColors
 
 data class PillShifterItem(
@@ -84,21 +81,18 @@ fun ElvanPillShifter(
     var touchOffsetFromCenterPx by remember { mutableStateOf(0f) }
     var hoverIndex by remember { mutableStateOf<Int?>(null) }
     var localLockedIndex by remember { mutableStateOf<Int?>(null) }
-    var snapNextFrame by remember { mutableStateOf(false) }
     // As in the tab bar: the list behind swaps only once the pill has landed, and a newer tap cancels an older one
-    var pendingSelect by remember { mutableStateOf<kotlinx.coroutines.Job?>(null) }
+    val pageDispatch = remember(coroutineScope) { PillPageDispatch(coroutineScope) }
+    DisposableEffect(pageDispatch) { onDispose { pageDispatch.cancel() } }
+    val currentOnInteraction by rememberUpdatedState(onInteraction)
+    val currentOnDragProgress by rememberUpdatedState(onDragProgress)
+    val currentActualIndex by rememberUpdatedState(actualIndex)
     val currentOnIndexSelected by rememberUpdatedState(onIndexSelected)
 
     LaunchedEffect(actualIndex) {
-        // Our own tap: let the pill finish gliding there. A change from elsewhere: jump straight there.
-        if (localLockedIndex != actualIndex) snapNextFrame = true
-        localLockedIndex = null
-    }
-    LaunchedEffect(snapNextFrame) {
-        if (snapNextFrame) {
-            kotlinx.coroutines.yield()
-            snapNextFrame = false
-        }
+        // Acknowledge only this destination; a newer gesture owns its own visual target.
+        // Retarget the existing spring without a one-frame snap, including external navigation.
+        if (localLockedIndex == actualIndex) localLockedIndex = null
     }
 
     val activeVisualIndex = if (isInteracting && hoverIndex != null) {
@@ -175,7 +169,6 @@ fun ElvanPillShifter(
         val animatedLeft = animateFloatAsState(
             targetValue = targetLeftPx,
             animationSpec = when {
-                snapNextFrame -> snap()
                 isInteracting && dragOffsetPx != null -> PillMotion.follow
                 else -> PillMotion.settle
             },
@@ -198,56 +191,45 @@ fun ElvanPillShifter(
                 .padding(horizontal = horizontalPadding, vertical = verticalPadding)
                 .pointerInput(itemCount, layoutWidthPx) {
                     if (layoutWidthPx <= 0f) return@pointerInput
-                    awaitEachGesture {
-                        val down = awaitFirstDown(requireUnconsumed = false)
-                        pendingSelect?.cancel()
-                        isInteracting = true
-                        onInteraction(true)
-
-                        val initialX = down.position.x
-                        hoverIndex = floor(initialX / layoutWidthPx).toInt().coerceIn(0, itemCount - 1)
-                        if (hoverIndex != actualIndex) haptics.tick()
-                        val slotCenter = (hoverIndex!! * layoutWidthPx) + (layoutWidthPx / 2f)
-                        touchOffsetFromCenterPx = initialX - slotCenter
-                        dragOffsetPx = null
-
-                        val pointerId = down.id
-
-                        while (true) {
-                            val event = awaitPointerEvent()
-                            val change = event.changes.firstOrNull { it.id == pointerId } ?: break
-                            if (!change.pressed) {
-                                break
+                    trackPillTabs(
+                        vertical = false,
+                        onStart = { position ->
+                            pageDispatch.cancel()
+                            isInteracting = true
+                            currentOnInteraction(true)
+                            hoverIndex = floor(position / layoutWidthPx).toInt().coerceIn(0, itemCount - 1)
+                            if (hoverIndex != currentActualIndex) haptics.tick()
+                            touchOffsetFromCenterPx = position - (hoverIndex!! * layoutWidthPx + layoutWidthPx / 2f)
+                            dragOffsetPx = null
+                        },
+                        onDrag = { position ->
+                            val targetCenter = position - touchOffsetFromCenterPx
+                            dragOffsetPx = targetCenter
+                            val slot = floor(targetCenter / layoutWidthPx).toInt().coerceIn(0, itemCount - 1)
+                            if (slot != hoverIndex) haptics.tick()
+                            hoverIndex = slot
+                            currentOnDragProgress(targetCenter / layoutWidthPx)
+                        },
+                        onEnd = {
+                            val finalIndex = hoverIndex
+                            if (finalIndex != null) localLockedIndex = finalIndex
+                            isInteracting = false
+                            currentOnInteraction(false)
+                            dragOffsetPx = null
+                            hoverIndex = null
+                            if (finalIndex != null) {
+                                pageDispatch.select(animatedLeft, ((finalIndex * layoutWidthPx) - overlapPx).coerceIn(minLeftPx, maxLeftPx)) {
+                                    currentOnIndexSelected(finalIndex)
+                                }
                             }
-                            val currentPos = change.position
-                            if (kotlin.math.abs(currentPos.x - down.position.x) > 4f) {
-                                val targetCenter = currentPos.x - touchOffsetFromCenterPx
-                                dragOffsetPx = targetCenter
-                                val slot = floor(targetCenter / layoutWidthPx).toInt().coerceIn(0, itemCount - 1)
-                                if (slot != hoverIndex) haptics.tick()
-                                hoverIndex = slot
-                                onDragProgress(targetCenter / layoutWidthPx)
-                                change.consume()
-                            }
+                        },
+                        onCancel = {
+                            isInteracting = false
+                            currentOnInteraction(false)
+                            dragOffsetPx = null
+                            hoverIndex = null
                         }
-
-                        val finalIndex = hoverIndex
-                        if (finalIndex != null) {
-                            localLockedIndex = finalIndex
-                        }
-                        isInteracting = false
-                        onInteraction(false)
-                        dragOffsetPx = null
-                        hoverIndex = null
-
-                        if (finalIndex != null) {
-                            pendingSelect?.cancel()
-                            pendingSelect = coroutineScope.launch {
-                                PillMotion.awaitLanded(animatedLeft, ((finalIndex * layoutWidthPx) - overlapPx).coerceIn(minLeftPx, maxLeftPx))
-                                currentOnIndexSelected(finalIndex)
-                            }
-                        }
-                    }
+                    )
                 },
             contentAlignment = Alignment.CenterStart
         ) {
@@ -259,7 +241,7 @@ fun ElvanPillShifter(
                 // Master Background Pill (Detached & Draggable)
                 Box(
                     modifier = Modifier
-                        .offset { IntOffset(animatedLeft.value.roundToInt(), 0) }
+                        .graphicsLayer { translationX = animatedLeft.value }
                         .fillMaxHeight()
                         .width(bgWidth)
                         .graphicsLayer {

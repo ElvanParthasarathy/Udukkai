@@ -23,6 +23,11 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.TextStyle
@@ -85,7 +90,7 @@ internal fun NeramHeader(title: String, subtitle: String) {
         Text(
             text = title,
             modifier = Modifier.padding(horizontal = 8.dp),
-            style = TextStyle(fontFamily = ElvanSansFontFamily, fontSize = 23.sp, fontWeight = FontWeight.Bold, color = NeramColors.textPrimary(), lineHeight = 29.sp),
+            style = TextStyle(fontFamily = ElvanSansFontFamily, fontSize = if (LocalAuthLandscape.current) 21.sp else 23.sp, fontWeight = FontWeight.Bold, color = NeramColors.textPrimary(), lineHeight = if (LocalAuthLandscape.current) 27.sp else 29.sp),
             textAlign = TextAlign.Center
         )
         Spacer(Modifier.height(6.dp))
@@ -108,6 +113,7 @@ internal fun NeramButton(
     modifier: Modifier = Modifier
 ) {
     val active = enabled && !loading
+    if (LocalAuthKeyboardVisible.current) return
     Box(
         modifier = modifier
             .fillMaxWidth()
@@ -152,7 +158,7 @@ internal fun Modifier.neramPill(): Modifier =
  * only when the screen is too small), and the button stays pinned at the bottom in the same place on every page.
  */
 @Composable
-internal fun NeramPage(
+internal fun LegacyNeramPage(
     bottom: @Composable () -> Unit,
     content: @Composable ColumnScope.() -> Unit
 ) {
@@ -166,7 +172,7 @@ internal fun NeramPage(
                 .fillMaxSize()
                 .imePadding()
         ) {
-            if (maxWidth > maxHeight) {
+            if (!com.elvan.udukkai.core.platform.platformLayoutPolicy.supportsLandscapeControls && maxWidth > maxHeight) {
                 // Sideways: the heading on the left, the fields on the right
                 val scope = androidx.compose.runtime.remember {
                     object : ColumnScope {
@@ -202,8 +208,8 @@ internal fun NeramPage(
                     .fillMaxWidth()
                     .heightIn(min = maxHeight)
                     .verticalScroll(rememberScrollState())
-                    .padding(horizontal = 16.dp, vertical = 24.dp)
-                    .padding(bottom = 96.dp),
+                    .padding(horizontal = 16.dp, vertical = if (LocalAuthKeyboardVisible.current) 8.dp else 24.dp)
+                    .padding(bottom = if (LocalAuthKeyboardVisible.current) 0.dp else 96.dp),
                 verticalArrangement = Arrangement.Center,
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
@@ -234,6 +240,10 @@ internal fun NeramChoiceCard(
     onSelect: (String) -> Unit
 ) {
     val dark = ThemeManager.isDark()
+    val scroll = rememberScrollState()
+    val cardColor = NeramColors.inputBackground()
+    val thumbColor = NeramColors.textPrimary().copy(alpha = 0.35f)
+    val scrollbarAlpha by animateFloatAsState(if (scroll.isScrollInProgress) 1f else 0f, tween(200), label = "language_scrollbar")
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -242,7 +252,28 @@ internal fun NeramChoiceCard(
                 else Modifier.cssShadow(color = Color.Black, alpha = 0.12f, blurRadius = 14.dp, offsetY = 4.dp)
             )
             .clip(RoundedCornerShape(24.dp))
-            .background(NeramColors.inputBackground())
+            .background(cardColor)
+            .drawWithContent {
+                drawContent()
+                val fade = 16.dp.toPx().coerceAtMost(size.height / 4)
+                if (scroll.canScrollBackward) drawRect(
+                    Brush.verticalGradient(listOf(cardColor, Color.Transparent), endY = fade),
+                    size = Size(size.width, fade)
+                )
+                if (scroll.canScrollForward) drawRect(
+                    Brush.verticalGradient(listOf(Color.Transparent, cardColor), startY = size.height - fade, endY = size.height),
+                    topLeft = Offset(0f, size.height - fade), size = Size(size.width, fade)
+                )
+                if (scroll.maxValue > 0 && scrollbarAlpha > 0f) {
+                    val thumb = (size.height * size.height / (size.height + scroll.maxValue)).coerceAtLeast(20.dp.toPx()).coerceAtMost(size.height)
+                    drawRoundRect(
+                        thumbColor.copy(alpha = thumbColor.alpha * scrollbarAlpha),
+                        topLeft = Offset(size.width - 6.dp.toPx(), (size.height - thumb) * scroll.value / scroll.maxValue),
+                        size = Size(3.dp.toPx(), thumb), cornerRadius = CornerRadius(2.dp.toPx())
+                    )
+                }
+            }
+            .then(if (LocalAuthLandscape.current) Modifier.verticalScroll(scroll) else Modifier)
             .padding(vertical = 4.dp)
     ) {
         choices.forEachIndexed { index, choice ->
@@ -254,7 +285,7 @@ internal fun NeramChoiceCard(
                         interactionSource = remember { MutableInteractionSource() },
                         indication = ripple(color = if (dark) Color.White else Color.Black, bounded = true)
                     ) { onSelect(choice.code) }
-                    .padding(horizontal = 18.dp, vertical = 14.dp),
+                    .padding(horizontal = 18.dp, vertical = if (LocalAuthLandscape.current) 10.dp else 14.dp),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {

@@ -15,6 +15,7 @@ import com.elvan.udukkai.ui.screens.onboarding.screens.NeramColors
 import com.elvan.udukkai.ui.screens.onboarding.screens.NeramElement
 import com.elvan.udukkai.ui.screens.onboarding.screens.NeramHeader
 import com.elvan.udukkai.ui.screens.onboarding.screens.NeramPage
+import com.elvan.udukkai.ui.screens.onboarding.screens.LocalAuthLandscape
 
 /**
  * Billing language page of the first-run setup, built like the language page: icon, title, rounded card, and
@@ -27,28 +28,31 @@ fun BillingLanguageStep(
     onContinue: () -> Unit
 ) {
     NeramPage(
-        bottom = { NeramButton(text = K.continueText.tr(), onClick = onContinue) }
+        boundedContent = true,
+        bottom = { NeramButton(text = K.continueText.tr(), onClick = onContinue) },
+        header = {
+            NeramElement(delayIndex = 0) {
+                Icon(
+                    imageVector = MaterialSymbols.Rounded.DescriptionFill,
+                    contentDescription = null,
+                    modifier = Modifier.size(if (LocalAuthLandscape.current) 40.dp else 56.dp),
+                    tint = NeramColors.textPrimary()
+                )
+            }
+
+            Spacer(Modifier.height(14.dp))
+
+            NeramElement(delayIndex = 1) {
+                NeramHeader(
+                    title = K.selectPrimaryBillingLanguage.tr(),
+                    subtitle = K.whichBillingLanguagePrompt.tr()
+                )
+            }
+
+            Spacer(Modifier.height(4.dp))
+
+        }
     ) {
-        NeramElement(delayIndex = 0) {
-            Icon(
-                imageVector = MaterialSymbols.Rounded.DescriptionFill,
-                contentDescription = null,
-                modifier = Modifier.size(56.dp),
-                tint = NeramColors.textPrimary()
-            )
-        }
-
-        Spacer(Modifier.height(14.dp))
-
-        NeramElement(delayIndex = 1) {
-            NeramHeader(
-                title = K.selectPrimaryBillingLanguage.tr(),
-                subtitle = K.whichBillingLanguagePrompt.tr()
-            )
-        }
-
-        Spacer(Modifier.height(4.dp))
-
         NeramElement(delayIndex = 2, modifier = Modifier.fillMaxWidth()) {
             NeramChoiceCard(
                 choices = listOf(NeramChoice("ta", "தமிழ்", "Tamil"), NeramChoice("en", "English", "ஆங்கிலம்")),

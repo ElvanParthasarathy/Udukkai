@@ -414,8 +414,7 @@ fun <T> ElvanSelectionBottomSheet(
                         modifier = Modifier
                             .fillMaxWidth()
                             .then(if (isLandscape) Modifier.fillMaxHeight() else Modifier.nestedScroll(downwardScrollConnection))
-                            .navigationBarsPadding()
-                            .padding(bottom = 16.dp)
+                            .then(if (isLandscape) Modifier.padding(bottom = 8.dp) else Modifier.navigationBarsPadding().padding(bottom = 16.dp))
                     ) {
                     // Full Header Draggable Area (Clean Drag Handle only, generous breathing room)
                     Box(

@@ -118,7 +118,7 @@ fun FactoryItemCard(
         isSelectionMode = isSelectionMode,
         padding = PaddingValues(
             horizontal = Dimens.CardPaddingHorizontal,
-            vertical = Dimens.CardPaddingVertical
+            vertical = if (com.elvan.udukkai.ui.components.shell.LocalLandscapeContent.current) 12.dp else Dimens.CardPaddingVertical
         ),
         borderRadius = Dimens.CardRadius
     ) {
@@ -146,7 +146,7 @@ fun FactoryItemCard(
                     modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.Top
                 ) {
-                    var primaryLineCount by remember { mutableStateOf<Int?>(null) }
+                    var primaryLineCount by remember(primary, com.elvan.udukkai.ui.components.shell.LocalLandscapeContent.current) { mutableStateOf<Int?>(null) }
                     Column(
                         modifier = Modifier.weight(1f)
                     ) {
@@ -209,7 +209,7 @@ fun TextilesItemCard(
         isSelectionMode = isSelectionMode,
         padding = PaddingValues(
             horizontal = Dimens.CardPaddingHorizontal,
-            vertical = Dimens.CardPaddingVertical
+            vertical = if (com.elvan.udukkai.ui.components.shell.LocalLandscapeContent.current) 12.dp else Dimens.CardPaddingVertical
         ),
         borderRadius = Dimens.CardRadius
     ) {
@@ -237,7 +237,7 @@ fun TextilesItemCard(
                     modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.Top
                 ) {
-                    var primaryLineCount by remember { mutableStateOf<Int?>(null) }
+                    var primaryLineCount by remember(primary, com.elvan.udukkai.ui.components.shell.LocalLandscapeContent.current) { mutableStateOf<Int?>(null) }
                     Column(
                         modifier = Modifier.weight(1f)
                     ) {

@@ -1,4 +1,6 @@
-﻿package com.elvan.udukkai.factory.ui.screens.settings
+package com.elvan.udukkai.ui.screens.settings.screens
+
+import com.elvan.udukkai.data.settings.BusinessProfileStore
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -31,20 +33,17 @@ import com.elvan.udukkai.theme.ShellDefaults
 import com.elvan.udukkai.theme.rememberShellColors
 import com.elvan.udukkai.ui.components.shell.*
 import com.elvan.udukkai.ui.navigation.MaterialSymbols
-import com.elvan.udukkai.factory.data.FactoryProfileRepository
 
-/**
- * Company Settings (நிறுவன அமைப்புகள்) Screen matching Flutter's `niruvana_amaippugal_thirai.dart` 1:1.
- * Supports smooth accordion edit expand/collapse with bilingual values and live repository updates.
- */
+/** Shared business Settings backed by the owning app's profile store. */
 @Composable
-fun FactoryMerchantSettingsScreen(
+fun CompanySettingsScreen(
+    store: BusinessProfileStore,
     onNavigateToManageProfiles: () -> Unit = {},
     scrollState: LazyListState = rememberLazyListState(),
     colors: ShellColors = rememberShellColors()
 ) {
-    val profile = FactoryProfileRepository.profile
-    val allProfilesList = FactoryProfileRepository.profiles
+    val profile = store.profile
+    val allProfilesList = store.profiles
     val ff = LocalAppFontFamily.current
 
     var editingSection by remember { mutableStateOf<String?>(null) }
@@ -64,14 +63,14 @@ fun FactoryMerchantSettingsScreen(
 
     fun saveField(action: () -> Unit) {
         action()
-        FactoryProfileRepository.updateProfile(profile)
+        store.updateProfile(profile)
         editingSection = null
         showExtraPhone = false
         ElvanSnackbar.show(saveSuccessMsg)
     }
 
     Box(modifier = Modifier.fillMaxSize()) {
-        LazyColumn(
+        com.elvan.udukkai.ui.components.shell.ElvanLazyColumn(
             state = scrollState,
             modifier = Modifier.fillMaxSize(),
             contentPadding = PaddingValues(
@@ -138,7 +137,7 @@ fun FactoryMerchantSettingsScreen(
                                         subtitleBuilder = { if (it.isBilingual) it.getSecondary("niruvanathinPeyar").takeIf { s -> s.isNotBlank() } else null },
                                         onSelected = { selected ->
                                             if (selected.id != null) {
-                                                FactoryProfileRepository.setActiveProfile(selected.id!!)
+                                                store.setActiveProfile(selected.id!!)
                                             }
                                         }
                                     )
@@ -535,4 +534,3 @@ fun FactoryMerchantSettingsScreen(
     }
     }
 }
-

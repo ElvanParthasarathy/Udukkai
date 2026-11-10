@@ -1,4 +1,6 @@
-﻿package com.elvan.udukkai.textiles.ui.screens.settings
+package com.elvan.udukkai.ui.screens.settings.screens
+
+import com.elvan.udukkai.data.settings.BusinessProfileStore
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -13,7 +15,6 @@ import com.elvan.udukkai.core.data.LocationName
 import com.elvan.udukkai.core.data.indianStates
 import com.elvan.udukkai.core.data.worldCountries
 import com.elvan.udukkai.core.data.tamilNaduDistricts
-import com.elvan.udukkai.textiles.data.TextilesProfileRepository
 import com.elvan.udukkai.localization.K
 import com.elvan.udukkai.localization.tr
 import com.elvan.udukkai.theme.Dimens
@@ -21,18 +22,18 @@ import com.elvan.udukkai.theme.ShellColors
 import com.elvan.udukkai.theme.rememberShellColors
 import com.elvan.udukkai.ui.components.shell.*
 
-/**
- * Address Settings Screen matching Flutter's `mugavari_thirai.dart` 1:1.
- * Dynamically renders Coolie (`kooli_mugavari.dart`) or Silk (`pattu_mugavari.dart`)
- * fields and accordion editing with pure Senthamizh localization.
- */
+enum class AddressFieldOrder { CountryFirst, StreetFirst }
+
+/** Shared business Settings backed by the owning app's profile store. */
 @Composable
-fun TextilesAddressSettingsScreen(
+fun AddressSettingsScreen(
+    store: BusinessProfileStore,
+    fieldOrder: AddressFieldOrder,
     scrollState: LazyListState = rememberLazyListState(),
     colors: ShellColors = rememberShellColors()
 ) {
-    val isPattu = true
-    val profile = TextilesProfileRepository.profile
+    val countryFirst = fieldOrder == AddressFieldOrder.CountryFirst
+    val profile = store.profile
     val isBilingual = profile.isBilingual
 
     var editingSection by remember { mutableStateOf<String?>(null) }
@@ -41,6 +42,8 @@ fun TextilesAddressSettingsScreen(
     var tempCustom by remember { mutableStateOf(false) }
 
     val countryTitle = K.country.tr()
+    val uiLanguage = com.elvan.udukkai.localization.LocalAppLanguage.current
+    fun uiName(value: String, options: List<com.elvan.udukkai.core.data.LocationName>) = com.elvan.udukkai.core.data.locationUiName(value, options, uiLanguage)
     val stateTitle = K.state.tr()
     val districtTitle = K.district.tr()
     val primaryLangLabel = if (profile.primaryLanguage.lowercase().startsWith("ta")) K.taCode.tr() else K.enCode.tr()
@@ -64,7 +67,7 @@ fun TextilesAddressSettingsScreen(
     }
 
     fun persistProfile(updated: com.elvan.udukkai.data.settings.BusinessProfile) {
-        TextilesProfileRepository.updateProfile(updated)
+        store.updateProfile(updated)
     }
 
     // The list as a bottom sheet for the edit panel: a pick fills the two fields, "Custom" makes both typeable
@@ -74,8 +77,8 @@ fun TextilesAddressSettingsScreen(
             title = title,
             items = items,
             currentValue = if (tempCustom) items.firstOrNull { it.en == "Custom" } else items.find { (if (taFirst) it.ta else it.en) == tempPrimary },
-            itemLabelBuilder = { if (taFirst) it.ta else it.en },
-            subtitleBuilder = { if (isBilingual) (if (taFirst) it.en else it.ta) else null },
+            itemLabelBuilder = { if (uiLanguage == "ta") it.ta else it.en },
+            subtitleBuilder = { if (isBilingual) (if (uiLanguage == "ta") it.en else it.ta) else null },
             showSearch = true,
             searchFilter = { item, query ->
                 item.ta.contains(query, ignoreCase = true) || item.en.contains(query, ignoreCase = true)
@@ -100,8 +103,8 @@ fun TextilesAddressSettingsScreen(
             currentValue = indianStates.find {
                 it.ta == profile.getPrimary("state") || it.en == profile.getPrimary("state")
             } ?: if (profile.getPrimary("state").isNotBlank()) indianStates.lastOrNull() else null,
-            itemLabelBuilder = { if (profile.primaryLanguage == "ta") it.ta else it.en },
-            subtitleBuilder = { if (isBilingual) (if (profile.primaryLanguage == "ta") it.en else it.ta) else null },
+            itemLabelBuilder = { if (uiLanguage == "ta") it.ta else it.en },
+            subtitleBuilder = { if (isBilingual) (if (uiLanguage == "ta") it.en else it.ta) else null },
             showSearch = true,
             searchFilter = { item, query ->
                 item.ta.contains(query, ignoreCase = true) || item.en.contains(query, ignoreCase = true)
@@ -150,7 +153,7 @@ fun TextilesAddressSettingsScreen(
     }
 
     Box(modifier = Modifier.fillMaxSize()) {
-        LazyColumn(
+        com.elvan.udukkai.ui.components.shell.ElvanLazyColumn(
             state = scrollState,
             modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(
@@ -167,7 +170,7 @@ fun TextilesAddressSettingsScreen(
 
         item {
             ElvanSettingsSection(colors = colors) {
-                if (isPattu) {
+                if (countryFirst) {
                     // ── Pattu Order ──
                     // 1. Country: deliberately unselected for new profiles; tap to choose.
                     val countryPrimary = profile.getPrimary("country")
@@ -177,7 +180,7 @@ fun TextilesAddressSettingsScreen(
                         displayContent = {
                             ElvanSettingsDisplayRow(
                                 title = K.country.tr(),
-                                primaryValue = countryPrimary,
+                                primaryValue = uiName(countryPrimary, worldCountries),
                                 secondaryValue = if (isBilingual) countrySecondary else null,
                                 onEdit = { beginEdit("naadu", countryPrimary, countrySecondary, custom = countryPrimary.isNotBlank() && listed(worldCountries, countryPrimary) == null) },
                                 colors = colors
@@ -216,7 +219,7 @@ fun TextilesAddressSettingsScreen(
                         displayContent = {
                             ElvanSettingsDisplayRow(
                                 title = K.state.tr(),
-                                primaryValue = statePrimary,
+                                primaryValue = uiName(statePrimary, indianStates),
                                 secondaryValue = if (isBilingual) stateSecondary else null,
                                 onEdit = if (profile.getPrimary("country").equals("India", true) || profile.getPrimary("country") == "இந்தியா") openStateSelection else { { beginEdit("maanilam", statePrimary, stateSecondary) } },
                                 colors = colors
@@ -259,7 +262,7 @@ fun TextilesAddressSettingsScreen(
                         displayContent = {
                             ElvanSettingsDisplayRow(
                                 title = K.district.tr(),
-                                primaryValue = districtPrimary,
+                                primaryValue = uiName(districtPrimary, tamilNaduDistricts),
                                 secondaryValue = if (isBilingual) districtSecondary else null,
                                 onEdit = { beginEdit("maavattam", districtPrimary, districtSecondary, custom = districtPrimary.isNotBlank() && listed(tamilNaduDistricts, districtPrimary) == null) },
                                 colors = colors
@@ -419,7 +422,7 @@ fun TextilesAddressSettingsScreen(
                         displayContent = {
                             ElvanSettingsDisplayRow(
                                 title = K.country.tr(),
-                                primaryValue = countryPrimary,
+                                primaryValue = uiName(countryPrimary, worldCountries),
                                 secondaryValue = if (isBilingual) countrySecondary else null,
                                 onEdit = { beginEdit("naadu", countryPrimary, countrySecondary, custom = countryPrimary.isNotBlank() && listed(worldCountries, countryPrimary) == null) },
                                 colors = colors
@@ -542,7 +545,7 @@ fun TextilesAddressSettingsScreen(
                         displayContent = {
                             ElvanSettingsDisplayRow(
                                 title = K.district.tr(),
-                                primaryValue = districtPrimary,
+                                primaryValue = uiName(districtPrimary, tamilNaduDistricts),
                                 secondaryValue = districtSecondary,
                                 onEdit = { beginEdit("maavattam", districtPrimary, districtSecondary, custom = districtPrimary.isNotBlank() && listed(tamilNaduDistricts, districtPrimary) == null) },
                                 colors = colors
@@ -609,4 +612,3 @@ fun TextilesAddressSettingsScreen(
     }
 }
 }
-

@@ -7,6 +7,8 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyItemScope
 import androidx.compose.foundation.lazy.LazyListScope
@@ -45,9 +47,33 @@ fun ElvanEditorList(
     /** False keeps every section full width (the bill editors put their fields side by side inside the section instead). */
     pairSections: Boolean = true,
     fullWidthKeys: Set<Any?> = FULL_WIDTH_KEYS,
+    landscapeOverviewKeys: Set<Any?>? = null,
     content: LazyListScope.() -> Unit
 ) {
     BoxWithConstraints(modifier) {
+        val androidLandscape = com.elvan.udukkai.core.platform.platformLayoutPolicy.screenLayout(maxWidth, maxHeight) == com.elvan.udukkai.core.platform.ScreenLayout.AndroidLandscape
+        if (androidLandscape && maxWidth >= 560.dp) {
+            val sections = RecordingScope().also { it.content() }.items.filter { it.key != "top_spacer" }
+            val overviewKeys = landscapeOverviewKeys ?: setOf("paid_locked_banner", "unconfigured_warning", "customer_section", "invoice_details_section", "invoice_picker_section", "customer_details_section", "item_details", "process_details")
+            val overview = sections.filter { it.key in overviewKeys }
+            val detail = sections.filter { it.key !in overviewKeys }
+            if (overview.isNotEmpty() && detail.isNotEmpty()) {
+                com.elvan.udukkai.ui.components.shell.ElvanLandscapeWorkspace(
+                    modifier = Modifier.padding(horizontal = 12.dp), overviewWeight = 0.45f,
+                    overviewState = rememberLazyListState(), detailState = state,
+                    overview = { overview.forEach { section -> item(key = section.key, content = section.content) } },
+                    detail = { detail.forEach { section -> item(key = section.key, content = section.content) } }
+                )
+            } else {
+                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
+                    com.elvan.udukkai.ui.components.shell.ElvanLazyColumn(
+                        state = state, modifier = Modifier.widthIn(max = 900.dp).fillMaxSize().padding(horizontal = 12.dp),
+                        landscapeRoot = true, verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) { sections.forEach { section -> item(key = section.key, content = section.content) } }
+                }
+            }
+            return@BoxWithConstraints
+        }
         if (maxWidth > maxHeight && maxWidth >= 560.dp) {
             val recorded = RecordingScope().also { it.content() }.items
             val rows = mutableListOf<List<RecordedItem>>()
@@ -65,7 +91,7 @@ fun ElvanEditorList(
                 }
             }
             pending?.let { rows += listOf(it) }
-            LazyColumn(state = state, modifier = Modifier.fillMaxSize(), contentPadding = contentPadding, verticalArrangement = verticalArrangement) {
+            com.elvan.udukkai.ui.components.shell.ElvanLazyColumn(state = state, modifier = Modifier.fillMaxSize(), contentPadding = contentPadding, verticalArrangement = verticalArrangement) {
                 rows.forEach { row ->
                     item(key = row.first().key) {
                         val fullKey = !pairSections || row.first().key in fullWidthKeys
@@ -82,7 +108,7 @@ fun ElvanEditorList(
                 }
             }
         } else {
-            LazyColumn(state = state, modifier = Modifier.fillMaxSize(), contentPadding = contentPadding, verticalArrangement = verticalArrangement, content = content)
+            com.elvan.udukkai.ui.components.shell.ElvanLazyColumn(state = state, modifier = Modifier.fillMaxSize(), contentPadding = contentPadding, verticalArrangement = verticalArrangement, content = content)
         }
     }
 }

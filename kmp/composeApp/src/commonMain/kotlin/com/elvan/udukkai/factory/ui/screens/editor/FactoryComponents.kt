@@ -116,7 +116,7 @@ fun FactoryItemCard(
                 Box(
                     modifier = Modifier
                         .padding(end = 8.dp, bottom = 6.dp)
-                        .size(32.dp)
+                        .size(48.dp)
                         .clip(CircleShape)
                         .background(if (isDark) Color.White.copy(alpha = 0.08f) else Color.Black.copy(alpha = 0.05f))
                         .clickable { onItemDeleted() },
@@ -126,7 +126,7 @@ fun FactoryItemCard(
                         imageVector = MaterialSymbols.Rounded.Delete,
                         contentDescription = K.delete.tr(),
                         tint = colors.textSecondary,
-                        modifier = Modifier.size(18.dp)
+                        modifier = Modifier.size(24.dp)
                     )
                 }
             }
@@ -519,7 +519,7 @@ fun FactoryAdditionalChargeCard(
             Box(
                 modifier = Modifier
                     .padding(end = 4.dp, bottom = 6.dp)
-                    .size(32.dp)
+                    .size(48.dp)
                     .clip(CircleShape)
                     .background(if (isDark) Color.White.copy(alpha = 0.08f) else Color.Black.copy(alpha = 0.05f))
                     .clickable { onDeleted() },
@@ -529,7 +529,7 @@ fun FactoryAdditionalChargeCard(
                     imageVector = MaterialSymbols.Rounded.Delete,
                     contentDescription = K.delete.tr(),
                     tint = colors.textSecondary,
-                    modifier = Modifier.size(18.dp)
+                    modifier = Modifier.size(24.dp)
                 )
             }
         }

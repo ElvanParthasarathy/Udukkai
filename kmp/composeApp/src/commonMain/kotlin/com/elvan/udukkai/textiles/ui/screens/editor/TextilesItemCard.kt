@@ -88,7 +88,7 @@ fun TextilesItemCard(
                 Box(
                     modifier = Modifier
                         .padding(end = 8.dp, bottom = 6.dp)
-                        .size(32.dp)
+                        .size(48.dp)
                         .clip(CircleShape)
                         .background(if (isDark) Color.White.copy(alpha = 0.08f) else Color.Black.copy(alpha = 0.05f))
                         .clickable { onItemDeleted() },

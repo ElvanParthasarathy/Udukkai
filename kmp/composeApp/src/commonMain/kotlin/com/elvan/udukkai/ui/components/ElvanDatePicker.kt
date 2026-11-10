@@ -189,8 +189,11 @@ private fun CalendarSheet(
         customContent = {
             BoxWithConstraints {
                 // A short window (landscape) gets shorter rows so the sheet still fits
-                val row = if (maxHeight < 430.dp) 24.dp else ROW_HEIGHT
-                Column(Modifier.fillMaxWidth().padding(top = CARD_TOP)) {
+                val wide = com.elvan.udukkai.ui.components.shell.LocalActionSheetLandscape.current
+                val row = if (wide || maxHeight < 430.dp) 24.dp else ROW_HEIGHT
+                val weekdayGap = if (wide) 4.dp else WEEKDAY_TO_DAYS
+                val belowDays = if (wide) 4.dp else BELOW_DAYS
+                Column(Modifier.fillMaxWidth().padding(top = if (wide) 8.dp else CARD_TOP)) {
                     MonthBar(
                         label = "${DateGroupUtils.monthFullName(month, tamil)} $year",
                         wheels = wheels,
@@ -207,7 +210,7 @@ private fun CalendarSheet(
                         ink = ink
                     )
                     // The same height in both modes, so nothing moves when they swap
-                    Crossfade(wheels, Modifier.fillMaxWidth().height(ROW_HEIGHT + WEEKDAY_TO_DAYS + row * 6 + BELOW_DAYS), animationSpec = tween(MODE_CHANGE_MS), label = "calendarMode") { showWheels ->
+                    Crossfade(wheels, Modifier.fillMaxWidth().height(ROW_HEIGHT + weekdayGap + row * 6 + belowDays), animationSpec = tween(MODE_CHANGE_MS), label = "calendarMode") { showWheels ->
                         if (showWheels) {
                             DateWheels(
                                 range = range,
@@ -228,7 +231,7 @@ private fun CalendarSheet(
                         } else {
                             Column(Modifier.fillMaxSize().padding(horizontal = SIDE_MARGIN)) {
                                 WeekdayRow(tamil, ink)
-                                Spacer(Modifier.height(WEEKDAY_TO_DAYS))
+                                Spacer(Modifier.height(weekdayGap))
                                 HorizontalPager(
                                     state = pager,
                                     beyondViewportPageCount = 1,

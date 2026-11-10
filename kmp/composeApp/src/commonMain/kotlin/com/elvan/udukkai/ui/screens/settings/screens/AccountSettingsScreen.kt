@@ -88,7 +88,7 @@ fun AccountSettingsScreen(
                     )
                 }
             } else if (!isOnline) {
-                LazyColumn(
+                com.elvan.udukkai.ui.components.shell.ElvanLazyColumn(
                     state = scrollState,
                     modifier = Modifier.fillMaxSize(),
                     contentPadding = PaddingValues(bottom = Dimens.SubpageContentPaddingBottom),
@@ -158,7 +158,7 @@ fun AccountSettingsScreen(
                     }
                 }
             } else {
-                LazyColumn(
+                com.elvan.udukkai.ui.components.shell.ElvanLazyColumn(
                     state = scrollState,
                     modifier = Modifier.fillMaxSize(),
                     contentPadding = PaddingValues(bottom = Dimens.SubpageContentPaddingBottom),

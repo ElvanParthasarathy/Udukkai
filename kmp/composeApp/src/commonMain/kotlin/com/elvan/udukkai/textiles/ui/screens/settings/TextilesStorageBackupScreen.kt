@@ -103,7 +103,7 @@ fun TextilesStorageBackupScreen(
     val maxSpace = 1024.0 * 1024.0 * 1024.0 // 1 GB
     val progress = (totalDbSize / maxSpace).toFloat().coerceIn(0.02f, 1f)
 
-    LazyColumn(
+    com.elvan.udukkai.ui.components.shell.ElvanLazyColumn(
         state = scrollState,
         modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(

@@ -1,4 +1,6 @@
-package com.elvan.udukkai.textiles.ui.screens.settings
+package com.elvan.udukkai.ui.screens.settings.screens
+
+import com.elvan.udukkai.data.settings.BusinessProfileStore
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -24,7 +26,6 @@ import com.elvan.udukkai.core.backup.getUdukkaiBackupService
 import com.elvan.udukkai.data.settings.BusinessProfile
 import com.elvan.udukkai.localization.K
 import com.elvan.udukkai.localization.tr
-import com.elvan.udukkai.textiles.data.TextilesProfileRepository
 import com.elvan.udukkai.theme.Dimens
 import com.elvan.udukkai.theme.LocalAppFontFamily
 import com.elvan.udukkai.theme.ShellColors
@@ -33,19 +34,18 @@ import com.elvan.udukkai.ui.components.shell.*
 import com.elvan.udukkai.ui.components.shell.sheets.ElvanDeleteConfirmSheet
 import com.elvan.udukkai.ui.navigation.MaterialSymbols
 
-/**
- * Textiles Manage Profiles Screen (சவுளி நிறுவனங்களை நிர்வகி).
- * Dedicated to Udukkai Textiles with zero cross-app branching or flags.
- */
+/** Shared business Settings backed by the owning app's profile store. */
 @Composable
-fun TextilesManageProfilesScreen(
+fun ManageProfilesSettingsScreen(
+    store: BusinessProfileStore,
     onBack: () -> Unit = {},
     scrollState: LazyListState = rememberLazyListState(),
     colors: ShellColors = rememberShellColors()
 ) {
+    val landscape = LocalLandscapeContent.current
     val ff = LocalAppFontFamily.current
-    val profiles = TextilesProfileRepository.profiles
-    val activeProfile = TextilesProfileRepository.profile
+    val profiles = store.profiles
+    val activeProfile = store.profile
 
     var showNewProfileSheet by remember { mutableStateOf(false) }
     var profileToDelete by remember { mutableStateOf<BusinessProfile?>(null) }
@@ -57,7 +57,7 @@ fun TextilesManageProfilesScreen(
     val lastBusinessMsg = K.lastBusinessCannotBeDeleted.tr()
 
     Box(modifier = Modifier.fillMaxSize()) {
-        LazyColumn(
+        com.elvan.udukkai.ui.components.shell.ElvanLazyColumn(
             state = scrollState,
             modifier = Modifier.fillMaxSize(),
             contentPadding = PaddingValues(
@@ -106,7 +106,7 @@ fun TextilesManageProfilesScreen(
                                     onEdit = if (profiles.size > 1) { { guard { profileToDelete = profileItem; nameInput = "" } } } else null,
                                     onTap = if (!isActive && profileItem.id != null) {
                                         {
-                                            TextilesProfileRepository.setActiveProfile(profileItem.id!!)
+                                            store.setActiveProfile(profileItem.id!!)
                                         }
                                     } else null,
                                     colors = colors
@@ -119,9 +119,16 @@ fun TextilesManageProfilesScreen(
                     }
                 }
             }
+            if (landscape && profiles.size < 5) item(key = "add_company") {
+                ElvanSectionContainer {
+                    ElvanSettingsSection(colors = colors) {
+                        ElvanSettingsRow(icon = MaterialSymbols.Rounded.Add, title = K.a11yNewProfile.tr(), onClick = { showNewProfileSheet = true }, colors = colors)
+                    }
+                }
+            }
         }
 
-        if (profiles.size < 5) {
+        if (!landscape && profiles.size < 5) {
             // Mono (not blue) add button: clip then clickable so the ripple stays inside the rounded square
             val addInk = if (colors.isDark) Color.Black else Color.White
             Box(
@@ -173,7 +180,7 @@ fun TextilesManageProfilesScreen(
                 } else if (id != null) {
                     // The data of every business is kept in a safety snapshot before one is removed
                     try { getUdukkaiBackupService().createSafetySnapshot() } catch (_: Exception) {}
-                    if (TextilesProfileRepository.deleteProfile(id)) {
+                    if (store.deleteProfile(id)) {
                         ElvanSnackbar.show(deleteSuccessMsg)
                     } else {
                         ElvanSnackbar.show(lastBusinessMsg)
@@ -186,7 +193,8 @@ fun TextilesManageProfilesScreen(
     }
 
     if (showNewProfileSheet) {
-        TextilesNewProfileBottomSheet(
+        CompanyProfileCreationSheet(
+            store = store,
             onDismissRequest = { showNewProfileSheet = false },
             onSuccess = { showNewProfileSheet = false },
             colors = colors
@@ -195,7 +203,8 @@ fun TextilesManageProfilesScreen(
 }
 
 @Composable
-fun TextilesNewProfileBottomSheet(
+fun CompanyProfileCreationSheet(
+    store: BusinessProfileStore,
     onDismissRequest: () -> Unit,
     onSuccess: () -> Unit,
     colors: ShellColors = rememberShellColors()
@@ -219,7 +228,7 @@ fun TextilesNewProfileBottomSheet(
         onDismissRequest = onDismissRequest,
         onConfirm = {
             if (newNamePrimary.trim().isNotEmpty()) {
-                val profiles = TextilesProfileRepository.profiles
+                val profiles = store.profiles
                 if (profiles.size >= 5) {
                     ElvanSnackbar.show(maxProfilesMsg)
                     return@ElvanActionSheet
@@ -229,7 +238,7 @@ fun TextilesNewProfileBottomSheet(
                     primaryLanguage = "ta",
                     secondaryLanguage = "en",
                     isBilingual = true,
-                    splitGst = true,
+                    splitGst = store.newProfileDefaults.splitGst,
                     businessName = mutableMapOf(
                         "ta" to newNamePrimary.trim(),
                         "en" to newNameSecondary.trim()
@@ -237,9 +246,9 @@ fun TextilesNewProfileBottomSheet(
                     shortName = newNamePrimary.trim().take(15),
                     country = mutableMapOf(),
                     headerLayout = "small",
-                    themeColor = "#6a1b9a"
+                    themeColor = store.newProfileDefaults.themeColor
                 )
-                val success = TextilesProfileRepository.createProfile(newProfile)
+                val success = store.createProfile(newProfile)
                 if (success) {
                     ElvanSnackbar.show(saveSuccessMsg)
                     onSuccess()

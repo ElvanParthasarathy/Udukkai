@@ -45,6 +45,7 @@ import com.elvan.udukkai.ui.screens.onboarding.screens.NeramElement
 import com.elvan.udukkai.ui.screens.onboarding.screens.NeramField
 import com.elvan.udukkai.ui.screens.onboarding.screens.NeramHeader
 import com.elvan.udukkai.ui.screens.onboarding.screens.NeramPage
+import com.elvan.udukkai.ui.screens.onboarding.screens.LocalAuthLandscape
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -60,6 +61,13 @@ fun ChangePasswordScreen(
     colors: ShellColors = rememberShellColors()
 ) {
     val scope = rememberCoroutineScope()
+    val keyboard = androidx.compose.ui.platform.LocalSoftwareKeyboardController.current
+    val focus = androidx.compose.ui.platform.LocalFocusManager.current
+    val keyboardOpen = com.elvan.udukkai.core.platform.getImeBottomPadding() > 0.dp
+    val back: () -> Unit = {
+        if (keyboardOpen) { keyboard?.hide(); focus.clearFocus() } else onBack()
+    }
+    com.elvan.udukkai.core.platform.AppBackHandler(enabled = keyboardOpen) { back() }
 
     var step by remember { mutableIntStateOf(1) } // 1: Verify, 2: New Password, 3: Success
     var currentPassword by remember { mutableStateOf("") }
@@ -103,10 +111,12 @@ fun ChangePasswordScreen(
         }
     }
 
-    Box(Modifier.fillMaxSize()) {
+    BoxWithConstraints(Modifier.fillMaxSize()) {
+    val landscape = com.elvan.udukkai.core.platform.platformLayoutPolicy.screenLayout(maxWidth, maxHeight) == com.elvan.udukkai.core.platform.ScreenLayout.AndroidLandscape
     AuthBackdrop() // the log-in page's animated shapes
     CompositionLocalProvider(LocalHasAuthBackdrop provides true) {
     NeramPage(
+        landscapeEndPadding = 68.dp,
         bottom = {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 when (step) {
@@ -114,22 +124,25 @@ fun ChangePasswordScreen(
                     2 -> NeramButton(text = K.updatePassword.tr(), onClick = { update() }, loading = isProcessing, enabled = passwordsMatch && passwordValid && !isProcessing)
                 }
             }
-        }
+        },
+        header = if (step != 3) ({
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                val isFactory = AuthManager.appScope == AppScope.FACTORY
+                Icon(
+                    painter = painterResource(if (isFactory) Res.drawable.factory_logo_vector else Res.drawable.textiles_logo_vector),
+                    contentDescription = null, tint = Color.Unspecified,
+                    modifier = Modifier.size(if (LocalAuthLandscape.current) 64.dp else 96.dp).clip(RoundedCornerShape(24.dp))
+                )
+                Spacer(Modifier.height(12.dp))
+                NeramHeader(
+                    title = if (step == 1) K.enterCurrentPassword.tr() else K.createNewPassword.tr(),
+                    subtitle = if (step == 1) K.confirmIdentityBeforeNewPassword.tr() else K.atLeast6Chars.tr()
+                )
+            }
+        }) else null
     ) {
-        if (step != 3) {
-            val isFactory = AuthManager.appScope == AppScope.FACTORY
-            Icon(
-                painter = painterResource(if (isFactory) Res.drawable.factory_logo_vector else Res.drawable.textiles_logo_vector),
-                contentDescription = null,
-                tint = Color.Unspecified,
-                modifier = Modifier.size(96.dp).clip(RoundedCornerShape(24.dp))
-            )
-            Spacer(Modifier.height(18.dp))
-        }
         when (step) {
             1 -> {
-                NeramElement(delayIndex = 0) { NeramHeader(title = K.enterCurrentPassword.tr(), subtitle = K.confirmIdentityBeforeNewPassword.tr()) }
-                Spacer(Modifier.height(16.dp))
                 NeramElement(delayIndex = 1, modifier = Modifier.fillMaxWidth()) {
                     Column(Modifier.fillMaxWidth()) {
                         NeramField(
@@ -168,8 +181,6 @@ fun ChangePasswordScreen(
                 }
             }
             2 -> {
-                NeramElement(delayIndex = 0) { NeramHeader(title = K.createNewPassword.tr(), subtitle = K.atLeast6Chars.tr()) }
-                Spacer(Modifier.height(16.dp))
                 NeramElement(delayIndex = 1, modifier = Modifier.fillMaxWidth()) {
                     Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                         NeramField(
@@ -214,9 +225,11 @@ fun ChangePasswordScreen(
     ElvanPill(
         liftProgress = 1f,
         colors = colors,
-        modifier = Modifier.statusBarsPadding().padding(start = 16.dp, top = 12.dp).size(50.dp)
+        modifier = Modifier.align(if (landscape) Alignment.TopEnd else Alignment.TopStart)
+            .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Top + WindowInsetsSides.Horizontal))
+            .padding(start = if (landscape) 0.dp else 16.dp, end = if (landscape) 12.dp else 0.dp, top = 8.dp).size(if (landscape) 56.dp else 50.dp)
     ) {
-        ElvanTopBarIconButton(onClick = onBack, size = 50.dp) {
+        ElvanTopBarIconButton(onClick = back, size = if (landscape) 56.dp else 50.dp) {
             Icon(
                 imageVector = MaterialSymbols.Rounded.ArrowBack,
                 contentDescription = K.back.tr(),

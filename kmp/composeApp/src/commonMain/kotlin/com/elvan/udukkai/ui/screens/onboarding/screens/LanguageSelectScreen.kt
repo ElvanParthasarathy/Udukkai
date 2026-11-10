@@ -27,6 +27,7 @@ fun LanguageSelectScreen(onContinue: () -> Unit) {
     )
 
     NeramPage(
+        boundedContent = true,
         bottom = {
             NeramButton(
                 text = K.continueText.trWithLang(preview),
@@ -35,28 +36,31 @@ fun LanguageSelectScreen(onContinue: () -> Unit) {
                     onContinue()
                 }
             )
+        },
+        header = {
+
+            NeramElement(delayIndex = 0) {
+                Icon(
+                    imageVector = MaterialSymbols.Rounded.Language,
+                    contentDescription = null,
+                    modifier = Modifier.size(if (LocalAuthLandscape.current) 40.dp else 56.dp),
+                    tint = NeramColors.textPrimary()
+                )
+            }
+
+            Spacer(Modifier.height(14.dp))
+
+            NeramElement(delayIndex = 1) {
+                NeramHeader(
+                    title = K.language.trWithLang(preview),
+                    subtitle = K.selectPreferredLanguage.trWithLang(preview)
+                )
+            }
+
+            Spacer(Modifier.height(4.dp))
+
         }
     ) {
-        NeramElement(delayIndex = 0) {
-            Icon(
-                imageVector = MaterialSymbols.Rounded.Language,
-                contentDescription = null,
-                modifier = Modifier.size(56.dp),
-                tint = NeramColors.textPrimary()
-            )
-        }
-
-        Spacer(Modifier.height(14.dp))
-
-        NeramElement(delayIndex = 1) {
-            NeramHeader(
-                title = K.language.trWithLang(preview),
-                subtitle = K.selectPreferredLanguage.trWithLang(preview)
-            )
-        }
-
-        Spacer(Modifier.height(4.dp))
-
         NeramElement(delayIndex = 2, modifier = Modifier.fillMaxWidth()) {
             NeramChoiceCard(choices = choices, selected = selected, onSelect = { selected = it })
         }

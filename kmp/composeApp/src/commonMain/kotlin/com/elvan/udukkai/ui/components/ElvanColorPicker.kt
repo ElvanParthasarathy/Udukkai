@@ -201,25 +201,28 @@ fun ElvanColorPicker(
         onConfirm = { onDone(color.copy(alpha = opacity)) },
         colors = colors,
         pickerCard = true,
+        landscapePickerWidth = 600.dp,
         slideDistance = 720.dp,
         customContent = {
             BoxWithConstraints {
                 // The grid gives way when the keyboard or a short window leaves less room than the full 634dp card
-                val shortBy = (634.dp - maxHeight).coerceAtLeast(0.dp)
-                Column(Modifier.fillMaxWidth().padding(start = SIDE, end = SIDE, top = 20.dp, bottom = 12.dp)) {
+                val wide = com.elvan.udukkai.ui.components.shell.LocalActionSheetLandscape.current
+                val shortBy = if (wide) 97.dp else (634.dp - maxHeight).coerceAtLeast(0.dp)
+                Column(Modifier.fillMaxWidth().padding(start = SIDE, end = SIDE, top = if (wide) 4.dp else 20.dp, bottom = if (wide) 4.dp else 12.dp)) {
                     ElvanPillShifter(
                         items = listOf(PillShifterItem(swatchesLabel), PillShifterItem(spectrumLabel)),
                         selectedIndex = tab,
                         onIndexSelected = { tab = it },
                         colors = colors,
                         isFullWidth = true,
-                        height = TAB_HEIGHT
+                        height = if (wide) 34.dp else TAB_HEIGHT
                     )
 
+                    val palette: @Composable () -> Unit = {
                     // Touching the colour area leaves the text fields: the keyboard's own Back keeps their focus
                     Column(Modifier.fillMaxWidth().pointerInput(Unit) { awaitEachGesture { awaitFirstDown(requireUnconsumed = false, pass = PointerEventPass.Initial); focus.clearFocus() } }) {
                         if (tab == 0) {
-                            Spacer(Modifier.height(24.dp))
+                            Spacer(Modifier.height(if (wide) 8.dp else 24.dp))
                             Canvas(
                                 Modifier.fillMaxWidth().height((SWATCH_HEIGHT - shortBy).coerceAtLeast(80.dp)).clip(RoundedCornerShape(4.dp))
                                     .semantics { contentDescription = "$swatchesLabel $hex" }
@@ -247,9 +250,9 @@ fun ElvanColorPicker(
                                     drawRoundRect(cc, at + Offset(-grow, -grow), Size(w + 2 * grow, h + 2 * grow), corner)
                                 }
                             }
-                            Spacer(Modifier.height(45.dp)) // so both modes stand the same height
+                            Spacer(Modifier.height(if (wide) 12.dp else 45.dp)) // so both modes stand the same height
                         } else {
-                            Spacer(Modifier.height(24.dp))
+                            Spacer(Modifier.height(if (wide) 8.dp else 24.dp))
                             Canvas(
                                 Modifier.fillMaxWidth().height((SPECTRUM_HEIGHT - shortBy).coerceAtLeast(80.dp)).clip(RoundedCornerShape(4.dp))
                                     .semantics { contentDescription = "$spectrumLabel $hex" }
@@ -262,25 +265,37 @@ fun ElvanColorPicker(
                                 drawCircle(color, radius = r, center = p)
                                 drawCircle(Color.White, radius = r, center = p, style = Stroke(2.dp.toPx()))
                             }
-                            Spacer(Modifier.height(25.dp))
+                            Spacer(Modifier.height(if (wide) 8.dp else 25.dp))
                             ColorBar(hsv.third, ink, null, listOf(Color.Black, Color.hsv(hsv.first, hsv.second, 1f))) { pickHsv(hsv.first, hsv.second, it) }
-                            Spacer(Modifier.height(29.dp))
+                            Spacer(Modifier.height(if (wide) 8.dp else 29.dp))
                         }
-                        ColorBar(opacity, ink, ink, listOf(color.copy(alpha = 0f), color.copy(alpha = 1f))) { opacity = it }
+                        if (!wide) ColorBar(opacity, ink, ink, listOf(color.copy(alpha = 0f), color.copy(alpha = 1f))) { opacity = it }
                     }
 
-                    Spacer(Modifier.height(18.dp))
+                    }
+                    val details: @Composable () -> Unit = {
+                    Spacer(Modifier.height(if (wide) 0.dp else 18.dp))
                     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(7.5.dp)) {
                         Row(Modifier.size(width = 56.dp, height = 36.dp).clip(RoundedCornerShape(10.dp)).border(BorderStroke(1.dp, ink.strong.copy(alpha = 0.3f)), RoundedCornerShape(10.dp))) {
                             Box(Modifier.weight(1f).fillMaxHeight().background(initial))
                             Box(Modifier.weight(1f).fillMaxHeight().background(color.copy(alpha = opacity)))
                         }
                         ColorField(K.hexLabel.tr(), hex, ::cleanHexInput, KeyboardType.Ascii, ink, Modifier.weight(85f)) { t -> parseHexColor(t)?.let { pick(it); true } ?: false }
+                        if (!wide) {
                         ColorField(K.colorRed.tr(), "${channel(color.red)}", ::cleanChannelInput, KeyboardType.Number, ink, Modifier.weight(40f)) { t -> t.toIntOrNull()?.let { pick(Color(it, channel(color.green), channel(color.blue))); true } ?: false }
                         ColorField(K.green.tr(), "${channel(color.green)}", ::cleanChannelInput, KeyboardType.Number, ink, Modifier.weight(40f)) { t -> t.toIntOrNull()?.let { pick(Color(channel(color.red), it, channel(color.blue))); true } ?: false }
                         ColorField(K.colorBlue.tr(), "${channel(color.blue)}", ::cleanChannelInput, KeyboardType.Number, ink, Modifier.weight(40f)) { t -> t.toIntOrNull()?.let { pick(Color(channel(color.red), channel(color.green), it)); true } ?: false }
+                        }
                     }
 
+                    if (wide) {
+                        Spacer(Modifier.height(8.dp))
+                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                        ColorField(K.colorRed.tr(), "${channel(color.red)}", ::cleanChannelInput, KeyboardType.Number, ink, Modifier.weight(1f)) { t -> t.toIntOrNull()?.let { pick(Color(it, channel(color.green), channel(color.blue))); true } ?: false }
+                        ColorField(K.green.tr(), "${channel(color.green)}", ::cleanChannelInput, KeyboardType.Number, ink, Modifier.weight(1f)) { t -> t.toIntOrNull()?.let { pick(Color(channel(color.red), it, channel(color.blue))); true } ?: false }
+                        ColorField(K.colorBlue.tr(), "${channel(color.blue)}", ::cleanChannelInput, KeyboardType.Number, ink, Modifier.weight(1f)) { t -> t.toIntOrNull()?.let { pick(Color(channel(color.red), channel(color.green), it)); true } ?: false }
+                        }
+                    }
                     Spacer(Modifier.height(5.dp))
                     Row(Modifier.height(20.dp), verticalAlignment = Alignment.CenterVertically) {
                         Text(K.recentColors.tr(), maxLines = 1, style = TextStyle(fontFamily = ff, fontSize = 13.dp.fixedSp()), color = ink.soft)
@@ -294,18 +309,27 @@ fun ElvanColorPicker(
                             }
                         }
                     }
-                    Spacer(Modifier.height(9.dp))
+                    Spacer(Modifier.height(if (wide) 4.dp else 9.dp))
                     Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                         val shown = recent.take(RECENT_SLOTS).mapNotNull { h -> parseHexColor(h)?.let { h to it } }
                         shown.forEach { (h, c) ->
                             Box(
-                                Modifier.size(40.dp).clip(CircleShape).background(c).border(1.dp, Color.Black.copy(alpha = 0.6f), CircleShape)
+                                Modifier.size(if (wide) 32.dp else 40.dp).clip(CircleShape).background(c).border(1.dp, Color.Black.copy(alpha = 0.6f), CircleShape)
                                     .semantics { contentDescription = h.uppercase() }
                                     .clickable { haptics.tick(); pick(c) }
                             )
                         }
-                        repeat(RECENT_SLOTS - shown.size) { Box(Modifier.size(40.dp).clip(CircleShape).background(ink.emptySlot).border(1.dp, Color.Black.copy(alpha = 0.6f), CircleShape)) }
+                        repeat(RECENT_SLOTS - shown.size) { Box(Modifier.size(if (wide) 32.dp else 40.dp).clip(CircleShape).background(ink.emptySlot).border(1.dp, Color.Black.copy(alpha = 0.6f), CircleShape)) }
                     }
+                    if (wide) {
+                        Spacer(Modifier.height(8.dp))
+                        ColorBar(opacity, ink, ink, listOf(color.copy(alpha = 0f), color.copy(alpha = 1f))) { opacity = it }
+                    }
+                    }
+                    if (wide) Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(24.dp), verticalAlignment = Alignment.CenterVertically) {
+                        Box(Modifier.weight(1f)) { palette() }
+                        Column(Modifier.weight(1f)) { details() }
+                    } else { palette(); details() }
                 }
             }
         }

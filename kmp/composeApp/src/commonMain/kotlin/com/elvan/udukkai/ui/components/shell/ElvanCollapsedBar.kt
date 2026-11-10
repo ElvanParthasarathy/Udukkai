@@ -56,7 +56,7 @@ fun ElvanTopBarIconButton(
     Box(modifier = modifier.size(size), contentAlignment = Alignment.Center) {
         Box(
             modifier = Modifier
-                .requiredSize(size + 12.dp * lift)
+                .requiredSize((size + 12.dp * lift).coerceAtMost(maxOf(size, 50.dp)))
                 .clip(CircleShape)
                 .clickable(
                 interactionSource = remember { MutableInteractionSource() },

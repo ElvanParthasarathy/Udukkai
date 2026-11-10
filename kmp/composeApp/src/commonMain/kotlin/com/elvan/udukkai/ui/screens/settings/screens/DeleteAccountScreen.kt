@@ -70,7 +70,7 @@ fun DeleteAccountScreen(
         scrollState = scrollState
     ) {
         Box(modifier = Modifier.fillMaxSize()) {
-        LazyColumn(
+        com.elvan.udukkai.ui.components.shell.ElvanLazyColumn(
             state = scrollState,
             modifier = Modifier.fillMaxSize(),
             contentPadding = PaddingValues(bottom = Dimens.SubpageContentPaddingBottom),

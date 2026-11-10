@@ -1,4 +1,6 @@
-package com.elvan.udukkai.factory.ui.screens.settings
+package com.elvan.udukkai.ui.screens.settings.screens
+
+import com.elvan.udukkai.data.settings.BusinessProfileStore
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -13,7 +15,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
-import com.elvan.udukkai.factory.data.FactoryProfileRepository
 import com.elvan.udukkai.localization.K
 import com.elvan.udukkai.localization.tr
 import com.elvan.udukkai.theme.Dimens
@@ -26,20 +27,23 @@ import com.elvan.udukkai.ui.screens.settings.SettingsRoute
 import com.elvan.udukkai.ui.screens.settings.ThemeColorSection
 
 /**
- * Invoice Creation Settings Screen for Factory Edition.
+ * Shared invoice creation settings, with the GST-split control supplied as an app capability.
  * Order:
  * 1. Billing Languages (Primary & Secondary kept outside)
  * 2. PDF Theme Color (ThemeColorSection with 2-line layout & explicit Save)
- * 3. Bilingual Settings navigation (subpage with One UI master toggle pill)
- * 4. Logo Settings navigation (subpage for logo position & sizing)
+ * 3. GST Splits switch (Goods / Pattu mode)
+ * 4. Bilingual Settings navigation (subpage with One UI master toggle pill)
+ * 5. Logo Settings navigation (subpage for logo position & sizing)
  */
 @Composable
-fun FactoryInvoiceCreationSettingsScreen(
+fun InvoiceCreationSettingsScreen(
+    store: BusinessProfileStore,
+    showGstSplit: Boolean,
     onNavigate: (SettingsRoute) -> Unit = {},
     scrollState: LazyListState = rememberLazyListState(),
     colors: ShellColors = rememberShellColors()
 ) {
-    val profile = FactoryProfileRepository.profile
+    val profile = store.profile
 
     var isEditingLanguages by remember { mutableStateOf(false) }
     var tempPrimaryLang by remember { mutableStateOf(profile.primaryLanguage) }
@@ -56,7 +60,7 @@ fun FactoryInvoiceCreationSettingsScreen(
     val hasLogo = profile.logo.isNotEmpty() || profile.wideLogo.isNotEmpty()
 
     Box(modifier = Modifier.fillMaxSize()) {
-        LazyColumn(
+        com.elvan.udukkai.ui.components.shell.ElvanLazyColumn(
             state = scrollState,
             modifier = Modifier.fillMaxSize(),
             contentPadding = PaddingValues(
@@ -130,7 +134,7 @@ fun FactoryInvoiceCreationSettingsScreen(
                                         primaryLanguage = tempPrimaryLang,
                                         secondaryLanguage = tempSecondaryLang
                                     )
-                                    FactoryProfileRepository.updateProfile(updated)
+                                    store.updateProfile(updated)
                                     isEditingLanguages = false
                                     ElvanSnackbar.show(saveSuccessMsg)
                                 },
@@ -175,11 +179,32 @@ fun FactoryInvoiceCreationSettingsScreen(
             // ── Section 2: PDF Theme Color (Moved above Bilingual) ──
             item(key = "theme_section") {
                 ThemeColorSection(profile, colors) {
-                    FactoryProfileRepository.updateProfile(it)
+                    store.updateProfile(it)
                 }
             }
 
-            // ── Section 3: Bilingual Settings (Subpage nav row with chevron) ──
+            // ── Section 3: GST Split Switch (Goods / Pattu Mode) ──
+            if (showGstSplit) item(key = "gst_split_section") {
+                ElvanSettingsSection(colors = colors) {
+                    ElvanSimpleSettingsRow(
+                        title = K.showGstSplitsInTable.tr(),
+                        trailing = {
+                            ElvanSettingsSwitch(
+                                checked = profile.splitGst,
+                                onCheckedChange = { isChecked ->
+                                    val updated = profile.copy(splitGst = isChecked)
+                                    store.updateProfile(updated)
+                                    ElvanSnackbar.show(saveSuccessMsg)
+                                },
+                                colors = colors
+                            )
+                        },
+                        colors = colors
+                    )
+                }
+            }
+
+            // ── Section 4: Bilingual Settings (Subpage nav row with chevron) ──
             item(key = "bilingual_nav_section") {
                 ElvanSettingsSection(colors = colors) {
                     ElvanSimpleSettingsRow(
@@ -191,7 +216,7 @@ fun FactoryInvoiceCreationSettingsScreen(
                 }
             }
 
-            // ── Section 4: Logo Settings (Subpage nav row with chevron) ──
+            // ── Section 5: Logo Settings (Subpage nav row with chevron) ──
             item(key = "logo_nav_section") {
                 ElvanSettingsSection(colors = colors) {
                     ElvanSimpleSettingsRow(

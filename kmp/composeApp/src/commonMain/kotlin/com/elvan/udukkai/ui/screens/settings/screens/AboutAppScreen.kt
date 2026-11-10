@@ -60,7 +60,7 @@ fun AboutAppScreen(
 
     val appNameText = if (isFactory) K.udukkaiFactory.tr() else K.udukkaiTextiles.tr()
 
-    LazyColumn(
+    com.elvan.udukkai.ui.components.shell.ElvanLazyColumn(
         state = scrollState,
         modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(

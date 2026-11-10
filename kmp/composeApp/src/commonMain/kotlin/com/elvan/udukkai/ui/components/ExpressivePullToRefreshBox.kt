@@ -5,6 +5,9 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -16,6 +19,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.dp
 import com.elvan.udukkai.theme.ShellColors
@@ -60,6 +64,13 @@ fun ExpressivePullToRefreshBox(
         targetValue = targetOffset,
         label = "pull_offset"
     )
+    val landscape = com.elvan.udukkai.ui.components.shell.LocalLandscapeContent.current
+    val safeTop = WindowInsets.safeDrawing.asPaddingValues().calculateTopPadding()
+    val indicatorOffset = if (landscape && !overlay) {
+        animatedOffset + with(LocalDensity.current) {
+            (safeTop + com.elvan.udukkai.theme.Dimens.LandscapeEdgeGap - REFRESH_INDICATOR_SIZE - 16.dp).toPx()
+        }
+    } else animatedOffset
 
     val pullModifier = if (enabled) {
         Modifier.pullToRefresh(
@@ -93,7 +104,7 @@ fun ExpressivePullToRefreshBox(
                 isRefreshing = isRefreshing,
                 fraction = fraction,
                 colors = colors,
-                animatedOffset = animatedOffset,
+                animatedOffset = indicatorOffset,
                 modifier = Modifier.align(Alignment.TopCenter)
             )
         }

@@ -38,52 +38,47 @@ fun ScreenLockRequiredScreen(
     val dark = ThemeManager.isDark()
     Box(Modifier.fillMaxSize()) {
         AuthBackdrop()
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .windowInsetsPadding(WindowInsets.safeDrawing)
-                .padding(horizontal = 24.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Spacer(Modifier.weight(1f))
+        NeramIntroPage(
+            horizontalPadding = 24.dp,
+            header = {
+                NeramElement(delayIndex = 0) {
+                    Box(
+                        modifier = Modifier
+                            .size(if (LocalAuthLandscape.current) 72.dp else 120.dp)
+                            .clip(RoundedCornerShape(36.dp))
+                            .background(if (dark) Color.White else Color(0xFF111111)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = MaterialSymbols.Rounded.Lock,
+                            contentDescription = null,
+                            tint = if (dark) Color.Black else Color.White,
+                            modifier = Modifier.size(if (LocalAuthLandscape.current) 36.dp else 60.dp)
+                        )
+                    }
+                }
 
-            NeramElement(delayIndex = 0) {
-                Box(
-                    modifier = Modifier
-                        .size(120.dp)
-                        .clip(RoundedCornerShape(36.dp))
-                        .background(if (dark) Color.White else Color(0xFF111111)),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        imageVector = MaterialSymbols.Rounded.Lock,
-                        contentDescription = null,
-                        tint = if (dark) Color.Black else Color.White,
-                        modifier = Modifier.size(60.dp)
+                Spacer(Modifier.height(if (LocalAuthLandscape.current) 12.dp else 24.dp))
+
+                NeramElement(delayIndex = 1, modifier = Modifier.fillMaxWidth()) {
+                    NeramHeader(
+                        title = K.screenLockRequired.tr(),
+                        subtitle = K.screenLockRequiredDesc.tr()
                     )
                 }
-            }
 
-            Spacer(Modifier.height(24.dp))
-
-            NeramElement(delayIndex = 1, modifier = Modifier.fillMaxWidth()) {
-                NeramHeader(
-                    title = K.screenLockRequired.tr(),
-                    subtitle = K.screenLockRequiredDesc.tr()
-                )
-            }
-
-            Spacer(Modifier.weight(1f))
-
-            NeramElement(delayIndex = 2, modifier = Modifier.fillMaxWidth()) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    NeramButton(
-                        text = K.goToSettings.tr(),
-                        onClick = onOpenSettings
-                    )
-                    Spacer(Modifier.height(40.dp))
+            },
+            bottom = {
+                NeramElement(delayIndex = 2, modifier = Modifier.fillMaxWidth()) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        NeramButton(
+                            text = K.goToSettings.tr(),
+                            onClick = onOpenSettings
+                        )
+                        Spacer(Modifier.height(if (LocalAuthLandscape.current) 0.dp else 40.dp))
+                    }
                 }
             }
-        }
+        )
     }
 }

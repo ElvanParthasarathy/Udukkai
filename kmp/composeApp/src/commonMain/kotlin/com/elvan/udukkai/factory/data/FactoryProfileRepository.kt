@@ -12,8 +12,9 @@ import com.elvan.udukkai.data.settings.BusinessProfile
  * Reactive profile repository dedicated exclusively to Udukkai Factory (ஆலை).
  * Reads and writes directly to `udukkai_factory.db` without any mode parameterization.
  */
-object FactoryProfileRepository {
-    val profiles: List<BusinessProfile> get() = allProfiles
+object FactoryProfileRepository : com.elvan.udukkai.data.settings.BusinessProfileStore {
+    override val newProfileDefaults = com.elvan.udukkai.data.settings.NewProfileDefaults(false, "#388e3c")
+    override val profiles: List<BusinessProfile> get() = allProfiles
     fun saveProfile(newProfile: BusinessProfile): Boolean = createProfile(newProfile)
 
 
@@ -65,7 +66,7 @@ object FactoryProfileRepository {
 
     const val MAX_PROFILES = 5
 
-    var profile by mutableStateOf(defaultProfile)
+    override var profile by mutableStateOf(defaultProfile)
         private set
 
     // Empty until the user creates their business in the setup flow (Flutter: isSetupComplete).
@@ -112,13 +113,13 @@ object FactoryProfileRepository {
         } catch (_: Exception) {}
     }
 
-    fun setActiveProfile(id: Long) {
+    override fun setActiveProfile(id: Long) {
         val selected = allProfiles.find { it.id == id } ?: return
         profile = selected
         persistActiveId(id)
     }
 
-    fun createProfile(newProfile: BusinessProfile): Boolean {
+    override fun createProfile(newProfile: BusinessProfile): Boolean {
         if (allProfiles.size >= MAX_PROFILES) return false
         val helper = getFactoryDatabaseHelper()
         val success = helper.saveProfile(newProfile)
@@ -134,7 +135,7 @@ object FactoryProfileRepository {
         return success
     }
 
-    fun updateProfile(updated: BusinessProfile) {
+    override fun updateProfile(updated: BusinessProfile) {
         val copy = updated.copy()
         profile = copy
         allProfiles = allProfiles.map { if (it.id == copy.id) copy else it }
@@ -148,7 +149,7 @@ object FactoryProfileRepository {
         } catch (_: Exception) {}
     }
 
-    fun deleteProfile(id: Long): Boolean {
+    override fun deleteProfile(id: Long): Boolean {
         // The only business is never deleted
         if (allProfiles.size <= 1) return false
         val helper = getFactoryDatabaseHelper()

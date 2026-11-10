@@ -55,82 +55,77 @@ fun RestorePage(
 
     Box(Modifier.fillMaxSize()) {
         AuthBackdrop()
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .windowInsetsPadding(WindowInsets.safeDrawing)
-                .padding(horizontal = 16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Spacer(Modifier.weight(1f))
-
-            NeramElement(delayIndex = 0) {
-                Box(
-                    modifier = Modifier
-                        .size(120.dp)
-                        .clip(RoundedCornerShape(36.dp))
-                        .background(if (dark) Color.White else Color(0xFF111111)),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        imageVector = MaterialSymbols.Rounded.HistoryFill,
-                        contentDescription = null,
-                        tint = if (dark) Color.Black else Color.White,
-                        modifier = Modifier.size(60.dp)
-                    )
+        NeramIntroPage(
+            horizontalPadding = 16.dp,
+            header = {
+                NeramElement(delayIndex = 0) {
+                    Box(
+                        modifier = Modifier
+                            .size(if (LocalAuthLandscape.current) 72.dp else 120.dp)
+                            .clip(RoundedCornerShape(36.dp))
+                            .background(if (dark) Color.White else Color(0xFF111111)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = MaterialSymbols.Rounded.HistoryFill,
+                            contentDescription = null,
+                            tint = if (dark) Color.Black else Color.White,
+                            modifier = Modifier.size(if (LocalAuthLandscape.current) 36.dp else 60.dp)
+                        )
+                    }
                 }
-            }
 
-            Spacer(Modifier.height(24.dp))
+                Spacer(Modifier.height(if (LocalAuthLandscape.current) 12.dp else 24.dp))
 
-            NeramElement(delayIndex = 1) {
-                NeramHeader(title = K.oldDataAvailable.tr(), subtitle = K.restorePreviousDataPrompt.tr())
-            }
+                NeramElement(delayIndex = 1) {
+                    NeramHeader(title = K.oldDataAvailable.tr(), subtitle = K.restorePreviousDataPrompt.tr())
+                }
 
-            Spacer(Modifier.weight(1f))
-
-            NeramElement(delayIndex = 2, modifier = Modifier.fillMaxWidth()) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    NeramButton(
-                        text = K.restoreDataBtn.tr(),
-                        loading = restoring,
-                        onClick = {
-                            if (restoring) return@NeramButton
-                            restoring = true
-                            scope.launch {
-                                val success = try {
-                                    withContext(Dispatchers.Default) { getUdukkaiBackupService().restoreFromBackup() }
-                                } catch (e: Exception) {
-                                    false
-                                }
-                                if (success) {
-                                    ElvanSnackbar.show(successText)
-                                    onRestoreComplete()
-                                } else {
-                                    ElvanSnackbar.show("Restore failed. Please try again.")
-                                    restoring = false
+            },
+            bottom = {
+                NeramElement(delayIndex = 2, modifier = Modifier.fillMaxWidth()) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        NeramButton(
+                            text = K.restoreDataBtn.tr(),
+                            loading = restoring,
+                            onClick = {
+                                if (restoring) return@NeramButton
+                                restoring = true
+                                scope.launch {
+                                    val success = try {
+                                        withContext(Dispatchers.Default) { getUdukkaiBackupService().restoreFromBackup() }
+                                    } catch (e: Exception) {
+                                        false
+                                    }
+                                    if (success) {
+                                        ElvanSnackbar.show(successText)
+                                        onRestoreComplete()
+                                    } else {
+                                        ElvanSnackbar.show("Restore failed. Please try again.")
+                                        restoring = false
+                                    }
                                 }
                             }
-                        }
-                    )
+                        )
 
-                    Spacer(Modifier.height(8.dp))
+                        Spacer(Modifier.height(8.dp))
 
-                    Text(
-                        text = K.startFreshBtn.tr(),
-                        style = TextStyle(fontFamily = ElvanSansFontFamily, fontSize = 14.sp, fontWeight = FontWeight.Bold),
-                        color = NeramColors.textSecondary(),
-                        modifier = Modifier
-                            .heightIn(min = 44.dp)
-                            .clip(RoundedCornerShape(50))
-                            .clickable(enabled = !restoring, role = Role.Button, onClick = onStartFresh)
-                            .padding(horizontal = 24.dp, vertical = 12.dp)
-                    )
+                        Text(
+                            text = K.startFreshBtn.tr(),
+                            style = TextStyle(fontFamily = ElvanSansFontFamily, fontSize = 14.sp, fontWeight = FontWeight.Bold),
+                            color = NeramColors.textSecondary(),
+                            modifier = Modifier
+                                .heightIn(min = 44.dp)
+                                .clip(RoundedCornerShape(50))
+                                .clickable(enabled = !restoring, role = Role.Button, onClick = onStartFresh)
+                                .padding(horizontal = 24.dp, vertical = 12.dp)
+                        )
 
-                    Spacer(Modifier.height(32.dp))
+                        Spacer(Modifier.height(if (LocalAuthLandscape.current) 0.dp else 32.dp))
+                    }
                 }
             }
-        }
+        )
     }
 
     // Flutter shows a loading overlay while restoring

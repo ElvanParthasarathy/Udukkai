@@ -141,7 +141,7 @@ fun ElvanSettingsRow(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 12.dp),
+                .padding(horizontal = 16.dp, vertical = if (LocalLandscapeContent.current) 10.dp else 12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             // An icon of its own soft colour in a tinted circle (Samsung style); the same icon always gets the same hue
@@ -1013,7 +1013,7 @@ private enum class Hue(val dark: Long, val light: Long) {
 private val settingsHues: Map<ImageVector, Hue> by lazy {
     with(MaterialSymbols.Rounded) {
         mapOf(
-            BusinessCenter to Hue.Blue, LocationOn to Hue.Teal, CreditCard to Hue.Indigo, Description to Hue.Blue,
+            Apartment to Hue.Orange, BusinessCenter to Hue.Blue, LocationOn to Hue.Teal, CreditCard to Hue.Indigo, Description to Hue.Blue,
             LightMode to Hue.Amber, Translate to Hue.Violet, Person to Hue.Indigo, Folder to Hue.Green, Info to Hue.Grey,
             CloudUpload to Hue.Blue, Sync to Hue.Teal, Restore to Hue.Green, Schedule to Hue.Violet, Share to Hue.Orange,
             Lock to Hue.Teal, Key to Hue.Amber, Link to Hue.Blue, Logout to Hue.Orange, DeleteForever to Hue.Red,

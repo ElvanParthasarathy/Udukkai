@@ -259,6 +259,12 @@ fun TextilesItemEditorScreen(
                                     )
                                 }
 
+                            }
+                        }
+                    }
+                    item(key = "pricing_section") {
+                        ElvanEditorSection(index = 1, title = K.billingSection.tr()) {
+                            Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(16.dp)) {
                                 ElvanEditorTextField(
                                     value = hsnCode,
                                     onValueChange = { hsnCode = it },

@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.runtime.Composable
@@ -56,6 +57,7 @@ fun ViewRecordPage(
     onBillClick: (Long) -> Unit,
     onReceiptClick: (Long) -> Unit,
     onRetryHistory: () -> Unit,
+    summary: @Composable () -> Unit = {},
     details: @Composable () -> Unit
 ) {
     var section by rememberSaveable { mutableIntStateOf(0) }
@@ -69,6 +71,31 @@ fun ViewRecordPage(
         menuItems = menuItems
     ) {
         BoxWithConstraints(Modifier.fillMaxSize()) {
+            val androidLandscape = com.elvan.udukkai.core.platform.platformLayoutPolicy.screenLayout(maxWidth, maxHeight) == com.elvan.udukkai.core.platform.ScreenLayout.AndroidLandscape
+            if (androidLandscape) {
+                androidx.compose.runtime.CompositionLocalProvider(LocalDocLandscape provides true) {
+                    com.elvan.udukkai.ui.components.shell.ElvanLandscapeWorkspace(
+                        modifier = Modifier.padding(horizontal = Dimens.ContentPadding), detailState = scrollState,
+                        overview = {
+                            item("record_summary") {
+                                Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(RECORD_GAP)) { summary() }
+                            }
+                        },
+                        detail = {
+                            item("record_tabs") {
+                                ElvanPillShifter(
+                                    items = listOf(PillShifterItem(K.detailsTab.tr()), PillShifterItem(K.transactionsTab.tr())),
+                                    selectedIndex = section, onIndexSelected = { section = it }, colors = colors, isFullWidth = true
+                                )
+                            }
+                            if (section == 0) item("record_details") {
+                                Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(RECORD_GAP)) { details() }
+                            } else viewHistoryItems(history, historyUi, colors, onBillClick, onReceiptClick, onRetryHistory, 0.dp, isLandscape = false)
+                        }
+                    )
+                }
+                return@BoxWithConstraints
+            }
             val density = LocalDensity.current
             val topSpace = LocalElvanTopSpacerHeight.current
             // Sideways the shifter sits in the top band beside the title and takes no height of its own
@@ -95,7 +122,7 @@ fun ViewRecordPage(
                 return if (held > 0) fill + with(density) { minOf(held, scrolledPx()).toDp() } else fill
             }
 
-            LazyColumn(
+            com.elvan.udukkai.ui.components.shell.ElvanLazyColumn(
                 state = scrollState,
                 modifier = Modifier.fillMaxSize(),
                 contentPadding = PaddingValues(start = Dimens.ContentPadding, end = Dimens.ContentPadding, bottom = bottomPadding),
@@ -117,12 +144,12 @@ fun ViewRecordPage(
                     item(key = "details") {
                         if (maxWidth > maxHeight) {
                             // Landscape: the cards flow into two columns so more of the page shows without scrolling
-                            TwoColumnFlow(Modifier.fillMaxWidth().heightIn(min = heightBelow(0.dp)), spacing, details)
+                            TwoColumnFlow(Modifier.fillMaxWidth().heightIn(min = heightBelow(0.dp)), spacing) { summary(); details() }
                         } else {
                             Column(
                                 Modifier.fillMaxWidth().heightIn(min = heightBelow(0.dp)),
                                 verticalArrangement = Arrangement.spacedBy(spacing),
-                                content = { details() }
+                                content = { summary(); details() }
                             )
                         }
                     }

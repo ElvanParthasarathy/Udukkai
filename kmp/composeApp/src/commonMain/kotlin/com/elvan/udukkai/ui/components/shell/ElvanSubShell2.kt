@@ -9,7 +9,12 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.runtime.remember
-import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.Icon
+import com.elvan.udukkai.ui.navigation.MaterialSymbols
+import com.elvan.udukkai.localization.K
+import com.elvan.udukkai.localization.tr
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.consumeWindowInsets
@@ -53,7 +58,7 @@ fun ElvanSubShell2(
     val hazeState = dev.chrisbanes.haze.rememberHazeState()
     val menuHost = remember { MenuHostState() }
     androidx.compose.runtime.CompositionLocalProvider(LocalHazeState provides hazeState, LocalMenuHost provides menuHost) {
-    Box(
+    BoxWithConstraints(
         modifier = Modifier
             .fillMaxSize()
             .background(colors.background)
@@ -61,6 +66,7 @@ fun ElvanSubShell2(
             .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null) {
 }
     ) {
+        val landscape = com.elvan.udukkai.core.platform.platformLayoutPolicy.screenLayout(maxWidth, maxHeight) == com.elvan.udukkai.core.platform.ScreenLayout.AndroidLandscape
         Box(Modifier.fillMaxSize().hazeSource(hazeState)) { content() }
 
         AnimatedVisibility(
@@ -70,7 +76,7 @@ fun ElvanSubShell2(
             modifier = Modifier.fillMaxSize()
         ) {
             Box(modifier = Modifier.fillMaxSize()) {
-                if (showBottomFade) {
+                if (showBottomFade && !landscape) {
                     // Bottom shadow fade above the system navigation bar, like the other subpages
                     Box(
                         modifier = Modifier
@@ -88,6 +94,18 @@ fun ElvanSubShell2(
                     )
                 }
 
+                if (landscape) {
+                    Box(
+                        Modifier.align(Alignment.TopEnd)
+                            .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal + WindowInsetsSides.Top))
+                            .padding(end = 12.dp, top = 8.dp).size(56.dp)
+                            .landscapePillSurface(CircleShape, colors), contentAlignment = Alignment.Center
+                    ) {
+                        ElvanTopBarIconButton(onClick = onBack, size = 56.dp) {
+                            Icon(MaterialSymbols.Rounded.ArrowBack, K.back.tr(), tint = colors.textPrimary, modifier = Modifier.size(28.dp))
+                        }
+                    }
+                } else {
                 ElvanStandardTopBar(
                     title = title,
                     onBack = onBack,
@@ -97,16 +115,18 @@ fun ElvanSubShell2(
                     modifier = Modifier.align(Alignment.TopCenter)
                 )
 
+                }
+
                 // The bar's own navigation bar padding is replaced by the held value
                 Box(
                     modifier = Modifier
-                        .align(Alignment.BottomCenter)
-                        .fillMaxWidth()
-                        .padding(bottom = navBottom)
+                        .align(if (landscape) Alignment.BottomEnd else Alignment.BottomCenter)
+                        .then(if (landscape) Modifier.fillMaxSize() else Modifier.fillMaxWidth())
+                        .padding(bottom = if (landscape) 0.dp else navBottom)
                         .consumeWindowInsets(WindowInsets.navigationBars),
                     contentAlignment = Alignment.BottomCenter
                 ) {
-                    floatingBar()
+                    androidx.compose.runtime.CompositionLocalProvider(LocalElvanSideBar provides landscape) { floatingBar() }
                 }
             }
         }

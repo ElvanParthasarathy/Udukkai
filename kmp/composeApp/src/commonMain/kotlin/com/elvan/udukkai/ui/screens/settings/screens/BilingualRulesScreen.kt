@@ -62,7 +62,7 @@ fun BilingualRulesScreen(
     var tempSignatureName by remember(profile.printSettingsJson) { mutableStateOf(currentSignatureName) }
 
     Box(modifier = Modifier.fillMaxSize()) {
-        LazyColumn(
+        com.elvan.udukkai.ui.components.shell.ElvanLazyColumn(
             state = scrollState,
             modifier = Modifier.fillMaxSize(),
             contentPadding = PaddingValues(
