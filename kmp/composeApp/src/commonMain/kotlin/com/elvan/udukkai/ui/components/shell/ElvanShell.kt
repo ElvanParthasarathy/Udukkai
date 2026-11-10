@@ -730,10 +730,10 @@ fun ElvanShell(
                         .landscapePillSurface(CircleShape, colors).padding(vertical = 4.dp).zIndex(120f),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    if (onBack != null) Box(Modifier.size(60.dp, 56.dp).clip(CircleShape).clickable(onClick = onBack), contentAlignment = Alignment.Center) {
+                    if (onBack != null) Box(Modifier.size(56.dp).clip(CircleShape).clickable(onClick = onBack), contentAlignment = Alignment.Center) {
                         Icon(com.elvan.udukkai.ui.navigation.MaterialSymbols.Rounded.ArrowBack, K.back.tr(), tint = colors.textPrimary, modifier = Modifier.size(28.dp))
                     }
-                    Box(Modifier.size(60.dp, 56.dp).clip(CircleShape).clickable(onClick = landscapeSearchAction), contentAlignment = Alignment.Center) {
+                    Box(Modifier.size(56.dp).clip(CircleShape).clickable(onClick = landscapeSearchAction), contentAlignment = Alignment.Center) {
                         Icon(com.elvan.udukkai.ui.navigation.MaterialSymbols.Rounded.Search, K.search.tr(), tint = colors.textPrimary, modifier = Modifier.size(28.dp))
                     }
                 }

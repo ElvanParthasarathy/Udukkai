@@ -13,7 +13,7 @@ import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.delay
+import androidx.compose.runtime.withFrameNanos
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
 
@@ -68,8 +68,8 @@ fun Modifier.dragSelect(
     val remove by rememberUpdatedState(onRemove)
     val haptics = rememberHaptics()
     return pointerInput(listState) {
-        val edge = 150.dp.toPx()
-        val maxStep = 16.dp.toPx()
+        val edgeLimit = 96.dp.toPx()
+        val maxSpeed = 1800.dp.toPx() // pixels per second, independent of display refresh rate
         coroutineScope {
             val scope = this
             awaitEachGesture {
@@ -120,14 +120,23 @@ fun Modifier.dragSelect(
                 }
                 pick()
                 val autoScroll = scope.launch {
+                    var previousFrame = withFrameNanos { it }
                     while (true) {
-                        delay(16)
-                        val height = listState.layoutInfo.viewportEndOffset.toFloat()
-                        val step = when {
-                            fingerY > height - edge -> maxStep * ((fingerY - (height - edge)) / edge).coerceAtMost(1f)
-                            fingerY < edge -> -maxStep * ((edge - fingerY) / edge).coerceAtMost(1f)
+                        val frame = withFrameNanos { it }
+                        val seconds = ((frame - previousFrame) / 1_000_000_000f).coerceIn(0f, .032f)
+                        previousFrame = frame
+                        val info = listState.layoutInfo
+                        val top = info.viewportStartOffset.toFloat().coerceAtLeast(0f)
+                        val bottom = info.viewportEndOffset.toFloat()
+                        // Keep edge zones separate even on short landscape viewports.
+                        val edge = minOf(edgeLimit, (bottom - top) / 3f).coerceAtLeast(1f)
+                        val proximity = when {
+                            fingerY < top + edge -> -((top + edge - fingerY) / edge).coerceIn(0f, 1f)
+                            fingerY > bottom - edge -> ((fingerY - bottom + edge) / edge).coerceIn(0f, 1f)
                             else -> 0f
                         }
+                        // Gentle entry, increasing continuously to full speed at the screen edge.
+                        val step = proximity * kotlin.math.abs(proximity) * maxSpeed * seconds
                         if (step != 0f) {
                             listState.scrollBy(step)
                             pick()

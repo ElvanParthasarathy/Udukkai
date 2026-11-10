@@ -112,7 +112,7 @@ fun ElvanFloatingActionBar(
                         else colors.textSecondary.copy(alpha = 0.35f)
                     Box(
                         modifier = Modifier
-                            .size(width = 60.dp, height = 56.dp)
+                            .size(56.dp)
                             .clip(CircleShape)
                             .clickable(
                                 interactionSource = remember { MutableInteractionSource() },
