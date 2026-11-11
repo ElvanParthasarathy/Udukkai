@@ -94,7 +94,7 @@ val seedTextilesItems: List<SeedItem> = listOf(
 
 val seedTextilesCustomers: List<SeedCustomer> = listOf(
     SeedCustomer("cli_1781436385668", bi("ஸ்ரீ சிவராம் சில்க் சாரீஸ்", "Sri Sivaram Silk Sarees Arani"), bi("எண் 6, ஒளவையார் தெரு", "No 6, Avvaiyaar Street"), bi("ஆரணி", "Arani"), bi("திருவண்ணாமலை", "Tiruvannamalai"), bi("Tamil Nadu", "Tamil Nadu"), bi("India", "India"), "632301", "33AYGPS0561E1ZN", "", ""),
-    SeedCustomer("cli_svc_factory", bi("எஸ்.வி.சி. பட்டுநூல் முறுக்கு ஆலை", "S.V.C. Silk Twisting Factory"), bi("179/B, ராஜீவ் காந்தி நகர், கம்பர் தெரு", "179/B, Rajiv Gandhi Nagar, Kambar Street"), bi("இரும்பேடு", "Irumbedu"), bi("திருவண்ணாமலை", "Tiruvannamalai"), bi("Tamil Nadu", "Tamil Nadu"), bi("India", "India"), "632317", "33AGJPT2746F1ZB", "", "")
+    SeedCustomer("cli_svc_factory", bi("S.V.C. சில்க் ட்விஸ்டிங் ஃபேக்டரி", "S.V.C. Silk Twisting Factory"), bi("179/B, ராஜீவ் காந்தி நகர், கம்பர் தெரு", "179/B, Rajiv Gandhi Nagar, Kambar Street"), bi("இரும்பேடு", "Irumbedu"), bi("திருவண்ணாமலை", "Tiruvannamalai"), bi("Tamil Nadu", "Tamil Nadu"), bi("India", "India"), "632317", "33AGJPT2746F1ZB", "", "")
 )
 
 val seedTextilesInvoices: List<SeedTextilesInvoice> = listOf(
@@ -128,19 +128,6 @@ val seedTextilesInvoices: List<SeedTextilesInvoice> = listOf(
             SeedLine("prod_4", bi("ஃபேன்ஸி கட்டம் புட்டா", "Fancy Checked Butta"), "50072010", 1.0, "Nos", 8500.0, 5.0, 5.0, "%")
         ),
         total = 75469.0, discount = 425.0, taxAmount = 3593.76, globalDiscountValue = 0.0, globalDiscountType = "%",
-        taxInclusive = false, showHSN = true, showDiscountColumn = true, measureMode = "",
-        terms = "", notes = "",
-        customer = mapOf("name.ta" to "ஸ்ரீ சிவராம் சில்க் சாரீஸ்", "name.en" to "Sri Sivaram Silk Sarees", "address.ta" to "எண் 6, ஒளவையார் தெரு", "address.en" to "No 6, Avvaiyaar Street", "city.ta" to "ஆரணி ", "city.en" to "arani ", "district.ta" to "திருவண்ணாமலை மாவட்டம் ", "district.en" to "Thiruvannamalai ", "state.ta" to "Tamil Nadu", "country.ta" to "India", "pinCode" to "632301", "gstin" to "33AYGPS0561E1ZN")
-    ),
-    SeedTextilesInvoice(
-        company = "SJPS", number = "SJPS-567", date = "2026-08-01", type = "tax-invoice", customerRef = "cli_1781436385668",
-        lines = listOf(
-            SeedLine("prod_1", bi("ஃபேன்ஸி சேலை", "Fancy Saree"), "50072010", 3.0, "Nos", 8100.0, 5.0, 0.0, "%"),
-            SeedLine("prod_1", bi("ஃபேன்ஸி சேலை", "Fancy Saree"), "50072010", 2.0, "Nos", 8400.0, 5.0, 0.0, "₹"),
-            SeedLine("prod_4", bi("ஃபேன்ஸி கட்டம் புட்டா", "Fancy Checked Butta"), "50072010", 1.0, "Nos", 8500.0, 5.0, 0.0, "₹"),
-            SeedLine("prod_4", bi("ஃபேன்ஸி கட்டம் புட்டா", "Fancy Checked Butta"), "50072010", 3.0, "Nos", 8700.0, 5.0, 0.0, "₹")
-        ),
-        total = 75511.0, discount = 3785.0, taxAmount = 3595.76, globalDiscountValue = 5.0, globalDiscountType = "%",
         taxInclusive = false, showHSN = true, showDiscountColumn = true, measureMode = "",
         terms = "", notes = "",
         customer = mapOf("name.ta" to "ஸ்ரீ சிவராம் சில்க் சாரீஸ்", "name.en" to "Sri Sivaram Silk Sarees", "address.ta" to "எண் 6, ஒளவையார் தெரு", "address.en" to "No 6, Avvaiyaar Street", "city.ta" to "ஆரணி ", "city.en" to "arani ", "district.ta" to "திருவண்ணாமலை மாவட்டம் ", "district.en" to "Thiruvannamalai ", "state.ta" to "Tamil Nadu", "country.ta" to "India", "pinCode" to "632301", "gstin" to "33AYGPS0561E1ZN")
@@ -253,7 +240,7 @@ val seedTextilesInvoices: List<SeedTextilesInvoice> = listOf(
     )
 ,
     SeedTextilesInvoice(
-        company = "SJPS", number = "INV-501", date = "2024-12-23", type = "tax-invoice", customerRef = "cli_svc_factory",
+        company = "SJPS", number = "SJPS-501", date = "2024-12-23", type = "tax-invoice", customerRef = "cli_svc_factory",
         lines = listOf(
             SeedLine("prod_1", bi("ஃபேன்ஸி சேலை", "Fancy Saree"), "50072010", 2.0, "Nos", 7650.0, 5.0, 0.0, "%"),
             SeedLine("doc_1789292103569", bi("ஃபேன்ஸி முத்து சேலை", "Fancy Muthu Saree"), "50072010", 2.0, "Nos", 8200.0, 5.0, 0.0, "%")
@@ -261,10 +248,10 @@ val seedTextilesInvoices: List<SeedTextilesInvoice> = listOf(
         total = 33285.0, discount = 0.0, taxAmount = 765.0, globalDiscountValue = 0.0, globalDiscountType = "%",
         taxInclusive = false, showHSN = true, showDiscountColumn = false, measureMode = "quantity",
         terms = "", notes = "",
-        customer = mapOf("name.ta" to "எஸ்.வி.சி. பட்டுநூல் முறுக்கு ஆலை", "name.en" to "S.V.C. Silk Twisting Factory", "address.ta" to "179/B, ராஜீவ் காந்தி நகர், கம்பர் தெரு", "address.en" to "179/B, Rajiv Gandhi Nagar, Kambar Street", "city.ta" to "இரும்பேடு", "city.en" to "Irumbedu", "district.ta" to "திருவண்ணாமலை", "district.en" to "Tiruvannamalai", "state.ta" to "தமிழ்நாடு", "country.ta" to "இந்தியா", "pinCode" to "632317", "gstin" to "33AGJPT2746F1ZB")
+        customer = mapOf("name.ta" to "S.V.C. சில்க் ட்விஸ்டிங் ஃபேக்டரி", "name.en" to "S.V.C. Silk Twisting Factory", "address.ta" to "179/B, ராஜீவ் காந்தி நகர், கம்பர் தெரு", "address.en" to "179/B, Rajiv Gandhi Nagar, Kambar Street", "city.ta" to "இரும்பேடு", "city.en" to "Irumbedu", "district.ta" to "திருவண்ணாமலை", "district.en" to "Tiruvannamalai", "state.ta" to "தமிழ்நாடு", "country.ta" to "இந்தியா", "pinCode" to "632317", "gstin" to "33AGJPT2746F1ZB")
     ),
     SeedTextilesInvoice(
-        company = "SJPS", number = "INV-502", date = "2024-12-24", type = "tax-invoice", customerRef = "cli_svc_factory",
+        company = "SJPS", number = "SJPS-502", date = "2024-12-24", type = "tax-invoice", customerRef = "cli_svc_factory",
         lines = listOf(
             SeedLine("prod_1", bi("ஃபேன்ஸி சேலை", "Fancy Saree"), "50072010", 2.0, "Nos", 7650.0, 5.0, 0.0, "%"),
             SeedLine("doc_1789292103569", bi("ஃபேன்ஸி முத்து சேலை", "Fancy Muthu Saree"), "50072010", 1.0, "Nos", 8200.0, 5.0, 0.0, "%")
@@ -272,10 +259,10 @@ val seedTextilesInvoices: List<SeedTextilesInvoice> = listOf(
         total = 24675.0, discount = 0.0, taxAmount = 765.0, globalDiscountValue = 0.0, globalDiscountType = "%",
         taxInclusive = false, showHSN = true, showDiscountColumn = false, measureMode = "quantity",
         terms = "", notes = "",
-        customer = mapOf("name.ta" to "எஸ்.வி.சி. பட்டுநூல் முறுக்கு ஆலை", "name.en" to "S.V.C. Silk Twisting Factory", "address.ta" to "179/B, ராஜீவ் காந்தி நகர், கம்பர் தெரு", "address.en" to "179/B, Rajiv Gandhi Nagar, Kambar Street", "city.ta" to "இரும்பேடு", "city.en" to "Irumbedu", "district.ta" to "திருவண்ணாமலை", "district.en" to "Tiruvannamalai", "state.ta" to "தமிழ்நாடு", "country.ta" to "இந்தியா", "pinCode" to "632317", "gstin" to "33AGJPT2746F1ZB")
+        customer = mapOf("name.ta" to "S.V.C. சில்க் ட்விஸ்டிங் ஃபேக்டரி", "name.en" to "S.V.C. Silk Twisting Factory", "address.ta" to "179/B, ராஜீவ் காந்தி நகர், கம்பர் தெரு", "address.en" to "179/B, Rajiv Gandhi Nagar, Kambar Street", "city.ta" to "இரும்பேடு", "city.en" to "Irumbedu", "district.ta" to "திருவண்ணாமலை", "district.en" to "Tiruvannamalai", "state.ta" to "தமிழ்நாடு", "country.ta" to "இந்தியா", "pinCode" to "632317", "gstin" to "33AGJPT2746F1ZB")
     ),
     SeedTextilesInvoice(
-        company = "SJPS", number = "INV-503", date = "2024-12-28", type = "tax-invoice", customerRef = "cli_svc_factory",
+        company = "SJPS", number = "SJPS-503", date = "2024-12-28", type = "tax-invoice", customerRef = "cli_svc_factory",
         lines = listOf(
             SeedLine("prod_1", bi("ஃபேன்ஸி சேலை", "Fancy Saree"), "50072010", 1.0, "Nos", 7650.0, 5.0, 0.0, "%"),
             SeedLine("doc_1789292103569", bi("ஃபேன்ஸி முத்து சேலை", "Fancy Muthu Saree"), "50072010", 1.0, "Nos", 8050.0, 5.0, 0.0, "%")
@@ -283,10 +270,10 @@ val seedTextilesInvoices: List<SeedTextilesInvoice> = listOf(
         total = 16485.0, discount = 0.0, taxAmount = 382.5, globalDiscountValue = 0.0, globalDiscountType = "%",
         taxInclusive = false, showHSN = true, showDiscountColumn = false, measureMode = "quantity",
         terms = "", notes = "",
-        customer = mapOf("name.ta" to "எஸ்.வி.சி. பட்டுநூல் முறுக்கு ஆலை", "name.en" to "S.V.C. Silk Twisting Factory", "address.ta" to "179/B, ராஜீவ் காந்தி நகர், கம்பர் தெரு", "address.en" to "179/B, Rajiv Gandhi Nagar, Kambar Street", "city.ta" to "இரும்பேடு", "city.en" to "Irumbedu", "district.ta" to "திருவண்ணாமலை", "district.en" to "Tiruvannamalai", "state.ta" to "தமிழ்நாடு", "country.ta" to "இந்தியா", "pinCode" to "632317", "gstin" to "33AGJPT2746F1ZB")
+        customer = mapOf("name.ta" to "S.V.C. சில்க் ட்விஸ்டிங் ஃபேக்டரி", "name.en" to "S.V.C. Silk Twisting Factory", "address.ta" to "179/B, ராஜீவ் காந்தி நகர், கம்பர் தெரு", "address.en" to "179/B, Rajiv Gandhi Nagar, Kambar Street", "city.ta" to "இரும்பேடு", "city.en" to "Irumbedu", "district.ta" to "திருவண்ணாமலை", "district.en" to "Tiruvannamalai", "state.ta" to "தமிழ்நாடு", "country.ta" to "இந்தியா", "pinCode" to "632317", "gstin" to "33AGJPT2746F1ZB")
     ),
     SeedTextilesInvoice(
-        company = "SJPS", number = "INV-504", date = "2024-12-30", type = "tax-invoice", customerRef = "cli_svc_factory",
+        company = "SJPS", number = "SJPS-504", date = "2024-12-30", type = "tax-invoice", customerRef = "cli_svc_factory",
         lines = listOf(
             SeedLine("prod_1", bi("ஃபேன்ஸி சேலை", "Fancy Saree"), "50072010", 1.0, "Nos", 7650.0, 5.0, 0.0, "%"),
             SeedLine("doc_1789292103569", bi("ஃபேன்ஸி முத்து சேலை", "Fancy Muthu Saree"), "50072010", 3.0, "Nos", 8200.0, 5.0, 0.0, "%"),
@@ -295,10 +282,10 @@ val seedTextilesInvoices: List<SeedTextilesInvoice> = listOf(
         total = 51187.5, discount = 0.0, taxAmount = 382.5, globalDiscountValue = 0.0, globalDiscountType = "%",
         taxInclusive = false, showHSN = true, showDiscountColumn = false, measureMode = "quantity",
         terms = "", notes = "",
-        customer = mapOf("name.ta" to "எஸ்.வி.சி. பட்டுநூல் முறுக்கு ஆலை", "name.en" to "S.V.C. Silk Twisting Factory", "address.ta" to "179/B, ராஜீவ் காந்தி நகர், கம்பர் தெரு", "address.en" to "179/B, Rajiv Gandhi Nagar, Kambar Street", "city.ta" to "இரும்பேடு", "city.en" to "Irumbedu", "district.ta" to "திருவண்ணாமலை", "district.en" to "Tiruvannamalai", "state.ta" to "தமிழ்நாடு", "country.ta" to "இந்தியா", "pinCode" to "632317", "gstin" to "33AGJPT2746F1ZB")
+        customer = mapOf("name.ta" to "S.V.C. சில்க் ட்விஸ்டிங் ஃபேக்டரி", "name.en" to "S.V.C. Silk Twisting Factory", "address.ta" to "179/B, ராஜீவ் காந்தி நகர், கம்பர் தெரு", "address.en" to "179/B, Rajiv Gandhi Nagar, Kambar Street", "city.ta" to "இரும்பேடு", "city.en" to "Irumbedu", "district.ta" to "திருவண்ணாமலை", "district.en" to "Tiruvannamalai", "state.ta" to "தமிழ்நாடு", "country.ta" to "இந்தியா", "pinCode" to "632317", "gstin" to "33AGJPT2746F1ZB")
     ),
     SeedTextilesInvoice(
-        company = "SJPS", number = "INV-505", date = "2025-01-04", type = "tax-invoice", customerRef = "cli_svc_factory",
+        company = "SJPS", number = "SJPS-505", date = "2025-01-04", type = "tax-invoice", customerRef = "cli_svc_factory",
         lines = listOf(
             SeedLine("prod_1", bi("ஃபேன்ஸி சேலை", "Fancy Saree"), "50072010", 2.0, "Nos", 7650.0, 5.0, 0.0, "%"),
             SeedLine("doc_1789292103569", bi("ஃபேன்ஸி முத்து சேலை", "Fancy Muthu Saree"), "50072010", 1.0, "Nos", 8050.0, 5.0, 0.0, "%"),
@@ -309,10 +296,10 @@ val seedTextilesInvoices: List<SeedTextilesInvoice> = listOf(
         total = 50662.5, discount = 0.0, taxAmount = 765.0, globalDiscountValue = 0.0, globalDiscountType = "%",
         taxInclusive = false, showHSN = true, showDiscountColumn = false, measureMode = "quantity",
         terms = "", notes = "",
-        customer = mapOf("name.ta" to "எஸ்.வி.சி. பட்டுநூல் முறுக்கு ஆலை", "name.en" to "S.V.C. Silk Twisting Factory", "address.ta" to "179/B, ராஜீவ் காந்தி நகர், கம்பர் தெரு", "address.en" to "179/B, Rajiv Gandhi Nagar, Kambar Street", "city.ta" to "இரும்பேடு", "city.en" to "Irumbedu", "district.ta" to "திருவண்ணாமலை", "district.en" to "Tiruvannamalai", "state.ta" to "தமிழ்நாடு", "country.ta" to "இந்தியா", "pinCode" to "632317", "gstin" to "33AGJPT2746F1ZB")
+        customer = mapOf("name.ta" to "S.V.C. சில்க் ட்விஸ்டிங் ஃபேக்டரி", "name.en" to "S.V.C. Silk Twisting Factory", "address.ta" to "179/B, ராஜீவ் காந்தி நகர், கம்பர் தெரு", "address.en" to "179/B, Rajiv Gandhi Nagar, Kambar Street", "city.ta" to "இரும்பேடு", "city.en" to "Irumbedu", "district.ta" to "திருவண்ணாமலை", "district.en" to "Tiruvannamalai", "state.ta" to "தமிழ்நாடு", "country.ta" to "இந்தியா", "pinCode" to "632317", "gstin" to "33AGJPT2746F1ZB")
     ),
     SeedTextilesInvoice(
-        company = "SJPS", number = "INV-506", date = "2025-01-06", type = "tax-invoice", customerRef = "cli_svc_factory",
+        company = "SJPS", number = "SJPS-506", date = "2025-01-06", type = "tax-invoice", customerRef = "cli_svc_factory",
         lines = listOf(
             SeedLine("prod_1", bi("ஃபேன்ஸி சேலை", "Fancy Saree"), "50072010", 1.0, "Nos", 7650.0, 5.0, 0.0, "%"),
             SeedLine("doc_1789292103569", bi("ஃபேன்ஸி முத்து சேலை", "Fancy Muthu Saree"), "50072010", 1.0, "Nos", 8200.0, 5.0, 0.0, "%"),
@@ -321,10 +308,10 @@ val seedTextilesInvoices: List<SeedTextilesInvoice> = listOf(
         total = 33967.5, discount = 0.0, taxAmount = 382.5, globalDiscountValue = 0.0, globalDiscountType = "%",
         taxInclusive = false, showHSN = true, showDiscountColumn = false, measureMode = "quantity",
         terms = "", notes = "",
-        customer = mapOf("name.ta" to "எஸ்.வி.சி. பட்டுநூல் முறுக்கு ஆலை", "name.en" to "S.V.C. Silk Twisting Factory", "address.ta" to "179/B, ராஜீவ் காந்தி நகர், கம்பர் தெரு", "address.en" to "179/B, Rajiv Gandhi Nagar, Kambar Street", "city.ta" to "இரும்பேடு", "city.en" to "Irumbedu", "district.ta" to "திருவண்ணாமலை", "district.en" to "Tiruvannamalai", "state.ta" to "தமிழ்நாடு", "country.ta" to "இந்தியா", "pinCode" to "632317", "gstin" to "33AGJPT2746F1ZB")
+        customer = mapOf("name.ta" to "S.V.C. சில்க் ட்விஸ்டிங் ஃபேக்டரி", "name.en" to "S.V.C. Silk Twisting Factory", "address.ta" to "179/B, ராஜீவ் காந்தி நகர், கம்பர் தெரு", "address.en" to "179/B, Rajiv Gandhi Nagar, Kambar Street", "city.ta" to "இரும்பேடு", "city.en" to "Irumbedu", "district.ta" to "திருவண்ணாமலை", "district.en" to "Tiruvannamalai", "state.ta" to "தமிழ்நாடு", "country.ta" to "இந்தியா", "pinCode" to "632317", "gstin" to "33AGJPT2746F1ZB")
     ),
     SeedTextilesInvoice(
-        company = "SJPS", number = "INV-507", date = "2025-01-10", type = "tax-invoice", customerRef = "cli_svc_factory",
+        company = "SJPS", number = "SJPS-507", date = "2025-01-10", type = "tax-invoice", customerRef = "cli_svc_factory",
         lines = listOf(
             SeedLine("prod_1", bi("ஃபேன்ஸி சேலை", "Fancy Saree"), "50072010", 1.0, "Nos", 7650.0, 5.0, 0.0, "%"),
             SeedLine("doc_1789292103569", bi("ஃபேன்ஸி முத்து சேலை", "Fancy Muthu Saree"), "50072010", 1.0, "Nos", 8050.0, 5.0, 0.0, "%"),
@@ -334,10 +321,10 @@ val seedTextilesInvoices: List<SeedTextilesInvoice> = listOf(
         total = 42682.5, discount = 0.0, taxAmount = 382.5, globalDiscountValue = 0.0, globalDiscountType = "%",
         taxInclusive = false, showHSN = true, showDiscountColumn = false, measureMode = "quantity",
         terms = "", notes = "",
-        customer = mapOf("name.ta" to "எஸ்.வி.சி. பட்டுநூல் முறுக்கு ஆலை", "name.en" to "S.V.C. Silk Twisting Factory", "address.ta" to "179/B, ராஜீவ் காந்தி நகர், கம்பர் தெரு", "address.en" to "179/B, Rajiv Gandhi Nagar, Kambar Street", "city.ta" to "இரும்பேடு", "city.en" to "Irumbedu", "district.ta" to "திருவண்ணாமலை", "district.en" to "Tiruvannamalai", "state.ta" to "தமிழ்நாடு", "country.ta" to "இந்தியா", "pinCode" to "632317", "gstin" to "33AGJPT2746F1ZB")
+        customer = mapOf("name.ta" to "S.V.C. சில்க் ட்விஸ்டிங் ஃபேக்டரி", "name.en" to "S.V.C. Silk Twisting Factory", "address.ta" to "179/B, ராஜீவ் காந்தி நகர், கம்பர் தெரு", "address.en" to "179/B, Rajiv Gandhi Nagar, Kambar Street", "city.ta" to "இரும்பேடு", "city.en" to "Irumbedu", "district.ta" to "திருவண்ணாமலை", "district.en" to "Tiruvannamalai", "state.ta" to "தமிழ்நாடு", "country.ta" to "இந்தியா", "pinCode" to "632317", "gstin" to "33AGJPT2746F1ZB")
     ),
     SeedTextilesInvoice(
-        company = "SJPS", number = "INV-508", date = "2025-01-23", type = "tax-invoice", customerRef = "cli_svc_factory",
+        company = "SJPS", number = "SJPS-508", date = "2025-01-23", type = "tax-invoice", customerRef = "cli_svc_factory",
         lines = listOf(
             SeedLine("prod_1", bi("ஃபேன்ஸி சேலை", "Fancy Saree"), "50072010", 2.0, "Nos", 7650.0, 5.0, 0.0, "%"),
             SeedLine("doc_1789292103569", bi("ஃபேன்ஸி முத்து சேலை", "Fancy Muthu Saree"), "50072010", 2.0, "Nos", 8200.0, 5.0, 0.0, "%"),
@@ -346,20 +333,20 @@ val seedTextilesInvoices: List<SeedTextilesInvoice> = listOf(
         total = 67935.0, discount = 0.0, taxAmount = 765.0, globalDiscountValue = 0.0, globalDiscountType = "%",
         taxInclusive = false, showHSN = true, showDiscountColumn = false, measureMode = "quantity",
         terms = "", notes = "",
-        customer = mapOf("name.ta" to "எஸ்.வி.சி. பட்டுநூல் முறுக்கு ஆலை", "name.en" to "S.V.C. Silk Twisting Factory", "address.ta" to "179/B, ராஜீவ் காந்தி நகர், கம்பர் தெரு", "address.en" to "179/B, Rajiv Gandhi Nagar, Kambar Street", "city.ta" to "இரும்பேடு", "city.en" to "Irumbedu", "district.ta" to "திருவண்ணாமலை", "district.en" to "Tiruvannamalai", "state.ta" to "தமிழ்நாடு", "country.ta" to "இந்தியா", "pinCode" to "632317", "gstin" to "33AGJPT2746F1ZB")
+        customer = mapOf("name.ta" to "S.V.C. சில்க் ட்விஸ்டிங் ஃபேக்டரி", "name.en" to "S.V.C. Silk Twisting Factory", "address.ta" to "179/B, ராஜீவ் காந்தி நகர், கம்பர் தெரு", "address.en" to "179/B, Rajiv Gandhi Nagar, Kambar Street", "city.ta" to "இரும்பேடு", "city.en" to "Irumbedu", "district.ta" to "திருவண்ணாமலை", "district.en" to "Tiruvannamalai", "state.ta" to "தமிழ்நாடு", "country.ta" to "இந்தியா", "pinCode" to "632317", "gstin" to "33AGJPT2746F1ZB")
     ),
     SeedTextilesInvoice(
-        company = "SJPS", number = "INV-509", date = "2025-01-28", type = "tax-invoice", customerRef = "cli_svc_factory",
+        company = "SJPS", number = "SJPS-509", date = "2025-01-28", type = "tax-invoice", customerRef = "cli_svc_factory",
         lines = listOf(
             SeedLine("doc_1789292103569", bi("ஃபேன்ஸி முத்து சேலை", "Fancy Muthu Saree"), "50072010", 1.0, "Nos", 8250.0, 5.0, 0.0, "%")
         ),
         total = 8662.5, discount = 0.0, taxAmount = 412.5, globalDiscountValue = 0.0, globalDiscountType = "%",
         taxInclusive = false, showHSN = true, showDiscountColumn = false, measureMode = "quantity",
         terms = "", notes = "",
-        customer = mapOf("name.ta" to "எஸ்.வி.சி. பட்டுநூல் முறுக்கு ஆலை", "name.en" to "S.V.C. Silk Twisting Factory", "address.ta" to "179/B, ராஜீவ் காந்தி நகர், கம்பர் தெரு", "address.en" to "179/B, Rajiv Gandhi Nagar, Kambar Street", "city.ta" to "இரும்பேடு", "city.en" to "Irumbedu", "district.ta" to "திருவண்ணாமலை", "district.en" to "Tiruvannamalai", "state.ta" to "தமிழ்நாடு", "country.ta" to "இந்தியா", "pinCode" to "632317", "gstin" to "33AGJPT2746F1ZB")
+        customer = mapOf("name.ta" to "S.V.C. சில்க் ட்விஸ்டிங் ஃபேக்டரி", "name.en" to "S.V.C. Silk Twisting Factory", "address.ta" to "179/B, ராஜீவ் காந்தி நகர், கம்பர் தெரு", "address.en" to "179/B, Rajiv Gandhi Nagar, Kambar Street", "city.ta" to "இரும்பேடு", "city.en" to "Irumbedu", "district.ta" to "திருவண்ணாமலை", "district.en" to "Tiruvannamalai", "state.ta" to "தமிழ்நாடு", "country.ta" to "இந்தியா", "pinCode" to "632317", "gstin" to "33AGJPT2746F1ZB")
     ),
     SeedTextilesInvoice(
-        company = "SJPS", number = "INV-510", date = "2025-01-29", type = "tax-invoice", customerRef = "cli_svc_factory",
+        company = "SJPS", number = "SJPS-510", date = "2025-01-29", type = "tax-invoice", customerRef = "cli_svc_factory",
         lines = listOf(
             SeedLine("prod_1", bi("ஃபேன்ஸி சேலை", "Fancy Saree"), "50072010", 2.0, "Nos", 7650.0, 5.0, 0.0, "%"),
             SeedLine("doc_1789292103569", bi("ஃபேன்ஸி முத்து சேலை", "Fancy Muthu Saree"), "50072010", 1.0, "Nos", 8250.0, 5.0, 0.0, "%")
@@ -367,10 +354,10 @@ val seedTextilesInvoices: List<SeedTextilesInvoice> = listOf(
         total = 24727.5, discount = 0.0, taxAmount = 765.0, globalDiscountValue = 0.0, globalDiscountType = "%",
         taxInclusive = false, showHSN = true, showDiscountColumn = false, measureMode = "quantity",
         terms = "", notes = "",
-        customer = mapOf("name.ta" to "எஸ்.வி.சி. பட்டுநூல் முறுக்கு ஆலை", "name.en" to "S.V.C. Silk Twisting Factory", "address.ta" to "179/B, ராஜீவ் காந்தி நகர், கம்பர் தெரு", "address.en" to "179/B, Rajiv Gandhi Nagar, Kambar Street", "city.ta" to "இரும்பேடு", "city.en" to "Irumbedu", "district.ta" to "திருவண்ணாமலை", "district.en" to "Tiruvannamalai", "state.ta" to "தமிழ்நாடு", "country.ta" to "இந்தியா", "pinCode" to "632317", "gstin" to "33AGJPT2746F1ZB")
+        customer = mapOf("name.ta" to "S.V.C. சில்க் ட்விஸ்டிங் ஃபேக்டரி", "name.en" to "S.V.C. Silk Twisting Factory", "address.ta" to "179/B, ராஜீவ் காந்தி நகர், கம்பர் தெரு", "address.en" to "179/B, Rajiv Gandhi Nagar, Kambar Street", "city.ta" to "இரும்பேடு", "city.en" to "Irumbedu", "district.ta" to "திருவண்ணாமலை", "district.en" to "Tiruvannamalai", "state.ta" to "தமிழ்நாடு", "country.ta" to "இந்தியா", "pinCode" to "632317", "gstin" to "33AGJPT2746F1ZB")
     ),
     SeedTextilesInvoice(
-        company = "SJPS", number = "INV-511", date = "2025-02-01", type = "tax-invoice", customerRef = "cli_svc_factory",
+        company = "SJPS", number = "SJPS-511", date = "2025-02-01", type = "tax-invoice", customerRef = "cli_svc_factory",
         lines = listOf(
             SeedLine("prod_1", bi("ஃபேன்ஸி சேலை", "Fancy Saree"), "50072010", 1.0, "Nos", 7650.0, 5.0, 0.0, "%"),
             SeedLine("doc_1789292103569", bi("ஃபேன்ஸி முத்து சேலை", "Fancy Muthu Saree"), "50072010", 1.0, "Nos", 8200.0, 5.0, 0.0, "%"),
@@ -379,20 +366,20 @@ val seedTextilesInvoices: List<SeedTextilesInvoice> = listOf(
         total = 25515.0, discount = 0.0, taxAmount = 382.5, globalDiscountValue = 0.0, globalDiscountType = "%",
         taxInclusive = false, showHSN = true, showDiscountColumn = false, measureMode = "quantity",
         terms = "", notes = "",
-        customer = mapOf("name.ta" to "எஸ்.வி.சி. பட்டுநூல் முறுக்கு ஆலை", "name.en" to "S.V.C. Silk Twisting Factory", "address.ta" to "179/B, ராஜீவ் காந்தி நகர், கம்பர் தெரு", "address.en" to "179/B, Rajiv Gandhi Nagar, Kambar Street", "city.ta" to "இரும்பேடு", "city.en" to "Irumbedu", "district.ta" to "திருவண்ணாமலை", "district.en" to "Tiruvannamalai", "state.ta" to "தமிழ்நாடு", "country.ta" to "இந்தியா", "pinCode" to "632317", "gstin" to "33AGJPT2746F1ZB")
+        customer = mapOf("name.ta" to "S.V.C. சில்க் ட்விஸ்டிங் ஃபேக்டரி", "name.en" to "S.V.C. Silk Twisting Factory", "address.ta" to "179/B, ராஜீவ் காந்தி நகர், கம்பர் தெரு", "address.en" to "179/B, Rajiv Gandhi Nagar, Kambar Street", "city.ta" to "இரும்பேடு", "city.en" to "Irumbedu", "district.ta" to "திருவண்ணாமலை", "district.en" to "Tiruvannamalai", "state.ta" to "தமிழ்நாடு", "country.ta" to "இந்தியா", "pinCode" to "632317", "gstin" to "33AGJPT2746F1ZB")
     ),
     SeedTextilesInvoice(
-        company = "SJPS", number = "INV-512", date = "2025-02-03", type = "tax-invoice", customerRef = "cli_svc_factory",
+        company = "SJPS", number = "SJPS-512", date = "2025-02-03", type = "tax-invoice", customerRef = "cli_svc_factory",
         lines = listOf(
             SeedLine("doc_1789292103569", bi("ஃபேன்ஸி முத்து சேலை", "Fancy Muthu Saree"), "50072010", 1.0, "Nos", 8200.0, 5.0, 0.0, "%")
         ),
         total = 8610.0, discount = 0.0, taxAmount = 410.0, globalDiscountValue = 0.0, globalDiscountType = "%",
         taxInclusive = false, showHSN = true, showDiscountColumn = false, measureMode = "quantity",
         terms = "", notes = "",
-        customer = mapOf("name.ta" to "எஸ்.வி.சி. பட்டுநூல் முறுக்கு ஆலை", "name.en" to "S.V.C. Silk Twisting Factory", "address.ta" to "179/B, ராஜீவ் காந்தி நகர், கம்பர் தெரு", "address.en" to "179/B, Rajiv Gandhi Nagar, Kambar Street", "city.ta" to "இரும்பேடு", "city.en" to "Irumbedu", "district.ta" to "திருவண்ணாமலை", "district.en" to "Tiruvannamalai", "state.ta" to "தமிழ்நாடு", "country.ta" to "இந்தியா", "pinCode" to "632317", "gstin" to "33AGJPT2746F1ZB")
+        customer = mapOf("name.ta" to "S.V.C. சில்க் ட்விஸ்டிங் ஃபேக்டரி", "name.en" to "S.V.C. Silk Twisting Factory", "address.ta" to "179/B, ராஜீவ் காந்தி நகர், கம்பர் தெரு", "address.en" to "179/B, Rajiv Gandhi Nagar, Kambar Street", "city.ta" to "இரும்பேடு", "city.en" to "Irumbedu", "district.ta" to "திருவண்ணாமலை", "district.en" to "Tiruvannamalai", "state.ta" to "தமிழ்நாடு", "country.ta" to "இந்தியா", "pinCode" to "632317", "gstin" to "33AGJPT2746F1ZB")
     ),
     SeedTextilesInvoice(
-        company = "SJPS", number = "INV-513", date = "2025-02-12", type = "tax-invoice", customerRef = "cli_svc_factory",
+        company = "SJPS", number = "SJPS-513", date = "2025-02-12", type = "tax-invoice", customerRef = "cli_svc_factory",
         lines = listOf(
             SeedLine("prod_1", bi("ஃபேன்ஸி சேலை", "Fancy Saree"), "50072010", 1.0, "Nos", 7650.0, 5.0, 0.0, "%"),
             SeedLine("prod_1", bi("ஃபேன்ஸி சேலை", "Fancy Saree"), "50072010", 1.0, "Nos", 7900.0, 5.0, 0.0, "%"),
@@ -402,10 +389,10 @@ val seedTextilesInvoices: List<SeedTextilesInvoice> = listOf(
         total = 50610.0, discount = 0.0, taxAmount = 382.5, globalDiscountValue = 0.0, globalDiscountType = "%",
         taxInclusive = false, showHSN = true, showDiscountColumn = false, measureMode = "quantity",
         terms = "", notes = "",
-        customer = mapOf("name.ta" to "எஸ்.வி.சி. பட்டுநூல் முறுக்கு ஆலை", "name.en" to "S.V.C. Silk Twisting Factory", "address.ta" to "179/B, ராஜீவ் காந்தி நகர், கம்பர் தெரு", "address.en" to "179/B, Rajiv Gandhi Nagar, Kambar Street", "city.ta" to "இரும்பேடு", "city.en" to "Irumbedu", "district.ta" to "திருவண்ணாமலை", "district.en" to "Tiruvannamalai", "state.ta" to "தமிழ்நாடு", "country.ta" to "இந்தியா", "pinCode" to "632317", "gstin" to "33AGJPT2746F1ZB")
+        customer = mapOf("name.ta" to "S.V.C. சில்க் ட்விஸ்டிங் ஃபேக்டரி", "name.en" to "S.V.C. Silk Twisting Factory", "address.ta" to "179/B, ராஜீவ் காந்தி நகர், கம்பர் தெரு", "address.en" to "179/B, Rajiv Gandhi Nagar, Kambar Street", "city.ta" to "இரும்பேடு", "city.en" to "Irumbedu", "district.ta" to "திருவண்ணாமலை", "district.en" to "Tiruvannamalai", "state.ta" to "தமிழ்நாடு", "country.ta" to "இந்தியா", "pinCode" to "632317", "gstin" to "33AGJPT2746F1ZB")
     ),
     SeedTextilesInvoice(
-        company = "SJPS", number = "INV-514", date = "2025-02-15", type = "tax-invoice", customerRef = "cli_svc_factory",
+        company = "SJPS", number = "SJPS-514", date = "2025-02-15", type = "tax-invoice", customerRef = "cli_svc_factory",
         lines = listOf(
             SeedLine("prod_1", bi("ஃபேன்ஸி சேலை", "Fancy Saree"), "50072010", 2.0, "Nos", 7900.0, 5.0, 0.0, "%"),
             SeedLine("prod_3", bi("ஃபேன்ஸி முத்து முந்தி கட்டம் சேலை", "Fancy Muthu Mundhi Kattam Saree"), "50072010", 1.0, "Nos", 8050.0, 5.0, 0.0, "%"),
@@ -414,30 +401,30 @@ val seedTextilesInvoices: List<SeedTextilesInvoice> = listOf(
         total = 42262.5, discount = 0.0, taxAmount = 790.0, globalDiscountValue = 0.0, globalDiscountType = "%",
         taxInclusive = false, showHSN = true, showDiscountColumn = false, measureMode = "quantity",
         terms = "", notes = "",
-        customer = mapOf("name.ta" to "எஸ்.வி.சி. பட்டுநூல் முறுக்கு ஆலை", "name.en" to "S.V.C. Silk Twisting Factory", "address.ta" to "179/B, ராஜீவ் காந்தி நகர், கம்பர் தெரு", "address.en" to "179/B, Rajiv Gandhi Nagar, Kambar Street", "city.ta" to "இரும்பேடு", "city.en" to "Irumbedu", "district.ta" to "திருவண்ணாமலை", "district.en" to "Tiruvannamalai", "state.ta" to "தமிழ்நாடு", "country.ta" to "இந்தியா", "pinCode" to "632317", "gstin" to "33AGJPT2746F1ZB")
+        customer = mapOf("name.ta" to "S.V.C. சில்க் ட்விஸ்டிங் ஃபேக்டரி", "name.en" to "S.V.C. Silk Twisting Factory", "address.ta" to "179/B, ராஜீவ் காந்தி நகர், கம்பர் தெரு", "address.en" to "179/B, Rajiv Gandhi Nagar, Kambar Street", "city.ta" to "இரும்பேடு", "city.en" to "Irumbedu", "district.ta" to "திருவண்ணாமலை", "district.en" to "Tiruvannamalai", "state.ta" to "தமிழ்நாடு", "country.ta" to "இந்தியா", "pinCode" to "632317", "gstin" to "33AGJPT2746F1ZB")
     ),
     SeedTextilesInvoice(
-        company = "SJPS", number = "INV-515", date = "2025-02-18", type = "tax-invoice", customerRef = "cli_svc_factory",
+        company = "SJPS", number = "SJPS-515", date = "2025-02-18", type = "tax-invoice", customerRef = "cli_svc_factory",
         lines = listOf(
             SeedLine("prod_1", bi("ஃபேன்ஸி சேலை", "Fancy Saree"), "50072010", 1.0, "Nos", 7650.0, 5.0, 0.0, "%")
         ),
         total = 8032.5, discount = 0.0, taxAmount = 382.5, globalDiscountValue = 0.0, globalDiscountType = "%",
         taxInclusive = false, showHSN = true, showDiscountColumn = false, measureMode = "quantity",
         terms = "", notes = "",
-        customer = mapOf("name.ta" to "எஸ்.வி.சி. பட்டுநூல் முறுக்கு ஆலை", "name.en" to "S.V.C. Silk Twisting Factory", "address.ta" to "179/B, ராஜீவ் காந்தி நகர், கம்பர் தெரு", "address.en" to "179/B, Rajiv Gandhi Nagar, Kambar Street", "city.ta" to "இரும்பேடு", "city.en" to "Irumbedu", "district.ta" to "திருவண்ணாமலை", "district.en" to "Tiruvannamalai", "state.ta" to "தமிழ்நாடு", "country.ta" to "இந்தியா", "pinCode" to "632317", "gstin" to "33AGJPT2746F1ZB")
+        customer = mapOf("name.ta" to "S.V.C. சில்க் ட்விஸ்டிங் ஃபேக்டரி", "name.en" to "S.V.C. Silk Twisting Factory", "address.ta" to "179/B, ராஜீவ் காந்தி நகர், கம்பர் தெரு", "address.en" to "179/B, Rajiv Gandhi Nagar, Kambar Street", "city.ta" to "இரும்பேடு", "city.en" to "Irumbedu", "district.ta" to "திருவண்ணாமலை", "district.en" to "Tiruvannamalai", "state.ta" to "தமிழ்நாடு", "country.ta" to "இந்தியா", "pinCode" to "632317", "gstin" to "33AGJPT2746F1ZB")
     ),
     SeedTextilesInvoice(
-        company = "SJPS", number = "INV-516", date = "2025-02-20", type = "tax-invoice", customerRef = "cli_svc_factory",
+        company = "SJPS", number = "SJPS-516", date = "2025-02-20", type = "tax-invoice", customerRef = "cli_svc_factory",
         lines = listOf(
             SeedLine("prod_3", bi("ஃபேன்ஸி முத்து முந்தி கட்டம் சேலை", "Fancy Muthu Mundhi Kattam Saree"), "50072010", 2.0, "Nos", 8050.0, 5.0, 0.0, "%")
         ),
         total = 16905.0, discount = 0.0, taxAmount = 805.0, globalDiscountValue = 0.0, globalDiscountType = "%",
         taxInclusive = false, showHSN = true, showDiscountColumn = false, measureMode = "quantity",
         terms = "", notes = "",
-        customer = mapOf("name.ta" to "எஸ்.வி.சி. பட்டுநூல் முறுக்கு ஆலை", "name.en" to "S.V.C. Silk Twisting Factory", "address.ta" to "179/B, ராஜீவ் காந்தி நகர், கம்பர் தெரு", "address.en" to "179/B, Rajiv Gandhi Nagar, Kambar Street", "city.ta" to "இரும்பேடு", "city.en" to "Irumbedu", "district.ta" to "திருவண்ணாமலை", "district.en" to "Tiruvannamalai", "state.ta" to "தமிழ்நாடு", "country.ta" to "இந்தியா", "pinCode" to "632317", "gstin" to "33AGJPT2746F1ZB")
+        customer = mapOf("name.ta" to "S.V.C. சில்க் ட்விஸ்டிங் ஃபேக்டரி", "name.en" to "S.V.C. Silk Twisting Factory", "address.ta" to "179/B, ராஜீவ் காந்தி நகர், கம்பர் தெரு", "address.en" to "179/B, Rajiv Gandhi Nagar, Kambar Street", "city.ta" to "இரும்பேடு", "city.en" to "Irumbedu", "district.ta" to "திருவண்ணாமலை", "district.en" to "Tiruvannamalai", "state.ta" to "தமிழ்நாடு", "country.ta" to "இந்தியா", "pinCode" to "632317", "gstin" to "33AGJPT2746F1ZB")
     ),
     SeedTextilesInvoice(
-        company = "SJPS", number = "INV-517", date = "2025-02-22", type = "tax-invoice", customerRef = "cli_svc_factory",
+        company = "SJPS", number = "SJPS-517", date = "2025-02-22", type = "tax-invoice", customerRef = "cli_svc_factory",
         lines = listOf(
             SeedLine("prod_3", bi("ஃபேன்ஸி முத்து முந்தி கட்டம் சேலை", "Fancy Muthu Mundhi Kattam Saree"), "50072010", 2.0, "Nos", 8050.0, 5.0, 0.0, "%"),
             SeedLine("doc_1789292103569", bi("ஃபேன்ஸி முத்து சேலை", "Fancy Muthu Saree"), "50072010", 2.0, "Nos", 8200.0, 5.0, 0.0, "%"),
@@ -446,10 +433,10 @@ val seedTextilesInvoices: List<SeedTextilesInvoice> = listOf(
         total = 51450.0, discount = 0.0, taxAmount = 805.0, globalDiscountValue = 0.0, globalDiscountType = "%",
         taxInclusive = false, showHSN = true, showDiscountColumn = false, measureMode = "quantity",
         terms = "", notes = "",
-        customer = mapOf("name.ta" to "எஸ்.வி.சி. பட்டுநூல் முறுக்கு ஆலை", "name.en" to "S.V.C. Silk Twisting Factory", "address.ta" to "179/B, ராஜீவ் காந்தி நகர், கம்பர் தெரு", "address.en" to "179/B, Rajiv Gandhi Nagar, Kambar Street", "city.ta" to "இரும்பேடு", "city.en" to "Irumbedu", "district.ta" to "திருவண்ணாமலை", "district.en" to "Tiruvannamalai", "state.ta" to "தமிழ்நாடு", "country.ta" to "இந்தியா", "pinCode" to "632317", "gstin" to "33AGJPT2746F1ZB")
+        customer = mapOf("name.ta" to "S.V.C. சில்க் ட்விஸ்டிங் ஃபேக்டரி", "name.en" to "S.V.C. Silk Twisting Factory", "address.ta" to "179/B, ராஜீவ் காந்தி நகர், கம்பர் தெரு", "address.en" to "179/B, Rajiv Gandhi Nagar, Kambar Street", "city.ta" to "இரும்பேடு", "city.en" to "Irumbedu", "district.ta" to "திருவண்ணாமலை", "district.en" to "Tiruvannamalai", "state.ta" to "தமிழ்நாடு", "country.ta" to "இந்தியா", "pinCode" to "632317", "gstin" to "33AGJPT2746F1ZB")
     ),
     SeedTextilesInvoice(
-        company = "SJPS", number = "INV-518", date = "2025-02-25", type = "tax-invoice", customerRef = "cli_svc_factory",
+        company = "SJPS", number = "SJPS-518", date = "2025-02-25", type = "tax-invoice", customerRef = "cli_svc_factory",
         lines = listOf(
             SeedLine("prod_1", bi("ஃபேன்ஸி சேலை", "Fancy Saree"), "50072010", 1.0, "Nos", 7900.0, 5.0, 0.0, "%"),
             SeedLine("prod_3", bi("ஃபேன்ஸி முத்து முந்தி கட்டம் சேலை", "Fancy Muthu Mundhi Kattam Saree"), "50072010", 1.0, "Nos", 8050.0, 5.0, 0.0, "%"),
@@ -458,10 +445,10 @@ val seedTextilesInvoices: List<SeedTextilesInvoice> = listOf(
         total = 25410.0, discount = 0.0, taxAmount = 395.0, globalDiscountValue = 0.0, globalDiscountType = "%",
         taxInclusive = false, showHSN = true, showDiscountColumn = false, measureMode = "quantity",
         terms = "", notes = "",
-        customer = mapOf("name.ta" to "எஸ்.வி.சி. பட்டுநூல் முறுக்கு ஆலை", "name.en" to "S.V.C. Silk Twisting Factory", "address.ta" to "179/B, ராஜீவ் காந்தி நகர், கம்பர் தெரு", "address.en" to "179/B, Rajiv Gandhi Nagar, Kambar Street", "city.ta" to "இரும்பேடு", "city.en" to "Irumbedu", "district.ta" to "திருவண்ணாமலை", "district.en" to "Tiruvannamalai", "state.ta" to "தமிழ்நாடு", "country.ta" to "இந்தியா", "pinCode" to "632317", "gstin" to "33AGJPT2746F1ZB")
+        customer = mapOf("name.ta" to "S.V.C. சில்க் ட்விஸ்டிங் ஃபேக்டரி", "name.en" to "S.V.C. Silk Twisting Factory", "address.ta" to "179/B, ராஜீவ் காந்தி நகர், கம்பர் தெரு", "address.en" to "179/B, Rajiv Gandhi Nagar, Kambar Street", "city.ta" to "இரும்பேடு", "city.en" to "Irumbedu", "district.ta" to "திருவண்ணாமலை", "district.en" to "Tiruvannamalai", "state.ta" to "தமிழ்நாடு", "country.ta" to "இந்தியா", "pinCode" to "632317", "gstin" to "33AGJPT2746F1ZB")
     ),
     SeedTextilesInvoice(
-        company = "SJPS", number = "INV-519", date = "2025-02-26", type = "tax-invoice", customerRef = "cli_svc_factory",
+        company = "SJPS", number = "SJPS-519", date = "2025-02-26", type = "tax-invoice", customerRef = "cli_svc_factory",
         lines = listOf(
             SeedLine("prod_1", bi("ஃபேன்ஸி சேலை", "Fancy Saree"), "50072010", 1.0, "Nos", 7900.0, 5.0, 0.0, "%"),
             SeedLine("doc_1789292103569", bi("ஃபேன்ஸி முத்து சேலை", "Fancy Muthu Saree"), "50072010", 2.0, "Nos", 8250.0, 5.0, 0.0, "%")
@@ -469,10 +456,10 @@ val seedTextilesInvoices: List<SeedTextilesInvoice> = listOf(
         total = 25620.0, discount = 0.0, taxAmount = 395.0, globalDiscountValue = 0.0, globalDiscountType = "%",
         taxInclusive = false, showHSN = true, showDiscountColumn = false, measureMode = "quantity",
         terms = "", notes = "",
-        customer = mapOf("name.ta" to "எஸ்.வி.சி. பட்டுநூல் முறுக்கு ஆலை", "name.en" to "S.V.C. Silk Twisting Factory", "address.ta" to "179/B, ராஜீவ் காந்தி நகர், கம்பர் தெரு", "address.en" to "179/B, Rajiv Gandhi Nagar, Kambar Street", "city.ta" to "இரும்பேடு", "city.en" to "Irumbedu", "district.ta" to "திருவண்ணாமலை", "district.en" to "Tiruvannamalai", "state.ta" to "தமிழ்நாடு", "country.ta" to "இந்தியா", "pinCode" to "632317", "gstin" to "33AGJPT2746F1ZB")
+        customer = mapOf("name.ta" to "S.V.C. சில்க் ட்விஸ்டிங் ஃபேக்டரி", "name.en" to "S.V.C. Silk Twisting Factory", "address.ta" to "179/B, ராஜீவ் காந்தி நகர், கம்பர் தெரு", "address.en" to "179/B, Rajiv Gandhi Nagar, Kambar Street", "city.ta" to "இரும்பேடு", "city.en" to "Irumbedu", "district.ta" to "திருவண்ணாமலை", "district.en" to "Tiruvannamalai", "state.ta" to "தமிழ்நாடு", "country.ta" to "இந்தியா", "pinCode" to "632317", "gstin" to "33AGJPT2746F1ZB")
     ),
     SeedTextilesInvoice(
-        company = "SJPS", number = "INV-520", date = "2025-03-06", type = "tax-invoice", customerRef = "cli_svc_factory",
+        company = "SJPS", number = "SJPS-520", date = "2025-03-06", type = "tax-invoice", customerRef = "cli_svc_factory",
         lines = listOf(
             SeedLine("prod_1", bi("ஃபேன்ஸி சேலை", "Fancy Saree"), "50072010", 2.0, "Nos", 7900.0, 5.0, 0.0, "%"),
             SeedLine("prod_3", bi("ஃபேன்ஸி முத்து முந்தி கட்டம் சேலை", "Fancy Muthu Mundhi Kattam Saree"), "50072010", 1.0, "Nos", 8050.0, 5.0, 0.0, "%"),
@@ -482,10 +469,10 @@ val seedTextilesInvoices: List<SeedTextilesInvoice> = listOf(
         total = 68302.5, discount = 0.0, taxAmount = 790.0, globalDiscountValue = 0.0, globalDiscountType = "%",
         taxInclusive = false, showHSN = true, showDiscountColumn = false, measureMode = "quantity",
         terms = "", notes = "",
-        customer = mapOf("name.ta" to "எஸ்.வி.சி. பட்டுநூல் முறுக்கு ஆலை", "name.en" to "S.V.C. Silk Twisting Factory", "address.ta" to "179/B, ராஜீவ் காந்தி நகர், கம்பர் தெரு", "address.en" to "179/B, Rajiv Gandhi Nagar, Kambar Street", "city.ta" to "இரும்பேடு", "city.en" to "Irumbedu", "district.ta" to "திருவண்ணாமலை", "district.en" to "Tiruvannamalai", "state.ta" to "தமிழ்நாடு", "country.ta" to "இந்தியா", "pinCode" to "632317", "gstin" to "33AGJPT2746F1ZB")
+        customer = mapOf("name.ta" to "S.V.C. சில்க் ட்விஸ்டிங் ஃபேக்டரி", "name.en" to "S.V.C. Silk Twisting Factory", "address.ta" to "179/B, ராஜீவ் காந்தி நகர், கம்பர் தெரு", "address.en" to "179/B, Rajiv Gandhi Nagar, Kambar Street", "city.ta" to "இரும்பேடு", "city.en" to "Irumbedu", "district.ta" to "திருவண்ணாமலை", "district.en" to "Tiruvannamalai", "state.ta" to "தமிழ்நாடு", "country.ta" to "இந்தியா", "pinCode" to "632317", "gstin" to "33AGJPT2746F1ZB")
     ),
     SeedTextilesInvoice(
-        company = "SJPS", number = "INV-521", date = "2025-03-14", type = "tax-invoice", customerRef = "cli_svc_factory",
+        company = "SJPS", number = "SJPS-521", date = "2025-03-14", type = "tax-invoice", customerRef = "cli_svc_factory",
         lines = listOf(
             SeedLine("prod_1", bi("ஃபேன்ஸி சேலை", "Fancy Saree"), "50072010", 3.0, "Nos", 7900.0, 5.0, 0.0, "%"),
             SeedLine("doc_1789292103569", bi("ஃபேன்ஸி முத்து சேலை", "Fancy Muthu Saree"), "50072010", 1.0, "Nos", 8250.0, 5.0, 0.0, "%"),
@@ -494,10 +481,10 @@ val seedTextilesInvoices: List<SeedTextilesInvoice> = listOf(
         total = 42420.0, discount = 0.0, taxAmount = 1185.0, globalDiscountValue = 0.0, globalDiscountType = "%",
         taxInclusive = false, showHSN = true, showDiscountColumn = false, measureMode = "quantity",
         terms = "", notes = "",
-        customer = mapOf("name.ta" to "எஸ்.வி.சி. பட்டுநூல் முறுக்கு ஆலை", "name.en" to "S.V.C. Silk Twisting Factory", "address.ta" to "179/B, ராஜீவ் காந்தி நகர், கம்பர் தெரு", "address.en" to "179/B, Rajiv Gandhi Nagar, Kambar Street", "city.ta" to "இரும்பேடு", "city.en" to "Irumbedu", "district.ta" to "திருவண்ணாமலை", "district.en" to "Tiruvannamalai", "state.ta" to "தமிழ்நாடு", "country.ta" to "இந்தியா", "pinCode" to "632317", "gstin" to "33AGJPT2746F1ZB")
+        customer = mapOf("name.ta" to "S.V.C. சில்க் ட்விஸ்டிங் ஃபேக்டரி", "name.en" to "S.V.C. Silk Twisting Factory", "address.ta" to "179/B, ராஜீவ் காந்தி நகர், கம்பர் தெரு", "address.en" to "179/B, Rajiv Gandhi Nagar, Kambar Street", "city.ta" to "இரும்பேடு", "city.en" to "Irumbedu", "district.ta" to "திருவண்ணாமலை", "district.en" to "Tiruvannamalai", "state.ta" to "தமிழ்நாடு", "country.ta" to "இந்தியா", "pinCode" to "632317", "gstin" to "33AGJPT2746F1ZB")
     ),
     SeedTextilesInvoice(
-        company = "SJPS", number = "INV-522", date = "2025-03-18", type = "tax-invoice", customerRef = "cli_svc_factory",
+        company = "SJPS", number = "SJPS-522", date = "2025-03-18", type = "tax-invoice", customerRef = "cli_svc_factory",
         lines = listOf(
             SeedLine("prod_3", bi("ஃபேன்ஸி முத்து முந்தி கட்டம் சேலை", "Fancy Muthu Mundhi Kattam Saree"), "50072010", 1.0, "Nos", 8050.0, 5.0, 0.0, "%"),
             SeedLine("doc_1789292103569", bi("ஃபேன்ஸி முத்து சேலை", "Fancy Muthu Saree"), "50072010", 3.0, "Nos", 8200.0, 5.0, 0.0, "%"),
@@ -506,10 +493,10 @@ val seedTextilesInvoices: List<SeedTextilesInvoice> = listOf(
         total = 42945.0, discount = 0.0, taxAmount = 402.5, globalDiscountValue = 0.0, globalDiscountType = "%",
         taxInclusive = false, showHSN = true, showDiscountColumn = false, measureMode = "quantity",
         terms = "", notes = "",
-        customer = mapOf("name.ta" to "எஸ்.வி.சி. பட்டுநூல் முறுக்கு ஆலை", "name.en" to "S.V.C. Silk Twisting Factory", "address.ta" to "179/B, ராஜீவ் காந்தி நகர், கம்பர் தெரு", "address.en" to "179/B, Rajiv Gandhi Nagar, Kambar Street", "city.ta" to "இரும்பேடு", "city.en" to "Irumbedu", "district.ta" to "திருவண்ணாமலை", "district.en" to "Tiruvannamalai", "state.ta" to "தமிழ்நாடு", "country.ta" to "இந்தியா", "pinCode" to "632317", "gstin" to "33AGJPT2746F1ZB")
+        customer = mapOf("name.ta" to "S.V.C. சில்க் ட்விஸ்டிங் ஃபேக்டரி", "name.en" to "S.V.C. Silk Twisting Factory", "address.ta" to "179/B, ராஜீவ் காந்தி நகர், கம்பர் தெரு", "address.en" to "179/B, Rajiv Gandhi Nagar, Kambar Street", "city.ta" to "இரும்பேடு", "city.en" to "Irumbedu", "district.ta" to "திருவண்ணாமலை", "district.en" to "Tiruvannamalai", "state.ta" to "தமிழ்நாடு", "country.ta" to "இந்தியா", "pinCode" to "632317", "gstin" to "33AGJPT2746F1ZB")
     ),
     SeedTextilesInvoice(
-        company = "SJPS", number = "INV-523", date = "2025-03-24", type = "tax-invoice", customerRef = "cli_svc_factory",
+        company = "SJPS", number = "SJPS-523", date = "2025-03-24", type = "tax-invoice", customerRef = "cli_svc_factory",
         lines = listOf(
             SeedLine("prod_1", bi("ஃபேன்ஸி சேலை", "Fancy Saree"), "50072010", 1.0, "Nos", 7900.0, 5.0, 0.0, "%"),
             SeedLine("prod_3", bi("ஃபேன்ஸி முத்து முந்தி கட்டம் சேலை", "Fancy Muthu Mundhi Kattam Saree"), "50072010", 2.0, "Nos", 8050.0, 5.0, 0.0, "%"),
@@ -520,20 +507,20 @@ val seedTextilesInvoices: List<SeedTextilesInvoice> = listOf(
         total = 66675.0, discount = 0.0, taxAmount = 395.0, globalDiscountValue = 0.0, globalDiscountType = "%",
         taxInclusive = false, showHSN = true, showDiscountColumn = false, measureMode = "quantity",
         terms = "", notes = "",
-        customer = mapOf("name.ta" to "எஸ்.வி.சி. பட்டுநூல் முறுக்கு ஆலை", "name.en" to "S.V.C. Silk Twisting Factory", "address.ta" to "179/B, ராஜீவ் காந்தி நகர், கம்பர் தெரு", "address.en" to "179/B, Rajiv Gandhi Nagar, Kambar Street", "city.ta" to "இரும்பேடு", "city.en" to "Irumbedu", "district.ta" to "திருவண்ணாமலை", "district.en" to "Tiruvannamalai", "state.ta" to "தமிழ்நாடு", "country.ta" to "இந்தியா", "pinCode" to "632317", "gstin" to "33AGJPT2746F1ZB")
+        customer = mapOf("name.ta" to "S.V.C. சில்க் ட்விஸ்டிங் ஃபேக்டரி", "name.en" to "S.V.C. Silk Twisting Factory", "address.ta" to "179/B, ராஜீவ் காந்தி நகர், கம்பர் தெரு", "address.en" to "179/B, Rajiv Gandhi Nagar, Kambar Street", "city.ta" to "இரும்பேடு", "city.en" to "Irumbedu", "district.ta" to "திருவண்ணாமலை", "district.en" to "Tiruvannamalai", "state.ta" to "தமிழ்நாடு", "country.ta" to "இந்தியா", "pinCode" to "632317", "gstin" to "33AGJPT2746F1ZB")
     ),
     SeedTextilesInvoice(
-        company = "SJPS", number = "INV-524", date = "2025-03-26", type = "tax-invoice", customerRef = "cli_svc_factory",
+        company = "SJPS", number = "SJPS-524", date = "2025-03-26", type = "tax-invoice", customerRef = "cli_svc_factory",
         lines = listOf(
             SeedLine("prod_3", bi("ஃபேன்ஸி முத்து முந்தி கட்டம் சேலை", "Fancy Muthu Mundhi Kattam Saree"), "50072010", 2.0, "Nos", 8050.0, 5.0, 0.0, "%")
         ),
         total = 16905.0, discount = 0.0, taxAmount = 805.0, globalDiscountValue = 0.0, globalDiscountType = "%",
         taxInclusive = false, showHSN = true, showDiscountColumn = false, measureMode = "quantity",
         terms = "", notes = "",
-        customer = mapOf("name.ta" to "எஸ்.வி.சி. பட்டுநூல் முறுக்கு ஆலை", "name.en" to "S.V.C. Silk Twisting Factory", "address.ta" to "179/B, ராஜீவ் காந்தி நகர், கம்பர் தெரு", "address.en" to "179/B, Rajiv Gandhi Nagar, Kambar Street", "city.ta" to "இரும்பேடு", "city.en" to "Irumbedu", "district.ta" to "திருவண்ணாமலை", "district.en" to "Tiruvannamalai", "state.ta" to "தமிழ்நாடு", "country.ta" to "இந்தியா", "pinCode" to "632317", "gstin" to "33AGJPT2746F1ZB")
+        customer = mapOf("name.ta" to "S.V.C. சில்க் ட்விஸ்டிங் ஃபேக்டரி", "name.en" to "S.V.C. Silk Twisting Factory", "address.ta" to "179/B, ராஜீவ் காந்தி நகர், கம்பர் தெரு", "address.en" to "179/B, Rajiv Gandhi Nagar, Kambar Street", "city.ta" to "இரும்பேடு", "city.en" to "Irumbedu", "district.ta" to "திருவண்ணாமலை", "district.en" to "Tiruvannamalai", "state.ta" to "தமிழ்நாடு", "country.ta" to "இந்தியா", "pinCode" to "632317", "gstin" to "33AGJPT2746F1ZB")
     ),
     SeedTextilesInvoice(
-        company = "SJPS", number = "INV-525", date = "2025-03-29", type = "tax-invoice", customerRef = "cli_svc_factory",
+        company = "SJPS", number = "SJPS-525", date = "2025-03-29", type = "tax-invoice", customerRef = "cli_svc_factory",
         lines = listOf(
             SeedLine("prod_1", bi("ஃபேன்ஸி சேலை", "Fancy Saree"), "50072010", 1.0, "Nos", 7900.0, 5.0, 0.0, "%"),
             SeedLine("doc_1789292103569", bi("ஃபேன்ஸி முத்து சேலை", "Fancy Muthu Saree"), "50072010", 1.0, "Nos", 8250.0, 5.0, 0.0, "%")
@@ -541,10 +528,10 @@ val seedTextilesInvoices: List<SeedTextilesInvoice> = listOf(
         total = 16957.5, discount = 0.0, taxAmount = 395.0, globalDiscountValue = 0.0, globalDiscountType = "%",
         taxInclusive = false, showHSN = true, showDiscountColumn = false, measureMode = "quantity",
         terms = "", notes = "",
-        customer = mapOf("name.ta" to "எஸ்.வி.சி. பட்டுநூல் முறுக்கு ஆலை", "name.en" to "S.V.C. Silk Twisting Factory", "address.ta" to "179/B, ராஜீவ் காந்தி நகர், கம்பர் தெரு", "address.en" to "179/B, Rajiv Gandhi Nagar, Kambar Street", "city.ta" to "இரும்பேடு", "city.en" to "Irumbedu", "district.ta" to "திருவண்ணாமலை", "district.en" to "Tiruvannamalai", "state.ta" to "தமிழ்நாடு", "country.ta" to "இந்தியா", "pinCode" to "632317", "gstin" to "33AGJPT2746F1ZB")
+        customer = mapOf("name.ta" to "S.V.C. சில்க் ட்விஸ்டிங் ஃபேக்டரி", "name.en" to "S.V.C. Silk Twisting Factory", "address.ta" to "179/B, ராஜீவ் காந்தி நகர், கம்பர் தெரு", "address.en" to "179/B, Rajiv Gandhi Nagar, Kambar Street", "city.ta" to "இரும்பேடு", "city.en" to "Irumbedu", "district.ta" to "திருவண்ணாமலை", "district.en" to "Tiruvannamalai", "state.ta" to "தமிழ்நாடு", "country.ta" to "இந்தியா", "pinCode" to "632317", "gstin" to "33AGJPT2746F1ZB")
     ),
     SeedTextilesInvoice(
-        company = "SJPS", number = "INV-526", date = "2025-04-04", type = "tax-invoice", customerRef = "cli_svc_factory",
+        company = "SJPS", number = "SJPS-526", date = "2025-04-04", type = "tax-invoice", customerRef = "cli_svc_factory",
         lines = listOf(
             SeedLine("prod_1", bi("ஃபேன்ஸி சேலை", "Fancy Saree"), "50072010", 2.0, "Nos", 7900.0, 5.0, 0.0, "%"),
             SeedLine("prod_3", bi("ஃபேன்ஸி முத்து முந்தி கட்டம் சேலை", "Fancy Muthu Mundhi Kattam Saree"), "50072010", 3.0, "Nos", 8050.0, 5.0, 0.0, "%"),
@@ -553,10 +540,10 @@ val seedTextilesInvoices: List<SeedTextilesInvoice> = listOf(
         total = 67935.0, discount = 0.0, taxAmount = 790.0, globalDiscountValue = 0.0, globalDiscountType = "%",
         taxInclusive = false, showHSN = true, showDiscountColumn = false, measureMode = "quantity",
         terms = "", notes = "",
-        customer = mapOf("name.ta" to "எஸ்.வி.சி. பட்டுநூல் முறுக்கு ஆலை", "name.en" to "S.V.C. Silk Twisting Factory", "address.ta" to "179/B, ராஜீவ் காந்தி நகர், கம்பர் தெரு", "address.en" to "179/B, Rajiv Gandhi Nagar, Kambar Street", "city.ta" to "இரும்பேடு", "city.en" to "Irumbedu", "district.ta" to "திருவண்ணாமலை", "district.en" to "Tiruvannamalai", "state.ta" to "தமிழ்நாடு", "country.ta" to "இந்தியா", "pinCode" to "632317", "gstin" to "33AGJPT2746F1ZB")
+        customer = mapOf("name.ta" to "S.V.C. சில்க் ட்விஸ்டிங் ஃபேக்டரி", "name.en" to "S.V.C. Silk Twisting Factory", "address.ta" to "179/B, ராஜீவ் காந்தி நகர், கம்பர் தெரு", "address.en" to "179/B, Rajiv Gandhi Nagar, Kambar Street", "city.ta" to "இரும்பேடு", "city.en" to "Irumbedu", "district.ta" to "திருவண்ணாமலை", "district.en" to "Tiruvannamalai", "state.ta" to "தமிழ்நாடு", "country.ta" to "இந்தியா", "pinCode" to "632317", "gstin" to "33AGJPT2746F1ZB")
     ),
     SeedTextilesInvoice(
-        company = "SJPS", number = "INV-527", date = "2025-04-09", type = "tax-invoice", customerRef = "cli_svc_factory",
+        company = "SJPS", number = "SJPS-527", date = "2025-04-09", type = "tax-invoice", customerRef = "cli_svc_factory",
         lines = listOf(
             SeedLine("prod_3", bi("ஃபேன்ஸி முத்து முந்தி கட்டம் சேலை", "Fancy Muthu Mundhi Kattam Saree"), "50072010", 2.0, "Nos", 8050.0, 5.0, 0.0, "%"),
             SeedLine("doc_1789292103569", bi("ஃபேன்ஸி முத்து சேலை", "Fancy Muthu Saree"), "50072010", 1.0, "Nos", 8250.0, 5.0, 0.0, "%"),
@@ -565,10 +552,10 @@ val seedTextilesInvoices: List<SeedTextilesInvoice> = listOf(
         total = 34440.0, discount = 0.0, taxAmount = 805.0, globalDiscountValue = 0.0, globalDiscountType = "%",
         taxInclusive = false, showHSN = true, showDiscountColumn = false, measureMode = "quantity",
         terms = "", notes = "",
-        customer = mapOf("name.ta" to "எஸ்.வி.சி. பட்டுநூல் முறுக்கு ஆலை", "name.en" to "S.V.C. Silk Twisting Factory", "address.ta" to "179/B, ராஜீவ் காந்தி நகர், கம்பர் தெரு", "address.en" to "179/B, Rajiv Gandhi Nagar, Kambar Street", "city.ta" to "இரும்பேடு", "city.en" to "Irumbedu", "district.ta" to "திருவண்ணாமலை", "district.en" to "Tiruvannamalai", "state.ta" to "தமிழ்நாடு", "country.ta" to "இந்தியா", "pinCode" to "632317", "gstin" to "33AGJPT2746F1ZB")
+        customer = mapOf("name.ta" to "S.V.C. சில்க் ட்விஸ்டிங் ஃபேக்டரி", "name.en" to "S.V.C. Silk Twisting Factory", "address.ta" to "179/B, ராஜீவ் காந்தி நகர், கம்பர் தெரு", "address.en" to "179/B, Rajiv Gandhi Nagar, Kambar Street", "city.ta" to "இரும்பேடு", "city.en" to "Irumbedu", "district.ta" to "திருவண்ணாமலை", "district.en" to "Tiruvannamalai", "state.ta" to "தமிழ்நாடு", "country.ta" to "இந்தியா", "pinCode" to "632317", "gstin" to "33AGJPT2746F1ZB")
     ),
     SeedTextilesInvoice(
-        company = "SJPS", number = "INV-528", date = "2025-04-16", type = "tax-invoice", customerRef = "cli_svc_factory",
+        company = "SJPS", number = "SJPS-528", date = "2025-04-16", type = "tax-invoice", customerRef = "cli_svc_factory",
         lines = listOf(
             SeedLine("prod_1", bi("ஃபேன்ஸி சேலை", "Fancy Saree"), "50072010", 2.0, "Nos", 7900.0, 5.0, 0.0, "%"),
             SeedLine("prod_3", bi("ஃபேன்ஸி முத்து முந்தி கட்டம் சேலை", "Fancy Muthu Mundhi Kattam Saree"), "50072010", 1.0, "Nos", 8050.0, 5.0, 0.0, "%"),
@@ -577,10 +564,10 @@ val seedTextilesInvoices: List<SeedTextilesInvoice> = listOf(
         total = 51030.0, discount = 0.0, taxAmount = 790.0, globalDiscountValue = 0.0, globalDiscountType = "%",
         taxInclusive = false, showHSN = true, showDiscountColumn = false, measureMode = "quantity",
         terms = "", notes = "",
-        customer = mapOf("name.ta" to "எஸ்.வி.சி. பட்டுநூல் முறுக்கு ஆலை", "name.en" to "S.V.C. Silk Twisting Factory", "address.ta" to "179/B, ராஜீவ் காந்தி நகர், கம்பர் தெரு", "address.en" to "179/B, Rajiv Gandhi Nagar, Kambar Street", "city.ta" to "இரும்பேடு", "city.en" to "Irumbedu", "district.ta" to "திருவண்ணாமலை", "district.en" to "Tiruvannamalai", "state.ta" to "தமிழ்நாடு", "country.ta" to "இந்தியா", "pinCode" to "632317", "gstin" to "33AGJPT2746F1ZB")
+        customer = mapOf("name.ta" to "S.V.C. சில்க் ட்விஸ்டிங் ஃபேக்டரி", "name.en" to "S.V.C. Silk Twisting Factory", "address.ta" to "179/B, ராஜீவ் காந்தி நகர், கம்பர் தெரு", "address.en" to "179/B, Rajiv Gandhi Nagar, Kambar Street", "city.ta" to "இரும்பேடு", "city.en" to "Irumbedu", "district.ta" to "திருவண்ணாமலை", "district.en" to "Tiruvannamalai", "state.ta" to "தமிழ்நாடு", "country.ta" to "இந்தியா", "pinCode" to "632317", "gstin" to "33AGJPT2746F1ZB")
     ),
     SeedTextilesInvoice(
-        company = "SJPS", number = "INV-529", date = "2025-04-17", type = "tax-invoice", customerRef = "cli_svc_factory",
+        company = "SJPS", number = "SJPS-529", date = "2025-04-17", type = "tax-invoice", customerRef = "cli_svc_factory",
         lines = listOf(
             SeedLine("doc_1789292103569", bi("ஃபேன்ஸி முத்து சேலை", "Fancy Muthu Saree"), "50072010", 2.0, "Nos", 8200.0, 5.0, 0.0, "%"),
             SeedLine("doc_1789292103569", bi("ஃபேன்ஸி முத்து சேலை", "Fancy Muthu Saree"), "50072010", 1.0, "Nos", 8250.0, 5.0, 0.0, "%")
@@ -588,10 +575,10 @@ val seedTextilesInvoices: List<SeedTextilesInvoice> = listOf(
         total = 25882.5, discount = 0.0, taxAmount = 820.0, globalDiscountValue = 0.0, globalDiscountType = "%",
         taxInclusive = false, showHSN = true, showDiscountColumn = false, measureMode = "quantity",
         terms = "", notes = "",
-        customer = mapOf("name.ta" to "எஸ்.வி.சி. பட்டுநூல் முறுக்கு ஆலை", "name.en" to "S.V.C. Silk Twisting Factory", "address.ta" to "179/B, ராஜீவ் காந்தி நகர், கம்பர் தெரு", "address.en" to "179/B, Rajiv Gandhi Nagar, Kambar Street", "city.ta" to "இரும்பேடு", "city.en" to "Irumbedu", "district.ta" to "திருவண்ணாமலை", "district.en" to "Tiruvannamalai", "state.ta" to "தமிழ்நாடு", "country.ta" to "இந்தியா", "pinCode" to "632317", "gstin" to "33AGJPT2746F1ZB")
+        customer = mapOf("name.ta" to "S.V.C. சில்க் ட்விஸ்டிங் ஃபேக்டரி", "name.en" to "S.V.C. Silk Twisting Factory", "address.ta" to "179/B, ராஜீவ் காந்தி நகர், கம்பர் தெரு", "address.en" to "179/B, Rajiv Gandhi Nagar, Kambar Street", "city.ta" to "இரும்பேடு", "city.en" to "Irumbedu", "district.ta" to "திருவண்ணாமலை", "district.en" to "Tiruvannamalai", "state.ta" to "தமிழ்நாடு", "country.ta" to "இந்தியா", "pinCode" to "632317", "gstin" to "33AGJPT2746F1ZB")
     ),
     SeedTextilesInvoice(
-        company = "SJPS", number = "INV-530", date = "2025-04-25", type = "tax-invoice", customerRef = "cli_svc_factory",
+        company = "SJPS", number = "SJPS-530", date = "2025-04-25", type = "tax-invoice", customerRef = "cli_svc_factory",
         lines = listOf(
             SeedLine("prod_1", bi("ஃபேன்ஸி சேலை", "Fancy Saree"), "50072010", 1.0, "Nos", 7900.0, 5.0, 0.0, "%"),
             SeedLine("prod_3", bi("ஃபேன்ஸி முத்து முந்தி கட்டம் சேலை", "Fancy Muthu Mundhi Kattam Saree"), "50072010", 1.0, "Nos", 8050.0, 5.0, 0.0, "%"),
@@ -601,10 +588,10 @@ val seedTextilesInvoices: List<SeedTextilesInvoice> = listOf(
         total = 51607.5, discount = 0.0, taxAmount = 395.0, globalDiscountValue = 0.0, globalDiscountType = "%",
         taxInclusive = false, showHSN = true, showDiscountColumn = false, measureMode = "quantity",
         terms = "", notes = "",
-        customer = mapOf("name.ta" to "எஸ்.வி.சி. பட்டுநூல் முறுக்கு ஆலை", "name.en" to "S.V.C. Silk Twisting Factory", "address.ta" to "179/B, ராஜீவ் காந்தி நகர், கம்பர் தெரு", "address.en" to "179/B, Rajiv Gandhi Nagar, Kambar Street", "city.ta" to "இரும்பேடு", "city.en" to "Irumbedu", "district.ta" to "திருவண்ணாமலை", "district.en" to "Tiruvannamalai", "state.ta" to "தமிழ்நாடு", "country.ta" to "இந்தியா", "pinCode" to "632317", "gstin" to "33AGJPT2746F1ZB")
+        customer = mapOf("name.ta" to "S.V.C. சில்க் ட்விஸ்டிங் ஃபேக்டரி", "name.en" to "S.V.C. Silk Twisting Factory", "address.ta" to "179/B, ராஜீவ் காந்தி நகர், கம்பர் தெரு", "address.en" to "179/B, Rajiv Gandhi Nagar, Kambar Street", "city.ta" to "இரும்பேடு", "city.en" to "Irumbedu", "district.ta" to "திருவண்ணாமலை", "district.en" to "Tiruvannamalai", "state.ta" to "தமிழ்நாடு", "country.ta" to "இந்தியா", "pinCode" to "632317", "gstin" to "33AGJPT2746F1ZB")
     ),
     SeedTextilesInvoice(
-        company = "SJPS", number = "INV-531", date = "2025-04-28", type = "tax-invoice", customerRef = "cli_svc_factory",
+        company = "SJPS", number = "SJPS-531", date = "2025-04-28", type = "tax-invoice", customerRef = "cli_svc_factory",
         lines = listOf(
             SeedLine("prod_1", bi("ஃபேன்ஸி சேலை", "Fancy Saree"), "50072010", 2.0, "Nos", 7900.0, 5.0, 0.0, "%"),
             SeedLine("doc_1789292103569", bi("ஃபேன்ஸி முத்து சேலை", "Fancy Muthu Saree"), "50072010", 3.0, "Nos", 8250.0, 5.0, 0.0, "%"),
@@ -615,10 +602,10 @@ val seedTextilesInvoices: List<SeedTextilesInvoice> = listOf(
         total = 71946.0, discount = 0.0, taxAmount = 790.0, globalDiscountValue = 0.0, globalDiscountType = "%",
         taxInclusive = false, showHSN = true, showDiscountColumn = false, measureMode = "quantity",
         terms = "", notes = "",
-        customer = mapOf("name.ta" to "எஸ்.வி.சி. பட்டுநூல் முறுக்கு ஆலை", "name.en" to "S.V.C. Silk Twisting Factory", "address.ta" to "179/B, ராஜீவ் காந்தி நகர், கம்பர் தெரு", "address.en" to "179/B, Rajiv Gandhi Nagar, Kambar Street", "city.ta" to "இரும்பேடு", "city.en" to "Irumbedu", "district.ta" to "திருவண்ணாமலை", "district.en" to "Tiruvannamalai", "state.ta" to "தமிழ்நாடு", "country.ta" to "இந்தியா", "pinCode" to "632317", "gstin" to "33AGJPT2746F1ZB")
+        customer = mapOf("name.ta" to "S.V.C. சில்க் ட்விஸ்டிங் ஃபேக்டரி", "name.en" to "S.V.C. Silk Twisting Factory", "address.ta" to "179/B, ராஜீவ் காந்தி நகர், கம்பர் தெரு", "address.en" to "179/B, Rajiv Gandhi Nagar, Kambar Street", "city.ta" to "இரும்பேடு", "city.en" to "Irumbedu", "district.ta" to "திருவண்ணாமலை", "district.en" to "Tiruvannamalai", "state.ta" to "தமிழ்நாடு", "country.ta" to "இந்தியா", "pinCode" to "632317", "gstin" to "33AGJPT2746F1ZB")
     ),
     SeedTextilesInvoice(
-        company = "SJPS", number = "INV-532", date = "2025-04-30", type = "tax-invoice", customerRef = "cli_svc_factory",
+        company = "SJPS", number = "SJPS-532", date = "2025-04-30", type = "tax-invoice", customerRef = "cli_svc_factory",
         lines = listOf(
             SeedLine("prod_1", bi("ஃபேன்ஸி சேலை", "Fancy Saree"), "50072010", 1.0, "Nos", 7900.0, 5.0, 0.0, "%"),
             SeedLine("prod_3", bi("ஃபேன்ஸி முத்து முந்தி கட்டம் சேலை", "Fancy Muthu Mundhi Kattam Saree"), "50072010", 1.0, "Nos", 8050.0, 5.0, 0.0, "%"),
@@ -627,10 +614,10 @@ val seedTextilesInvoices: List<SeedTextilesInvoice> = listOf(
         total = 34072.5, discount = 0.0, taxAmount = 395.0, globalDiscountValue = 0.0, globalDiscountType = "%",
         taxInclusive = false, showHSN = true, showDiscountColumn = false, measureMode = "quantity",
         terms = "", notes = "",
-        customer = mapOf("name.ta" to "எஸ்.வி.சி. பட்டுநூல் முறுக்கு ஆலை", "name.en" to "S.V.C. Silk Twisting Factory", "address.ta" to "179/B, ராஜீவ் காந்தி நகர், கம்பர் தெரு", "address.en" to "179/B, Rajiv Gandhi Nagar, Kambar Street", "city.ta" to "இரும்பேடு", "city.en" to "Irumbedu", "district.ta" to "திருவண்ணாமலை", "district.en" to "Tiruvannamalai", "state.ta" to "தமிழ்நாடு", "country.ta" to "இந்தியா", "pinCode" to "632317", "gstin" to "33AGJPT2746F1ZB")
+        customer = mapOf("name.ta" to "S.V.C. சில்க் ட்விஸ்டிங் ஃபேக்டரி", "name.en" to "S.V.C. Silk Twisting Factory", "address.ta" to "179/B, ராஜீவ் காந்தி நகர், கம்பர் தெரு", "address.en" to "179/B, Rajiv Gandhi Nagar, Kambar Street", "city.ta" to "இரும்பேடு", "city.en" to "Irumbedu", "district.ta" to "திருவண்ணாமலை", "district.en" to "Tiruvannamalai", "state.ta" to "தமிழ்நாடு", "country.ta" to "இந்தியா", "pinCode" to "632317", "gstin" to "33AGJPT2746F1ZB")
     ),
     SeedTextilesInvoice(
-        company = "SJPS", number = "INV-533", date = "2025-05-07", type = "tax-invoice", customerRef = "cli_svc_factory",
+        company = "SJPS", number = "SJPS-533", date = "2025-05-07", type = "tax-invoice", customerRef = "cli_svc_factory",
         lines = listOf(
             SeedLine("prod_1", bi("ஃபேன்ஸி சேலை", "Fancy Saree"), "50072010", 1.0, "Nos", 7900.0, 5.0, 0.0, "%"),
             SeedLine("prod_3", bi("ஃபேன்ஸி முத்து முந்தி கட்டம் சேலை", "Fancy Muthu Mundhi Kattam Saree"), "50072010", 2.0, "Nos", 8050.0, 5.0, 0.0, "%"),
@@ -640,10 +627,10 @@ val seedTextilesInvoices: List<SeedTextilesInvoice> = listOf(
         total = 42735.0, discount = 0.0, taxAmount = 395.0, globalDiscountValue = 0.0, globalDiscountType = "%",
         taxInclusive = false, showHSN = true, showDiscountColumn = false, measureMode = "quantity",
         terms = "", notes = "",
-        customer = mapOf("name.ta" to "எஸ்.வி.சி. பட்டுநூல் முறுக்கு ஆலை", "name.en" to "S.V.C. Silk Twisting Factory", "address.ta" to "179/B, ராஜீவ் காந்தி நகர், கம்பர் தெரு", "address.en" to "179/B, Rajiv Gandhi Nagar, Kambar Street", "city.ta" to "இரும்பேடு", "city.en" to "Irumbedu", "district.ta" to "திருவண்ணாமலை", "district.en" to "Tiruvannamalai", "state.ta" to "தமிழ்நாடு", "country.ta" to "இந்தியா", "pinCode" to "632317", "gstin" to "33AGJPT2746F1ZB")
+        customer = mapOf("name.ta" to "S.V.C. சில்க் ட்விஸ்டிங் ஃபேக்டரி", "name.en" to "S.V.C. Silk Twisting Factory", "address.ta" to "179/B, ராஜீவ் காந்தி நகர், கம்பர் தெரு", "address.en" to "179/B, Rajiv Gandhi Nagar, Kambar Street", "city.ta" to "இரும்பேடு", "city.en" to "Irumbedu", "district.ta" to "திருவண்ணாமலை", "district.en" to "Tiruvannamalai", "state.ta" to "தமிழ்நாடு", "country.ta" to "இந்தியா", "pinCode" to "632317", "gstin" to "33AGJPT2746F1ZB")
     ),
     SeedTextilesInvoice(
-        company = "SJPS", number = "INV-534", date = "2025-05-14", type = "tax-invoice", customerRef = "cli_svc_factory",
+        company = "SJPS", number = "SJPS-534", date = "2025-05-14", type = "tax-invoice", customerRef = "cli_svc_factory",
         lines = listOf(
             SeedLine("prod_1", bi("ஃபேன்ஸி சேலை", "Fancy Saree"), "50072010", 1.0, "Nos", 7900.0, 5.0, 0.0, "%"),
             SeedLine("doc_1789292103569", bi("ஃபேன்ஸி முத்து சேலை", "Fancy Muthu Saree"), "50072010", 1.0, "Nos", 8250.0, 5.0, 0.0, "%"),
@@ -652,20 +639,20 @@ val seedTextilesInvoices: List<SeedTextilesInvoice> = listOf(
         total = 25830.0, discount = 0.0, taxAmount = 395.0, globalDiscountValue = 0.0, globalDiscountType = "%",
         taxInclusive = false, showHSN = true, showDiscountColumn = false, measureMode = "quantity",
         terms = "", notes = "",
-        customer = mapOf("name.ta" to "எஸ்.வி.சி. பட்டுநூல் முறுக்கு ஆலை", "name.en" to "S.V.C. Silk Twisting Factory", "address.ta" to "179/B, ராஜீவ் காந்தி நகர், கம்பர் தெரு", "address.en" to "179/B, Rajiv Gandhi Nagar, Kambar Street", "city.ta" to "இரும்பேடு", "city.en" to "Irumbedu", "district.ta" to "திருவண்ணாமலை", "district.en" to "Tiruvannamalai", "state.ta" to "தமிழ்நாடு", "country.ta" to "இந்தியா", "pinCode" to "632317", "gstin" to "33AGJPT2746F1ZB")
+        customer = mapOf("name.ta" to "S.V.C. சில்க் ட்விஸ்டிங் ஃபேக்டரி", "name.en" to "S.V.C. Silk Twisting Factory", "address.ta" to "179/B, ராஜீவ் காந்தி நகர், கம்பர் தெரு", "address.en" to "179/B, Rajiv Gandhi Nagar, Kambar Street", "city.ta" to "இரும்பேடு", "city.en" to "Irumbedu", "district.ta" to "திருவண்ணாமலை", "district.en" to "Tiruvannamalai", "state.ta" to "தமிழ்நாடு", "country.ta" to "இந்தியா", "pinCode" to "632317", "gstin" to "33AGJPT2746F1ZB")
     ),
     SeedTextilesInvoice(
-        company = "SJPS", number = "INV-535", date = "2025-05-19", type = "tax-invoice", customerRef = "cli_svc_factory",
+        company = "SJPS", number = "SJPS-535", date = "2025-05-19", type = "tax-invoice", customerRef = "cli_svc_factory",
         lines = listOf(
             SeedLine("prod_discount_saree", bi("தள்ளுபடி சேலை", "Discount Saree"), "50072010", 1.0, "Nos", 6320.0, 5.0, 0.0, "%")
         ),
         total = 6636.0, discount = 0.0, taxAmount = 316.0, globalDiscountValue = 0.0, globalDiscountType = "%",
         taxInclusive = false, showHSN = true, showDiscountColumn = false, measureMode = "quantity",
         terms = "", notes = "",
-        customer = mapOf("name.ta" to "எஸ்.வி.சி. பட்டுநூல் முறுக்கு ஆலை", "name.en" to "S.V.C. Silk Twisting Factory", "address.ta" to "179/B, ராஜீவ் காந்தி நகர், கம்பர் தெரு", "address.en" to "179/B, Rajiv Gandhi Nagar, Kambar Street", "city.ta" to "இரும்பேடு", "city.en" to "Irumbedu", "district.ta" to "திருவண்ணாமலை", "district.en" to "Tiruvannamalai", "state.ta" to "தமிழ்நாடு", "country.ta" to "இந்தியா", "pinCode" to "632317", "gstin" to "33AGJPT2746F1ZB")
+        customer = mapOf("name.ta" to "S.V.C. சில்க் ட்விஸ்டிங் ஃபேக்டரி", "name.en" to "S.V.C. Silk Twisting Factory", "address.ta" to "179/B, ராஜீவ் காந்தி நகர், கம்பர் தெரு", "address.en" to "179/B, Rajiv Gandhi Nagar, Kambar Street", "city.ta" to "இரும்பேடு", "city.en" to "Irumbedu", "district.ta" to "திருவண்ணாமலை", "district.en" to "Tiruvannamalai", "state.ta" to "தமிழ்நாடு", "country.ta" to "இந்தியா", "pinCode" to "632317", "gstin" to "33AGJPT2746F1ZB")
     ),
     SeedTextilesInvoice(
-        company = "SJPS", number = "INV-536", date = "2025-05-21", type = "tax-invoice", customerRef = "cli_svc_factory",
+        company = "SJPS", number = "SJPS-536", date = "2025-05-21", type = "tax-invoice", customerRef = "cli_svc_factory",
         lines = listOf(
             SeedLine("prod_1", bi("ஃபேன்ஸி சேலை", "Fancy Saree"), "50072010", 2.0, "Nos", 7900.0, 5.0, 0.0, "%"),
             SeedLine("prod_3", bi("ஃபேன்ஸி முத்து முந்தி கட்டம் சேலை", "Fancy Muthu Mundhi Kattam Saree"), "50072010", 1.0, "Nos", 8050.0, 5.0, 0.0, "%"),
@@ -674,10 +661,10 @@ val seedTextilesInvoices: List<SeedTextilesInvoice> = listOf(
         total = 42787.5, discount = 0.0, taxAmount = 790.0, globalDiscountValue = 0.0, globalDiscountType = "%",
         taxInclusive = false, showHSN = true, showDiscountColumn = false, measureMode = "quantity",
         terms = "", notes = "",
-        customer = mapOf("name.ta" to "எஸ்.வி.சி. பட்டுநூல் முறுக்கு ஆலை", "name.en" to "S.V.C. Silk Twisting Factory", "address.ta" to "179/B, ராஜீவ் காந்தி நகர், கம்பர் தெரு", "address.en" to "179/B, Rajiv Gandhi Nagar, Kambar Street", "city.ta" to "இரும்பேடு", "city.en" to "Irumbedu", "district.ta" to "திருவண்ணாமலை", "district.en" to "Tiruvannamalai", "state.ta" to "தமிழ்நாடு", "country.ta" to "இந்தியா", "pinCode" to "632317", "gstin" to "33AGJPT2746F1ZB")
+        customer = mapOf("name.ta" to "S.V.C. சில்க் ட்விஸ்டிங் ஃபேக்டரி", "name.en" to "S.V.C. Silk Twisting Factory", "address.ta" to "179/B, ராஜீவ் காந்தி நகர், கம்பர் தெரு", "address.en" to "179/B, Rajiv Gandhi Nagar, Kambar Street", "city.ta" to "இரும்பேடு", "city.en" to "Irumbedu", "district.ta" to "திருவண்ணாமலை", "district.en" to "Tiruvannamalai", "state.ta" to "தமிழ்நாடு", "country.ta" to "இந்தியா", "pinCode" to "632317", "gstin" to "33AGJPT2746F1ZB")
     ),
     SeedTextilesInvoice(
-        company = "SJPS", number = "INV-537", date = "2025-05-27", type = "tax-invoice", customerRef = "cli_svc_factory",
+        company = "SJPS", number = "SJPS-537", date = "2025-05-27", type = "tax-invoice", customerRef = "cli_svc_factory",
         lines = listOf(
             SeedLine("doc_1789292103569", bi("ஃபேன்ஸி முத்து சேலை", "Fancy Muthu Saree"), "50072010", 1.0, "Nos", 8250.0, 5.0, 0.0, "%"),
             SeedLine("prod_fancy_border_muthu", bi("ஃபேன்ஸி பார்டர் முத்து சேலை", "Fancy Border Muthu Saree"), "50072010", 2.0, "Nos", 8450.0, 5.0, 0.0, "%")
@@ -685,10 +672,10 @@ val seedTextilesInvoices: List<SeedTextilesInvoice> = listOf(
         total = 26407.5, discount = 0.0, taxAmount = 412.5, globalDiscountValue = 0.0, globalDiscountType = "%",
         taxInclusive = false, showHSN = true, showDiscountColumn = false, measureMode = "quantity",
         terms = "", notes = "",
-        customer = mapOf("name.ta" to "எஸ்.வி.சி. பட்டுநூல் முறுக்கு ஆலை", "name.en" to "S.V.C. Silk Twisting Factory", "address.ta" to "179/B, ராஜீவ் காந்தி நகர், கம்பர் தெரு", "address.en" to "179/B, Rajiv Gandhi Nagar, Kambar Street", "city.ta" to "இரும்பேடு", "city.en" to "Irumbedu", "district.ta" to "திருவண்ணாமலை", "district.en" to "Tiruvannamalai", "state.ta" to "தமிழ்நாடு", "country.ta" to "இந்தியா", "pinCode" to "632317", "gstin" to "33AGJPT2746F1ZB")
+        customer = mapOf("name.ta" to "S.V.C. சில்க் ட்விஸ்டிங் ஃபேக்டரி", "name.en" to "S.V.C. Silk Twisting Factory", "address.ta" to "179/B, ராஜீவ் காந்தி நகர், கம்பர் தெரு", "address.en" to "179/B, Rajiv Gandhi Nagar, Kambar Street", "city.ta" to "இரும்பேடு", "city.en" to "Irumbedu", "district.ta" to "திருவண்ணாமலை", "district.en" to "Tiruvannamalai", "state.ta" to "தமிழ்நாடு", "country.ta" to "இந்தியா", "pinCode" to "632317", "gstin" to "33AGJPT2746F1ZB")
     ),
     SeedTextilesInvoice(
-        company = "SJPS", number = "INV-538", date = "2025-05-29", type = "tax-invoice", customerRef = "cli_svc_factory",
+        company = "SJPS", number = "SJPS-538", date = "2025-05-29", type = "tax-invoice", customerRef = "cli_svc_factory",
         lines = listOf(
             SeedLine("prod_3", bi("ஃபேன்ஸி முத்து முந்தி கட்டம் சேலை", "Fancy Muthu Mundhi Kattam Saree"), "50072010", 2.0, "Nos", 8450.0, 5.0, 0.0, "%"),
             SeedLine("prod_3", bi("ஃபேன்ஸி முத்து முந்தி கட்டம் சேலை", "Fancy Muthu Mundhi Kattam Saree"), "50072010", 2.0, "Nos", 8050.0, 5.0, 0.0, "%")
@@ -696,10 +683,10 @@ val seedTextilesInvoices: List<SeedTextilesInvoice> = listOf(
         total = 34650.0, discount = 0.0, taxAmount = 845.0, globalDiscountValue = 0.0, globalDiscountType = "%",
         taxInclusive = false, showHSN = true, showDiscountColumn = false, measureMode = "quantity",
         terms = "", notes = "",
-        customer = mapOf("name.ta" to "எஸ்.வி.சி. பட்டுநூல் முறுக்கு ஆலை", "name.en" to "S.V.C. Silk Twisting Factory", "address.ta" to "179/B, ராஜீவ் காந்தி நகர், கம்பர் தெரு", "address.en" to "179/B, Rajiv Gandhi Nagar, Kambar Street", "city.ta" to "இரும்பேடு", "city.en" to "Irumbedu", "district.ta" to "திருவண்ணாமலை", "district.en" to "Tiruvannamalai", "state.ta" to "தமிழ்நாடு", "country.ta" to "இந்தியா", "pinCode" to "632317", "gstin" to "33AGJPT2746F1ZB")
+        customer = mapOf("name.ta" to "S.V.C. சில்க் ட்விஸ்டிங் ஃபேக்டரி", "name.en" to "S.V.C. Silk Twisting Factory", "address.ta" to "179/B, ராஜீவ் காந்தி நகர், கம்பர் தெரு", "address.en" to "179/B, Rajiv Gandhi Nagar, Kambar Street", "city.ta" to "இரும்பேடு", "city.en" to "Irumbedu", "district.ta" to "திருவண்ணாமலை", "district.en" to "Tiruvannamalai", "state.ta" to "தமிழ்நாடு", "country.ta" to "இந்தியா", "pinCode" to "632317", "gstin" to "33AGJPT2746F1ZB")
     ),
     SeedTextilesInvoice(
-        company = "SJPS", number = "INV-539", date = "2025-05-31", type = "tax-invoice", customerRef = "cli_svc_factory",
+        company = "SJPS", number = "SJPS-539", date = "2025-05-31", type = "tax-invoice", customerRef = "cli_svc_factory",
         lines = listOf(
             SeedLine("doc_1789292103569", bi("ஃபேன்ஸி முத்து சேலை", "Fancy Muthu Saree"), "50072010", 3.0, "Nos", 8250.0, 5.0, 0.0, "%"),
             SeedLine("doc_1789292103569", bi("ஃபேன்ஸி முத்து சேலை", "Fancy Muthu Saree"), "50072010", 1.0, "Nos", 8450.0, 5.0, 0.0, "%"),
@@ -708,20 +695,20 @@ val seedTextilesInvoices: List<SeedTextilesInvoice> = listOf(
         total = 41496.0, discount = 0.0, taxAmount = 1237.5, globalDiscountValue = 0.0, globalDiscountType = "%",
         taxInclusive = false, showHSN = true, showDiscountColumn = false, measureMode = "quantity",
         terms = "", notes = "",
-        customer = mapOf("name.ta" to "எஸ்.வி.சி. பட்டுநூல் முறுக்கு ஆலை", "name.en" to "S.V.C. Silk Twisting Factory", "address.ta" to "179/B, ராஜீவ் காந்தி நகர், கம்பர் தெரு", "address.en" to "179/B, Rajiv Gandhi Nagar, Kambar Street", "city.ta" to "இரும்பேடு", "city.en" to "Irumbedu", "district.ta" to "திருவண்ணாமலை", "district.en" to "Tiruvannamalai", "state.ta" to "தமிழ்நாடு", "country.ta" to "இந்தியா", "pinCode" to "632317", "gstin" to "33AGJPT2746F1ZB")
+        customer = mapOf("name.ta" to "S.V.C. சில்க் ட்விஸ்டிங் ஃபேக்டரி", "name.en" to "S.V.C. Silk Twisting Factory", "address.ta" to "179/B, ராஜீவ் காந்தி நகர், கம்பர் தெரு", "address.en" to "179/B, Rajiv Gandhi Nagar, Kambar Street", "city.ta" to "இரும்பேடு", "city.en" to "Irumbedu", "district.ta" to "திருவண்ணாமலை", "district.en" to "Tiruvannamalai", "state.ta" to "தமிழ்நாடு", "country.ta" to "இந்தியா", "pinCode" to "632317", "gstin" to "33AGJPT2746F1ZB")
     ),
     SeedTextilesInvoice(
-        company = "SJPS", number = "INV-540", date = "2025-06-02", type = "tax-invoice", customerRef = "cli_svc_factory",
+        company = "SJPS", number = "SJPS-540", date = "2025-06-02", type = "tax-invoice", customerRef = "cli_svc_factory",
         lines = listOf(
             SeedLine("prod_3", bi("ஃபேன்ஸி முத்து முந்தி கட்டம் சேலை", "Fancy Muthu Mundhi Kattam Saree"), "50072010", 1.0, "Nos", 8050.0, 5.0, 0.0, "%")
         ),
         total = 8452.5, discount = 0.0, taxAmount = 402.5, globalDiscountValue = 0.0, globalDiscountType = "%",
         taxInclusive = false, showHSN = true, showDiscountColumn = false, measureMode = "quantity",
         terms = "", notes = "",
-        customer = mapOf("name.ta" to "எஸ்.வி.சி. பட்டுநூல் முறுக்கு ஆலை", "name.en" to "S.V.C. Silk Twisting Factory", "address.ta" to "179/B, ராஜீவ் காந்தி நகர், கம்பர் தெரு", "address.en" to "179/B, Rajiv Gandhi Nagar, Kambar Street", "city.ta" to "இரும்பேடு", "city.en" to "Irumbedu", "district.ta" to "திருவண்ணாமலை", "district.en" to "Tiruvannamalai", "state.ta" to "தமிழ்நாடு", "country.ta" to "இந்தியா", "pinCode" to "632317", "gstin" to "33AGJPT2746F1ZB")
+        customer = mapOf("name.ta" to "S.V.C. சில்க் ட்விஸ்டிங் ஃபேக்டரி", "name.en" to "S.V.C. Silk Twisting Factory", "address.ta" to "179/B, ராஜீவ் காந்தி நகர், கம்பர் தெரு", "address.en" to "179/B, Rajiv Gandhi Nagar, Kambar Street", "city.ta" to "இரும்பேடு", "city.en" to "Irumbedu", "district.ta" to "திருவண்ணாமலை", "district.en" to "Tiruvannamalai", "state.ta" to "தமிழ்நாடு", "country.ta" to "இந்தியா", "pinCode" to "632317", "gstin" to "33AGJPT2746F1ZB")
     ),
     SeedTextilesInvoice(
-        company = "SJPS", number = "INV-541", date = "2025-06-07", type = "tax-invoice", customerRef = "cli_svc_factory",
+        company = "SJPS", number = "SJPS-541", date = "2025-06-07", type = "tax-invoice", customerRef = "cli_svc_factory",
         lines = listOf(
             SeedLine("prod_3", bi("ஃபேன்ஸி முத்து முந்தி கட்டம் சேலை", "Fancy Muthu Mundhi Kattam Saree"), "50072010", 1.0, "Nos", 8050.0, 5.0, 0.0, "%"),
             SeedLine("doc_1789292103569", bi("ஃபேன்ஸி முத்து சேலை", "Fancy Muthu Saree"), "50072010", 1.0, "Nos", 8250.0, 5.0, 0.0, "%"),
@@ -730,40 +717,40 @@ val seedTextilesInvoices: List<SeedTextilesInvoice> = listOf(
         total = 25987.5, discount = 0.0, taxAmount = 402.5, globalDiscountValue = 0.0, globalDiscountType = "%",
         taxInclusive = false, showHSN = true, showDiscountColumn = false, measureMode = "quantity",
         terms = "", notes = "",
-        customer = mapOf("name.ta" to "எஸ்.வி.சி. பட்டுநூல் முறுக்கு ஆலை", "name.en" to "S.V.C. Silk Twisting Factory", "address.ta" to "179/B, ராஜீவ் காந்தி நகர், கம்பர் தெரு", "address.en" to "179/B, Rajiv Gandhi Nagar, Kambar Street", "city.ta" to "இரும்பேடு", "city.en" to "Irumbedu", "district.ta" to "திருவண்ணாமலை", "district.en" to "Tiruvannamalai", "state.ta" to "தமிழ்நாடு", "country.ta" to "இந்தியா", "pinCode" to "632317", "gstin" to "33AGJPT2746F1ZB")
+        customer = mapOf("name.ta" to "S.V.C. சில்க் ட்விஸ்டிங் ஃபேக்டரி", "name.en" to "S.V.C. Silk Twisting Factory", "address.ta" to "179/B, ராஜீவ் காந்தி நகர், கம்பர் தெரு", "address.en" to "179/B, Rajiv Gandhi Nagar, Kambar Street", "city.ta" to "இரும்பேடு", "city.en" to "Irumbedu", "district.ta" to "திருவண்ணாமலை", "district.en" to "Tiruvannamalai", "state.ta" to "தமிழ்நாடு", "country.ta" to "இந்தியா", "pinCode" to "632317", "gstin" to "33AGJPT2746F1ZB")
     ),
     SeedTextilesInvoice(
-        company = "SJPS", number = "INV-542", date = "2025-06-11", type = "tax-invoice", customerRef = "cli_svc_factory",
+        company = "SJPS", number = "SJPS-542", date = "2025-06-11", type = "tax-invoice", customerRef = "cli_svc_factory",
         lines = listOf(
             SeedLine("prod_1", bi("ஃபேன்ஸி சேலை", "Fancy Saree"), "50072010", 1.0, "Nos", 7900.0, 5.0, 0.0, "%")
         ),
         total = 8295.0, discount = 0.0, taxAmount = 395.0, globalDiscountValue = 0.0, globalDiscountType = "%",
         taxInclusive = false, showHSN = true, showDiscountColumn = false, measureMode = "quantity",
         terms = "", notes = "",
-        customer = mapOf("name.ta" to "எஸ்.வி.சி. பட்டுநூல் முறுக்கு ஆலை", "name.en" to "S.V.C. Silk Twisting Factory", "address.ta" to "179/B, ராஜீவ் காந்தி நகர், கம்பர் தெரு", "address.en" to "179/B, Rajiv Gandhi Nagar, Kambar Street", "city.ta" to "இரும்பேடு", "city.en" to "Irumbedu", "district.ta" to "திருவண்ணாமலை", "district.en" to "Tiruvannamalai", "state.ta" to "தமிழ்நாடு", "country.ta" to "இந்தியா", "pinCode" to "632317", "gstin" to "33AGJPT2746F1ZB")
+        customer = mapOf("name.ta" to "S.V.C. சில்க் ட்விஸ்டிங் ஃபேக்டரி", "name.en" to "S.V.C. Silk Twisting Factory", "address.ta" to "179/B, ராஜீவ் காந்தி நகர், கம்பர் தெரு", "address.en" to "179/B, Rajiv Gandhi Nagar, Kambar Street", "city.ta" to "இரும்பேடு", "city.en" to "Irumbedu", "district.ta" to "திருவண்ணாமலை", "district.en" to "Tiruvannamalai", "state.ta" to "தமிழ்நாடு", "country.ta" to "இந்தியா", "pinCode" to "632317", "gstin" to "33AGJPT2746F1ZB")
     ),
     SeedTextilesInvoice(
-        company = "SJPS", number = "INV-543", date = "2025-06-20", type = "tax-invoice", customerRef = "cli_svc_factory",
+        company = "SJPS", number = "SJPS-543", date = "2025-06-20", type = "tax-invoice", customerRef = "cli_svc_factory",
         lines = listOf(
             SeedLine("prod_1", bi("ஃபேன்ஸி சேலை", "Fancy Saree"), "50072010", 1.0, "Nos", 7900.0, 5.0, 0.0, "%")
         ),
         total = 8295.0, discount = 0.0, taxAmount = 395.0, globalDiscountValue = 0.0, globalDiscountType = "%",
         taxInclusive = false, showHSN = true, showDiscountColumn = false, measureMode = "quantity",
         terms = "", notes = "",
-        customer = mapOf("name.ta" to "எஸ்.வி.சி. பட்டுநூல் முறுக்கு ஆலை", "name.en" to "S.V.C. Silk Twisting Factory", "address.ta" to "179/B, ராஜீவ் காந்தி நகர், கம்பர் தெரு", "address.en" to "179/B, Rajiv Gandhi Nagar, Kambar Street", "city.ta" to "இரும்பேடு", "city.en" to "Irumbedu", "district.ta" to "திருவண்ணாமலை", "district.en" to "Tiruvannamalai", "state.ta" to "தமிழ்நாடு", "country.ta" to "இந்தியா", "pinCode" to "632317", "gstin" to "33AGJPT2746F1ZB")
+        customer = mapOf("name.ta" to "S.V.C. சில்க் ட்விஸ்டிங் ஃபேக்டரி", "name.en" to "S.V.C. Silk Twisting Factory", "address.ta" to "179/B, ராஜீவ் காந்தி நகர், கம்பர் தெரு", "address.en" to "179/B, Rajiv Gandhi Nagar, Kambar Street", "city.ta" to "இரும்பேடு", "city.en" to "Irumbedu", "district.ta" to "திருவண்ணாமலை", "district.en" to "Tiruvannamalai", "state.ta" to "தமிழ்நாடு", "country.ta" to "இந்தியா", "pinCode" to "632317", "gstin" to "33AGJPT2746F1ZB")
     ),
     SeedTextilesInvoice(
-        company = "SJPS", number = "INV-544", date = "2025-06-24", type = "tax-invoice", customerRef = "cli_svc_factory",
+        company = "SJPS", number = "SJPS-544", date = "2025-06-24", type = "tax-invoice", customerRef = "cli_svc_factory",
         lines = listOf(
             SeedLine("doc_1789292103569", bi("ஃபேன்ஸி முத்து சேலை", "Fancy Muthu Saree"), "50072010", 1.0, "Nos", 8250.0, 5.0, 0.0, "%")
         ),
         total = 8662.5, discount = 0.0, taxAmount = 412.5, globalDiscountValue = 0.0, globalDiscountType = "%",
         taxInclusive = false, showHSN = true, showDiscountColumn = false, measureMode = "quantity",
         terms = "", notes = "",
-        customer = mapOf("name.ta" to "எஸ்.வி.சி. பட்டுநூல் முறுக்கு ஆலை", "name.en" to "S.V.C. Silk Twisting Factory", "address.ta" to "179/B, ராஜீவ் காந்தி நகர், கம்பர் தெரு", "address.en" to "179/B, Rajiv Gandhi Nagar, Kambar Street", "city.ta" to "இரும்பேடு", "city.en" to "Irumbedu", "district.ta" to "திருவண்ணாமலை", "district.en" to "Tiruvannamalai", "state.ta" to "தமிழ்நாடு", "country.ta" to "இந்தியா", "pinCode" to "632317", "gstin" to "33AGJPT2746F1ZB")
+        customer = mapOf("name.ta" to "S.V.C. சில்க் ட்விஸ்டிங் ஃபேக்டரி", "name.en" to "S.V.C. Silk Twisting Factory", "address.ta" to "179/B, ராஜீவ் காந்தி நகர், கம்பர் தெரு", "address.en" to "179/B, Rajiv Gandhi Nagar, Kambar Street", "city.ta" to "இரும்பேடு", "city.en" to "Irumbedu", "district.ta" to "திருவண்ணாமலை", "district.en" to "Tiruvannamalai", "state.ta" to "தமிழ்நாடு", "country.ta" to "இந்தியா", "pinCode" to "632317", "gstin" to "33AGJPT2746F1ZB")
     ),
     SeedTextilesInvoice(
-        company = "SJPS", number = "INV-545", date = "2025-07-16", type = "tax-invoice", customerRef = "cli_1781436385668",
+        company = "SJPS", number = "SJPS-545", date = "2025-07-16", type = "tax-invoice", customerRef = "cli_1781436385668",
         lines = listOf(
             SeedLine("prod_1", bi("ஃபேன்ஸி சேலை", "Fancy Saree"), "50072010", 6.0, "Nos", 7900.0, 5.0, 0.0, "%"),
             SeedLine("doc_1789292103569", bi("ஃபேன்ஸி முத்து சேலை", "Fancy Muthu Saree"), "50072010", 8.0, "Nos", 8200.0, 5.0, 0.0, "%")
@@ -774,7 +761,7 @@ val seedTextilesInvoices: List<SeedTextilesInvoice> = listOf(
         customer = mapOf("name.ta" to "ஸ்ரீ சிவராம் சில்க் சாரீஸ்", "name.en" to "Sri Sivaram Silk Sarees Arani", "address.ta" to "எண் 6, ஒளவையார் தெரு", "address.en" to "No 6, Avvaiyaar Street", "city.ta" to "ஆரணி", "city.en" to "Arani", "district.ta" to "திருவண்ணாமலை", "district.en" to "Tiruvannamalai", "state.ta" to "தமிழ்நாடு", "country.ta" to "இந்தியா", "pinCode" to "632301", "gstin" to "33AYGPS0561E1ZN")
     ),
     SeedTextilesInvoice(
-        company = "SJPS", number = "INV-546", date = "2025-08-10", type = "tax-invoice", customerRef = "cli_1781436385668",
+        company = "SJPS", number = "SJPS-546", date = "2025-08-10", type = "tax-invoice", customerRef = "cli_1781436385668",
         lines = listOf(
             SeedLine("prod_1", bi("ஃபேன்ஸி சேலை", "Fancy Saree"), "50072010", 8.0, "Nos", 7900.0, 5.0, 0.0, "%"),
             SeedLine("doc_1789292103569", bi("ஃபேன்ஸி முத்து சேலை", "Fancy Muthu Saree"), "50072010", 8.0, "Nos", 8200.0, 5.0, 0.0, "%"),
@@ -786,7 +773,7 @@ val seedTextilesInvoices: List<SeedTextilesInvoice> = listOf(
         customer = mapOf("name.ta" to "ஸ்ரீ சிவராம் சில்க் சாரீஸ்", "name.en" to "Sri Sivaram Silk Sarees Arani", "address.ta" to "எண் 6, ஒளவையார் தெரு", "address.en" to "No 6, Avvaiyaar Street", "city.ta" to "ஆரணி", "city.en" to "Arani", "district.ta" to "திருவண்ணாமலை", "district.en" to "Tiruvannamalai", "state.ta" to "தமிழ்நாடு", "country.ta" to "இந்தியா", "pinCode" to "632301", "gstin" to "33AYGPS0561E1ZN")
     ),
     SeedTextilesInvoice(
-        company = "SJPS", number = "INV-547", date = "2025-08-21", type = "tax-invoice", customerRef = "cli_1781436385668",
+        company = "SJPS", number = "SJPS-547", date = "2025-08-21", type = "tax-invoice", customerRef = "cli_1781436385668",
         lines = listOf(
             SeedLine("doc_1789292103569", bi("ஃபேன்ஸி முத்து சேலை", "Fancy Muthu Saree"), "50072010", 6.0, "Nos", 8200.0, 5.0, 0.0, "%"),
             SeedLine("doc_1789292103569", bi("ஃபேன்ஸி முத்து சேலை", "Fancy Muthu Saree"), "50072010", 1.0, "Nos", 8700.0, 5.0, 0.0, "%"),
@@ -798,7 +785,7 @@ val seedTextilesInvoices: List<SeedTextilesInvoice> = listOf(
         customer = mapOf("name.ta" to "ஸ்ரீ சிவராம் சில்க் சாரீஸ்", "name.en" to "Sri Sivaram Silk Sarees Arani", "address.ta" to "எண் 6, ஒளவையார் தெரு", "address.en" to "No 6, Avvaiyaar Street", "city.ta" to "ஆரணி", "city.en" to "Arani", "district.ta" to "திருவண்ணாமலை", "district.en" to "Tiruvannamalai", "state.ta" to "தமிழ்நாடு", "country.ta" to "இந்தியா", "pinCode" to "632301", "gstin" to "33AYGPS0561E1ZN")
     ),
     SeedTextilesInvoice(
-        company = "SJPS", number = "INV-548", date = "2025-09-01", type = "tax-invoice", customerRef = "cli_1781436385668",
+        company = "SJPS", number = "SJPS-548", date = "2025-09-01", type = "tax-invoice", customerRef = "cli_1781436385668",
         lines = listOf(
             SeedLine("prod_vetti", bi("வேட்டி", "Vetti"), "50072010", 2.0, "Nos", 5900.0, 5.0, 0.0, "%"),
             SeedLine("prod_1", bi("ஃபேன்ஸி சேலை", "Fancy Saree"), "50072010", 4.0, "Nos", 7900.0, 5.0, 0.0, "%"),
@@ -811,7 +798,7 @@ val seedTextilesInvoices: List<SeedTextilesInvoice> = listOf(
         customer = mapOf("name.ta" to "ஸ்ரீ சிவராம் சில்க் சாரீஸ்", "name.en" to "Sri Sivaram Silk Sarees Arani", "address.ta" to "எண் 6, ஒளவையார் தெரு", "address.en" to "No 6, Avvaiyaar Street", "city.ta" to "ஆரணி", "city.en" to "Arani", "district.ta" to "திருவண்ணாமலை", "district.en" to "Tiruvannamalai", "state.ta" to "தமிழ்நாடு", "country.ta" to "இந்தியா", "pinCode" to "632301", "gstin" to "33AYGPS0561E1ZN")
     ),
     SeedTextilesInvoice(
-        company = "SJPS", number = "INV-549", date = "2025-09-15", type = "tax-invoice", customerRef = "cli_1781436385668",
+        company = "SJPS", number = "SJPS-549", date = "2025-09-15", type = "tax-invoice", customerRef = "cli_1781436385668",
         lines = listOf(
             SeedLine("prod_shirt", bi("சட்டை", "Shirt"), "50072010", 2.0, "Nos", 3600.0, 5.0, 0.0, "%"),
             SeedLine("prod_vetti", bi("வேட்டி", "Vetti"), "50072010", 3.0, "Nos", 5900.0, 5.0, 0.0, "%"),
@@ -825,7 +812,7 @@ val seedTextilesInvoices: List<SeedTextilesInvoice> = listOf(
         customer = mapOf("name.ta" to "ஸ்ரீ சிவராம் சில்க் சாரீஸ்", "name.en" to "Sri Sivaram Silk Sarees Arani", "address.ta" to "எண் 6, ஒளவையார் தெரு", "address.en" to "No 6, Avvaiyaar Street", "city.ta" to "ஆரணி", "city.en" to "Arani", "district.ta" to "திருவண்ணாமலை", "district.en" to "Tiruvannamalai", "state.ta" to "தமிழ்நாடு", "country.ta" to "இந்தியா", "pinCode" to "632301", "gstin" to "33AYGPS0561E1ZN")
     ),
     SeedTextilesInvoice(
-        company = "SJPS", number = "INV-550", date = "2025-10-06", type = "tax-invoice", customerRef = "cli_1781436385668",
+        company = "SJPS", number = "SJPS-550", date = "2025-10-06", type = "tax-invoice", customerRef = "cli_1781436385668",
         lines = listOf(
             SeedLine("prod_shirt", bi("சட்டை", "Shirt"), "50072010", 3.0, "Nos", 3600.0, 5.0, 0.0, "%"),
             SeedLine("prod_1", bi("ஃபேன்ஸி சேலை", "Fancy Saree"), "50072010", 9.0, "Nos", 7900.0, 5.0, 0.0, "%"),
@@ -838,7 +825,7 @@ val seedTextilesInvoices: List<SeedTextilesInvoice> = listOf(
         customer = mapOf("name.ta" to "ஸ்ரீ சிவராம் சில்க் சாரீஸ்", "name.en" to "Sri Sivaram Silk Sarees Arani", "address.ta" to "எண் 6, ஒளவையார் தெரு", "address.en" to "No 6, Avvaiyaar Street", "city.ta" to "ஆரணி", "city.en" to "Arani", "district.ta" to "திருவண்ணாமலை", "district.en" to "Tiruvannamalai", "state.ta" to "தமிழ்நாடு", "country.ta" to "இந்தியா", "pinCode" to "632301", "gstin" to "33AYGPS0561E1ZN")
     ),
     SeedTextilesInvoice(
-        company = "SJPS", number = "INV-551", date = "2025-10-14", type = "tax-invoice", customerRef = "cli_1781436385668",
+        company = "SJPS", number = "SJPS-551", date = "2025-10-14", type = "tax-invoice", customerRef = "cli_1781436385668",
         lines = listOf(
             SeedLine("prod_1", bi("ஃபேன்ஸி சேலை", "Fancy Saree"), "50072010", 6.0, "Nos", 7900.0, 5.0, 0.0, "%"),
             SeedLine("doc_1789292103569", bi("ஃபேன்ஸி முத்து சேலை", "Fancy Muthu Saree"), "50072010", 9.0, "Nos", 8200.0, 5.0, 0.0, "%")
@@ -849,7 +836,7 @@ val seedTextilesInvoices: List<SeedTextilesInvoice> = listOf(
         customer = mapOf("name.ta" to "ஸ்ரீ சிவராம் சில்க் சாரீஸ்", "name.en" to "Sri Sivaram Silk Sarees Arani", "address.ta" to "எண் 6, ஒளவையார் தெரு", "address.en" to "No 6, Avvaiyaar Street", "city.ta" to "ஆரணி", "city.en" to "Arani", "district.ta" to "திருவண்ணாமலை", "district.en" to "Tiruvannamalai", "state.ta" to "தமிழ்நாடு", "country.ta" to "இந்தியா", "pinCode" to "632301", "gstin" to "33AYGPS0561E1ZN")
     ),
     SeedTextilesInvoice(
-        company = "SJPS", number = "INV-552", date = "2025-12-02", type = "tax-invoice", customerRef = "cli_1781436385668",
+        company = "SJPS", number = "SJPS-552", date = "2025-12-02", type = "tax-invoice", customerRef = "cli_1781436385668",
         lines = listOf(
             SeedLine("prod_1", bi("ஃபேன்ஸி சேலை", "Fancy Saree"), "50072010", 6.0, "Nos", 7900.0, 5.0, 0.0, "%"),
             SeedLine("doc_1789292103569", bi("ஃபேன்ஸி முத்து சேலை", "Fancy Muthu Saree"), "50072010", 10.0, "Nos", 8200.0, 5.0, 0.0, "%"),
@@ -861,7 +848,7 @@ val seedTextilesInvoices: List<SeedTextilesInvoice> = listOf(
         customer = mapOf("name.ta" to "ஸ்ரீ சிவராம் சில்க் சாரீஸ்", "name.en" to "Sri Sivaram Silk Sarees Arani", "address.ta" to "எண் 6, ஒளவையார் தெரு", "address.en" to "No 6, Avvaiyaar Street", "city.ta" to "ஆரணி", "city.en" to "Arani", "district.ta" to "திருவண்ணாமலை", "district.en" to "Tiruvannamalai", "state.ta" to "தமிழ்நாடு", "country.ta" to "இந்தியா", "pinCode" to "632301", "gstin" to "33AYGPS0561E1ZN")
     ),
     SeedTextilesInvoice(
-        company = "SJPS", number = "INV-553", date = "2025-12-08", type = "tax-invoice", customerRef = "cli_1781436385668",
+        company = "SJPS", number = "SJPS-553", date = "2025-12-08", type = "tax-invoice", customerRef = "cli_1781436385668",
         lines = listOf(
             SeedLine("prod_1", bi("ஃபேன்ஸி சேலை", "Fancy Saree"), "50072010", 6.0, "Nos", 7900.0, 5.0, 0.0, "%"),
             SeedLine("doc_1789292103569", bi("ஃபேன்ஸி முத்து சேலை", "Fancy Muthu Saree"), "50072010", 7.0, "Nos", 8200.0, 5.0, 0.0, "%"),
@@ -873,7 +860,7 @@ val seedTextilesInvoices: List<SeedTextilesInvoice> = listOf(
         customer = mapOf("name.ta" to "ஸ்ரீ சிவராம் சில்க் சாரீஸ்", "name.en" to "Sri Sivaram Silk Sarees Arani", "address.ta" to "எண் 6, ஒளவையார் தெரு", "address.en" to "No 6, Avvaiyaar Street", "city.ta" to "ஆரணி", "city.en" to "Arani", "district.ta" to "திருவண்ணாமலை", "district.en" to "Tiruvannamalai", "state.ta" to "தமிழ்நாடு", "country.ta" to "இந்தியா", "pinCode" to "632301", "gstin" to "33AYGPS0561E1ZN")
     ),
     SeedTextilesInvoice(
-        company = "SJPS", number = "INV-554", date = "2025-12-15", type = "tax-invoice", customerRef = "cli_1781436385668",
+        company = "SJPS", number = "SJPS-554", date = "2025-12-15", type = "tax-invoice", customerRef = "cli_1781436385668",
         lines = listOf(
             SeedLine("prod_1", bi("ஃபேன்ஸி சேலை", "Fancy Saree"), "50072010", 7.0, "Nos", 7900.0, 5.0, 0.0, "%"),
             SeedLine("doc_1789292103569", bi("ஃபேன்ஸி முத்து சேலை", "Fancy Muthu Saree"), "50072010", 12.0, "Nos", 8200.0, 5.0, 0.0, "%"),
@@ -885,7 +872,7 @@ val seedTextilesInvoices: List<SeedTextilesInvoice> = listOf(
         customer = mapOf("name.ta" to "ஸ்ரீ சிவராம் சில்க் சாரீஸ்", "name.en" to "Sri Sivaram Silk Sarees Arani", "address.ta" to "எண் 6, ஒளவையார் தெரு", "address.en" to "No 6, Avvaiyaar Street", "city.ta" to "ஆரணி", "city.en" to "Arani", "district.ta" to "திருவண்ணாமலை", "district.en" to "Tiruvannamalai", "state.ta" to "தமிழ்நாடு", "country.ta" to "இந்தியா", "pinCode" to "632301", "gstin" to "33AYGPS0561E1ZN")
     ),
     SeedTextilesInvoice(
-        company = "SJPS", number = "INV-555", date = "2026-01-02", type = "tax-invoice", customerRef = "cli_1781436385668",
+        company = "SJPS", number = "SJPS-555", date = "2026-01-02", type = "tax-invoice", customerRef = "cli_1781436385668",
         lines = listOf(
             SeedLine("prod_1", bi("ஃபேன்ஸி சேலை", "Fancy Saree"), "50072010", 5.0, "Nos", 7900.0, 5.0, 0.0, "%"),
             SeedLine("doc_1789292103569", bi("ஃபேன்ஸி முத்து சேலை", "Fancy Muthu Saree"), "50072010", 7.0, "Nos", 8200.0, 5.0, 0.0, "%"),
@@ -898,7 +885,7 @@ val seedTextilesInvoices: List<SeedTextilesInvoice> = listOf(
         customer = mapOf("name.ta" to "ஸ்ரீ சிவராம் சில்க் சாரீஸ்", "name.en" to "Sri Sivaram Silk Sarees Arani", "address.ta" to "எண் 6, ஒளவையார் தெரு", "address.en" to "No 6, Avvaiyaar Street", "city.ta" to "ஆரணி", "city.en" to "Arani", "district.ta" to "திருவண்ணாமலை", "district.en" to "Tiruvannamalai", "state.ta" to "தமிழ்நாடு", "country.ta" to "இந்தியா", "pinCode" to "632301", "gstin" to "33AYGPS0561E1ZN")
     ),
     SeedTextilesInvoice(
-        company = "SJPS", number = "INV-556", date = "2026-01-09", type = "tax-invoice", customerRef = "cli_1781436385668",
+        company = "SJPS", number = "SJPS-556", date = "2026-01-09", type = "tax-invoice", customerRef = "cli_1781436385668",
         lines = listOf(
             SeedLine("prod_1", bi("ஃபேன்ஸி சேலை", "Fancy Saree"), "50072010", 9.0, "Nos", 7900.0, 5.0, 0.0, "%"),
             SeedLine("doc_1789292103569", bi("ஃபேன்ஸி முத்து சேலை", "Fancy Muthu Saree"), "50072010", 7.0, "Nos", 8200.0, 5.0, 0.0, "%"),
@@ -911,7 +898,7 @@ val seedTextilesInvoices: List<SeedTextilesInvoice> = listOf(
         customer = mapOf("name.ta" to "ஸ்ரீ சிவராம் சில்க் சாரீஸ்", "name.en" to "Sri Sivaram Silk Sarees Arani", "address.ta" to "எண் 6, ஒளவையார் தெரு", "address.en" to "No 6, Avvaiyaar Street", "city.ta" to "ஆரணி", "city.en" to "Arani", "district.ta" to "திருவண்ணாமலை", "district.en" to "Tiruvannamalai", "state.ta" to "தமிழ்நாடு", "country.ta" to "இந்தியா", "pinCode" to "632301", "gstin" to "33AYGPS0561E1ZN")
     ),
     SeedTextilesInvoice(
-        company = "SJPS", number = "INV-557", date = "2026-02-05", type = "tax-invoice", customerRef = "cli_1781436385668",
+        company = "SJPS", number = "SJPS-557", date = "2026-02-05", type = "tax-invoice", customerRef = "cli_1781436385668",
         lines = listOf(
             SeedLine("prod_1", bi("ஃபேன்ஸி சேலை", "Fancy Saree"), "50072010", 7.0, "Nos", 7900.0, 5.0, 0.0, "%"),
             SeedLine("doc_1789292103569", bi("ஃபேன்ஸி முத்து சேலை", "Fancy Muthu Saree"), "50072010", 10.0, "Nos", 8200.0, 5.0, 0.0, "%"),
@@ -924,7 +911,7 @@ val seedTextilesInvoices: List<SeedTextilesInvoice> = listOf(
         customer = mapOf("name.ta" to "ஸ்ரீ சிவராம் சில்க் சாரீஸ்", "name.en" to "Sri Sivaram Silk Sarees Arani", "address.ta" to "எண் 6, ஒளவையார் தெரு", "address.en" to "No 6, Avvaiyaar Street", "city.ta" to "ஆரணி", "city.en" to "Arani", "district.ta" to "திருவண்ணாமலை", "district.en" to "Tiruvannamalai", "state.ta" to "தமிழ்நாடு", "country.ta" to "இந்தியா", "pinCode" to "632301", "gstin" to "33AYGPS0561E1ZN")
     ),
     SeedTextilesInvoice(
-        company = "SJPS", number = "INV-558", date = "2026-03-02", type = "tax-invoice", customerRef = "cli_1781436385668",
+        company = "SJPS", number = "SJPS-558", date = "2026-03-02", type = "tax-invoice", customerRef = "cli_1781436385668",
         lines = listOf(
             SeedLine("prod_1", bi("ஃபேன்ஸி சேலை", "Fancy Saree"), "50072010", 6.0, "Nos", 7900.0, 5.0, 0.0, "%"),
             SeedLine("doc_1789292103569", bi("ஃபேன்ஸி முத்து சேலை", "Fancy Muthu Saree"), "50072010", 7.0, "Nos", 8200.0, 5.0, 0.0, "%"),
@@ -936,7 +923,7 @@ val seedTextilesInvoices: List<SeedTextilesInvoice> = listOf(
         customer = mapOf("name.ta" to "ஸ்ரீ சிவராம் சில்க் சாரீஸ்", "name.en" to "Sri Sivaram Silk Sarees Arani", "address.ta" to "எண் 6, ஒளவையார் தெரு", "address.en" to "No 6, Avvaiyaar Street", "city.ta" to "ஆரணி", "city.en" to "Arani", "district.ta" to "திருவண்ணாமலை", "district.en" to "Tiruvannamalai", "state.ta" to "தமிழ்நாடு", "country.ta" to "இந்தியா", "pinCode" to "632301", "gstin" to "33AYGPS0561E1ZN")
     ),
     SeedTextilesInvoice(
-        company = "SJPS", number = "INV-559", date = "2026-03-06", type = "tax-invoice", customerRef = "cli_1781436385668",
+        company = "SJPS", number = "SJPS-559", date = "2026-03-06", type = "tax-invoice", customerRef = "cli_1781436385668",
         lines = listOf(
             SeedLine("prod_1", bi("ஃபேன்ஸி சேலை", "Fancy Saree"), "50072010", 4.0, "Nos", 7900.0, 5.0, 0.0, "%"),
             SeedLine("doc_1789292103569", bi("ஃபேன்ஸி முத்து சேலை", "Fancy Muthu Saree"), "50072010", 7.0, "Nos", 8200.0, 5.0, 0.0, "%"),
@@ -948,7 +935,7 @@ val seedTextilesInvoices: List<SeedTextilesInvoice> = listOf(
         customer = mapOf("name.ta" to "ஸ்ரீ சிவராம் சில்க் சாரீஸ்", "name.en" to "Sri Sivaram Silk Sarees Arani", "address.ta" to "எண் 6, ஒளவையார் தெரு", "address.en" to "No 6, Avvaiyaar Street", "city.ta" to "ஆரணி", "city.en" to "Arani", "district.ta" to "திருவண்ணாமலை", "district.en" to "Tiruvannamalai", "state.ta" to "தமிழ்நாடு", "country.ta" to "இந்தியா", "pinCode" to "632301", "gstin" to "33AYGPS0561E1ZN")
     ),
     SeedTextilesInvoice(
-        company = "SJPS", number = "INV-560", date = "2026-04-01", type = "tax-invoice", customerRef = "cli_1781436385668",
+        company = "SJPS", number = "SJPS-560", date = "2026-04-01", type = "tax-invoice", customerRef = "cli_1781436385668",
         lines = listOf(
             SeedLine("prod_1", bi("ஃபேன்ஸி சேலை", "Fancy Saree"), "50072010", 8.0, "Nos", 7900.0, 5.0, 0.0, "%"),
             SeedLine("doc_1789292103569", bi("ஃபேன்ஸி முத்து சேலை", "Fancy Muthu Saree"), "50072010", 7.0, "Nos", 8200.0, 5.0, 0.0, "%"),
@@ -961,7 +948,7 @@ val seedTextilesInvoices: List<SeedTextilesInvoice> = listOf(
         customer = mapOf("name.ta" to "ஸ்ரீ சிவராம் சில்க் சாரீஸ்", "name.en" to "Sri Sivaram Silk Sarees Arani", "address.ta" to "எண் 6, ஒளவையார் தெரு", "address.en" to "No 6, Avvaiyaar Street", "city.ta" to "ஆரணி", "city.en" to "Arani", "district.ta" to "திருவண்ணாமலை", "district.en" to "Tiruvannamalai", "state.ta" to "தமிழ்நாடு", "country.ta" to "இந்தியா", "pinCode" to "632301", "gstin" to "33AYGPS0561E1ZN")
     ),
     SeedTextilesInvoice(
-        company = "SJPS", number = "INV-561", date = "2026-04-06", type = "tax-invoice", customerRef = "cli_1781436385668",
+        company = "SJPS", number = "SJPS-561", date = "2026-04-06", type = "tax-invoice", customerRef = "cli_1781436385668",
         lines = listOf(
             SeedLine("prod_1", bi("ஃபேன்ஸி சேலை", "Fancy Saree"), "50072010", 4.0, "Nos", 7900.0, 5.0, 0.0, "%"),
             SeedLine("prod_3", bi("ஃபேன்ஸி முத்து முந்தி கட்டம் சேலை", "Fancy Muthu Mundhi Kattam Saree"), "50072010", 5.0, "Nos", 8200.0, 5.0, 0.0, "%"),
@@ -974,7 +961,7 @@ val seedTextilesInvoices: List<SeedTextilesInvoice> = listOf(
         customer = mapOf("name.ta" to "ஸ்ரீ சிவராம் சில்க் சாரீஸ்", "name.en" to "Sri Sivaram Silk Sarees Arani", "address.ta" to "எண் 6, ஒளவையார் தெரு", "address.en" to "No 6, Avvaiyaar Street", "city.ta" to "ஆரணி", "city.en" to "Arani", "district.ta" to "திருவண்ணாமலை", "district.en" to "Tiruvannamalai", "state.ta" to "தமிழ்நாடு", "country.ta" to "இந்தியா", "pinCode" to "632301", "gstin" to "33AYGPS0561E1ZN")
     ),
     SeedTextilesInvoice(
-        company = "SJPS", number = "INV-562", date = "2026-05-02", type = "tax-invoice", customerRef = "cli_1781436385668",
+        company = "SJPS", number = "SJPS-562", date = "2026-05-02", type = "tax-invoice", customerRef = "cli_1781436385668",
         lines = listOf(
             SeedLine("prod_1", bi("ஃபேன்ஸி சேலை", "Fancy Saree"), "50072010", 1.0, "Nos", 7900.0, 5.0, 0.0, "%"),
             SeedLine("doc_1789292103569", bi("ஃபேன்ஸி முத்து சேலை", "Fancy Muthu Saree"), "50072010", 2.0, "Nos", 8100.0, 5.0, 0.0, "%"),
@@ -988,7 +975,7 @@ val seedTextilesInvoices: List<SeedTextilesInvoice> = listOf(
         customer = mapOf("name.ta" to "ஸ்ரீ சிவராம் சில்க் சாரீஸ்", "name.en" to "Sri Sivaram Silk Sarees Arani", "address.ta" to "எண் 6, ஒளவையார் தெரு", "address.en" to "No 6, Avvaiyaar Street", "city.ta" to "ஆரணி", "city.en" to "Arani", "district.ta" to "திருவண்ணாமலை", "district.en" to "Tiruvannamalai", "state.ta" to "தமிழ்நாடு", "country.ta" to "இந்தியா", "pinCode" to "632301", "gstin" to "33AYGPS0561E1ZN")
     ),
     SeedTextilesInvoice(
-        company = "SJPS", number = "INV-564", date = "2026-06-01", type = "tax-invoice", customerRef = "cli_1781436385668",
+        company = "SJPS", number = "SJPS-564", date = "2026-06-01", type = "tax-invoice", customerRef = "cli_1781436385668",
         lines = listOf(
             SeedLine("prod_1", bi("ஃபேன்ஸி சேலை", "Fancy Saree"), "50072010", 2.0, "Nos", 7900.0, 5.0, 0.0, "%"),
             SeedLine("doc_1789292103569", bi("ஃபேன்ஸி முத்து சேலை", "Fancy Muthu Saree"), "50072010", 6.0, "Nos", 8400.0, 5.0, 0.0, "%")
@@ -999,7 +986,7 @@ val seedTextilesInvoices: List<SeedTextilesInvoice> = listOf(
         customer = mapOf("name.ta" to "ஸ்ரீ சிவராம் சில்க் சாரீஸ்", "name.en" to "Sri Sivaram Silk Sarees Arani", "address.ta" to "எண் 6, ஒளவையார் தெரு", "address.en" to "No 6, Avvaiyaar Street", "city.ta" to "ஆரணி", "city.en" to "Arani", "district.ta" to "திருவண்ணாமலை", "district.en" to "Tiruvannamalai", "state.ta" to "தமிழ்நாடு", "country.ta" to "இந்தியா", "pinCode" to "632301", "gstin" to "33AYGPS0561E1ZN")
     ),
     SeedTextilesInvoice(
-        company = "SJPS", number = "INV-565", date = "2026-06-05", type = "tax-invoice", customerRef = "cli_1781436385668",
+        company = "SJPS", number = "SJPS-565", date = "2026-06-05", type = "tax-invoice", customerRef = "cli_1781436385668",
         lines = listOf(
             SeedLine("prod_1", bi("ஃபேன்ஸி சேலை", "Fancy Saree"), "50072010", 7.0, "Nos", 7900.0, 5.0, 0.0, "%"),
             SeedLine("doc_1789292103569", bi("ஃபேன்ஸி முத்து சேலை", "Fancy Muthu Saree"), "50072010", 3.0, "Nos", 8200.0, 5.0, 0.0, "%"),
@@ -1012,7 +999,7 @@ val seedTextilesInvoices: List<SeedTextilesInvoice> = listOf(
         customer = mapOf("name.ta" to "ஸ்ரீ சிவராம் சில்க் சாரீஸ்", "name.en" to "Sri Sivaram Silk Sarees Arani", "address.ta" to "எண் 6, ஒளவையார் தெரு", "address.en" to "No 6, Avvaiyaar Street", "city.ta" to "ஆரணி", "city.en" to "Arani", "district.ta" to "திருவண்ணாமலை", "district.en" to "Tiruvannamalai", "state.ta" to "தமிழ்நாடு", "country.ta" to "இந்தியா", "pinCode" to "632301", "gstin" to "33AYGPS0561E1ZN")
     ),
     SeedTextilesInvoice(
-        company = "SJPS", number = "INV-566", date = "2026-07-02", type = "tax-invoice", customerRef = "cli_1781436385668",
+        company = "SJPS", number = "SJPS-566", date = "2026-07-02", type = "tax-invoice", customerRef = "cli_1781436385668",
         lines = listOf(
             SeedLine("prod_1", bi("ஃபேன்ஸி சேலை", "Fancy Saree"), "50072010", 5.0, "Nos", 7900.0, 5.0, 0.0, "%"),
             SeedLine("prod_3", bi("ஃபேன்ஸி முத்து முந்தி கட்டம் சேலை", "Fancy Muthu Mundhi Kattam Saree"), "50072010", 4.0, "Nos", 8200.0, 5.0, 0.0, "%"),
@@ -1025,7 +1012,7 @@ val seedTextilesInvoices: List<SeedTextilesInvoice> = listOf(
         customer = mapOf("name.ta" to "ஸ்ரீ சிவராம் சில்க் சாரீஸ்", "name.en" to "Sri Sivaram Silk Sarees Arani", "address.ta" to "எண் 6, ஒளவையார் தெரு", "address.en" to "No 6, Avvaiyaar Street", "city.ta" to "ஆரணி", "city.en" to "Arani", "district.ta" to "திருவண்ணாமலை", "district.en" to "Tiruvannamalai", "state.ta" to "தமிழ்நாடு", "country.ta" to "இந்தியா", "pinCode" to "632301", "gstin" to "33AYGPS0561E1ZN")
     ),
     SeedTextilesInvoice(
-        company = "SJPS", number = "INV-567", date = "2026-07-06", type = "tax-invoice", customerRef = "cli_1781436385668",
+        company = "SJPS", number = "SJPS-567", date = "2026-07-06", type = "tax-invoice", customerRef = "cli_1781436385668",
         lines = listOf(
             SeedLine("prod_1", bi("ஃபேன்ஸி சேலை", "Fancy Saree"), "50072010", 1.0, "Nos", 7900.0, 5.0, 0.0, "%"),
             SeedLine("prod_3", bi("ஃபேன்ஸி முத்து முந்தி கட்டம் சேலை", "Fancy Muthu Mundhi Kattam Saree"), "50072010", 2.0, "Nos", 8200.0, 5.0, 0.0, "%"),
