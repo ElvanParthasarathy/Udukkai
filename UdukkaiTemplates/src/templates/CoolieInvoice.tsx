@@ -206,7 +206,7 @@ export default function CoolieInvoiceBilingual({ bill }) {
 
       {/* Bill Info Section */}
       <div className="bill-info-section">
-        <div className="bill-meta-row" style={{ marginBottom: '6px' }}>
+        <div className="bill-meta-row">
           <span className="bill-meta"><div style={{ fontSize: 'inherit', fontWeight: 'inherit', color: 'inherit' }}>{slash('பட்டியல் எண்', 'Bill No')} : <strong style={{ textTransform: 'uppercase', color: '#242f3d', fontWeight: 600 }}>{displayBillNo}</strong></div></span>
           <span className="bill-meta"><div style={{ fontSize: 'inherit', fontWeight: 'inherit', color: 'inherit' }}>{slash('நாள்', 'Date')} : <strong style={{ color: '#242f3d', fontWeight: 600 }}>{date}</strong></div></span>
         </div>
