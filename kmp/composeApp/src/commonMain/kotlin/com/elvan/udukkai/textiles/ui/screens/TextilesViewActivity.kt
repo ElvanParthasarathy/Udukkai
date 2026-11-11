@@ -1,5 +1,7 @@
 package com.elvan.udukkai.textiles.ui.screens
 
+import com.elvan.udukkai.data.model.InvoiceItemCatalog
+import com.elvan.udukkai.data.model.ItemNames
 import com.elvan.udukkai.data.model.CustomerModel
 import com.elvan.udukkai.data.model.InvoiceModel
 import com.elvan.udukkai.data.model.ItemModel
@@ -37,16 +39,17 @@ fun textilesCustomerActivity(customer: CustomerModel): ViewActivity {
 
 /** An item's tax invoices in the open company: how much of it was billed, and every bill with its quantity and line value. */
 fun textilesItemActivity(item: ItemModel): ViewActivity {
-    val id = item.id.toString()
+    val id = item.id
     val profile = TextilesProfileRepository.profile
     val invoices = TextilesInvoiceRepository.activeCompanyInvoices
+    val catalog = InvoiceItemCatalog(TextilesItemRepository.items, profile.id)
     val paid = paidAmounts(invoices)
     fun rowsOf(estimates: Boolean) = ViewHistory.itemRows(
         invoices = invoices,
         companyId = profile.id,
         paid = paid,
-        linesOf = { inv -> TextilesCalculation.itemsFromJson(inv.itemsJson).filter { it.itemId == id }.map { ItemLine(it.quantity, it.rowTotal, it.unit) } },
-        customerNameOf = { it.customerName[profile.primaryLanguage] ?: it.customerName.values.firstOrNull { n -> n.isNotBlank() }.orEmpty() },
+        linesOf = { inv -> TextilesCalculation.itemsFromJson(inv.itemsJson).filter { catalog.find(it.itemId, ItemNames.snapshot(it.languageMap, it.itemName, it.itemNameEn))?.id == id }.map { ItemLine(it.quantity, it.rowTotal, it.unit) } },
+        customerNameOf = { com.elvan.udukkai.data.settings.DataLanguageDisplay(profile).first(it.customerName) },
         quantityText = { lines -> "${count(lines.sumOf { it.quantity })} ${lines.first().unit}".trim() },
         estimates = estimates
     )

@@ -147,6 +147,7 @@ private fun DocumentPreview(
             onBack = onBack,
             scrollState = listState,
             showBottomFade = true,
+            hasFloatingBar = com.elvan.udukkai.core.platform.platformLayoutPolicy.supportsLandscapeControls,
             collapsedOnly = true,
             hideTitleSideways = true,
             floatingBar = { PreviewBottomArea(controller, onEdit, menuItems, quiet = true) },

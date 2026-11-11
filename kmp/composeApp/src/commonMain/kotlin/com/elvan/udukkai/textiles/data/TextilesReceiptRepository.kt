@@ -147,6 +147,8 @@ object TextilesReceiptRepository {
 
     fun saveWithLinks(receipt: ReceiptModel, links: List<ReceiptInvoiceLinkModel>): Long {
         if (blocked(receipt)) return -1L
+        if (!com.elvan.udukkai.core.finance.FullReceiptSettlement.matches(receipt, links, TextilesInvoiceRepository.invoices)) return -1L
+        if (validateLinks(links, receipt.id.takeIf { it > 0L }) != null) return -1L
         val helper = getTextilesDatabaseHelper()
         val id = helper.saveReceiptWithLinks(receipt, links)
         if (id > 0) {
@@ -175,7 +177,10 @@ object TextilesReceiptRepository {
     fun restoreBlocker(id: Long): RestoreBlock? {
         val r = deletedReceipts.find { it.id == id } ?: return null
         val target = r.receiptNumber.trim().uppercase()
-        if (receipts.any { it.companyId == r.companyId && it.receiptNumber.trim().uppercase() == target }) return RestoreBlock.NumberTaken
+        if (target.isNotBlank() && receipts.any {
+                it.companyId == r.companyId && it.receiptNumber.trim().uppercase() == target &&
+                    DateUtils.financialYearStart(it.receiptDate) == DateUtils.financialYearStart(r.receiptDate)
+            }) return RestoreBlock.NumberTaken
         val activeInvoiceIds = TextilesInvoiceRepository.invoices.map { it.id }.toSet()
         if (getLinks(id).any { it.invoiceId in activeInvoiceIds && getPaidAmount(it.invoiceId) > 0.0 }) return RestoreBlock.InvoicePaid
         return null

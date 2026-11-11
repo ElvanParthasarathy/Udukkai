@@ -9,10 +9,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.elvan.udukkai.core.platform.openDialer
 import com.elvan.udukkai.core.platform.openMailTo
+import com.elvan.udukkai.core.data.locationDataName
+import com.elvan.udukkai.core.data.indianStates
+import com.elvan.udukkai.core.data.tamilNaduDistricts
 import com.elvan.udukkai.core.utils.CurrencyUtils
 import com.elvan.udukkai.data.model.CustomerModel
+import com.elvan.udukkai.data.settings.DataLanguageDisplay
 import com.elvan.udukkai.data.settings.BusinessProfile
 import com.elvan.udukkai.localization.K
+import com.elvan.udukkai.localization.trWithLang
 import com.elvan.udukkai.localization.tr
 import com.elvan.udukkai.theme.Dimens
 import com.elvan.udukkai.theme.rememberShellColors
@@ -40,54 +45,49 @@ fun CustomerViewScreen(
     onDelete: (() -> ViewDeleteResult)? = null
 ) {
     val colors = rememberShellColors()
-    val (history, retryHistory) = rememberViewHistory(merchant.id, historyKey, loadHistory)
+    val (history, retryHistory) = rememberViewHistory(merchant.id, listOf(historyKey, profile.primaryLanguage, profile.secondaryLanguage, profile.isBilingual), loadHistory)
     val activity = (history as? ViewHistoryState.Ready)?.activity ?: ViewActivity()
     val ready = history is ViewHistoryState.Ready
     val historyUi = rememberViewHistoryUi(history, K.noCustomerInvoices.tr(), withReceipts = true)
     val deleteItem = rememberViewDeleteItem(onDelete, K.customerDeleted.tr(), onBack)
 
-    val isBilingual = profile.isBilingual
-    val primaryLang = profile.primaryLanguage.ifEmpty { "ta" }
-    val secondaryLang = profile.secondaryLanguage.ifEmpty { "en" }
-
-    val p1 = merchant.name[primaryLang] ?: merchant.name["ta"] ?: ""
-    val p2 = merchant.name[secondaryLang] ?: merchant.name["en"] ?: ""
-    val primaryName = p1.ifEmpty { p2.ifEmpty { "-" } }
-    val secondaryName = if (isBilingual && p1.isNotEmpty() && p2.isNotEmpty() && p1 != p2) p2 else ""
+    val language = DataLanguageDisplay(profile)
+    val primaryLang = language.primary
+    val secondaryLang = language.secondary
+    val primaryName = language.first(merchant.name).ifBlank { "-" }
+    val secondaryName = language.second(merchant.name)
 
     fun pick(map: Map<String, String>): String =
-        map[primaryLang] ?: map[secondaryLang] ?: map.values.firstOrNull { it.isNotBlank() }.orEmpty()
+        language.first(map)
 
-    fun second(map: Map<String, String>) = if (isBilingual) map[secondaryLang].orEmpty() else ""
+    fun second(map: Map<String, String>) = language.second(map)
 
     fun isDefaultCountry(v: String) = v == "India" || v == "இந்தியா"
 
-    fun formatDistrict(district: String, isTamil: Boolean): String {
-        val d = district.trim()
-        if (d.isEmpty() || d.contains("மாவட்டம்") || d.contains("District", ignoreCase = true)) return d
-        return if (isTamil) "$d மாவட்டம்" else "$d District"
+    fun formatDistrict(district: String, languageCode: String): String {
+        val value = district.trim()
+        val suffix = K.district.trWithLang(languageCode)
+        if (value.isBlank() || value.contains(suffix, ignoreCase = true)) return value
+        return "$value $suffix"
     }
 
-    val isPrimaryTa = primaryLang.lowercase().startsWith("ta")
-    val isSecondaryTa = secondaryLang.lowercase().startsWith("ta")
+    val d1 = formatDistrict(locationDataName(merchant.district, tamilNaduDistricts, primaryLang), primaryLang)
+    val d2 = formatDistrict(locationDataName(merchant.district, tamilNaduDistricts, secondaryLang), secondaryLang)
 
-    val d1 = formatDistrict(pick(merchant.district), isPrimaryTa)
-    val d2 = formatDistrict(second(merchant.district), isSecondaryTa)
-
-    // Main language: whatever the customer has (it falls back to the other language when this one is empty)
+    // Only the configured primary language; saved translations remain untouched.
     val addressLines = listOf(
         pick(merchant.address),
         listOf(pick(merchant.city), d1).filter { it.isNotBlank() }.joinToString(", "),
-        listOf(pick(merchant.state), merchant.pinCode).filter { it.isNotBlank() }.joinToString(" - "),
+        listOf(locationDataName(merchant.state, indianStates, primaryLang), merchant.pinCode).filter { it.isNotBlank() }.joinToString(" - "),
         pick(merchant.country).takeUnless { isDefaultCountry(it) }.orEmpty()
     )
     // Second language: only what is really written in it, as its own complete address
     val secondaryLines = listOf(
         second(merchant.address),
         listOf(second(merchant.city), d2).filter { it.isNotBlank() }.joinToString(", "),
-        listOf(second(merchant.state), merchant.pinCode).filter { it.isNotBlank() }.joinToString(" - "),
+        listOf(locationDataName(merchant.state, indianStates, secondaryLang), merchant.pinCode).filter { it.isNotBlank() }.joinToString(" - "),
         second(merchant.country).takeUnless { isDefaultCountry(it) }.orEmpty()
-    ).takeIf { lines -> lines.any { it.isNotBlank() } && lines != addressLines } ?: emptyList()
+    ).takeIf { lines -> language.languages.size > 1 && lines.any { it.isNotBlank() } && lines != addressLines } ?: emptyList()
 
     // Under the name: the second-language name with the place after a dot; with no second language the place stands alone
     val heroSecond = if (secondaryName.isNotEmpty())
@@ -97,7 +97,7 @@ fun CustomerViewScreen(
     val availability = if (merchant.companyIds.isEmpty()) K.allCompanies.tr()
     else merchant.companyIds.mapNotNull { id ->
         val p = allProfiles.find { it.id == id }
-        p?.shortName?.ifEmpty { p.businessName.values.firstOrNull() }
+        p?.shortName?.ifEmpty { language.first(p.businessName) }
     }.joinToString(", ").ifEmpty { "${K.select.tr()} ${K.companies.tr()}" }
 
     val callLabel = K.callBtn.tr()

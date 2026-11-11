@@ -1,3 +1,4 @@
+import { languageName, visibleDataValues } from "../lib/dataLanguages";
 import { normalizeFy } from "../lib/finYear";
 // @ts-nocheck
 import React, { useRef, useState, useEffect } from 'react';
@@ -67,9 +68,8 @@ const getFinYear = (d?: string | number | Date): string => {
 export function normalizeReceiptProfile(p: any = {}) {
   const isBilingual = p.enableBilingual !== false;
   const isTamilPrimary = p.primaryDataLanguage === 'Tamil' || (!p.primaryDataLanguage && p.receiptLanguage !== 'en');
-  const primaryLang = isBilingual 
-    ? (p.primaryDataLanguage || 'Tamil') 
-    : (p.receiptLanguage === 'en' ? 'English' : (p.primaryDataLanguage || 'Tamil'));
+  // The active business language wins over the obsolete receipt-only preference.
+  const primaryLang = p.primaryDataLanguage || languageName(p.receiptLanguage || 'ta');
   const secondaryLang = isBilingual ? (p.secondaryDataLanguage || 'English') : primaryLang;
 
   // Business Name: English is primary, Tamil is subtitle (matching Coolie Bill)
@@ -96,8 +96,9 @@ export function normalizeReceiptProfile(p: any = {}) {
 
   // Bilingual: English first with the Tamil name under it. A single-language receipt shows only its own language.
   const monoTamil = !isBilingual && primaryLang === 'Tamil';
-  const namePrimary = (isBilingual ? (englishName || tamilName) : (monoTamil ? (tamilName || englishName) : (englishName || tamilName))) || 'Your Business';
-  const nameSecondary = tamilName;
+  const selectedNames = p.dataLanguageConfig ? visibleDataValues(p.businessNames, p.dataLanguageConfig) : null;
+  const namePrimary = selectedNames ? (selectedNames[0] || 'Your Business') : (isBilingual ? (englishName || tamilName) : (monoTamil ? (tamilName || englishName) : (englishName || tamilName))) || 'Your Business';
+  const nameSecondary = selectedNames ? (selectedNames[1] || '') : tamilName;
 
   // Address lines matching invoice contact lines:
   // Line 1: Street, City - PIN

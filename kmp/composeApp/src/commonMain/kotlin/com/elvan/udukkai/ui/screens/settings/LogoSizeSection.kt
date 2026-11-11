@@ -283,7 +283,7 @@ fun LogoPlaceSection(profile: BusinessProfile, isFactory: Boolean, colors: Shell
                         colors = colors
                     ) {
                         LogoAdjuster(
-                            remember(path, receipt, wide) { logoPreviewPayload(profile, wide, path, isFactory, receipt) },
+                            remember(path, receipt, wide, profile) { logoPreviewPayload(profile, wide, path, isFactory, receipt) },
                             prefix, temp, saved, { temp = it }, (if (wide) K.wideLogoSize else K.logoSize).tr(), colors
                         )
                     }

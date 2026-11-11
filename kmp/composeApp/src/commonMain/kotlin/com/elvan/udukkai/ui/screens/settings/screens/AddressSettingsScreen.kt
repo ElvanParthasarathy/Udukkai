@@ -32,7 +32,7 @@ fun AddressSettingsScreen(
     scrollState: LazyListState = rememberLazyListState(),
     colors: ShellColors = rememberShellColors()
 ) {
-    val countryFirst = fieldOrder == AddressFieldOrder.CountryFirst
+    val countryFirst = true // Both businesses share country → state → district → city → address.
     val profile = store.profile
     val isBilingual = profile.isBilingual
 
@@ -42,8 +42,8 @@ fun AddressSettingsScreen(
     var tempCustom by remember { mutableStateOf(false) }
 
     val countryTitle = K.country.tr()
-    val uiLanguage = com.elvan.udukkai.localization.LocalAppLanguage.current
-    fun uiName(value: String, options: List<com.elvan.udukkai.core.data.LocationName>) = com.elvan.udukkai.core.data.locationUiName(value, options, uiLanguage)
+    val dataLanguage = profile.primaryLanguage
+    fun uiName(value: String, options: List<com.elvan.udukkai.core.data.LocationName>) = com.elvan.udukkai.core.data.locationUiName(value, options, dataLanguage)
     val stateTitle = K.state.tr()
     val districtTitle = K.district.tr()
     val primaryLangLabel = if (profile.primaryLanguage.lowercase().startsWith("ta")) K.taCode.tr() else K.enCode.tr()
@@ -77,8 +77,8 @@ fun AddressSettingsScreen(
             title = title,
             items = items,
             currentValue = if (tempCustom) items.firstOrNull { it.en == "Custom" } else items.find { (if (taFirst) it.ta else it.en) == tempPrimary },
-            itemLabelBuilder = { if (uiLanguage == "ta") it.ta else it.en },
-            subtitleBuilder = { if (isBilingual) (if (uiLanguage == "ta") it.en else it.ta) else null },
+            itemLabelBuilder = { if (dataLanguage == "ta") it.ta else it.en },
+            subtitleBuilder = { if (isBilingual) (if (dataLanguage == "ta") it.en else it.ta) else null },
             showSearch = true,
             searchFilter = { item, query ->
                 item.ta.contains(query, ignoreCase = true) || item.en.contains(query, ignoreCase = true)
@@ -103,8 +103,8 @@ fun AddressSettingsScreen(
             currentValue = indianStates.find {
                 it.ta == profile.getPrimary("state") || it.en == profile.getPrimary("state")
             } ?: if (profile.getPrimary("state").isNotBlank()) indianStates.lastOrNull() else null,
-            itemLabelBuilder = { if (uiLanguage == "ta") it.ta else it.en },
-            subtitleBuilder = { if (isBilingual) (if (uiLanguage == "ta") it.en else it.ta) else null },
+            itemLabelBuilder = { if (dataLanguage == "ta") it.ta else it.en },
+            subtitleBuilder = { if (isBilingual) (if (dataLanguage == "ta") it.en else it.ta) else null },
             showSearch = true,
             searchFilter = { item, query ->
                 item.ta.contains(query, ignoreCase = true) || item.en.contains(query, ignoreCase = true)
@@ -462,7 +462,7 @@ fun AddressSettingsScreen(
                             ElvanSettingsDisplayRow(
                                 title = K.address.tr(),
                                 primaryValue = addressPrimary,
-                                secondaryValue = addressSecondary,
+                                secondaryValue = if (isBilingual) addressSecondary else null,
                                 onEdit = { beginEdit("mugavari", addressPrimary, addressSecondary) },
                                 colors = colors
                             )
@@ -507,7 +507,7 @@ fun AddressSettingsScreen(
                             ElvanSettingsDisplayRow(
                                 title = K.city.tr(),
                                 primaryValue = cityPrimary,
-                                secondaryValue = citySecondary,
+                                secondaryValue = if (isBilingual) citySecondary else null,
                                 onEdit = { beginEdit("oor", cityPrimary, citySecondary) },
                                 colors = colors
                             )
@@ -546,7 +546,7 @@ fun AddressSettingsScreen(
                             ElvanSettingsDisplayRow(
                                 title = K.district.tr(),
                                 primaryValue = uiName(districtPrimary, tamilNaduDistricts),
-                                secondaryValue = districtSecondary,
+                                secondaryValue = if (isBilingual) districtSecondary else null,
                                 onEdit = { beginEdit("maavattam", districtPrimary, districtSecondary, custom = districtPrimary.isNotBlank() && listed(tamilNaduDistricts, districtPrimary) == null) },
                                 colors = colors
                             )

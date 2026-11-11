@@ -30,6 +30,9 @@ import androidx.compose.ui.unit.dp
 import com.elvan.udukkai.theme.Dimens
 import com.elvan.udukkai.theme.rememberShellColors
 
+/** Set only by a portrait page shell; nested lists keep their own spacing. */
+val LocalPortraitPageBottom = compositionLocalOf<androidx.compose.ui.unit.Dp?> { null }
+
 val LocalLandscapeContent = compositionLocalOf { false }
 val LocalLandscapeHeaderClearance = compositionLocalOf { 0.dp }
 val LocalLandscapeSettingsHeader = compositionLocalOf { false }
@@ -51,7 +54,26 @@ fun ElvanLazyColumn(
     val landscape = com.elvan.udukkai.core.platform.platformLayoutPolicy.supportsLandscapeControls && (LocalLandscapeContent.current || landscapeRoot)
     val screenList = landscape && (landscapeRoot || state === LocalElvanScrollState.current)
     if (!screenList) {
-        LazyColumn(modifier, state, contentPadding, reverseLayout, verticalArrangement, horizontalAlignment, flingBehavior, userScrollEnabled, content = content)
+        val bottom = LocalPortraitPageBottom.current
+        val rootPortrait = bottom != null && state === LocalElvanScrollState.current && !reverseLayout
+        val direction = LocalLayoutDirection.current
+        val padding = if (rootPortrait && com.elvan.udukkai.core.platform.getImeBottomPadding() == 0.dp) PaddingValues(
+            start = contentPadding.calculateStartPadding(direction),
+            end = contentPadding.calculateEndPadding(direction),
+            top = contentPadding.calculateTopPadding(), bottom = bottom!!
+        ) else contentPadding
+        // The spacer and the arrangement gap together define the first card's start.
+        val spacer = (LocalElvanTopSpacerHeight.current + Dimens.SectionSpacing - verticalArrangement.spacing).coerceAtLeast(0.dp)
+        LazyColumn(modifier, state, padding, reverseLayout, verticalArrangement, horizontalAlignment, flingBehavior, userScrollEnabled) {
+            val delegate = this
+            content(object : LazyListScope by delegate {
+                override fun item(key: Any?, contentType: Any?, content: @Composable LazyItemScope.() -> Unit) {
+                    if (rootPortrait && key in setOf("home_top_spacer", "shell_top_spacer", "top_spacer")) {
+                        delegate.item(key, contentType) { androidx.compose.foundation.layout.Spacer(Modifier.height(spacer)) }
+                    } else delegate.item(key, contentType, content)
+                }
+            })
+        }
         return
     }
     val direction = LocalLayoutDirection.current

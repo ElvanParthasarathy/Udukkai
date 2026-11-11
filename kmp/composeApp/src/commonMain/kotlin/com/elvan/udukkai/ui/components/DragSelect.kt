@@ -18,7 +18,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
 
 private val SINGLE_KEY = Regex("^(?:item|cust|invoice|receipt)_([0-9]+)$")
-private val PAIR_KEY = Regex("^(?:item|cust|inv)_pair_([0-9]+(?:_[0-9]+)*)$")
+private val PAIR_KEY = Regex("^(?:item|cust|inv|rec)_pair_([0-9]+(?:_[0-9]+)*)$")
 
 /** The record ids of a list key, left to right: "item_12" gives [12], a landscape row "item_pair_12_13" gives [12, 13]; headers and spacers give none. */
 internal fun recordIdsOfKey(key: Any): List<Long> {
@@ -94,11 +94,13 @@ fun Modifier.dragSelect(
                 fun noteRows() = listState.layoutInfo.visibleItemsInfo.forEach { rows[it.index] = recordIdsOfKey(it.key) }
                 // The row under the finger; past the first or last row it is that edge row, in a gap between rows none
                 fun rowAtFinger(): LazyListItemInfo? {
-                    val items = listState.layoutInfo.visibleItemsInfo
+                    val layout = listState.layoutInfo
+                    val items = layout.visibleItemsInfo
+                    val listY = fingerY + layout.viewportStartOffset
                     val first = items.firstOrNull() ?: return null
                     val last = items.last()
-                    return items.firstOrNull { fingerY >= it.offset && fingerY < it.offset + it.size }
-                        ?: if (fingerY < first.offset) first else if (fingerY >= last.offset + last.size) last else null
+                    return items.firstOrNull { listY >= it.offset && listY < it.offset + it.size }
+                        ?: if (listY < first.offset) first else if (listY >= last.offset + last.size) last else null
                 }
                 noteRows()
                 // Only a hold on a card starts a drag (header, filter pills and gaps do not)
@@ -126,8 +128,8 @@ fun Modifier.dragSelect(
                         val seconds = ((frame - previousFrame) / 1_000_000_000f).coerceIn(0f, .032f)
                         previousFrame = frame
                         val info = listState.layoutInfo
-                        val top = info.viewportStartOffset.toFloat().coerceAtLeast(0f)
-                        val bottom = info.viewportEndOffset.toFloat()
+                        val top = 0f
+                        val bottom = (info.viewportEndOffset - info.viewportStartOffset).toFloat()
                         // Keep edge zones separate even on short landscape viewports.
                         val edge = minOf(edgeLimit, (bottom - top) / 3f).coerceAtLeast(1f)
                         val proximity = when {
@@ -146,11 +148,11 @@ fun Modifier.dragSelect(
                 try {
                     while (true) {
                         val change = awaitPointerEvent(PointerEventPass.Initial).changes.firstOrNull { it.id == down.id } ?: break
+                        change.consume()
                         if (!change.pressed) break
                         fingerX = change.position.x
                         fingerY = change.position.y
                         pick()
-                        change.consume() // the finger selects here, it must not also scroll the list
                     }
                 } finally {
                     autoScroll.cancel()

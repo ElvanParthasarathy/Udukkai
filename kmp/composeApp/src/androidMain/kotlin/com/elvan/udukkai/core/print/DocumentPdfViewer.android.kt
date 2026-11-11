@@ -36,7 +36,7 @@ actual fun DocumentPdfViewer(
 
     var pdfView by remember { mutableStateOf<PDFView?>(null) }
     var zoomFlag by remember { mutableStateOf(false) }
-    LaunchedEffect(landscape) { controller.immersive = landscape }
+    LaunchedEffect(landscape) { controller.immersive = false }
     // Portrait returns its controls at page fit; landscape remains an immersive document canvas.
     LaunchedEffect(pdfView, landscape) {
         val view = pdfView ?: return@LaunchedEffect
@@ -45,7 +45,7 @@ actual fun DocumentPdfViewer(
             val zoomed = view.zoom > 1.05f
             if (zoomed != zoomFlag) {
                 zoomFlag = zoomed
-                controller.immersive = landscape || zoomed
+                if (!landscape) controller.immersive = zoomed
             }
         }
     }

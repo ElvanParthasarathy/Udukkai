@@ -3,10 +3,12 @@ package com.elvan.udukkai.data.database
 import com.elvan.udukkai.data.DesktopDbPaths
 import com.elvan.udukkai.data.model.CustomerModel
 import com.elvan.udukkai.data.model.InvoiceModel
+import com.elvan.udukkai.core.finance.FullReceiptSettlement
 import com.elvan.udukkai.data.model.ReceiptInvoiceLinkModel
 import com.elvan.udukkai.data.model.ReceiptModel
 import com.elvan.udukkai.data.model.ItemJsonConverter
 import com.elvan.udukkai.data.model.ItemModel
+import com.elvan.udukkai.data.model.ItemNames
 import com.elvan.udukkai.data.settings.LanguageJsonConverter
 import com.elvan.udukkai.data.settings.BusinessProfile
 import java.io.File
@@ -252,6 +254,7 @@ class DesktopUdukkaiDatabaseHelper(
                     "unit" TEXT NOT NULL DEFAULT 'Nos',
                     "company_ids" TEXT NOT NULL DEFAULT '[]',
                     "company_prices" TEXT NOT NULL DEFAULT '{}',
+                    "previous_names" TEXT NOT NULL DEFAULT '{}',
                     "created_at" INTEGER NOT NULL DEFAULT (CAST(strftime('%s', CURRENT_TIMESTAMP) AS INTEGER)),
                     "updated_at" INTEGER NOT NULL DEFAULT (CAST(strftime('%s', CURRENT_TIMESTAMP) AS INTEGER)),
                     "is_deleted" INTEGER NOT NULL DEFAULT 0 CHECK ("is_deleted" IN (0, 1)),
@@ -365,6 +368,7 @@ class DesktopUdukkaiDatabaseHelper(
             """.trimIndent())
 
             try { stmt.execute("ALTER TABLE \"$customersTable\" ADD COLUMN \"company_ids\" TEXT NOT NULL DEFAULT '[]'") } catch (_: Exception) {}
+            try { stmt.execute("ALTER TABLE \"$itemsTable\" ADD COLUMN \"previous_names\" TEXT NOT NULL DEFAULT '{}'") } catch (_: Exception) {}
             try { stmt.execute("ALTER TABLE \"$customersTable\" ADD COLUMN \"extra\" TEXT NOT NULL DEFAULT '{}'") } catch (_: Exception) {}
             try { stmt.execute("ALTER TABLE \"$profilesTable\" ADD COLUMN \"print_settings\" TEXT NOT NULL DEFAULT '{}'") } catch (_: Exception) {}
             try { stmt.execute("ALTER TABLE \"$linksTable\" ADD COLUMN \"created_at\" INTEGER NOT NULL DEFAULT 0") } catch (_: Exception) {}
@@ -588,11 +592,15 @@ class DesktopUdukkaiDatabaseHelper(
     }
 
     override fun saveItem(item: ItemModel): Long = useConn { conn ->
-        val isUpdate = item.id != null && item.id > 0
+        val isUpdate = item.id > 0
+        val previous = if (isUpdate) conn.prepareStatement("SELECT * FROM \"$itemsTable\" WHERE id=?").use { stmt ->
+            stmt.setLong(1, item.id)
+            stmt.executeQuery().use { rs -> if (rs.next()) rsToItem(rs) else null }
+        } else null
         val sql = if (isUpdate) {
-            "UPDATE \"$itemsTable\" SET name=?, hsn_code=?, price=?, tax_rate=?, quantity_type=?, unit=?, company_ids=?, company_prices=?, updated_at=?, is_deleted=0 WHERE id=?"
+            "UPDATE \"$itemsTable\" SET name=?, hsn_code=?, price=?, tax_rate=?, quantity_type=?, unit=?, company_ids=?, company_prices=?, previous_names=?, updated_at=?, is_deleted=0 WHERE id=?"
         } else {
-            "INSERT INTO \"$itemsTable\" (name, hsn_code, price, tax_rate, quantity_type, unit, company_ids, company_prices, created_at, updated_at, is_deleted) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0)"
+            "INSERT INTO \"$itemsTable\" (name, hsn_code, price, tax_rate, quantity_type, unit, company_ids, company_prices, previous_names, created_at, updated_at, is_deleted) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0)"
         }
         conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS).use { stmt ->
             stmt.setString(1, LanguageJsonConverter.stringify(item.name))
@@ -603,16 +611,16 @@ class DesktopUdukkaiDatabaseHelper(
             stmt.setString(6, item.unit)
             stmt.setString(7, item.companyIds.toString())
             stmt.setString(8, item.companyPrices.toString())
+            stmt.setString(9, ItemNames.encodeHistory(ItemNames.history(previous, item, System.currentTimeMillis() / 1000)))
 
             val now = System.currentTimeMillis() / 1000
             if (isUpdate) {
-                stmt.setLong(9, now)
-                stmt.setLong(10, item.id!!)
-                stmt.executeUpdate()
-                item.id!!
-            } else {
-                stmt.setLong(9, now)
                 stmt.setLong(10, now)
+                stmt.setLong(11, item.id)
+                if (stmt.executeUpdate() == 1) item.id else -1L
+            } else {
+                stmt.setLong(10, now)
+                stmt.setLong(11, now)
                 stmt.executeUpdate()
                 stmt.generatedKeys.use { gk ->
                     if (gk.next()) gk.getLong(1) else -1L
@@ -721,8 +729,7 @@ class DesktopUdukkaiDatabaseHelper(
                 if (isUpdate) {
                     stmt.setLong(27, now)
                     stmt.setLong(28, invoice.id!!)
-                    stmt.executeUpdate()
-                    invoice.id!!
+                    if (stmt.executeUpdate() == 1) invoice.id else -1L
                 } else {
                     stmt.setLong(27, now)
                     stmt.setLong(28, now)
@@ -738,8 +745,7 @@ class DesktopUdukkaiDatabaseHelper(
                 if (isUpdate) {
                     stmt.setLong(21, now)
                     stmt.setLong(22, invoice.id!!)
-                    stmt.executeUpdate()
-                    invoice.id!!
+                    if (stmt.executeUpdate() == 1) invoice.id else -1L
                 } else {
                     stmt.setLong(21, now)
                     stmt.setLong(22, now)
@@ -830,8 +836,7 @@ class DesktopUdukkaiDatabaseHelper(
             if (isUpdate) {
                 stmt.setLong(14, now)
                 stmt.setLong(15, receipt.id!!)
-                stmt.executeUpdate()
-                receipt.id!!
+                if (stmt.executeUpdate() == 1) receipt.id else -1L
             } else {
                 stmt.setLong(14, now)
                 stmt.setLong(15, now)
@@ -915,6 +920,18 @@ class DesktopUdukkaiDatabaseHelper(
         val autoCommit = conn.autoCommit
         conn.autoCommit = false
         try {
+            if (links.isNotEmpty()) {
+                val sql = FullReceiptSettlement.eligibleBillsQuery(invoicesTable, receiptsTable, linksTable, links.size)
+                val bills = conn.prepareStatement(sql).use { stmt ->
+                    links.forEachIndexed { index, link -> stmt.setLong(index + 1, link.invoiceId) }
+                    stmt.setLong(links.size + 1, receipt.id)
+                    stmt.executeQuery().use { rows -> buildList { while (rows.next()) add(rsToInvoice(rows)) } }
+                }
+                if (!FullReceiptSettlement.matches(receipt, links, bills)) {
+                    conn.rollback()
+                    return@useConn -1L
+                }
+            }
             val rId = saveReceiptInternal(conn, receipt)
             if (rId > 0) {
                 conn.prepareStatement("DELETE FROM \"$linksTable\" WHERE receipt_id = ?").use { delStmt ->
@@ -1152,6 +1169,7 @@ class DesktopUdukkaiDatabaseHelper(
         unit = getStringCol(rs, "unit", "alagu", default = "Nos"),
         companyIds = ItemJsonConverter.parseLongList(getStringCol(rs, "company_ids", "niruvanam_ids", default = "[]")),
         companyPrices = ItemJsonConverter.parseCompanyPrices(getStringCol(rs, "company_prices", default = "{}")),
+        previousNames = ItemNames.decodeHistory(getStringCol(rs, "previous_names")),
         createdAt = getLongCol(rs, "created_at"),
         updatedAt = getLongCol(rs, "updated_at"),
         isDeleted = getIntCol(rs, "is_deleted") == 1,

@@ -47,6 +47,7 @@ import com.elvan.udukkai.ui.navigation.MaterialSymbols
 @Composable
 fun ReceiptInvoiceSelectionSheet(
     invoices: List<InvoiceModel>,
+    profile: com.elvan.udukkai.data.settings.BusinessProfile,
     initialSelectedIds: Set<Long>,
     onConfirmed: (List<InvoiceModel>) -> Unit,
     onDismissRequest: () -> Unit,
@@ -54,6 +55,7 @@ fun ReceiptInvoiceSelectionSheet(
     colors: ShellColors = rememberShellColors(),
     merchants: List<com.elvan.udukkai.data.model.CustomerModel> = emptyList()
 ) {
+    val language = com.elvan.udukkai.data.settings.DataLanguageDisplay(profile)
     val allMerchants = merchants
     val ff = LocalAppFontFamily.current
     val sheetBg = LocalShellColors.current.surface
@@ -91,22 +93,16 @@ fun ReceiptInvoiceSelectionSheet(
         searchFilter = { inv, q ->
             val query = q.trim().lowercase()
             val enMatch = inv.invoiceNumber.lowercase().contains(query)
-            val nameTa = inv.customerName["ta"]?.lowercase().orEmpty()
-            val nameEn = inv.customerName["en"]?.lowercase().orEmpty()
-            enMatch || nameTa.contains(query) || nameEn.contains(query)
+            enMatch || inv.customerName.values.any { it.lowercase().contains(query) }
         },
         itemLabelBuilder = { it.invoiceNumber },
         itemRowContent = { inv, isSelected, onToggle ->
             val customer = allMerchants.firstOrNull { it.id == inv.customerId }
-            val cityText = customer?.city?.get("ta")
-                ?: customer?.city?.get("en")
-                ?: ""
+            val cityText = customer?.city?.let(language::first).orEmpty()
 
             val dateStr = DateUtils.formatDate(inv.invoiceDate)
 
-            val customerName = inv.customerName["ta"]
-                ?: inv.customerName["en"]
-                ?: ""
+            val customerNames = language.lines(inv.customerName)
 
             val formattedAmount = CurrencyUtils.formatInr(inv.totalAmount)
 
@@ -177,18 +173,12 @@ fun ReceiptInvoiceSelectionSheet(
                         }
                     }
 
-                    if (customerName.isNotEmpty()) {
+                    customerNames.forEach { (name, primary) ->
                         Spacer(modifier = Modifier.height(2.dp))
-                        Text(
-                            text = customerName.preventBrokenLigatures(),
-                            style = TextStyle(
-                                fontFamily = ff,
-                                fontSize = 13.sp,
-                                color = colors.textSecondary.copy(alpha = 0.8f)
-                            ),
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
-                        )
+                        Text(name.preventBrokenLigatures(), style = TextStyle(fontFamily = ff,
+                            fontSize = if (primary) 13.sp else 12.sp,
+                            color = colors.textSecondary.copy(alpha = if (primary) 0.8f else 0.65f)),
+                            maxLines = 1, overflow = TextOverflow.Ellipsis)
                     }
 
                     val amountDetail = if (cityText.isNotEmpty()) "$cityText • $formattedAmount" else formattedAmount

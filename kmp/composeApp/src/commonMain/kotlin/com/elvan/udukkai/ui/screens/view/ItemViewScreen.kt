@@ -1,18 +1,29 @@
 package com.elvan.udukkai.ui.screens.view
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.elvan.udukkai.core.utils.CurrencyUtils
+import com.elvan.udukkai.core.utils.DateUtils
 import com.elvan.udukkai.data.model.ItemModel
+import com.elvan.udukkai.data.settings.DataLanguageDisplay
 import com.elvan.udukkai.data.settings.BusinessProfile
 import com.elvan.udukkai.localization.K
 import com.elvan.udukkai.localization.tr
 import com.elvan.udukkai.theme.Dimens
+import com.elvan.udukkai.theme.LocalAppFontFamily
+import com.elvan.udukkai.theme.LocalShellColors
+import com.elvan.udukkai.theme.preventBrokenLigatures
 import com.elvan.udukkai.theme.rememberShellColors
 import com.elvan.udukkai.ui.navigation.MaterialSymbols
 
@@ -38,24 +49,19 @@ fun ItemViewScreen(
     onDelete: (() -> ViewDeleteResult)? = null
 ) {
     val colors = rememberShellColors()
-    val (history, retryHistory) = rememberViewHistory(item.id, historyKey, loadHistory)
+    val (history, retryHistory) = rememberViewHistory(item.id, listOf(historyKey, item.previousNames, profile.primaryLanguage, profile.secondaryLanguage, profile.isBilingual), loadHistory)
     val activity = (history as? ViewHistoryState.Ready)?.activity ?: ViewActivity()
     val ready = history is ViewHistoryState.Ready
     val historyUi = rememberViewHistoryUi(history, K.noItemInvoices.tr(), withReceipts = false)
     val deleteItem = rememberViewDeleteItem(onDelete, K.itemDeleted.tr(), onBack)
 
-    val isBilingual = profile.isBilingual
-    val primaryLang = profile.primaryLanguage.ifEmpty { "ta" }
-    val secondaryLang = profile.secondaryLanguage.ifEmpty { "en" }
-
-    val p1 = item.name[primaryLang] ?: item.name["ta"] ?: ""
-    val p2 = item.name[secondaryLang] ?: item.name["en"] ?: ""
-    val primaryName = p1.ifEmpty { p2.ifEmpty { "-" } }
-    val secondaryName = if (isBilingual && p1.isNotEmpty() && p2.isNotEmpty() && p1 != p2) p2 else ""
+    val language = DataLanguageDisplay(profile)
+    val primaryName = language.first(item.name).ifBlank { "-" }
+    val secondaryName = language.second(item.name)
 
     fun companyName(id: Long): String {
         val p = allProfiles.find { it.id == id }
-        return p?.shortName?.ifEmpty { p.businessName.values.firstOrNull().orEmpty() }.orEmpty().ifEmpty { "#$id" }
+        return p?.shortName?.ifEmpty { language.first(p.businessName) }.orEmpty().ifEmpty { "#$id" }
     }
     val availability = if (item.companyIds.isEmpty()) K.allCompanies.tr()
     else item.companyIds.joinToString(", ") { companyName(it) }
@@ -73,6 +79,7 @@ fun ItemViewScreen(
         onBillClick = onBillClick,
         onReceiptClick = onReceiptClick,
         onRetryHistory = retryHistory,
+        recordHistory = { ItemHistoryTimeline(item, language) },
         summary = {
             ViewHero(primary = primaryName, secondary = secondaryName, icon = MaterialSymbols.Rounded.Inventory2, tint = colors.itemColor, colors = colors)
 
@@ -108,7 +115,8 @@ fun ItemViewScreen(
                 ViewAddressBox(
                     title = K.companies.tr(),
                     lines = if (item.companyIds.isEmpty()) listOf(availability) else item.companyIds.map { companyName(it) },
-                    colors = colors
+                    colors = colors,
+                    maxLinesPerEntry = 2
                 )
             }
 
@@ -117,7 +125,8 @@ fun ItemViewScreen(
                     ViewInfoSection(
                         title = K.sellingRate.tr(),
                         rows = item.companyPrices.map { (id, price) -> companyName(id) to CurrencyUtils.formatInr(price) },
-                        colors = colors
+                        colors = colors,
+                        labelMaxLines = 2
                     )
                 }
             }
@@ -127,3 +136,55 @@ fun ItemViewScreen(
 /** 5.0 shows as 5, 2.5 stays 2.5. */
 internal fun formatRate(rate: Double): String =
     if (rate % 1.0 == 0.0) rate.toLong().toString() else rate.toString()
+
+@Composable
+private fun ItemHistoryTimeline(item: ItemModel, language: DataLanguageDisplay) {
+    data class Event(val label: String?, val timestamp: Long?, val names: List<Pair<String, Boolean>> = emptyList())
+
+    val events = buildList {
+        add(Event(K.itemHistoryCreated.tr(), item.createdAt))
+        item.previousNames.sortedBy { it.changedAt ?: 0L }.forEach { revision ->
+            val names = language.lines(revision.names)
+            if (names.isNotEmpty()) {
+                add(Event(null, revision.changedAt, names))
+            }
+        }
+        if (item.updatedAt > item.createdAt) {
+            add(Event(K.itemHistoryModified.tr(), item.updatedAt))
+        }
+    }
+    val colors = LocalShellColors.current
+    val font = LocalAppFontFamily.current
+    val lineColor = colors.textTertiary.copy(alpha = 0.28f)
+    Column(Modifier.fillMaxWidth().padding(horizontal = 10.dp)) {
+        events.forEachIndexed { index, (label, timestamp, names) ->
+            Column(
+                Modifier.fillMaxWidth().drawBehind {
+                    val x = 7.dp.toPx()
+                    val y = 23.dp.toPx()
+                    if (index > 0) drawLine(lineColor, Offset(x, 0f), Offset(x, y), 1.dp.toPx())
+                    if (index < events.lastIndex) drawLine(lineColor, Offset(x, y), Offset(x, size.height), 1.dp.toPx())
+                    drawCircle(colors.accent, radius = 3.5.dp.toPx(), center = Offset(x, y))
+                }.padding(start = 22.dp, top = 4.dp, bottom = 4.dp)
+                    .background(colors.surface, RoundedCornerShape(Dimens.CardRadius))
+                    .padding(horizontal = 16.dp, vertical = 10.dp),
+                verticalArrangement = Arrangement.spacedBy(2.dp)
+            ) {
+                if (label != null) Text(label, fontFamily = font, fontSize = 13.sp, color = colors.textPrimary)
+                names.forEach { (name, isPrimary) ->
+                    Text(
+                        text = name.preventBrokenLigatures(),
+                        fontFamily = font,
+                        fontSize = if (isPrimary) 14.sp else 12.sp,
+                        fontWeight = if (isPrimary) FontWeight.Medium else FontWeight.Normal,
+                        color = if (isPrimary) colors.textPrimary else colors.textSecondary
+                    )
+                }
+                if (timestamp != null && timestamp > 0) {
+                    val millis = if (timestamp < 100_000_000_000L) timestamp * 1000 else timestamp
+                    Text(DateUtils.formatDateTime(millis), fontFamily = font, fontSize = 12.sp, color = colors.textSecondary)
+                }
+            }
+        }
+    }
+}

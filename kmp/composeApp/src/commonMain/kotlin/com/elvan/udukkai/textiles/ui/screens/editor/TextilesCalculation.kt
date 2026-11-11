@@ -227,8 +227,8 @@ object TextilesCalculation {
         val objects = splitJsonObjects(json)
         return objects.mapNotNull { body ->
             try {
-                val pId = Regex(""""(?:itemId|productId|porulId)"\s*:\s*(?:"([^"]*)"|null)""").find(body)?.let {
-                    if (it.groupValues[1].isNotEmpty()) it.groupValues[1] else null
+                val pId = Regex(""""(?:itemId|productId|porulId)"\s*:\s*(?:"([^"]*)"|([0-9]+)|null)""").find(body)?.let {
+                    it.groupValues[1].ifEmpty { it.groupValues[2] }.ifBlank { null }
                 }
                 val pName = Regex(""""(?:itemName|productName|porulPeyar)"\s*:\s*"((?:\\.|[^"\\])*)"""").find(body)?.groupValues?.get(1)
                     ?.replace("\\\"", "\"")?.replace("\\\\", "\\") ?: ""

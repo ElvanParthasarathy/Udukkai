@@ -143,7 +143,7 @@ fun InvoiceCreationSettingsScreen(
                                 ElvanSettingsDropdown(
                                     label = K.primaryLanguage.tr(),
                                     value = tempPrimaryLang,
-                                    items = listOf("ta", "en"),
+                                    items = com.elvan.udukkai.localization.BillingLanguage.entries.map { it.code },
                                     itemLabelBuilder = { getLanguageName(it) },
                                     onChanged = { selectedLang ->
                                         if (selectedLang == tempSecondaryLang) {
@@ -159,7 +159,7 @@ fun InvoiceCreationSettingsScreen(
                                     ElvanSettingsDropdown(
                                         label = K.secondaryLanguage.tr(),
                                         value = tempSecondaryLang,
-                                        items = listOf("ta", "en"),
+                                        items = com.elvan.udukkai.localization.BillingLanguage.entries.map { it.code },
                                         itemLabelBuilder = { getLanguageName(it) },
                                         onChanged = { selectedLang ->
                                             if (selectedLang == tempPrimaryLang) {

@@ -24,6 +24,7 @@ import com.elvan.udukkai.ui.components.ElvanCardSecondLine
 import com.elvan.udukkai.ui.components.ElvanCardSelector
 import com.elvan.udukkai.ui.components.ElvanCommonCard
 import com.elvan.udukkai.ui.navigation.MaterialSymbols
+import com.elvan.udukkai.data.settings.DataLanguageDisplay
 import com.elvan.udukkai.data.settings.BusinessProfile
 import com.elvan.udukkai.localization.K
 import com.elvan.udukkai.localization.tr
@@ -43,31 +44,8 @@ private fun resolveCustomerCompanyTag(
         val p = profiles.find { it.id == cId }
         p?.shortName?.trim()?.takeIf { it.isNotEmpty() }
             ?: p?.businessName?.get(primaryLang)?.trim()?.takeIf { it.isNotEmpty() }
-            ?: p?.businessName?.values?.firstOrNull { it.isNotBlank() }?.trim()
             ?: "Company #$cId"
     }.joinToString(", ").ifEmpty { K.allCompanies.tr() }
-}
-
-private fun getMainLanguageField(
-    map: Map<String, String>,
-    primaryLang: String,
-    secondaryLang: String
-): String {
-    val exactVal = map[primaryLang]?.trim()
-    if (!exactVal.isNullOrEmpty()) return exactVal
-    val fallbackVal = map[secondaryLang]?.trim()
-    if (!fallbackVal.isNullOrEmpty()) return fallbackVal
-    return map.values.firstOrNull { it.isNotBlank() }?.trim() ?: ""
-}
-
-private fun getBilingualSecondaryName(
-    map: Map<String, String>,
-    primaryLang: String,
-    secondaryLang: String
-): String {
-    val exactVal = map[secondaryLang]?.trim()
-    if (!exactVal.isNullOrEmpty()) return exactVal
-    return map.entries.firstOrNull { it.key != primaryLang && it.value.isNotBlank() }?.value?.trim().orEmpty()
 }
 
 @Composable
@@ -83,15 +61,15 @@ fun FactoryCustomerCard(
     val ff = LocalAppFontFamily.current
     val profile = FactoryProfileRepository.profile
     val profiles = FactoryProfileRepository.allProfiles
-    val primaryLang = profile.primaryLanguage.ifEmpty { "ta" }
-    val secondaryLang = profile.secondaryLanguage.ifEmpty { "en" }
+    val language = DataLanguageDisplay(profile)
+    val primaryLang = language.primary
 
-    val primaryName = getMainLanguageField(merchant.name, primaryLang, secondaryLang)
+    val primaryName = language.first(merchant.name)
         .ifEmpty { "-" }
     val secondaryName = if (profile.isBilingual) {
-        getBilingualSecondaryName(merchant.name, primaryLang, secondaryLang)
+        language.second(merchant.name)
     } else ""
-    val primaryCity = getMainLanguageField(merchant.city, primaryLang, secondaryLang)
+    val primaryCity = language.first(merchant.city)
     // Under the name: the second-language name with the place (in the main language) after a dot; the place alone without one
     val nameSecondLine = listOf(secondaryName.takeIf { it.isNotBlank() && it != primaryName }.orEmpty(), primaryCity)
         .filter { it.isNotBlank() }.joinToString("  •  ")
@@ -188,15 +166,15 @@ fun TextilesCustomerCard(
     val ff = LocalAppFontFamily.current
     val profile = TextilesProfileRepository.profile
     val profiles = TextilesProfileRepository.allProfiles
-    val primaryLang = profile.primaryLanguage.ifEmpty { "ta" }
-    val secondaryLang = profile.secondaryLanguage.ifEmpty { "en" }
+    val language = DataLanguageDisplay(profile)
+    val primaryLang = language.primary
 
-    val primaryName = getMainLanguageField(merchant.name, primaryLang, secondaryLang)
+    val primaryName = language.first(merchant.name)
         .ifEmpty { "-" }
     val secondaryName = if (profile.isBilingual) {
-        getBilingualSecondaryName(merchant.name, primaryLang, secondaryLang)
+        language.second(merchant.name)
     } else ""
-    val primaryCity = getMainLanguageField(merchant.city, primaryLang, secondaryLang)
+    val primaryCity = language.first(merchant.city)
     // Under the name: the second-language name with the place (in the main language) after a dot; the place alone without one
     val nameSecondLine = listOf(secondaryName.takeIf { it.isNotBlank() && it != primaryName }.orEmpty(), primaryCity)
         .filter { it.isNotBlank() }.joinToString("  •  ")

@@ -12,8 +12,6 @@ enum class ViewDeleteResult { Deleted, HasReceipts, BooksLocked, Failed }
 
 enum class ViewRowKind { Invoice, Receipt, Estimate }
 
-enum class HistoryFilter { All, Unpaid, PartlyPaid, Paid }
-
 enum class HistorySort { DateNew, DateOld, NumberHigh, NumberLow }
 
 /**
@@ -72,14 +70,9 @@ object ViewHistory {
     fun withEstimates(bills: List<ViewBillRow>, estimates: List<ViewBillRow>): List<ViewBillRow> =
         (bills + estimates).sortedWith(compareByDescending<ViewBillRow> { it.date }.thenByDescending { it.id })
 
-    /** A bill counts as partly paid while a receipt covers only some of it. A proforma is never due or paid, so a status filter leaves it out. */
-    fun apply(rows: List<ViewBillRow>, filter: HistoryFilter, sort: HistorySort): List<ViewBillRow> {
-        val sales = rows.filter { it.kind != ViewRowKind.Estimate }
-        val shown = when (filter) {
-            HistoryFilter.All -> rows
-            HistoryFilter.Unpaid -> sales.filter { !it.isPaid }
-            HistoryFilter.PartlyPaid -> sales.filter { it.isPaid && it.balance > 0.004 }
-            HistoryFilter.Paid -> sales.filter { it.isPaid && it.balance <= 0.004 }
+    fun apply(rows: List<ViewBillRow>, sort: HistorySort, startMillis: Long? = null, endMillis: Long? = null): List<ViewBillRow> {
+        val shown = if (startMillis == null && endMillis == null) rows else rows.filter {
+            (startMillis == null || it.date >= startMillis) && (endMillis == null || it.date <= endMillis)
         }
         fun serial(r: ViewBillRow) = BillNumbering.serialOf(r.number) ?: 0
         return when (sort) {

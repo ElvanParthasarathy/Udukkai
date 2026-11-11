@@ -40,6 +40,19 @@ fun CreatePasswordScreen(
     scrollState: LazyListState = rememberLazyListState(),
     colors: ShellColors = rememberShellColors()
 ) {
+    BoxWithConstraints(Modifier.fillMaxSize()) {
+        val landscape = com.elvan.udukkai.core.platform.platformLayoutPolicy.screenLayout(maxWidth, maxHeight) == com.elvan.udukkai.core.platform.ScreenLayout.AndroidLandscape
+        CreatePasswordContent(onBack, scrollState, colors, landscape)
+    }
+}
+
+@Composable
+private fun CreatePasswordContent(
+    onBack: UnitCallback,
+    scrollState: LazyListState,
+    colors: ShellColors,
+    landscape: Boolean
+) {
     val ff = LocalAppFontFamily.current
     val scope = rememberCoroutineScope()
 
@@ -61,6 +74,14 @@ fun CreatePasswordScreen(
     }
 
     ElvanSubShell(
+        overlay = {
+            if (landscape) Box(Modifier.fillMaxSize(), contentAlignment = Alignment.TopEnd) {
+                com.elvan.udukkai.ui.navigation.LandscapeTopActionButton(
+                    icon = MaterialSymbols.Rounded.ArrowBack,
+                    contentDescription = K.back.tr(), onClick = onBack, colors = colors
+                )
+            }
+        },
         title = K.createPassword.tr(),
         onBack = onBack,
         scrollState = scrollState
@@ -76,8 +97,11 @@ fun CreatePasswordScreen(
             }
 
             item(key = "create_password_card") {
-                ElvanSectionContainer {
-                    ElvanSettingsSection(colors = colors) {
+                ElvanSectionContainer(horizontalAlignment = Alignment.CenterHorizontally) {
+                    ElvanSettingsSection(
+                        modifier = if (landscape) Modifier.widthIn(max = 560.dp).padding(end = 64.dp) else Modifier,
+                        colors = colors
+                    ) {
                         Column(
                             modifier = Modifier
                                 .fillMaxWidth()

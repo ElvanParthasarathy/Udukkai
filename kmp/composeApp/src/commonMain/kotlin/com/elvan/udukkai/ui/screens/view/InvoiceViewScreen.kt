@@ -1,5 +1,6 @@
 package com.elvan.udukkai.ui.screens.view
 
+import com.elvan.udukkai.data.model.ItemNames
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import com.elvan.udukkai.core.print.billBusinessFolder
@@ -10,8 +11,12 @@ import com.elvan.udukkai.core.utils.DateUtils
 import com.elvan.udukkai.core.utils.NumberToWords
 import com.elvan.udukkai.data.model.InvoiceDisplayOptions
 import com.elvan.udukkai.data.model.InvoiceModel
+import com.elvan.udukkai.data.model.CustomerModel
+import com.elvan.udukkai.data.model.CustomerSnapshot
+import com.elvan.udukkai.data.model.fullAddress
 import com.elvan.udukkai.data.model.PaymentType
 import com.elvan.udukkai.data.model.ReceiptModel
+import com.elvan.udukkai.data.settings.DataLanguageDisplay
 import com.elvan.udukkai.data.settings.BusinessProfile
 import com.elvan.udukkai.factory.ui.screens.editor.FactoryCalculation
 import com.elvan.udukkai.localization.K
@@ -46,10 +51,12 @@ fun InvoiceViewScreen(
     onOpenCustomer: (() -> Unit)? = null,
     onDelete: (() -> ViewDeleteResult)? = null,
     isFactory: Boolean = false,
-    printPayload: ((activeProfile: BusinessProfile) -> String)? = null
+    printPayload: ((activeProfile: BusinessProfile) -> String)? = null,
+    currentCustomer: CustomerModel? = null
 ) {
     val activeProfile = (if (invoice.companyId != null) allProfiles.find { it.id == invoice.companyId } else null) ?: profile
-    val payload = remember(invoice, activeProfile) { printPayload?.invoke(activeProfile) }
+    val appLanguage = com.elvan.udukkai.localization.LanguageManager.activeLanguageCode
+    val payload = remember(invoice, activeProfile, appLanguage, currentCustomer) { printPayload?.invoke(activeProfile) }
     val isProforma = invoice.invoiceType == "proforma"
     val copyTitle = K.copyBtn.tr()
     val deleteItem = rememberViewDeleteItem(onDelete, K.invoiceDeletedMsg.tr(), onBack)
@@ -66,7 +73,7 @@ fun InvoiceViewScreen(
         printFileName = invoicePdfName(invoice),
         businessFolder = billBusinessFolder(activeProfile),
         showPreparationOverlay = true,
-        body = { InvoiceBody(invoice, activeProfile, isPaid, isProforma, receipts, onOpenReceipt, onRecordPayment, onOpenCustomer, isFactory, onConvertToTaxInvoice) }
+        body = { InvoiceBody(invoice, activeProfile, isPaid, isProforma, receipts, onOpenReceipt, onRecordPayment, onOpenCustomer, isFactory, onConvertToTaxInvoice, currentCustomer) }
     )
 }
 
@@ -83,16 +90,20 @@ private fun InvoiceBody(
     onRecordPayment: (() -> Unit)?,
     onOpenCustomer: (() -> Unit)?,
     isFactory: Boolean,
-    onConvertToTaxInvoice: (() -> Unit)?
+    onConvertToTaxInvoice: (() -> Unit)?,
+    currentCustomer: CustomerModel?
 ) {
-    val primary = profile.primaryLanguage.ifEmpty { "ta" }
-    val secondary = profile.secondaryLanguage.ifEmpty { "en" }
-    val name = invoice.customerName[primary] ?: invoice.customerName[secondary] ?: invoice.customerName.values.firstOrNull().orEmpty().ifEmpty { "-" }
-    val secondName = if (profile.isBilingual) invoice.customerName[secondary].orEmpty() else ""
-    val town = invoice.customerAddress[primary] ?: invoice.customerAddress[secondary] ?: invoice.customerAddress.values.firstOrNull().orEmpty()
+    val language = DataLanguageDisplay(profile)
+    val billedCustomer = remember(invoice, currentCustomer, isFactory) {
+        CustomerSnapshot.forInvoice(invoice, currentCustomer, legacyAddressIsCity = !isFactory)
+    }
+    val name = language.first(billedCustomer.name).ifBlank { "-" }
+    val secondName = language.second(billedCustomer.name)
+    val town = language.first(billedCustomer.city)
 
     val options = remember(invoice.customPreferencesJson) { InvoiceDisplayOptions.fromJson(invoice.customPreferencesJson) }
-    val summary = remember(invoice, isFactory) { billSummary(invoice, options, isFactory) }
+    val chargeLabels = K.courierCharge.tr() to K.ahimsaSilk.tr()
+    val summary = remember(invoice, isFactory, profile.primaryLanguage, profile.secondaryLanguage, profile.isBilingual, chargeLabels) { billSummary(invoice, options, isFactory, language, chargeLabels) }
     val daysPending = ((DateUtils.todayMillis() - invoice.invoiceDate) / DAY).toInt()
 
     val paidLabel = K.billFullyPaid.tr()
@@ -114,7 +125,7 @@ private fun InvoiceBody(
     val paidRowLabel = K.statusPaid.tr()
     val wordsTitle = K.amountInWords.tr()
     val notesTitle = K.remarks.tr()
-    val words = remember(invoice.totalAmount) { NumberToWords.toTamil(invoice.totalAmount) to NumberToWords.toEnglish(invoice.totalAmount) }
+    val words = remember(invoice.totalAmount, language.languages) { language.lines { NumberToWords.forLanguage(invoice.totalAmount, it) } }
 
     DocPage(horizontalPadding = Dimens.ContentPadding) {
         item(key = "status") {
@@ -159,7 +170,7 @@ private fun InvoiceBody(
                 DocDivider()
                 DocRow(fyLabel, DateUtils.financialYearLabel(invoice.invoiceDate))
                 DocDivider()
-                DocRow(placeLabel, if (primary.startsWith("ta")) options.placeOfSupplyTa.ifBlank { options.placeOfSupply } else options.placeOfSupply)
+                DocRow(placeLabel, language.first(options.placeOfSupplyLanguages))
             }
         }
         if (summary.lines.isNotEmpty()) {
@@ -186,7 +197,7 @@ private fun InvoiceBody(
                 if (isPaid) DocRow(paidRowLabel, "− " + CurrencyUtils.formatInr(invoice.totalAmount), valueColor = androidx.compose.ui.graphics.Color(0xFF16A34A))
             }
         }
-        item(key = "words") { DocTextCard(wordsTitle, listOf(words.first to true, words.second to false)) }
+        item(key = "words") { DocTextCard(wordsTitle, words) }
         if (invoice.notes.isNotBlank()) {
             item(key = "notes") { DocTextCard(notesTitle, listOf(invoice.notes to true)) }
         }
@@ -208,7 +219,7 @@ private data class BillSummary(
 private fun taxPart(json: String, key: String): Double =
     Regex("\"$key\"\\s*:\\s*([-+0-9.eE]+)").find(json)?.groupValues?.get(1)?.toDoubleOrNull() ?: 0.0
 
-private fun billSummary(invoice: InvoiceModel, options: InvoiceDisplayOptions, isFactory: Boolean): BillSummary {
+private fun billSummary(invoice: InvoiceModel, options: InvoiceDisplayOptions, isFactory: Boolean, language: DataLanguageDisplay, chargeLabels: Pair<String, String>): BillSummary {
     val cgst = taxPart(invoice.taxDataJson, "cgst")
     val sgst = taxPart(invoice.taxDataJson, "sgst")
     val igst = taxPart(invoice.taxDataJson, "igst")
@@ -216,12 +227,13 @@ private fun billSummary(invoice: InvoiceModel, options: InvoiceDisplayOptions, i
     return if (isFactory) {
         val items = FactoryCalculation.itemsFromJson(invoice.itemsJson)
         val lines = items.map {
-            BillLine(it.itemName, it.itemNameEn, "${BillRules.plainNumber(it.weight)} kg × ${CurrencyUtils.formatInr(it.price)}", it.rowTotal.toDouble())
+            val names = ItemNames.snapshot(it.languageMap, it.itemName, it.itemNameEn)
+            BillLine(language.first(names), language.second(names), "${BillRules.plainNumber(it.weight)} kg × ${CurrencyUtils.formatInr(it.price)}", it.rowTotal.toDouble())
         }
         val subtotal = lines.sumOf { it.amount }
         val extras = buildList {
-            if (invoice.postalCharges > 0) add("அஞ்சல் கட்டணம்" to invoice.postalCharges)
-            if (invoice.ahimsaSilkAmount > 0) add("அகிம்சைப் பட்டு" to invoice.ahimsaSilkAmount)
+            if (invoice.postalCharges > 0) add(chargeLabels.first to invoice.postalCharges)
+            if (invoice.ahimsaSilkAmount > 0) add(chargeLabels.second to invoice.ahimsaSilkAmount)
         }
         val before = subtotal - invoice.discount + extras.sumOf { it.second } + tax
         BillSummary(lines, subtotal, invoice.discount, extras, cgst, sgst, igst, invoice.totalAmount - before)
@@ -234,7 +246,8 @@ private fun billSummary(invoice: InvoiceModel, options: InvoiceDisplayOptions, i
                 "${BillRules.plainNumber(it.quantity)} × ${CurrencyUtils.formatInr(it.price)}",
                 if (it.taxRate > 0) "${BillRules.plainNumber(it.taxRate)}%" else null
             ).joinToString("  •  ")
-            BillLine(it.itemName, it.itemNameEn, detail, it.taxableAmount)
+            val names = ItemNames.snapshot(it.languageMap, it.itemName, it.itemNameEn)
+            BillLine(language.first(names), language.second(names), detail, it.taxableAmount)
         }
         val before = totals.subtotal - totals.totalDiscount + (if (options.taxInclusive) 0.0 else tax)
         BillSummary(lines, totals.subtotal, totals.totalDiscount, emptyList(), cgst, sgst, igst, invoice.totalAmount - before)

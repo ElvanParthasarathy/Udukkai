@@ -17,7 +17,7 @@ import com.elvan.udukkai.textiles.data.TextilesProfileRepository
  * 2. Print / Billing Language (PrintLanguageManager / Pattiyal Mozhi):
  *    - Governs printed bills, thermal receipts, and PDF invoices.
  *    - Changing UI language NEVER affects what prints on the bill!
- *    - Changing Print language NEVER affects what appears on screen!
+ *    - Billing data in editors and record views follows these languages; UI labels keep the UI language.
  *
  * 3. App Domain Isolation (Factory vs Textiles):
  *    - Factory (ஆலை) has its own independent billing language.

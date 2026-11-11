@@ -6,6 +6,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -22,6 +23,7 @@ import com.elvan.udukkai.ui.navigation.MaterialSymbols
  * Preserves the exact line count before selection mode so neither 1-line cards
  * wrap downwards nor 2-line cards shrink upwards when long-pressing.
  */
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun DocCardText(
     colors: ShellColors,
@@ -35,10 +37,14 @@ fun DocCardText(
     textLines: Int,
     isSelectionMode: Boolean = false,
     modifier: Modifier = Modifier,
-    below: @Composable ColumnScope.() -> Unit = {}
+    paymentIcon: ImageVector? = null
 ) {
+    val separatePaymentDetails = paymentIcon != null
     val ff = LocalAppFontFamily.current
     val secondary = LocalShellColors.current.textSecondary
+    val metadataLineHeight = 17.sp
+    val numberStyle = TextStyle(fontFamily = ff, fontSize = if (separatePaymentDetails) 13.sp else 13.5.sp, lineHeight = metadataLineHeight, color = secondary)
+    val dateStyle = TextStyle(fontFamily = ff, fontSize = 13.sp, lineHeight = metadataLineHeight, color = secondary)
 
     var primaryLineCount by remember { mutableStateOf<Int?>(null) }
     var secondLineCount by remember { mutableStateOf<Int?>(null) }
@@ -85,47 +91,62 @@ fun DocCardText(
             )
         }
 
-        Spacer(Modifier.height(8.dp))
-        // Left: number and date, then (receipts) the bills settled, then the year. Right: the status right above the amount.
-        Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.Bottom) {
+        Spacer(Modifier.height(7.dp))
+
+        val amountStyle = TextStyle(
+            fontFamily = ff,
+            fontSize = if (amount.length > 11) 13.sp else 15.sp,
+            lineHeight = metadataLineHeight,
+            fontWeight = FontWeight.ExtraBold,
+            color = colors.textPrimary
+        )
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.Bottom
+        ) {
             Column(modifier = Modifier.weight(1f)) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(
-                        text = number,
-                        style = TextStyle(fontFamily = ff, fontSize = 13.5.sp, color = secondary),
-                        maxLines = 1
-                    )
-                    Text(
-                        text = "•",
-                        modifier = Modifier.padding(horizontal = 7.dp),
-                        style = TextStyle(fontFamily = ff, fontSize = 13.sp, color = LocalShellColors.current.textTertiary)
-                    )
-                    Text(
-                        text = date.preventBrokenLigatures(),
-                        style = TextStyle(fontFamily = ff, fontSize = 13.sp, color = secondary),
-                        maxLines = 1
-                    )
+                if (separatePaymentDetails) {
+                    FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                        Text(number, style = numberStyle, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                        Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
+                            Text("•", style = dateStyle.copy(color = LocalShellColors.current.textTertiary))
+                            Text(date.preventBrokenLigatures(), style = dateStyle)
+                        }
+                    }
+                } else {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(number, style = numberStyle, maxLines = 1)
+                        Text(
+                            text = "•",
+                            modifier = Modifier.padding(horizontal = 6.dp),
+                            style = dateStyle.copy(color = LocalShellColors.current.textTertiary)
+                        )
+                        Text(date.preventBrokenLigatures(), style = dateStyle, maxLines = 1)
+                    }
                 }
-                below()
                 Spacer(Modifier.height(2.dp))
                 Text(
                     text = fy,
-                    style = TextStyle(fontFamily = ff, fontSize = 12.5.sp, color = LocalShellColors.current.textTertiary),
+                    style = TextStyle(fontFamily = ff, fontSize = if (separatePaymentDetails) 12.sp else 12.5.sp, lineHeight = metadataLineHeight, color = LocalShellColors.current.textTertiary),
                     maxLines = 1
                 )
             }
             Spacer(Modifier.width(8.dp))
-            Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                if (status.isNotBlank()) Text(
-                    text = status.preventBrokenLigatures(),
-                    style = TextStyle(fontFamily = ff, fontSize = 12.sp, color = secondary),
-                    maxLines = 1
-                )
-                Text(
-                    text = amount,
-                    style = TextStyle(fontFamily = ff, fontSize = if (amount.length > 11) 13.sp else 15.sp, fontWeight = FontWeight.ExtraBold, color = colors.textPrimary),
-                    maxLines = 1
-                )
+            if (paymentIcon != null) {
+                Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                    Icon(paymentIcon, contentDescription = status, tint = secondary, modifier = Modifier.size(16.dp))
+                    Text(amount, style = amountStyle, maxLines = 1)
+                }
+            } else {
+                Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                    if (status.isNotBlank()) Text(
+                        text = status.preventBrokenLigatures(),
+                        style = TextStyle(fontFamily = ff, fontSize = 12.sp, lineHeight = metadataLineHeight, color = secondary),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                    Text(amount, style = amountStyle, maxLines = 1)
+                }
             }
         }
     }

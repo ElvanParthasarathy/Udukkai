@@ -64,8 +64,8 @@ fun TextilesPlaceOfSupplyField(
     }
 
     val displayText = when {
-        isCustom -> if (LanguageManager.activeLanguageCode == "ta") "தனிப்பயன்" else "Custom"
-        LanguageManager.activeLanguageCode == "ta" -> placeOfSupplyTa.ifBlank { placeOfSupplyEn }
+        isCustom -> if (primaryLang == "ta") "தனிப்பயன்" else "Custom"
+        primaryLang == "ta" -> placeOfSupplyTa.ifBlank { placeOfSupplyEn }
         else -> placeOfSupplyEn.ifBlank { placeOfSupplyTa }
     }
 
@@ -181,8 +181,8 @@ fun TextilesPlaceOfSupplyField(
                 }
                 isSheetOpen = false
             },
-            itemLabelBuilder = { s -> if (LanguageManager.activeLanguageCode == "ta") s.ta else s.en },
-            subtitleBuilder = { s -> if (LanguageManager.activeLanguageCode == "ta") s.en else s.ta },
+            itemLabelBuilder = { s -> if (primaryLang == "ta") s.ta else s.en },
+            subtitleBuilder = { s -> if (isBilingual) (if (primaryLang == "ta") s.en else s.ta) else null },
             searchFilter = { s, query ->
                 val q = query.lowercase()
                 s.ta.lowercase().contains(q) || s.en.lowercase().contains(q)

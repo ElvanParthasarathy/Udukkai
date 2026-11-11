@@ -18,6 +18,9 @@ data class InvoiceDisplayOptions(
     /** The customer as printed when the bill was saved; empty on bills saved before this existed. */
     val customer: Map<String, String> = emptyMap()
 ) {
+    /** Compatibility with the fixed language fields in older saved invoices. */
+    val placeOfSupplyLanguages: Map<String, String> get() = mapOf("ta" to placeOfSupplyTa, "en" to placeOfSupply)
+
     fun toJson(): String {
         val sb = StringBuilder("{")
         sb.append("\"taxInclusive\":").append(taxInclusive).append(",")

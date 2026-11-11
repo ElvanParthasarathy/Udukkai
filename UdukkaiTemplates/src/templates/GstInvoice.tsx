@@ -3,6 +3,7 @@ import { useLanguage } from '../lib/mozhi/LanguageContext';
 import React, { useState, useEffect } from 'react';
 import QRCode from 'qrcode';
 import DOMPurify from 'dompurify';
+import { invoiceAddressLines } from '../lib/invoiceAddress';
 
 const IconPhone = ({ size = 14, className = '', style = {} }) => (
     <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="currentColor" className={className} style={style}>
@@ -330,16 +331,13 @@ const SjsTheme = React.forwardRef(({ profile = {}, client = {}, details = {}, it
                 const get = (f) => (second
                   ? (getDynamicField(client, f, profile, false) || getDynamicField(client, f, profile, true))
                   : (getDynamicField(client, f, profile, true) || getDynamicField(client, f, profile, false)));
-                const addr1 = [get('mugavari'), get('oor')].filter(Boolean).join(', ') + (client?.pin ? ` - ${client.pin}` : '');
                 const maavattam = showDistrict ? get('maavattam') : '';
                 const stateRaw = getDynamicField(client, 'maanilam', profile, true) || getDynamicField(client, 'maanilam', profile, false);
                 const only = second ? { returnOnlySecondary: true } : { returnOnlyPrimary: true };
                 const maanilam = showState ? (getBilingualStateName(stateRaw, { ...profile, fallbackEnglishName: getDynamicField(client, 'maanilam', profile, false), ...only }) || get('maanilam')) : '';
-                const distLabel = /[\u0B80-\u0BFF]/.test(maavattam) ? 'மாவட்டம்' : 'District';
-                const distString = maavattam ? (maavattam.toLowerCase().includes('district') || maavattam.includes('மாவட்டம்') ? maavattam : `${maavattam} ${distLabel}`) : '';
                 const countryRaw = getDynamicField(client, 'country', profile, true) || getDynamicField(client, 'country', profile, false);
                 const country = showCountry ? (getBilingualCountryName(countryRaw, { ...profile, fallbackEnglishName: getDynamicField(client, 'country', profile, false), ...only }) || get('country')) : '';
-                return [addr1, [distString, maanilam, country].filter(Boolean).join(', ')];
+                return invoiceAddressLines({ street: get('mugavari'), town: get('oor'), pin: client?.pin, district: maavattam, state: maanilam, country });
               };
               // No rule: the second language when bilingual (as before), the main language otherwise
               // A single-language bill prints the main language; a bilingual one a single language, English unless the rule says Tamil

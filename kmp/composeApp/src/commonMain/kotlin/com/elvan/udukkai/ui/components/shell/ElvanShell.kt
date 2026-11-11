@@ -4,8 +4,10 @@ import com.elvan.udukkai.ui.navigation.smoothScrollToTop
 
 import dev.chrisbanes.haze.hazeSource
 import androidx.compose.animation.core.CubicBezierEasing
+import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -39,7 +41,6 @@ import com.elvan.udukkai.localization.tr
 import com.elvan.udukkai.theme.Dimens
 import com.elvan.udukkai.theme.ShellColors
 import com.elvan.udukkai.theme.rememberShellColors
-import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
 
 /** The home screen draws its own trailing-edge landscape controls and gutter; a page inside it must not add a second set. */
@@ -50,6 +51,7 @@ val LocalElvanPaneChrome = compositionLocalOf { false }
 val LocalElvanPaneNoBack = compositionLocalOf { false }
 val LocalElvanScrollState = compositionLocalOf<LazyListState?> { null }
 val LocalElvanTopSpacerHeight = compositionLocalOf<Dp> { 280.dp - Dimens.SectionSpacing }
+internal val LocalElvanHeaderSettledCollapsed = compositionLocalOf { false }
 object GlobalHeaderState {
     var isExpanded: Boolean = true
 }
@@ -133,14 +135,19 @@ fun ElvanShell(
             mutableFloatStateOf(if (!isCompactHeader && globalHeaderExpanded.value) 0f else handoffShrinkOffsetPx)
         }
 
-    LaunchedEffect(headerCollapsePx, handoffShrinkOffsetPx) {
-        if (collapsedOnly) return@LaunchedEffect
-        if (headerCollapsePx >= handoffShrinkOffsetPx && globalHeaderExpanded.value) {
-            globalHeaderExpanded.value = false
-            GlobalHeaderState.isExpanded = false
-        } else if (headerCollapsePx == 0f && !globalHeaderExpanded.value) {
-            globalHeaderExpanded.value = true
-            GlobalHeaderState.isExpanded = true
+    LaunchedEffect(scrollState, handoffShrinkOffsetPx, isCompactHeader, globalHeaderExpanded) {
+        if (isCompactHeader) return@LaunchedEffect
+        snapshotFlow {
+            when {
+                headerCollapsePx >= handoffShrinkOffsetPx -> false
+                headerCollapsePx <= 0f -> true
+                else -> null
+            }
+        }.collect { expanded ->
+            if (expanded != null && globalHeaderExpanded.value != expanded) {
+                globalHeaderExpanded.value = expanded
+                GlobalHeaderState.isExpanded = expanded
+            }
         }
     }
 
@@ -200,32 +207,33 @@ fun ElvanShell(
 
     val topSpacerHeight = if (isCompactHeader) {
         // Sideways the title row and the round button are one 56dp band; the page starts just under it
-        if (isLandscape) statusBarHeight + 37.dp else ceiling + pillHeight + 10.dp
+        if (isLandscape) statusBarHeight + 37.dp else if (!androidLandscape && !isDesktop) ceiling + pillHeight + Dimens.PortraitEdgeGap - Dimens.SectionSpacing else ceiling + pillHeight + 10.dp
     } else {
         (expandedHeight - Dimens.SectionSpacing - with(density) { collapsePx.toDp() }).coerceAtLeast(0.dp)
     }
 
-    var isHeaderExpanded by remember(scrollState) {
-        mutableStateOf(
-            scrollState.firstVisibleItemIndex == 0 &&
-            currentScrollOffset < handoffShrinkOffsetPx
-        )
-    }
-
-    LaunchedEffect(scrollState, handoffShrinkOffsetPx, headerCollapsePx) {
-        snapshotFlow {
-            scrollState.firstVisibleItemIndex > 0 || currentScrollOffset >= handoffShrinkOffsetPx
-        }.distinctUntilChanged().collect { isPastBoundary ->
-            if (isPastBoundary && isHeaderExpanded) {
-                isHeaderExpanded = false
-            }
-        }
-    }
-
-    var isFlinging by remember { mutableStateOf(false) }
-
-    val nestedScrollConnection = remember(scrollState, handoffShrinkOffsetPx, collisionOffsetPx, density) {
+    val nestedScrollConnection = remember(scrollState, handoffShrinkOffsetPx, collisionOffsetPx, density, isCompactHeader, onBack != null) {
         object : NestedScrollConnection {
+            private var headerDragStart: Float? = null
+
+            private fun moveHeader(delta: Float, source: NestedScrollSource): Offset {
+                val previous = headerCollapsePx
+                val next = (previous - delta).coerceIn(0f, handoffShrinkOffsetPx)
+                if (source == NestedScrollSource.UserInput && headerDragStart == null) {
+                    headerDragStart = previous
+                }
+                headerCollapsePx = next
+                return Offset(0f, previous - next)
+            }
+
+            private fun hasReachedCompactBar(): Boolean {
+                if (scrollState.firstVisibleItemIndex > 0) return true
+                val listOffset = scrollState.firstVisibleItemScrollOffset
+                return if (isCompactHeader) listOffset > 8 else {
+                    headerCollapsePx + listOffset >= minOf(handoffShrinkOffsetPx, collisionOffsetPx) - with(density) { 4.dp.toPx() }
+                }
+            }
+
             override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
                 val delta = available.y
                 val isItem0 = scrollState.firstVisibleItemIndex == 0
@@ -233,20 +241,13 @@ fun ElvanShell(
 
                 // 1. Dragging UP: Header collapses FIRST before list scrolls
                 if (delta < 0f && headerCollapsePx < handoffShrinkOffsetPx) {
-                    val newCollapse = (headerCollapsePx - delta).coerceIn(0f, handoffShrinkOffsetPx)
-                    val consumedY = -(newCollapse - headerCollapsePx)
-                    headerCollapsePx = newCollapse
-                    return Offset(0f, consumedY)
+                    return moveHeader(delta, source)
                 }
 
                 // 2. Dragging DOWN: Expand header when list is at top
                 if (delta > 0f && isListAtTop && headerCollapsePx > 0f) {
                     if (source == NestedScrollSource.UserInput) {
-                        isHeaderExpanded = true
-                        val newCollapse = (headerCollapsePx - delta).coerceIn(0f, handoffShrinkOffsetPx)
-                        val consumedY = -(newCollapse - headerCollapsePx)
-                        headerCollapsePx = newCollapse
-                        return Offset(0f, consumedY)
+                        return moveHeader(delta, source)
                     } else {
                         return Offset(0f, delta)
                     }
@@ -260,15 +261,10 @@ fun ElvanShell(
                 }
 
                 // 4. Navbar hide/show logic matching Flutter One UI Physics
-                val reachedPill = if (isCompactHeader) {
-                    scrollState.firstVisibleItemIndex > 0 || scrollState.firstVisibleItemScrollOffset > 8
-                } else {
-                    !isItem0 || currentScrollOffset >= (handoffShrinkOffsetPx.coerceAtMost(collisionOffsetPx) - with(density) { 4.dp.toPx() })
-                }
                 if (delta > 2f && !isNavbarVisible) {
                     // Scrolling UP (finger moving down) -> Show immediately!
                     isNavbarVisible = true
-                } else if (delta < -2f && isNavbarVisible && reachedPill) {
+                } else if (delta < -2f && isNavbarVisible && hasReachedCompactBar()) {
                     // Scrolling DOWN past header (finger moving up) -> Hide!
                     isNavbarVisible = false
                 }
@@ -280,10 +276,7 @@ fun ElvanShell(
                 val isListAtTop = isItem0 && scrollState.firstVisibleItemScrollOffset == 0
                 if (available.y > 0f && isListAtTop && headerCollapsePx > 0f) {
                     if (source == NestedScrollSource.UserInput) {
-                        val newCollapse = (headerCollapsePx - available.y).coerceIn(0f, handoffShrinkOffsetPx)
-                        val consumedY = -(newCollapse - headerCollapsePx)
-                        headerCollapsePx = newCollapse
-                        return Offset(0f, consumedY)
+                        return moveHeader(available.y, source)
                     } else {
                         return Offset(0f, available.y)
                     }
@@ -295,35 +288,48 @@ fun ElvanShell(
                 val isItem0 = scrollState.firstVisibleItemIndex == 0
                 val isListAtTop = isItem0 && scrollState.firstVisibleItemScrollOffset == 0
                 val isSubpage = onBack != null
+                val flingThreshold = with(density) { if (isSubpage) 80.dp.toPx() else 160.dp.toPx() }
+                val dragStart = headerDragStart
+                headerDragStart = null
 
                 if (headerCollapsePx > 0f && headerCollapsePx < handoffShrinkOffsetPx && isListAtTop) {
                     val currentProgress = headerCollapsePx / handoffShrinkOffsetPx
+                    val pulledToExpand = dragStart != null &&
+                        dragStart - headerCollapsePx >= with(density) { 14.dp.toPx() }
                     val target = when {
-                        isSubpage && available.y < -100f -> handoffShrinkOffsetPx
-                        available.y < -500f -> handoffShrinkOffsetPx
-                        available.y > 500f -> 0f
+                        available.y < -flingThreshold -> handoffShrinkOffsetPx
+                        available.y > flingThreshold -> 0f
+                        pulledToExpand -> 0f
                         isSubpage && currentProgress >= 0.2f -> handoffShrinkOffsetPx
-                        currentProgress >= 0.4f -> handoffShrinkOffsetPx
+                        currentProgress >= 0.5f -> handoffShrinkOffsetPx
                         else -> 0f
                     }
+                    val start = headerCollapsePx
+                    val distance = target - start
+                    val releaseSpeed = -available.y
+                    val initialVelocity = if (releaseSpeed * distance > 0f) {
+                        releaseSpeed.coerceIn(-kotlin.math.abs(distance) * 16f, kotlin.math.abs(distance) * 16f)
+                    } else 0f
                     androidx.compose.animation.core.animate(
-                        initialValue = headerCollapsePx,
+                        initialValue = start,
                         targetValue = target,
-                        animationSpec = tween(
-                            durationMillis = 260,
-                            easing = CubicBezierEasing(0.0f, 0.0f, 0.2f, 1.0f)
+                        initialVelocity = initialVelocity,
+                        animationSpec = spring(
+                            dampingRatio = Spring.DampingRatioNoBouncy,
+                            stiffness = 900f,
+                            visibilityThreshold = 0.75f
                         )
-                    ) { value, _ -> headerCollapsePx = value }
+                    ) { value, _ -> headerCollapsePx = value.coerceIn(0f, handoffShrinkOffsetPx) }
                     return available
                 }
 
+                // A slow release at the header boundary shouldn't start a second list animation.
+                if (isListAtTop && handoffShrinkOffsetPx > 0f &&
+                    headerCollapsePx >= handoffShrinkOffsetPx && available.y in -flingThreshold..0f
+                ) return Velocity(0f, available.y)
+
                 if (available.y < -300f) {
-                    val reachedPill = if (isCompactHeader) {
-                        scrollState.firstVisibleItemIndex > 0 || scrollState.firstVisibleItemScrollOffset > 8
-                    } else {
-                        !isItem0 || currentScrollOffset >= (handoffShrinkOffsetPx.coerceAtMost(collisionOffsetPx) - with(density) { 4.dp.toPx() })
-                    }
-                    if (reachedPill && isNavbarVisible) {
+                    if (hasReachedCompactBar() && isNavbarVisible) {
                         isNavbarVisible = false
                     }
                 }
@@ -331,7 +337,6 @@ fun ElvanShell(
             }
 
             override suspend fun onPostFling(consumed: Velocity, available: Velocity): Velocity {
-                isFlinging = false
                 if (!isNavbarVisible) isNavbarVisible = true
                 return Velocity.Zero
             }
@@ -428,11 +433,17 @@ fun ElvanShell(
         if (androidLandscape && (isSearchActive || isSelectionMode)) 68.dp else if (paneChrome && androidLandscape && LocalLandscapeSettingsHeader.current) Dimens.SettingsPaneHeaderHeight + Dimens.HeaderGap else 0.dp,
         tween(420, easing = CubicBezierEasing(0.2f, 0f, 0.2f, 1f)), label = "searchContentClearance"
     )
+    val portraitBottom = Dimens.portraitBottomPadding(
+        showNavbar || hasFloatingBar,
+        com.elvan.udukkai.core.platform.getNavBarBottomPadding()
+    )
     CompositionLocalProvider(
         LocalElvanScrollState provides scrollState,
         LocalLandscapeContent provides androidLandscape,
         LocalLandscapeHeaderClearance provides searchClearance,
         LocalElvanTopSpacerHeight provides topSpacerHeight,
+        LocalElvanHeaderSettledCollapsed provides (isCompactHeader || collapsePx >= handoffShrinkOffsetPx),
+        LocalPortraitPageBottom provides if (!androidLandscape && !isDesktop) portraitBottom else null,
         LocalElvanShellController provides shellController,
         LocalElvanSideBar provides isLandscape
     ) {
@@ -455,17 +466,20 @@ fun ElvanShell(
         Box(
             modifier = shellModifier
         ) {
+            val chromeHandled = LocalElvanLandscapeChromeHandled.current
+            val needsTrailingClearance = (!chromeHandled && (!showNavbar || onBack != null)) ||
+                (toolbarPresent && !isSelectionMode) || (androidLandscape && isSelectionMode)
             // Layer 1: Content (100% Full screen, ZERO translation, ZERO bottom clipping)
             Box(
                 modifier = Modifier
                     .hazeSource(hazeState)
                     .fillMaxSize()
                     // Subpages and unhandled landscape screens: exactly match the Home screen's horizontal window insets
-                    .then(if (isLandscape && !LocalElvanLandscapeChromeHandled.current) Modifier.windowInsetsPadding(androidx.compose.foundation.layout.WindowInsets.safeDrawing.only(androidx.compose.foundation.layout.WindowInsetsSides.Horizontal)) else Modifier)
+                    .then(if (isLandscape && !chromeHandled) Modifier.windowInsetsPadding(androidx.compose.foundation.layout.WindowInsets.safeDrawing.only(androidx.compose.foundation.layout.WindowInsetsSides.Horizontal)) else Modifier)
                     // Landscape pages: keep content clear of the trailing-edge back button and action column (matches Home screen end = 80.dp)
-                    .then(if (isLandscape && ((!LocalElvanLandscapeChromeHandled.current && (!showNavbar || onBack != null)) || (toolbarPresent && !isSelectionMode))) Modifier.padding(end = 80.dp) else Modifier)
+                    .then(if (isLandscape && needsTrailingClearance) Modifier.padding(end = 80.dp) else Modifier)
                     // Landscape navbar clearance: only when navbar is present (Home screen). Subpages have no left navbar.
-                    .then(if (isLandscape && showNavbar && !LocalElvanLandscapeChromeHandled.current) Modifier.padding(start = 76.dp) else Modifier)
+                    .then(if (isLandscape && showNavbar && !chromeHandled) Modifier.padding(start = 76.dp) else Modifier)
                     .then(if (!showNavbar) Modifier.imePadding() else Modifier)
             ) {
                 content()

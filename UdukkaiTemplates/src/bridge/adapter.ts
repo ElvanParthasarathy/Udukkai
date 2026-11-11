@@ -1,3 +1,4 @@
+import { languageName } from "../lib/dataLanguages";
 import { normalizeFy } from "../lib/finYear";
 // @ts-nocheck
 // Translates the KMP app's payload (English field names, language-code maps
@@ -5,16 +6,7 @@ import { normalizeFy } from "../lib/finYear";
 // templates receive in the React app. The templates themselves are imported
 // untouched — every naming difference is resolved here, in one place.
 
-const LANG_NAMES = {
-  ta: 'Tamil',
-  en: 'English',
-  hi: 'Hindi',
-  te: 'Telugu',
-  kn: 'Kannada',
-  ml: 'Malayalam',
-};
-
-const langName = (code, fallback) => LANG_NAMES[code] || fallback;
+const langName = (code, fallback) => languageName(code) || fallback;
 
 const round2 = (n) => Math.round((Number(n) || 0) * 100) / 100;
 
@@ -76,6 +68,8 @@ const toPaymentAccount = (acc, lang) => ({
 
 export const toReactProfile = (p, lang) => {
   const out = {
+    dataLanguageConfig: { primaryLanguage: p.primaryLanguage, secondaryLanguage: p.secondaryLanguage, isBilingual: p.isBilingual === true },
+    businessNames: p.businessName || {},
     primaryDataLanguage: lang.primary,
     secondaryDataLanguage: lang.secondary,
     enableBilingual: p.isBilingual !== false,
@@ -146,7 +140,7 @@ export const toReactClient = (c, invoice, lang) => {
   const city = c?.city && Object.keys(c.city).length ? c.city : invoice.customerAddress;
 
   putBilingual(out, 'name', name, lang);
-  putBilingual(out, 'mugavari', c?.address, lang);
+  putBilingual(out, 'mugavari', Object.keys(c?.internationalAddress || {}).length ? c.internationalAddress : c?.address, lang);
   putBilingual(out, 'oor', city, lang);
   putBilingual(out, 'maavattam', c?.district, lang);
   putBilingual(out, 'maanilam', c?.state, lang);
@@ -308,6 +302,7 @@ export const toCoolieProfile = (p) => {
     district: str(p.district?.ta),
     districtEn: str(p.district?.en),
     pincode: str(p.pinCode),
+    invoiceAddress: { address: p.address, city: p.city, district: p.district, state: p.state, country: p.country, pinCode: p.pinCode },
     bankName: str(p.bankName?.ta),
     bankNameEn: str(p.bankName?.en),
     accountNo: str(p.accountNumber),
@@ -330,7 +325,9 @@ export const toCoolieProfile = (p) => {
     defaultPrintLanguage: ps.defaultPrintLanguage || 'ta',
     // Bilingual bills: Tamil line + English line, like the Textiles invoice
     enableBilingual: p.isBilingual !== false,
-    primaryDataLanguage: langName(p.primaryLanguage || 'ta', 'Tamil'),
+    dataLanguageConfig: { primaryLanguage: p.primaryLanguage, secondaryLanguage: p.secondaryLanguage, isBilingual: p.isBilingual === true },
+    businessNames: p.businessName || {},
+    primaryDataLanguage: languageName(p.primaryLanguage),
     secondaryDataLanguage: langName(p.secondaryLanguage || 'en', 'English'),
     receiptLanguage: ps.receiptLanguage || 'ta',
     langRules: ps.langRules || {},
@@ -373,6 +370,9 @@ export const toCoolieBillProps = (payload) => {
       city_en: str(city.en),
       district: str(c.district?.ta),
       district_en: str(c.district?.en),
+      full_address: str(c.fullAddress?.ta),
+      full_address_en: str(c.fullAddress?.en),
+      customerInvoiceAddress: { ...c, city },
       customer_gstin: str(c.gstin),
       items: (inv.items || []).map((it) => ({
         porul: str(it.name?.ta),

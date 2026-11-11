@@ -1,5 +1,7 @@
 package com.elvan.udukkai.factory.ui.screens
 
+import com.elvan.udukkai.data.model.InvoiceItemCatalog
+import com.elvan.udukkai.data.model.ItemNames
 import com.elvan.udukkai.data.model.CustomerModel
 import com.elvan.udukkai.data.model.InvoiceModel
 import com.elvan.udukkai.data.model.ItemModel
@@ -41,17 +43,18 @@ fun factoryCustomerActivity(customer: CustomerModel): ViewActivity {
 
 /** An item's bills in the open company: how much of it was billed, and every bill with its weight and line value. */
 fun factoryItemActivity(item: ItemModel): ViewActivity {
-    val id = item.id.toString()
+    val id = item.id
     val profile = FactoryProfileRepository.profile
     val invoices = FactoryInvoiceRepository.activeCompanyInvoices
+    val catalog = InvoiceItemCatalog(FactoryItemRepository.items, profile.id)
     val paid = paidAmounts(invoices)
     var totalWeight = 0.0
     fun rowsOf(estimates: Boolean) = ViewHistory.itemRows(
         invoices = invoices,
         companyId = profile.id,
         paid = paid,
-        linesOf = { inv -> FactoryCalculation.itemsFromJson(inv.itemsJson).filter { it.itemId == id }.map { ItemLine(it.weight, it.rowTotal.toDouble()) } },
-        customerNameOf = { it.customerName[profile.primaryLanguage] ?: it.customerName.values.firstOrNull { n -> n.isNotBlank() }.orEmpty() },
+        linesOf = { inv -> FactoryCalculation.itemsFromJson(inv.itemsJson).filter { catalog.find(it.itemId, ItemNames.snapshot(it.languageMap, it.itemName, it.itemNameEn))?.id == id }.map { ItemLine(it.weight, it.rowTotal.toDouble()) } },
+        customerNameOf = { com.elvan.udukkai.data.settings.DataLanguageDisplay(profile).first(it.customerName) },
         quantityText = { lines -> lines.sumOf { it.quantity }.let { if (!estimates) totalWeight += it; kg(it) } },
         estimates = estimates
     )

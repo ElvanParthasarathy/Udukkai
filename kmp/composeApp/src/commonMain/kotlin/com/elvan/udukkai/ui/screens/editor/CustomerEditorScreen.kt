@@ -455,8 +455,8 @@ fun CustomerEditorScreen(
                                         isCustomState = false
                                         isCustomDistrict = false
                                     },
-                                    itemLabelBuilder = { if (LanguageManager.activeLanguageCode == "ta") it.ta else it.en },
-                                    subtitleBuilder = { if (LanguageManager.activeLanguageCode == "ta") it.en else it.ta },
+                                    itemLabelBuilder = { if (primaryLang == "ta") it.ta else it.en },
+                                    subtitleBuilder = { if (isBilingual) (if (primaryLang == "ta") it.en else it.ta) else null },
                                     showSearch = true,
                                     searchFilter = { item, query ->
                                         item.en.contains(query, ignoreCase = true) || item.ta.contains(query, ignoreCase = true)
@@ -506,8 +506,8 @@ fun CustomerEditorScreen(
                                                 }
                                             }
                                         },
-                                        itemLabelBuilder = { if (LanguageManager.activeLanguageCode == "ta") it.ta else it.en },
-                                        subtitleBuilder = { if (LanguageManager.activeLanguageCode == "ta") it.en else it.ta },
+                                        itemLabelBuilder = { if (primaryLang == "ta") it.ta else it.en },
+                                        subtitleBuilder = { if (isBilingual) (if (primaryLang == "ta") it.en else it.ta) else null },
                                         showSearch = true,
                                         searchFilter = { item, query ->
                                             item.en.contains(query, ignoreCase = true) || item.ta.contains(query, ignoreCase = true)
@@ -551,8 +551,8 @@ fun CustomerEditorScreen(
                                                     districtMap = mapOf("en" to picked.en, "ta" to picked.ta)
                                                 }
                                             },
-                                            itemLabelBuilder = { if (LanguageManager.activeLanguageCode == "ta") it.ta else it.en },
-                                            subtitleBuilder = { if (LanguageManager.activeLanguageCode == "ta") it.en else it.ta },
+                                            itemLabelBuilder = { if (primaryLang == "ta") it.ta else it.en },
+                                            subtitleBuilder = { if (isBilingual) (if (primaryLang == "ta") it.en else it.ta) else null },
                                             showSearch = true,
                                             searchFilter = { item, query ->
                                                 item.en.contains(query, ignoreCase = true) || item.ta.contains(query, ignoreCase = true)

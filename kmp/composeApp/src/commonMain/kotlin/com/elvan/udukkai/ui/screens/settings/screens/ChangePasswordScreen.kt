@@ -82,6 +82,7 @@ fun ChangePasswordScreen(
     val incorrectPasswordMsg = K.incorrectPassword.tr()
     val genericErrorMsg = K.error.tr()
     val resetSentMsg = K.resetMailSent.tr()
+    val resetNotSentMsg = K.resetNotSent.tr()
 
     LaunchedEffect(step) {
         if (step == 3) {
@@ -91,6 +92,7 @@ fun ChangePasswordScreen(
     }
 
     fun verify() {
+        if (isProcessing) return
         if (currentPassword.isEmpty()) { errorMessage = incorrectPasswordMsg; return }
         isProcessing = true
         errorMessage = null
@@ -163,15 +165,20 @@ fun ChangePasswordScreen(
                                 .padding(top = 8.dp)
                                 .clip(RoundedCornerShape(50))
                                 .clickable(
+                                    enabled = !isProcessing,
                                     interactionSource = remember { MutableInteractionSource() },
                                     indication = ripple(color = NeramColors.textPrimary(), bounded = true),
                                     role = Role.Button
                                 ) {
                                     val email = AuthManager.signedInEmail
                                     if (!email.isNullOrBlank()) {
+                                        isProcessing = true
+                                        errorMessage = null
                                         scope.launch {
-                                            com.elvan.udukkai.core.auth.platformSendPasswordReset(email)
-                                            ElvanSnackbar.show(resetSentMsg)
+                                            val sent = com.elvan.udukkai.core.auth.platformSendPasswordReset(email)
+                                            isProcessing = false
+                                            if (sent) ElvanSnackbar.show(resetSentMsg)
+                                            else errorMessage = resetNotSentMsg
                                         }
                                     }
                                 }

@@ -19,6 +19,36 @@ import kotlin.test.assertTrue
 
 /** Every field typed into a customer, an item or a bill must reach the payload the print template reads. */
 class BillFieldsTest {
+    @Test fun legacyBillsKeepSavedCustomerNameAfterLiveCustomerRename() {
+        val savedNames = mapOf("ta" to "Saved business and owner", "en" to "Original invoice name")
+        val invoice = InvoiceModel(customerName = savedNames)
+        val renamed = CustomerModel(name = mapOf("en" to "Renamed live customer"))
+        val profile = BusinessProfile(primaryLanguage = "en")
+        for (payload in listOf(
+            PrintPayload.forFactoryInvoice(invoice, profile, renamed, "en"),
+            PrintPayload.forTextilesInvoice(invoice, profile, renamed, "en")
+        )) {
+            val printed = com.elvan.udukkai.core.utils.MiniJson.parseObject(payload)["customer"] as Map<*, *>
+            assertEquals(savedNames, printed["name"])
+        }
+    }
+    @Test fun olderCustomerStateTranslationReachesBothInvoicePayloads() {
+        val oldCustomer = CustomerModel(state = mapOf("ta" to "Tamil Nadu"))
+        for (language in listOf("ta", "en")) {
+            val business = BusinessProfile(primaryLanguage = language, secondaryLanguage = "en", isBilingual = false)
+            val invoice = InvoiceModel()
+            val expected = com.elvan.udukkai.core.data.locationDataName(oldCustomer.state, com.elvan.udukkai.core.data.indianStates, language)
+            for (payload in listOf(
+                PrintPayload.forTextilesInvoice(invoice, business, oldCustomer, "en"),
+                PrintPayload.forFactoryInvoice(invoice, business, oldCustomer, "en")
+            )) {
+                val root = com.elvan.udukkai.core.utils.MiniJson.parseObject(payload)
+                val customer = root["customer"] as Map<*, *>
+                assertEquals(expected, (customer["state"] as Map<*, *>)[language])
+            }
+        }
+        assertEquals(mapOf("ta" to "Tamil Nadu"), oldCustomer.state)
+    }
     private val profile = BusinessProfile(
         businessName = mutableMapOf("ta" to "எனது கடை", "en" to "My Shop"),
         gstin = "33SHOPG1234F1Z5",

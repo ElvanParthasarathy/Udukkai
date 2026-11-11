@@ -73,6 +73,8 @@ fun ElvanFloatingActionBar(
     if (actions.isEmpty()) return
 
     val isDark = colors.isDark
+    // Action controls stay out of the keyboard viewport instead of riding its resize animation.
+    if (com.elvan.udukkai.core.platform.getImeBottomPadding() > 0.dp) return
     val ff = LocalAppFontFamily.current
 
     SideEffect {

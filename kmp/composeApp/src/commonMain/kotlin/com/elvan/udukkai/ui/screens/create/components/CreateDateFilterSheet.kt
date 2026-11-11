@@ -30,6 +30,22 @@ enum class DateFilterPreset {
     CUSTOM
 }
 
+@Composable
+internal fun dateFilterLabel(startMillis: Long?, endMillis: Long?): String {
+    if (startMillis == null) return endMillis?.let { "<= ${DateUtils.formatDate(it)}" }.orEmpty()
+    if (endMillis == null) return ">= ${DateUtils.formatDate(startMillis)}"
+    val startDay = DateGroupUtils.getDayKey(startMillis)
+    if (startDay != DateGroupUtils.getDayKey(endMillis)) {
+        return "${DateUtils.formatDate(startMillis)} - ${DateUtils.formatDate(endMillis)}"
+    }
+    val today = DateUtils.todayMillis()
+    return when (startDay) {
+        DateGroupUtils.getDayKey(today) -> K.today.tr()
+        DateGroupUtils.getDayKey(today - 86400000L) -> K.yesterday.tr()
+        else -> DateUtils.formatDate(startMillis)
+    }
+}
+
 /**
  * Clean Date Filter Modal built on ElvanSelectionBottomSheet matching Settings Dropdown selection 1:1.
  * Features:
@@ -66,7 +82,7 @@ fun CreateDateFilterSheet(
 
     val lastMonthEnd = thisMonthStart - 1L
     val cLastMonth = DateGroupUtils.getDateComponents(lastMonthEnd)
-    val lastMonthStart = lastMonthEnd - ((cLastMonth.day - 1) * 86400000L)
+    val lastMonthStart = thisMonthStart - cLastMonth.day * 86400000L
 
     val activePreset = remember(currentStartMillis, currentEndMillis) {
         when {

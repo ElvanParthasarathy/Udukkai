@@ -1,4 +1,4 @@
-package com.elvan.udukkai.textiles.ui.screens.editor
+package com.elvan.udukkai.ui.screens.editor
 
 import androidx.compose.animation.*
 import androidx.compose.animation.core.Spring
@@ -24,9 +24,10 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.elvan.udukkai.data.model.CustomerModel
-import com.elvan.udukkai.textiles.data.TextilesCustomerRepository
+import com.elvan.udukkai.data.model.fullAddress
+import com.elvan.udukkai.data.settings.BusinessProfile
+import com.elvan.udukkai.data.settings.DataLanguageDisplay
 import com.elvan.udukkai.localization.K
-import com.elvan.udukkai.localization.PrintLanguageManager
 import com.elvan.udukkai.localization.tr
 import com.elvan.udukkai.theme.LocalAppFontFamily
 import com.elvan.udukkai.theme.preventBrokenLigatures
@@ -36,14 +37,11 @@ import com.elvan.udukkai.ui.navigation.MaterialSymbols
 import com.elvan.udukkai.ui.screens.editor.ElvanEditorCard
 import com.elvan.udukkai.ui.screens.editor.ElvanEditorLabel
 
-/**
- * Dedicated Customer section for Textiles (சவுளி) Invoice Editor:
- * - Customer search picker with bottom sheet.
- * - Saved details card with bilingual name, address lines, and GSTIN.
- * - Distinct from Factory customer handling.
- */
 @Composable
-fun TextilesCustomerField(
+fun InvoiceCustomerField(
+    customers: List<CustomerModel>,
+    profile: BusinessProfile,
+    savedCustomer: CustomerModel? = null,
     selectedCustomerId: Long?,
     onCustomerSelected: (CustomerModel) -> Unit,
     onCustomerCleared: () -> Unit,
@@ -53,17 +51,9 @@ fun TextilesCustomerField(
     val colors = rememberShellColors()
     val ff = LocalAppFontFamily.current
 
-    val config = PrintLanguageManager.getTextilesConfig()
-    val primaryLang = config.primaryLanguage.code
-    val secondaryLang = config.secondaryLanguage.code
-    val isBilingual = config.isBilingual
-
+    val language = DataLanguageDisplay(profile)
     var isBottomSheetOpen by remember { mutableStateOf(false) }
-    val allMerchants = TextilesCustomerRepository.customers
-
-    val selectedCustomer = remember(selectedCustomerId, allMerchants) {
-        allMerchants.firstOrNull { it.id == selectedCustomerId }
-    }
+    val selectedCustomer = savedCustomer ?: customers.firstOrNull { it.id == selectedCustomerId }
     var lastCustomer by remember { mutableStateOf<CustomerModel?>(null) }
     if (selectedCustomer != null) {
         lastCustomer = selectedCustomer
@@ -73,10 +63,7 @@ fun TextilesCustomerField(
         ElvanEditorLabel(label = K.clientNameSearch.tr())
 
         val containerBg = colors.iconBg
-        val customerName = selectedCustomer?.name?.get(primaryLang)
-            ?: selectedCustomer?.name?.get(secondaryLang)
-            ?: selectedCustomer?.name?.values?.firstOrNull()
-            ?: ""
+        val customerName = selectedCustomer?.let { language.first(it.billName()) }.orEmpty()
 
         // ── Customer Selector Pill ──
         Box(
@@ -177,63 +164,13 @@ fun TextilesCustomerField(
                                 )
                             )
 
-                            // Secondary language name if bilingual
-                            val secName = if (isBilingual) displayCustomer.name[secondaryLang].orEmpty() else ""
-                            if (secName.isNotEmpty()) {
-                                Text(
-                                    text = secName.preventBrokenLigatures(),
-                                    style = TextStyle(
-                                        fontFamily = ff,
-                                        fontSize = 15.sp,
-                                        fontWeight = FontWeight.Bold,
-                                        color = colors.textPrimary
-                                    )
-                                )
+                            val secondaryName = language.second(displayCustomer.billName())
+                            if (secondaryName.isNotBlank()) {
+                                Text(secondaryName.preventBrokenLigatures(), style = TextStyle(fontFamily = ff, fontSize = 15.sp, fontWeight = FontWeight.Bold, color = colors.textPrimary))
                             }
-
-                            // Address & Oor — bilingual
-                            val primAddress = displayCustomer.address[primaryLang]
-                                ?: displayCustomer.address.values.firstOrNull().orEmpty()
-                            val primCity = displayCustomer.city[primaryLang]
-                                ?: displayCustomer.city.values.firstOrNull().orEmpty()
-                            val primState = displayCustomer.state[primaryLang]
-                                ?: displayCustomer.state.values.firstOrNull().orEmpty()
-                            val primAddressCombined = listOf(primAddress, primCity, primState, displayCustomer.pinCode)
-                                .filter { it.isNotBlank() }
-                                .joinToString(", ")
-
-                            if (primAddressCombined.isNotBlank()) {
-                                Text(
-                                    text = primAddressCombined.preventBrokenLigatures(),
-                                    style = TextStyle(
-                                        fontFamily = ff,
-                                        fontSize = 13.sp,
-                                        color = colors.textSecondary,
-                                        lineHeight = 18.sp
-                                    )
-                                )
-                            }
-
-                            // Secondary language address
-                            if (isBilingual) {
-                                val secAddress = displayCustomer.address[secondaryLang].orEmpty()
-                                val secCity = displayCustomer.city[secondaryLang].orEmpty()
-                                val secState = displayCustomer.state[secondaryLang].orEmpty()
-                                val secAddressCombined = listOf(secAddress, secCity, secState)
-                                    .filter { it.isNotBlank() }
-                                    .joinToString(", ")
-
-                                if (secAddressCombined.isNotBlank() && secAddressCombined != primAddressCombined.replace(", ${displayCustomer.pinCode}", "")) {
-                                    Text(
-                                        text = secAddressCombined.preventBrokenLigatures(),
-                                        style = TextStyle(
-                                            fontFamily = ff,
-                                            fontSize = 13.sp,
-                                            color = colors.textSecondary.copy(alpha = 0.7f),
-                                            lineHeight = 18.sp
-                                        )
-                                    )
-                                }
+                            language.lines(displayCustomer::fullAddress).forEach { (address, primary) ->
+                                Text(address.preventBrokenLigatures(), style = TextStyle(fontFamily = ff, fontSize = 13.sp,
+                                    lineHeight = 18.sp, color = if (primary) colors.textSecondary else colors.textTertiary))
                             }
 
                             // GSTIN
@@ -259,21 +196,18 @@ fun TextilesCustomerField(
     if (isBottomSheetOpen) {
         ElvanSelectionBottomSheet(
             title = K.selectCustomer.tr(),
-            items = allMerchants,
-            currentValue = selectedCustomer,
+            items = customers,
+            currentValue = customers.firstOrNull { it.id == selectedCustomerId },
             showSearch = true,
             onDismissRequest = { isBottomSheetOpen = false },
             onSelected = { customer ->
                 onCustomerSelected(customer)
                 isBottomSheetOpen = false
             },
-            itemLabelBuilder = { c ->
-                c.name[primaryLang] ?: c.name.values.firstOrNull().orEmpty()
-            },
-            subtitleBuilder = { c ->
-                val sec = if (isBilingual) c.name[secondaryLang].orEmpty() else ""
-                val city = c.city[primaryLang] ?: c.city.values.firstOrNull().orEmpty()
-                listOf(sec, city).filter { it.isNotEmpty() }.joinToString(" - ")
+            itemLabelBuilder = { language.first(it.billName()) },
+            subtitleBuilder = { customer ->
+                listOf(language.second(customer.billName()), language.first(customer.city))
+                    .filter { it.isNotBlank() }.joinToString(" • ")
             },
             searchFilter = { c, query ->
                 val q = query.lowercase()

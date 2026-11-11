@@ -53,6 +53,7 @@ import com.elvan.udukkai.ui.screens.editor.ElvanEditorDisabledOverlay
 import com.elvan.udukkai.ui.screens.editor.receipt.components.ReceiptInvoiceSelectionSheet
 import com.elvan.udukkai.ui.screens.editor.invoice.components.ElvanDocumentNumberField
 import com.elvan.udukkai.ui.screens.editor.invoice.components.InvoiceDateField
+import com.elvan.udukkai.core.finance.FullReceiptSettlement
 import com.elvan.udukkai.core.utils.DateUtils
 import com.elvan.udukkai.ui.components.shell.LocalElvanTopSpacerHeight
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -166,6 +167,7 @@ fun TextilesReceiptEditorScreen(
     val referenceRequiredMsg = K.referenceRequired.tr()
     val receiptBeforeInvoiceMsg = K.receiptBeforeInvoice.tr()
     val thogaiInvalidMsg = K.amountMustBeGreaterThanZero.tr()
+    val amountMismatchMsg = K.receiptAmountMustMatchBills.tr()
     val duplicateMsg = K.receiptNumberAlreadyExists.tr()
     val savedMsg = K.receiptSaved.tr()
     val saveFailedMsg = K.couldNotSavePrefix.tr()
@@ -184,7 +186,7 @@ fun TextilesReceiptEditorScreen(
     }
 
     // Auto-generate receipt number on profile selection if new
-    LaunchedEffect(selectedCompanyId) {
+    LaunchedEffect(selectedCompanyId, selectedProfile?.shortName) {
         if (!isEditing && (!isReceiptNumberOverridden || receiptNumber.isEmpty()) && selectedCompanyId != null) {
             generateReceiptNumber(selectedProfile, receiptDate)
         }
@@ -197,8 +199,8 @@ fun TextilesReceiptEditorScreen(
         hasUnsavedChanges = true
 
         if (newList.isNotEmpty()) {
-            val total = newList.sumOf { it.totalAmount }
-            thogai = if (total % 1.0 == 0.0) total.toLong().toString() else ((total * 100).toLong() / 100.0).toString()
+            val total = FullReceiptSettlement.total(newList)
+            thogai = com.elvan.udukkai.core.utils.BillRules.plainNumber(total)
 
             val first = newList.first()
             if (selectedCustomerId == null || selectedCustomerNameMap.isEmpty()) {
@@ -243,13 +245,17 @@ fun TextilesReceiptEditorScreen(
     var previewPayload by remember { mutableStateOf<String?>(null) }
     fun openPreview() {
         if (!isProfileConfigured) { ElvanSnackbar.show(selectCompanyProfileMsg); return }
-        val name = selectedCustomerNameMap["ta"] ?: selectedCustomerNameMap.values.firstOrNull().orEmpty()
+        if (!isEditing && selectedInvoices.isEmpty()) { ElvanSnackbar.show(selectInvoiceMsg); return }
+        val name = selectedCustomerNameMap.values.firstOrNull { it.isNotBlank() }.orEmpty()
         if (name.trim().isEmpty()) { ElvanSnackbar.show(customerNameRequiredMsg); return }
         val amount = thogai.trim().toDoubleOrNull() ?: 0.0
         if (amount <= 0.0) { ElvanSnackbar.show(thogaiInvalidMsg); return }
-        // Invoices the amount reaches, in order, like when the receipt is saved
-        var remaining = amount
-        var numbers = selectedInvoices.filter { inv -> (remaining > 0.0).also { remaining -= inv.totalAmount } }.map { it.invoiceNumber }
+        if (selectedInvoices.isNotEmpty() && !FullReceiptSettlement.matches(amount, selectedInvoices)) {
+            ElvanSnackbar.show(amountMismatchMsg.replace("%s", com.elvan.udukkai.core.utils.CurrencyUtils.formatInr(FullReceiptSettlement.total(selectedInvoices))))
+            return
+        }
+
+        var numbers = selectedInvoices.map { it.invoiceNumber }
         if (numbers.isEmpty() && receipt != null && receipt.id > 0L) {
             numbers = com.elvan.udukkai.textiles.data.TextilesReceiptRepository.getLinksForReceipt(receipt.id).mapNotNull { link ->
                 com.elvan.udukkai.textiles.data.TextilesInvoiceRepository.invoices.find { it.id == link.invoiceId }?.invoiceNumber
@@ -275,7 +281,7 @@ fun TextilesReceiptEditorScreen(
             return
         }
 
-        val customerNameTamil = selectedCustomerNameMap["ta"] ?: selectedCustomerNameMap.values.firstOrNull().orEmpty()
+        val customerNameTamil = selectedCustomerNameMap.values.firstOrNull { it.isNotBlank() }.orEmpty()
         if (customerNameTamil.trim().isEmpty()) {
             ElvanSnackbar.show(customerNameRequiredMsg)
             return
@@ -284,6 +290,11 @@ fun TextilesReceiptEditorScreen(
         val amount = thogai.trim().toDoubleOrNull() ?: 0.0
         if (amount <= 0.0) {
             ElvanSnackbar.show(thogaiInvalidMsg)
+            return
+        }
+
+        if (selectedInvoices.isNotEmpty() && !FullReceiptSettlement.matches(amount, selectedInvoices)) {
+            ElvanSnackbar.show(amountMismatchMsg.replace("%s", com.elvan.udukkai.core.utils.CurrencyUtils.formatInr(FullReceiptSettlement.total(selectedInvoices))))
             return
         }
 
@@ -313,25 +324,11 @@ fun TextilesReceiptEditorScreen(
             return
         }
 
-        // FIFO allocation across selected invoices
-        val links = mutableListOf<ReceiptInvoiceLinkModel>()
-        if (selectedInvoices.isNotEmpty()) {
-            var remaining = amount
-            for (inv in selectedInvoices) {
-                if (remaining <= 0.0) break
-                val apply = remaining.coerceAtMost(inv.totalAmount)
-                if (apply > 0.0) {
-                    links.add(
-                        ReceiptInvoiceLinkModel(
-                            receiptId = receipt?.id ?: 0L,
-                            invoiceId = inv.id,
-                            appliedAmount = apply
-                        )
-                    )
-                    remaining -= apply
-                }
-            }
-
+        // The amount was checked against the complete selected-bill total above.
+        val links = selectedInvoices.map { inv ->
+            ReceiptInvoiceLinkModel(receiptId = receipt?.id ?: 0L, invoiceId = inv.id, appliedAmount = inv.totalAmount)
+        }
+        if (links.isNotEmpty()) {
             // Validate links
             val validationErr = com.elvan.udukkai.textiles.data.TextilesReceiptRepository.validateLinks(links, receipt?.id)
             if (validationErr != null) {
@@ -406,6 +403,7 @@ fun TextilesReceiptEditorScreen(
         scrollState = scrollState,
         hasActions = false,
         actions = {},
+        hasFloatingBar = com.elvan.udukkai.core.platform.platformLayoutPolicy.supportsLandscapeControls,
         floatingBar = {
             ElvanEditorBottomBar(
                 onPreview = ::openPreview,
@@ -767,6 +765,7 @@ fun TextilesReceiptEditorScreen(
 
         ReceiptInvoiceSelectionSheet(
             invoices = selectableInvoices,
+            profile = selectedProfile,
             initialSelectedIds = selectedInvoices.map { it.id }.toSet(),
             onConfirmed = { pickedList ->
                 onInvoicesUpdated(pickedList)

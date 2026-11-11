@@ -169,7 +169,11 @@ fun ViewTile(
                     .background(colors.background)
             ) {
                 Box(modifier = modifier.fillMaxSize()) {
-                    CompositionLocalProvider(LocalElvanTopSpacerHeight provides elvanStandardTopBarInset()) {
+                    CompositionLocalProvider(
+                        LocalElvanTopSpacerHeight provides if (!isLandscape && com.elvan.udukkai.core.platform.platformLayoutPolicy.supportsLandscapeControls) elvanStandardTopBarInset() + com.elvan.udukkai.theme.Dimens.HeaderGap - com.elvan.udukkai.theme.Dimens.SectionSpacing else elvanStandardTopBarInset(),
+                        com.elvan.udukkai.ui.components.shell.LocalElvanScrollState provides scrollState,
+                        com.elvan.udukkai.ui.components.shell.LocalPortraitPageBottom provides if (!isLandscape && com.elvan.udukkai.core.platform.platformLayoutPolicy.supportsLandscapeControls) com.elvan.udukkai.theme.Dimens.portraitBottomPadding(true, navBarsPadding) else null
+                    ) {
                         content()
                     }
                 }
@@ -223,6 +227,7 @@ fun ViewTile(
                 onBack = onBack,
                 scrollState = scrollState,
                 showBottomFade = true,
+                hasFloatingBar = com.elvan.udukkai.core.platform.platformLayoutPolicy.supportsLandscapeControls,
                 collapsedOnly = true,
                 hideTitleSideways = true,
                 floatingBar = {

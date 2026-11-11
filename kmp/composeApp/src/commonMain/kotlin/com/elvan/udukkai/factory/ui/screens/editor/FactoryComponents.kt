@@ -1,5 +1,7 @@
 package com.elvan.udukkai.factory.ui.screens.editor
 
+import com.elvan.udukkai.data.model.ItemNames
+import com.elvan.udukkai.data.model.ItemModel
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
@@ -26,7 +28,6 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.elvan.udukkai.core.utils.CurrencyUtils
-import com.elvan.udukkai.data.model.ItemModel
 import com.elvan.udukkai.factory.data.FactoryItemRepository
 import com.elvan.udukkai.localization.K
 import com.elvan.udukkai.localization.PrintLanguageManager
@@ -116,7 +117,7 @@ fun FactoryItemCard(
                 Box(
                     modifier = Modifier
                         .padding(end = 8.dp, bottom = 6.dp)
-                        .size(48.dp)
+                        .size(if (com.elvan.udukkai.ui.components.shell.LocalLandscapeContent.current) 48.dp else 32.dp)
                         .clip(CircleShape)
                         .background(if (isDark) Color.White.copy(alpha = 0.08f) else Color.Black.copy(alpha = 0.05f))
                         .clickable { onItemDeleted() },
@@ -126,7 +127,7 @@ fun FactoryItemCard(
                         imageVector = MaterialSymbols.Rounded.Delete,
                         contentDescription = K.delete.tr(),
                         tint = colors.textSecondary,
-                        modifier = Modifier.size(24.dp)
+                        modifier = Modifier.size(if (com.elvan.udukkai.ui.components.shell.LocalLandscapeContent.current) 24.dp else 18.dp)
                     )
                 }
             }
@@ -144,18 +145,11 @@ fun FactoryItemCard(
                 val secondaryLang = config.secondaryLanguage.code
                 val isBilingual = config.isBilingual
 
-                val primaryName = if (item.languageMap.isNotEmpty()) {
-                    item.languageMap[primaryLang] ?: item.languageMap.values.firstOrNull().orEmpty()
-                } else {
-                    if (primaryLang == "ta") item.itemName.ifEmpty { item.itemNameEn }
-                    else item.itemNameEn.ifEmpty { item.itemName }
-                }
-                val secondaryName = if (item.languageMap.isNotEmpty()) {
-                    item.languageMap[secondaryLang] ?: ""
-                } else {
-                    if (secondaryLang == "en") item.itemNameEn else item.itemName
-                }
-                val displayName = primaryName.ifEmpty { item.itemName.ifEmpty { item.itemNameEn } }
+                val names = ItemNames.snapshot(item.languageMap, item.itemName, item.itemNameEn)
+                val primaryName = names[primaryLang].orEmpty()
+                val secondaryName = if (isBilingual) names[secondaryLang].orEmpty() else ""
+                val displayName = primaryName
+
                 val containerBg = colors.iconBg
 
                 val itemSearchPill = @Composable {
@@ -423,7 +417,7 @@ fun FactoryItemCard(
             onDismissRequest = { isPickerOpen = false },
             onSelected = { p: ItemModel ->
                 val primary = if (p.name.isNotEmpty()) {
-                    p.name[primaryLang] ?: p.name.values.firstOrNull().orEmpty()
+                    p.name[primaryLang].orEmpty()
                 } else ""
                 val secondary = if (p.name.isNotEmpty()) {
                     p.name[secondaryLang] ?: ""
@@ -449,7 +443,7 @@ fun FactoryItemCard(
             },
             itemLabelBuilder = { p ->
                 if (p.name.isNotEmpty()) {
-                    p.name[primaryLang] ?: p.name.values.firstOrNull().orEmpty()
+                    p.name[primaryLang].orEmpty()
                 } else ""
             },
             subtitleBuilder = { p ->
@@ -519,7 +513,7 @@ fun FactoryAdditionalChargeCard(
             Box(
                 modifier = Modifier
                     .padding(end = 4.dp, bottom = 6.dp)
-                    .size(48.dp)
+                    .size(if (com.elvan.udukkai.ui.components.shell.LocalLandscapeContent.current) 48.dp else 32.dp)
                     .clip(CircleShape)
                     .background(if (isDark) Color.White.copy(alpha = 0.08f) else Color.Black.copy(alpha = 0.05f))
                     .clickable { onDeleted() },
@@ -529,7 +523,7 @@ fun FactoryAdditionalChargeCard(
                     imageVector = MaterialSymbols.Rounded.Delete,
                     contentDescription = K.delete.tr(),
                     tint = colors.textSecondary,
-                    modifier = Modifier.size(24.dp)
+                    modifier = Modifier.size(if (com.elvan.udukkai.ui.components.shell.LocalLandscapeContent.current) 24.dp else 18.dp)
                 )
             }
         }

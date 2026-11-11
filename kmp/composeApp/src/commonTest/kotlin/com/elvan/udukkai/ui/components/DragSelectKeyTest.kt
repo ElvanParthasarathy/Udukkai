@@ -20,6 +20,7 @@ class DragSelectKeyTest {
         assertEquals(listOf(12L, 13L), recordIdsOfKey("item_pair_12_13"))
         assertEquals(listOf(5L), recordIdsOfKey("cust_pair_5"))
         assertEquals(listOf(9L, 4L), recordIdsOfKey("inv_pair_9_4"))
+        assertEquals(listOf(8L, 2L), recordIdsOfKey("rec_pair_8_2"))
     }
 
     @Test

@@ -1,5 +1,7 @@
 package com.elvan.udukkai.textiles.ui.screens.editor
 
+import com.elvan.udukkai.data.model.InvoiceItemCatalog
+import com.elvan.udukkai.data.model.ItemNames
 import com.elvan.udukkai.core.utils.DateUtils
 import com.elvan.udukkai.core.utils.BillRules
 import com.elvan.udukkai.core.print.PrintPayload
@@ -174,6 +176,9 @@ fun TextilesInvoiceEditorScreen(
         InvoiceDisplayOptions.fromJson(invoice?.customPreferencesJson)
     }
     var displayOptions by remember { mutableStateOf(initialDisplayOptions) }
+    var customerReselected by remember { mutableStateOf(false) }
+    val keepCustomerSnapshot = invoice != null && !customerReselected && selectedCustomerId == invoice.customerId
+    val savedCustomer = if (keepCustomerSnapshot) com.elvan.udukkai.data.model.CustomerSnapshot.toCustomer(initialDisplayOptions.customer) else null
 
     // Metadata
     var invoiceType by remember { mutableStateOf(invoice?.invoiceType?.ifEmpty { "tax-invoice" } ?: "tax-invoice") }
@@ -410,6 +415,7 @@ fun TextilesInvoiceEditorScreen(
 
     // The bill as the form stands now: used by Save and by the draft preview
     val buildInvoice: (Int) -> InvoiceModel = { nextVanakkam ->
+        val catalog = InvoiceItemCatalog(TextilesItemRepository.items, selectedCompanyId)
         val validItems = activeItems.filter { it.quantity > 0 && it.price > 0 }
         InvoiceModel(
             id = invoice?.id ?: 0L,
@@ -422,7 +428,12 @@ fun TextilesInvoiceEditorScreen(
             customerName = selectedCustomerNameMap,
             customerAddress = selectedCustomerAddressMap,
             invoiceDate = invoiceDate,
-            itemsJson = TextilesCalculation.itemsToJson(validItems),
+            itemsJson = TextilesCalculation.itemsToJson(validItems.map { line ->
+                if (!line.itemId.isNullOrBlank()) line else {
+                    val match = catalog.find(null, ItemNames.snapshot(line.languageMap, line.itemName, line.itemNameEn))
+                    line.copy(itemId = match?.id?.toString())
+                }
+            }),
             totalAmount = totals.grandTotal,
             discount = totals.totalDiscount,
             globalDiscountValue = globalDiscountValue.toDoubleOrNull() ?: 0.0,
@@ -433,7 +444,7 @@ fun TextilesInvoiceEditorScreen(
             customPreferencesJson = displayOptions.copy(
                 placeOfSupply = placeOfSupplyEn,
                 placeOfSupplyTa = placeOfSupplyTa,
-                customer = selectedCustomerId?.let { com.elvan.udukkai.textiles.data.TextilesCustomerRepository.getById(it) }?.let(com.elvan.udukkai.data.model.CustomerSnapshot::of)
+                customer = if (savedCustomer != null) initialDisplayOptions.customer else selectedCustomerId?.let { TextilesCustomerRepository.getById(it) }?.let(com.elvan.udukkai.data.model.CustomerSnapshot::of)
                     // Same customer as the saved bill, but gone from the list: keep what the bill already had
                     ?: if (selectedCustomerId == invoice?.customerId) displayOptions.customer else emptyMap()
             ).toJson(),
@@ -508,6 +519,7 @@ fun TextilesInvoiceEditorScreen(
         scrollState = scrollState,
         hasActions = false,
         actions = {},
+        hasFloatingBar = com.elvan.udukkai.core.platform.platformLayoutPolicy.supportsLandscapeControls,
         floatingBar = {
             ElvanEditorBottomBar(
                 onPreview = openPreview,
@@ -582,11 +594,15 @@ fun TextilesInvoiceEditorScreen(
                 // ── Section 0: ① Billed To (பெறுநர்) ──
                 item(key = "customer_section") {
                     ElvanEditorSection(index = 0, title = K.billedTo.tr()) {
-                        TextilesCustomerField(
+                        com.elvan.udukkai.ui.screens.editor.InvoiceCustomerField(
+                            customers = TextilesCustomerRepository.customers.filter { it.isAvailableForCompany(selectedCompanyId) },
+                            savedCustomer = savedCustomer,
+                            profile = selectedProfile,
                             selectedCustomerId = selectedCustomerId,
                             onCustomerSelected = { customer ->
+                                customerReselected = true
                                 selectedCustomerId = customer.id
-                                selectedCustomerNameMap = customer.name
+                                selectedCustomerNameMap = customer.billName()
                                 selectedCustomerAddressMap = customer.city
                                 val sEn = customer.state["en"].orEmpty()
                                 val sTa = customer.state["ta"] ?: customer.state.values.firstOrNull().orEmpty()
@@ -598,6 +614,7 @@ fun TextilesInvoiceEditorScreen(
                                 hasUnsavedChanges = true
                             },
                             onCustomerCleared = {
+                                customerReselected = true
                                 selectedCustomerId = null
                                 selectedCustomerNameMap = emptyMap()
                                 selectedCustomerAddressMap = emptyMap()

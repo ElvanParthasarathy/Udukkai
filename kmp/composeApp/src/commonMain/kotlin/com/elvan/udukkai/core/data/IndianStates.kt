@@ -2,8 +2,12 @@ package com.elvan.udukkai.core.data
 
 data class LocationName(
     val en: String,
-    val ta: String
-)
+    val ta: String,
+    val additionalTranslations: Map<String, String> = emptyMap()
+) {
+    // Existing catalog constructors keep their legacy columns; new languages extend the map.
+    val translations: Map<String, String> = mapOf("en" to en, "ta" to ta) + additionalTranslations
+}
 
 val indianStates: List<LocationName> = listOf(
     LocationName(en = "Andaman and Nicobar Islands", ta = "அந்தமான் நிக்கோபார் தீவுகள்"),
@@ -117,6 +121,16 @@ fun getCountryCallingCode(countryName: String?): String {
 
 /** Localize known geographic names for controls without translating free-form address data. */
 fun locationUiName(value: String, options: List<LocationName>, language: String): String {
-    val preset = options.firstOrNull { it.en.equals(value, ignoreCase = true) || it.ta == value } ?: return value
-    return if (language == "ta") preset.ta else preset.en
+    val preset = options.firstOrNull { item -> item.translations.values.any { it.equals(value, ignoreCase = true) } } ?: return value
+    return preset.translations[language]?.takeIf { it.isNotBlank() } ?: value
+}
+
+/** Known dropdown values have a stable identity even when an older record saved just one translation. */
+fun locationDataName(values: Map<String, String>, options: List<LocationName>, language: String): String {
+    val own = values[language].orEmpty()
+    if (own.isNotBlank()) return locationUiName(own, options, language)
+    val preset = options.firstOrNull { item ->
+        item.translations.values.any { known -> values.values.any { it.equals(known, ignoreCase = true) } }
+    }
+    return preset?.translations?.get(language).orEmpty()
 }

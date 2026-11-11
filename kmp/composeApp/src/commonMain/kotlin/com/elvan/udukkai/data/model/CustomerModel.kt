@@ -41,7 +41,7 @@ data class CustomerModel(
         if (!isBusiness || owner.isEmpty()) return name
         return (name.keys + owner.keys).associateWith { lang ->
             val biz = name[lang].orEmpty()
-            val own = owner[lang] ?: owner.values.first()
+            val own = owner[lang].orEmpty()
             when (billNameMode) {
                 SHOW_OWNER -> own.ifBlank { biz }
                 SHOW_BOTH -> if (biz.isBlank() || own.isBlank()) biz.ifBlank { own } else "$biz ($own)"

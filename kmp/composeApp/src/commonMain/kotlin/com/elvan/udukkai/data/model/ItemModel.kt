@@ -15,7 +15,8 @@ data class ItemModel(
     val createdAt: Long = System.currentTimeMillis(),
     val updatedAt: Long = System.currentTimeMillis(),
     val isDeleted: Boolean = false,
-    val deletedAt: Long? = null
+    val deletedAt: Long? = null,
+    val previousNames: List<ItemNameRevision> = emptyList()
 ) {
 
     /**
@@ -100,6 +101,7 @@ object ItemFirebasePayloadConverter {
         return hashMapOf(
             "id" to item.id,
             "name" to LanguageJsonConverter.stringify(item.name),
+            "previousNames" to ItemNames.encodeHistory(item.previousNames),
             "hsnCode" to item.hsnCode,
             "price" to item.price,
             "taxRate" to item.taxRate,
@@ -249,7 +251,8 @@ object ItemFirebasePayloadConverter {
             createdAt = createdAt,
             updatedAt = updatedAt,
             isDeleted = isDeleted,
-            deletedAt = deletedAt
+            deletedAt = deletedAt,
+            previousNames = ItemNames.decodeHistory(map["previousNames"] as? String)
         )
     }
 }

@@ -1,6 +1,9 @@
 package com.elvan.udukkai.data.settings
 
 object LanguageJsonConverter {
+    /** Old invoice rows used fixed Tamil/English columns before language maps existed. */
+    fun legacyItemNames(name: String, nameEn: String): Map<String, String> = mapOf("ta" to name, "en" to nameEn)
+
     fun parse(json: String?): MutableMap<String, String> {
         val result = mutableMapOf<String, String>()
         if (json.isNullOrBlank() || json.trim() == "{}" || json.trim() == "null") return result

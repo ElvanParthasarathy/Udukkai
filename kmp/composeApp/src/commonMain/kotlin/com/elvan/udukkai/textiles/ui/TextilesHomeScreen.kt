@@ -482,6 +482,7 @@ ElvanSearchBar(
                             )
                             navigateToSubpage(ActiveSubpage.InvoiceEditor(converted))
                         },
+                        currentCustomer = currentInvoice.customerId?.let { TextilesCustomerRepository.getById(it) },
                         printPayload = { activeProfile ->
                             PrintPayload.forTextilesInvoice(
                                 invoice = currentInvoice,
@@ -819,6 +820,7 @@ androidx.compose.animation.AnimatedContent(
                             NavTab.Create -> {
                                 ExpressivePullToRefreshBox(
                                     enabled = !isSelectionMode,
+                                    overlay = !isLandscape,
                                     isRefreshing = isRefreshing,
                                     onRefresh = {
                                         scope.launch {
@@ -838,7 +840,7 @@ androidx.compose.animation.AnimatedContent(
                                         selectedSegment = uruvakkuSegment,
                                         onSegmentSelected = { newSegment ->
                                             if (uruvakkuSegment != newSegment) {
-                                                scope.launch { createScrollState.scrollToItem(0, 0) }
+                                                createScrollState.requestScrollToItem(0)
                                                 uruvakkuSegment = newSegment
                                             }
                                             isSearchActive = false

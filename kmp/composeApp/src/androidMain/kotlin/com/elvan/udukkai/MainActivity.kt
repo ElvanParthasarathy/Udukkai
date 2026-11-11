@@ -68,6 +68,11 @@ class MainActivity : FragmentActivity() {
     override fun onNewIntent(intent: android.content.Intent) {
         super.onNewIntent(intent)
         devSkipLock(intent)
+        if (BuildConfig.DEBUG && java.io.File(filesDir, "release-audit-offline").exists()) {
+            intent.getStringExtra("dev_settings_route")?.let {
+                SettingsActivity.start(this, com.elvan.udukkai.ui.screens.settings.settingsRouteFromName(it))
+            }
+        }
     }
 
     @OptIn(androidx.compose.ui.ExperimentalComposeUiApi::class)
@@ -84,6 +89,11 @@ class MainActivity : FragmentActivity() {
         super.onCreate(savedInstanceState)
         devSkipLock(intent)
         com.elvan.udukkai.core.platform.AppContext.context = applicationContext
+        if (BuildConfig.DEBUG && intent.getBooleanExtra("dev_release_audit", false)) {
+            Thread { com.elvan.udukkai.core.audit.ReleaseAudit.run() }.start()
+            finish()
+            return
+        }
         com.elvan.udukkai.core.security.ScreenLockReceiver.register(applicationContext)
         com.elvan.udukkai.core.platform.CurrentActivity.activity = this
         com.elvan.udukkai.localization.LanguageManager.init()

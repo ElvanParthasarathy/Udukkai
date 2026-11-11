@@ -12,25 +12,25 @@ class ViewHistoryFilterTest {
     private val rows = listOf(row(3, 0.0, 100.0), row(2, 40.0, 60.0), row(1, 100.0, 0.0))
 
     @Test
-    fun statusFiltersSplitUnpaidPartlyAndPaid() {
-        assertEquals(listOf(3L), ViewHistory.apply(rows, HistoryFilter.Unpaid, HistorySort.DateNew).map { it.id })
-        assertEquals(listOf(2L), ViewHistory.apply(rows, HistoryFilter.PartlyPaid, HistorySort.DateNew).map { it.id })
-        assertEquals(listOf(1L), ViewHistory.apply(rows, HistoryFilter.Paid, HistorySort.DateNew).map { it.id })
+    fun dateBoundsAreInclusiveAndIndependentOfSort() {
+        assertEquals(listOf(3L, 2L), ViewHistory.apply(rows, HistorySort.DateNew, startMillis = 2).map { it.id })
+        assertEquals(listOf(1L, 2L), ViewHistory.apply(rows, HistorySort.DateOld, endMillis = 2).map { it.id })
+        assertEquals(listOf(2L), ViewHistory.apply(rows, HistorySort.DateNew, 2, 2).map { it.id })
     }
 
     @Test
     fun sortsByDateAndByNumberNotAsText() {
         val numbered = listOf(row(1, 0.0, 100.0, "INV-9"), row(2, 0.0, 100.0, "INV-10"))
-        assertEquals(listOf(2L, 1L), ViewHistory.apply(numbered, HistoryFilter.All, HistorySort.NumberHigh).map { it.id })
-        assertEquals(listOf(1L, 2L, 3L), ViewHistory.apply(rows, HistoryFilter.All, HistorySort.DateOld).map { it.id })
+        assertEquals(listOf(2L, 1L), ViewHistory.apply(numbered, HistorySort.NumberHigh).map { it.id })
+        assertEquals(listOf(1L, 2L, 3L), ViewHistory.apply(rows, HistorySort.DateOld).map { it.id })
     }
 
     @Test
-    fun proformasJoinTheInvoicesButNotTheStatusFilters() {
+    fun proformasJoinTheInvoicesAndFollowTheDateFilter() {
         val estimate = ViewBillRow(id = 9, number = "PF/A-001", date = 9, amount = 50.0, isPaid = false, kind = ViewRowKind.Estimate)
         val all = ViewHistory.withEstimates(rows, listOf(estimate))
-        assertEquals(listOf(9L, 3L, 2L, 1L), ViewHistory.apply(all, HistoryFilter.All, HistorySort.DateNew).map { it.id })
-        assertEquals(listOf(3L), ViewHistory.apply(all, HistoryFilter.Unpaid, HistorySort.DateNew).map { it.id })
+        assertEquals(listOf(9L, 3L, 2L, 1L), ViewHistory.apply(all, HistorySort.DateNew).map { it.id })
+        assertEquals(listOf(9L, 3L), ViewHistory.apply(all, HistorySort.DateNew, startMillis = 3).map { it.id })
     }
 
     @Test

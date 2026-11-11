@@ -83,6 +83,7 @@ class InvoiceViewActivity : BaseSubpageActivity() {
                     )
                     InvoiceEditorActivity.start(this, converted)
                 },
+                currentCustomer = currentInvoice.customerId?.let { FactoryCustomerRepository.getById(it) },
                 printPayload = { activeProfile ->
                     PrintPayload.forFactoryInvoice(
                         invoice = currentInvoice,
@@ -136,6 +137,7 @@ class InvoiceViewActivity : BaseSubpageActivity() {
                     )
                     InvoiceEditorActivity.start(this, converted)
                 },
+                currentCustomer = currentInvoice.customerId?.let { TextilesCustomerRepository.getById(it) },
                 printPayload = { activeProfile ->
                     PrintPayload.forTextilesInvoice(
                         invoice = currentInvoice,

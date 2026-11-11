@@ -1,5 +1,6 @@
 package com.elvan.udukkai.textiles.ui.screens.editor
 
+import com.elvan.udukkai.data.model.ItemNames
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -88,7 +89,7 @@ fun TextilesItemCard(
                 Box(
                     modifier = Modifier
                         .padding(end = 8.dp, bottom = 6.dp)
-                        .size(48.dp)
+                        .size(if (com.elvan.udukkai.ui.components.shell.LocalLandscapeContent.current) 48.dp else 32.dp)
                         .clip(CircleShape)
                         .background(if (isDark) Color.White.copy(alpha = 0.08f) else Color.Black.copy(alpha = 0.05f))
                         .clickable { onItemDeleted() },
@@ -98,7 +99,7 @@ fun TextilesItemCard(
                         imageVector = MaterialSymbols.Rounded.Delete,
                         contentDescription = K.delete.tr(),
                         tint = colors.textSecondary,
-                        modifier = Modifier.size(18.dp)
+                        modifier = Modifier.size(if (com.elvan.udukkai.ui.components.shell.LocalLandscapeContent.current) 24.dp else 18.dp)
                     )
                 }
             }
@@ -114,19 +115,10 @@ fun TextilesItemCard(
                 ElvanEditorLabel(label = K.item.tr())
 
                 val config = PrintLanguageManager.getTextilesConfig()
-                val primaryName = if (item.languageMap.isNotEmpty()) {
-                    item.languageMap[config.primaryLanguage.code] ?: item.languageMap.values.firstOrNull().orEmpty()
-                } else {
-                    item.name
-                }
-                val secondaryName = if (config.isBilingual) {
-                    if (item.languageMap.isNotEmpty()) {
-                        item.languageMap[config.secondaryLanguage.code].orEmpty()
-                    } else {
-                        item.itemNameEn
-                    }
-                } else ""
-                val displayName = primaryName.ifEmpty { secondaryName }
+                val names = ItemNames.snapshot(item.languageMap, item.itemName, item.itemNameEn)
+                val primaryName = names[config.primaryLanguage.code].orEmpty()
+                val secondaryName = if (config.isBilingual) names[config.secondaryLanguage.code].orEmpty() else ""
+                val displayName = primaryName
                 val containerBg = colors.iconBg
 
                 Box(

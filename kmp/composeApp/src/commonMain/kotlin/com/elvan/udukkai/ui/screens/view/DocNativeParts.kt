@@ -149,37 +149,39 @@ fun DocStatusHeader(tone: DocTone, label: String, amount: Double, note: String? 
         .fillMaxWidth()
         .clip(RoundedCornerShape(28.dp))
         .background(if (tone == DocTone.Neutral) colors.surface else tint.copy(alpha = if (colors.isDark) 0.14f else 0.09f))
-    val body: @Composable () -> Unit = {
-        run {
-            val darkGreen = tone == DocTone.Paid && colors.isDark
-            Box(
-                Modifier.size(if (LocalDocLandscape.current) 40.dp else 52.dp).clip(CircleShape).background(
-                    // A clear, deeper tone of the hue in both modes, so the white symbol stands out and never blends into it
-                    (if (tone == DocTone.Paid) colors.receiptColor else if (tone == DocTone.Neutral) toneColor(DocTone.Due) else tint).let { base ->
-                        androidx.compose.ui.graphics.Brush.linearGradient(
-                            if (tone == DocTone.Paid && !colors.isDark) listOf(
-                                androidx.compose.ui.graphics.lerp(base, Color.Black, 0.02f),
-                                androidx.compose.ui.graphics.lerp(base, Color.Black, 0.14f)
-                            )
-                            else if (darkGreen) listOf(androidx.compose.ui.graphics.lerp(tint, Color.White, 0.25f), tint) // the dark mode green, with its dark symbol
-                            else listOf(
-                                androidx.compose.ui.graphics.lerp(base, Color.Black, if (colors.isDark) 0.25f else 0.12f),
-                                androidx.compose.ui.graphics.lerp(base, Color.Black, if (colors.isDark) 0.45f else 0.32f)
-                            )
+    val landscape = LocalDocLandscape.current
+    val badge: @Composable () -> Unit = {
+        val darkGreen = tone == DocTone.Paid && colors.isDark
+        Box(
+            Modifier.size(if (landscape) 38.dp else 52.dp).clip(CircleShape).background(
+                // A clear, deeper tone of the hue in both modes, so the white symbol stands out and never blends into it
+                (if (tone == DocTone.Paid) colors.receiptColor else if (tone == DocTone.Neutral) toneColor(DocTone.Due) else tint).let { base ->
+                    androidx.compose.ui.graphics.Brush.linearGradient(
+                        if (tone == DocTone.Paid && !colors.isDark) listOf(
+                            androidx.compose.ui.graphics.lerp(base, Color.White, 0.22f),
+                            androidx.compose.ui.graphics.lerp(base, Color.Black, 0.18f)
                         )
-                    }
-                ),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    imageVector = when (tone) { DocTone.Paid -> MaterialSymbols.Rounded.Check; DocTone.Due -> MaterialSymbols.Rounded.Schedule; DocTone.Neutral -> MaterialSymbols.Rounded.InvoiceFill },
-                    contentDescription = null,
-                    tint = if (darkGreen) Color(0xFF0B1210) else Color.White,
-                    modifier = Modifier.size(if (LocalDocLandscape.current) (if (darkGreen) 22.dp else 26.dp) else if (darkGreen) 28.dp else 32.dp)
-                )
-            }
-            Spacer(Modifier.height(if (LocalDocLandscape.current) 6.dp else 14.dp))
+                        else if (darkGreen) listOf(androidx.compose.ui.graphics.lerp(tint, Color.White, 0.25f), tint) // the dark mode green, with its dark symbol
+                        else listOf(
+                            androidx.compose.ui.graphics.lerp(base, Color.Black, if (colors.isDark) 0.25f else 0.12f),
+                            androidx.compose.ui.graphics.lerp(base, Color.Black, if (colors.isDark) 0.45f else 0.32f)
+                        )
+                    )
+                }
+            ),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                imageVector = when (tone) { DocTone.Paid -> MaterialSymbols.Rounded.Check; DocTone.Due -> MaterialSymbols.Rounded.Schedule; DocTone.Neutral -> MaterialSymbols.Rounded.InvoiceFill },
+                contentDescription = null,
+                tint = if (darkGreen) Color(0xFF0B1210) else Color.White,
+                modifier = Modifier.size(if (landscape) 22.dp else if (darkGreen) 28.dp else 32.dp)
+            )
         }
+    }
+    val body: @Composable () -> Unit = {
+        badge()
+        Spacer(Modifier.height(14.dp))
         Text(
             text = label.preventBrokenLigatures(),
             style = TextStyle(fontFamily = ff, fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = if (tone == DocTone.Neutral) colors.textSecondary else tint),
@@ -200,14 +202,9 @@ fun DocStatusHeader(tone: DocTone, label: String, amount: Double, note: String? 
             )
         }
     }
-    if (LocalDocLandscape.current) {
+    if (landscape) {
         Row(shape.padding(16.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            Box(Modifier.size(38.dp).clip(CircleShape).background(tint.copy(alpha = 0.18f)), contentAlignment = Alignment.Center) {
-                Icon(
-                    when (tone) { DocTone.Paid -> MaterialSymbols.Rounded.Check; DocTone.Due -> MaterialSymbols.Rounded.Schedule; DocTone.Neutral -> MaterialSymbols.Rounded.InvoiceFill },
-                    null, tint = tint, modifier = Modifier.size(22.dp)
-                )
-            }
+            badge()
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 Text(label.preventBrokenLigatures(), style = TextStyle(fontFamily = ff, fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = tint))
                 Text(CurrencyUtils.formatInr(amount), style = TextStyle(fontFamily = ff, fontSize = 24.sp, fontWeight = FontWeight.ExtraBold, color = colors.textPrimary))
@@ -221,9 +218,15 @@ fun DocStatusHeader(tone: DocTone, label: String, amount: Double, note: String? 
 
 /** The customer: letter avatar, name in both languages and town. Opens the customer when [onClick] is given. */
 @Composable
-fun DocCustomerCard(name: String, secondName: String, town: String, onClick: (() -> Unit)?) {
+fun DocCustomerCard(
+    name: String,
+    secondName: String,
+    town: String,
+    onClick: (() -> Unit)?
+) {
     val colors = rememberShellColors()
     val ff = LocalAppFontFamily.current
+    val subtitleStyle = TextStyle(fontFamily = ff, fontSize = 13.sp, color = colors.textSecondary)
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -241,9 +244,9 @@ fun DocCustomerCard(name: String, secondName: String, town: String, onClick: (()
         Spacer(Modifier.width(14.dp))
         Column(Modifier.weight(1f)) {
             Text(name.preventBrokenLigatures(), style = TextStyle(fontFamily = ff, fontSize = 16.sp, fontWeight = FontWeight.Bold, color = colors.textPrimary), maxLines = 2, overflow = TextOverflow.Ellipsis)
-            val sub = listOf(secondName, town).filter { it.isNotBlank() && it != name }.joinToString(" • ")
-            if (sub.isNotBlank()) {
-                Text(sub.preventBrokenLigatures(), style = TextStyle(fontFamily = ff, fontSize = 13.sp, color = colors.textSecondary), maxLines = if (LocalDocLandscape.current) 3 else 1, overflow = TextOverflow.Ellipsis)
+            val subtitle = listOf(secondName, town).filter { it.isNotBlank() && it != name }.distinct().joinToString(" • ")
+            if (subtitle.isNotBlank()) {
+                Text(subtitle.preventBrokenLigatures(), style = subtitleStyle, maxLines = 2, overflow = TextOverflow.Ellipsis)
             }
         }
         if (onClick != null) {

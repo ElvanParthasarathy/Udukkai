@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.runtime.Composable
@@ -58,9 +59,15 @@ fun ViewRecordPage(
     onReceiptClick: (Long) -> Unit,
     onRetryHistory: () -> Unit,
     summary: @Composable () -> Unit = {},
+    recordHistory: (@Composable () -> Unit)? = null,
     details: @Composable () -> Unit
 ) {
     var section by rememberSaveable { mutableIntStateOf(0) }
+    val tabs = buildList {
+        add(PillShifterItem(K.detailsTab.tr()))
+        add(PillShifterItem(K.transactionsTab.tr()))
+        if (recordHistory != null) add(PillShifterItem(K.itemHistoryTab.tr()))
+    }
 
     ViewTile(
         title = title,
@@ -84,12 +91,14 @@ fun ViewRecordPage(
                         detail = {
                             item("record_tabs") {
                                 ElvanPillShifter(
-                                    items = listOf(PillShifterItem(K.detailsTab.tr()), PillShifterItem(K.transactionsTab.tr())),
+                                    items = tabs,
                                     selectedIndex = section, onIndexSelected = { section = it }, colors = colors, isFullWidth = true
                                 )
                             }
                             if (section == 0) item("record_details") {
                                 Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(RECORD_GAP)) { details() }
+                            } else if (section == 2 && recordHistory != null) {
+                                item("record_history") { recordHistory() }
                             } else viewHistoryItems(history, historyUi, colors, onBillClick, onReceiptClick, onRetryHistory, 0.dp, isLandscape = false)
                         }
                     )
@@ -115,7 +124,7 @@ fun ViewRecordPage(
                 }
             }
             // Kept while scrolling back up, shrinking with it: the new content can hold the old position but not scroll further
-            val held = remember(section, historyUi.tab, historyUi.filter, historyUi.sort) { scrolledPx() }
+            val held = remember(section, historyUi.tab, historyUi.dateRange, historyUi.sort) { scrolledPx() }
 
             fun heightBelow(rowAbove: Dp): Dp {
                 val fill = (maxHeight - topSpace - extraTop - shifterH - spacing - rowAbove - bottomPadding).coerceAtLeast(0.dp)
@@ -132,11 +141,13 @@ fun ViewRecordPage(
                 item(key = "section_tabs") {
                     Box(Modifier.fillMaxWidth().elvanTopBandRow(sideways, up = 12.dp + extraTop), contentAlignment = Alignment.Center) {
                         ElvanPillShifter(
-                            items = listOf(PillShifterItem(K.detailsTab.tr()), PillShifterItem(K.transactionsTab.tr())),
+                            items = tabs,
                             selectedIndex = section,
                             onIndexSelected = { section = it },
                             colors = colors,
-                            isFullWidth = false
+                            modifier = if (recordHistory != null) Modifier.widthIn(max = 380.dp) else Modifier,
+                            isFullWidth = recordHistory != null,
+                            height = SHIFTER_HEIGHT
                         )
                     }
                 }
@@ -152,6 +163,10 @@ fun ViewRecordPage(
                                 content = { summary(); details() }
                             )
                         }
+                    }
+                } else if (section == 2 && recordHistory != null) {
+                    item("record_history") {
+                        Box(Modifier.fillMaxWidth().heightIn(min = heightBelow(0.dp))) { recordHistory() }
                     }
                 } else {
                     viewHistoryItems(history, historyUi, colors, onBillClick, onReceiptClick, onRetryHistory, heightBelow(HISTORY_TOOLS_HEIGHT + spacing), isLandscape = maxWidth > maxHeight)

@@ -9,6 +9,7 @@ import com.elvan.udukkai.core.utils.NumberToWords
 import com.elvan.udukkai.data.model.InvoiceModel
 import com.elvan.udukkai.data.model.PaymentType
 import com.elvan.udukkai.data.model.ReceiptModel
+import com.elvan.udukkai.data.settings.DataLanguageDisplay
 import com.elvan.udukkai.data.settings.BusinessProfile
 import com.elvan.udukkai.localization.K
 import com.elvan.udukkai.localization.tr
@@ -37,7 +38,8 @@ fun ReceiptViewScreen(
 ) {
     val activeProfile = (if (receipt.companyId != null) allProfiles.find { it.id == receipt.companyId } else null) ?: profile
     val deleteItem = rememberViewDeleteItem(onDelete, K.receiptDeletedMsg.tr(), onBack)
-    val payload = remember(receipt, activeProfile) { printPayload?.invoke(activeProfile) }
+    val appLanguage = com.elvan.udukkai.localization.LanguageManager.activeLanguageCode
+    val payload = remember(receipt, activeProfile, appLanguage) { printPayload?.invoke(activeProfile) }
     PreviewScreen(
         title = receipt.receiptNumber,
         onBack = onBack,
@@ -59,11 +61,10 @@ private fun ReceiptBody(
     onOpenInvoice: ((InvoiceModel) -> Unit)?,
     onOpenCustomer: (() -> Unit)?
 ) {
-    val primary = profile.primaryLanguage.ifEmpty { "ta" }
-    val secondary = profile.secondaryLanguage.ifEmpty { "en" }
-    val name = receipt.customerName[primary] ?: receipt.customerName[secondary] ?: receipt.customerName.values.firstOrNull().orEmpty().ifEmpty { "-" }
-    val secondName = if (profile.isBilingual) receipt.customerName[secondary].orEmpty() else ""
-    val town = receipt.customerAddress[primary] ?: receipt.customerAddress[secondary] ?: receipt.customerAddress.values.firstOrNull().orEmpty()
+    val language = DataLanguageDisplay(profile)
+    val name = language.first(receipt.customerName).ifBlank { "-" }
+    val secondName = language.second(receipt.customerName)
+    val town = language.first(receipt.customerAddress)
 
     val receivedLabel = K.amountReceived.tr()
     val numberLabel = K.receiptNumber.tr()
@@ -75,7 +76,7 @@ private fun ReceiptBody(
     val billsTitle = K.invoices.tr()
     val wordsTitle = K.amountInWords.tr()
     val notesTitle = K.remarks.tr()
-    val words = remember(receipt.amount) { NumberToWords.toTamil(receipt.amount) to NumberToWords.toEnglish(receipt.amount) }
+    val words = remember(receipt.amount, language.languages) { language.lines { NumberToWords.forLanguage(receipt.amount, it) } }
 
     DocPage(fullWidthKeys = setOf("top_spacer")) {
         item(key = "status") { DocStatusHeader(DocTone.Paid, receivedLabel, receipt.amount) }
@@ -116,7 +117,7 @@ private fun ReceiptBody(
                 }
             }
         }
-        item(key = "words") { DocTextCard(wordsTitle, listOf(words.first to true, words.second to false)) }
+        item(key = "words") { DocTextCard(wordsTitle, words) }
         if (receipt.notes.isNotBlank()) {
             item(key = "notes") { DocTextCard(notesTitle, listOf(receipt.notes to true)) }
         }

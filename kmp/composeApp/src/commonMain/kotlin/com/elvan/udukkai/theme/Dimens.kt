@@ -7,6 +7,11 @@ import com.elvan.udukkai.core.platform.getImeBottomPadding
 import com.elvan.udukkai.core.platform.getNavBarBottomPadding
 
 object Dimens {
+    /** Final card-to-edge gap; floating controls reserve their own height plus this gap. */
+    val PortraitEdgeGap = 12.dp
+    fun portraitBottomPadding(hasFloatingBar: Boolean, navigationInset: Dp): Dp =
+        navigationInset + PortraitEdgeGap + if (hasFloatingBar) 56.dp + FloatingBarBottomGap else 0.dp
+
     val LandscapeEdgeGap = 8.dp
     val SettingsPaneHeaderHeight = 52.dp
     val ContentPadding = 12.dp

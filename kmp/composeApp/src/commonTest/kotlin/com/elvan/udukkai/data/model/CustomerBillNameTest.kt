@@ -5,6 +5,11 @@ import kotlin.test.assertEquals
 
 /** What a customer's bill prints: the business, the owner or both, and just the name for a person. */
 class CustomerBillNameTest {
+    @kotlin.test.Test fun missingOwnerTranslationNeverBorrowsAnotherLanguage() {
+        val customer = CustomerModel(name = mapOf("fr" to "Business", "hi" to "Business Hindi"), extra = mapOf("type" to "b2b", "owner.hi" to "Owner Hindi", "show" to SHOW_BOTH))
+        assertEquals("Business", customer.billName()["fr"])
+        assertEquals("Business Hindi (Owner Hindi)", customer.billName()["hi"])
+    }
     private val business = CustomerModel(
         name = mapOf("en" to "Sri Silks", "ta" to "ஸ்ரீ சில்க்ஸ்"),
         extra = mapOf("type" to "b2b", "owner.en" to "Raman", "owner.ta" to "ராமன்")

@@ -5,29 +5,24 @@ import com.elvan.udukkai.ui.components.dragSelect
 import com.elvan.udukkai.ui.components.ExpressiveDotsLoader
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import com.elvan.udukkai.ui.components.shell.elvanTopBandRow
-import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.elvan.udukkai.core.utils.DateGroupUtils
-import com.elvan.udukkai.core.utils.DateUtils
+import com.elvan.udukkai.ui.screens.create.components.dateFilterLabel
 import com.elvan.udukkai.data.model.InvoiceModel
 import com.elvan.udukkai.data.model.ReceiptModel
 import com.elvan.udukkai.textiles.data.TextilesInvoiceRepository
@@ -40,7 +35,6 @@ import com.elvan.udukkai.theme.LocalAppFontFamily
 import com.elvan.udukkai.theme.LocalShellColors
 import com.elvan.udukkai.theme.preventBrokenLigatures
 import com.elvan.udukkai.theme.rememberShellColors
-import com.elvan.udukkai.ui.components.shell.LocalElvanTopSpacerHeight
 import com.elvan.udukkai.ui.components.shell.UruvakkuCardSkeleton
 import com.elvan.udukkai.ui.navigation.MaterialSymbols
 import com.elvan.udukkai.ui.screens.create.components.*
@@ -99,123 +93,48 @@ fun TextilesCreateScreen(
 
     BoxWithConstraints(modifier = modifier.fillMaxSize()) {
         val isLandscape = maxWidth > maxHeight
-        com.elvan.udukkai.ui.components.shell.ElvanLazyColumn(
+        val dateFilterActive = if (selectedSegment == 0) TextilesInvoiceRepository.isDateFilterActive else TextilesReceiptRepository.isDateFilterActive
+        CreateDocumentList(
             state = scrollState,
-            modifier = Modifier.fillMaxSize().dragSelect(scrollState, { it in selectedItemIds }, { onItemLongClick?.invoke(it) }, { onToggleSelect?.invoke(it) }),
+            listModifier = Modifier.dragSelect(scrollState, { it in selectedItemIds }, { onItemLongClick?.invoke(it) }, { onToggleSelect?.invoke(it) }),
             contentPadding = PaddingValues(
                 bottom = Dimens.ContentPaddingBottom.sidewaysTight()
             ),
-            verticalArrangement = Arrangement.spacedBy(14.dp)
-        ) {
-            item(key = "uruvakku_top_spacer") {
-                Spacer(modifier = Modifier.height(LocalElvanTopSpacerHeight.current))
-            }
-
-            item(key = "top_shifters_container") {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(bottom = 8.dp),
-                    verticalArrangement = Arrangement.spacedBy(16.dp)
+            landscape = isLandscape,
+            colors = colors,
+            groups = if (isRefreshing) emptyList() else if (listSegment == 0) invoiceGroups else receiptGroups,
+            tabs = {
+                Box(
+                    modifier = Modifier.fillMaxWidth().elvanTopBandRow(com.elvan.udukkai.ui.components.shell.LocalElvanSideBar.current),
+                    contentAlignment = Alignment.Center
                 ) {
+                    ElvanPillShifter(
+                        items = shifterItems,
+                        selectedIndex = selectedSegment,
+                        onIndexSelected = onSegmentSelected,
+                        colors = colors,
+                        isFullWidth = false
+                    )
+                }
+            },
+            filter = if (dateFilterActive) {
+                {
+                    val startMillis = if (selectedSegment == 0) TextilesInvoiceRepository.startDateFilter else TextilesReceiptRepository.startDateFilter
+                    val endMillis = if (selectedSegment == 0) TextilesInvoiceRepository.endDateFilter else TextilesReceiptRepository.endDateFilter
+                    val filterText = dateFilterLabel(startMillis, endMillis)
+
                     Box(
-                        modifier = Modifier.fillMaxWidth().elvanTopBandRow(com.elvan.udukkai.ui.components.shell.LocalElvanSideBar.current),
+                        modifier = Modifier.fillMaxWidth().padding(horizontal = Dimens.ContentPadding),
                         contentAlignment = Alignment.Center
                     ) {
-                        ElvanPillShifter(
-                            items = shifterItems,
-                            selectedIndex = selectedSegment,
-                            onIndexSelected = onSegmentSelected,
-                            colors = colors,
-                            isFullWidth = false
-                        )
-                    }
-
-                    val isDateFilterActive = if (selectedSegment == 0) {
-                        TextilesInvoiceRepository.isDateFilterActive
-                    } else {
-                        TextilesReceiptRepository.isDateFilterActive
-                    }
-
-                    if (isDateFilterActive) {
-                        val startMillis = if (selectedSegment == 0) TextilesInvoiceRepository.startDateFilter else TextilesReceiptRepository.startDateFilter
-                        val endMillis = if (selectedSegment == 0) TextilesInvoiceRepository.endDateFilter else TextilesReceiptRepository.endDateFilter
-                        val todayText = K.today.tr()
-                        val yesterdayText = K.yesterday.tr()
-                        val filterText = remember(startMillis, endMillis, todayText, yesterdayText) {
-                            if (startMillis == null && endMillis == null) {
-                                ""
-                            } else if (startMillis != null && endMillis != null) {
-                                val startKey = DateGroupUtils.getDayKey(startMillis)
-                                val endKey = DateGroupUtils.getDayKey(endMillis)
-                                if (startKey == endKey) {
-                                    val now = DateUtils.todayMillis()
-                                    val todayKey = DateGroupUtils.getDayKey(now)
-                                    val yesterdayKey = DateGroupUtils.getDayKey(now - 86400000L)
-                                    when (startKey) {
-                                        todayKey -> todayText
-                                        yesterdayKey -> yesterdayText
-                                        else -> DateUtils.formatDate(startMillis)
-                                    }
-                                } else {
-                                    "${DateUtils.formatDate(startMillis)} - ${DateUtils.formatDate(endMillis)}"
-                                }
-                            } else if (startMillis != null) {
-                                ">= ${DateUtils.formatDate(startMillis)}"
-                            } else {
-                                "<= ${DateUtils.formatDate(endMillis!!)}"
-                            }
-                        }
-
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = Dimens.ContentPadding),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Surface(
-                                shape = CircleShape,
-                                color = colors.accent.copy(alpha = 0.12f),
-                                modifier = Modifier
-                                    .clip(CircleShape)
-                                    .clickable {
-                                        TextilesInvoiceRepository.clearDateFilter()
-                                        TextilesReceiptRepository.clearDateFilter()
-                                    }
-                            ) {
-                                Row(
-                                    modifier = Modifier.padding(horizontal = 14.dp, vertical = 6.dp),
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(6.dp)
-                                ) {
-                                    Icon(
-                                        imageVector = MaterialSymbols.Rounded.FilterList,
-                                        contentDescription = null,
-                                        tint = colors.accent,
-                                        modifier = Modifier.size(14.dp)
-                                    )
-                                    Text(
-                                        text = filterText,
-                                        style = TextStyle(
-                                            fontFamily = ff,
-                                            fontSize = 12.sp,
-                                            fontWeight = FontWeight.SemiBold,
-                                            color = colors.accent
-                                        )
-                                    )
-                                    Icon(
-                                        imageVector = MaterialSymbols.Rounded.Close,
-                                        contentDescription = K.clear.tr(),
-                                        tint = colors.accent,
-                                        modifier = Modifier.size(14.dp)
-                                    )
-                                }
-                            }
+                        ActiveFilterPill(filterText, colors) {
+                            TextilesInvoiceRepository.clearDateFilter()
+                            TextilesReceiptRepository.clearDateFilter()
                         }
                     }
                 }
-            }
-
+            } else null
+        ) {
             if (isRefreshing) {
                 items(6) {
                     Box(
@@ -428,7 +347,6 @@ fun TextilesCreateScreen(
                                                 profile = TextilesProfileRepository.profile,
                                                 allProfiles = TextilesProfileRepository.allProfiles,
                                                 customerCity = receipt.customerId?.let { id -> com.elvan.udukkai.textiles.data.TextilesCustomerRepository.customers.find { it.id == id }?.city } ?: emptyMap(),
-                                                linkedInvoiceNumbers = TextilesReceiptRepository.getLinkedInvoiceNumbers(receipt.id)
                                             )
                                         }
                                     }
@@ -472,7 +390,6 @@ fun TextilesCreateScreen(
                                         profile = TextilesProfileRepository.profile,
                                         allProfiles = TextilesProfileRepository.allProfiles,
                                         customerCity = receipt.customerId?.let { id -> com.elvan.udukkai.textiles.data.TextilesCustomerRepository.customers.find { it.id == id }?.city } ?: emptyMap(),
-                                        linkedInvoiceNumbers = TextilesReceiptRepository.getLinkedInvoiceNumbers(receipt.id)
                                     )
                                 }
                             }

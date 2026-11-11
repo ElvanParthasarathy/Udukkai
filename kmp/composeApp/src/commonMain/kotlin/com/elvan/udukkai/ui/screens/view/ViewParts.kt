@@ -49,6 +49,9 @@ import com.elvan.udukkai.theme.preventBrokenLigatures
 import com.elvan.udukkai.ui.components.shell.ElvanSettingsDivider
 import com.elvan.udukkai.ui.components.shell.ElvanSettingsSection
 import com.elvan.udukkai.ui.navigation.MaterialSymbols
+import com.elvan.udukkai.ui.screens.create.components.ActiveFilterPill
+import com.elvan.udukkai.ui.screens.create.components.CreateDateFilterSheet
+import com.elvan.udukkai.ui.screens.create.components.dateFilterLabel
 import com.elvan.udukkai.ui.screens.home.components.ElvanStatsCard
 
 /** One bill in a view page's "recent" list. */
@@ -102,7 +105,7 @@ fun ViewHero(primary: String, secondary: String, icon: ImageVector, tint: androi
             Column(Modifier.weight(1f)) {
                 Text(
                     text = primary.preventBrokenLigatures(),
-                    maxLines = if (LocalDocLandscape.current) 3 else 1,
+                    maxLines = 2,
                     overflow = TextOverflow.Ellipsis,
                     style = TextStyle(fontFamily = ff, fontSize = 17.sp, fontWeight = FontWeight.Bold, color = colors.textPrimary)
                 )
@@ -110,7 +113,7 @@ fun ViewHero(primary: String, secondary: String, icon: ImageVector, tint: androi
                     Spacer(Modifier.height(2.dp))
                     Text(
                         text = secondary.preventBrokenLigatures(),
-                        maxLines = if (LocalDocLandscape.current) 3 else 1,
+                        maxLines = 2,
                         overflow = TextOverflow.Ellipsis,
                         style = TextStyle(fontFamily = ff, fontSize = 13.5.sp, color = colors.textSecondary)
                     )
@@ -178,7 +181,7 @@ fun ViewQuickActions(actions: List<Triple<ImageVector, String, () -> Unit>>, col
 
 /** Label-and-value rows in one rounded section with slit dividers (empty values are left out). */
 @Composable
-fun ViewInfoSection(title: String, rows: List<Pair<String, String>>, colors: ShellColors) {
+fun ViewInfoSection(title: String, rows: List<Pair<String, String>>, colors: ShellColors, labelMaxLines: Int = Int.MAX_VALUE) {
     val shown = rows.filter { it.second.isNotBlank() }
     if (shown.isEmpty()) return
     val ff = LocalAppFontFamily.current
@@ -193,7 +196,9 @@ fun ViewInfoSection(title: String, rows: List<Pair<String, String>>, colors: She
                 Text(
                     text = label.preventBrokenLigatures(),
                     style = TextStyle(fontFamily = ff, fontSize = 14.sp, color = colors.textSecondary),
-                    modifier = Modifier.weight(0.42f)
+                    modifier = Modifier.weight(0.42f),
+                    maxLines = labelMaxLines,
+                    overflow = TextOverflow.Ellipsis
                 )
                 Spacer(Modifier.width(12.dp))
                 Text(
@@ -208,7 +213,7 @@ fun ViewInfoSection(title: String, rows: List<Pair<String, String>>, colors: She
 
 /** A postal address in one rounded box, left-aligned like on an envelope: one line per part (empty parts are skipped). */
 @Composable
-fun ViewAddressBox(title: String?, lines: List<String>, colors: ShellColors) {
+fun ViewAddressBox(title: String?, lines: List<String>, colors: ShellColors, maxLinesPerEntry: Int = Int.MAX_VALUE) {
     val shown = lines.filter { it.isNotBlank() }
     if (shown.isEmpty()) return
     val ff = LocalAppFontFamily.current
@@ -218,7 +223,8 @@ fun ViewAddressBox(title: String?, lines: List<String>, colors: ShellColors) {
             verticalArrangement = Arrangement.spacedBy(4.dp)
         ) {
             shown.forEach {
-                Text(it.preventBrokenLigatures(), style = TextStyle(fontFamily = ff, fontSize = 16.sp, color = colors.textPrimary, lineHeight = 22.sp))
+                Text(it.preventBrokenLigatures(), style = TextStyle(fontFamily = ff, fontSize = 16.sp, color = colors.textPrimary, lineHeight = 22.sp),
+                    maxLines = maxLinesPerEntry, overflow = TextOverflow.Ellipsis)
             }
         }
     }
@@ -233,7 +239,7 @@ sealed interface ViewHistoryState {
 /** Works out the page's bills off the main thread (an item has every bill's lines to read). Re-runs when [key] changes; the second value retries. */
 @Composable
 fun rememberViewHistory(subject: Any?, key: Any?, load: () -> ViewActivity): Pair<ViewHistoryState, () -> Unit> {
-    var state by remember { mutableStateOf<ViewHistoryState>(ViewHistoryState.Loading) }
+    var state by remember(subject, key) { mutableStateOf<ViewHistoryState>(ViewHistoryState.Loading) }
     var attempt by remember { mutableStateOf(0) }
     val latestLoad by rememberUpdatedState(load)
     LaunchedEffect(subject, key, attempt) {
@@ -248,10 +254,10 @@ fun rememberViewHistory(subject: Any?, key: Any?, load: () -> ViewActivity): Pai
     return state to { state = ViewHistoryState.Loading; attempt++ }
 }
 
-/** Which type, status and order the page is showing; kept while a bill is open and the page comes back. */
+/** Document type, date range and sort order for the Transactions tab. */
 class ViewHistoryUi {
     var tab by mutableStateOf(0)
-    var filter by mutableStateOf(HistoryFilter.All)
+    var dateRange by mutableStateOf<Pair<Long?, Long?>>(null to null)
     var sort by mutableStateOf(HistorySort.DateNew)
     var showFilter by mutableStateOf(false)
     var showSort by mutableStateOf(false)
@@ -259,12 +265,10 @@ class ViewHistoryUi {
     internal var tabs: List<HistoryTabInfo> = emptyList() // rebuilt with the page; not state, or setting it would recompose forever
 }
 
-internal class HistoryTabInfo(val item: com.elvan.udukkai.ui.screens.create.components.PillShifterItem, val rows: List<ViewBillRow>, val empty: String, val hasStatus: Boolean)
+internal class HistoryTabInfo(val item: com.elvan.udukkai.ui.screens.create.components.PillShifterItem, val rows: List<ViewBillRow>, val empty: String)
 
 /**
- * The page's document types with their status filter and sort, as Zoho's Transactions tab has them, in the app's own
- * pill shifter and sheets. Proformas sit with the invoices (their PF number tells them apart). [emptyInvoices] is the invoice
- * tab's empty line; receipts appear on customer pages only.
+ * Transactions use the same date picker as Make. Proformas appear with invoices, and customer pages also list receipts.
  */
 @Composable
 fun rememberViewHistoryUi(state: ViewHistoryState, emptyInvoices: String, withReceipts: Boolean): ViewHistoryUi {
@@ -275,18 +279,18 @@ fun rememberViewHistoryUi(state: ViewHistoryState, emptyInvoices: String, withRe
     val receiptItem = com.elvan.udukkai.ui.screens.create.components.PillShifterItem(K.receipts.tr(), symbols.Receipt, symbols.ReceiptFill)
     val noReceipts = K.noCustomerReceipts.tr()
     ui.tabs = buildList {
-        add(HistoryTabInfo(invoiceItem, ViewHistory.withEstimates(activity.bills, activity.estimates), emptyInvoices, hasStatus = true))
-        if (withReceipts) add(HistoryTabInfo(receiptItem, activity.receipts, noReceipts, hasStatus = false))
+        add(HistoryTabInfo(invoiceItem, ViewHistory.withEstimates(activity.bills, activity.estimates), emptyInvoices))
+        if (withReceipts) add(HistoryTabInfo(receiptItem, activity.receipts, noReceipts))
     }
     if (ui.tab > ui.tabs.lastIndex) ui.tab = 0
 
     val colors = rememberShellColors()
     if (ui.showFilter) {
-        val labels = mapOf(HistoryFilter.All to K.all.tr(), HistoryFilter.Unpaid to K.statusUnpaid.tr(), HistoryFilter.PartlyPaid to K.statusPartlyPaid.tr(), HistoryFilter.Paid to K.statusPaid.tr())
-        com.elvan.udukkai.ui.components.shell.ElvanSelectionBottomSheet(
-            title = K.filterBy.tr(), items = HistoryFilter.entries, currentValue = ui.filter, colors = colors,
-            onSelected = { ui.filter = it; ui.showFilter = false }, onDismissRequest = { ui.showFilter = false },
-            itemLabelBuilder = { labels.getValue(it) }
+        CreateDateFilterSheet(
+            isOpen = true, currentStartMillis = ui.dateRange.first, currentEndMillis = ui.dateRange.second,
+            onDismissRequest = { ui.showFilter = false },
+            onApplyFilter = { start, end, _ -> ui.dateRange = start to end; ui.showFilter = false },
+            colors = colors
         )
     }
     if (ui.showSort) {
@@ -321,7 +325,9 @@ fun LazyListScope.viewHistoryItems(
 ) {
     val tabs = ui.tabs
     val tab = tabs.getOrNull(ui.tab) ?: return
-    val rows = ViewHistory.apply(tab.rows, if (tab.hasStatus) ui.filter else HistoryFilter.All, ui.sort)
+    val (start, end) = ui.dateRange
+    val rows = ViewHistory.apply(tab.rows, ui.sort, start, end)
+    val filtered = start != null || end != null
     item(key = "history_tools") {
         Row(Modifier.fillMaxWidth().height(HISTORY_TOOLS_HEIGHT).padding(start = 12.dp), verticalAlignment = Alignment.CenterVertically) {
             Row(
@@ -338,15 +344,21 @@ fun LazyListScope.viewHistoryItems(
                 if (tabs.size > 1) Icon(MaterialSymbols.Rounded.KeyboardArrowDown, null, tint = colors.textPrimary.copy(alpha = 0.55f), modifier = Modifier.size(18.dp))
             }
             Spacer(Modifier.weight(1f))
-            if (tab.hasStatus) com.elvan.udukkai.ui.components.shell.ElvanTopBarIconButton(onClick = { ui.showFilter = true }) {
-                Icon(MaterialSymbols.Rounded.FilterAlt, K.a11yFilter.tr(), tint = if (ui.filter == HistoryFilter.All) colors.textPrimary else colors.accent, modifier = Modifier.size(17.dp))
+            com.elvan.udukkai.ui.components.shell.ElvanTopBarIconButton(onClick = { ui.showFilter = true }) {
+                Icon(MaterialSymbols.Rounded.FilterList, K.a11yFilter.tr(), tint = if (filtered) colors.accent else colors.textPrimary, modifier = Modifier.size(20.dp))
             }
             com.elvan.udukkai.ui.components.shell.ElvanTopBarIconButton(onClick = { ui.showSort = true }) {
                 Icon(MaterialSymbols.Rounded.Sort, K.sortBy.tr(), tint = if (ui.sort == HistorySort.DateNew) colors.textPrimary else colors.accent, modifier = Modifier.size(20.dp))
             }
         }
     }
-    val filtered = tab.hasStatus && ui.filter != HistoryFilter.All
+    if (filtered) {
+        item("history_active_filter") {
+            Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                ActiveFilterPill(dateFilterLabel(start, end), colors) { ui.dateRange = null to null }
+            }
+        }
+    }
     if (isLandscape) {
         val pairs = rows.chunked(2)
         if (state is ViewHistoryState.Ready && rows.size > SHORT_LIST_ROWS) {

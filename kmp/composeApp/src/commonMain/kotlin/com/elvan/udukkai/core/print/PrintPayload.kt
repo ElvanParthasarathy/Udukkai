@@ -1,13 +1,21 @@
 package com.elvan.udukkai.core.print
 
+import com.elvan.udukkai.data.model.ItemNames
 import com.elvan.udukkai.core.utils.DateUtils
 import com.elvan.udukkai.core.utils.MiniJson
+import com.elvan.udukkai.data.model.fullAddress
 import com.elvan.udukkai.data.model.CustomerModel
 import com.elvan.udukkai.data.model.CustomerSnapshot
 import com.elvan.udukkai.data.model.InvoiceDisplayOptions
 import com.elvan.udukkai.data.model.InvoiceModel
 import com.elvan.udukkai.data.model.ReceiptModel
 import com.elvan.udukkai.factory.ui.screens.editor.FactoryCalculation
+import com.elvan.udukkai.core.data.LocationName
+import com.elvan.udukkai.core.data.indianStates
+import com.elvan.udukkai.core.data.tamilNaduDistricts
+import com.elvan.udukkai.core.data.worldCountries
+import com.elvan.udukkai.core.data.locationDataName
+import com.elvan.udukkai.data.settings.DataLanguageDisplay
 import com.elvan.udukkai.data.settings.BusinessProfile
 import com.elvan.udukkai.data.settings.PaymentAccount
 import com.elvan.udukkai.textiles.ui.screens.editor.TextilesCalculation
@@ -32,8 +40,7 @@ object PrintPayload {
     ): String {
         val options = InvoiceDisplayOptions.fromJson(invoice.customPreferencesJson)
         // The bill's own copy first; older bills use the live customer, then what the bill saved (a Textiles bill saves the city)
-        val billCustomer = CustomerSnapshot.toCustomer(options.customer) ?: customer
-            ?: CustomerModel(name = invoice.customerName, city = invoice.customerAddress)
+        val billCustomer = CustomerSnapshot.forInvoice(invoice, customer, legacyAddressIsCity = true)
         val items = TextilesCalculation.itemsFromJson(invoice.itemsJson)
         val totals = TextilesCalculation.calculate(
             items = items,
@@ -44,15 +51,13 @@ object PrintPayload {
             country = profile.country["en"] ?: "India",
             taxInclusive = options.taxInclusive
         )
-        val primary = profile.primaryLanguage.ifEmpty { "ta" }
-        val secondary = profile.secondaryLanguage.ifEmpty { "en" }
 
         val json = JsonWriter()
         json.obj {
             field("docType", "gst-invoice")
             field("appLanguage", appLanguage)
             field("profile") { profile(profile) }
-            field("customer") { customer(billCustomer) }
+            field("customer") { customer(billCustomer, profile) }
             field("invoice") {
                 obj {
                     field("invoiceNumber", invoice.invoiceNumber)
@@ -69,9 +74,7 @@ object PrintPayload {
                             obj {
                                 field("id", item.id)
                                 field("name") {
-                                    langMap(item.languageMap.ifEmpty {
-                                        mapOf(primary to item.itemName, secondary to item.itemNameEn)
-                                    })
+                                    langMap(ItemNames.snapshot(item.languageMap, item.itemName, item.itemNameEn))
                                 }
                                 field("hsnCode", item.hsnCode)
                                 field("quantity", item.quantity)
@@ -140,8 +143,7 @@ object PrintPayload {
         appLanguage: String
     ): String {
         val options = InvoiceDisplayOptions.fromJson(invoice.customPreferencesJson)
-        val billCustomer = CustomerSnapshot.toCustomer(options.customer) ?: customer
-            ?: CustomerModel(name = invoice.customerName, address = invoice.customerAddress)
+        val billCustomer = CustomerSnapshot.forInvoice(invoice, customer, legacyAddressIsCity = false)
         val items = FactoryCalculation.itemsFromJson(invoice.itemsJson)
         val charges = FactoryCalculation.chargesFromJson(invoice.otherTaxesJson)
         val totals = FactoryCalculation.calculate(
@@ -156,7 +158,7 @@ object PrintPayload {
             field("docType", "coolie-invoice")
             field("appLanguage", appLanguage)
             field("profile") { profile(profile) }
-            field("customer") { customer(billCustomer) }
+            field("customer") { customer(billCustomer, profile) }
             field("invoice") {
                 obj {
                     field("id", invoice.id.toString())
@@ -169,7 +171,7 @@ object PrintPayload {
                         array(items) { item ->
                             obj {
                                 field("name") {
-                                    langMap(item.languageMap.ifEmpty { mapOf("ta" to item.itemName, "en" to item.itemNameEn) })
+                                    langMap(ItemNames.snapshot(item.languageMap, item.itemName, item.itemNameEn))
                                 }
                                 field("weight", item.weight)
                                 field("price", item.price)
@@ -242,14 +244,18 @@ object PrintPayload {
         }
     }
 
-    private fun JsonWriter.customer(c: CustomerModel) = obj {
+    private fun customerLocations(values: Map<String, String>, options: List<LocationName>, profile: BusinessProfile): Map<String, String> =
+        values + DataLanguageDisplay(profile).languages.associateWith { locationDataName(values, options, it) }
+
+    private fun JsonWriter.customer(c: CustomerModel, profile: BusinessProfile) = obj {
         field("name") { langMap(c.name) }
         field("address") { langMap(c.address) }
         field("city") { langMap(c.city) }
-        field("district") { langMap(c.district) }
-        field("state") { langMap(c.state) }
-        field("country") { langMap(c.country) }
+        field("district") { langMap(customerLocations(c.district, tamilNaduDistricts, profile)) }
+        field("state") { langMap(customerLocations(c.state, indianStates, profile)) }
+        field("country") { langMap(customerLocations(c.country, worldCountries, profile)) }
         field("internationalAddress") { langMap(c.internationalAddress) }
+        field("fullAddress") { langMap(DataLanguageDisplay(profile).languages.associateWith(c::fullAddress)) }
         field("pinCode", c.pinCode)
         field("gstin", c.gstin)
         field("email", c.email)

@@ -81,6 +81,8 @@ class AndroidFirebaseSyncManager : FirebaseSyncManager {
     @Volatile private var isApplyingRemoteChange = false
 
     private fun getDatabase(): FirebaseDatabase? {
+        // Audit runs must neither read cloud data nor enqueue writes, even with network available.
+        if (com.elvan.udukkai.BuildConfig.DEBUG && AppContext.isInitialized && java.io.File(AppContext.context.filesDir, "release-audit-offline").exists()) return null
         if (databaseInstance != null) return databaseInstance
         return try {
             if (!AppContext.isInitialized) {

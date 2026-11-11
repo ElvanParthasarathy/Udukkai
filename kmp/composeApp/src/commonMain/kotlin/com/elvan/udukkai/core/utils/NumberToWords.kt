@@ -9,6 +9,16 @@ import kotlin.math.roundToLong
  */
 object NumberToWords {
 
+    /** Each supported language supplies its formatter here; callers use configured language codes. */
+    private val formatters: Map<String, (Double) -> String> = mapOf(
+        "ta" to ::toTamil,
+        "en" to ::toEnglish
+    )
+
+    /** Unsupported languages do not silently display words from another language. */
+    fun forLanguage(amount: Double, languageCode: String): String =
+        formatters[languageCode.substringBefore('-').lowercase()]?.invoke(amount).orEmpty()
+
     // ─────────────────────────────────────────────────────────────────────────
     // TAMIL IMPLEMENTATION
     // ─────────────────────────────────────────────────────────────────────────

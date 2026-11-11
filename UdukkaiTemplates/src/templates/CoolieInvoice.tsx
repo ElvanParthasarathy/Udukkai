@@ -4,6 +4,8 @@ import '../styles/print.css'; // Same stylesheet as the original Coolie bill: sa
 import { numberToWords } from '../lib/Payanpadu';
 import { fyFull } from '../lib/finYear';
 import { both, oneLang, langRule } from '../lib/langRules';
+import { visibleDataLanguages } from '../lib/dataLanguages';
+import { invoiceAddressLines } from '../lib/invoiceAddress';
 
 // Coolie (Factory) invoice, print only. The original Coolie bill, made bilingual the way the
 // Textiles invoice is (Tamil line + smaller English line), without the "Motham" table footer: the
@@ -73,6 +75,8 @@ export default function CoolieInvoiceBilingual({ bill }) {
     city_en: cityEn,
     district: districtTa,
     district_en: districtEn,
+    full_address: fullAddressTa,
+    full_address_en: fullAddressEn,
     customer_gstin: customerGstin,
     items = [],
     setharam_grams: setharamGrams,
@@ -102,17 +106,6 @@ export default function CoolieInvoiceBilingual({ bill }) {
   const subtotal = items.reduce((sum, item) => sum + calcItemAmount(item.coolie, item.kg), 0);
   const totalRs = Math.floor(subtotal + (parseFloat(courierRs) || 0) + (parseFloat(ahimsaSilkRs) || 0) + (parseFloat(customChargeRs) || 0));
 
-  const formatDistrict = (d) => {
-    if (!d) return '';
-    const label = /[\u0B80-\u0BFF]/.test(d) ? 'மாவட்டம்' : 'District';
-    return (d.toLowerCase().includes('district') || d.includes('மாவட்டம்')) ? d : `${d} ${label}`;
-  };
-
-  // Customer / place: the Tamil value, with the English one under it when bilingual
-  const place = (a, c, d) => {
-    const distStr = formatDistrict(d);
-    return [a, c, distStr].filter(Boolean).join(', ');
-  };
   const useEn = bi || isEng;
   const same = (a, b) => (a || '').trim().toLowerCase() === (b || '').trim().toLowerCase();
   // The (main language, second language) pair of a Tamil + English value
@@ -120,7 +113,21 @@ export default function CoolieInvoiceBilingual({ bill }) {
   // Customer name and address: a single-language bill prints its own language; a bilingual one a single language, English unless the rule says Tamil
   const one = (field, ta, en) => (bi ? oneLang(p, field, ...priSec(ta, en)) : (isEng ? (en || ta) : (ta || en)) || '');
   const customerName = one('customerName', customerNameTa, customerNameEn);
-  const customerPlace = one('customerAddress', place(addressTa, cityTa, districtTa), place(addressEn, cityEn, districtEn));
+  const addressBlock = (field, source, legacyTamil, legacyEnglish) => {
+    if (!source || !p.dataLanguageConfig?.primaryLanguage) return one(field, legacyTamil, legacyEnglish) || [];
+    const visible = visibleDataLanguages(p.dataLanguageConfig);
+    const preferred = langRule(p, field);
+    const codes = visible.includes(preferred) ? [preferred, ...visible.filter(code => code !== preferred)] : visible;
+    const value = (key) => codes.map(code => source[key]?.[code]?.trim()).find(Boolean);
+    const address = invoiceAddressLines({
+      street: value('internationalAddress') || value('address'), town: value('city'), pin: source.pinCode,
+      district: value('district'), state: value('state'), country: value('country'),
+    });
+    return address.length ? address : [value('fullAddress')].filter(Boolean);
+  };
+  const customerPlace = addressBlock('customerAddress', bill.customerInvoiceAddress,
+    fullAddressTa ? [fullAddressTa] : invoiceAddressLines({ street: addressTa, town: cityTa, district: districtTa }),
+    fullAddressEn ? [fullAddressEn] : invoiceAddressLines({ street: addressEn, town: cityEn, district: districtEn }));
   const kg = !bi && !isEng ? 'கிலோ' : 'Kg';
 
   // Business
@@ -131,16 +138,9 @@ export default function CoolieInvoiceBilingual({ bill }) {
   const wideLogo = !!p.wideLogo && p.billHeaderStyle === 'wide';
   const fontOf = (t) => (/[\u0B80-\u0BFF]/.test(t) ? 'font-tamil' : 'font-display');
   const phone = p.phone ? (Array.isArray(p.phone) ? p.phone : String(p.phone).split(',')) : [];
-  const contactLines = (en) => {
-    const line1 = en ? p.addressEn : p.address;
-    const city = en ? p.cityEn : p.city;
-    const districtRaw = en ? p.districtEn : p.district;
-    const district = formatDistrict(districtRaw);
-    const cityPin = [city, p.pincode].filter(Boolean).join(' - ');
-    return { l1: [line1, cityPin].filter(Boolean).join(', '), l2: district || '' };
-  };
-  // Bilingual: a single language, English unless the rule says Tamil
-  const contactBlock = bi ? oneLang(p, 'businessAddress', ...(primaryEng ? [contactLines(true), contactLines(false)] : [contactLines(false), contactLines(true)])) : contactLines(useEn);
+  const contactBlock = addressBlock('businessAddress', p.invoiceAddress,
+    invoiceAddressLines({ street: p.address, town: p.city, district: p.district, pin: p.pincode }),
+    invoiceAddressLines({ street: p.addressEn, town: p.cityEn, district: p.districtEn, pin: p.pincode }));
   const ifsc = billIfsc || p.ifsc || '';
 
   // Amount in words, like the Textiles invoice (primary line, smaller secondary line)
@@ -212,14 +212,17 @@ export default function CoolieInvoiceBilingual({ bill }) {
         </div>
         {/* Bill To, and on its free right side the financial year */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '12px' }}>
-          <div className="inv-party" style={{ marginTop: '6px', paddingLeft: '8px', paddingRight: '8px' }}>
-            <h4 className="inv-section-label" style={{ color: 'var(--bill-primary)', fontWeight: 700, fontSize: '12px', marginBottom: '3px', textTransform: 'none' }}>{slash('பெறுநர்', 'Bill To')}</h4>
+          <div className="inv-party" style={{ marginTop: '6px', paddingLeft: '8px', paddingRight: '8px', minWidth: 0, overflowWrap: 'anywhere' }}>
+            <h4 className="inv-section-label" style={{ marginBottom: '3px' }}>{slash('பெறுநர்', 'Bill To')}</h4>
             <p className="inv-party-name" style={{ color: '#242f3d', fontWeight: 600, fontSize: '15px', margin: 0, marginBottom: '2px' }}>{customerName || '-'}</p>
-            {(customerPlace || customerGstin) && <div className="inv-party-details" style={{ color: '#475569', fontSize: '13px' }}>{customerPlace && <p style={{ color: '#475569', margin: 0 }}>{customerPlace}</p>}{customerGstin && <p style={{ color: '#475569', margin: 0 }}>GSTIN: {customerGstin}</p>}</div>}
+            {(customerPlace.length > 0 || customerGstin) && <div className="inv-party-details">
+              {customerPlace.map((line, index) => <p key={index}>{line}</p>)}
+              {customerGstin && <p>GSTIN: {customerGstin}</p>}
+            </div>}
           </div>
           {fyFull(date) && (
             <div style={{ marginTop: '6px', paddingRight: '8px', textAlign: 'right', whiteSpace: 'nowrap' }}>
-              <h4 className="inv-section-label" style={{ color: 'var(--bill-primary)', fontWeight: 700, fontSize: '12px', marginBottom: '3px', textTransform: 'none' }}>{slash('பொருளாண்டு', 'Financial Year')}</h4>
+              <h4 className="inv-section-label" style={{ marginBottom: '3px' }}>{slash('பொருளாண்டு', 'Financial Year')}</h4>
               <p style={{ color: '#242f3d', fontWeight: 600, fontSize: '15px', margin: 0 }}>{fyFull(date)}</p>
             </div>
           )}
@@ -401,12 +404,12 @@ export default function CoolieInvoiceBilingual({ bill }) {
       <div className="contact-section">
         <div className="contact-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', width: '100%' }}>
           {/* Left Column: Title + Address Lines */}
-          <div className="contact-left" style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+          <div className="contact-left" style={{ display: 'flex', flexDirection: 'column', minWidth: 0, gap: '4px' }}>
             <div style={{ fontSize: '0.85rem', fontWeight: 700, color: accent, display: 'flex', alignItems: 'center', height: '20px', lineHeight: 1.2 }}>
               {lbl('தொடர்பு கொள்ள', 'Contact Us')}
             </div>
-            {[contactBlock.l1, contactBlock.l2].filter(Boolean).map((line, i) => (
-              <div key={i} style={{ fontSize: '0.82rem', color: '#334155', fontWeight: 500, display: 'flex', alignItems: 'center', height: '20px', lineHeight: 1.2 }}>
+            {contactBlock.map((line, i) => (
+              <div key={i} style={{ fontSize: '0.82rem', color: '#334155', fontWeight: 500, minHeight: '20px', lineHeight: 1.3, overflowWrap: 'anywhere' }}>
                 {line}
               </div>
             ))}

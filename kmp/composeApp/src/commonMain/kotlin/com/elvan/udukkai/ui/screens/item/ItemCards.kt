@@ -47,7 +47,6 @@ private fun resolveItemCompanyTag(
         val p = profiles.find { it.id == cId }
         p?.shortName?.trim()?.takeIf { it.isNotEmpty() }
             ?: p?.businessName?.get(primaryLang)?.trim()?.takeIf { it.isNotEmpty() }
-            ?: p?.businessName?.values?.firstOrNull { it.isNotBlank() }?.trim()
             ?: "Company #$cId"
     }.joinToString(", ").ifEmpty { K.allCompanies.tr() }
 }
@@ -61,14 +60,7 @@ private fun getDynamicField(
 ): String {
     if (!isBilingual && !isPrimary) return ""
     val targetLang = if (isPrimary) primaryLang else secondaryLang
-    val exactVal = map[targetLang]?.trim()
-    if (!exactVal.isNullOrEmpty()) return exactVal
-    if (!isBilingual && isPrimary) {
-        val fallbackVal = map[secondaryLang]?.trim()
-        if (!fallbackVal.isNullOrEmpty()) return fallbackVal
-    }
-    if (isPrimary) return map.values.firstOrNull { it.isNotBlank() } ?: ""
-    return ""
+    return map[targetLang].orEmpty().trim()
 }
 
 /**
@@ -105,11 +97,11 @@ fun FactoryItemCard(
     val profile = FactoryProfileRepository.profile
     val profiles = FactoryProfileRepository.allProfiles
     val isBilingual = profile.isBilingual
-    val primaryLang = profile.primaryLanguage.ifEmpty { "ta" }
-    val secondaryLang = profile.secondaryLanguage.ifEmpty { "en" }
+    val primaryLang = profile.primaryLanguage
+    val secondaryLang = profile.secondaryLanguage
 
     val primary = getDynamicField(item.name, isPrimary = true, isBilingual = isBilingual, primaryLang, secondaryLang)
-        .ifEmpty { item.name.values.firstOrNull() ?: "-" }
+        .ifEmpty { "-" }
 
     ElvanCommonCard(
         onClick = onClick,
@@ -196,11 +188,11 @@ fun TextilesItemCard(
     val profile = TextilesProfileRepository.profile
     val profiles = TextilesProfileRepository.allProfiles
     val isBilingual = profile.isBilingual
-    val primaryLang = profile.primaryLanguage.ifEmpty { "ta" }
-    val secondaryLang = profile.secondaryLanguage.ifEmpty { "en" }
+    val primaryLang = profile.primaryLanguage
+    val secondaryLang = profile.secondaryLanguage
 
     val primary = getDynamicField(item.name, isPrimary = true, isBilingual = isBilingual, primaryLang, secondaryLang)
-        .ifEmpty { item.name.values.firstOrNull() ?: "-" }
+        .ifEmpty { "-" }
 
     ElvanCommonCard(
         onClick = onClick,

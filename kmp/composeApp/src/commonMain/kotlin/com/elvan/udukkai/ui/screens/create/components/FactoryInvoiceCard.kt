@@ -25,6 +25,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.elvan.udukkai.core.finance.BillNumbering
+import com.elvan.udukkai.data.settings.DataLanguageDisplay
 import com.elvan.udukkai.core.utils.CurrencyUtils
 import com.elvan.udukkai.core.utils.DateUtils
 import com.elvan.udukkai.data.model.InvoiceModel
@@ -58,23 +59,15 @@ fun FactoryInvoiceCard(
     val profiles = com.elvan.udukkai.factory.data.FactoryProfileRepository.profiles
     val profile = (if (invoice.companyId != null) profiles.find { it.id == invoice.companyId } else null)
         ?: com.elvan.udukkai.factory.data.FactoryProfileRepository.profile
-    val isBilingual = profile.isBilingual
-    val primaryLang = profile.primaryLanguage.ifEmpty { "ta" }
-    val secondaryLang = profile.secondaryLanguage.ifEmpty { "en" }
-
-    val primary = invoice.customerName[primaryLang]
-        ?: invoice.customerName["ta"]
-        ?: invoice.customerName["en"]
-        ?: invoice.customerName.values.firstOrNull()
-        ?: "-"
-
-    val secondary = if (isBilingual) invoice.customerName[secondaryLang].orEmpty() else ""
-    val showSecondary = isBilingual && secondary.isNotBlank() && secondary != primary
+    val language = DataLanguageDisplay(profile)
+    val primary = language.first(invoice.customerName).ifBlank { "-" }
+    val secondary = language.second(invoice.customerName)
+    val showSecondary = secondary.isNotBlank()
 
     // The place on the card is the customer's ஊர (city) field, not the saved address text: with the town in the
     // address ("Mullipattu") and the city in ஊர ("Arani"), the card shows Arani
     val cityMap = invoice.customerId?.let { id -> com.elvan.udukkai.factory.data.FactoryCustomerRepository.customers.find { it.id == id }?.city } ?: emptyMap()
-    val primaryCity = cityMap[primaryLang] ?: cityMap["ta"] ?: cityMap["en"] ?: cityMap.values.firstOrNull() ?: ""
+    val primaryCity = language.first(cityMap)
 
     // The second line under the name: the second-language name with the place after a dot, the place in the main language ("Sundari Silks • ஆரணி").
     // Without a second language the place stands alone there, so the card adapts.

@@ -7,10 +7,12 @@ import android.util.Log
 import com.elvan.udukkai.core.platform.AppContext
 import com.elvan.udukkai.data.model.CustomerModel
 import com.elvan.udukkai.data.model.InvoiceModel
+import com.elvan.udukkai.core.finance.FullReceiptSettlement
 import com.elvan.udukkai.data.model.ReceiptInvoiceLinkModel
 import com.elvan.udukkai.data.model.ReceiptModel
 import com.elvan.udukkai.data.model.ItemJsonConverter
 import com.elvan.udukkai.data.model.ItemModel
+import com.elvan.udukkai.data.model.ItemNames
 import com.elvan.udukkai.data.settings.LanguageJsonConverter
 import com.elvan.udukkai.data.settings.BusinessProfile
 import java.io.File
@@ -252,6 +254,7 @@ class AndroidUdukkaiDatabaseHelper(
                 "unit" TEXT NOT NULL DEFAULT 'Nos',
                 "company_ids" TEXT NOT NULL DEFAULT '[]',
                 "company_prices" TEXT NOT NULL DEFAULT '{}',
+                "previous_names" TEXT NOT NULL DEFAULT '{}',
                 "created_at" INTEGER NOT NULL DEFAULT (CAST(strftime('%s', CURRENT_TIMESTAMP) AS INTEGER)),
                 "updated_at" INTEGER NOT NULL DEFAULT (CAST(strftime('%s', CURRENT_TIMESTAMP) AS INTEGER)),
                 "is_deleted" INTEGER NOT NULL DEFAULT 0 CHECK ("is_deleted" IN (0, 1)),
@@ -367,6 +370,7 @@ class AndroidUdukkaiDatabaseHelper(
         """.trimIndent())
 
         try { db.execSQL("ALTER TABLE \"$customersTable\" ADD COLUMN \"company_ids\" TEXT NOT NULL DEFAULT '[]'") } catch (_: Exception) {}
+        try { db.execSQL("ALTER TABLE \"$itemsTable\" ADD COLUMN \"previous_names\" TEXT NOT NULL DEFAULT '{}'") } catch (_: Exception) {}
         try { db.execSQL("ALTER TABLE \"$customersTable\" ADD COLUMN \"extra\" TEXT NOT NULL DEFAULT '{}'") } catch (_: Exception) {}
         try { db.execSQL("ALTER TABLE \"$profilesTable\" ADD COLUMN \"print_settings\" TEXT NOT NULL DEFAULT '{}'") } catch (_: Exception) {}
         try { db.execSQL("ALTER TABLE \"$profilesTable\" ADD COLUMN \"pan\" TEXT NOT NULL DEFAULT ''") } catch (_: Exception) {}
@@ -602,6 +606,10 @@ class AndroidUdukkaiDatabaseHelper(
         list
     } ?: emptyList()
 
+    private fun storedItem(db: SQLiteDatabase, id: Long): ItemModel? = db.query(
+        "\"$itemsTable\"", null, "id = ?", arrayOf(id.toString()), null, null, null
+    ).use { if (it.moveToFirst()) cursorToItem(it) else null }
+
     private fun itemValues(item: ItemModel, fromSync: Boolean): ContentValues = ContentValues().apply {
             put("name", LanguageJsonConverter.stringify(item.name))
             put("hsn_code", item.hsnCode)
@@ -611,6 +619,7 @@ class AndroidUdukkaiDatabaseHelper(
             put("unit", item.unit)
             put("company_ids", item.companyIds.toString())
             put("company_prices", item.companyPrices.toString())
+            put("previous_names", ItemNames.encodeHistory(item.previousNames))
             put("updated_at", if (fromSync) item.updatedAt else System.currentTimeMillis() / 1000)
             put("is_deleted", if (fromSync && item.isDeleted) 1 else 0)
             if (fromSync) {
@@ -620,16 +629,23 @@ class AndroidUdukkaiDatabaseHelper(
     }
 
     override fun saveItem(item: ItemModel): Long = (useDb { db ->
-        val cv = itemValues(item, false)
-        if (item.id != null && item.id > 0) {
-            db.update("\"$itemsTable\"", cv, "id = ?", arrayOf(item.id.toString()))
-            item.id
-        } else {
-            val newId = Ids.next()
-            cv.put("id", newId)
-            cv.put("created_at", System.currentTimeMillis() / 1000)
-            db.insert("\"$itemsTable\"", null, cv)
-            newId
+        db.beginTransaction()
+        try {
+            val previous = storedItem(db, item.id)
+            val cv = itemValues(item.copy(previousNames = ItemNames.history(previous, item, System.currentTimeMillis() / 1000)), false)
+            val id = if (item.id > 0) {
+                if (db.update("\"$itemsTable\"", cv, "id = ?", arrayOf(item.id.toString())) == 1) item.id else -1L
+            } else {
+                val newId = Ids.next()
+                cv.put("id", newId)
+                cv.put("created_at", System.currentTimeMillis() / 1000)
+                db.insertOrThrow("\"$itemsTable\"", null, cv)
+                newId
+            }
+            db.setTransactionSuccessful()
+            id
+        } finally {
+            db.endTransaction()
         }
     } ?: -1L).also { if (it > 0) pushItemRow(it) }
 
@@ -639,7 +655,8 @@ class AndroidUdukkaiDatabaseHelper(
             db.beginTransaction()
             try {
                 for (item in list) {
-                    val cv = itemValues(item, true)
+                    val previous = storedItem(db, item.id)
+                    val cv = itemValues(item.copy(previousNames = ItemNames.history(previous, item)), true)
                     cv.put("id", item.id)
                     db.insertWithOnConflict("\"$itemsTable\"", null, cv, SQLiteDatabase.CONFLICT_REPLACE)
                 }
@@ -732,13 +749,12 @@ class AndroidUdukkaiDatabaseHelper(
     override fun saveInvoice(invoice: InvoiceModel): Long = (useDb { db ->
         val cv = invoiceValues(invoice, false)
         if (invoice.id != null && invoice.id > 0) {
-            db.update("\"$invoicesTable\"", cv, "id = ?", arrayOf(invoice.id.toString()))
-            invoice.id
+            if (db.update("\"$invoicesTable\"", cv, "id = ?", arrayOf(invoice.id.toString())) == 1) invoice.id else -1L
         } else {
             val newId = Ids.next()
             cv.put("id", newId)
             cv.put("created_at", System.currentTimeMillis() / 1000)
-            db.insert("\"$invoicesTable\"", null, cv)
+            db.insertOrThrow("\"$invoicesTable\"", null, cv)
             newId
         }
     } ?: -1L).also { if (it > 0) pushInvoiceRow(it) }
@@ -858,13 +874,12 @@ class AndroidUdukkaiDatabaseHelper(
     private fun saveReceiptInternal(db: SQLiteDatabase, receipt: ReceiptModel): Long {
         val cv = receiptValues(receipt, false)
         return if (receipt.id != null && receipt.id > 0) {
-            db.update("\"$receiptsTable\"", cv, "id = ?", arrayOf(receipt.id.toString()))
-            receipt.id
+            if (db.update("\"$receiptsTable\"", cv, "id = ?", arrayOf(receipt.id.toString())) == 1) receipt.id else -1L
         } else {
             val newId = Ids.next()
             cv.put("id", newId)
             cv.put("created_at", System.currentTimeMillis() / 1000)
-            db.insert("\"$receiptsTable\"", null, cv)
+            db.insertOrThrow("\"$receiptsTable\"", null, cv)
             newId
         }
     }
@@ -983,6 +998,14 @@ class AndroidUdukkaiDatabaseHelper(
     override fun saveReceiptWithLinks(receipt: ReceiptModel, links: List<ReceiptInvoiceLinkModel>): Long = (useDb { db ->
         db.beginTransaction()
         try {
+            if (links.isNotEmpty()) {
+                val sql = FullReceiptSettlement.eligibleBillsQuery(invoicesTable, receiptsTable, linksTable, links.size)
+                val args = (links.map { it.invoiceId.toString() } + receipt.id.toString()).toTypedArray()
+                val bills = db.rawQuery(sql, args).use { cursor ->
+                    buildList { while (cursor.moveToNext()) add(cursorToInvoice(cursor)) }
+                }
+                if (!FullReceiptSettlement.matches(receipt, links, bills)) return@useDb -1L
+            }
             val rId = saveReceiptInternal(db, receipt)
             if (rId > 0) {
                 db.delete("\"$linksTable\"", "receipt_id = ?", arrayOf(rId.toString()))
@@ -993,7 +1016,7 @@ class AndroidUdukkaiDatabaseHelper(
                         put("applied_amount", link.appliedAmount)
                         put("created_at", System.currentTimeMillis() / 1000)
                     }
-                    db.insert("\"$linksTable\"", null, cv)
+                    db.insertOrThrow("\"$linksTable\"", null, cv)
                 }
                 db.setTransactionSuccessful()
             }
@@ -1177,6 +1200,7 @@ class AndroidUdukkaiDatabaseHelper(
         unit = getStringCol(c, "unit", "alagu", default = "Nos"),
         companyIds = ItemJsonConverter.parseLongList(getStringCol(c, "company_ids", "niruvanam_ids", default = "[]")),
         companyPrices = ItemJsonConverter.parseCompanyPrices(getStringCol(c, "company_prices", default = "{}")),
+        previousNames = ItemNames.decodeHistory(getStringCol(c, "previous_names")),
         createdAt = getLongCol(c, "created_at"),
         updatedAt = getLongCol(c, "updated_at"),
         isDeleted = getIntCol(c, "is_deleted") == 1,

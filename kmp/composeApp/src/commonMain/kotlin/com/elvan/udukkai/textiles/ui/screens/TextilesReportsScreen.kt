@@ -59,7 +59,7 @@ private fun reportLine(invoice: InvoiceModel): ReportLine {
         sgst = invoice.taxAmount - cgst
     }
     val tax = cgst + sgst + igst
-    val gstin = invoice.customerId?.let { TextilesCustomerRepository.getById(it)?.gstin }.orEmpty()
+    val gstin = com.elvan.udukkai.data.model.CustomerSnapshot.invoiceGstin(invoice, invoice.customerId?.let { TextilesCustomerRepository.getById(it) })
     return ReportLine(invoice, (invoice.totalAmount - tax).coerceAtLeast(0.0), cgst, sgst, igst, gstin.isNotBlank())
 }
 

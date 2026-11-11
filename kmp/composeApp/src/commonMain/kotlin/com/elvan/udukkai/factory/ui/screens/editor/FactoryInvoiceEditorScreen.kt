@@ -1,5 +1,7 @@
 package com.elvan.udukkai.factory.ui.screens.editor
 
+import com.elvan.udukkai.data.model.InvoiceItemCatalog
+import com.elvan.udukkai.data.model.ItemNames
 import com.elvan.udukkai.core.utils.DateUtils
 import com.elvan.udukkai.core.utils.BillRules
 import com.elvan.udukkai.core.print.PrintPayload
@@ -180,6 +182,13 @@ fun FactoryInvoiceEditorScreen(
         InvoiceDisplayOptions.fromJson(invoice?.customPreferencesJson)
     }
     var displayOptions by remember { mutableStateOf(initialDisplayOptions) }
+    var customerReselected by remember { mutableStateOf(false) }
+    val keepCustomerSnapshot = invoice != null && !customerReselected && selectedCustomerId == invoice.customerId
+    val savedCustomer = if (keepCustomerSnapshot && invoice != null && initialDisplayOptions.customer.isNotEmpty()) {
+        com.elvan.udukkai.data.model.CustomerSnapshot.forInvoice(
+            invoice, selectedCustomerId?.let(FactoryCustomerRepository::getById), legacyAddressIsCity = false
+        )
+    } else null
 
     // Date
     var invoiceDate by remember { mutableStateOf(invoice?.invoiceDate ?: DateUtils.todayMillis()) }
@@ -195,41 +204,13 @@ fun FactoryInvoiceEditorScreen(
         )
     }
 
-    LaunchedEffect(FactoryItemRepository.items) {
-        if (FactoryItemRepository.items.isNotEmpty()) {
-            items = items.map { item ->
-                if (item.languageMap.isEmpty()) {
-                    val matched = FactoryItemRepository.items.firstOrNull { it.id.toString() == item.itemId }
-                        ?: FactoryItemRepository.items.firstOrNull { it.name.values.any { v -> v.equals(item.itemName, ignoreCase = true) || v.equals(item.itemNameEn, ignoreCase = true) } }
-                    if (matched != null && matched.name.isNotEmpty()) {
-                        item.copy(
-                            itemId = matched.id.toString(),
-                            itemName = matched.name["ta"] ?: item.itemName,
-                            itemNameEn = matched.name["en"] ?: item.itemNameEn,
-                            languageMap = matched.name
-                        )
-                    } else if (item.itemName.isNotEmpty() || item.itemNameEn.isNotEmpty()) {
-                        item.copy(
-                            languageMap = mapOf("ta" to item.itemName, "en" to item.itemNameEn).filterValues { it.isNotEmpty() }
-                        )
-                    } else {
-                        item
-                    }
-                } else {
-                    item
-                }
-            }
-        }
-    }
-
     LaunchedEffect(FactoryCustomerRepository.merchants) {
         if (selectedCustomerId == null && selectedCustomerNameMap.isNotEmpty() && FactoryCustomerRepository.merchants.isNotEmpty()) {
-            val matched = FactoryCustomerRepository.merchants.firstOrNull { m ->
-                m.name.values.any { v -> selectedCustomerNameMap.values.contains(v) }
+            val matched = FactoryCustomerRepository.merchants.singleOrNull { m ->
+                m.isAvailableForCompany(selectedCompanyId) && m.billName().values.any { v -> selectedCustomerNameMap.values.contains(v) }
             }
             if (matched != null) {
                 selectedCustomerId = matched.id
-                selectedCustomerNameMap = matched.name
                 selectedCustomerAddressMap = matched.address
             }
         }
@@ -441,6 +422,7 @@ fun FactoryInvoiceEditorScreen(
 
     // The bill as the form stands now: used by Save and by the draft preview
     val buildInvoice: (Int) -> InvoiceModel = { vanakkam ->
+        val catalog = InvoiceItemCatalog(FactoryItemRepository.items, selectedCompanyId)
         val validItems = activeItems.filter { it.weight > 0 && it.price > 0 }
         InvoiceModel(
             id = invoice?.id ?: 0L,
@@ -453,7 +435,12 @@ fun FactoryInvoiceEditorScreen(
             customerName = selectedCustomerNameMap,
             customerAddress = selectedCustomerAddressMap,
             invoiceDate = invoiceDate,
-            itemsJson = FactoryCalculation.itemsToJson(validItems),
+            itemsJson = FactoryCalculation.itemsToJson(validItems.map { line ->
+                if (!line.itemId.isNullOrBlank()) line else {
+                    val match = catalog.find(null, ItemNames.snapshot(line.languageMap, line.itemName, line.itemNameEn))
+                    line.copy(itemId = match?.id?.toString())
+                }
+            }),
             totalAmount = totals.grandTotal,
             totalWeight = totals.totalWeight,
             wastageGrams = setharamGrams,
@@ -461,7 +448,7 @@ fun FactoryInvoiceEditorScreen(
             ahimsaSilkAmount = ahimsaPattuThogai,
             otherTaxesJson = FactoryCalculation.chargesToJson(additionalCharges),
             customPreferencesJson = displayOptions.copy(
-                customer = selectedCustomerId?.let { com.elvan.udukkai.factory.data.FactoryCustomerRepository.getById(it) }?.let(com.elvan.udukkai.data.model.CustomerSnapshot::of)
+                customer = if (savedCustomer != null) initialDisplayOptions.customer else selectedCustomerId?.let { FactoryCustomerRepository.getById(it) }?.let(com.elvan.udukkai.data.model.CustomerSnapshot::of)
                     // Same customer as the saved bill, but gone from the list: keep what the bill already had
                     ?: if (selectedCustomerId == invoice?.customerId) displayOptions.customer else emptyMap()
             ).toJson(),
@@ -534,6 +521,7 @@ fun FactoryInvoiceEditorScreen(
         scrollState = scrollState,
         hasActions = false,
         actions = {},
+        hasFloatingBar = com.elvan.udukkai.core.platform.platformLayoutPolicy.supportsLandscapeControls,
         floatingBar = {
             ElvanEditorBottomBar(
                 onPreview = openPreview,
@@ -608,15 +596,20 @@ fun FactoryInvoiceEditorScreen(
                 // ── Section 0: Customer (பெறுநர்) ──
                 item(key = "customer_section") {
                     ElvanEditorSection(index = 0, title = K.billedTo.tr()) {
-                        FactoryCustomerField(
+                        com.elvan.udukkai.ui.screens.editor.InvoiceCustomerField(
+                            customers = FactoryCustomerRepository.customers.filter { it.isAvailableForCompany(selectedCompanyId) },
+                            savedCustomer = savedCustomer,
+                            profile = selectedProfile,
                             selectedCustomerId = selectedCustomerId,
                             onCustomerSelected = { customer ->
+                                customerReselected = true
                                 selectedCustomerId = customer.id
-                                selectedCustomerNameMap = customer.name
+                                selectedCustomerNameMap = customer.billName()
                                 selectedCustomerAddressMap = customer.address
                                 hasUnsavedChanges = true
                             },
                             onCustomerCleared = {
+                                customerReselected = true
                                 selectedCustomerId = null
                                 selectedCustomerNameMap = emptyMap()
                                 selectedCustomerAddressMap = emptyMap()
