@@ -206,24 +206,24 @@ export default function CoolieInvoiceBilingual({ bill }) {
 
       {/* Bill Info Section */}
       <div className="bill-info-section">
-        <div className="bill-meta-row">
+        <div className="bill-meta-row" style={{ marginBottom: '6px' }}>
           <span className="bill-meta"><div style={{ fontSize: 'inherit', fontWeight: 'inherit', color: 'inherit' }}>{slash('பட்டியல் எண்', 'Bill No')} : <strong style={{ textTransform: 'uppercase', color: '#242f3d', fontWeight: 600 }}>{displayBillNo}</strong></div></span>
           <span className="bill-meta"><div style={{ fontSize: 'inherit', fontWeight: 'inherit', color: 'inherit' }}>{slash('நாள்', 'Date')} : <strong style={{ color: '#242f3d', fontWeight: 600 }}>{date}</strong></div></span>
         </div>
         {/* Bill To, and on its free right side the financial year */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '12px' }}>
-          <div className="inv-party" style={{ marginTop: '6px', paddingLeft: '8px', paddingRight: '8px', minWidth: 0, overflowWrap: 'anywhere' }}>
+          <div className="inv-party" style={{ marginTop: '0', paddingLeft: '8px', paddingRight: '8px', minWidth: 0, overflowWrap: 'anywhere' }}>
             <h4 className="inv-section-label" style={{ marginBottom: '3px' }}>{slash('பெறுநர்', 'Bill To')}</h4>
-            <p className="inv-party-name" style={{ color: '#242f3d', fontWeight: 600, fontSize: '15px', margin: 0, marginBottom: '2px' }}>{customerName || '-'}</p>
-            {(customerPlace.length > 0 || customerGstin) && <div className="inv-party-details">
+            <p className="inv-party-name" style={{ color: '#0f172a', fontWeight: 700, fontSize: '1rem', margin: 0, marginBottom: '0.3rem' }}>{customerName || '-'}</p>
+            {(customerPlace.length > 0 || customerGstin) && <div className="inv-party-details" style={{ fontSize: '0.8rem', color: '#64748b', lineHeight: 1.65 }}>
               {customerPlace.map((line, index) => <p key={index}>{line}</p>)}
               {customerGstin && <p>GSTIN: {customerGstin}</p>}
             </div>}
           </div>
           {fyFull(date) && (
-            <div style={{ marginTop: '6px', paddingRight: '8px', textAlign: 'right', whiteSpace: 'nowrap' }}>
+            <div style={{ marginTop: '0', paddingRight: '8px', textAlign: 'right', whiteSpace: 'nowrap' }}>
               <h4 className="inv-section-label" style={{ marginBottom: '3px' }}>{slash('பொருளாண்டு', 'Financial Year')}</h4>
-              <p style={{ color: '#242f3d', fontWeight: 600, fontSize: '15px', margin: 0 }}>{fyFull(date)}</p>
+              <p style={{ color: '#0f172a', fontWeight: 700, fontSize: '1rem', margin: 0 }}>{fyFull(date)}</p>
             </div>
           )}
         </div>
