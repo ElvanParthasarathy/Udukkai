@@ -78,18 +78,18 @@ val seedTextilesProfiles: List<SeedProfile> = listOf(
 )
 
 val seedTextilesItems: List<SeedItem> = listOf(
-    SeedItem("prod_fancy_border_muthu", bi("ஃபேன்ஸி பார்டர் முத்து சேலை", "Fancy Border Muthu Saree"), "50072010", 8450.0, 5.0, "quantity", "Nos"),
-    SeedItem("prod_discount_saree", bi("தள்ளுபடி சேலை", "Discount Saree"), "50072010", 7425.0, 5.0, "quantity", "Nos"),
+    SeedItem("prod_fancy_border_muthu", bi("ஃபேன்ஸி பார்டர் முத்து சேலை", "Fancy Border Muthu Saree"), "50072010", 8400.0, 5.0, "quantity", "Nos"),
+    SeedItem("prod_discount_saree", bi("தள்ளுபடி சேலை", "Discount Saree"), "50072010", 7500.0, 5.0, "quantity", "Nos"),
     SeedItem("prod_vetti", bi("வேட்டி", "Vetti"), "50072010", 5900.0, 5.0, "quantity", "Nos"),
     SeedItem("prod_shirt", bi("சட்டை", "Shirt"), "50072010", 3600.0, 5.0, "quantity", "Nos"),
-    SeedItem("doc_1789292103569", bi("ஃபேன்ஸி முத்து சேலை", "Fancy Muthu Saree"), "50072010", 8400.0, 5.0, "quantity", "Nos"),
+    SeedItem("doc_1789292103569", bi("ஃபேன்ஸி முத்து சேலை", "Fancy Muthu Saree"), "50072010", 8200.0, 5.0, "quantity", "Nos"),
     SeedItem("doc_1789292175195", bi("ஃபேன்ஸி கட்டம் சேலை", "Fancy Checked Saree"), "50072010", 8200.0, 5.0, "quantity", "Nos"),
     SeedItem("prod_1", bi("ஃபேன்ஸி சேலை", "Fancy Saree"), "50072010", 7900.0, 5.0, "quantity", "Nos"),
-    SeedItem("prod_1781193310300", bi("கச்சா பட்டு", "Raw Silk"), "50072000", 5806.0, 0.0, "weight", "kg"),
+    SeedItem("prod_1781193310300", bi("கச்சா பட்டு", "Raw Silk"), "500200", 5500.0, 0.0, "weight", "kg"),
+    SeedItem("prod_rasilk", bi("ரா சில்க்", "Rasilk"), "500200", 5000.0, 0.0, "weight", "kg"),
     SeedItem("prod_1781194651230", bi("முறுக்கு பட்டு", "Twisted Silk"), "50072019", 18900.0, 0.0, "weight", "kg"),
-    SeedItem("prod_2", bi("ஃபேன்ஸி சேலை", "Fancy Saree"), "50072010", 7900.0, 5.0, "quantity", "Nos"),
     SeedItem("prod_3", bi("ஃபேன்ஸி முத்து முந்தி கட்டம் சேலை", "Fancy Muthu Mundhi Kattam Saree"), "50072010", 8200.0, 5.0, "quantity", "Nos"),
-    SeedItem("prod_4", bi("ஃபேன்ஸி கட்டம் புட்டா", "Fancy Checked Butta"), "50072010", 8500.0, 5.0, "quantity", "Nos")
+    SeedItem("prod_4", bi("ஃபேன்ஸி கட்டம் புட்டா", "Fancy Checked Butta"), "50072010", 8700.0, 5.0, "quantity", "Nos")
 )
 
 val seedTextilesCustomers: List<SeedCustomer> = listOf(
@@ -136,7 +136,7 @@ val seedTextilesInvoices: List<SeedTextilesInvoice> = listOf(
         company = "SJPS", number = "SJPS-567", date = "2026-08-01", type = "tax-invoice", customerRef = "cli_1781436385668",
         lines = listOf(
             SeedLine("prod_1", bi("ஃபேன்ஸி சேலை", "Fancy Saree"), "50072010", 3.0, "Nos", 8100.0, 5.0, 0.0, "%"),
-            SeedLine("prod_2", bi("ஃபேன்ஸி சேலை", "Fancy Saree"), "50072010", 2.0, "Nos", 8400.0, 5.0, 0.0, "₹"),
+            SeedLine("prod_1", bi("ஃபேன்ஸி சேலை", "Fancy Saree"), "50072010", 2.0, "Nos", 8400.0, 5.0, 0.0, "₹"),
             SeedLine("prod_4", bi("ஃபேன்ஸி கட்டம் புட்டா", "Fancy Checked Butta"), "50072010", 1.0, "Nos", 8500.0, 5.0, 0.0, "₹"),
             SeedLine("prod_4", bi("ஃபேன்ஸி கட்டம் புட்டா", "Fancy Checked Butta"), "50072010", 3.0, "Nos", 8700.0, 5.0, 0.0, "₹")
         ),
@@ -150,7 +150,7 @@ val seedTextilesInvoices: List<SeedTextilesInvoice> = listOf(
         lines = listOf(
             SeedLine("prod_1", bi("ஃபேன்ஸி சேலை", "Fancy Saree"), "50072010", 1.0, "Nos", 8100.0, 5.0, 0.0, "₹"),
             SeedLine("prod_1", bi("ஃபேன்ஸி சேலை", "Fancy Saree"), "50072010", 1.0, "Nos", 8300.0, 5.0, 0.0, "₹"),
-            SeedLine("prod_2", bi("ஃபேன்ஸி சேலை", "Fancy Saree"), "50072010", 3.0, "Nos", 8400.0, 5.0, 0.0, "₹"),
+            SeedLine("prod_1", bi("ஃபேன்ஸி சேலை", "Fancy Saree"), "50072010", 3.0, "Nos", 8400.0, 5.0, 0.0, "₹"),
             SeedLine("prod_1", bi("ஃபேன்ஸி சேலை", "Fancy Saree"), "50072010", 2.0, "Nos", 8500.0, 5.0, 0.0, "₹"),
             SeedLine("prod_4", bi("ஃபேன்ஸி கட்டம் புட்டா", "Fancy Checked Butta"), "50072010", 1.0, "Nos", 8700.0, 5.0, 0.0, "₹")
         ),
@@ -175,9 +175,9 @@ val seedTextilesInvoices: List<SeedTextilesInvoice> = listOf(
     SeedTextilesInvoice(
         company = "SJPS", number = "SJPS-570", date = "2026-09-01", type = "tax-invoice", customerRef = "cli_1781436385668",
         lines = listOf(
-            SeedLine("prod_2", bi("ஃபேன்ஸி சேலை", "Fancy Saree"), "50072010", 2.0, "Nos", 8200.0, 5.0, 0.0, "₹"),
+            SeedLine("prod_1", bi("ஃபேன்ஸி சேலை", "Fancy Saree"), "50072010", 2.0, "Nos", 8200.0, 5.0, 0.0, "₹"),
             SeedLine("prod_1", bi("ஃபேன்ஸி சேலை", "Fancy Saree"), "50072010", 2.0, "Nos", 8300.0, 5.0, 0.0, "₹"),
-            SeedLine("prod_2", bi("ஃபேன்ஸி சேலை", "Fancy Saree"), "50072010", 4.0, "Nos", 8400.0, 5.0, 0.0, "₹"),
+            SeedLine("prod_1", bi("ஃபேன்ஸி சேலை", "Fancy Saree"), "50072010", 4.0, "Nos", 8400.0, 5.0, 0.0, "₹"),
             SeedLine("prod_4", bi("ஃபேன்ஸி கட்டம் புட்டா", "Fancy Checked Butta"), "50072010", 4.0, "Nos", 8700.0, 5.0, 0.0, "₹")
         ),
         total = 106470.0, discount = 0.0, taxAmount = 5070.0, globalDiscountValue = 0.0, globalDiscountType = "%",
@@ -190,7 +190,7 @@ val seedTextilesInvoices: List<SeedTextilesInvoice> = listOf(
         lines = listOf(
             SeedLine("prod_1", bi("ஃபேன்ஸி சேலை", "Fancy Saree"), "50072010", 5.0, "Nos", 8100.0, 5.0, 0.0, "₹"),
             SeedLine("prod_1", bi("ஃபேன்ஸி சேலை", "Fancy Saree"), "50072010", 4.0, "Nos", 8400.0, 5.0, 0.0, "₹"),
-            SeedLine("prod_2", bi("ஃபேன்ஸி சேலை", "Fancy Saree"), "50072010", 3.0, "Nos", 8500.0, 5.0, 0.0, "₹"),
+            SeedLine("prod_1", bi("ஃபேன்ஸி சேலை", "Fancy Saree"), "50072010", 3.0, "Nos", 8500.0, 5.0, 0.0, "₹"),
             SeedLine("prod_4", bi("ஃபேன்ஸி கட்டம் புட்டா", "Fancy Checked Butta"), "50072010", 4.0, "Nos", 8700.0, 5.0, 0.0, "₹")
         ),
         total = 141120.0, discount = 0.0, taxAmount = 6720.0, globalDiscountValue = 0.0, globalDiscountType = "%",
@@ -201,7 +201,7 @@ val seedTextilesInvoices: List<SeedTextilesInvoice> = listOf(
     SeedTextilesInvoice(
         company = "SJPS", number = "SJPS-572", date = "2026-10-02", type = "tax-invoice", customerRef = "cli_1781436385668",
         lines = listOf(
-            SeedLine("prod_2", bi("ஃபேன்ஸி சேலை", "Fancy Saree"), "50072010", 3.0, "Nos", 8100.0, 5.0, 0.0, "₹"),
+            SeedLine("prod_1", bi("ஃபேன்ஸி சேலை", "Fancy Saree"), "50072010", 3.0, "Nos", 8100.0, 5.0, 0.0, "₹"),
             SeedLine(null, bi("ஃபேன்ஸி முத்து சேலை", "Fancy Muthu Saree"), "50072010", 6.0, "Nos", 8400.0, 5.0, 0.0, "₹"),
             SeedLine(null, bi("ஃபேன்ஸி கட்டம் சேலை", "Fancy Checked Saree"), "50072010", 1.0, "Nos", 8500.0, 5.0, 0.0, "₹"),
             SeedLine("prod_4", bi("ஃபேன்ஸி கட்டம் புட்டா", "Fancy Checked Butta"), "50072010", 3.0, "Nos", 8700.0, 5.0, 0.0, "₹")
