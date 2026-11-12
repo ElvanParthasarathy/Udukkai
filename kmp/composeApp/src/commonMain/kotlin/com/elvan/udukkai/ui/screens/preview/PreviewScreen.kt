@@ -313,10 +313,11 @@ private fun PreviewBottomArea(controller: DocumentPrintController, onEdit: (() -
                 notice?.kind == PrintNoticeKind.Failed -> K.pdfFailed.tr()
                 else -> K.preparingPdf.tr()
             }
+            var multiLine by remember(text) { mutableStateOf(false) }
             Row(
                 modifier = Modifier
                     .padding(horizontal = 16.dp, vertical = 8.dp)
-                    .clip(RoundedCornerShape(50))
+                    .clip(if (multiLine) RoundedCornerShape(20.dp) else RoundedCornerShape(100))
                     .background(colors.textPrimary)
                     .padding(horizontal = 16.dp, vertical = 10.dp),
                 verticalAlignment = Alignment.CenterVertically,
@@ -332,7 +333,8 @@ private fun PreviewBottomArea(controller: DocumentPrintController, onEdit: (() -
                         fontSize = 13.sp,
                         fontWeight = FontWeight.Medium,
                         color = colors.background
-                    )
+                    ),
+                    onTextLayout = { multiLine = it.lineCount > 1 }
                 )
             }
         }
