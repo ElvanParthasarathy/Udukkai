@@ -44,6 +44,15 @@ private fun keyFile(fileName: String, business: String): File {
     return File(dir, "$business|$fileName".replace(Regex("[\\/:*?\"<>]"), "-") + ".key")
 }
 
+internal fun hasStoredBillKey(fileName: String, business: String, key: String): Boolean {
+    return try {
+        val index = keyFile(fileName, business)
+        index.exists() && index.readText().trim() == key
+    } catch (_: Exception) {
+        false
+    }
+}
+
 /**
  * Copies the stored PDF of this bill into [dest] when it was made from the document with [key];
  * false when it is missing (cleared, deleted) or out of date, and the PDF has to be made again.
@@ -91,6 +100,10 @@ actual fun storeBillPdf(pdfPath: String, fileName: String, business: String): St
         if (source.parentFile?.name == "print_pdfs") {
             try { keyFile(fileName, business).writeText(source.nameWithoutExtension) } catch (_: Exception) {}
         }
+        val fullPath = File(Environment.getExternalStorageDirectory(), "$folder/$name").absolutePath
+        try {
+            android.media.MediaScannerConnection.scanFile(AppContext.context, arrayOf(fullPath), arrayOf("application/pdf"), null)
+        } catch (_: Exception) {}
         "$folder/$name"
     } catch (e: Exception) {
         Log.e(TAG, "Storing $fileName failed: ${e.message}", e)

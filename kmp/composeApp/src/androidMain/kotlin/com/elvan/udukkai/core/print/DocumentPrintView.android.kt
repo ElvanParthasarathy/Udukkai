@@ -268,7 +268,7 @@ private class PrintBridge(
         if (key == currentKey) return
         // A saved bill has its PDF in Documents/Udukkai: use that while it still matches the bill
         val business = controller.folder
-        if (business.isNotBlank() && lookupKey != key) {
+        if (business.isNotBlank() && lookupKey != key && hasStoredBillKey(safeName(), business, key)) {
             lookupKey = key
             val name = safeName()
             Thread {
@@ -373,7 +373,7 @@ private class PrintBridge(
                             }
                         }
                     }
-                }, 400)
+                }, 80)
             }
         }
         printer.loadDataWithBaseURL("$PRINT_ORIGIN/", html, "text/html", "UTF-8", null)
@@ -558,13 +558,16 @@ private class PrintBridge(
                     DocumentPrintAction.Save -> {
                         val savedPath = storeBillPdf(file.absolutePath, name, folder)
                         main.post {
+                            delivering = false
+                            controller.isBusy = false
+                            controller.activeAction = null
+                            controller.isWaitingForPdfAction = false
                             if (savedPath != null) {
                                 controller.notice = PrintNotice(PrintNoticeKind.Saved, savedPath)
                             } else {
                                 controller.notice = PrintNotice(PrintNoticeKind.Failed)
                             }
                         }
-                        postHandoff(startTime) {}
                     }
                 }
             } catch (e: Exception) {

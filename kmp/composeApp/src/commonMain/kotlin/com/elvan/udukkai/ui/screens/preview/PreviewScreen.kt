@@ -130,9 +130,8 @@ private fun DocumentPreview(
     body: (@Composable () -> Unit)? = null
 ) {
     val colors = rememberShellColors()
-    // With a native page the paper is made a moment later, so the page appears first
-    var makePaper by remember { mutableStateOf(body == null) }
-    LaunchedEffect(Unit) { if (!makePaper) { delay(450); makePaper = true } }
+    // Build paper concurrently in the background so it is already ready in cache
+    var makePaper by remember { mutableStateOf(true) }
 
     if (body != null) {
         LaunchedEffect(Unit) {
@@ -306,12 +305,13 @@ private fun PreviewBottomArea(controller: DocumentPrintController, onEdit: (() -
                 controller.notice = null
             }
         }
-        // A native page needs no "preparing" note: the buttons simply wake up when the paper is ready
-        if ((controller.isBusy && !quiet) || notice != null) {
+        // Show feedback immediately whenever an action is triggered or PDF is busy
+        val isUserWaiting = controller.activeAction != null || controller.isWaitingForPdfAction
+        if ((controller.isBusy && (!quiet || isUserWaiting)) || isUserWaiting || notice != null) {
             val text = when {
-                controller.isBusy -> K.preparingPdf.tr()
                 notice?.kind == PrintNoticeKind.Saved -> "${K.pdfSavedTo.tr()}: ${notice.detail}"
-                else -> K.pdfFailed.tr()
+                notice?.kind == PrintNoticeKind.Failed -> K.pdfFailed.tr()
+                else -> K.preparingPdf.tr()
             }
             Row(
                 modifier = Modifier
@@ -322,7 +322,7 @@ private fun PreviewBottomArea(controller: DocumentPrintController, onEdit: (() -
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                if (controller.isBusy) {
+                if (controller.isBusy || isUserWaiting) {
                     ExpressiveLoadingIndicator(modifier = Modifier.size(16.dp), color = colors.background, strokeWidth = 2.dp)
                 }
                 Text(
