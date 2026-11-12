@@ -54,6 +54,7 @@ object FactoryReceiptRepository {
     val filteredReceipts: List<ReceiptModel>
         get() {
             return activeCompanyReceipts.filter { r ->
+                if (!com.elvan.udukkai.core.utils.DateUtils.isCurrentFinancialYear(r.receiptDate)) return@filter false
                 val matchesQuery = SearchHelper.matchesReceipt(r, searchQuery, if (searchQuery.isBlank()) emptyList() else getLinkedInvoiceNumbers(r.id))
                 val matchesDate = when {
                     startDateFilter != null && endDateFilter != null -> r.receiptDate in startDateFilter!!..endDateFilter!!
@@ -146,8 +147,12 @@ object FactoryReceiptRepository {
     }
 
     fun saveWithLinks(receipt: ReceiptModel, links: List<ReceiptInvoiceLinkModel>): Long {
-        if (blocked(receipt)) return -1L
-        if (!com.elvan.udukkai.core.finance.FullReceiptSettlement.matches(receipt, links, FactoryInvoiceRepository.invoices)) return -1L
+        val invoices = FactoryInvoiceRepository.invoices
+        val linkedIds = links.map { it.invoiceId }.toSet()
+        val settlement = com.elvan.udukkai.core.finance.FullReceiptSettlement
+        if (receipt.id > 0 && blocked(receipt)) return -1L
+        if (!settlement.canRecordInYear(receipt.receiptDate, receipt.id <= 0L, invoices.filter { it.id in linkedIds })) return -1L
+        if (!settlement.matches(receipt, links, invoices)) return -1L
         if (validateLinks(links, receipt.id.takeIf { it > 0L }) != null) return -1L
         val helper = getFactoryDatabaseHelper()
         val id = helper.saveReceiptWithLinks(receipt, links)

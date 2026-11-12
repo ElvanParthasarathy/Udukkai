@@ -149,7 +149,8 @@ data class BusinessProfile(
     var printSettingsJson: String = "{}",
 
     /** Seconds since 1970 of the last save; used to decide which copy wins when syncing. */
-    var updatedAt: Long = 0L
+    var updatedAt: Long = 0L,
+    var isDeleted: Boolean = false
 ) {
     val fullSignatoryName: String
         get() {

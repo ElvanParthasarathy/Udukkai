@@ -123,6 +123,12 @@
             android:windowSoftInputMode="adjustResize" />
 
         <activity
+            android:name=".activities.FinancialYearsActivity"
+            android:exported="false"
+            android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize|density|uiMode|keyboardHidden|keyboard"
+            android:windowSoftInputMode="adjustResize" />
+
+        <activity
             android:name=".activities.ReportsActivity"
             android:exported="false"
             android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize|density|uiMode|keyboardHidden|keyboard"

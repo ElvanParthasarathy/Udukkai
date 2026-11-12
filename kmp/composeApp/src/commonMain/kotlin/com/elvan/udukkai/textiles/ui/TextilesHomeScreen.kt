@@ -121,7 +121,6 @@ fun TextilesHomeScreen() {
     var selectedItemIds by remember { mutableStateOf<Set<Long>>(emptySet()) }
     var showBulkDeleteConfirm by remember { mutableStateOf(false) }
     var bulkDelete by remember { mutableStateOf<BulkDelete?>(null) }
-    var closedYearEdit by remember { mutableStateOf<com.elvan.udukkai.data.model.InvoiceModel?>(null) }
     var showDateFilterSheet by remember { mutableStateOf(false) }
 
     val onToggleItem: (Long) -> Unit = { id ->
@@ -378,6 +377,16 @@ ElvanSearchBar(
                         onBack = popSubpage
                     )
                 }
+                ActiveSubpage.FinancialYears, is ActiveSubpage.FinancialYearBook -> {
+                    com.elvan.udukkai.ui.screens.create.FinancialYearsScreen(
+                        year = (subpage as? ActiveSubpage.FinancialYearBook)?.year,
+                        isFactory = false,
+                        onBack = popSubpage,
+                        onOpenYear = { navigateToSubpage(ActiveSubpage.FinancialYearBook(it)) },
+                        onOpenInvoice = { navigateToSubpage(ActiveSubpage.InvoiceView(it)) },
+                        onOpenReceipt = { navigateToSubpage(ActiveSubpage.ReceiptView(it)) }
+                    )
+                }
                 is ActiveSubpage.ItemEditor -> {
                     TextilesItemEditorScreen(
                         item = subpage.item,
@@ -407,8 +416,9 @@ ElvanSearchBar(
                     val currentCustomer = TextilesCustomerRepository.customers.find { it.id == subpage.customer.id } ?: subpage.customer
                     CustomerViewScreen(
                         merchant = currentCustomer,
-                       historyKey = TextilesInvoiceRepository.invoices to TextilesReceiptRepository.receipts,
-                       loadHistory = { textilesCustomerActivity(currentCustomer) },
+                       historyKey = listOf("textiles", TextilesInvoiceRepository.invoices, TextilesReceiptRepository.receipts),
+                       historyYears = com.elvan.udukkai.textiles.ui.screens.textilesHistoryYears(),
+                       loadHistory = { textilesCustomerActivity(currentCustomer, it) },
                        onReceiptClick = { id -> TextilesReceiptRepository.receipts.find { it.id == id }?.let { navigateToSubpage(ActiveSubpage.ReceiptView(it)) } },
                        onDelete = { com.elvan.udukkai.textiles.ui.screens.textilesDeleteCustomer(currentCustomer.id) },
                         onBillClick = { id -> TextilesInvoiceRepository.invoices.find { it.id == id }?.let { navigateToSubpage(ActiveSubpage.InvoiceView(it)) } },
@@ -428,8 +438,9 @@ ElvanSearchBar(
                     val currentItem = TextilesItemRepository.items.find { it.id == subpage.item.id } ?: subpage.item
                     ItemViewScreen(
                         item = currentItem,
-                       historyKey = TextilesInvoiceRepository.invoices to TextilesReceiptRepository.receipts,
-                       loadHistory = { textilesItemActivity(currentItem) },
+                       historyKey = listOf("textiles", TextilesInvoiceRepository.invoices, TextilesReceiptRepository.receipts, TextilesItemRepository.items),
+                       historyYears = com.elvan.udukkai.textiles.ui.screens.textilesHistoryYears(),
+                       loadHistory = { textilesItemActivity(currentItem, it) },
                        onDelete = { com.elvan.udukkai.textiles.ui.screens.textilesDeleteItem(currentItem.id) },
                         onBillClick = { id -> TextilesInvoiceRepository.invoices.find { it.id == id }?.let { navigateToSubpage(ActiveSubpage.InvoiceView(it)) } },
                         profile = TextilesProfileRepository.profile,
@@ -462,9 +473,7 @@ ElvanSearchBar(
                         onEdit = {
                             if (TextilesInvoiceRepository.hasLinkedReceipts(currentInvoice.id)) {
                                 ElvanSnackbar.show(invoiceLockedMsg)
-                            } else if (TextilesInvoiceRepository.isLocked(currentInvoice)) {
-                                closedYearEdit = currentInvoice
-                            } else {
+                            } else if (!TextilesInvoiceRepository.isLocked(currentInvoice)) {
                                 navigateToSubpage(ActiveSubpage.InvoiceEditor(currentInvoice))
                             }
                         },
@@ -579,7 +588,7 @@ ElvanSearchBar(
 
                             // Filter Circle Button (exclusive for Uruvakku: Search -> Filter -> 3-Dot)
                             if (selectedTab == NavTab.Create) {
-                                val isFilterActive = TextilesInvoiceRepository.isDateFilterActive || TextilesReceiptRepository.isDateFilterActive
+                                val isFilterActive = if (uruvakkuSegment == 0) TextilesInvoiceRepository.isCreateFilterActive else TextilesReceiptRepository.isDateFilterActive
                                 ElvanTopBarIconButton(
                                     onClick = { showDateFilterSheet = true }
                                 ) {
@@ -592,15 +601,7 @@ ElvanSearchBar(
                                 }
                             }
 
-                            // 3-Dot More Menu (மேலும்) - in actions for portrait only
-                            if (isLandscape) {
-                                ElvanTopBarIconButton(onClick = { navigateToSubpage(ActiveSubpage.Settings) }) {
-                                    Icon(imageVector = MaterialSymbols.Rounded.Settings, contentDescription = K.settings.tr(), tint = colors.textPrimary, modifier = Modifier.size(22.dp))
-                                }
-                                ElvanTopBarIconButton(onClick = { navigateToSubpage(ActiveSubpage.RecycleBin) }) {
-                                    Icon(imageVector = MaterialSymbols.Rounded.Delete, contentDescription = K.recycleBin.tr(), tint = colors.textPrimary, modifier = Modifier.size(22.dp))
-                                }
-                            } else {
+                            run {
                                 Box {
                                     ElvanTopBarIconButton(
                                         onClick = {
@@ -626,6 +627,17 @@ ElvanSearchBar(
                                                 ElvanMenuState.isMenuOpen = false
                                                 menuExpanded = false
                                                 navigateToSubpage(ActiveSubpage.Settings)
+                                            }
+                                        )
+                                    )
+                                    add(
+                                        ElvanPopupMenuItem(
+                                            title = K.financialYears.tr(),
+                                            icon = MaterialSymbols.Rounded.Calendar,
+                                            onClick = {
+                                                ElvanMenuState.isMenuOpen = false
+                                                menuExpanded = false
+                                                navigateToSubpage(ActiveSubpage.FinancialYears)
                                             }
                                         )
                                     )
@@ -1077,19 +1089,6 @@ androidx.compose.animation.AnimatedContent(
             }
 
             }
-        closedYearEdit?.let { target ->
-            ElvanActionSheet(
-                title = K.yearClosedEditTitle.tr(),
-                cancelText = K.cancelBtn.tr(),
-                confirmText = K.editAnyway.tr(),
-                onConfirm = {
-                    com.elvan.udukkai.core.finance.YearLock.openForSession(target.invoiceDate)
-                    navigateToSubpage(ActiveSubpage.InvoiceEditor(target))
-                    closedYearEdit = null
-                },
-                onDismissRequest = { closedYearEdit = null }
-            )
-        }
 
         if (showBulkDeleteConfirm && selectedItemIds.isNotEmpty()) {
             val deleteSheetTitle = when (selectedTab) {
@@ -1147,8 +1146,7 @@ androidx.compose.animation.AnimatedContent(
                             if (deleted > 0) ElvanSnackbar.show("$deleted $invoicesLabel $erasingLabel")
                             // Bills that have a receipt are paid and stay
                             if (deleted < job.ids.size) {
-                                val inLockedYear = TextilesInvoiceRepository.invoices.any { it.id in job.ids && TextilesInvoiceRepository.isLocked(it) }
-                                ElvanSnackbar.show(if (inLockedYear) booksLockedMsg else invoiceHasReceiptsMsg)
+                                ElvanSnackbar.show(invoiceHasReceiptsMsg)
                             }
                         } else {
                             if (deleted > 0) ElvanSnackbar.show("$deleted $receiptsLabel $erasingLabel")
@@ -1163,14 +1161,31 @@ androidx.compose.animation.AnimatedContent(
             )
         }
 
+        var showInvoiceFilters by remember { mutableStateOf(false) }
+        if (showDateFilterSheet && uruvakkuSegment == 0 && !showInvoiceFilters) {
+            com.elvan.udukkai.ui.screens.create.components.DocumentFilterSheet(
+                payment = TextilesInvoiceRepository.paymentFilter,
+                onPayment = {
+                    TextilesInvoiceRepository.paymentFilter = it
+                    createScrollState.requestScrollToItem(0)
+                    showDateFilterSheet = false
+                },
+                start = TextilesInvoiceRepository.startDateFilter,
+                end = TextilesInvoiceRepository.endDateFilter,
+                onDate = { showInvoiceFilters = true },
+                onDismiss = { if (!showInvoiceFilters) showDateFilterSheet = false },
+                colors = colors
+            )
+        }
         CreateDateFilterSheet(
-            isOpen = showDateFilterSheet,
+            isOpen = showDateFilterSheet && (uruvakkuSegment != 0 || showInvoiceFilters),
             currentStartMillis = if (uruvakkuSegment == 0) TextilesInvoiceRepository.startDateFilter else TextilesReceiptRepository.startDateFilter,
             currentEndMillis = if (uruvakkuSegment == 0) TextilesInvoiceRepository.endDateFilter else TextilesReceiptRepository.endDateFilter,
-            onDismissRequest = { showDateFilterSheet = false },
+            onDismissRequest = { showDateFilterSheet = false; showInvoiceFilters = false },
             onApplyFilter = { start, end, _ ->
-                TextilesInvoiceRepository.setDateRange(start, end)
-                TextilesReceiptRepository.setDateRange(start, end)
+                if (uruvakkuSegment == 0) TextilesInvoiceRepository.setDateRange(start, end)
+                else TextilesReceiptRepository.setDateRange(start, end)
+                createScrollState.requestScrollToItem(0)
             },
             colors = colors
         )

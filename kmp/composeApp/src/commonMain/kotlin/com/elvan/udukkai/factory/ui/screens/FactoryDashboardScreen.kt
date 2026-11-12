@@ -53,9 +53,12 @@ fun FactoryDashboardScreen(
     val showSkeleton = isRefreshing || isSwitchingCompany || restoringEmpty ||
         com.elvan.udukkai.ui.components.shell.LoginShimmer.active
 
-    val recentBills = FactoryInvoiceRepository.recentInvoices
-    val overallTotal = FactoryInvoiceRepository.overallTotal
-    val activeCompanyInvoiceCount = FactoryInvoiceRepository.activeCompanyInvoices.size
+    val currentInvoices = FactoryInvoiceRepository.activeCompanyInvoices.filter {
+        com.elvan.udukkai.core.utils.DateUtils.isCurrentFinancialYear(it.invoiceDate)
+    }
+    val recentBills = currentInvoices.take(5)
+    val overallTotal = currentInvoices.filter { it.invoiceType != "proforma" }.sumOf { it.totalAmount }
+    val activeCompanyInvoiceCount = currentInvoices.size
 
     BoxWithConstraints(modifier = modifier.fillMaxSize()) {
         val isLandscape = maxWidth > maxHeight
@@ -173,7 +176,7 @@ ElvanStatsCard(
                     }
                 } else {
                     if (isLandscape) {
-                        val pairs = FactoryInvoiceRepository.activeCompanyInvoices.take(6).chunked(2) // landscape shows a sixth so the two columns end level
+                        val pairs = currentInvoices.take(6).chunked(2)
                         itemsIndexed(
                             items = pairs,
                             key = { _, pair -> "recent_pair_${pair.first().id}" }

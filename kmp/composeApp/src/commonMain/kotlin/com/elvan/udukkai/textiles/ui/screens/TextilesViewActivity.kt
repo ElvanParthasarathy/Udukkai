@@ -24,24 +24,31 @@ private fun paidAmounts(invoices: List<InvoiceModel>): Map<Long, Double> =
     invoices.map { it.id }.chunked(500).fold(HashMap()) { acc, ids -> acc.apply { putAll(TextilesReceiptRepository.getPaidAmounts(ids)) } }
 
 /** A customer's tax invoices in the open company: billed, still unpaid, every bill. */
-fun textilesCustomerActivity(customer: CustomerModel): ViewActivity {
-    val invoices = TextilesInvoiceRepository.activeCompanyInvoices
+fun textilesCustomerActivity(customer: CustomerModel, year: Int): ViewActivity {
+    val invoices = TextilesInvoiceRepository.activeCompanyInvoices.filter {
+        it.customerId == customer.id && com.elvan.udukkai.core.utils.DateUtils.financialYearStart(it.invoiceDate) == year
+    }
     val rows = ViewHistory.customerRows(invoices, customer.id, TextilesProfileRepository.profile.id, paidAmounts(invoices))
     return ViewActivity(
         count = rows.size,
         billed = rows.sumOf { it.amount },
         unpaid = rows.filter { !it.isPaid }.sumOf { it.amount },
         bills = rows,
-        receipts = ViewHistory.receiptRows(TextilesReceiptRepository.activeCompanyReceipts, customer.id, TextilesProfileRepository.profile.id),
+        receipts = ViewHistory.receiptRows(
+            TextilesReceiptRepository.activeCompanyReceipts.filter { com.elvan.udukkai.core.utils.DateUtils.financialYearStart(it.receiptDate) == year },
+            customer.id, TextilesProfileRepository.profile.id
+        ),
         estimates = ViewHistory.customerRows(invoices, customer.id, TextilesProfileRepository.profile.id, emptyMap(), estimates = true),
     )
 }
 
 /** An item's tax invoices in the open company: how much of it was billed, and every bill with its quantity and line value. */
-fun textilesItemActivity(item: ItemModel): ViewActivity {
+fun textilesItemActivity(item: ItemModel, year: Int): ViewActivity {
     val id = item.id
     val profile = TextilesProfileRepository.profile
-    val invoices = TextilesInvoiceRepository.activeCompanyInvoices
+    val invoices = TextilesInvoiceRepository.activeCompanyInvoices.filter {
+        com.elvan.udukkai.core.utils.DateUtils.financialYearStart(it.invoiceDate) == year
+    }
     val catalog = InvoiceItemCatalog(TextilesItemRepository.items, profile.id)
     val paid = paidAmounts(invoices)
     fun rowsOf(estimates: Boolean) = ViewHistory.itemRows(
@@ -57,14 +64,20 @@ fun textilesItemActivity(item: ItemModel): ViewActivity {
     return ViewActivity(count = rows.size, billed = rows.sumOf { it.amount }, bills = rows, estimates = rowsOf(true))
 }
 
+@androidx.compose.runtime.Composable
+fun textilesHistoryYears(): List<Int> {
+    val invoices = TextilesInvoiceRepository.activeCompanyInvoices
+    val receipts = TextilesReceiptRepository.activeCompanyReceipts
+    return androidx.compose.runtime.remember(invoices, receipts) { ViewHistory.financialYears(invoices, receipts) }
+}
+
 fun textilesDeleteCustomer(id: Long) = if (TextilesCustomerRepository.delete(id)) ViewDeleteResult.Deleted else ViewDeleteResult.Failed
 
 fun textilesDeleteItem(id: Long) = if (TextilesItemRepository.delete(id)) ViewDeleteResult.Deleted else ViewDeleteResult.Failed
 
-/** The rules of the list's delete: a bill with a receipt stays, and so does one in a closed year. */
+/** Linked receipts protect an invoice from deletion, regardless of the financial year. */
 fun textilesDeleteInvoice(invoice: InvoiceModel) = when {
     TextilesInvoiceRepository.hasLinkedReceipts(invoice.id) -> ViewDeleteResult.HasReceipts
-    TextilesInvoiceRepository.isLocked(invoice) -> ViewDeleteResult.BooksLocked
     TextilesInvoiceRepository.delete(invoice.id) -> ViewDeleteResult.Deleted
     else -> ViewDeleteResult.Failed
 }

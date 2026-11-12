@@ -236,6 +236,7 @@ class AndroidFirebaseSyncManager : FirebaseSyncManager {
                         _restoreProgress.value = null
                         _syncStatus.value = SyncStatus.SYNCED
                         _lastSyncTime.value = System.currentTimeMillis()
+                        cleanCloudToMatchLocal(scope)
                     }
                 }
             }
@@ -279,7 +280,159 @@ class AndroidFirebaseSyncManager : FirebaseSyncManager {
     }
 
     override fun triggerManualSync() {
-        startSync(if (com.elvan.udukkai.BuildConfig.FLAVOR == "factory") "factory" else "textiles")
+        val scope = if (com.elvan.udukkai.BuildConfig.FLAVOR == "factory") "factory" else "textiles"
+        cleanCloudToMatchLocal(scope) {
+            startSync(scope)
+        }
+    }
+
+    override fun cleanCloudToMatchLocal(scope: String, onComplete: ((Boolean) -> Unit)?) {
+        if (!isSyncAllowed()) {
+            onComplete?.invoke(false)
+            return
+        }
+        val db = getDatabase()
+        if (db == null) {
+            onComplete?.invoke(false)
+            return
+        }
+
+        worker.execute {
+            try {
+                val prefix = getPrefix(scope)
+                val helper = helperFor(scope)
+                val rootRef = db.getReference(prefix)
+
+                // Local active truth sets (NEVER modified, only read)
+                val activeProfiles = helper.loadAllProfiles()
+                val activeCompanyIds = activeProfiles.mapNotNull { it.id }.toSet()
+                val activeCustomers = helper.loadAllCustomers()
+                val activeCustomerIds = activeCustomers.mapNotNull { it.id }.toSet()
+                val activeItems = helper.loadAllItems()
+                val activeItemIds = activeItems.map { it.id }.toSet()
+                val activeInvoices = helper.loadAllInvoices().filter { it.companyId in activeCompanyIds }
+                val activeInvoiceIds = activeInvoices.map { it.id }.toSet()
+                val activeReceipts = helper.loadAllReceipts().filter { it.companyId in activeCompanyIds }
+                val activeReceiptIds = activeReceipts.map { it.id }.toSet()
+
+                Log.i(tag, "Starting cleanCloudToMatchLocal for $prefix. Active local: ${activeProfiles.size} profiles, ${activeInvoices.size} invoices, ${activeReceipts.size} receipts, ${activeItems.size} items, ${activeCustomers.size} customers")
+
+                // 1. Clean Profiles: remove any remote profile not in activeCompanyIds
+                rootRef.child("profiles").addListenerForSingleValueEvent(object : ValueEventListener {
+                    override fun onDataChange(snapshot: DataSnapshot) {
+                        for (child in snapshot.children) {
+                            val id = child.key?.toLongOrNull()
+                            if (id == null || id !in activeCompanyIds) {
+                                Log.i(tag, "Pruning remote orphan/deleted profile: ${child.key}")
+                                child.ref.removeValue()
+                            }
+                        }
+                        activeProfiles.forEach { pushProfile(it, scope) }
+                    }
+                    override fun onCancelled(error: DatabaseError) {
+                        Log.e(tag, "Clean profiles cancelled: ${error.message}")
+                    }
+                })
+
+                // 2. Clean Invoices: remove any remote invoice not in activeInvoiceIds or not in activeCompanyIds
+                rootRef.child("invoices").addListenerForSingleValueEvent(object : ValueEventListener {
+                    override fun onDataChange(snapshot: DataSnapshot) {
+                        for (child in snapshot.children) {
+                            val id = child.key?.toLongOrNull()
+                            val compId = (child.child("companyId").value as? Number)?.toLong()
+                            val isDel = child.child("isDeleted").value as? Boolean ?: false
+                            if (id == null || id !in activeInvoiceIds || (compId != null && compId !in activeCompanyIds) || isDel) {
+                                Log.i(tag, "Pruning remote extra/deleted invoice: ${child.key}")
+                                child.ref.removeValue()
+                            }
+                        }
+                        activeInvoices.forEach { pushInvoice(it, scope) }
+                    }
+                    override fun onCancelled(error: DatabaseError) {
+                        Log.e(tag, "Clean invoices cancelled: ${error.message}")
+                    }
+                })
+
+                // 3. Clean Receipts & Receipt Links
+                rootRef.child("receipts").addListenerForSingleValueEvent(object : ValueEventListener {
+                    override fun onDataChange(snapshot: DataSnapshot) {
+                        for (child in snapshot.children) {
+                            val id = child.key?.toLongOrNull()
+                            val compId = (child.child("companyId").value as? Number)?.toLong()
+                            val isDel = child.child("isDeleted").value as? Boolean ?: false
+                            if (id == null || id !in activeReceiptIds || (compId != null && compId !in activeCompanyIds) || isDel) {
+                                Log.i(tag, "Pruning remote extra/deleted receipt: ${child.key}")
+                                child.ref.removeValue()
+                                rootRef.child("receipt_links").child("${child.key}").removeValue()
+                            }
+                        }
+                        activeReceipts.forEach { receipt ->
+                            pushReceipt(receipt, scope)
+                            val links = helper.getLinksForReceipt(receipt.id)
+                            if (links.isNotEmpty()) {
+                                pushReceiptLinks(receipt.id, links, scope)
+                            }
+                        }
+                    }
+                    override fun onCancelled(error: DatabaseError) {
+                        Log.e(tag, "Clean receipts cancelled: ${error.message}")
+                    }
+                })
+
+                rootRef.child("receipt_links").addListenerForSingleValueEvent(object : ValueEventListener {
+                    override fun onDataChange(snapshot: DataSnapshot) {
+                        for (child in snapshot.children) {
+                            val id = child.key?.toLongOrNull()
+                            if (id == null || id !in activeReceiptIds) {
+                                child.ref.removeValue()
+                            }
+                        }
+                    }
+                    override fun onCancelled(error: DatabaseError) {}
+                })
+
+                // 4. Clean Customers
+                rootRef.child("customers").addListenerForSingleValueEvent(object : ValueEventListener {
+                    override fun onDataChange(snapshot: DataSnapshot) {
+                        for (child in snapshot.children) {
+                            val id = child.key?.toLongOrNull()
+                            val isDel = child.child("isDeleted").value as? Boolean ?: false
+                            if (id == null || id !in activeCustomerIds || isDel) {
+                                Log.i(tag, "Pruning remote extra/deleted customer: ${child.key}")
+                                child.ref.removeValue()
+                            }
+                        }
+                        activeCustomers.forEach { pushMerchant(it, scope) }
+                    }
+                    override fun onCancelled(error: DatabaseError) {}
+                })
+
+                // 5. Clean Items
+                rootRef.child("items").addListenerForSingleValueEvent(object : ValueEventListener {
+                    override fun onDataChange(snapshot: DataSnapshot) {
+                        for (child in snapshot.children) {
+                            val id = child.key?.toLongOrNull()
+                            val isDel = child.child("isDeleted").value as? Boolean ?: false
+                            if (id == null || id !in activeItemIds || isDel) {
+                                Log.i(tag, "Pruning remote extra/deleted item: ${child.key}")
+                                child.ref.removeValue()
+                            }
+                        }
+                        activeItems.forEach { pushItem(it, scope) }
+                    }
+                    override fun onCancelled(error: DatabaseError) {}
+                })
+
+                mainHandler.post {
+                    _lastSyncTime.value = System.currentTimeMillis()
+                    _syncStatus.value = SyncStatus.SYNCED
+                    onComplete?.invoke(true)
+                }
+            } catch (e: Exception) {
+                Log.e(tag, "cleanCloudToMatchLocal failed: ${e.message}", e)
+                mainHandler.post { onComplete?.invoke(false) }
+            }
+        }
     }
 
     override fun dismissGuardAlert() {
@@ -306,9 +459,9 @@ class AndroidFirebaseSyncManager : FirebaseSyncManager {
         val helper = helperFor(scope)
         when (kind) {
             RestorePhase.PROFILES -> mergeCollection(
-                kind, snapshot, helper.loadAllProfiles(),
+                kind, scope, snapshot, helper.loadEveryProfile(),
                 parse = { snapshotToProfile(it) }, id = { it.id ?: 0L }, updated = { it.updatedAt },
-                isDeleted = { false }, deletedAt = { null },
+                isDeleted = { it.isDeleted }, deletedAt = { null },
                 upsert = { helper.upsertProfilesFromSync(it) }, push = { pushProfile(it, scope) },
                 reload = {
                     if (isFact) com.elvan.udukkai.factory.data.FactoryProfileRepository.refreshFromDatabase()
@@ -317,7 +470,7 @@ class AndroidFirebaseSyncManager : FirebaseSyncManager {
                 }
             )
             RestorePhase.CUSTOMERS -> mergeCollection(
-                kind, snapshot, helper.loadEveryCustomer(),
+                kind, scope, snapshot, helper.loadEveryCustomer(),
                 parse = { snapshotToMerchant(it) }, id = { it.id ?: 0L }, updated = { it.updatedAt },
                 isDeleted = { it.isDeleted }, deletedAt = { it.deletedAt },
                 upsert = { helper.upsertCustomersFromSync(it) }, push = { pushMerchant(it, scope) },
@@ -332,7 +485,7 @@ class AndroidFirebaseSyncManager : FirebaseSyncManager {
                 }
             )
             RestorePhase.ITEMS -> mergeCollection(
-                kind, snapshot, helper.loadEveryItem(),
+                kind, scope, snapshot, helper.loadEveryItem(),
                 parse = { snapshotToItem(it) }, id = { it.id }, updated = { it.updatedAt },
                 isDeleted = { it.isDeleted }, deletedAt = { it.deletedAt },
                 upsert = { helper.upsertItemsFromSync(it) }, push = { pushItem(it, scope) },
@@ -347,7 +500,7 @@ class AndroidFirebaseSyncManager : FirebaseSyncManager {
                 }
             )
             RestorePhase.INVOICES -> mergeCollection(
-                kind, snapshot, helper.loadEveryInvoice(),
+                kind, scope, snapshot, helper.loadEveryInvoice(),
                 parse = { snapshotToInvoice(it) }, id = { it.id }, updated = { it.updatedAt },
                 isDeleted = { it.isDeleted }, deletedAt = { it.deletedAt },
                 upsert = { helper.upsertInvoicesFromSync(it) }, push = { pushInvoice(it, scope) },
@@ -362,7 +515,7 @@ class AndroidFirebaseSyncManager : FirebaseSyncManager {
                 }
             )
             RestorePhase.RECEIPTS -> mergeCollection(
-                kind, snapshot, helper.loadEveryReceipt(),
+                kind, scope, snapshot, helper.loadEveryReceipt(),
                 parse = { snapshotToReceipt(it) }, id = { it.id }, updated = { it.updatedAt },
                 isDeleted = { it.isDeleted }, deletedAt = { it.deletedAt },
                 upsert = { helper.upsertReceiptsFromSync(it) }, push = { pushReceipt(it, scope) },
@@ -387,6 +540,7 @@ class AndroidFirebaseSyncManager : FirebaseSyncManager {
      */
     private fun <T> mergeCollection(
         kind: RestorePhase,
+        scope: String,
         snapshot: DataSnapshot,
         local: List<T>,
         parse: (DataSnapshot) -> T?,
@@ -406,6 +560,9 @@ class AndroidFirebaseSyncManager : FirebaseSyncManager {
         var done = 0
         var storedAny = false
         val purgeLimit = System.currentTimeMillis() / 1000 - 30 * 86400
+        val activeCompanyIds = if (kind == RestorePhase.INVOICES || kind == RestorePhase.RECEIPTS || kind == RestorePhase.PROFILES) {
+            helperFor(scope).loadAllProfiles().mapNotNull { it.id }.toSet()
+        } else emptySet()
 
         fun flush() {
             if (batch.isEmpty()) return
@@ -425,11 +582,46 @@ class AndroidFirebaseSyncManager : FirebaseSyncManager {
         for (child in snapshot.children) {
             val remote = parse(child)
             if (remote != null) {
-                remoteIds.add(id(remote))
-                val mine = localById[id(remote)]
-                // A record deleted for good here long ago is not brought back from the cloud
+                val remoteId = id(remote)
+
+                // 1. Never restore deleted records from cloud - purge from cloud
+                if (isDeleted(remote)) {
+                    child.ref.removeValue()
+                    continue
+                }
+
+                // 2. Invoices & receipts: if company doesn't exist locally, purge from cloud
+                if (kind == RestorePhase.INVOICES) {
+                    val compId = (remote as? InvoiceModel)?.companyId
+                    if (compId != null && compId !in activeCompanyIds) {
+                        child.ref.removeValue()
+                        continue
+                    }
+                }
+                if (kind == RestorePhase.RECEIPTS) {
+                    val compId = (remote as? ReceiptModel)?.companyId
+                    if (compId != null && compId !in activeCompanyIds) {
+                        child.ref.removeValue()
+                        continue
+                    }
+                }
+
+                // 3. Profiles: if marked deleted locally, purge from cloud
+                if (kind == RestorePhase.PROFILES) {
+                    val localProfile = localById[remoteId] as? com.elvan.udukkai.data.settings.BusinessProfile
+                    if (localProfile?.isDeleted == true) {
+                        child.ref.removeValue()
+                        continue
+                    }
+                }
+
+                remoteIds.add(remoteId)
+                val mine = localById[remoteId]
                 // Deleted for good on this phone a moment ago: an older snapshot must not revive it
-                if (mine == null && removedLocally.contains("${kind.name.lowercase()}:${id(remote)}")) continue
+                if (mine == null && removedLocally.contains("${kind.name.lowercase()}:$remoteId")) {
+                    child.ref.removeValue()
+                    continue
+                }
                 val oldTombstone = mine == null && isDeleted(remote) && (deletedAt(remote) ?: Long.MAX_VALUE) < purgeLimit
                 if (!oldTombstone && (mine == null || updated(remote) > updated(mine))) {
                     batch.add(remote)
@@ -437,6 +629,8 @@ class AndroidFirebaseSyncManager : FirebaseSyncManager {
                 } else if (mine != null && updated(mine) > updated(remote)) {
                     push(mine)
                 }
+            } else {
+                child.ref.removeValue()
             }
             done++
             if (reportProgress && (storedAny || batch.isNotEmpty()) && (done % 10 == 0 || done == total)) {
@@ -444,9 +638,9 @@ class AndroidFirebaseSyncManager : FirebaseSyncManager {
             }
         }
         flush()
-        // Records only this phone has (first sync, or made while offline) go up
+        // Records only this phone has (first sync, or made while offline) go up - active only
         for (mine in local) {
-            if (id(mine) !in remoteIds) push(mine)
+            if (!isDeleted(mine) && id(mine) !in remoteIds) push(mine)
         }
     }
 

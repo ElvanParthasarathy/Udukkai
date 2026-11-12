@@ -51,6 +51,9 @@ interface FirebaseSyncManager {
 
     /** Wipes all cloud data for the given scope (used by dev clear / erase). */
     fun wipeScope(scope: String = "factory")
+
+    /** Cleans the cloud database to strictly match active local records, purging orphan/deleted records. */
+    fun cleanCloudToMatchLocal(scope: String = "factory", onComplete: ((Boolean) -> Unit)? = null)
 }
 
 expect fun getFirebaseSyncManager(): FirebaseSyncManager

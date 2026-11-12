@@ -4,6 +4,7 @@ import com.elvan.udukkai.data.model.ItemNames
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import com.elvan.udukkai.core.print.billBusinessFolder
+import com.elvan.udukkai.core.finance.YearLock
 import com.elvan.udukkai.core.print.invoicePdfName
 import com.elvan.udukkai.core.utils.BillRules
 import com.elvan.udukkai.core.utils.CurrencyUtils
@@ -64,8 +65,11 @@ fun InvoiceViewScreen(
     PreviewScreen(
         title = invoice.invoiceNumber,
         onBack = onBack,
-        onEdit = if (isPaid) null else onEdit,
+        onEdit = if (isPaid || YearLock.isLocked(invoice.invoiceDate) || DateUtils.isPastFinancialYear(invoice.invoiceDate)) null else onEdit,
         menuItems = buildList {
+            if (!isPaid && !isProforma && onRecordPayment != null && DateUtils.isPastFinancialYear(invoice.invoiceDate)) {
+                add(ElvanPopupMenuItem(K.recordPayment.tr(), MaterialSymbols.Rounded.Add, onRecordPayment))
+            }
             if (onCopy != null) add(ElvanPopupMenuItem(copyTitle, MaterialSymbols.Rounded.ContentCopy, onCopy))
             deleteItem?.let { add(it) }
         },

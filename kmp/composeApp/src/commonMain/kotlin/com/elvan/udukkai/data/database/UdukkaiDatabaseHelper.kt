@@ -90,6 +90,8 @@ interface UdukkaiDatabaseHelper {
     fun loadEveryInvoice(): List<InvoiceModel> = loadAllInvoices() + loadDeletedInvoices()
     fun loadEveryCustomer(): List<CustomerModel> = loadAllCustomers() + loadDeletedCustomers()
     fun loadEveryItem(): List<ItemModel> = loadAllItems() + loadDeletedItems()
+    fun loadDeletedProfiles(): List<BusinessProfile> = emptyList()
+    fun loadEveryProfile(): List<BusinessProfile> = loadAllProfiles() + loadDeletedProfiles()
 }
 
 expect fun getFactoryDatabaseHelper(): UdukkaiDatabaseHelper

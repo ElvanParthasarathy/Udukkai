@@ -3,10 +3,20 @@ package com.elvan.udukkai.core.finance
 import com.elvan.udukkai.data.model.InvoiceModel
 import com.elvan.udukkai.data.model.ReceiptInvoiceLinkModel
 import com.elvan.udukkai.data.model.ReceiptModel
+import com.elvan.udukkai.core.utils.DateUtils
 import kotlin.math.roundToLong
 
 /** A receipt settles its selected bills completely; several bills may share one receipt. */
 object FullReceiptSettlement {
+    /** A new receipt may settle existing invoices in a closed book without reopening that book. */
+    fun canRecordInYear(date: Long, isNew: Boolean, invoices: List<InvoiceModel>): Boolean {
+        if (!YearLock.isLocked(date)) return true
+        val year = DateUtils.financialYearStart(date)
+        return isNew && invoices.isNotEmpty() && invoices.all {
+            !it.isDeleted && it.invoiceType != "proforma" && DateUtils.financialYearStart(it.invoiceDate) == year
+        }
+    }
+
     fun total(invoices: List<InvoiceModel>): Double = invoices.sumOf { cents(it.totalAmount) } / 100.0
 
     fun matches(amount: Double, invoices: List<InvoiceModel>): Boolean =
@@ -21,7 +31,7 @@ object FullReceiptSettlement {
         val byId = invoices.associateBy { it.id }
         val selected = links.map { byId[it.invoiceId] ?: return false }
         return selected.all { !it.isDeleted && it.companyId == receipt.companyId &&
-            it.customerId == receipt.customerId && it.invoiceDate <= receipt.receiptDate } &&
+            it.customerId == receipt.customerId && DateUtils.dayOf(it.invoiceDate) <= DateUtils.dayOf(receipt.receiptDate) } &&
             matches(receipt.amount, selected) && links.all {
             it.appliedAmount.isFinite() && cents(it.appliedAmount) == cents(byId.getValue(it.invoiceId).totalAmount)
         }

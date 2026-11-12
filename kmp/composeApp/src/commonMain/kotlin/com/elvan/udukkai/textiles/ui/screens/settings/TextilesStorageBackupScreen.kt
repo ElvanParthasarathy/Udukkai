@@ -206,6 +206,19 @@ fun TextilesStorageBackupScreen(
                     colors = colors
                 )
                 ElvanSettingsDivider(colors = colors)
+                val cleanedCloudMsg = K.cloudCleanedMsg.tr()
+                ElvanSettingsRow(
+                    icon = MaterialSymbols.Rounded.Autorenew,
+                    title = K.cleanCloudData.tr(),
+                    description = K.cleanCloudDataHint.tr(),
+                    onClick = {
+                        sync.cleanCloudToMatchLocal("textiles") { success ->
+                            if (success) ElvanSnackbar.show(cleanedCloudMsg)
+                        }
+                    },
+                    colors = colors
+                )
+                ElvanSettingsDivider(colors = colors)
                 ElvanSettingsRow(
                     icon = MaterialSymbols.Rounded.Folder,
                     title = K.storageUsed.tr(),

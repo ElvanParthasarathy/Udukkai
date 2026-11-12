@@ -53,9 +53,12 @@ fun TextilesDashboardScreen(
     val showSkeleton = isRefreshing || isSwitchingCompany || restoringEmpty ||
         com.elvan.udukkai.ui.components.shell.LoginShimmer.active
 
-    val recentBills = TextilesInvoiceRepository.recentInvoices
-    val overallTotal = TextilesInvoiceRepository.overallTotal
-    val activeCompanyInvoiceCount = TextilesInvoiceRepository.activeCompanyInvoices.size
+    val currentInvoices = TextilesInvoiceRepository.activeCompanyInvoices.filter {
+        com.elvan.udukkai.core.utils.DateUtils.isCurrentFinancialYear(it.invoiceDate)
+    }
+    val recentBills = currentInvoices.take(5)
+    val overallTotal = currentInvoices.filter { it.invoiceType != "proforma" }.sumOf { it.totalAmount }
+    val activeCompanyInvoiceCount = currentInvoices.size
 
     BoxWithConstraints(modifier = modifier.fillMaxSize()) {
         val isLandscape = maxWidth > maxHeight
@@ -173,7 +176,7 @@ ElvanStatsCard(
                     }
                 } else {
                     if (isLandscape) {
-                        val pairs = TextilesInvoiceRepository.activeCompanyInvoices.take(6).chunked(2) // landscape shows a sixth so the two columns end level
+                        val pairs = currentInvoices.take(6).chunked(2)
                         itemsIndexed(
                             items = pairs,
                             key = { _, pair -> "recent_pair_${pair.first().id}" }

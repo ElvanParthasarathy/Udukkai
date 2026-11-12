@@ -87,12 +87,9 @@ fun FactoryReceiptEditorScreen(
 
     val profiles: List<BusinessProfile> = com.elvan.udukkai.factory.data.FactoryProfileRepository.profiles
     val activeProfile = com.elvan.udukkai.factory.data.FactoryProfileRepository.profile
-    val selectedProfile = remember(profiles, activeProfile, receipt?.companyId) {
-        if (isEditing) {
-            profiles.firstOrNull { it.id == receipt?.companyId } ?: activeProfile
-        } else {
-            activeProfile
-        }
+    val sourceCompanyId = receipt?.companyId ?: forInvoice?.companyId
+    val selectedProfile = remember(profiles, activeProfile, sourceCompanyId) {
+        profiles.firstOrNull { it.id == sourceCompanyId } ?: activeProfile
     }
     val selectedCompanyId = if (isEditing) (receipt?.companyId ?: selectedProfile.id) else (selectedProfile.id ?: profiles.firstOrNull()?.id)
     val isProfileConfigured = profiles.isNotEmpty() && selectedCompanyId != null
@@ -311,7 +308,7 @@ fun FactoryReceiptEditorScreen(
         }
 
         // A receipt in a locked financial year cannot be added, moved or changed
-        if (com.elvan.udukkai.core.finance.YearLock.isLocked(receiptDate) ||
+        if (!com.elvan.udukkai.core.finance.FullReceiptSettlement.canRecordInYear(receiptDate, !isEditing, selectedInvoices) ||
             (receipt != null && com.elvan.udukkai.factory.data.FactoryReceiptRepository.isLocked(receipt))) {
             ElvanSnackbar.show(booksLockedMsg)
             return

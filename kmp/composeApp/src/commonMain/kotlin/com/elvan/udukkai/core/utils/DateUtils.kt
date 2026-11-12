@@ -79,6 +79,12 @@ object DateUtils {
     }
 
     /** "2026-27" for a date between April 2026 and March 2027. */
+    fun isPastFinancialYear(millis: Long): Boolean =
+        financialYearStart(millis) < financialYearStart(todayMillis())
+
+    fun isCurrentFinancialYear(millis: Long): Boolean =
+        financialYearStart(millis) == financialYearStart(todayMillis())
+
     fun financialYearLabel(millis: Long): String {
         val start = financialYearStart(millis)
         return "$start-${((start + 1) % 100).toString().padStart(2, '0')}"

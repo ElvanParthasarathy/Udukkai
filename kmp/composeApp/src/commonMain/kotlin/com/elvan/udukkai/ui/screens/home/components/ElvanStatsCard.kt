@@ -29,6 +29,15 @@ import com.elvan.udukkai.theme.LocalShellColors
 import com.elvan.udukkai.theme.gradientFor
 
 @Composable
+private fun StatValueSkeleton() {
+    val brush = com.elvan.udukkai.ui.components.shell.rememberShimmerBrush()
+    Box(
+        Modifier.padding(vertical = 3.dp).width(72.dp).height(16.dp)
+            .clip(androidx.compose.foundation.shape.CircleShape).background(brush)
+    )
+}
+
+@Composable
 fun ElvanStatsCard(
     icon: ImageVector,
     label: String,
@@ -40,6 +49,7 @@ fun ElvanStatsCard(
     iconBg: Color? = null,
     accentColor: Color? = null,
     gradientColors: List<Color>? = null,
+    loading: Boolean = false,
     onClick: (() -> Unit)? = null
 ) {
     val ff = LocalAppFontFamily.current
@@ -152,7 +162,7 @@ fun ElvanStatsCard(
                         overflow = TextOverflow.Ellipsis
                     )
                     Spacer(modifier = Modifier.height(2.dp))
-                    Text(
+                    if (loading) StatValueSkeleton() else Text(
                         text = value.preventBrokenLigatures(),
                         style = TextStyle(
                             fontFamily = ff,
@@ -226,7 +236,7 @@ fun ElvanStatsCard(
                     )
                     Spacer(modifier = Modifier.height(2.dp))
                     Box(modifier = Modifier.fillMaxWidth().height(28.dp), contentAlignment = Alignment.BottomStart) {
-                        Text(
+                        if (loading) StatValueSkeleton() else Text(
                             text = value.preventBrokenLigatures(),
                             style = TextStyle(
                                 fontFamily = ff,

@@ -62,13 +62,15 @@ fun CreateDateFilterSheet(
     currentEndMillis: Long?,
     onDismissRequest: () -> Unit,
     onApplyFilter: (startMillis: Long?, endMillis: Long?, preset: DateFilterPreset) -> Unit,
-    colors: ShellColors = rememberShellColors()
+    colors: ShellColors = rememberShellColors(),
+    financialYear: Int? = null
 ) {
     val ff = LocalAppFontFamily.current
     val isDark = colors.isDark
 
     val todayStart = DateUtils.todayMillis()
     val todayEnd = todayStart + 86399999L
+    val historical = financialYear != null && financialYear < DateUtils.financialYearStart(todayStart)
 
     val yesterdayStart = todayStart - 86400000L
     val yesterdayEnd = todayStart - 1L
@@ -109,8 +111,8 @@ fun CreateDateFilterSheet(
     val allRecordsLabel = K.allRecords.tr()
     val selectDateRangeLabel = K.selectDateRange.tr()
 
-    val items = remember {
-        listOf(
+    val items = remember(historical) {
+        if (historical) listOf(DateFilterPreset.ALL, DateFilterPreset.CUSTOM) else listOf(
             DateFilterPreset.ALL,
             DateFilterPreset.TODAY,
             DateFilterPreset.YESTERDAY,
@@ -191,9 +193,10 @@ fun CreateDateFilterSheet(
     }
 
     if (showDateRangePicker) {
+        val yearStart = if (historical) DateUtils.parseToEpochMillis("01/04/$financialYear") ?: todayStart else todayStart
         ElvanDateRangePicker(
-            initialStart = currentStartMillis ?: todayStart,
-            initialEnd = currentEndMillis ?: todayEnd,
+            initialStart = currentStartMillis ?: yearStart,
+            initialEnd = currentEndMillis ?: if (historical) yearStart else todayEnd,
             onDismiss = {
                 showDateRangePicker = false
                 onDismissRequest() // cancelled or not, the presets sheet does not come back: one step out, not two

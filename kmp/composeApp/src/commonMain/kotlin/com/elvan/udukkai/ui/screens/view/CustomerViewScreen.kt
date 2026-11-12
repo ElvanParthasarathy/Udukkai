@@ -34,7 +34,8 @@ fun CustomerViewScreen(
     allProfiles: List<BusinessProfile> = emptyList(),
     showGst: Boolean = true,
     historyKey: Any? = null,
-    loadHistory: () -> ViewActivity = { ViewActivity() },
+    loadHistory: (Int) -> ViewActivity = { ViewActivity() },
+    historyYears: List<Int> = emptyList(),
     onBillClick: (Long) -> Unit = {},
     onReceiptClick: (Long) -> Unit = {},
     /** Kept by the caller, so the page comes back where it was after opening a bill. */
@@ -45,10 +46,18 @@ fun CustomerViewScreen(
     onDelete: (() -> ViewDeleteResult)? = null
 ) {
     val colors = rememberShellColors()
-    val (history, retryHistory) = rememberViewHistory(merchant.id, listOf(historyKey, profile.primaryLanguage, profile.secondaryLanguage, profile.isBilingual), loadHistory)
+    val financialYear = rememberViewFinancialYear(merchant.id, profile.id, historyYears)
+    val year = financialYear.year
+    val (history, retryHistory) = rememberViewHistory(
+        "Customer" to merchant.id,
+        listOf(historyKey, year, profile.id, profile.primaryLanguage, profile.secondaryLanguage, profile.isBilingual),
+        cache = historyKey != null
+    ) { loadHistory(year) }
     val activity = (history as? ViewHistoryState.Ready)?.activity ?: ViewActivity()
     val ready = history is ViewHistoryState.Ready
     val historyUi = rememberViewHistoryUi(history, K.noCustomerInvoices.tr(), withReceipts = true)
+    historyUi.financialYear = financialYear
+    androidx.compose.runtime.LaunchedEffect(year) { historyUi.dateRange = null to null }
     val deleteItem = rememberViewDeleteItem(onDelete, K.customerDeleted.tr(), onBack)
 
     val language = DataLanguageDisplay(profile)
@@ -123,8 +132,10 @@ fun CustomerViewScreen(
         summary = {
             ViewHero(primary = primaryName, secondary = heroSecond, icon = MaterialSymbols.Rounded.Person, tint = colors.customerColor, colors = colors)
 
+            ViewFinancialYearButton(financialYear, colors)
             run {
                 ViewStats(
+                    loading = history is ViewHistoryState.Loading,
                     left = Triple(MaterialSymbols.Rounded.CurrencyRupeeCircle, K.totalBilledAmount.tr(), if (ready) CurrencyUtils.formatInr(activity.billed) else "-"),
                     right = Triple(MaterialSymbols.Rounded.Payments, K.unpaidAmount.tr(), if (ready) CurrencyUtils.formatInr(activity.unpaid) else "-"),
                     colors = colors

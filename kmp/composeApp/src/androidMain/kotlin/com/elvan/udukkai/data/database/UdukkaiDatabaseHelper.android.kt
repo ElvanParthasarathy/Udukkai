@@ -561,7 +561,7 @@ class AndroidUdukkaiDatabaseHelper(
             put("deleted_at", System.currentTimeMillis() / 1000)
         }
         db.update("\"$customersTable\"", cv, "id = ?", arrayOf(id.toString())) > 0
-    } ?: false).also { if (it) pushCustomerRow(id) }
+    } ?: false).also { if (it) removeRemote("customers", id) }
 
     override fun loadDeletedCustomers(): List<CustomerModel> = useDb { db ->
         val list = mutableListOf<CustomerModel>()
@@ -585,7 +585,13 @@ class AndroidUdukkaiDatabaseHelper(
 
     override fun purgeExpiredCustomers(days: Int): Int = useDb { db ->
         val threshold = (System.currentTimeMillis() / 1000) - (days * 86400L)
-        db.delete("\"$customersTable\"", "is_deleted = 1 AND deleted_at < ?", arrayOf(threshold.toString()))
+        val idsToPurge = mutableListOf<Long>()
+        db.rawQuery("SELECT id FROM \"$customersTable\" WHERE is_deleted = 1 AND deleted_at < ?", arrayOf(threshold.toString())).use { c ->
+            while (c.moveToNext()) idsToPurge.add(c.getLong(0))
+        }
+        val count = db.delete("\"$customersTable\"", "is_deleted = 1 AND deleted_at < ?", arrayOf(threshold.toString()))
+        idsToPurge.forEach { removeRemote("customers", it) }
+        count
     } ?: 0
 
     // Backward-compatible delegates
@@ -673,7 +679,7 @@ class AndroidUdukkaiDatabaseHelper(
             put("deleted_at", System.currentTimeMillis() / 1000)
         }
         db.update("\"$itemsTable\"", cv, "id = ?", arrayOf(id.toString())) > 0
-    } ?: false).also { if (it) pushItemRow(id) }
+    } ?: false).also { if (it) removeRemote("items", id) }
 
     override fun loadDeletedItems(): List<ItemModel> = useDb { db ->
         val list = mutableListOf<ItemModel>()
@@ -697,7 +703,13 @@ class AndroidUdukkaiDatabaseHelper(
 
     override fun purgeExpiredItems(days: Int): Int = useDb { db ->
         val threshold = (System.currentTimeMillis() / 1000) - (days * 86400L)
-        db.delete("\"$itemsTable\"", "is_deleted = 1 AND deleted_at < ?", arrayOf(threshold.toString()))
+        val idsToPurge = mutableListOf<Long>()
+        db.rawQuery("SELECT id FROM \"$itemsTable\" WHERE is_deleted = 1 AND deleted_at < ?", arrayOf(threshold.toString())).use { c ->
+            while (c.moveToNext()) idsToPurge.add(c.getLong(0))
+        }
+        val count = db.delete("\"$itemsTable\"", "is_deleted = 1 AND deleted_at < ?", arrayOf(threshold.toString()))
+        idsToPurge.forEach { removeRemote("items", it) }
+        count
     } ?: 0
 
     // ── Invoices ─────────────────────────────────────────────────────────────
@@ -782,7 +794,7 @@ class AndroidUdukkaiDatabaseHelper(
             put("deleted_at", System.currentTimeMillis() / 1000)
         }
         db.update("\"$invoicesTable\"", cv, "id = ?", arrayOf(id.toString())) > 0
-    } ?: false).also { if (it) pushInvoiceRow(id) }
+    } ?: false).also { if (it) removeRemote("invoices", id) }
 
     override fun loadDeletedInvoices(): List<InvoiceModel> = useDb { db ->
         val list = mutableListOf<InvoiceModel>()
@@ -806,7 +818,13 @@ class AndroidUdukkaiDatabaseHelper(
 
     override fun purgeExpiredInvoices(days: Int): Int = useDb { db ->
         val threshold = (System.currentTimeMillis() / 1000) - (days * 86400L)
-        db.delete("\"$invoicesTable\"", "is_deleted = 1 AND deleted_at < ?", arrayOf(threshold.toString()))
+        val idsToPurge = mutableListOf<Long>()
+        db.rawQuery("SELECT id FROM \"$invoicesTable\" WHERE is_deleted = 1 AND deleted_at < ?", arrayOf(threshold.toString())).use { c ->
+            while (c.moveToNext()) idsToPurge.add(c.getLong(0))
+        }
+        val count = db.delete("\"$invoicesTable\"", "is_deleted = 1 AND deleted_at < ?", arrayOf(threshold.toString()))
+        idsToPurge.forEach { removeRemote("invoices", it) }
+        count
     } ?: 0
 
 
@@ -935,7 +953,7 @@ class AndroidUdukkaiDatabaseHelper(
             put("deleted_at", System.currentTimeMillis() / 1000)
         }
         db.update("\"$receiptsTable\"", cv, "id = ?", arrayOf(id.toString())) > 0
-    } ?: false).also { if (it) pushReceiptRow(id, false) }
+    } ?: false).also { if (it) removeRemote("receipts", id) }
 
     override fun loadDeletedReceipts(): List<ReceiptModel> = useDb { db ->
         val list = mutableListOf<ReceiptModel>()
@@ -951,7 +969,7 @@ class AndroidUdukkaiDatabaseHelper(
             putNull("deleted_at")
         }
         db.update("\"$receiptsTable\"", cv, "id = ?", arrayOf(id.toString())) > 0
-    } ?: false).also { if (it) pushReceiptRow(id, false) }
+    } ?: false).also { if (it) pushReceiptRow(id, true) }
 
     override fun permanentDeleteReceipt(id: Long): Boolean = (useDb { db ->
         db.delete("\"$linksTable\"", "receipt_id = ?", arrayOf(id.toString()))
@@ -960,7 +978,13 @@ class AndroidUdukkaiDatabaseHelper(
 
     override fun purgeExpiredReceipts(days: Int): Int = useDb { db ->
         val threshold = (System.currentTimeMillis() / 1000) - (days * 86400L)
-        db.delete("\"$receiptsTable\"", "is_deleted = 1 AND deleted_at < ?", arrayOf(threshold.toString()))
+        val idsToPurge = mutableListOf<Long>()
+        db.rawQuery("SELECT id FROM \"$receiptsTable\" WHERE is_deleted = 1 AND deleted_at < ?", arrayOf(threshold.toString())).use { c ->
+            while (c.moveToNext()) idsToPurge.add(c.getLong(0))
+        }
+        val count = db.delete("\"$receiptsTable\"", "is_deleted = 1 AND deleted_at < ?", arrayOf(threshold.toString()))
+        idsToPurge.forEach { removeRemote("receipts", it) }
+        count
     } ?: 0
 
     // ── Junction Links ───────────────────────────────────────────────────────
@@ -1072,6 +1096,14 @@ class AndroidUdukkaiDatabaseHelper(
         list
     } ?: emptyList()
 
+    override fun loadDeletedProfiles(): List<BusinessProfile> = useDb { db ->
+        val list = mutableListOf<BusinessProfile>()
+        db.rawQuery("SELECT * FROM \"$profilesTable\" WHERE is_deleted = 1 ORDER BY id ASC", null).use { c ->
+            while (c.moveToNext()) list.add(cursorToProfile(c))
+        }
+        list
+    } ?: emptyList()
+
     private fun profileValues(profile: BusinessProfile, fromSync: Boolean): ContentValues = ContentValues().apply {
             put("primary_language", profile.primaryLanguage)
             put("secondary_language", profile.secondaryLanguage)
@@ -1152,7 +1184,29 @@ class AndroidUdukkaiDatabaseHelper(
             put("deleted_at", System.currentTimeMillis() / 1000)
         }
         db.update("\"$profilesTable\"", cv, "id = ?", arrayOf(profileId.toString())) > 0
-    } ?: false).also { if (it) removeRemote("profiles", profileId) }
+    } ?: false).also {
+        if (it) {
+            removeRemote("profiles", profileId)
+            // Also purge all remote invoices and receipts belonging to this deleted company
+            val invoiceIds = useDb { db ->
+                val ids = mutableListOf<Long>()
+                db.rawQuery("SELECT id FROM \"$invoicesTable\" WHERE company_id = ?", arrayOf(profileId.toString())).use { c ->
+                    while (c.moveToNext()) ids.add(c.getLong(0))
+                }
+                ids
+            } ?: emptyList()
+            invoiceIds.forEach { invId -> removeRemote("invoices", invId) }
+
+            val receiptIds = useDb { db ->
+                val ids = mutableListOf<Long>()
+                db.rawQuery("SELECT id FROM \"$receiptsTable\" WHERE company_id = ?", arrayOf(profileId.toString())).use { c ->
+                    while (c.moveToNext()) ids.add(c.getLong(0))
+                }
+                ids
+            } ?: emptyList()
+            receiptIds.forEach { recId -> removeRemote("receipts", recId) }
+        }
+    }
 
     override fun clearProfiles(): Boolean = useDb { db ->
         db.delete("\"$profilesTable\"", null, null) > 0
@@ -1296,7 +1350,8 @@ class AndroidUdukkaiDatabaseHelper(
         upiId = getStringCol(c, "upi_id"),
         themeColor = getStringCol(c, "theme_color", "thoatra_niram"),
         printSettingsJson = getStringCol(c, "print_settings", default = "{}"),
-        updatedAt = getLongCol(c, "updated_at")
+        updatedAt = getLongCol(c, "updated_at"),
+        isDeleted = getIntCol(c, "is_deleted") == 1
     )
 }
 

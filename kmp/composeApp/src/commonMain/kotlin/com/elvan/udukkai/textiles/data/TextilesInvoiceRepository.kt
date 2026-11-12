@@ -10,6 +10,7 @@ import com.elvan.udukkai.core.utils.DateUtils
 import com.elvan.udukkai.data.database.getTextilesDatabaseHelper
 import com.elvan.udukkai.core.utils.SearchHelper
 import com.elvan.udukkai.data.model.InvoiceModel
+import com.elvan.udukkai.core.finance.InvoicePaymentFilter
 
 object TextilesInvoiceRepository {
 
@@ -20,11 +21,14 @@ object TextilesInvoiceRepository {
         internal set
 
     var searchQuery by mutableStateOf("")
+    var paymentFilter by mutableStateOf(InvoicePaymentFilter.All)
     var startDateFilter by mutableStateOf<Long?>(null)
     var endDateFilter by mutableStateOf<Long?>(null)
 
     val isDateFilterActive: Boolean
         get() = startDateFilter != null || endDateFilter != null
+    val isCreateFilterActive: Boolean
+        get() = isDateFilterActive || paymentFilter != InvoicePaymentFilter.All
 
     fun setDateRange(start: Long?, end: Long?) {
         startDateFilter = start
@@ -49,6 +53,8 @@ object TextilesInvoiceRepository {
     val filteredInvoices: List<InvoiceModel>
         get() {
             return activeCompanyInvoices.filter { inv ->
+                if (!DateUtils.isCurrentFinancialYear(inv.invoiceDate)) return@filter false
+                if (!paymentFilter.matches(inv.invoiceType != "proforma") { hasLinkedReceipts(inv.id) }) return@filter false
                 val matchesQuery = SearchHelper.matchesInvoice(inv, searchQuery) ||
                     (searchQuery.isNotBlank() && TextilesReceiptRepository.receiptsForInvoice(inv.id).any { SearchHelper.matchesRecord(listOf(it.receiptNumber), searchQuery) })
 
@@ -127,7 +133,7 @@ object TextilesInvoiceRepository {
     }
 
     fun hasLinkedReceipts(invoiceId: Long): Boolean {
-        if (invoiceId <= 0L) return false
+        if (invoiceId <= 0L || TextilesReceiptRepository.receipts.isEmpty()) return false
         return TextilesReceiptRepository.hasPaidAmount(invoiceId)
     }
 
@@ -169,7 +175,6 @@ object TextilesInvoiceRepository {
     /** A bill that has a receipt is paid: it cannot be deleted (delete the receipt first). */
     fun delete(id: Long): Boolean {
         if (hasLinkedReceipts(id)) return false
-        if (invoices.any { it.id == id && isLocked(it) }) return false
         val success = getTextilesDatabaseHelper().deleteInvoice(id)
         if (success) {
             loadAll()
@@ -188,7 +193,6 @@ object TextilesInvoiceRepository {
 
     fun restore(id: Long): Boolean {
         if (restoreBlocked(id)) return false
-        if (deletedInvoices.any { it.id == id && isLocked(it) }) return false
         val success = getTextilesDatabaseHelper().restoreInvoice(id)
         if (success) {
             loadAll()

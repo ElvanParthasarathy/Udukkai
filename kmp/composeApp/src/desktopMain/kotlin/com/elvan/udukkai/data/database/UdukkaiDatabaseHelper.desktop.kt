@@ -1017,6 +1017,16 @@ class DesktopUdukkaiDatabaseHelper(
         list
     }
 
+    override fun loadDeletedProfiles(): List<BusinessProfile> = useConn { conn ->
+        val list = mutableListOf<BusinessProfile>()
+        conn.createStatement().use { stmt ->
+            stmt.executeQuery("SELECT * FROM \"$profilesTable\" WHERE is_deleted = 1 ORDER BY id ASC").use { rs ->
+                while (rs.next()) list.add(rsToProfile(rs))
+            }
+        }
+        list
+    }
+
     override fun saveProfile(profile: BusinessProfile): Boolean = useConn { conn ->
         val pId = profile.id
         val exists = if (pId != null) {
@@ -1272,7 +1282,8 @@ class DesktopUdukkaiDatabaseHelper(
         tagline = LanguageJsonConverter.parse(getStringCol(rs, "tagline", "adaimozhi")),
         upiId = getStringCol(rs, "upi_id"),
         themeColor = getStringCol(rs, "theme_color", "thoatra_niram", "thoatraNiram"),
-        printSettingsJson = getStringCol(rs, "print_settings", default = "{}")
+        printSettingsJson = getStringCol(rs, "print_settings", default = "{}"),
+        isDeleted = getIntCol(rs, "is_deleted", default = 0) == 1
     )
 }
 

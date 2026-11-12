@@ -41,3 +41,28 @@ class ReportsActivity : BaseSubpageActivity() {
         }
     }
 }
+
+class FinancialYearsActivity : BaseSubpageActivity() {
+    @Composable
+    override fun ScreenContent() {
+        val year = intent.getIntExtra(EXTRA_YEAR, 0).takeIf { it != 0 }
+        com.elvan.udukkai.ui.screens.create.FinancialYearsScreen(
+            year = year,
+            isFactory = isFactory,
+            onBack = { finish() },
+            onOpenYear = { start(this, it) },
+            onOpenInvoice = { InvoiceViewActivity.start(this, it) },
+            onOpenReceipt = { ReceiptViewActivity.start(this, it) }
+        )
+    }
+
+    companion object {
+        private const val EXTRA_YEAR = "financial_year"
+
+        fun start(context: Context, year: Int? = null) {
+            context.startActivity(Intent(context, FinancialYearsActivity::class.java).apply {
+                year?.let { putExtra(EXTRA_YEAR, it) }
+            })
+        }
+    }
+}

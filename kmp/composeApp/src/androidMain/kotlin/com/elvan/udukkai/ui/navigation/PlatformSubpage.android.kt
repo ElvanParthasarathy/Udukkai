@@ -7,6 +7,8 @@ import com.elvan.udukkai.core.platform.CurrentActivity
 actual fun openPlatformSubpage(subpage: ActiveSubpage): Boolean {
     val activity = CurrentActivity.activity ?: return false
     when (subpage) {
+        ActiveSubpage.FinancialYears -> FinancialYearsActivity.start(activity)
+        is ActiveSubpage.FinancialYearBook -> FinancialYearsActivity.start(activity, subpage.year)
         is ActiveSubpage.Settings -> SettingsActivity.start(activity)
         is ActiveSubpage.RecycleBin -> RecycleBinActivity.start(activity)
         is ActiveSubpage.Reports -> ReportsActivity.start(activity)

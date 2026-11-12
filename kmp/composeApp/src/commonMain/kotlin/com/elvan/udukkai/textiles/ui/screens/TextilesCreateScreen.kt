@@ -22,6 +22,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.elvan.udukkai.core.utils.DateGroupUtils
+import com.elvan.udukkai.core.finance.InvoicePaymentFilter
 import com.elvan.udukkai.ui.screens.create.components.dateFilterLabel
 import com.elvan.udukkai.data.model.InvoiceModel
 import com.elvan.udukkai.data.model.ReceiptModel
@@ -93,7 +94,7 @@ fun TextilesCreateScreen(
 
     BoxWithConstraints(modifier = modifier.fillMaxSize()) {
         val isLandscape = maxWidth > maxHeight
-        val dateFilterActive = if (selectedSegment == 0) TextilesInvoiceRepository.isDateFilterActive else TextilesReceiptRepository.isDateFilterActive
+        val filterActive = if (selectedSegment == 0) TextilesInvoiceRepository.isCreateFilterActive else TextilesReceiptRepository.isDateFilterActive
         CreateDocumentList(
             state = scrollState,
             listModifier = Modifier.dragSelect(scrollState, { it in selectedItemIds }, { onItemLongClick?.invoke(it) }, { onToggleSelect?.invoke(it) }),
@@ -117,19 +118,26 @@ fun TextilesCreateScreen(
                     )
                 }
             },
-            filter = if (dateFilterActive) {
+            filter = if (filterActive) {
                 {
                     val startMillis = if (selectedSegment == 0) TextilesInvoiceRepository.startDateFilter else TextilesReceiptRepository.startDateFilter
                     val endMillis = if (selectedSegment == 0) TextilesInvoiceRepository.endDateFilter else TextilesReceiptRepository.endDateFilter
-                    val filterText = dateFilterLabel(startMillis, endMillis)
+                    val dateActive = startMillis != null || endMillis != null
+                    val payment = TextilesInvoiceRepository.paymentFilter
+                    val filterText = listOfNotNull(
+                        if (dateActive) dateFilterLabel(startMillis, endMillis) else null,
+                        if (selectedSegment == 0 && payment != InvoicePaymentFilter.All) payment.label() else null
+                    ).joinToString("  •  ")
 
                     Box(
                         modifier = Modifier.fillMaxWidth().padding(horizontal = Dimens.ContentPadding),
                         contentAlignment = Alignment.Center
                     ) {
                         ActiveFilterPill(filterText, colors) {
-                            TextilesInvoiceRepository.clearDateFilter()
-                            TextilesReceiptRepository.clearDateFilter()
+                            if (selectedSegment == 0) {
+                                TextilesInvoiceRepository.clearDateFilter()
+                                TextilesInvoiceRepository.paymentFilter = InvoicePaymentFilter.All
+                            } else TextilesReceiptRepository.clearDateFilter()
                         }
                     }
                 }
@@ -166,7 +174,7 @@ fun TextilesCreateScreen(
                                 )
                                 Spacer(modifier = Modifier.height(14.dp))
                                 Text(
-                                    text = if (isSearchActive || TextilesInvoiceRepository.isDateFilterActive) {
+                                    text = if (isSearchActive || TextilesInvoiceRepository.isCreateFilterActive) {
                                         K.noMatchingInvoices.tr().preventBrokenLigatures()
                                     } else {
                                         K.noInvoicesYet.tr().preventBrokenLigatures()

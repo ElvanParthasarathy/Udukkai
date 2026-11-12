@@ -1,6 +1,7 @@
 package com.elvan.udukkai.ui.screens.view
 
 import com.elvan.udukkai.core.finance.BillNumbering
+import com.elvan.udukkai.core.utils.DateUtils
 import com.elvan.udukkai.data.model.InvoiceModel
 import com.elvan.udukkai.data.model.ReceiptModel
 
@@ -19,6 +20,11 @@ enum class HistorySort { DateNew, DateOld, NumberHigh, NumberLow }
  * the GST report, a bill counts once however it came in, and the newest comes first.
  */
 object ViewHistory {
+    fun financialYears(invoices: List<InvoiceModel>, receipts: List<ReceiptModel>): List<Int> =
+        (invoices.asSequence().map { DateUtils.financialYearStart(it.invoiceDate) } +
+            receipts.asSequence().map { DateUtils.financialYearStart(it.receiptDate) })
+            .distinct().sortedDescending().toList()
+
     private fun bills(invoices: List<InvoiceModel>, companyId: Long?, estimates: Boolean): List<InvoiceModel> =
         invoices.filter { (it.invoiceType == "proforma") == estimates && !it.isDeleted && (companyId == null || it.companyId == companyId) }
             .distinctBy { it.id }

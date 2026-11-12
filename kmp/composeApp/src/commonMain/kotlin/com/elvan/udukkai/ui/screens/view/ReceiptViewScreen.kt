@@ -43,7 +43,7 @@ fun ReceiptViewScreen(
     PreviewScreen(
         title = receipt.receiptNumber,
         onBack = onBack,
-        onEdit = onEdit,
+        onEdit = onEdit.takeUnless { com.elvan.udukkai.core.utils.DateUtils.isPastFinancialYear(receipt.receiptDate) },
         menuItems = listOfNotNull(deleteItem),
         printPayload = payload,
         printFileName = receiptPdfName(receipt),
