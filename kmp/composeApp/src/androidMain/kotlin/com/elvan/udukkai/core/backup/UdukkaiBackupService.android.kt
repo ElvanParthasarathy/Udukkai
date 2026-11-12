@@ -554,8 +554,19 @@ class AndroidUdukkaiBackupService : UdukkaiBackupService {
         val latestFile = getFileForWriting(BackupSlot.LATEST)
         val previousFile = getFileForWriting(BackupSlot.PREVIOUS)
 
-        // Rotate existing LATEST to PREVIOUS atomically only after new backup is verified
-        if (latestFile.exists() && latestFile.length() >= 60 && validateArchive(latestFile)) {
+        // An empty database (fresh install, failed restore) must never replace a backup that holds data
+        val live = getLiveStats()
+        if (live.invoiceCount + live.receiptCount + live.customerCount + live.itemCount == 0) {
+            val old = getBackupMetadata(BackupSlot.LATEST)
+            if (old != null && old.invoiceCount + old.receiptCount + old.customerCount + old.itemCount > 0) {
+                Log.w(tag, "Skipping backup: database is empty but the existing backup has data.")
+                try { tempNewFile.delete() } catch (_: Exception) {}
+                return true
+            }
+        }
+
+        // Rotate LATEST to PREVIOUS only when it is over an hour old, so a burst of edits cannot overwrite the older good copy
+        if (latestFile.exists() && latestFile.length() >= 60 && System.currentTimeMillis() - latestFile.lastModified() > 3600_000L && validateArchive(latestFile)) {
             try {
                 latestFile.copyTo(previousFile, overwrite = true)
             } catch (e: Exception) {
@@ -599,6 +610,12 @@ class AndroidUdukkaiBackupService : UdukkaiBackupService {
         }
 
         val vaultFile = getFileForWriting(BackupSlot.SAFETY_VAULT)
+        // Keep the vault it replaces for one more generation
+        try {
+            if (vaultFile.exists() && validateArchive(vaultFile)) {
+                vaultFile.copyTo(File(vaultFile.parentFile, vaultFile.name.removeSuffix(".db") + "_older.db"), overwrite = true)
+            }
+        } catch (_: Exception) {}
         val replaced = atomicReplace(tempVaultFile, vaultFile)
         if (!replaced) return false
 

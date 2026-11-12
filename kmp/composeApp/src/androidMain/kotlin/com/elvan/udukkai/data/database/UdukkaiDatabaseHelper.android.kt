@@ -456,6 +456,25 @@ class AndroidUdukkaiDatabaseHelper(
                 "deleted_at" INTEGER NULL
             )
         """.trimIndent())
+
+        seedUniqueIds(db, listOf(customersTable, itemsTable, invoicesTable, receiptsTable, profilesTable))
+    }
+
+    /**
+     * New records on a phone start from a random high id, so records made on a reinstalled or second phone can never
+     * share an id with records already in the cloud (the cloud merges by id). Done once per table; old ids stay.
+     */
+    private fun seedUniqueIds(db: SQLiteDatabase, tables: List<String>) {
+        for (t in tables) {
+            try {
+                val maxId = db.rawQuery("SELECT COALESCE(MAX(id),0) FROM \"$t\"", null).use { if (it.moveToFirst()) it.getLong(0) else 0L }
+                val seq = db.rawQuery("SELECT seq FROM sqlite_sequence WHERE name = ?", arrayOf(t)).use { if (it.moveToFirst()) it.getLong(0) else 0L }
+                if (maxOf(maxId, seq) >= 1_000_000L) continue
+                val base = (1L + (Math.random() * 8_999_999L).toLong()) * 1_000_000L
+                val changed = db.compileStatement("UPDATE sqlite_sequence SET seq = $base WHERE name = ?").apply { bindString(1, t) }.executeUpdateDelete()
+                if (changed == 0) db.execSQL("INSERT INTO sqlite_sequence(name, seq) VALUES(?, ?)", arrayOf<Any>(t, base))
+            } catch (_: Exception) {}
+        }
     }
 
     // ensureTables runs dozens of CREATE / ALTER / migration statements. Doing that on every query

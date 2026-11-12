@@ -151,7 +151,10 @@ class AndroidFirebaseSyncManager : FirebaseSyncManager {
 
         // Take automatic Copy 2 Safety Snapshot before sync session
         try {
-            getUdukkaiBackupService().createSafetySnapshot()
+            // At most daily, so launches cannot push a good vault out with copies of bad data
+            val svc = getUdukkaiBackupService()
+            val last = svc.getSafetySnapshotStats()?.lastModified ?: 0L
+            if (System.currentTimeMillis() - last > 24 * 3600_000L) svc.createSafetySnapshot()
             Log.i(tag, "Copy 2 Safety Snapshot created prior to RTDB sync session.")
         } catch (e: Exception) {
             Log.w(tag, "Pre-sync safety snapshot warning: ${e.message}")
@@ -236,7 +239,7 @@ class AndroidFirebaseSyncManager : FirebaseSyncManager {
                         _restoreProgress.value = null
                         _syncStatus.value = SyncStatus.SYNCED
                         _lastSyncTime.value = System.currentTimeMillis()
-                        cleanCloudToMatchLocal(scope)
+                        // No automatic cloud prune: it deleted cloud records the phone lacked (e.g. after restoring an old backup)
                     }
                 }
             }
@@ -281,9 +284,7 @@ class AndroidFirebaseSyncManager : FirebaseSyncManager {
 
     override fun triggerManualSync() {
         val scope = if (com.elvan.udukkai.BuildConfig.FLAVOR == "factory") "factory" else "textiles"
-        cleanCloudToMatchLocal(scope) {
-            startSync(scope)
-        }
+        startSync(scope)
     }
 
     override fun cleanCloudToMatchLocal(scope: String, onComplete: ((Boolean) -> Unit)?) {
@@ -586,7 +587,7 @@ class AndroidFirebaseSyncManager : FirebaseSyncManager {
 
                 // 1. Never restore deleted records from cloud - purge from cloud
                 if (isDeleted(remote)) {
-                    child.ref.removeValue()
+                    // kept in the cloud: sync never deletes data
                     continue
                 }
 
@@ -594,14 +595,14 @@ class AndroidFirebaseSyncManager : FirebaseSyncManager {
                 if (kind == RestorePhase.INVOICES) {
                     val compId = (remote as? InvoiceModel)?.companyId
                     if (compId != null && compId !in activeCompanyIds) {
-                        child.ref.removeValue()
+                        // kept in the cloud: sync never deletes data
                         continue
                     }
                 }
                 if (kind == RestorePhase.RECEIPTS) {
                     val compId = (remote as? ReceiptModel)?.companyId
                     if (compId != null && compId !in activeCompanyIds) {
-                        child.ref.removeValue()
+                        // kept in the cloud: sync never deletes data
                         continue
                     }
                 }
@@ -610,7 +611,7 @@ class AndroidFirebaseSyncManager : FirebaseSyncManager {
                 if (kind == RestorePhase.PROFILES) {
                     val localProfile = localById[remoteId] as? com.elvan.udukkai.data.settings.BusinessProfile
                     if (localProfile?.isDeleted == true) {
-                        child.ref.removeValue()
+                        // kept in the cloud: sync never deletes data
                         continue
                     }
                 }
@@ -619,7 +620,7 @@ class AndroidFirebaseSyncManager : FirebaseSyncManager {
                 val mine = localById[remoteId]
                 // Deleted for good on this phone a moment ago: an older snapshot must not revive it
                 if (mine == null && removedLocally.contains("${kind.name.lowercase()}:$remoteId")) {
-                    child.ref.removeValue()
+                    // kept in the cloud: sync never deletes data
                     continue
                 }
                 val oldTombstone = mine == null && isDeleted(remote) && (deletedAt(remote) ?: Long.MAX_VALUE) < purgeLimit
@@ -630,7 +631,7 @@ class AndroidFirebaseSyncManager : FirebaseSyncManager {
                     push(mine)
                 }
             } else {
-                child.ref.removeValue()
+                // kept in the cloud: sync never deletes data
             }
             done++
             if (reportProgress && (storedAny || batch.isNotEmpty()) && (done % 10 == 0 || done == total)) {
