@@ -305,9 +305,8 @@ private fun PreviewBottomArea(controller: DocumentPrintController, onEdit: (() -
                 controller.notice = null
             }
         }
-        // Show feedback immediately whenever an action is triggered or PDF is busy
-        val isUserWaiting = controller.activeAction != null || controller.isWaitingForPdfAction
-        if ((controller.isBusy && (!quiet || isUserWaiting)) || isUserWaiting || notice != null) {
+        // A native page uses the center preparation overlay (quiet = true), so keep the bottom toast only for final notices
+        if ((controller.isBusy && !quiet) || notice != null) {
             val text = when {
                 notice?.kind == PrintNoticeKind.Saved -> "${K.pdfSavedTo.tr()}: ${notice.detail}"
                 notice?.kind == PrintNoticeKind.Failed -> K.pdfFailed.tr()
@@ -323,7 +322,7 @@ private fun PreviewBottomArea(controller: DocumentPrintController, onEdit: (() -
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                if (controller.isBusy || isUserWaiting) {
+                if (controller.isBusy && !quiet && notice == null) {
                     ExpressiveLoadingIndicator(modifier = Modifier.size(16.dp), color = colors.background, strokeWidth = 2.dp)
                 }
                 Text(
