@@ -60,7 +60,7 @@ actual val isDocumentPrintSupported: Boolean = true
 internal const val PRINT_ORIGIN = "https://udukkai.print"
 private const val TAG = "DocumentPrintView"
 private const val CACHE_DIR = "print_pdfs"
-private const val CACHE_LIMIT = 50
+private const val CACHE_LIMIT = 15
 
 /**
  * Provides the document as a PDF. A PDF already cached for this exact document + options opens
@@ -543,7 +543,7 @@ private class PrintBridge(
                         }
                     }
                     DocumentPrintAction.Open -> {
-                        storeBillPdf(file.absolutePath, name, folder)
+                        // Opens in an external PDF viewer using the cache copy only — no Documents save
                         val uri = stagePdf(bytes, name)
                         val intent = Intent(Intent.ACTION_VIEW).apply {
                             setDataAndType(uri, "application/pdf")
