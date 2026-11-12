@@ -51,6 +51,9 @@ import com.elvan.udukkai.ui.components.shell.ElvanSettingsSection
 import com.elvan.udukkai.ui.navigation.MaterialSymbols
 import com.elvan.udukkai.ui.screens.create.components.ActiveFilterPill
 import com.elvan.udukkai.ui.screens.create.components.CreateDateFilterSheet
+import com.elvan.udukkai.ui.screens.create.components.DocumentFilterSheet
+import com.elvan.udukkai.core.finance.InvoicePaymentFilter
+import com.elvan.udukkai.ui.screens.create.components.label
 import com.elvan.udukkai.ui.screens.create.components.dateFilterLabel
 import com.elvan.udukkai.ui.screens.home.components.ElvanStatsCard
 
@@ -128,14 +131,15 @@ fun ViewHero(primary: String, secondary: String, icon: ImageVector, tint: androi
 fun ViewStats(
     left: Triple<ImageVector, String, String>,
     right: Triple<ImageVector, String, String>,
-    colors: ShellColors
+    colors: ShellColors,
+    loading: Boolean = false
 ) {
     if (LocalDocLandscape.current) {
         Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             for ((icon, label, value) in listOf(left, right)) {
                 val hue = viewIconHue(icon, colors)
                 ElvanStatsCard(icon = icon, label = label, value = value, colors = colors,
-                    accentColor = hue, isFullWidth = true)
+                    accentColor = hue, isFullWidth = true, loading = loading)
             }
         }
         return
@@ -146,6 +150,7 @@ fun ViewStats(
             ElvanStatsCard(
                 icon = icon, label = label, value = value, colors = colors, modifier = Modifier.weight(1f),
                 accentColor = hue,
+                loading = loading,
                 gradientColors = listOf(androidx.compose.ui.graphics.lerp(hue, androidx.compose.ui.graphics.Color.White, 0.3f), hue)
             )
         }
@@ -238,13 +243,23 @@ sealed interface ViewHistoryState {
 
 /** Works out the page's bills off the main thread (an item has every bill's lines to read). Re-runs when [key] changes; the second value retries. */
 @Composable
-fun rememberViewHistory(subject: Any?, key: Any?, load: () -> ViewActivity): Pair<ViewHistoryState, () -> Unit> {
-    var state by remember(subject, key) { mutableStateOf<ViewHistoryState>(ViewHistoryState.Loading) }
-    var attempt by remember { mutableStateOf(0) }
+fun rememberViewHistory(subject: Any?, key: Any?, cache: Boolean, load: () -> ViewActivity): Pair<ViewHistoryState, () -> Unit> {
+    val cacheKey = subject to key
+    var state by remember(subject, key) {
+        val cached = if (cache) recentViewHistory[cacheKey] else null
+        mutableStateOf<ViewHistoryState>(cached?.let { ViewHistoryState.Ready(it) } ?: ViewHistoryState.Loading)
+    }
+    var attempt by remember(subject, key) { mutableStateOf(0) }
     val latestLoad by rememberUpdatedState(load)
     LaunchedEffect(subject, key, attempt) {
+        if (attempt == 0 && state is ViewHistoryState.Ready) return@LaunchedEffect
         state = try {
-            ViewHistoryState.Ready(withContext(Dispatchers.Default) { latestLoad() })
+            val activity = withContext(Dispatchers.Default) { latestLoad() }
+            if (cache) {
+                recentViewHistory[cacheKey] = activity
+                if (recentViewHistory.size > 12) recentViewHistory.remove(recentViewHistory.keys.first())
+            }
+            ViewHistoryState.Ready(activity)
         } catch (e: CancellationException) {
             throw e
         } catch (_: Exception) {
@@ -254,12 +269,58 @@ fun rememberViewHistory(subject: Any?, key: Any?, load: () -> ViewActivity): Pai
     return state to { state = ViewHistoryState.Loading; attempt++ }
 }
 
+// Recently opened records, keyed by the company, year and repository snapshots.
+private val recentViewHistory = LinkedHashMap<Pair<Any?, Any?>, ViewActivity>()
+
+internal class ViewFinancialYear(initial: Int) {
+    var year by mutableStateOf(initial)
+    var showPicker by mutableStateOf(false)
+}
+
+@Composable
+internal fun rememberViewFinancialYear(subject: Any?, companyId: Long?, years: List<Int>): ViewFinancialYear {
+    val current = DateUtils.financialYearStart(DateUtils.todayMillis())
+    val selection = remember(subject, companyId, current) { ViewFinancialYear(current) }
+    if (selection.showPicker) {
+        com.elvan.udukkai.ui.components.shell.ElvanSelectionBottomSheet(
+            title = K.financialYears.tr(),
+            items = (years + current + selection.year).distinct().sortedDescending(),
+            currentValue = selection.year,
+            onSelected = { selection.year = it; selection.showPicker = false },
+            onDismissRequest = { selection.showPicker = false },
+            itemLabelBuilder = { yearLabel(it) }
+        )
+    }
+    return selection
+}
+
+private fun yearLabel(year: Int): String = "$year–${((year + 1) % 100).toString().padStart(2, '0')}"
+
+@Composable
+internal fun ViewFinancialYearButton(selection: ViewFinancialYear, colors: ShellColors) {
+    val description = K.financialYears.tr()
+    Row(
+        Modifier.clip(CircleShape).clickable(role = Role.Button) { selection.showPicker = true }
+            .semantics { contentDescription = description }
+            .heightIn(min = 44.dp).padding(horizontal = 10.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(5.dp)
+    ) {
+        Icon(MaterialSymbols.Rounded.Calendar, null, tint = colors.textSecondary, modifier = Modifier.size(16.dp))
+        Text(yearLabel(selection.year), color = colors.textSecondary, fontSize = 13.sp)
+        Icon(MaterialSymbols.Rounded.KeyboardArrowDown, null, tint = colors.textSecondary, modifier = Modifier.size(16.dp))
+    }
+}
+
 /** Document type, date range and sort order for the Transactions tab. */
 class ViewHistoryUi {
+    internal var financialYear: ViewFinancialYear? = null
     var tab by mutableStateOf(0)
     var dateRange by mutableStateOf<Pair<Long?, Long?>>(null to null)
     var sort by mutableStateOf(HistorySort.DateNew)
+    var payment by mutableStateOf(InvoicePaymentFilter.All)
     var showFilter by mutableStateOf(false)
+    var showDate by mutableStateOf(false)
     var showSort by mutableStateOf(false)
     var showType by mutableStateOf(false)
     internal var tabs: List<HistoryTabInfo> = emptyList() // rebuilt with the page; not state, or setting it would recompose forever
@@ -286,17 +347,29 @@ fun rememberViewHistoryUi(state: ViewHistoryState, emptyInvoices: String, withRe
 
     val colors = rememberShellColors()
     if (ui.showFilter) {
-        CreateDateFilterSheet(
-            isOpen = true, currentStartMillis = ui.dateRange.first, currentEndMillis = ui.dateRange.second,
-            onDismissRequest = { ui.showFilter = false },
-            onApplyFilter = { start, end, _ -> ui.dateRange = start to end; ui.showFilter = false },
+        DocumentFilterSheet(
+            payment = ui.payment.takeIf { ui.tab == 0 },
+            onPayment = { ui.payment = it; ui.showFilter = false },
+            start = ui.dateRange.first,
+            end = ui.dateRange.second,
+            onDate = { ui.showFilter = false; ui.showDate = true },
+            onDismiss = { ui.showFilter = false },
             colors = colors
         )
     }
+    if (ui.showDate) {
+        CreateDateFilterSheet(
+            isOpen = true, currentStartMillis = ui.dateRange.first, currentEndMillis = ui.dateRange.second,
+            onDismissRequest = { ui.showDate = false },
+            onApplyFilter = { start, end, _ -> ui.dateRange = start to end; ui.showDate = false },
+            colors = colors,
+            financialYear = ui.financialYear?.year
+        )
+    }
     if (ui.showSort) {
-        val labels = mapOf(HistorySort.DateNew to K.sortDateNew.tr(), HistorySort.DateOld to K.sortDateOld.tr(), HistorySort.NumberHigh to K.sortNumberHigh.tr(), HistorySort.NumberLow to K.sortNumberLow.tr())
+        val labels = mapOf(HistorySort.DateNew to K.sortDateNew.tr(), HistorySort.DateOld to K.sortDateOld.tr())
         com.elvan.udukkai.ui.components.shell.ElvanSelectionBottomSheet(
-            title = K.sortBy.tr(), items = HistorySort.entries, currentValue = ui.sort, colors = colors,
+            title = K.sortBy.tr(), items = labels.keys.toList(), currentValue = ui.sort, colors = colors,
             onSelected = { ui.sort = it; ui.showSort = false }, onDismissRequest = { ui.showSort = false },
             itemLabelBuilder = { labels.getValue(it) }
         )
@@ -326,8 +399,13 @@ fun LazyListScope.viewHistoryItems(
     val tabs = ui.tabs
     val tab = tabs.getOrNull(ui.tab) ?: return
     val (start, end) = ui.dateRange
-    val rows = ViewHistory.apply(tab.rows, ui.sort, start, end)
-    val filtered = start != null || end != null
+    val payment = if (ui.tab == 0) ui.payment else InvoicePaymentFilter.All
+    val sourceRows = if (payment == InvoicePaymentFilter.All) tab.rows else tab.rows.filter {
+        payment.matches(it.kind == ViewRowKind.Invoice) { it.isPaid }
+    }
+    val rows = ViewHistory.apply(sourceRows, ui.sort, start, end)
+    val dateFiltered = start != null || end != null
+    val filtered = dateFiltered || payment != InvoicePaymentFilter.All
     item(key = "history_tools") {
         Row(Modifier.fillMaxWidth().height(HISTORY_TOOLS_HEIGHT).padding(start = 12.dp), verticalAlignment = Alignment.CenterVertically) {
             Row(
@@ -344,18 +422,31 @@ fun LazyListScope.viewHistoryItems(
                 if (tabs.size > 1) Icon(MaterialSymbols.Rounded.KeyboardArrowDown, null, tint = colors.textPrimary.copy(alpha = 0.55f), modifier = Modifier.size(18.dp))
             }
             Spacer(Modifier.weight(1f))
+            ui.financialYear?.let { ViewFinancialYearButton(it, colors) }
             com.elvan.udukkai.ui.components.shell.ElvanTopBarIconButton(onClick = { ui.showFilter = true }) {
-                Icon(MaterialSymbols.Rounded.FilterList, K.a11yFilter.tr(), tint = if (filtered) colors.accent else colors.textPrimary, modifier = Modifier.size(20.dp))
+                Icon(MaterialSymbols.Rounded.FilterAlt, K.a11yFilter.tr(), tint = if (filtered) colors.accent else colors.textPrimary, modifier = Modifier.size(20.dp))
             }
             com.elvan.udukkai.ui.components.shell.ElvanTopBarIconButton(onClick = { ui.showSort = true }) {
-                Icon(MaterialSymbols.Rounded.Sort, K.sortBy.tr(), tint = if (ui.sort == HistorySort.DateNew) colors.textPrimary else colors.accent, modifier = Modifier.size(20.dp))
+                Icon(
+                    MaterialSymbols.Rounded.Sort,
+                    K.sortBy.tr(),
+                    tint = if (ui.sort == HistorySort.DateNew) colors.textPrimary else colors.accent,
+                    modifier = Modifier.size(20.dp)
+                )
             }
         }
     }
     if (filtered) {
         item("history_active_filter") {
             Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-                ActiveFilterPill(dateFilterLabel(start, end), colors) { ui.dateRange = null to null }
+                val label = listOfNotNull(
+                    if (dateFiltered) dateFilterLabel(start, end) else null,
+                    if (payment != InvoicePaymentFilter.All) payment.label() else null
+                ).joinToString("  •  ")
+                ActiveFilterPill(label, colors) {
+                    ui.dateRange = null to null
+                    if (ui.tab == 0) ui.payment = InvoicePaymentFilter.All
+                }
             }
         }
     }
