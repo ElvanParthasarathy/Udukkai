@@ -15,6 +15,11 @@ internal fun InvoicePaymentFilter.label(): String = when (this) {
     InvoicePaymentFilter.Unpaid -> K.statusUnpaid.tr()
 }
 
+internal sealed interface FilterRow {
+    data object DateNav : FilterRow
+    data class PaymentItem(val filter: InvoicePaymentFilter) : FilterRow
+}
+
 /**
  * DocumentFilterSheet — unified filter sheet.
  *
@@ -38,11 +43,6 @@ internal fun DocumentFilterSheet(
     onDismiss: () -> Unit,
     colors: ShellColors
 ) {
-    sealed interface FilterRow {
-        data object DateNav : FilterRow
-        data class PaymentItem(val filter: InvoicePaymentFilter) : FilterRow
-    }
-
     val rows: List<FilterRow> = buildList {
         add(FilterRow.DateNav)
         if (payment != null) InvoicePaymentFilter.entries.forEach { add(FilterRow.PaymentItem(it)) }
