@@ -13,7 +13,7 @@ import androidx.compose.ui.unit.dp
 /** Whether this platform can render the React print templates. */
 expect val isDocumentPrintSupported: Boolean
 
-enum class DocumentPrintAction { Print, Share, Open }
+enum class DocumentPrintAction { Print, Share, Open, Save }
 
 enum class PrintNoticeKind { Saved, Failed }
 
@@ -80,6 +80,7 @@ class DocumentPrintController {
     fun print() = request(DocumentPrintAction.Print)
     fun share() = request(DocumentPrintAction.Share)
     fun open() = request(DocumentPrintAction.Open)
+    fun save() = request(DocumentPrintAction.Save)
 
     private fun request(action: DocumentPrintAction) {
         if (activeAction != null || isBusy || isWaitingForPdfAction) return

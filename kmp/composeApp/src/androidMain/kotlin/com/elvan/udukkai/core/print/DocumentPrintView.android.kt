@@ -555,6 +555,17 @@ private class PrintBridge(
                             else context.startActivity(intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
                         }
                     }
+                    DocumentPrintAction.Save -> {
+                        val savedPath = storeBillPdf(file.absolutePath, name, folder)
+                        main.post {
+                            if (savedPath != null) {
+                                controller.notice = PrintNotice(PrintNoticeKind.Saved, savedPath)
+                            } else {
+                                controller.notice = PrintNotice(PrintNoticeKind.Failed)
+                            }
+                        }
+                        postHandoff(startTime) {}
+                    }
                 }
             } catch (e: Exception) {
                 Log.e(TAG, "Delivering PDF failed: ${e.message}", e)

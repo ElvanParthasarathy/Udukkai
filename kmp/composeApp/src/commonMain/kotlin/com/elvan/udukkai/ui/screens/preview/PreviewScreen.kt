@@ -284,6 +284,16 @@ private fun PreviewMenuButton(items: List<ElvanPopupMenuItem>) {
 private fun PreviewBottomArea(controller: DocumentPrintController, onEdit: (() -> Unit)?, menuItems: List<ElvanPopupMenuItem> = emptyList(), quiet: Boolean = false) {
     val colors = rememberShellColors()
     var menuOpen by remember { mutableStateOf(false) }
+    val saveTitle = K.saveBtn.tr()
+    val allMenuItems = remember(menuItems, controller, saveTitle) {
+        listOf(
+            ElvanPopupMenuItem(
+                title = saveTitle,
+                icon = MaterialSymbols.Rounded.Download,
+                onClick = { controller.save() }
+            )
+        ) + menuItems
+    }
     Column(
         modifier = Modifier.fillMaxWidth(),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -353,7 +363,7 @@ private fun PreviewBottomArea(controller: DocumentPrintController, onEdit: (() -
                         icon = MaterialSymbols.Rounded.Share,
                         onClick = { controller.share() }
                     ),
-                    if (menuItems.isEmpty() || com.elvan.udukkai.ui.components.shell.LocalElvanSideBar.current) null else ElvanFloatingAction(
+                    if (allMenuItems.isEmpty() || com.elvan.udukkai.ui.components.shell.LocalElvanSideBar.current) null else ElvanFloatingAction(
                         label = K.more.tr(),
                         icon = MaterialSymbols.Rounded.MoreVert,
                         onClick = { menuOpen = true },
@@ -363,11 +373,11 @@ private fun PreviewBottomArea(controller: DocumentPrintController, onEdit: (() -
                                 onDismissRequest = { menuOpen = false },
                                 colors = colors,
                                 upward = true,
-                                items = menuItems.map { item -> ElvanPopupMenuItem(item.title, item.icon, { menuOpen = false; item.onClick() }, item.isDestructive) }
+                                items = allMenuItems.map { item -> ElvanPopupMenuItem(item.title, item.icon, { menuOpen = false; item.onClick() }, item.isDestructive) }
                             )
                         }
                     )
-                ) + (if (com.elvan.udukkai.ui.components.shell.LocalElvanSideBar.current) menuItems.map { mi -> ElvanFloatingAction(label = mi.title, icon = mi.icon, onClick = mi.onClick, isDestructive = mi.isDestructive) } else emptyList())
+                ) + (if (com.elvan.udukkai.ui.components.shell.LocalElvanSideBar.current) allMenuItems.map { mi -> ElvanFloatingAction(label = mi.title, icon = mi.icon, onClick = mi.onClick, isDestructive = mi.isDestructive) } else emptyList())
             )
         }
     }
