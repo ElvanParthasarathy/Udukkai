@@ -1055,10 +1055,10 @@ val seedFactoryProfiles: List<SeedProfile> = listOf(
 )
 
 val seedFactoryItems: List<SeedItem> = listOf(
-    SeedItem("cprod_seed_17808568672680", bi("இரண்டிழைச் சப்புரி பணிக்கட்டணம்", "2-Ply Sappuri Job Work Charges"), "", 0.0, 0.0, "quantity", "Nos"),
-    SeedItem("cprod_seed_17808568672791", bi("ஜரித் தடை பணிக்கட்டணம்", "Jari Thadai Job Work Charges"), "", 0.0, 0.0, "quantity", "Nos"),
-    SeedItem("cprod_seed_17808568672802", bi("மூன்றிழைச் சப்புரி பணிக்கட்டணம்", "3-Ply Sappuri Job Work Charges"), "", 0.0, 0.0, "quantity", "Nos"),
-    SeedItem("cprod_seed_17808568672823", bi("ஓண்டித் தடை பணிக்கட்டணம்", "Ondi Thadai Job Work Charges"), "", 0.0, 0.0, "quantity", "Nos")
+    SeedItem("cprod_seed_17808568672680", bi("இரண்டிழைச் சப்புரி பணிக்கட்டணம்", "2-Ply Weft Silk Job Work Charges"), "", 0.0, 0.0, "quantity", "Nos"),
+    SeedItem("cprod_seed_17808568672791", bi("ஜரித் தடை பணிக்கட்டணம்", "Jari Warp Silk Job Work Charges"), "", 0.0, 0.0, "quantity", "Nos"),
+    SeedItem("cprod_seed_17808568672802", bi("மூன்றிழைச் சப்புரி பணிக்கட்டணம்", "3-Ply Weft Silk Job Work Charges"), "", 0.0, 0.0, "quantity", "Nos"),
+    SeedItem("cprod_seed_17808568672823", bi("ஓண்டித் தடை பணிக்கட்டணம்", "Ondi Warp Silk Job Work Charges"), "", 0.0, 0.0, "quantity", "Nos")
 )
 
 val seedFactoryCustomers: List<SeedCustomer> = listOf(
@@ -1363,21 +1363,21 @@ val seedFactoryInvoices: List<SeedFactoryInvoice> = listOf(
     ),
     SeedFactoryInvoice(
         company = "VRM", number = "VRM-128", date = "2026-10-21", customerRef = "cclient_seed_17808578447730",
-        lines = listOf(SeedFactoryLine("cprod_seed_17808568672680", bi("இரண்டிழைச் சப்புரி பணிக்கட்டணம்", "2-Ply Sappuri Job Work Charges"), 28.66, 380.0)),
+        lines = listOf(SeedFactoryLine("cprod_seed_17808568672680", bi("இரண்டிழைச் சப்புரி பணிக்கட்டணம்", "2-Ply Weft Silk Job Work Charges"), 28.66, 380.0)),
         total = 10890.0, wastageGrams = 1040.0, postalCharges = 0.0, ahimsaSilkAmount = 0.0,
         bankDetails = mapOf("bankDetails" to "தமிழ்நாடு மெர்கன்டைல் வங்கி, ஆரணி", "accountNo" to "309150050800162", "ifsc" to "TMBL0000309", "showBank" to "true", "showIfsc" to "true"),
         customer = mapOf("name.ta" to "சுந்தரி சில்க்ஸ் இந்தியா", "name.en" to "Sundari Silks India", "city.ta" to "முள்ளிப்பட்டு, ஆரணி", "city.en" to "Mullippattu, Arani")
     ),
     SeedFactoryInvoice(
         company = "VRM", number = "VRM-01", date = "2026-10-31", customerRef = "cclient_seed_17808578447730",
-        lines = listOf(SeedFactoryLine("cprod_seed_17808568672680", bi("இரண்டிழைச் சப்புரி பணிக்கட்டணம்", "2-Ply Sappuri Job Work Charges"), 22.0, 92.0), SeedFactoryLine("cprod_seed_17808568672791", bi("ஜரித் தடை பணிக்கட்டணம்", "Jari Thadai Job Work Charges"), 22.0, 15.0), SeedFactoryLine("cprod_seed_17808568672802", bi("மூன்றிழைச் சப்புரி பணிக்கட்டணம்", "3-Ply Sappuri Job Work Charges"), 13.0, 22.0), SeedFactoryLine("cprod_seed_17808568672823", bi("ஓண்டித் தடை பணிக்கட்டணம்", "Ondi Thadai Job Work Charges"), 34.0, 4.0)),
+        lines = listOf(SeedFactoryLine("cprod_seed_17808568672680", bi("இரண்டிழைச் சப்புரி பணிக்கட்டணம்", "2-Ply Weft Silk Job Work Charges"), 22.0, 92.0), SeedFactoryLine("cprod_seed_17808568672791", bi("ஜரித் தடை பணிக்கட்டணம்", "Jari Warp Silk Job Work Charges"), 22.0, 15.0), SeedFactoryLine("cprod_seed_17808568672802", bi("மூன்றிழைச் சப்புரி பணிக்கட்டணம்", "3-Ply Weft Silk Job Work Charges"), 13.0, 22.0), SeedFactoryLine("cprod_seed_17808568672823", bi("ஓண்டித் தடை பணிக்கட்டணம்", "Ondi Warp Silk Job Work Charges"), 34.0, 4.0)),
         total = 3094.0, wastageGrams = 90.0, postalCharges = 19.0, ahimsaSilkAmount = 299.0,
         bankDetails = mapOf("bankDetails" to "தமிழ்நாடு மெர்கன்டைல் வங்கி, ஆரணி", "accountNo" to "309150050800162", "ifsc" to "TMBL0000309", "showBank" to "true", "showIfsc" to "true"),
         customer = mapOf("name.ta" to "சுந்தரி சில்க்ஸ் இந்தியா", "name.en" to "Sundari Silks India", "city.ta" to "முள்ளிப்பட்டு, ஆரணி", "city.en" to "Mullippattu, Arani")
     ),
     SeedFactoryInvoice(
         company = "VRM", number = "VRM-129", date = "2026-10-31", customerRef = "cclient_seed_17808578447730",
-        lines = listOf(SeedFactoryLine("cprod_seed_17808568672791", bi("ஜரித் தடை பணிக்கட்டணம்", "Jari Thadai Job Work Charges"), 35.99, 610.0)),
+        lines = listOf(SeedFactoryLine("cprod_seed_17808568672791", bi("ஜரித் தடை பணிக்கட்டணம்", "Jari Warp Silk Job Work Charges"), 35.99, 610.0)),
         total = 21953.0, wastageGrams = 1310.0, postalCharges = 0.0, ahimsaSilkAmount = 0.0,
         bankDetails = mapOf("bankDetails" to "தமிழ்நாடு மெர்கன்டைல் வங்கி, ஆரணி", "accountNo" to "309150050800162", "ifsc" to "TMBL0000309", "showBank" to "true", "showIfsc" to "true"),
         customer = mapOf("name.ta" to "சுந்தரி சில்க்ஸ் இந்தியா", "name.en" to "Sundari Silks India", "city.ta" to "முள்ளிப்பட்டு, ஆரணி", "city.en" to "Mullippattu, Arani")

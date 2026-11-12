@@ -57,6 +57,11 @@ class AndroidFirebaseSyncManager : FirebaseSyncManager {
     /** True only while the first snapshot of a phase is being applied: later live updates stay silent. */
     @Volatile private var reportProgress = false
 
+    /** Thrown by the merge when one sync would overwrite an unusual number of records; the sync pauses and asks. */
+    private class GuardStop(val kind: RestorePhase, val toCloud: Int, val toPhone: Int) : RuntimeException()
+    @Volatile private var guardApproved = false
+    @Volatile private var guardScope: String? = null
+
     private class Phase(val kind: RestorePhase, val node: String)
 
     private val phases = listOf(
@@ -138,6 +143,7 @@ class AndroidFirebaseSyncManager : FirebaseSyncManager {
         getDatabase()
     }
 
+    // Debug builds use their own Firebase project (src/<flavor>/debug/google-services.json), so testing never touches the real books
     private fun getPrefix(scope: String): String = if (scope == "factory" || scope == "kooli") "factory" else "textiles"
 
     override fun startSync(scope: String) {
@@ -194,6 +200,9 @@ class AndroidFirebaseSyncManager : FirebaseSyncManager {
                     reportProgress = isFirst
                     try {
                         applyPhase(phase.kind, scope, snapshot)
+                    } catch (g: GuardStop) {
+                        pauseForGuard(g, scope)
+                        return@execute
                     } catch (e: Exception) {
                         Log.e(tag, "Applying ${phase.node} failed: ${e.message}", e)
                         _syncStatus.value = SyncStatus.ERROR
@@ -238,6 +247,7 @@ class AndroidFirebaseSyncManager : FirebaseSyncManager {
                     if (isFirst) {
                         _restoreProgress.value = null
                         _syncStatus.value = SyncStatus.SYNCED
+                        guardApproved = false
                         _lastSyncTime.value = System.currentTimeMillis()
                         // No automatic cloud prune: it deleted cloud records the phone lacked (e.g. after restoring an old backup)
                     }
@@ -272,7 +282,7 @@ class AndroidFirebaseSyncManager : FirebaseSyncManager {
             _profilesRestored.value = true
             _restoreProgress.value = null
             _syncStatus.value = SyncStatus.IDLE
-            if (isSyncAllowed()) {
+            if (com.elvan.udukkai.BuildConfig.DEBUG && isSyncAllowed()) {
                 val db = getDatabase()
                 db?.getReference(prefix)?.removeValue()
                 Log.i(tag, "Purged remote Firebase RTDB branch: $prefix")
@@ -436,11 +446,18 @@ class AndroidFirebaseSyncManager : FirebaseSyncManager {
         }
     }
 
+    /** Stop: the sync stays off (nothing was changed) until the user syncs again. */
     override fun dismissGuardAlert() {
         _guardAlertMessage.value = null
-        if (_syncStatus.value == SyncStatus.GUARD_TRIGGERED) {
-            _syncStatus.value = SyncStatus.SYNCED
-        }
+        if (_syncStatus.value == SyncStatus.GUARD_TRIGGERED) _syncStatus.value = SyncStatus.IDLE
+    }
+
+    /** Continue: the paused sync runs, keeping the newest version of each record. */
+    override fun approveGuard() {
+        val scope = guardScope ?: return
+        _guardAlertMessage.value = null
+        guardApproved = true
+        startSync(scope)
     }
 
     // --- Anti-Erasure Guard & RTDB Inbound Snapshot Processors ---
@@ -564,6 +581,20 @@ class AndroidFirebaseSyncManager : FirebaseSyncManager {
         val activeCompanyIds = if (kind == RestorePhase.INVOICES || kind == RestorePhase.RECEIPTS || kind == RestorePhase.PROFILES) {
             helperFor(scope).loadAllProfiles().mapNotNull { it.id }.toSet()
         } else emptySet()
+
+        // Guard: nothing is applied in either direction when one sync would overwrite unusually many records
+        if (!guardApproved) {
+            var toCloud = 0
+            var toPhone = 0
+            for (child in snapshot.children) {
+                val remote = parse(child) ?: continue
+                if (isDeleted(remote)) continue
+                val mine = localById[id(remote)] ?: continue
+                if (updated(mine) > updated(remote)) toCloud++ else if (updated(remote) > updated(mine)) toPhone++
+            }
+            val limit = maxOf(20, local.size / 5)
+            if (toCloud > limit || toPhone > limit) throw GuardStop(kind, toCloud, toPhone)
+        }
 
         fun flush() {
             if (batch.isEmpty()) return
@@ -695,14 +726,16 @@ class AndroidFirebaseSyncManager : FirebaseSyncManager {
         }
     }
 
-    private fun triggerAntiErasureGuard(entityName: String, localCount: Int) {
-        Log.w(tag, "Anti-Erasure Guard Triggered! Prevented remote wipe of $localCount $entityName.")
-        getUdukkaiBackupService().createSafetySnapshot() // Copy 2 Safety Vault locked
-        _guardAlertMessage.value = "Anti-Erasure Guard: Remote wipe of $localCount $entityName was blocked. Local data & Copy 2 Safety Vault are safe."
-        _syncStatus.value = SyncStatus.GUARD_TRIGGERED
+    private fun pauseForGuard(g: GuardStop, scope: String) {
+        Log.w(tag, "Sync guard: ${g.kind} would overwrite ${g.toCloud} cloud and ${g.toPhone} phone records. Paused.")
+        try { getUdukkaiBackupService().createSafetySnapshot() } catch (_: Exception) {}
+        mainHandler.post {
+            stopSync()
+            guardScope = scope
+            _guardAlertMessage.value = "${g.kind.name.lowercase()}: ${g.toCloud} \u2191  ${g.toPhone} \u2193"
+            _syncStatus.value = SyncStatus.GUARD_TRIGGERED
+        }
     }
-
-    // --- Outbound Push Operations (Offline-Persistent) ---
 
     override fun pushMerchant(merchant: CustomerModel, scope: String) {
         if (isApplyingRemoteChange || !isSyncAllowed()) return

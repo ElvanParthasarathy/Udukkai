@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Debug build: its own name, so it can be told apart from the release app installed beside it. -->
+<resources>
+    <string name="app_name">Udukkai Factory Debug</string>
+    <string name="app_name_en">Udukkai Factory Debug</string>
+    <string name="app_name_ta">உடுக்கை ஆலை Debug</string>
+</resources>

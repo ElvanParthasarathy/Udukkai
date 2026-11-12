@@ -71,6 +71,7 @@ fun TextilesApp() {
 
                     ElvanBottomSheetHost(bottomSheetController)
                     ElvanSnackbarHost(colors = colors)
+                    com.elvan.udukkai.core.sync.SyncGuardPrompt()
 
                     if (isDebugBuild) {
                         Box(

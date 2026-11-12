@@ -143,6 +143,8 @@ android {
     }
     buildTypes {
         getByName("debug") {
+            // Its own app id, so the debug and release builds can be installed side by side
+            applicationIdSuffix = ".debug"
             signingConfig = signingConfigs.findByName("release") ?: signingConfigs.getByName("debug")
         }
         getByName("release") {

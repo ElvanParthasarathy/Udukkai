@@ -40,7 +40,8 @@ class AndroidUdukkaiBackupService : UdukkaiBackupService {
      */
     private fun getExternalBackupDir(): File? {
         return try {
-            val app = if (isFactory()) "Udukkai Factory" else "Udukkai Textiles"
+            // The debug app keeps its backups apart, so test data is never offered to the release app as a restore
+            val app = (if (isFactory()) "Udukkai Factory" else "Udukkai Textiles") + if (com.elvan.udukkai.BuildConfig.DEBUG) " Debug" else ""
             val docs = android.os.Environment.getExternalStoragePublicDirectory(android.os.Environment.DIRECTORY_DOCUMENTS)
             val dir = File(docs, "Udukkai/$app/Backup")
             if (!dir.exists()) dir.mkdirs()
@@ -681,10 +682,21 @@ class AndroidUdukkaiBackupService : UdukkaiBackupService {
 
     private fun beforeRestoreFile(): File = File(getInternalBackupDir(), "udukkai_${modePrefix(currentMode())}_before_restore.db")
 
-    override fun lastRestoreBackup(): BackupItemMetadata? = metadataOf(beforeRestoreFile(), BackupSlot.SAFETY_VAULT)
+    /** Going back is only offered for a day: after that the copy is deleted, so newer bills can never be undone by mistake. */
+    private fun undoCopy(): File? {
+        val file = beforeRestoreFile()
+        if (!file.exists()) return null
+        if (System.currentTimeMillis() - file.lastModified() > 24 * 3600_000L) {
+            try { file.delete() } catch (_: Exception) {}
+            return null
+        }
+        return file
+    }
+
+    override fun lastRestoreBackup(): BackupItemMetadata? = undoCopy()?.let { metadataOf(it, BackupSlot.SAFETY_VAULT) }
 
     override fun undoLastRestore(): Boolean {
-        val file = beforeRestoreFile()
+        val file = undoCopy() ?: return false
         if (!validateArchive(file)) return false
         // A copy of the data as it is now is kept first, like any restore
         if (!createSafetySnapshot()) return false

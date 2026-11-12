@@ -39,6 +39,9 @@ interface FirebaseSyncManager {
     fun triggerManualSync()
     fun dismissGuardAlert()
 
+    /** Lets a sync the guard paused go on. */
+    fun approveGuard() {}
+
     fun pushMerchant(merchant: CustomerModel, scope: String = "factory")
     fun pushItem(item: ItemModel, scope: String = "factory")
     fun pushInvoice(invoice: InvoiceModel, scope: String = "factory")

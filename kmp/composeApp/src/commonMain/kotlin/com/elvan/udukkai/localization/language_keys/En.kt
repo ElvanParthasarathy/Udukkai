@@ -654,6 +654,8 @@ val en: Map<String, String> = mapOf(
     K.syncStatusSyncing to "Syncing...",
     K.syncStatusOffline to "Offline, will sync when online",
     K.syncStatusError to "Sync problem, tap to retry",
+    K.syncGuardPrompt to "Sync paused. Many records differ between this phone and the cloud. Nothing was changed and a safety copy was saved. Continue and keep the newest version of each record?",
+    K.syncGuardStop to "Stop sync",
     K.syncStatusIdle to "Not syncing, tap to start",
     K.lastSyncedAt to "Last synced",
     K.cleanCloudData to "Clean Cloud Data",

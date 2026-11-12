@@ -15,7 +15,7 @@ actual fun saveReport(baseName: String, extension: String, mimeType: String, byt
     // Public Documents without a storage permission needs MediaStore (Android 10+), as for the bill PDFs
     if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) return null
     return try {
-        val app = if (BuildConfig.FLAVOR == "factory") "Udukkai Factory" else "Udukkai Textiles"
+        val app = (if (BuildConfig.FLAVOR == "factory") "Udukkai Factory" else "Udukkai Textiles") + if (BuildConfig.DEBUG) " Debug" else ""
         val folder = "${Environment.DIRECTORY_DOCUMENTS}/Udukkai/$app/$businessFolder/Reports"
         val name = "$baseName.$extension"
         val resolver = AppContext.context.contentResolver

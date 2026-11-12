@@ -676,6 +676,8 @@ object K {
     const val syncStatusSyncing = "syncStatusSyncing"
     const val syncStatusOffline = "syncStatusOffline"
     const val syncStatusError = "syncStatusError"
+    const val syncGuardPrompt = "syncGuardPrompt"
+    const val syncGuardStop = "syncGuardStop"
     const val syncStatusIdle = "syncStatusIdle"
     const val lastSyncedAt = "lastSyncedAt"
     const val cleanCloudData = "cleanCloudData"

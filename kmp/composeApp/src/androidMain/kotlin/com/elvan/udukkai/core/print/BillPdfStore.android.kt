@@ -15,7 +15,7 @@ private const val TAG = "BillPdfStore"
 
 /** Documents/Udukkai/<Udukkai Textiles|Udukkai Factory>/<business>/<Invoice|Receipt>. */
 private fun billFolder(fileName: String, business: String): String {
-    val app = if (BuildConfig.FLAVOR == "factory") "Udukkai Factory" else "Udukkai Textiles"
+    val app = (if (BuildConfig.FLAVOR == "factory") "Udukkai Factory" else "Udukkai Textiles") + if (BuildConfig.DEBUG) " Debug" else ""
     val category = if (fileName.startsWith("RCPT_")) "Receipt" else "Invoice"
     return "${Environment.DIRECTORY_DOCUMENTS}/Udukkai/$app/$business/$category"
 }
