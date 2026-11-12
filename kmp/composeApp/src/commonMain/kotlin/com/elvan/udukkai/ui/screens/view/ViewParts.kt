@@ -424,7 +424,7 @@ fun LazyListScope.viewHistoryItems(
             Spacer(Modifier.weight(1f))
             ui.financialYear?.let { ViewFinancialYearButton(it, colors) }
             com.elvan.udukkai.ui.components.shell.ElvanTopBarIconButton(onClick = { ui.showFilter = true }) {
-                Icon(MaterialSymbols.Rounded.FilterAlt, K.a11yFilter.tr(), tint = if (filtered) colors.accent else colors.textPrimary, modifier = Modifier.size(20.dp))
+                Icon(MaterialSymbols.Rounded.FilterAlt, K.a11yFilter.tr(), tint = if (filtered) colors.accent else colors.textPrimary, modifier = Modifier.size(18.dp))
             }
             com.elvan.udukkai.ui.components.shell.ElvanTopBarIconButton(onClick = { ui.showSort = true }) {
                 Icon(
