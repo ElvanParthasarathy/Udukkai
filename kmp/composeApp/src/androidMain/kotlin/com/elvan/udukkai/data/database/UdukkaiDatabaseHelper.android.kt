@@ -332,6 +332,42 @@ class AndroidUdukkaiDatabaseHelper(
         }
         db.execSQL(createInvoiceSql)
 
+        // Deduplicate active invoices by invoice_number per company (keeps the row with the highest
+        // updated_at; soft-deletes older duplicates). Safe to run repeatedly — a UNIQUE index below
+        // prevents new duplicates, so this UPDATE becomes a no-op after the first run.
+        try {
+            db.execSQL("""
+                UPDATE "$invoicesTable"
+                SET is_deleted = 1, deleted_at = ${System.currentTimeMillis() / 1000}
+                WHERE is_deleted = 0
+                  AND id NOT IN (
+                      SELECT id FROM "$invoicesTable"
+                      WHERE is_deleted = 0
+                      GROUP BY company_id, invoice_number
+                      HAVING MAX(updated_at)
+                  )
+                  AND (company_id, invoice_number) IN (
+                      SELECT company_id, invoice_number FROM "$invoicesTable"
+                      WHERE is_deleted = 0
+                      GROUP BY company_id, invoice_number
+                      HAVING COUNT(*) > 1
+                  )
+            """.trimIndent())
+        } catch (e: Exception) {
+            Log.w(tag, "Invoice dedup migration skipped: ${e.message}")
+        }
+
+        // Partial unique index — only active (non-deleted) invoices must have unique invoice_number
+        // per company. Deleted rows are excluded so they don't block re-use of the same number.
+        try {
+            db.execSQL("""
+                CREATE UNIQUE INDEX IF NOT EXISTS "idx_${invoicesTable}_number_active"
+                ON "$invoicesTable" (company_id, invoice_number) WHERE is_deleted = 0
+            """.trimIndent())
+        } catch (e: Exception) {
+            Log.w(tag, "Invoice unique index creation skipped: ${e.message}")
+        }
+
         // 4. Receipts Table
         db.execSQL("""
             CREATE TABLE IF NOT EXISTS "$receiptsTable" (
@@ -776,7 +812,40 @@ class AndroidUdukkaiDatabaseHelper(
         useDb { db ->
             db.beginTransaction()
             try {
+                val nowSec = System.currentTimeMillis() / 1000
                 for (invoice in list) {
+                    // Detect an active invoice with the same (company_id, invoice_number) but a
+                    // different id. If the incoming record is newer, soft-delete the existing one
+                    // first so the unique index doesn't reject the upsert.
+                    if (!invoice.isDeleted && invoice.companyId != null) {
+                        val conflictCursor = db.rawQuery(
+                            """SELECT id, updated_at FROM "$invoicesTable"
+                               WHERE is_deleted = 0
+                                 AND company_id = ?
+                                 AND invoice_number = ?
+                                 AND id != ?""",
+                            arrayOf(
+                                invoice.companyId.toString(),
+                                invoice.invoiceNumber,
+                                (invoice.id ?: -1L).toString()
+                            )
+                        )
+                        conflictCursor.use { c ->
+                            while (c.moveToNext()) {
+                                val existingId = c.getLong(0)
+                                val existingUpdatedAt = c.getLong(1)
+                                if (invoice.updatedAt >= existingUpdatedAt) {
+                                    // Incoming is newer — soft-delete the stale duplicate
+                                    val delCv = ContentValues().apply {
+                                        put("is_deleted", 1)
+                                        put("deleted_at", nowSec)
+                                    }
+                                    db.update("\"$invoicesTable\"", delCv, "id = ?", arrayOf(existingId.toString()))
+                                    Log.i(tag, "Deduped invoice: soft-deleted id=$existingId (older duplicate of ${invoice.invoiceNumber})")
+                                }
+                            }
+                        }
+                    }
                     val cv = invoiceValues(invoice, true)
                     cv.put("id", invoice.id)
                     db.insertWithOnConflict("\"$invoicesTable\"", null, cv, SQLiteDatabase.CONFLICT_REPLACE)
