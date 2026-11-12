@@ -1,10 +1,9 @@
-package com.elvan.udukkai.factory.ui.screens.editor
+﻿package com.elvan.udukkai.factory.ui.screens.editor
 
 import com.elvan.udukkai.core.print.PrintPayload
 import com.elvan.udukkai.localization.LanguageManager
 import com.elvan.udukkai.ui.screens.preview.DraftBillPreview
-import com.elvan.udukkai.core.print.BillPdfAutoSave
-import com.elvan.udukkai.core.print.receiptPdfName
+
 import androidx.compose.ui.Alignment
 import com.elvan.udukkai.ui.screens.editor.ElvanEditorBottomBar
 
@@ -339,7 +338,6 @@ fun FactoryReceiptEditorScreen(
             val entryToSave = buildEntry(amount)
 
             val savedId = com.elvan.udukkai.factory.data.FactoryReceiptRepository.saveWithLinks(entryToSave, links)
-            BillPdfAutoSave.request(BillPdfAutoSave.Kind.Receipt, savedId, receipt?.takeIf { it.id > 0L }?.let(::receiptPdfName), receipt?.takeIf { it.id > 0L }?.companyId)
             if (savedId > 0L) {
                 isExiting = true
                 ElvanSnackbar.show(savedMsg)

@@ -1,4 +1,4 @@
-package com.elvan.udukkai.textiles.ui.screens.editor
+﻿package com.elvan.udukkai.textiles.ui.screens.editor
 
 import com.elvan.udukkai.data.model.InvoiceItemCatalog
 import com.elvan.udukkai.data.model.ItemNames
@@ -7,8 +7,7 @@ import com.elvan.udukkai.core.utils.BillRules
 import com.elvan.udukkai.core.print.PrintPayload
 import com.elvan.udukkai.localization.LanguageManager
 import com.elvan.udukkai.ui.screens.preview.DraftBillPreview
-import com.elvan.udukkai.core.print.BillPdfAutoSave
-import com.elvan.udukkai.core.print.invoicePdfName
+
 import androidx.compose.ui.Alignment
 import com.elvan.udukkai.ui.screens.editor.ElvanEditorBottomBar
 import com.elvan.udukkai.ui.components.shell.ElvanSnackbar
@@ -494,7 +493,6 @@ fun TextilesInvoiceEditorScreen(
                 val nextVanakkam = TextilesInvoiceRepository.getNextVanakkam(selectedCompanyId)
                 val newInvoice = buildInvoice(nextVanakkam)
                 val savedId = TextilesInvoiceRepository.save(newInvoice)
-                BillPdfAutoSave.request(BillPdfAutoSave.Kind.Invoice, savedId, invoice?.takeIf { it.id > 0L }?.let(::invoicePdfName), invoice?.takeIf { it.id > 0L }?.companyId)
                 prefs.setString(draftKey, null)
                 isExiting = true
                 hasUnsavedChanges = false

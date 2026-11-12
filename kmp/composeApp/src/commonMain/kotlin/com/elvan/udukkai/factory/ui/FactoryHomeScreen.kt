@@ -273,12 +273,6 @@ fun FactoryHomeScreen() {
             billBusinessFolder(FactoryProfileRepository.profiles.find { it.id == id } ?: FactoryProfileRepository.profile)
         }
 
-        // Bills that have no PDF yet get one a moment after the app opens
-        LaunchedEffect(Unit) {
-            delay(8000)
-            BillPdfAutoSave.syncMissing(FactoryInvoiceRepository.invoices, FactoryReceiptRepository.receipts, billBusiness)
-        }
-
         // Writes the PDF of every saved bill to the documents folder
         BillPdfAutoSaveHost(businessOf = billBusiness) { request ->
             val lang = if (LanguageManager.activeLanguageCode.startsWith("ta")) "ta" else "en"
