@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## 1.0.10
+
+### New
+- Sync pauses and asks before it would overwrite many records, on the phone or in the cloud.
+- Going back after a restore from a file is offered for 24 hours only.
+
+### Fixed
+- Sync no longer deletes cloud records the phone does not have. A phone with old or empty data could erase newer bills.
+- An empty database can no longer replace a backup that holds data, and the older backup copy is kept for at least an hour.
+- Factory items use the Warp Silk and Weft Silk English names.
+
 ## 1.0.8
 
 ### New

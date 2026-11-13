@@ -97,6 +97,7 @@ fun PillTab(
     near: () -> Float,
     idleColor: Color,
     activeColor: Color,
+    iconSize: androidx.compose.ui.unit.Dp = 22.dp,
     modifier: Modifier = Modifier
 ) {
     // The idle layer fades a little later than the active one comes in, so the tab never dims halfway
@@ -107,9 +108,9 @@ fun PillTab(
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Box(Modifier.size(22.dp)) {
-            Icon(icon, null, tint = idleColor, modifier = Modifier.matchParentSize().then(idle))
-            Icon(activeIcon, null, tint = activeColor, modifier = Modifier.matchParentSize().then(active))
+        Box(Modifier.size(23.dp), contentAlignment = Alignment.Center) {
+            Icon(icon, null, tint = idleColor, modifier = Modifier.size(iconSize).then(idle))
+            Icon(activeIcon, null, tint = activeColor, modifier = Modifier.size(iconSize).then(active))
         }
         Spacer(modifier = Modifier.height(1.5.dp))
         Box(contentAlignment = Alignment.Center) {
@@ -132,9 +133,10 @@ fun BottomNavBar(
     onDragProgress: (Float) -> Unit = {},
     hideContent: Boolean = false,
     onAddClick: (() -> Unit)? = null,
+    addIsSearch: Boolean = false,
     modifier: Modifier = Modifier
 ) {
-    val tabs = NavTab.entries
+    val tabs = NavTab.barTabs
     val coroutineScope = rememberCoroutineScope()
     val pageDispatch = remember(coroutineScope) { com.elvan.udukkai.ui.navigation.PillPageDispatch(coroutineScope) }
     DisposableEffect(pageDispatch) { onDispose { pageDispatch.cancel() } }
@@ -165,7 +167,7 @@ fun BottomNavBar(
 
     // The visual selection changes immediately; only the latest destination is composed after the pill settles.
 
-    val actualIndex = tabs.indexOf(selectedTab).coerceAtLeast(0)
+    val actualIndex = tabs.indexOf(NavTab.barSlot(selectedTab)).coerceAtLeast(0)
     LaunchedEffect(actualIndex) {
         // Acknowledge only this destination; a newer gesture owns its own visual target.
         // Retarget the existing spring without a one-frame snap, including external navigation.
@@ -348,6 +350,7 @@ fun BottomNavBar(
                             near = { pillNearness(animatedLeft.value, bgWidthPx, layoutWidthPx, index) },
                             idleColor = colors.textSecondary,
                             activeColor = colors.textPrimary,
+                            iconSize = tab.navIconSize,
                             modifier = Modifier.fillMaxHeight().width(layoutWidth)
                         )
                     }
@@ -391,8 +394,8 @@ fun BottomNavBar(
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
-                    imageVector = MaterialSymbols.Rounded.Add,
-                    contentDescription = K.add.tr(),
+                    imageVector = if (addIsSearch) MaterialSymbols.Rounded.Search else MaterialSymbols.Rounded.Add,
+                    contentDescription = if (addIsSearch) K.search.tr() else K.add.tr(),
                     tint = colors.textPrimary,
                     modifier = Modifier.size(24.dp)
                 )

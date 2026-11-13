@@ -3,34 +3,22 @@ package com.elvan.udukkai.ui.screens.settings
 import com.elvan.udukkai.data.settings.BusinessProfile
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.elvan.udukkai.core.platform.AppBackHandler
 import com.elvan.udukkai.core.auth.AuthManager
 import com.elvan.udukkai.localization.K
 import com.elvan.udukkai.localization.tr
 import com.elvan.udukkai.theme.Dimens
-import com.elvan.udukkai.theme.FontManager
-import com.elvan.udukkai.theme.LocalAppFontFamily
-import com.elvan.udukkai.theme.ShellDefaults
 import com.elvan.udukkai.theme.Transitions
-import com.elvan.udukkai.theme.preventBrokenLigatures
 import com.elvan.udukkai.theme.rememberShellColors
 import com.elvan.udukkai.ui.components.shell.*
 import com.elvan.udukkai.ui.navigation.MaterialSymbols
@@ -79,7 +67,7 @@ fun SettingsScreenShell(
     val subpageScrollStates = remember { mutableStateMapOf<SettingsRoute, LazyListState>() }
     val pageNavigation = remember(initialRoute) { SettingsNavigator(initialRoute) }
     val detailNavigation = remember(initialRoute) {
-        SettingsNavigator(if (initialRoute == SettingsRoute.Hub) SettingsRoute.Merchant else initialRoute)
+        SettingsNavigator(if (initialRoute == SettingsRoute.Hub) SettingsRoute.Display else initialRoute)
     }
     val entries = remember(business.identityRoute) { settingsEntries(business.identityRoute) }
 
@@ -100,7 +88,7 @@ fun SettingsScreenShell(
         }
         val handleBack: () -> Unit = {
             if (searchOpen) { searchOpen = false; focus.clearFocus() }
-            else if (!(if (twoPane) navigation.popOrReturnTo(SettingsRoute.Merchant) else navigation.pop())) onBack()
+            else if (!(if (twoPane) navigation.popOrReturnTo(SettingsRoute.Display) else navigation.pop())) onBack()
         }
         fun selectRoot(route: SettingsRoute) {
             searchOpen = false
@@ -111,7 +99,7 @@ fun SettingsScreenShell(
             }
             detailNavigation.selectRoot(route)
         }
-        AppBackHandler(enabled = searchOpen || navigation.canGoBack || (twoPane && navigation.state.route != SettingsRoute.Merchant)) { handleBack() }
+        AppBackHandler(enabled = searchOpen || navigation.canGoBack || (twoPane && navigation.state.route != SettingsRoute.Display)) { handleBack() }
 
         @Composable
         fun RoutePage(route: SettingsRoute, handleBack: () -> Unit, navigateTo: (SettingsRoute) -> Unit, twoPane: Boolean, showBack: Boolean) {
@@ -362,12 +350,12 @@ private fun SettingsHubContent(
     onSearchFocus: () -> Unit = {}
 ) {
     val colors = rememberShellColors()
-    val ff = LocalAppFontFamily.current
-    val profile = business.profile
-
-    val landscape = com.elvan.udukkai.core.platform.platformLayoutPolicy.supportsLandscapeControls && com.elvan.udukkai.ui.components.shell.LocalElvanPaneChrome.current
-    val defaultFirmTitle = business.appTitle
-    val profileName = resolveCompanyItemLabel(profile).ifEmpty { defaultFirmTitle }
+    val landscape = com.elvan.udukkai.ui.components.shell.LocalLandscapeContent.current
+    val accountEmail = AuthManager.signedInEmail.orEmpty()
+    val accountName = AuthManager.signedInDisplayName
+        ?.takeIf { it.isNotBlank() }
+        ?: accountEmail.substringBefore("@").takeIf { it.isNotBlank() }
+        ?: K.userAccount.tr()
 
     com.elvan.udukkai.ui.components.shell.ElvanLazyColumn(
         state = scrollState,
@@ -394,156 +382,59 @@ private fun SettingsHubContent(
             }
         }
 
-        if (!landscape) {
-        // Section 0: Company card in landscape; compact pill in portrait.
-        item(key = "company_pill") {
-            val companyShape = RoundedCornerShape(999.dp)
+        // Identity comes first. Compact layouts use the app's familiar profile pill;
+        // landscape keeps the denser card-row language used by the two-pane settings list.
+        item(key = "account_identity") {
             ElvanSectionContainer {
-                Surface(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(companyShape)
-                        .clickable(
-                            interactionSource = remember { MutableInteractionSource() },
-                            indication = ShellDefaults.ripple(colors, bounded = true),
-                            onClick = { onNavigate(SettingsRoute.Merchant) }
-                        ),
-                    shape = companyShape,
-                    color = colors.surface,
-                    shadowElevation = 0.dp
-                ) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(84.dp)
-                            .padding(start = 11.dp, end = 16.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .size(62.dp)
-                                .clip(CircleShape)
-                                .background(colors.iconBg),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            com.elvan.udukkai.ui.screens.settings.AccountAvatar {
-                            Text(
-                                text = profileName.take(1).uppercase(),
-                                style = TextStyle(
-                                    fontFamily = ff,
-                                    fontSize = 24.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = colors.textPrimary
-                                )
-                            )
-                            }
-                        }
-
-                        Spacer(modifier = Modifier.width(16.dp))
-
-                        Column(
-                            modifier = Modifier.weight(1f),
-                            horizontalAlignment = Alignment.Start
-                        ) {
-                            Text(
-                                text = defaultFirmTitle,
-                                style = TextStyle(
-                                    fontFamily = ff,
-                                    fontSize = 18.sp,
-                                    fontWeight = FontWeight.SemiBold,
-                                    color = colors.textPrimary
-                                )
-                            )
-                            Spacer(modifier = Modifier.height(3.dp))
-                            Text(
-                                text = profileName.preventBrokenLigatures(),
-                                style = TextStyle(
-                                    fontFamily = ff,
-                                    fontSize = 14.sp,
-                                    fontWeight = FontWeight.Medium,
-                                    color = colors.textPrimary.copy(alpha = 0.5f)
-                                ),
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis
-                            )
-                        }
-
-                        Icon(
-                            imageVector = MaterialSymbols.Rounded.ChevronRight,
-                            contentDescription = null,
-                            tint = colors.textTertiary,
-                            modifier = Modifier.size(20.dp)
-                        )
-                    }
-                }
-            }
-        }
-
-        }
-
-        // Section 1: Business Identity & Finance
-        item(key = "business_identity_section") {
-            ElvanSectionContainer {
-                ElvanSettingsSection(colors = colors) {
-                    if (landscape) {
+                if (landscape) {
+                    ElvanSettingsSection(colors = colors) {
                         ElvanSettingsRow(
-                            icon = MaterialSymbols.Rounded.Apartment,
-                            title = K.company.tr(),
-                            description = profileName,
-                            onClick = { onNavigate(SettingsRoute.Merchant) },
+                            iconWidget = {
+                                AccountAvatar(fallback = {
+                                    Icon(
+                                        imageVector = MaterialSymbols.Rounded.Person,
+                                        contentDescription = null,
+                                        tint = colors.textPrimary,
+                                        modifier = Modifier.size(20.dp)
+                                    )
+                                })
+                            },
+                            title = accountName,
+                            description = accountEmail.ifEmpty { K.signInMethods.tr() },
+                            onClick = { onNavigate(SettingsRoute.Account) },
                             colors = colors
                         )
-                        ElvanSettingsDivider(colors = colors)
                     }
-                    ElvanSettingsRow(
-                        icon = MaterialSymbols.Rounded.BusinessCenter,
-                        title = K.identifier.tr(),
-                        description = K.identityHint.tr(),
-                        onClick = { onNavigate(business.identityRoute) },
-                        colors = colors
-                    )
-
-                    ElvanSettingsDivider(colors = colors)
-
-                    ElvanSettingsRow(
-                        icon = MaterialSymbols.Rounded.LocationOn,
-                        title = K.address.tr(),
-                        description = K.companyAddressDetails.tr(),
-                        onClick = { onNavigate(SettingsRoute.Address) },
-                        colors = colors
-                    )
-
-                    ElvanSettingsDivider(colors = colors)
-
-                    ElvanSettingsRow(
-                        icon = MaterialSymbols.Rounded.CreditCard,
-                        title = K.bank.tr(),
-                        description = K.bankDetails.tr(),
-                        onClick = { onNavigate(SettingsRoute.Bank) },
+                } else {
+                    ElvanProfilePillCard(
+                        title = accountName,
+                        subtitle = accountEmail.ifEmpty { K.signInMethods.tr() },
+                        onClick = { onNavigate(SettingsRoute.Account) },
+                        iconWidget = {
+                            AccountAvatar(fallback = {
+                                Icon(
+                                    imageVector = MaterialSymbols.Rounded.Person,
+                                    contentDescription = null,
+                                    tint = colors.textPrimary,
+                                    modifier = Modifier.size(26.dp)
+                                )
+                            })
+                        },
+                        trailing = {
+                            Icon(
+                                imageVector = MaterialSymbols.Rounded.ChevronRight,
+                                contentDescription = null,
+                                tint = colors.textTertiary,
+                                modifier = Modifier.size(20.dp)
+                            )
+                        },
                         colors = colors
                     )
                 }
             }
         }
 
-        // Section 2: Invoicing & Interface
-        item(key = "invoicing_interface_section") {
-            ElvanSectionContainer {
-                ElvanSettingsSection(colors = colors) {
-                    ElvanSettingsRow(
-                        icon = MaterialSymbols.Rounded.Description,
-                        title = K.createBtn.tr(),
-                        description = K.pdfStylingOptions.tr(),
-                        onClick = { onNavigate(SettingsRoute.InvoiceCreation) },
-                        colors = colors
-                    )
-
-
-                }
-            }
-        }
-
-        // Section 3: App Looks & Language
+        // App appearance and language stay together as the first preference group.
         item(key = "app_looks_section") {
             ElvanSectionContainer {
                 ElvanSettingsSection(colors = colors) {
@@ -568,22 +459,10 @@ private fun SettingsHubContent(
             }
         }
 
-        // Section 4: Data & Security
+        // Data belongs below personal preferences; account details now live in the identity card above.
         item(key = "data_security_section") {
             ElvanSectionContainer {
                 ElvanSettingsSection(colors = colors) {
-                    // 1. Account
-                    ElvanSettingsRow(
-                        icon = MaterialSymbols.Rounded.Person,
-                        title = K.account.tr(),
-                        description = AuthManager.signedInEmail?.ifEmpty { K.signInMethods.tr() } ?: K.signInMethods.tr(),
-                        onClick = { onNavigate(SettingsRoute.Account) },
-                        colors = colors
-                    )
-
-                    ElvanSettingsDivider(colors = colors)
-
-                    // 2. Storage & Backup
                     ElvanSettingsRow(
                         icon = MaterialSymbols.Rounded.Folder,
                         title = K.storageAndBackup.tr(),
@@ -595,17 +474,24 @@ private fun SettingsHubContent(
             }
         }
 
-        // Section 5: About & Legal
+        // Section 5: About, listed here directly instead of behind one more page
         item(key = "system_about_section") {
             ElvanSectionContainer {
                 ElvanSettingsSection(colors = colors) {
-                    ElvanSettingsRow(
-                        icon = MaterialSymbols.Rounded.Info,
-                        title = K.aboutAndLegal.tr(),
-                        description = K.aboutAndLegalHint.tr(),
-                        onClick = { onNavigate(SettingsRoute.About) },
-                        colors = colors
-                    )
+                    ElvanSettingsRow(icon = MaterialSymbols.Rounded.Info, title = K.aboutApp.tr(), description = "${business.appName} v${com.elvan.udukkai.core.platform.appVersionName()}", onClick = { onNavigate(SettingsRoute.AboutApp) }, colors = colors)
+                    ElvanSettingsDivider(colors = colors)
+                    ElvanSettingsRow(icon = MaterialSymbols.Rounded.BusinessCenter, title = K.elvanNavil.tr(), description = K.elvanNavilStudioDesc.tr(), onClick = { onNavigate(SettingsRoute.ElvanNavil) }, colors = colors)
+                }
+            }
+        }
+        item(key = "system_legal_section") {
+            ElvanSectionContainer {
+                ElvanSettingsSection(colors = colors) {
+                    ElvanSettingsRow(icon = MaterialSymbols.Rounded.Lock, title = K.privacyPolicy.tr(), description = K.privacyPolicyHint.tr(), onClick = { onNavigate(SettingsRoute.Privacy) }, colors = colors)
+                    ElvanSettingsDivider(colors = colors)
+                    ElvanSettingsRow(icon = MaterialSymbols.Rounded.Info, title = K.termsOfUse.tr(), description = K.termsOfUseHint.tr(), onClick = { onNavigate(SettingsRoute.Terms) }, colors = colors)
+                    ElvanSettingsDivider(colors = colors)
+                    ElvanSettingsRow(icon = MaterialSymbols.Rounded.Code, title = K.openSourceLicences.tr(), description = K.openSourceLicencesHint.tr(), onClick = { onNavigate(SettingsRoute.Licences) }, colors = colors)
                 }
             }
         }

@@ -33,7 +33,7 @@ import kotlinx.coroutines.withContext
 
 /**
  * கணக்கு அமைப்புகள் — Account Settings Screen (Matching Neram Mobile).
- * - Top Profile Pill Card showing avatar, display name, and email. Tapping opens Name Edit subpage.
+ * - A compact Display Name row opens the name editor without repeating the large account profile pill.
  * - Card 1 (Security & Sign-in): Google link ("கூகுள் இணைப்பு"), Password status, Sign Out with clean ActionSheet.
  * - Card 2 (Danger Zone): Delete account step-by-step wizard.
  * - Minimalist monochrome UI with expressive contained page loader and pure Tamil offline state.
@@ -168,33 +168,18 @@ fun AccountSettingsScreen(
                         Spacer(modifier = Modifier.height(LocalElvanTopSpacerHeight.current))
                     }
 
-                    // ── Top Profile Pill Card: Tapping opens Name Edit Sub-page ──
-                    item(key = "profile_pill_header") {
+                    // Display name is an editable setting here; the large account identity stays on the hub.
+                    item(key = "display_name") {
                         ElvanSectionContainer {
-                            ElvanProfilePillCard(
-                                title = displayName.ifEmpty { K.userAccount.tr() },
-                                subtitle = email.ifEmpty { K.notConnected.tr() },
-                                onClick = { onNavigate(SettingsRoute.EditName) },
-                                iconWidget = {
-                                    AccountAvatar(fallback = {
-                                        Icon(
-                                            imageVector = MaterialSymbols.Rounded.Person,
-                                            contentDescription = null,
-                                            tint = colors.textPrimary,
-                                            modifier = Modifier.size(26.dp)
-                                        )
-                                    })
-                                },
-                                trailing = {
-                                    Icon(
-                                        imageVector = MaterialSymbols.Rounded.ChevronRight,
-                                        contentDescription = null,
-                                        tint = colors.textTertiary,
-                                        modifier = Modifier.size(20.dp)
-                                    )
-                                },
-                                colors = colors
-                            )
+                            ElvanSettingsSection(colors = colors) {
+                                ElvanSettingsRow(
+                                    icon = MaterialSymbols.Rounded.Person,
+                                    title = K.displayName.tr(),
+                                    description = displayName.ifEmpty { K.userAccount.tr() },
+                                    onClick = { onNavigate(SettingsRoute.EditName) },
+                                    colors = colors
+                                )
+                            }
                         }
                     }
 

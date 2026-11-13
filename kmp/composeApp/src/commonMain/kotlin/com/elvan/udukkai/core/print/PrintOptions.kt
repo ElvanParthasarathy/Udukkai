@@ -16,6 +16,9 @@ enum class PrintMargin(val mm: Int) { NONE(0), NARROW(5), NORMAL(10) }
 /** WIDTH: scale the sheet to the page width (continues on more pages when taller). PAGE: whole sheet on one page. */
 enum class PrintFit(val key: String) { WIDTH("width"), PAGE("page") }
 
+/** Number of compact copies placed on one physical sheet. */
+enum class PagesPerSheet(val count: Int) { ONE(1), TWO(2), FOUR(4) }
+
 /**
  * How a document is laid out when it is printed, saved or shared as a PDF.
  * The defaults reproduce the plain A4 sheet. The last choices are remembered per app.
@@ -25,12 +28,13 @@ data class PrintOptions(
     val orientation: PageOrientation = PageOrientation.PORTRAIT,
     val margin: PrintMargin = PrintMargin.NONE,
     val color: Boolean = true,
-    val fit: PrintFit = PrintFit.WIDTH
+    val fit: PrintFit = PrintFit.WIDTH,
+    val pagesPerSheet: PagesPerSheet = PagesPerSheet.ONE
 ) {
     /** The options as the JSON the print page expects. */
     fun toJson(): String =
         "{\"paper\":\"${paper.key}\",\"orientation\":\"${orientation.key}\",\"marginMm\":${margin.mm}," +
-            "\"color\":$color,\"fit\":\"${fit.key}\"}"
+            "\"color\":$color,\"fit\":\"${fit.key}\",\"pagesPerSheet\":${pagesPerSheet.count}}"
 
     fun save() {
         try {
@@ -40,6 +44,7 @@ data class PrintOptions(
                 setString(KEY_MARGIN, margin.name)
                 setBoolean(KEY_COLOR, color)
                 setString(KEY_FIT, fit.name)
+                setString(KEY_PAGES_PER_SHEET, pagesPerSheet.name)
             }
         } catch (_: Exception) {
         }
@@ -51,6 +56,7 @@ data class PrintOptions(
         private const val KEY_MARGIN = "print_margin"
         private const val KEY_COLOR = "print_color"
         private const val KEY_FIT = "print_fit"
+        private const val KEY_PAGES_PER_SHEET = "print_pages_per_sheet"
 
         fun load(): PrintOptions = try {
             val prefs = getPreferencesHelper()
@@ -60,7 +66,9 @@ data class PrintOptions(
                     ?: PageOrientation.PORTRAIT,
                 margin = prefs.getString(KEY_MARGIN)?.let { n -> PrintMargin.entries.find { it.name == n } } ?: PrintMargin.NONE,
                 color = prefs.getBoolean(KEY_COLOR, true),
-                fit = prefs.getString(KEY_FIT)?.let { n -> PrintFit.entries.find { it.name == n } } ?: PrintFit.WIDTH
+                fit = prefs.getString(KEY_FIT)?.let { n -> PrintFit.entries.find { it.name == n } } ?: PrintFit.WIDTH,
+                pagesPerSheet = prefs.getString(KEY_PAGES_PER_SHEET)?.let { n -> PagesPerSheet.entries.find { it.name == n } }
+                    ?: PagesPerSheet.ONE
             )
         } catch (_: Exception) {
             PrintOptions()

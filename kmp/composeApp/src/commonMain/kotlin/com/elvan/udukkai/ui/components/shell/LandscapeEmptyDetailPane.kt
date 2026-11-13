@@ -41,6 +41,8 @@ fun LandscapeEmptyDetailPane(
         NavTab.Create -> MaterialSymbols.CustomNav.Create
         NavTab.Items -> MaterialSymbols.CustomNav.Items
         NavTab.Customers -> MaterialSymbols.CustomNav.Customers
+        NavTab.Business -> MaterialSymbols.Rounded.Apartment
+        NavTab.Tools -> MaterialSymbols.Rounded.Handyman
     }
 
     val title = when (selectedTab) {
@@ -48,6 +50,8 @@ fun LandscapeEmptyDetailPane(
         NavTab.Create -> K.invoices.tr()
         NavTab.Items -> K.items.tr()
         NavTab.Customers -> K.customers.tr()
+        NavTab.Business -> K.records.tr()
+        NavTab.Tools -> K.tools.tr()
     }
 
     val hint = "தரவுகளைக் காண இடப்பக்கத்தில் ஒரு உருப்படியைத் தேர்ந்தெடுக்கவும்"

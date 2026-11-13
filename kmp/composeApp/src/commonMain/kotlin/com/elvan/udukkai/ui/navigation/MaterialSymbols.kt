@@ -440,10 +440,13 @@ object MaterialSymbols {
         val ContentCopy: ImageVector get() = LibSymbols.Rounded.Content_copy
         val ContentPaste: ImageVector get() = LibSymbols.Rounded.Content_paste
         val Print: ImageVector get() = LibSymbols.Rounded.Print
+        val PrintFill: ImageVector get() = LibSymbols.RoundedFilled.Print
 
         // ── Settings Categories & Badges (Filled / Solid as per old Flutter design) ──
         val BusinessCenter: ImageVector get() = LibSymbols.RoundedFilled.Business_center
         val Apartment: ImageVector get() = LibSymbols.RoundedFilled.Apartment
+        val ApartmentOutline: ImageVector get() = LibSymbols.Rounded.Apartment
+        val HandymanFill: ImageVector get() = LibSymbols.RoundedFilled.Handyman
         val CurrencyRupee: ImageVector get() = LibSymbols.RoundedFilled.Currency_rupee
         val CurrencyRupeeCircle: ImageVector get() = LibSymbols.RoundedFilled.Currency_rupee_circle
         val LocationOn: ImageVector get() = LibSymbols.RoundedFilled.Location_on
@@ -530,6 +533,22 @@ object MaterialSymbols {
         }
     }
 
+    /** One Material Symbols Rounded family for navigation; FILL is the selected-state change. */
+    object Nav {
+        val Home: ImageVector get() = LibSymbols.Rounded.Home
+        val HomeFill: ImageVector get() = LibSymbols.RoundedFilled.Home
+        val Create: ImageVector get() = LibSymbols.Rounded.Add_box
+        val CreateFill: ImageVector get() = LibSymbols.RoundedFilled.Add_box
+        val Items: ImageVector get() = LibSymbols.Rounded.Inventory_2
+        val ItemsFill: ImageVector get() = LibSymbols.RoundedFilled.Inventory_2
+        val Customers: ImageVector get() = LibSymbols.Rounded.Groups
+        val CustomersFill: ImageVector get() = LibSymbols.RoundedFilled.Groups
+        val Business: ImageVector get() = LibSymbols.Rounded.Store
+        val BusinessFill: ImageVector get() = LibSymbols.RoundedFilled.Store
+        val Menu: ImageVector get() = LibSymbols.Rounded.Menu
+        val MenuFill: ImageVector get() = LibSymbols.RoundedFilled.Menu
+    }
+
     /**
      * Custom Phosphor Navigation Bar SVG Icons matching Flutter 1:1.
      */
@@ -578,6 +597,75 @@ object MaterialSymbols {
         val CustomersFill: ImageVector by lazy {
             navSymbol("CustomersFill", "M164.47,195.63a8,8,0,0,1-6.7,12.37H10.23a8,8,0,0,1-6.7-12.37,95.83,95.83,0,0,1,47.22-37.71,60,60,0,1,1,66.5,0A95.83,95.83,0,0,1,164.47,195.63Zm87.91-.15a95.87,95.87,0,0,0-47.13-37.56A60,60,0,0,0,144.7,54.59a4,4,0,0,0-1.33,6A75.83,75.83,0,0,1,147,150.53a4,4,0,0,0,1.07,5.53,112.32,112.32,0,0,1,29.85,30.83,23.92,23.92,0,0,1,3.65,16.47,4,4,0,0,0,3.95,4.64h60.3a8,8,0,0,0,7.73-5.93A8.22,8.22,0,0,0,252.38,195.48Z")
         }
+
+        // Company profile: a deliberately minimal building that stays legible in the compact nav pill.
+        val Business: ImageVector by lazy {
+            ImageVector.Builder(
+                name = "Business",
+                defaultWidth = 32.dp,
+                defaultHeight = 32.dp,
+                viewportWidth = 256f,
+                viewportHeight = 256f
+            ).apply {
+                path(
+                    fill = null,
+                    stroke = SolidColor(Color.Black),
+                    strokeLineWidth = 16f,
+                    strokeLineCap = StrokeCap.Round,
+                    strokeLineJoin = StrokeJoin.Round
+                ) {
+                    moveTo(56f, 216f); lineTo(56f, 48f); lineTo(200f, 48f); lineTo(200f, 216f)
+                    moveTo(96f, 88f); lineTo(96f, 108f)
+                    moveTo(160f, 88f); lineTo(160f, 108f)
+                    moveTo(108f, 216f); lineTo(108f, 160f); lineTo(148f, 160f); lineTo(148f, 216f)
+                    moveTo(32f, 216f); lineTo(224f, 216f)
+                }
+            }.build()
+        }
+        val BusinessFill: ImageVector by lazy {
+            ImageVector.Builder(
+                name = "BusinessFill",
+                defaultWidth = 32.dp,
+                defaultHeight = 32.dp,
+                viewportWidth = 256f,
+                viewportHeight = 256f
+            ).apply {
+                path(fill = SolidColor(Color.Black), pathFillType = PathFillType.EvenOdd) {
+                    moveTo(48f, 32f); lineTo(208f, 32f); lineTo(208f, 224f); lineTo(48f, 224f); close()
+                    moveTo(84f, 76f); lineTo(112f, 76f); lineTo(112f, 108f); lineTo(84f, 108f); close()
+                    moveTo(144f, 76f); lineTo(172f, 76f); lineTo(172f, 108f); lineTo(144f, 108f); close()
+                    moveTo(104f, 152f); lineTo(152f, 152f); lineTo(152f, 224f); lineTo(104f, 224f); close()
+                }
+            }.build()
+        }
+
+        // Tab 3: Menu — the active version keeps the same familiar glyph with a little more weight.
+        val Menu: ImageVector by lazy {
+            navMenu("Menu", 20f)
+        }
+        val MenuFill: ImageVector by lazy {
+            navMenu("MenuFill", 28f)
+        }
+
+        private fun navMenu(name: String, weight: Float): ImageVector = ImageVector.Builder(
+            name = name,
+            defaultWidth = 32.dp,
+            defaultHeight = 32.dp,
+            viewportWidth = 256f,
+            viewportHeight = 256f
+        ).apply {
+            path(
+                fill = null,
+                stroke = SolidColor(Color.Black),
+                strokeLineWidth = weight,
+                strokeLineCap = StrokeCap.Round,
+                strokeLineJoin = StrokeJoin.Round
+            ) {
+                moveTo(36f, 64f); lineTo(220f, 64f)
+                moveTo(36f, 128f); lineTo(220f, 128f)
+                moveTo(36f, 192f); lineTo(220f, 192f)
+            }
+        }.build()
     }
 }
 

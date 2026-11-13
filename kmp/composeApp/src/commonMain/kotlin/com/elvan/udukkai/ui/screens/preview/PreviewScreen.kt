@@ -32,6 +32,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import kotlinx.coroutines.delay
 import com.elvan.udukkai.core.print.PrintNoticeKind
+import com.elvan.udukkai.core.print.PagesPerSheet
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.graphicsLayer
@@ -284,8 +285,26 @@ private fun PreviewBottomArea(controller: DocumentPrintController, onEdit: (() -
     val colors = rememberShellColors()
     var menuOpen by remember { mutableStateOf(false) }
     val saveTitle = K.saveBtn.tr()
-    val allMenuItems = remember(menuItems, controller, saveTitle) {
+    val pagesPerSheet = controller.options.pagesPerSheet
+    val layoutTitle = when (pagesPerSheet) {
+        PagesPerSheet.ONE -> K.a4OneCopy.tr()
+        PagesPerSheet.TWO -> K.a4TwoCopies.tr()
+        PagesPerSheet.FOUR -> K.a4FourCopies.tr()
+    }
+    val allMenuItems = remember(menuItems, controller, saveTitle, pagesPerSheet, layoutTitle) {
         listOf(
+            ElvanPopupMenuItem(
+                title = layoutTitle,
+                icon = MaterialSymbols.Rounded.Apps,
+                onClick = {
+                    val next = when (pagesPerSheet) {
+                        PagesPerSheet.ONE -> PagesPerSheet.TWO
+                        PagesPerSheet.TWO -> PagesPerSheet.FOUR
+                        PagesPerSheet.FOUR -> PagesPerSheet.ONE
+                    }
+                    controller.updateOptions(controller.options.copy(pagesPerSheet = next))
+                }
+            ),
             ElvanPopupMenuItem(
                 title = saveTitle,
                 icon = MaterialSymbols.Rounded.Download,

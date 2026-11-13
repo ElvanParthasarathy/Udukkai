@@ -195,11 +195,11 @@ fun LandscapeSideNavBar(
     morphWhenHidden: Boolean = false,
     modifier: Modifier = Modifier
 ) {
-    val items = NavTab.entries.map { SideRailItem(it.icon, it.activeIcon, it.getLocalizedLabel()) }
+    val items = NavTab.barTabs.map { SideRailItem(it.icon, it.activeIcon, it.getLocalizedLabel(), it.navIconSize) }
     SideTabRail(
         items = items,
-        selectedIndex = NavTab.entries.indexOf(selectedTab),
-        onSelected = { i, drag -> onTabSelected(NavTab.entries[i], drag) },
+        selectedIndex = NavTab.barTabs.indexOf(NavTab.barSlot(selectedTab)),
+        onSelected = { i, drag -> onTabSelected(NavTab.barTabs[i], drag) },
         onInteraction = onInteraction,
         onDragProgress = onDragProgress,
         hideContent = hideContent,
@@ -209,7 +209,12 @@ fun LandscapeSideNavBar(
 }
 
 /** One tab of a [SideTabRail]. */
-class SideRailItem(val icon: ImageVector, val activeIcon: ImageVector, val label: String)
+class SideRailItem(
+    val icon: ImageVector,
+    val activeIcon: ImageVector,
+    val label: String,
+    val iconSize: androidx.compose.ui.unit.Dp = 22.dp
+)
 
 /** The rail for any set of tabs: the main tabs, the recycle bin's, and so on. */
 @Composable
@@ -419,6 +424,7 @@ fun SideTabRail(
                                     near = { pillNearnessVertical(animatedTop.value, bgHeightPx, layoutHeightPx, index) },
                                     idleColor = colors.textSecondary,
                                     activeColor = colors.textPrimary,
+                                    iconSize = tab.iconSize,
                                     modifier = Modifier.fillMaxWidth().height(layoutHeight)
                                 )
                             }

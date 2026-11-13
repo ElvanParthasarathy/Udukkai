@@ -94,8 +94,8 @@ android {
         // applicationId is set per-flavor
         minSdk = libs.versions.android.minSdk.get().toInt()
         targetSdk = libs.versions.android.targetSdk.get().toInt()
-        versionCode = 11
-        versionName = "1.0.9"
+        versionCode = 12
+        versionName = "1.0.10"
         val isPlayStore = project.hasProperty("playStore") || (project.findProperty("playStore")?.toString() == "true")
         buildConfigField("Boolean", "IS_PLAY_STORE_BUILD", isPlayStore.toString())
     }

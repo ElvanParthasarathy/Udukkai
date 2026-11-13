@@ -19,4 +19,7 @@ sealed class ActiveSubpage {
     data class ItemView(val item: ItemModel) : ActiveSubpage()
     data class InvoiceView(val invoice: InvoiceModel) : ActiveSubpage()
     data class ReceiptView(val receipt: ReceiptModel) : ActiveSubpage()
+    data object LetterheadPreview : ActiveSubpage()
+    data object ItemsList : ActiveSubpage()
+    data object CustomersList : ActiveSubpage()
 }

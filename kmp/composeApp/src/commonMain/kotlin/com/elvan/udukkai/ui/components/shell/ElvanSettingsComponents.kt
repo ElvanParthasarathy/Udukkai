@@ -308,11 +308,11 @@ fun ElvanProfilePillCard(
                 .padding(horizontal = 16.dp, vertical = 14.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Circular Avatar/Icon (52dp)
+            // Match the 62dp account circle used on the home greeting pill.
             Surface(
                 shape = CircleShape,
                 color = avatarBg,
-                modifier = Modifier.size(52.dp)
+                modifier = Modifier.size(62.dp)
             ) {
                 Box(contentAlignment = Alignment.Center) {
                     if (iconWidget != null) {

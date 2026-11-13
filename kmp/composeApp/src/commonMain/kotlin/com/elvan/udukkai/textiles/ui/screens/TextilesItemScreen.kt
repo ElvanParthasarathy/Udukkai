@@ -60,7 +60,7 @@ fun TextilesItemScreen(
 ) {
     val items = TextilesItemRepository.filteredItems
     val ff = LocalAppFontFamily.current
-    var selectedTabIndex by remember { mutableIntStateOf(0) }
+    val selectedTabIndex = TextilesItemRepository.measureFilter
 
     val allTabLabel = K.allTab.tr()
     val quantityTabLabel = K.quantity.tr()
@@ -109,26 +109,6 @@ fun TextilesItemScreen(
         ) {
             item(key = "item_top_spacer") {
                 Spacer(modifier = Modifier.height(LocalElvanTopSpacerHeight.current))
-            }
-
-            item(key = "item_measure_type_pill_shifter") {
-                Box(
-                    contentAlignment = Alignment.Center,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(bottom = 6.dp).elvanTopBandRow(com.elvan.udukkai.ui.components.shell.LocalElvanSideBar.current)
-                ) {
-                    ElvanPillShifter(
-                        items = shifterItems,
-                        selectedIndex = selectedTabIndex,
-                        onIndexSelected = {
-                            selectedTabIndex = it
-                        },
-                        colors = colors,
-                        isSmall = true,
-                        isFullWidth = false
-                    )
-                }
             }
 
             if (isRefreshing) {

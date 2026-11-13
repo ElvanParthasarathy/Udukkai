@@ -7,7 +7,7 @@
 //   window.UdukkaiPrint.buildPdf(opts)    -> no image fallback in this bundle: reports onError so the host fails fast
 import { useEffect } from 'react';
 import { createRoot } from 'react-dom/client';
-import { GstInvoice, CoolieInvoice, GstReceipt, CoolieReceipt, LanguageProvider } from '../index';
+import { GstInvoice, CoolieInvoice, GstReceipt, CoolieReceipt, Letterhead, LanguageProvider } from '../index';
 import { toGstInvoiceProps, toGstReceiptProps, toCoolieBillProps, toCoolieReceiptProps } from './adapter';
 import { TEMPLATE_VERSION } from './version';
 
@@ -64,6 +64,12 @@ const RECEIPT_PRINT_RULES = `
               .receipt-box, .invoice-paper, .a4-paper { box-shadow: none !important; margin: 0 !important; border: none !important; width: 100% !important; }
               .no-print { display: none !important; }`;
 
+const LETTERHEAD_PRINT_RULES = `
+              @page { size: A4 portrait; margin: 0; }
+              body, html { background-color: white !important; margin: 0; padding: 0; }
+              .letterhead-paper { box-shadow: none !important; margin: 0 !important; border: none !important; width: 100% !important; }
+              .no-print { display: none !important; }`;
+
 // The paper element of each template, its print rules and the print job name.
 const DOC_TYPES = {
   'gst-invoice': {
@@ -82,6 +88,10 @@ const DOC_TYPES = {
     paper: '.print-area', printRules: RECEIPT_PRINT_RULES,
     title: (p) => (p?.receipt?.receiptNo ? `Receipt-${p.receipt.receiptNo}` : 'Print'),
   },
+  'letterhead': {
+    paper: '.letterhead-paper', printRules: LETTERHEAD_PRINT_RULES,
+    title: (p) => 'Letterhead',
+  },
 };
 
 const Mounted = ({ onMounted, children }) => {
@@ -91,6 +101,7 @@ const Mounted = ({ onMounted, children }) => {
 
 const renderDocument = (docType, props) => {
   switch (docType) {
+    case 'letterhead': return <Letterhead profile={props.profile} />;
     case 'gst-receipt': return <GstReceipt receipt={props.receipt} profile={props.profile} />;
     case 'coolie-invoice': return <CoolieInvoice bill={props.bill} />;
     case 'coolie-receipt': return <CoolieReceipt receipt={props.receipt} />;
@@ -106,6 +117,7 @@ const paperElement = () => document.querySelector(DOC_TYPES[current.docType].pap
 
 const toProps = (data) => {
   switch (data.docType) {
+    case 'letterhead': return { profile: data.profile };
     case 'gst-receipt': return toGstReceiptProps(data);
     case 'coolie-invoice': return toCoolieBillProps(data);
     case 'coolie-receipt': return toCoolieReceiptProps(data);
@@ -150,7 +162,7 @@ const renderProps = async (props, appLanguage, docType = 'gst-invoice') => {
 
 // Paper sizes in mm (portrait: width x height)
 const PAPER_MM = { A4: [210, 297], A5: [148, 210], Letter: [215.9, 279.4], Legal: [215.9, 355.6] };
-const DEFAULT_PDF_OPTIONS = { paper: 'A4', orientation: 'portrait', marginMm: 0, color: true, fit: 'width' };
+const DEFAULT_PDF_OPTIONS = { paper: 'A4', orientation: 'portrait', marginMm: 0, color: true, fit: 'width', pagesPerSheet: 1 };
 
 // Converts an rgb()/rgba() colour to its grey equivalent (keeps alpha).
 const toGray = (css) => {
@@ -298,6 +310,50 @@ const printHtml = (options) => {
 
   const clone = printContent.cloneNode(true);
   if (!o.color) grayscaleClone(printContent, clone);
+
+  const requestedCopies = [1, 2, 4].includes(Number(o.pagesPerSheet)) ? Number(o.pagesPerSheet) : 1;
+  // Multi-up is intended for compact copies of a one-page document. A long invoice remains
+  // full-size so no rows, totals or contact details can be clipped.
+  const copies = pages === 1 ? requestedCopies : 1;
+
+  if (copies > 1) {
+    const columns = copies === 4 ? 2 : 1;
+    const rows = copies / columns;
+    const gap = 1.5;
+    const cellW = (contentW - gap * (columns - 1)) / columns;
+    const cellH = (contentH - gap * (rows - 1)) / rows;
+    const compactZoom = Math.min(cellW / sheetW, cellH / sheetH);
+    const copy = clone.outerHTML;
+    const cells = Array.from({ length: copies }, () =>
+      `<div class="udk-multi-cell"><div class="udk-multi-copy">${copy}</div></div>`
+    ).join('');
+
+    return `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>${title}</title>
+          ${headContent}
+          <style>@media print {${cfg.printRules}}</style>
+          <style>
+            @page { size: ${pageW}mm ${pageH}mm; margin: ${margin}mm; }
+            html, body { width: auto !important; height: auto !important; min-height: 0 !important; overflow: hidden !important;
+                         margin: 0 !important; padding: 0 !important; background: #fff !important; }
+            .udk-multi-sheet { width: ${contentW}mm; height: ${contentH}mm; display: grid;
+                               grid-template-columns: repeat(${columns}, ${cellW}mm);
+                               grid-template-rows: repeat(${rows}, ${cellH}mm); gap: ${gap}mm; }
+            .udk-multi-cell { width: ${cellW}mm; height: ${cellH}mm; overflow: hidden; position: relative;
+                              box-sizing: border-box; outline: 0.15mm solid rgba(0,0,0,.12); outline-offset: -0.15mm; }
+            .udk-multi-copy { width: ${sheetW}mm; height: ${sheetH}mm; zoom: ${compactZoom}; transform-origin: top left; }
+            .udk-multi-copy #invoice-preview, .udk-multi-copy .a4-paper, .udk-multi-copy .receipt-box,
+            .udk-multi-copy .letterhead-paper { width: ${sheetW}mm !important; height: ${sheetH}mm !important;
+                                                min-height: ${sheetH}mm !important; margin: 0 !important; }
+            * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+          </style>
+        </head>
+        <body><div class="udk-multi-sheet">${cells}</div></body>
+      </html>`;
+  }
 
   // More than one page: the lines are split over pages that each end with the contact band.
   let paper = clone.outerHTML;

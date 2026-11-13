@@ -17,6 +17,8 @@ enum class SettingsPaneLayout { SinglePane, AndroidLandscape, Desktop }
 fun settingsPaneLayout(width: Dp, height: Dp, standalonePage: Boolean = false): SettingsPaneLayout =
     when (platformLayoutPolicy.screenLayout(width, height)) {
         ScreenLayout.AndroidPortrait -> SettingsPaneLayout.SinglePane
-        ScreenLayout.AndroidLandscape -> if (!standalonePage && width.value >= 600f) SettingsPaneLayout.AndroidLandscape else SettingsPaneLayout.SinglePane
+        // Android Settings stays a single, predictable page in every phone orientation.
+        // A split pane made routes opened from Profile look like they had fallen back into the Settings hub.
+        ScreenLayout.AndroidLandscape -> SettingsPaneLayout.SinglePane
         ScreenLayout.Desktop -> if (width > height && width.value >= 600f) SettingsPaneLayout.Desktop else SettingsPaneLayout.SinglePane
     }

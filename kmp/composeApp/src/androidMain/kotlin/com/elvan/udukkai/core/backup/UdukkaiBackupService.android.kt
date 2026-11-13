@@ -705,7 +705,7 @@ class AndroidUdukkaiBackupService : UdukkaiBackupService {
         return try {
             file.copyTo(work, overwrite = true)
             val done = unpackFromFile(work)
-            if (done) file.delete()
+            if (done) { file.delete(); createBackup() }
             done
         } catch (e: Exception) {
             Log.e(tag, "Undoing the restore failed: ${e.message}", e)
@@ -840,6 +840,7 @@ class AndroidUdukkaiBackupService : UdukkaiBackupService {
         if (mode == RestoreMode.REPLACE) {
             val done = unpackFromFile(archive)
             return if (done) {
+                createBackup()
                 RestoreReport(
                     ok = true,
                     added = mapOf(
@@ -863,6 +864,8 @@ class AndroidUdukkaiBackupService : UdukkaiBackupService {
             if (report.ok) {
                 if (isFactory()) reloadFactoryRepositories() else reloadTextilesRepositories()
             }
+            try { live.close() } catch (_: Exception) {}
+            if (report.ok) createBackup()
             report
         } catch (e: Exception) {
             Log.e(tag, "Merging the backup failed: ${e.message}", e)
@@ -1014,6 +1017,8 @@ class AndroidUdukkaiBackupService : UdukkaiBackupService {
 
     override fun shareBackup(slot: BackupSlot): Boolean {
         return try {
+            // What is shared is the data as it is now, never an older saved copy
+            if (slot == BackupSlot.LATEST) createBackup()
             val file = resolveExistingFileForReading(slot) ?: return false
             val context = AppContext.context
             val authority = "${context.packageName}.fileprovider"

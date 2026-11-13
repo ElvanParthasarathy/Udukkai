@@ -36,7 +36,6 @@ import com.elvan.udukkai.theme.preventBrokenLigatures
 import com.elvan.udukkai.theme.rememberShellColors
 import com.elvan.udukkai.ui.components.shell.*
 import com.elvan.udukkai.ui.screens.settings.restoreFlow
-import com.elvan.udukkai.ui.screens.settings.undoRestoreDetails
 import com.elvan.udukkai.ui.navigation.MaterialSymbols
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -55,7 +54,6 @@ fun FactoryStorageBackupScreen(
     val backupService = remember { getUdukkaiBackupService() }
 
     var showBackupConfirm by remember { mutableStateOf(false) }
-    var showUndoConfirm by remember { mutableStateOf(false) }
     val guard = rememberPinGuard(colors)
     // Bumped after a restore so the "go back" row appears at once
     var restoreTick by remember { mutableStateOf(0) }
@@ -240,16 +238,6 @@ fun FactoryStorageBackupScreen(
                     onClick = startRestore,
                     colors = colors
                 )
-                if (restoreTick >= 0 && backupService.lastRestoreBackup() != null) {
-                    ElvanSettingsDivider(colors = colors)
-                    ElvanSettingsRow(
-                        icon = MaterialSymbols.Rounded.Restore,
-                        title = K.undoRestore.tr(),
-                        description = undoRestoreDetails(backupService),
-                        onClick = { guard { showUndoConfirm = true } },
-                        colors = colors
-                    )
-                }
                 ElvanSettingsDivider(colors = colors)
 
                 ElvanSettingsRow(
@@ -410,39 +398,6 @@ fun FactoryStorageBackupScreen(
                         ElvanSnackbar.show(backupFailedMsg)
                     }
                 }
-            },
-            colors = colors
-        )
-    }
-
-    // Going back to the copy kept just before the last restore
-    if (showUndoConfirm) {
-        ElvanActionSheet(
-            title = K.undoRestore.tr(),
-            cancelText = K.cancelBtn.tr(),
-            confirmText = K.restoreBtn.tr(),
-            onDismissRequest = { showUndoConfirm = false },
-            onConfirm = {
-                showUndoConfirm = false
-                isRestoring = true
-                scope.launch {
-                    delay(250)
-                    val success = backupService.undoLastRestore()
-                    isRestoring = false
-                    if (success) {
-                        refreshAll()
-                        ElvanSnackbar.show(restoreSuccessMsg)
-                    } else {
-                        ElvanSnackbar.show(backupFailedMsg)
-                    }
-                }
-            },
-            customContent = {
-                Text(
-                    text = (K.undoRestoreHint.tr() + "\n\n" + undoRestoreDetails(backupService)).preventBrokenLigatures(),
-                    style = TextStyle(fontFamily = ff, fontSize = 13.sp, color = colors.textSecondary, lineHeight = 18.sp),
-                    modifier = Modifier.padding(horizontal = 8.dp)
-                )
             },
             colors = colors
         )

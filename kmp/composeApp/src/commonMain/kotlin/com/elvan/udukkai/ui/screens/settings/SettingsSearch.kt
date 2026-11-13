@@ -71,6 +71,22 @@ class SettingsEntry(
     val keywords: List<String> = emptyList()
 )
 
+/** A searchable destination owned by a top-level app section such as Profile or Menu. */
+class SectionSearchEntry(
+    val title: String,
+    val description: String?,
+    val icon: ImageVector,
+    val keywords: List<String> = emptyList(),
+    val open: () -> Unit
+)
+
+private class SearchResultRow(
+    val title: String,
+    val description: String?,
+    val icon: ImageVector,
+    val open: () -> Unit
+)
+
 /** Everything the settings search knows. The identity page differs between the two apps, so it is passed in. */
 fun settingsEntries(identity: SettingsRoute): List<SettingsEntry> = with(MaterialSymbols.Rounded) {
     listOf(
@@ -129,6 +145,24 @@ object RecentSettingSearches {
     fun clear() = save(emptyList())
 
     private fun save(list: List<String>) = getPreferencesHelper().setString(KEY, list.take(MAX).joinToString("\n"))
+}
+
+private object RecentSectionSearches {
+    private const val MAX = 8
+    private fun key(scope: String) = "section_recent_searches_$scope"
+    fun all(scope: String): List<String> = getPreferencesHelper().getString(key(scope)).orEmpty().split('\n').filter { it.isNotBlank() }
+    fun add(scope: String, query: String) {
+        val q = query.trim()
+        if (q.isEmpty()) return
+        save(scope, listOf(q) + all(scope).filterNot { it.equals(q, ignoreCase = true) })
+    }
+    fun remove(scope: String, query: String): List<String> {
+        val updated = all(scope).filterNot { it == query }
+        save(scope, updated)
+        return updated
+    }
+    fun clear(scope: String) = save(scope, emptyList())
+    private fun save(scope: String, list: List<String>) = getPreferencesHelper().setString(key(scope), list.take(MAX).joinToString("\n"))
 }
 
 /** The search pill: comfortable, substantial floating pill (52dp high, 216dp wide closed; expands to 56dp high). */
@@ -210,13 +244,17 @@ fun SettingsSearchOverlay(open: Boolean, entries: List<SettingsEntry>, colors: S
     var query by remember { mutableStateOf("") }
     var recents by remember { mutableStateOf(RecentSettingSearches.all()) }
     val focusManager = LocalFocusManager.current
-    val results = remember(query, entries) { searchSettings(entries, query) }
+    val matches = remember(query, entries) { searchSettings(entries, query) }
     // Each time the page opens it starts clean
     LaunchedEffect(open) { if (open) { query = initialQuery; recents = RecentSettingSearches.all() } }
     fun openResult(route: SettingsRoute) {
         RecentSettingSearches.add(query)
         focusManager.clearFocus()
         onOpen(route)
+    }
+    val results = mutableListOf<SearchResultRow>()
+    for (entry in matches) {
+        results += SearchResultRow(entry.titleKey.tr(), entry.groupKey.tr(), entry.icon) { openResult(entry.route) }
     }
     LaunchedEffect(open) {
         if (!open && progress.value > 0f) {
@@ -250,13 +288,23 @@ fun SettingsSearchOverlay(open: Boolean, entries: List<SettingsEntry>, colors: S
         // The page is the blur source for the field floating over it, so the field is frosted glass here as on the other pages
         val haze = remember { dev.chrisbanes.haze.HazeState() }
         Box(Modifier.fillMaxSize().graphicsLayer { alpha = p; translationY = rise }.hazeSource(haze)) {
-            SearchPage(query, { query = it }, recents, { recents = it }, results, colors, ::openResult, onClose)
+            SearchPage(
+                query = query,
+                onQuery = { query = it },
+                recents = recents,
+                onRecents = { recents = it },
+                results = results,
+                colors = colors,
+                onClose = onClose,
+                clearRecents = { RecentSettingSearches.clear() },
+                removeRecent = { RecentSettingSearches.remove(it); RecentSettingSearches.all() }
+            )
         }
         // The field is the pill itself: it starts at the pill's place and size and smoothly grows to the full field
         // Share the resting pill's blur source; switching blur sources at handoff flashes.
         SearchField(
             colors = colors, open = open, query = query, onQuery = { query = it },
-            onSearch = { results.firstOrNull()?.let { openResult(it.route) } },
+            onSearch = { results.firstOrNull()?.open?.invoke() },
             height = currentHeight,
             modifier = Modifier.align(Alignment.BottomCenter)
                 .padding(bottom = maxOf(imeBottom, navInset) + Dimens.FloatingBarBottomGap)
@@ -265,8 +313,141 @@ fun SettingsSearchOverlay(open: Boolean, entries: List<SettingsEntry>, colors: S
     }
 }
 
+/** The Settings search experience, scoped to the destinations inside one top-level section. */
 @Composable
-private fun SearchField(colors: ShellColors, open: Boolean, query: String, onQuery: (String) -> Unit, onSearch: () -> Unit, height: Dp, modifier: Modifier) {
+fun SectionSearchOverlay(
+    open: Boolean,
+    scope: String,
+    entries: List<SectionSearchEntry>,
+    colors: ShellColors,
+    onClose: () -> Unit,
+    onActive: (Boolean) -> Unit = {},
+    modifier: Modifier = Modifier
+) {
+    val progress = remember { Animatable(0f) }
+    var query by remember { mutableStateOf("") }
+    var recents by remember(scope) { mutableStateOf(RecentSectionSearches.all(scope)) }
+    val focusManager = LocalFocusManager.current
+    val words = query.trim().lowercase().split(' ').filter { it.isNotEmpty() }
+    val matched = if (words.isEmpty()) emptyList() else entries.filter { entry ->
+        val haystack = listOfNotNull(entry.title, entry.description) + entry.keywords
+        words.all { word -> haystack.any { it.contains(word, ignoreCase = true) } }
+    }
+    val results = mutableListOf<SearchResultRow>()
+    for (entry in matched) {
+        results += SearchResultRow(entry.title, entry.description, entry.icon) {
+            RecentSectionSearches.add(scope, query)
+            focusManager.clearFocus()
+            entry.open()
+            onClose()
+        }
+    }
+    LaunchedEffect(open, scope) {
+        if (open) {
+            query = ""
+            recents = RecentSectionSearches.all(scope)
+        }
+    }
+    LaunchedEffect(open) {
+        if (!open && progress.value > 0f) {
+            focusManager.clearFocus()
+            delay(280)
+        }
+        progress.animateTo(if (open) 1f else 0f, tween(if (open) 320 else 260, easing = CubicBezierEasing(0.2f, 0f, 0f, 1f)))
+    }
+    val active = open || progress.value > 0f
+    SideEffect { onActive(active) }
+    if (!active) return
+    val p = progress.value
+    val imeBottom = getImeBottomPadding()
+    val navInset = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
+    BoxWithConstraints(
+        modifier.fillMaxSize()
+            .background(colors.background.copy(alpha = p))
+            .pointerInput(Unit) { awaitPointerEventScope { while (true) awaitPointerEvent().changes.forEach { it.consume() } } }
+    ) {
+        val rise = with(LocalDensity.current) { (28.dp * (1f - p)).toPx() }
+        val closedWidth = PILL_CLOSED_WIDTH.coerceAtMost(maxWidth - PILL_OPEN_MARGIN * 2)
+        val openWidth = maxWidth - PILL_OPEN_MARGIN * 2
+        val currentWidth = closedWidth + (openWidth - closedWidth) * p
+        val currentHeight = PILL_CLOSED_HEIGHT + (PILL_OPEN_HEIGHT - PILL_CLOSED_HEIGHT) * p
+        val haze = remember { dev.chrisbanes.haze.HazeState() }
+        Box(Modifier.fillMaxSize().graphicsLayer { alpha = p; translationY = rise }.hazeSource(haze)) {
+            SearchPage(
+                query = query,
+                onQuery = { query = it },
+                recents = recents,
+                onRecents = { recents = it },
+                results = results,
+                colors = colors,
+                onClose = onClose,
+                clearRecents = { RecentSectionSearches.clear(scope) },
+                removeRecent = { RecentSectionSearches.remove(scope, it) },
+                fixedHeader = true
+            )
+        }
+        SearchField(
+            colors = colors,
+            open = open,
+            query = query,
+            onQuery = { query = it },
+            onSearch = { results.firstOrNull()?.open?.invoke() },
+            height = currentHeight,
+            modifier = Modifier.align(Alignment.BottomCenter)
+                .padding(bottom = maxOf(imeBottom, navInset) + Dimens.FloatingBarBottomGap)
+                .width(currentWidth)
+        )
+    }
+}
+
+/**
+ * The editable field from Settings search, reused by list-style tabs that filter their content in place.
+ * This keeps Profile and Menu search visually and behaviorally identical to Settings without coupling
+ * those destinations to [SettingsEntry] or opening another settings window.
+ */
+@Composable
+fun SettingsFilterSearchBar(
+    visible: Boolean,
+    query: String,
+    onQuery: (String) -> Unit,
+    onClose: (() -> Unit)? = null,
+    colors: ShellColors,
+    landscape: Boolean = false,
+    modifier: Modifier = Modifier
+) {
+    if (!visible) return
+    val imeBottom = getImeBottomPadding()
+    val navInset = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
+    BoxWithConstraints(
+        modifier = modifier
+            .fillMaxWidth()
+            .then(if (landscape) Modifier else Modifier.padding(bottom = maxOf(imeBottom, navInset) + Dimens.FloatingBarBottomGap)),
+        contentAlignment = Alignment.Center
+    ) {
+        SearchField(
+            colors = colors,
+            open = visible,
+            query = query,
+            onQuery = onQuery,
+            onSearch = {},
+            onClose = onClose,
+            height = PILL_OPEN_HEIGHT,
+            modifier = Modifier.width((maxWidth - PILL_OPEN_MARGIN * 2).coerceAtMost(520.dp))
+        )
+    }
+}
+
+@Composable
+private fun SearchField(
+    colors: ShellColors,
+    open: Boolean,
+    query: String,
+    onQuery: (String) -> Unit,
+    onSearch: () -> Unit,
+    height: Dp,
+    modifier: Modifier,
+    onClose: (() -> Unit)? = null
+) {
     val ff = LocalAppFontFamily.current
     val focus = remember { FocusRequester() }
     val focusManager = LocalFocusManager.current
@@ -275,9 +456,23 @@ private fun SearchField(colors: ShellColors, open: Boolean, query: String, onQue
         if (open) { delay(260); runCatching { focus.requestFocus() } } else focusManager.clearFocus()
     }
     val voice = com.elvan.udukkai.ui.components.shell.rememberVoiceInput { onQuery(it) }
-    Row(modifier.floatingPill(colors, height = height).padding(start = 16.dp, end = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-        Icon(MaterialSymbols.Rounded.Search, null, tint = colors.textSecondary, modifier = Modifier.size(20.dp))
-        Spacer(Modifier.width(10.dp))
+    Row(
+        modifier.floatingPill(colors, height = height)
+            .padding(start = if (onClose == null) 16.dp else 6.dp, end = 8.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        if (onClose == null) {
+            Icon(MaterialSymbols.Rounded.Search, null, tint = colors.textSecondary, modifier = Modifier.size(20.dp))
+            Spacer(Modifier.width(10.dp))
+        } else {
+            Box(
+                Modifier.size(44.dp).clip(CircleShape).clickable(onClick = onClose),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(MaterialSymbols.Rounded.ArrowBack, K.back.tr(), tint = colors.textPrimary, modifier = Modifier.size(21.dp))
+            }
+            Spacer(Modifier.width(2.dp))
+        }
         Box(Modifier.weight(1f), contentAlignment = Alignment.CenterStart) {
             if (query.isEmpty()) Text(K.searchWord.tr(), style = TextStyle(fontFamily = ff, fontSize = 15.5.sp, color = colors.textSecondary.copy(alpha = 0.6f)))
             BasicTextField(
@@ -359,11 +554,12 @@ fun SettingsPaneSearchResults(query: String, entries: List<SettingsEntry>, color
 @Composable
 private fun SearchPage(
     query: String, onQuery: (String) -> Unit, recents: List<String>, onRecents: (List<String>) -> Unit,
-    results: List<SettingsEntry>, colors: ShellColors, openResult: (SettingsRoute) -> Unit, onClose: () -> Unit
+    results: List<SearchResultRow>, colors: ShellColors, onClose: () -> Unit,
+    clearRecents: () -> Unit, removeRecent: (String) -> List<String>, fixedHeader: Boolean = false
 ) {
     val ff = LocalAppFontFamily.current
     val scrollState = rememberLazyListState()
-    ElvanSubShell(title = K.searchWord.tr(), onBack = onClose, scrollState = scrollState) {
+    ElvanSubShell(title = K.searchWord.tr(), onBack = onClose, scrollState = scrollState, collapsedOnly = fixedHeader) {
         com.elvan.udukkai.ui.components.shell.ElvanLazyColumn(
             state = scrollState,
             modifier = Modifier.fillMaxSize(),
@@ -382,7 +578,7 @@ private fun SearchPage(
                                     K.clearAll.tr(),
                                     style = TextStyle(fontFamily = ff, fontSize = 14.sp, fontWeight = FontWeight.SemiBold),
                                     color = colors.textPrimary,
-                                    modifier = Modifier.clip(CircleShape).clickable { RecentSettingSearches.clear(); onRecents(emptyList()) }.padding(horizontal = 8.dp, vertical = 4.dp)
+                                    modifier = Modifier.clip(CircleShape).clickable { clearRecents(); onRecents(emptyList()) }.padding(horizontal = 8.dp, vertical = 4.dp)
                                 )
                             }
                             Spacer(Modifier.height(12.dp))
@@ -395,7 +591,7 @@ private fun SearchPage(
                                         Text(word, style = TextStyle(fontFamily = ff, fontSize = 15.sp), color = colors.textPrimary)
                                         Spacer(Modifier.width(6.dp))
                                         Box(
-                                            Modifier.size(28.dp).clip(CircleShape).clickable { RecentSettingSearches.remove(word); onRecents(RecentSettingSearches.all()) },
+                                            Modifier.size(28.dp).clip(CircleShape).clickable { onRecents(removeRecent(word)) },
                                             contentAlignment = Alignment.Center
                                         ) { Icon(MaterialSymbols.Rounded.Close, null, tint = colors.textPrimary.copy(alpha = 0.7f), modifier = Modifier.size(16.dp)) }
                                     }
@@ -419,7 +615,7 @@ private fun SearchPage(
                         ElvanSettingsSection(colors = colors) {
                             results.forEachIndexed { i, e ->
                                 if (i > 0) ElvanSettingsDivider(colors = colors)
-                                ElvanSettingsRow(icon = e.icon, title = e.titleKey.tr(), description = e.groupKey.tr(), onClick = { openResult(e.route) }, colors = colors)
+                                ElvanSettingsRow(icon = e.icon, title = e.title, description = e.description, onClick = e.open, colors = colors)
                             }
                         }
                     }

@@ -21,6 +21,9 @@ object TextilesItemRepository {
 
     var searchQuery by mutableStateOf("")
 
+    /** 0 all, 1 by quantity, 2 by weight: set from the filter button of the Records tab. */
+    var measureFilter by mutableStateOf(0)
+
     val filteredItems: List<ItemModel>
         get() {
             val activeId = TextilesProfileRepository.profile.id

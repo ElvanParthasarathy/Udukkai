@@ -20,6 +20,10 @@ actual fun openPlatformSubpage(subpage: ActiveSubpage): Boolean {
         is ActiveSubpage.ReceiptView -> ReceiptViewActivity.start(activity, subpage.receipt)
         is ActiveSubpage.ItemView -> ItemViewActivity.start(activity, subpage.item)
         is ActiveSubpage.CustomerView -> CustomerViewActivity.start(activity, subpage.customer)
+        ActiveSubpage.ItemsList -> ItemsActivity.start(activity)
+        ActiveSubpage.CustomersList -> CustomersActivity.start(activity)
+        // Letterhead preview is still composed by the owning app because it needs its active business payload.
+        ActiveSubpage.LetterheadPreview -> return false
     }
     return true
 }

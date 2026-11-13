@@ -135,6 +135,20 @@ object PrintPayload {
         return json.toString()
     }
 
+    /** Single letterhead / memo pad. */
+    fun forLetterhead(
+        profile: BusinessProfile,
+        appLanguage: String
+    ): String {
+        val json = JsonWriter()
+        json.obj {
+            field("docType", "letterhead")
+            field("appLanguage", appLanguage)
+            field("profile") { profile(profile) }
+        }
+        return json.toString()
+    }
+
     /** Factory (Coolie) invoice -> "coolie-invoice". */
     fun forFactoryInvoice(
         invoice: InvoiceModel,

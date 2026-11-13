@@ -17,6 +17,7 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.material3.MaterialTheme
 import com.github.barteksc.pdfviewer.PDFView
 import com.github.barteksc.pdfviewer.util.FitPolicy
+import com.github.barteksc.pdfviewer.util.Constants
 import java.io.File
 
 /**
@@ -58,14 +59,25 @@ actual fun DocumentPdfViewer(
     AndroidView(
         modifier = modifier.fillMaxSize(),
         factory = { ctx ->
+            // The library normally shows a 30%-resolution full-page thumbnail while
+            // 256px tiles arrive. On a dense phone display those temporary soft patches
+            // are obvious, and they move after every zoom. Keep the initial page at its
+            // fitted resolution and use larger tiles so only sharp content is composited.
+            Constants.THUMBNAIL_RATIO = 1f
+            Constants.PART_SIZE = 384f
+            Constants.Cache.CACHE_SIZE = 64
+            Constants.Cache.THUMBNAILS_CACHE_SIZE = 3
             PDFView(ctx, null).apply {
                 val view = this
                 setBackgroundColor(background)
                 pdfView = this
+                view.minZoom = 1f
+                view.midZoom = 2f
+                view.maxZoom = 5f
                 view.fromFile(File(path))
                     .enableSwipe(true)
                     .enableDoubletap(true)
-                    .onRender { view.resetZoom(); view.jumpTo(0, false) }
+                    .defaultPage(0)
                     .onTap {
                         // Controls overlay the canvas, so showing them never changes the page fit.
                         controller.immersive = !controller.immersive
@@ -78,9 +90,6 @@ actual fun DocumentPdfViewer(
                     .spacing(8)
                     .enableAntialiasing(true)
                     .load()
-                view.minZoom = 1f
-                view.midZoom = 2f
-                view.maxZoom = 5f
             }
         },
         onRelease = { view -> if (pdfView === view) pdfView = null; view.recycle() }

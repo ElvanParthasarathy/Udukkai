@@ -93,6 +93,8 @@ fun TextilesHomeScreen() {
     val createScrollState = rememberLazyListState()
     val itemsScrollState = rememberLazyListState()
     val customersScrollState = rememberLazyListState()
+    val toolsScrollState = rememberLazyListState()
+    val businessScrollState = rememberLazyListState()
 
     var selectedTab by remember { mutableStateOf(NavTab.Home) }
     var tabScrollJob by remember { mutableStateOf<kotlinx.coroutines.Job?>(null) }
@@ -117,6 +119,8 @@ fun TextilesHomeScreen() {
     var isRefreshing by remember { mutableStateOf(false) }
     var isSearchActive by remember { mutableStateOf(false) }
     var menuExpanded by remember { mutableStateOf(false) }
+    // What is typed in the search of the Business and Tools tabs
+    var pageSearchQuery by remember { mutableStateOf("") }
     var isSelectionMode by remember { mutableStateOf(false) }
     var selectedItemIds by remember { mutableStateOf<Set<Long>>(emptySet()) }
     var showBulkDeleteConfirm by remember { mutableStateOf(false) }
@@ -209,6 +213,7 @@ fun TextilesHomeScreen() {
                 selectedItemIds = emptySet()
             } else if (isSearchActive) {
                 isSearchActive = false
+                pageSearchQuery = ""
                 TextilesInvoiceRepository.searchQuery = ""
                 TextilesReceiptRepository.searchQuery = ""
                 TextilesItemRepository.searchQuery = ""
@@ -216,6 +221,9 @@ fun TextilesHomeScreen() {
             } else if (selectedTab == NavTab.Create && uruvakkuSegment == 1) {
                 // Receipts step back to bills first; the next Back returns to Home
                 uruvakkuSegment = 0
+            } else if (selectedTab == NavTab.Items || selectedTab == NavTab.Customers) {
+                // Items and Customers are pages of the Business tab
+                selectedTab = NavTab.Business
             } else if (selectedTab != NavTab.Home) {
                 // Bottom tabs remain unanimated; Back simply returns to Home.
                 selectedTab = NavTab.Home
@@ -250,10 +258,13 @@ fun TextilesHomeScreen() {
         NavTab.Create -> createScrollState
         NavTab.Items -> itemsScrollState
         NavTab.Customers -> customersScrollState
+        NavTab.Tools -> toolsScrollState
+        NavTab.Business -> businessScrollState
     }
 
     val currentSearchQuery = when (selectedTab) {
         NavTab.Home -> ""
+        NavTab.Tools, NavTab.Business -> pageSearchQuery
         NavTab.Create -> if (uruvakkuSegment == 0) TextilesInvoiceRepository.searchQuery else TextilesReceiptRepository.searchQuery
         NavTab.Items -> TextilesItemRepository.searchQuery
         NavTab.Customers -> TextilesCustomerRepository.searchQuery
@@ -322,7 +333,7 @@ fun TextilesHomeScreen() {
 
         @Composable
         fun HomeSearchBar() {
-ElvanSearchBar(
+            if (selectedTab != NavTab.Business && selectedTab != NavTab.Tools) ElvanSearchBar(
                                         landscape = isLandscape,
                                         visible = isSearchActive,
                                         query = currentSearchQuery,
@@ -341,11 +352,12 @@ ElvanSearchBar(
                                                 NavTab.Customers -> {
                                                     TextilesCustomerRepository.searchQuery = newQuery
                                                 }
-                                                else -> {}
+                                                else -> pageSearchQuery = newQuery
                                             }
                                         },
                                         onClose = {
                                             isSearchActive = false
+                                            pageSearchQuery = ""
                                             TextilesInvoiceRepository.searchQuery = ""
                                             TextilesReceiptRepository.searchQuery = ""
                                             TextilesItemRepository.searchQuery = ""
@@ -358,6 +370,74 @@ ElvanSearchBar(
         @Composable
         fun RenderSubpage(subpage: ActiveSubpage) {
             when (subpage) {
+                ActiveSubpage.ItemsList, ActiveSubpage.CustomersList -> {
+                    // Items and Customers: pages of the Business tab, with their own back, search and plus
+                    val showingItems = subpage == ActiveSubpage.ItemsList
+                    var listSearch by remember { mutableStateOf(false) }
+                    val listScroll = rememberLazyListState()
+                    val closeListSearch = { listSearch = false; TextilesItemRepository.searchQuery = ""; TextilesCustomerRepository.searchQuery = "" }
+                    com.elvan.udukkai.ui.components.shell.ElvanSubShell2(
+                        title = if (showingItems) K.items.tr() else K.customers.tr(),
+                        onBack = { closeListSearch(); popSubpage() },
+                        actions = {
+                            ElvanTopBarIconButton(onClick = { listSearch = true }) {
+                                Icon(imageVector = MaterialSymbols.Rounded.Search, contentDescription = K.search.tr(), tint = colors.textPrimary, modifier = Modifier.size(22.dp))
+                            }
+                            if (showingItems) {
+                                var itemFilterOpen by remember { mutableStateOf(false) }
+                                Box {
+                                    ElvanTopBarIconButton(onClick = { ElvanMenuState.isMenuOpen = true; itemFilterOpen = true }) {
+                                        Icon(
+                                            imageVector = MaterialSymbols.Rounded.FilterList,
+                                            contentDescription = K.a11yFilter.tr(),
+                                            tint = if (TextilesItemRepository.measureFilter != 0) colors.accent else colors.textPrimary,
+                                            modifier = Modifier.size(22.dp)
+                                        )
+                                    }
+                                    val filterLabels = listOf(K.allTab.tr(), K.quantity.tr(), K.weight.tr())
+                                    ElvanPopupMenu(
+                                        expanded = itemFilterOpen,
+                                        onDismissRequest = { ElvanMenuState.isMenuOpen = false; itemFilterOpen = false },
+                                        colors = colors,
+                                        items = filterLabels.mapIndexed { i, label ->
+                                            ElvanPopupMenuItem(
+                                                title = label,
+                                                icon = if (TextilesItemRepository.measureFilter == i) MaterialSymbols.Rounded.CheckCircleFill else MaterialSymbols.Rounded.Apps,
+                                                onClick = { TextilesItemRepository.measureFilter = i; ElvanMenuState.isMenuOpen = false; itemFilterOpen = false }
+                                            )
+                                        }
+                                    )
+                                }
+                            }
+
+                            ElvanTopBarIconButton(onClick = { navigateToSubpage(if (showingItems) ActiveSubpage.ItemEditor(null) else ActiveSubpage.MerchantEditor(null)) }) {
+                                Icon(imageVector = MaterialSymbols.Rounded.Add, contentDescription = K.add.tr(), tint = colors.textPrimary, modifier = Modifier.size(22.dp))
+                            }
+                        },
+                        floatingBar = {
+                            ElvanSearchBar(
+                                visible = listSearch,
+                                query = if (showingItems) TextilesItemRepository.searchQuery else TextilesCustomerRepository.searchQuery,
+                                onQueryChange = { if (showingItems) TextilesItemRepository.searchQuery = it else TextilesCustomerRepository.searchQuery = it },
+                                onClose = closeListSearch,
+                                colors = colors
+                            )
+                        }
+                    ) {
+                        if (showingItems) TextilesItemScreen(scrollState = listScroll, onItemClick = { navigateToSubpage(ActiveSubpage.ItemView(it)) })
+                        else TextilesCustomerScreen(scrollState = listScroll, onCustomerClick = { navigateToSubpage(ActiveSubpage.CustomerView(it)) }, colors = colors)
+                    }
+                }
+                ActiveSubpage.LetterheadPreview -> {
+                    val letterheadProfile = TextilesProfileRepository.profile
+                    com.elvan.udukkai.ui.screens.preview.PreviewScreen(
+                        title = K.letterhead.tr(),
+                        onBack = popSubpage,
+                        businessFolder = billBusinessFolder(letterheadProfile),
+                        printPayload = PrintPayload.forLetterhead(letterheadProfile, if (LanguageManager.activeLanguageCode.startsWith("ta")) "ta" else "en"),
+                        printFileName = "Letterhead"
+                    )
+                }
                 is ActiveSubpage.Settings -> {
                     TextilesSettingsScreen(
                         onBack = popSubpage
@@ -566,7 +646,7 @@ ElvanSearchBar(
                             selectedItemIds = emptySet()
                         },
                         actions = {
-                            if (selectedTab != NavTab.Home) {
+                            if (selectedTab != NavTab.Home && selectedTab != NavTab.Tools && selectedTab != NavTab.Business) {
                                 // Search Icon Button
                                 ElvanTopBarIconButton(
                                     onClick = { isSearchActive = true }
@@ -621,28 +701,6 @@ ElvanSearchBar(
                                                 ElvanMenuState.isMenuOpen = false
                                                 menuExpanded = false
                                                 navigateToSubpage(ActiveSubpage.Settings)
-                                            }
-                                        )
-                                    )
-                                    add(
-                                        ElvanPopupMenuItem(
-                                            title = K.financialYears.tr(),
-                                            icon = MaterialSymbols.Rounded.Calendar,
-                                            onClick = {
-                                                ElvanMenuState.isMenuOpen = false
-                                                menuExpanded = false
-                                                navigateToSubpage(ActiveSubpage.FinancialYears)
-                                            }
-                                        )
-                                    )
-                                    add(
-                                        ElvanPopupMenuItem(
-                                            title = meetpagamLabel,
-                                            icon = MaterialSymbols.Rounded.Delete,
-                                            onClick = {
-                                                ElvanMenuState.isMenuOpen = false
-                                                menuExpanded = false
-                                                navigateToSubpage(ActiveSubpage.RecycleBin)
                                             }
                                         )
                                     )
@@ -731,11 +789,13 @@ androidx.compose.animation.AnimatedContent(
                                     BottomNavBar(
                                         selectedTab = selectedTab,
                                         hideContent = isSearchActive || showDateFilterSheet,
+                                        addIsSearch = selectedTab == NavTab.Tools || selectedTab == NavTab.Business,
                                         onAddClick = {
                                             when (selectedTab) {
                                                 NavTab.Home -> {
                                                     navigateToSubpage(ActiveSubpage.InvoiceEditor(null))
                                                 }
+                                                NavTab.Tools, NavTab.Business -> isSearchActive = true
                                                 NavTab.Items -> {
                                                     navigateToSubpage(ActiveSubpage.ItemEditor(null))
                                                 }
@@ -751,7 +811,8 @@ androidx.compose.animation.AnimatedContent(
                                                 }
                                             }
                                         },
-                                        onTabSelected = { tab, _ ->
+                                        onTabSelected = { tapped, _ ->
+                                            val tab = tapped
                                             if (selectedTab == tab) {
                                                 tabScrollJob?.cancel()
                                                 shellController.toggleHeader()
@@ -764,6 +825,8 @@ androidx.compose.animation.AnimatedContent(
                                                     NavTab.Create -> createScrollState
                                                     NavTab.Items -> itemsScrollState
                                                     NavTab.Customers -> customersScrollState
+                                                    NavTab.Tools -> toolsScrollState
+                                                    NavTab.Business -> businessScrollState
                                                 }
                                                 tabScrollJob?.cancel()
                                                 targetScrollState.requestScrollToItem(0, 0)
@@ -927,6 +990,29 @@ androidx.compose.animation.AnimatedContent(
                                     )
                                 }
                             }
+
+                            NavTab.Business -> {
+                                com.elvan.udukkai.ui.screens.settings.BusinessTabScreen(
+                                    scrollState = businessScrollState,
+                                    identityRoute = com.elvan.udukkai.ui.screens.settings.SettingsRoute.TextilesIdentity,
+                                    profileName = com.elvan.udukkai.ui.components.shell.resolveCompanyItemLabel(TextilesProfileRepository.profile),
+                                    itemCount = TextilesItemRepository.filteredItems.size,
+                                    customerCount = TextilesCustomerRepository.filteredMerchants.size,
+                                    onOpenItems = { isSearchActive = false; navigateToSubpage(ActiveSubpage.ItemsList) },
+                                    onOpenCustomers = { isSearchActive = false; navigateToSubpage(ActiveSubpage.CustomersList) },
+                                    query = "",
+                                    colors = colors
+                                )
+                            }
+
+                            NavTab.Tools -> {
+                                com.elvan.udukkai.ui.screens.tools.ToolsScreen(
+                                    scrollState = toolsScrollState,
+                                    onOpen = { navigateToSubpage(it) },
+                                    query = "",
+                                    colors = colors
+                                )
+                            }
                         }
                     }
         }
@@ -945,6 +1031,8 @@ androidx.compose.animation.AnimatedContent(
                                 NavTab.Create -> createScrollState
                                 NavTab.Items -> itemsScrollState
                                 NavTab.Customers -> customersScrollState
+                                NavTab.Tools -> toolsScrollState
+                                NavTab.Business -> businessScrollState
                             }
                             // Mobile tabs retain their viewport; forcing a remeasure here competes with navigation.
                                                 if (isWideScreen) scope.launch { targetScrollState.scrollToItem(0, 0) }
@@ -1033,11 +1121,12 @@ androidx.compose.animation.AnimatedContent(
                         )
                     } else {
                         LandscapeTopActionButton(
-                            icon = MaterialSymbols.Rounded.Add,
-                            contentDescription = K.add.tr(),
+                            icon = if (selectedTab == NavTab.Tools || selectedTab == NavTab.Business) MaterialSymbols.Rounded.Search else MaterialSymbols.Rounded.Add,
+                            contentDescription = if (selectedTab == NavTab.Tools || selectedTab == NavTab.Business) K.search.tr() else K.add.tr(),
                             onClick = {
                                 when (selectedTab) {
                                     NavTab.Home -> navigateToSubpage(ActiveSubpage.InvoiceEditor(null))
+                                    NavTab.Tools, NavTab.Business -> isSearchActive = true
                                     NavTab.Items -> navigateToSubpage(ActiveSubpage.ItemEditor(null))
                                     NavTab.Customers -> navigateToSubpage(ActiveSubpage.MerchantEditor(null))
                                     NavTab.Create -> {
@@ -1058,7 +1147,8 @@ androidx.compose.animation.AnimatedContent(
                         selectedTab = selectedTab,
                         hideContent = isSearchActive || showDateFilterSheet,
                         morphWhenHidden = showDateFilterSheet,
-                        onTabSelected = { tab, _ ->
+                        onTabSelected = { tapped, _ ->
+                            val tab = tapped
                             if (selectedTab == tab) {
                                 tabScrollJob?.cancel()
                                 tabScrollJob = scope.launch { currentScrollState.smoothScrollToTop() }
@@ -1071,6 +1161,8 @@ androidx.compose.animation.AnimatedContent(
                                     NavTab.Create -> createScrollState
                                     NavTab.Items -> itemsScrollState
                                     NavTab.Customers -> customersScrollState
+                                    NavTab.Tools -> toolsScrollState
+                                    NavTab.Business -> businessScrollState
                                 }
                                 tabScrollJob?.cancel()
                                 targetScrollState.requestScrollToItem(0, 0)
@@ -1083,6 +1175,27 @@ androidx.compose.animation.AnimatedContent(
             }
 
             }
+
+        if (selectedTab == NavTab.Business || selectedTab == NavTab.Tools) {
+            com.elvan.udukkai.ui.screens.settings.SectionSearchOverlay(
+                open = isSearchActive,
+                scope = if (selectedTab == NavTab.Business) "textiles_profile" else "textiles_menu",
+                entries = if (selectedTab == NavTab.Business) {
+                    com.elvan.udukkai.ui.screens.settings.businessSectionSearchEntries(
+                        identityRoute = com.elvan.udukkai.ui.screens.settings.SettingsRoute.TextilesIdentity,
+                        profileName = com.elvan.udukkai.ui.components.shell.resolveCompanyItemLabel(TextilesProfileRepository.profile),
+                        itemCount = TextilesItemRepository.filteredItems.size,
+                        customerCount = TextilesCustomerRepository.filteredMerchants.size,
+                        onOpenItems = { navigateToSubpage(ActiveSubpage.ItemsList) },
+                        onOpenCustomers = { navigateToSubpage(ActiveSubpage.CustomersList) }
+                    )
+                } else {
+                    com.elvan.udukkai.ui.screens.tools.toolSectionSearchEntries { navigateToSubpage(it) }
+                },
+                colors = colors,
+                onClose = { isSearchActive = false; pageSearchQuery = "" }
+            )
+        }
 
         if (showBulkDeleteConfirm && selectedItemIds.isNotEmpty()) {
             val deleteSheetTitle = when (selectedTab) {
